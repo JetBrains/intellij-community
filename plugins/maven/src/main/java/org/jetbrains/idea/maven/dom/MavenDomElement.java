@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.dom.beans;
+package org.jetbrains.idea.maven.dom;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JavaNameStrategy;

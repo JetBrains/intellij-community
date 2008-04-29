@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.lucene.search.Query;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenImportToolWindow;
@@ -27,10 +30,11 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class MavenRepositoryManager extends DummyProjectComponent {
   private MavenEmbedder myEmbedder;
-  private MavenRepositoryIndex myIndex;
+  private MavenRepositoryIndices myIndices;
   private Project myProject;
 
   public static MavenRepositoryManager getInstance(Project p) {
@@ -53,7 +57,7 @@ public class MavenRepositoryManager extends DummyProjectComponent {
           StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
             public void run() {
               try {
-                addAndUpdateLocalRepository();
+                ensureHasLocalRepository();
               }
               catch (MavenRepositoryException e) {
                 showErrorWhenProjectIsOpen(new MavenException(e));
@@ -71,6 +75,7 @@ public class MavenRepositoryManager extends DummyProjectComponent {
   private void showErrorWhenProjectIsOpen(final MavenException e) {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
+        MavenLog.LOG.warn(e);
         new MavenImportToolWindow(myProject, "Maven Repository Manager").displayErrors(e);
       }
     });
@@ -78,18 +83,24 @@ public class MavenRepositoryManager extends DummyProjectComponent {
 
   @TestOnly
   public void initIndex() throws MavenException {
-    File baseDir = new File(PathManager.getSystemPath(), "Maven");
-    File projectIndecesDir = new File(baseDir, myProject.getLocationHash());
-
-    myEmbedder = MavenFactory.createEmbedderForExecute(MavenCore.getInstance(myProject).getState());
-    myIndex = new MavenRepositoryIndex(myEmbedder, projectIndecesDir);
+    myEmbedder = MavenFactory.createEmbedderForExecute(getSettings());
+    myIndices = new MavenRepositoryIndices(myEmbedder, getIndicesDir());
 
     try {
-      myIndex.load();
+      myIndices.load();
     }
     catch (MavenRepositoryException e) {
       new MavenException("Couldn't load Maven Repositories: " + e.getMessage());
     }
+  }
+
+  private MavenCoreSettings getSettings() {
+    return MavenCore.getInstance(myProject).getState();
+  }
+
+  private File getIndicesDir() {
+    File baseDir = new File(PathManager.getSystemPath(), "Maven");
+    return new File(baseDir, myProject.getLocationHash());
   }
 
   public void disposeComponent() {
@@ -99,9 +110,12 @@ public class MavenRepositoryManager extends DummyProjectComponent {
   @TestOnly
   public void closeIndex() {
     try {
-      if (myIndex != null) myIndex.close();
+      if (myIndices != null) {
+        myIndices.save();
+        myIndices.close();
+      }
       if (myEmbedder != null) myEmbedder.stop();
-      myIndex = null;
+      myIndices = null;
       myEmbedder = null;
     }
     catch (MavenEmbedderException e) {
@@ -109,17 +123,34 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     }
   }
 
-  private void addAndUpdateLocalRepository() throws MavenRepositoryException {
-    String repoDir = myEmbedder.getLocalRepository().getBasedir();
-    List<MavenRepositoryInfo> infos = myIndex.getInfos();
+  @TestOnly
+  public void clearIndices() {
+    FileUtil.delete(getIndicesDir());
+  }
 
-    for (MavenRepositoryInfo i : infos) {
-      if (i.getId().equals("local")) return;
+  private void ensureHasLocalRepository() throws MavenRepositoryException {
+    File localRepoFile = getSettings().getEffectiveLocalRepository();
+    if (localRepoFile == null) return;
+
+    MavenRepositoryInfo index = findLocalIndex();
+    if(index == null) {
+      index = new MavenRepositoryInfo("local", localRepoFile.getPath(), false);
+      myIndices.add(index);
+      startUpdate(index);
+      return;
     }
 
-    MavenRepositoryInfo i = new MavenRepositoryInfo("local", repoDir, false);
-    myIndex.add(i);
-    startUpdate(i);
+    if (!index.getRepositoryFile().equals(localRepoFile)) {
+      myIndices.change(index, "local", localRepoFile.getPath(), false);
+      startUpdate(index);
+    }
+  }
+
+  private MavenRepositoryInfo findLocalIndex() {
+    for (MavenRepositoryInfo i :  myIndices.getInfos()) {
+      if (!i.isRemote()) return i;
+    }
+    return null;
   }
 
   public Configurable createConfigurable() {
@@ -127,19 +158,19 @@ public class MavenRepositoryManager extends DummyProjectComponent {
   }
 
   public void save() {
-    myIndex.save();
+    myIndices.save();
   }
 
   public void add(MavenRepositoryInfo i) throws MavenRepositoryException {
-    myIndex.add(i);
+    myIndices.add(i);
   }
 
   public void change(MavenRepositoryInfo i, String id, String repositoryPathOrUrl, boolean isRemote) throws MavenRepositoryException {
-    myIndex.change(i, id, repositoryPathOrUrl, isRemote);
+    myIndices.change(i, id, repositoryPathOrUrl, isRemote);
   }
 
   public void remove(MavenRepositoryInfo i) throws MavenRepositoryException {
-    myIndex.remove(i);
+    myIndices.remove(i);
   }
 
   public void startUpdate(MavenRepositoryInfo i) {
@@ -156,11 +187,11 @@ public class MavenRepositoryManager extends DummyProjectComponent {
         try {
           List<MavenRepositoryInfo> infos = info != null
                                             ? Collections.singletonList(info)
-                                            : myIndex.getInfos();
+                                            : myIndices.getInfos();
 
           for (MavenRepositoryInfo each : infos) {
             indicator.setText("Updating [" + each.getId() + "]");
-            myIndex.update(each, indicator);
+            myIndices.update(each, indicator);
           }
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -182,18 +213,30 @@ public class MavenRepositoryManager extends DummyProjectComponent {
   }
 
   public List<MavenRepositoryInfo> getInfos() {
-    return myIndex.getInfos();
+    return myIndices.getInfos();
+  }
+
+  public Set<String> getGroupIds() throws MavenRepositoryException {
+    return myIndices.getGroupIds();
+  }
+
+  public Set<String> getArtifactIds(String groupId) throws MavenRepositoryException {
+    return myIndices.getArtifactIds(groupId);
+  }
+
+  public Set<String> getVersions(String groupId, String artifactId) throws MavenRepositoryException {
+    return myIndices.getVersions(groupId, artifactId);
   }
 
   public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenRepositoryException {
-    return myIndex.findByArtifactId(pattern);
+    return myIndices.findByArtifactId(pattern);
   }
 
   public List<ArtifactInfo> findByGroupId(String groupId) throws MavenRepositoryException {
-    return myIndex.findByGroupId(groupId);
+    return myIndices.findByGroupId(groupId);
   }
 
   public Collection<ArtifactInfo> search(Query q) throws MavenRepositoryException {
-    return myIndex.search(q);
+    return myIndices.search(q);
   }
 }

@@ -27,7 +27,7 @@ import java.util.zip.ZipFile;
 public class MavenPluginsRepository extends DummyProjectComponent {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.repo.ModelUtils");
 
-  @NonNls private static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
+  @NonNls public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
 
   private final Project myProject;
   private final MavenCore myMavenCore;
@@ -70,7 +70,7 @@ public class MavenPluginsRepository extends DummyProjectComponent {
 
   @Nullable
   @NonNls
-  private String findPluginPath(String groupId, String artifactId, String version) {
+  public String findPluginPath(String groupId, String artifactId, String version) {
     File repository = getLocalRepository();
     if (repository == null) return null;
 

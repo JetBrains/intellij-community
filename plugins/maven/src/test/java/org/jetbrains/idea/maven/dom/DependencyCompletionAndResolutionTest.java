@@ -32,6 +32,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   @Override
   protected void tearDown() throws Exception {
     myRepositoryManager.closeIndex();
+    myRepositoryManager.clearIndices();
     super.tearDown();
   }
 

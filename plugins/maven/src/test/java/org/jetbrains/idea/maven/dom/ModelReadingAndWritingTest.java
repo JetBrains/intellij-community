@@ -11,8 +11,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.dom.beans.MavenModel;
-import org.jetbrains.idea.maven.dom.beans.Dependency;
+import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.Dependency;
 
 public abstract class ModelReadingAndWritingTest extends MavenTestCase {
   @Override

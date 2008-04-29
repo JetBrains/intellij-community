@@ -31,7 +31,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.beans.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.project.Constants;
 
 import java.io.File;

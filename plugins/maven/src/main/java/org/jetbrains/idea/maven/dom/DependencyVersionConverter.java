@@ -1,21 +1,12 @@
 package org.jetbrains.idea.maven.dom;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.TermQuery;
-import org.sonatype.nexus.index.ArtifactInfo;
+import org.jetbrains.idea.maven.repository.MavenRepositoryException;
+import org.jetbrains.idea.maven.repository.MavenRepositoryManager;
+
+import java.util.Set;
 
 public class DependencyVersionConverter extends DependencyConverter {
-  protected BooleanQuery createQuery(String group, String artifact) {
-    BooleanQuery q = new BooleanQuery();
-    q.add(new TermQuery(new Term(ArtifactInfo.GROUP_ID, group)), BooleanClause.Occur.MUST);
-    q.add(new TermQuery(new Term(ArtifactInfo.ARTIFACT_ID, artifact)), BooleanClause.Occur.MUST);
-    return q;
+  protected Set<String> getVariants(MavenRepositoryManager manager, String groupId, String artifactId) throws MavenRepositoryException {
+    return manager.getVersions(groupId, artifactId);
   }
-
-  protected String getValueFrom(ArtifactInfo i) {
-    return i.version;
-  }
-
 }
