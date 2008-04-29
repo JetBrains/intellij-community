@@ -30,7 +30,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.AsyncConsumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -166,19 +165,7 @@ public class JavaCompletionContributor extends CompletionContributor{
     registrar.extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(XmlPatterns.xmlAttributeValue().save(XML_ATTRIBUTE_VALUE)),
                      new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet<LookupElement> result) {
-        for (final PsiReference reference : context.get(XML_ATTRIBUTE_VALUE).getReferences()) {
-          if (reference instanceof JavaClassReference) {
-            result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
-              public void consume(final LookupElement lookupElement) {
-                if (lookupElement.getTailType() == TailType.UNKNOWN) {
-                  lookupElement.setTailType(TailType.NONE);
-                }
-                result.addElement(lookupElement);
-              }
-            });
-            return;
-          }
-        }
+        XmlCompletionContributor.setNoneTailType(result, context.get(XML_ATTRIBUTE_VALUE), JavaClassReference.class);
       }
     });
   }

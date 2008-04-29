@@ -15,10 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.AsyncConsumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlElementDescriptor;
@@ -45,19 +42,7 @@ public class XmlCompletionContributor extends CompletionContributor{
     registrar.extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(XmlPatterns.xmlAttributeValue().save(XML_ATTRIBUTE_VALUE)),
                      new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet<LookupElement> result) {
-        for (final PsiReference reference : context.get(XML_ATTRIBUTE_VALUE).getReferences()) {
-          if (reference instanceof FileReference) {
-            result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
-              public void consume(final LookupElement lookupElement) {
-                if (lookupElement.getTailType() == TailType.UNKNOWN) {
-                  lookupElement.setTailType(TailType.NONE);
-                }
-                result.addElement(lookupElement);
-              }
-            });
-            return;
-          }
-        }
+        setNoneTailType(result, context.get(XML_ATTRIBUTE_VALUE), FileReference.class);
       }
     });
 
@@ -128,6 +113,28 @@ public class XmlCompletionContributor extends CompletionContributor{
         }
       }
     });
+  }
+
+  public static void setNoneTailType(final CompletionResultSet<LookupElement> result, final XmlElement element,
+                                     final Class<? extends PsiReference> referenceClass) {
+    final PsiReference[] references = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference[]>() {
+      public PsiReference[] compute() {
+        return element.getReferences();
+      }
+    });
+    for (final PsiReference reference : references) {
+      if (referenceClass.isInstance(reference)) {
+        result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
+          public void consume(final LookupElement lookupElement) {
+            if (lookupElement.getTailType() == TailType.UNKNOWN) {
+              lookupElement.setTailType(TailType.NONE);
+            }
+            result.addElement(lookupElement);
+          }
+        });
+        return;
+      }
+    }
   }
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
