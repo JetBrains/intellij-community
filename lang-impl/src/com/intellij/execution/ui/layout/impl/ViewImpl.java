@@ -1,17 +1,19 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.openapi.util.Key;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.View;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 
-public class ViewImpl {
+public class ViewImpl implements View {
 
   public static final Key<String> ID = Key.create("ViewID");
 
   private String myID;
 
-  private TabImpl myTab;
+  private Tab myTab;
   private int myTabIndex;
 
   private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
@@ -34,7 +36,7 @@ public class ViewImpl {
     content.addContent(XmlSerializer.serialize(this));
   }
 
-  public TabImpl getTab() {
+  public Tab getTab() {
     return myTab;
   }
 
@@ -64,7 +66,7 @@ public class ViewImpl {
     myPlaceInGrid = placeInGrid;
   }
 
-  public void assignTab(final TabImpl tab) {
+  public void assignTab(final Tab tab) {
     myTab = tab;
   }
 

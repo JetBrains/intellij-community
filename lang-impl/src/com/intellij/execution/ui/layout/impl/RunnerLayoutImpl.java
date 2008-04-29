@@ -1,5 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.RunnerLayout;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class RunnerLayoutImpl {
+public class RunnerLayoutImpl implements RunnerLayout {
 
   private String myID;
 

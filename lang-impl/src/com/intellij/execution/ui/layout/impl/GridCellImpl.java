@@ -1,6 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -15,8 +15,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.containers.HashSet;
@@ -32,7 +32,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-public class GridCellImpl implements Disposable {
+public class GridCellImpl implements GridCell, Disposable {
 
   private GridImpl myContainer;
 
@@ -288,7 +288,7 @@ public class GridCellImpl implements Disposable {
   }
 
   private void saveState(Content content, boolean minimized) {
-    ViewImpl state = myContext.getStateFor(content);
+    View state = myContext.getStateFor(content);
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
     state.assignTab(myContainer.getTabIndex());

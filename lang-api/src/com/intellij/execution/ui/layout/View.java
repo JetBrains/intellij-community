@@ -1,106 +1,19 @@
 package com.intellij.execution.ui.layout;
 
-import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.openapi.util.Key;
-import org.jdom.Element;
+public interface View {
+  Tab getTab();
 
-public class View {
+  RunnerLayoutUi.PlaceInGrid getPlaceInGrid();
 
-  public static final Key<String> ID = Key.create("ViewID");
+  boolean isMinimizedInGrid();
 
-  private String myID;
+  int getTabIndex();
 
-  private Tab myTab;
-  private int myTabIndex;
+  void setMinimizedInGrid(boolean minimizedInGrid);
 
-  private PlaceInGrid myPlaceInGrid;
+  void setPlaceInGrid(RunnerLayoutUi.PlaceInGrid placeInGrid);
 
-  private boolean myMinimizedInGrid;
+  void assignTab(Tab tab);
 
-  public View(String id, Tab tab, final PlaceInGrid placeInGrid, boolean minimizedInGrid) {
-    myID = id;
-    myTab = tab;
-    myPlaceInGrid = placeInGrid;
-    myMinimizedInGrid = minimizedInGrid;
-  }
-
-  public View(RunnerLayout settings, Element element) {
-    XmlSerializer.deserializeInto(this, element);
-    assignTab(settings.getOrCreateTab(myTabIndex));
-  }
-
-  public void write(final Element content) {
-    content.addContent(XmlSerializer.serialize(this));
-  }
-
-  public Tab getTab() {
-    return myTab;
-  }
-
-  public PlaceInGrid getPlaceInGrid() {
-    return myPlaceInGrid;
-  }
-
-
-  public boolean isMinimizedInGrid() {
-    return myMinimizedInGrid;
-  }
-
-  public void setID(final String ID) {
-    myID = ID;
-  }
-
-  public String getID() {
-    return myID;
-  }
-
-
-  public void setMinimizedInGrid(final boolean minimizedInGrid) {
-    myMinimizedInGrid = minimizedInGrid;
-  }
-
-  public void setPlaceInGrid(PlaceInGrid placeInGrid) {
-    myPlaceInGrid = placeInGrid;
-  }
-
-  public void assignTab(final Tab tab) {
-    myTab = tab;
-  }
-
-  public int getTabIndex() {
-    return myTab != null ? myTab.getIndex() : myTabIndex;
-  }
-
-  public void setTabIndex(final int tabIndex) {
-    myTabIndex = tabIndex;
-  }
-
-  public static enum PlaceInGrid {
-    left, center, right, bottom
-  }
-
-  public static class Default {
-
-    private String myID;
-    private int myTabID;
-    private PlaceInGrid myPlaceInGrid;
-    private boolean myMinimizedInGrid;
-
-    public Default(final String ID, final int tabID, final PlaceInGrid placeInGrid, final boolean minimizedInGrid) {
-      myID = ID;
-      myTabID = tabID;
-      myPlaceInGrid = placeInGrid;
-      myMinimizedInGrid = minimizedInGrid;
-    }
-
-    public View createView(RunnerLayout settings) {
-      final Tab tab = myTabID == Integer.MAX_VALUE ? settings.createNewTab() : settings.getOrCreateTab(myTabID);
-      return new View(myID, tab, myPlaceInGrid, myMinimizedInGrid);
-    }
-
-    public PlaceInGrid getPlaceInGrid() {
-      return myPlaceInGrid;
-    }
-  }
-
+  void setTabIndex(int tabIndex);
 }

@@ -1,6 +1,5 @@
-package com.intellij.execution.ui.layout.impl;
+package com.intellij.execution.ui.layout;
 
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -23,9 +22,9 @@ public interface ViewContext extends Disposable {
 
   CellTransform.Facade getCellTransform();
 
-  TabImpl getTabFor(final GridImpl grid);
+  Tab getTabFor(final Grid grid);
 
-  ViewImpl getStateFor(Content content);
+  View getStateFor(Content content);
 
   void saveUiState();
 
@@ -33,7 +32,7 @@ public interface ViewContext extends Disposable {
 
   ContentManager getContentManager();
 
-  RunnerLayoutImpl getLayoutSettings();
+  RunnerLayout getLayoutSettings();
 
   ActionManager getActionManager();
 
@@ -41,9 +40,9 @@ public interface ViewContext extends Disposable {
 
   RunnerLayoutUi getRunnerLayoutUi();
 
-  GridCellImpl findCellFor(final Content content);
+  GridCell findCellFor(final Content content);
 
-  GridImpl findGridFor(Content content);
+  Grid findGridFor(Content content);
 
   ActionCallback select(Content content, boolean requestFocus);
 

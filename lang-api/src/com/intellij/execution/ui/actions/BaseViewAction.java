@@ -1,15 +1,15 @@
-package com.intellij.execution.ui.layout.actions;
+package com.intellij.execution.ui.actions;
 
-import com.intellij.execution.ui.layout.impl.GridImpl;
-import com.intellij.execution.ui.layout.impl.GridCellImpl;
-import com.intellij.execution.ui.layout.impl.TabImpl;
-import com.intellij.execution.ui.layout.impl.ViewContext;
+import com.intellij.execution.ui.layout.Grid;
+import com.intellij.execution.ui.layout.GridCell;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseRunnerViewAction extends AnAction {
+public abstract class BaseViewAction extends AnAction {
 
   public final void update(final AnActionEvent e) {
     ViewContext context = getViewFacade(e);
@@ -45,13 +45,13 @@ public abstract class BaseRunnerViewAction extends AnAction {
   }
 
   protected static boolean isDetached(ViewContext context, Content content) {
-    final GridCellImpl cell = context.findCellFor(content);
+    final GridCell cell = context.findCellFor(content);
     return cell != null ? cell.isDetached() : false;
   }
 
-  protected static TabImpl getTabFor(final ViewContext context, final Content[] content) {
-    GridImpl grid = context.findGridFor(content[0]);
-    TabImpl tab = context.getTabFor(grid);
+  protected static Tab getTabFor(final ViewContext context, final Content[] content) {
+    Grid grid = context.findGridFor(content[0]);
+    Tab tab = context.getTabFor(grid);
     return tab;
   }
 

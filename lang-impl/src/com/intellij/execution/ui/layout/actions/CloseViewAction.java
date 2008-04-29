@@ -1,10 +1,11 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.impl.ViewContext;
+import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 
-public class CloseViewAction extends BaseRunnerViewAction {
+public class CloseViewAction extends BaseViewAction {
 
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(context, content, e.getPlace()));

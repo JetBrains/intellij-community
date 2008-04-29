@@ -1,7 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
-import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
+import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -206,7 +205,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       public void contentRemoved(final ContentManagerEvent event) {
         event.getContent().removePropertyChangeListener(RunnerContentUi.this);
 
-        GridImpl grid = findGridFor(event.getContent());
+        GridImpl grid = (GridImpl)findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());
           removeGridIfNeeded(grid);
@@ -221,7 +220,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         if (isStateBeingRestored()) return;
 
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-          GridImpl toSelect = findGridFor(event.getContent());
+          Grid toSelect = findGridFor(event.getContent());
           GridImpl selected = getSelectedGrid();
 
           if (selected != null && toSelect != null && selected == toSelect) {
@@ -255,7 +254,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Nullable
   private GridImpl getGridFor(Content content, boolean createIfMissing) {
-    GridImpl grid = findGridFor(content);
+    GridImpl grid = (GridImpl)findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
 
     grid = new GridImpl(this, mySessionName);
@@ -293,7 +292,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Nullable
-  public GridCellImpl findCellFor(final Content content) {
+  public GridCell findCellFor(final Content content) {
     GridImpl cell = getGridFor(content, false);
     assert cell != null;
     return cell.getCellFor(content);
@@ -462,8 +461,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  public TabImpl getTabFor(final GridImpl grid) {
-    TabInfo info = myTabs.findInfo(grid);
+  public Tab getTabFor(final Grid grid) {
+    TabInfo info = myTabs.findInfo((Component)grid);
     return getTabFor(info);
   }
 
@@ -476,8 +475,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Nullable
-  public GridImpl findGridFor(Content content) {
-    TabImpl tab = getStateFor(content).getTab();
+  public Grid findGridFor(Content content) {
+    TabImpl tab = (TabImpl)getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       if (getTabFor(each).equals(tab)) return getGridFor(each);
     }
@@ -809,11 +808,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myActionManager;
   }
 
-  public RunnerLayoutImpl getLayoutSettings() {
+  public RunnerLayout getLayoutSettings() {
     return myLayoutSettings;
   }
 
-  public ViewImpl getStateFor(final Content content) {
+  public View getStateFor(final Content content) {
     return myLayoutSettings.getStateFor(content);
   }
 
@@ -822,7 +821,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
-    final GridImpl grid = findGridFor(content);
+    final GridImpl grid = (GridImpl)findGridFor(content);
     if (grid == null) return new ActionCallback.Done();
 
 

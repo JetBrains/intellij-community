@@ -1,6 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.NullableComponent;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class GridImpl extends Wrapper implements Disposable, CellTransform.Facade, DataProvider {
+public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform.Facade, DataProvider {
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
@@ -123,7 +123,7 @@ public class GridImpl extends Wrapper implements Disposable, CellTransform.Facad
     return cell;
   }
 
-  ViewImpl getStateFor(final Content content) {
+  View getStateFor(final Content content) {
     return myViewContext.getStateFor(content);
   }
 
@@ -165,7 +165,7 @@ public class GridImpl extends Wrapper implements Disposable, CellTransform.Facad
     }
   }
 
-  public TabImpl getTabIndex() {
+  public Tab getTabIndex() {
     return getTab();
   }
 
@@ -221,36 +221,39 @@ public class GridImpl extends Wrapper implements Disposable, CellTransform.Facad
   void saveSplitterProportions(final RunnerLayoutUi.PlaceInGrid placeInGrid) {
     if (!RunnerContentUi.ensureValid(this)) return;
 
+    final TabImpl tab = (TabImpl)getTab();
+
     switch (placeInGrid) {
       case left:
-        getTab().setLeftProportion(getLeftProportion());
+        tab.setLeftProportion(getLeftProportion());
         break;
       case right:
-        getTab().setRightProportion(getRightProportion());
+        tab.setRightProportion(getRightProportion());
         break;
       case bottom:
-        getTab().setBottomProportion(getBottomPropertion());
+        tab.setBottomProportion(getBottomPropertion());
       case center:
         break;
     }
   }
 
-  public TabImpl getTab() {
+  public Tab getTab() {
     return myViewContext.getTabFor(this);
   }
 
   void restoreLastSplitterProportions(RunnerLayoutUi.PlaceInGrid placeInGrid) {
     if (!RunnerContentUi.ensureValid(this)) return;
 
+    final TabImpl tab = (TabImpl)getTab();
     switch (placeInGrid) {
       case left:
-        setLeftProportion(getTab().getLeftProportion());
+        setLeftProportion(tab.getLeftProportion());
         break;
       case right:
-        setRightProportion(getTab().getRightProportion());
+        setRightProportion(tab.getRightProportion());
         break;
       case bottom:
-        mySplitter.setProportion(getTab().getBottomProportion());
+        mySplitter.setProportion(tab.getBottomProportion());
       case center:
         break;
     }

@@ -1,12 +1,13 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.impl.GridImpl;
-import com.intellij.execution.ui.layout.impl.TabImpl;
-import com.intellij.execution.ui.layout.impl.ViewContext;
+import com.intellij.execution.ui.actions.BaseViewAction;
+import com.intellij.execution.ui.layout.Grid;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 
-public class MoveToGridAction extends BaseRunnerViewAction {
+public class MoveToGridAction extends BaseViewAction {
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     if (!context.isMoveToGridActionEnabled() || content.length != 1) {
       setEnabled(e, false);
@@ -18,8 +19,8 @@ public class MoveToGridAction extends BaseRunnerViewAction {
       return;
     }
 
-    GridImpl grid = context.findGridFor(content[0]);
-    TabImpl tab = context.getTabFor(grid);
+    Grid grid = context.findGridFor(content[0]);
+    Tab tab = context.getTabFor(grid);
     setEnabled(e, !tab.isDefault() && grid.getContents().size() == 1);
   }
                      

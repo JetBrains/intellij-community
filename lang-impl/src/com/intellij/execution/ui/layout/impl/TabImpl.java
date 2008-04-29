@@ -1,12 +1,13 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 
 import javax.swing.*;
 
-public class TabImpl {
+public class TabImpl implements Tab {
 
   private int myIndex;
   private String myDisplayName;
