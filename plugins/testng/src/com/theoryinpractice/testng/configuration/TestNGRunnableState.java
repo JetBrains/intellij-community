@@ -360,6 +360,9 @@ public class TestNGRunnableState extends JavaCommandLineState
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
+      if (null == psiClass.getQualifiedName()) {
+        throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
+      }
       classes.putAll(calculateDependencies(data, true, psiClass));
     } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
@@ -367,6 +370,9 @@ public class TestNGRunnableState extends JavaCommandLineState
           .findClass(data.getMainClassName(), getSearchScope());
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
+      }
+      if (null == psiClass.getQualifiedName()) {
+        throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
       classes.putAll(calculateDependencies(data, false, psiClass));
       classes.put(psiClass, Arrays.asList(psiClass.findMethodsByName(data.getMethodName(), true)));
