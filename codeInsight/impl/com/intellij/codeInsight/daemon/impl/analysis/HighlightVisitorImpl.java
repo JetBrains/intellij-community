@@ -352,7 +352,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightUtil.checkValidArrayAccessExpression(((PsiArrayAccessExpression)expression).getArrayExpression(),
                                                                  ((PsiArrayAccessExpression)expression).getIndexExpression()));
     }
-    else if (expression.getParent() instanceof PsiNewExpression
+    if (expression.getParent() instanceof PsiNewExpression
              && ((PsiNewExpression)expression.getParent()).getQualifier() != expression
              && ((PsiNewExpression)expression.getParent()).getArrayInitializer() != expression) {
       // like in 'new String["s"]'
