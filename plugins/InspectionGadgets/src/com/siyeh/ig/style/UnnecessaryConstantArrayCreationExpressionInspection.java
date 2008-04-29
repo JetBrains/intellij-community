@@ -29,31 +29,33 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NewArrayExpressionMayBeArrayInitializerInspection
+public class UnnecessaryConstantArrayCreationExpressionInspection
         extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "new.array.expression.may.be.array.initializer.display.name");
+                "unnecessary.constant.array.creation.expression.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "New array expression may be array initializer";
+        return InspectionGadgetsBundle.message(
+                "unnecessary.constant.array.creation.expression.problem.descriptor");
     }
 
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new NewArrayExpressionMayBeArrayInitializerFix();
+        return new UnnecessaryConstantArrayCreationExpressionFix();
     }
 
-    private static class NewArrayExpressionMayBeArrayInitializerFix
+    private static class UnnecessaryConstantArrayCreationExpressionFix
             extends InspectionGadgetsFix {
 
         @NotNull
         public String getName() {
-            return "Replace with array initializer";
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.constant.array.creation.expression.quickfix");
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -73,10 +75,10 @@ public class NewArrayExpressionMayBeArrayInitializerInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new NewArrayExpressionMayBeArrayInitializerVisitor();
+        return new UnnecessaryConstantArrayCreationExpressionVisitor();
     }
 
-    private static class NewArrayExpressionMayBeArrayInitializerVisitor
+    private static class UnnecessaryConstantArrayCreationExpressionVisitor
             extends BaseInspectionVisitor {
 
         public void visitArrayInitializerExpression(

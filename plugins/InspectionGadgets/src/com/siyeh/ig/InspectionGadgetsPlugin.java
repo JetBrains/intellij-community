@@ -719,6 +719,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(MissortedModifiersInspection.class);
         m_inspectionClasses.add(MultipleDeclarationInspection.class);
         m_inspectionClasses.add(MultipleTypedDeclarationInspection.class);
+        m_inspectionClasses.add(UnnecessaryConstantArrayCreationExpressionInspection.class);
         m_inspectionClasses.add(NestedMethodCallInspection.class);
         m_inspectionClasses.add(RedundantFieldInitializationInspection.class);
         m_inspectionClasses.add(RedundantImplementsInspection.class);
