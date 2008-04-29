@@ -26,7 +26,7 @@ import java.awt.*;
 
 public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
    private Project myProject;
-  private RunnerLayoutImpl myLayout;
+  private RunnerLayout myLayout;
   private JPanel myContentPanel;
   private RunnerContentUi myContentUI;
 
@@ -125,7 +125,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return ContentFactory.SERVICE.getInstance();
   }
 
-  public RunnerLayoutImpl getLayout() {
+  public RunnerLayout getLayout() {
     return myLayout;
   }
 

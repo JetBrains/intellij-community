@@ -36,7 +36,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @NonNls public static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
 
   ContentManager myManager;
-  RunnerLayoutImpl myLayoutSettings;
+  RunnerLayout myLayoutSettings;
 
   ActionManager myActionManager;
   String mySessionName;
@@ -77,7 +77,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                          RunnerLayoutUi ui,
                          ActionManager actionManager,
                          IdeFocusManager focusManager,
-                         RunnerLayoutImpl settings,
+                         RunnerLayout settings,
                          String sessionName) {
     myProject = project;
     myRunnerUi = ui;

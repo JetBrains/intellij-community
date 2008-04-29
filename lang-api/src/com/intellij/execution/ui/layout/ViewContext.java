@@ -32,8 +32,6 @@ public interface ViewContext extends Disposable {
 
   ContentManager getContentManager();
 
-  RunnerLayout getLayoutSettings();
-
   ActionManager getActionManager();
 
   IdeFocusManager getFocusManager();

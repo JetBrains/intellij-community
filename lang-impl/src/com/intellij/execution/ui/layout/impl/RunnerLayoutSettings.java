@@ -18,12 +18,12 @@ import java.util.Map;
     file = "$APP_CONFIG$/runner.layout.xml")})
 public class RunnerLayoutSettings implements PersistentStateComponent<Element>, ApplicationComponent {
 
-  private Map<String, RunnerLayoutImpl> myRunnerId2Settings = new LinkedHashMap<String, RunnerLayoutImpl>();
+  private Map<String, RunnerLayout> myRunnerId2Settings = new LinkedHashMap<String, RunnerLayout>();
 
-  public RunnerLayoutImpl getLayout(String id) {
-    RunnerLayoutImpl layout = myRunnerId2Settings.get(id);
+  public RunnerLayout getLayout(String id) {
+    RunnerLayout layout = myRunnerId2Settings.get(id);
     if (layout == null) {
-      layout = new RunnerLayoutImpl(id);
+      layout = new RunnerLayout(id);
       myRunnerId2Settings.put(id, layout);
     }
 
@@ -33,7 +33,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element>, 
   public Element getState() {
     final Element runners = new Element("runners");
     for (String eachID : myRunnerId2Settings.keySet()) {
-      final RunnerLayoutImpl layout = myRunnerId2Settings.get(eachID);
+      final RunnerLayout layout = myRunnerId2Settings.get(eachID);
       final Element runnerElement = new Element("runner");
       runnerElement.setAttribute("id", eachID);
       layout.write(runnerElement);
@@ -47,7 +47,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element>, 
     for (Object each : runners) {
       Element eachRunnerElement = (Element)each;
       final String eachID = eachRunnerElement.getAttributeValue("id");
-      final RunnerLayoutImpl eachLayout = new RunnerLayoutImpl(eachID);
+      final RunnerLayout eachLayout = new RunnerLayout(eachID);
       eachLayout.read(eachRunnerElement);
       myRunnerId2Settings.put(eachID, eachLayout);
     }

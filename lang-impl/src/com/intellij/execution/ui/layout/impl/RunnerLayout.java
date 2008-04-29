@@ -1,6 +1,5 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.RunnerLayout;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class RunnerLayoutImpl implements RunnerLayout {
+public class RunnerLayout  {
 
   private String myID;
 
@@ -32,7 +31,7 @@ public class RunnerLayoutImpl implements RunnerLayout {
   private String myDefaultToFocus;
 
 
-  public RunnerLayoutImpl(final String ID) {
+  public RunnerLayout(final String ID) {
     myID = ID;
   }
 

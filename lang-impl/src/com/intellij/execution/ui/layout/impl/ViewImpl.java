@@ -27,7 +27,7 @@ public class ViewImpl implements View {
     myMinimizedInGrid = minimizedInGrid;
   }
 
-  public ViewImpl(RunnerLayoutImpl settings, Element element) {
+  public ViewImpl(RunnerLayout settings, Element element) {
     XmlSerializer.deserializeInto(this, element);
     assignTab(settings.getOrCreateTab(myTabIndex));
   }
@@ -92,7 +92,7 @@ public class ViewImpl implements View {
       myMinimizedInGrid = minimizedInGrid;
     }
 
-    public ViewImpl createView(RunnerLayoutImpl settings) {
+    public ViewImpl createView(RunnerLayout settings) {
       final TabImpl tab = myTabID == Integer.MAX_VALUE ? settings.createNewTab() : settings.getOrCreateTab(myTabID);
       return new ViewImpl(myID, tab, myPlaceInGrid, myMinimizedInGrid);
     }
