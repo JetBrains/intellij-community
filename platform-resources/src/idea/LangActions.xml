@@ -537,15 +537,22 @@
         <action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/>
       </group>
 
+
       <group id="Runner.View.Popup">
         <action id="Runner.MoveViewToGrid" class="com.intellij.execution.ui.layout.actions.MoveToGridAction" icon="/debugger/toGrid.png"/>
         <action id="Runner.MoveViewToTab" class="com.intellij.execution.ui.layout.actions.MoveToTabAction" icon="/debugger/toTab.png"/>
         <action id="Runner.DetachCell" class="com.intellij.execution.ui.layout.actions.DetachCellAction" icon="/debugger/detach.png"/>
         <action id="Runner.AttachCell" class="com.intellij.execution.ui.layout.actions.AttachCellAction" icon="/debugger/attach.png"/>
         <separator/>
-        <action id="Runner.FocusOnStartup" class="com.intellij.execution.ui.layout.actions.FocusOnStartAction"/>
+        <group id="Runner.Focus">
+          <action id="Runner.FocusOnStartup" class="com.intellij.execution.ui.actions.FocusOnStartAction"/>
+        </group>
         <separator/>
         <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="/actions/cross.png"/>
+      </group>
+
+      <group id="Runner.Layout.Focus">
+
       </group>
 
       <group id="Runner.View.Toolbar">

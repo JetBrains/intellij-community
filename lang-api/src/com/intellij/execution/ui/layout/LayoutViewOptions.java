@@ -8,6 +8,8 @@ import com.intellij.ui.content.Content;
 
 public interface LayoutViewOptions {
 
+  String STARTUP = "startup";
+
   @NotNull
   LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
@@ -22,9 +24,9 @@ public interface LayoutViewOptions {
   @NotNull
   LayoutViewOptions setAttractionPolicy(@NotNull String contentId, LayoutAttractionPolicy policy);
 
-  boolean isFocusOnStartup(Content content);
+  boolean isToFocus(Content content, final String condition);
 
-  LayoutViewOptions setFocusOnStartup(@Nullable Content content);
+  LayoutViewOptions setToFocus(@Nullable Content content, final String condition);
 
   AnAction getLayoutActions();
 

@@ -149,12 +149,12 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return getContentManager().removeContent(content, dispose);
   }
 
-  public boolean isFocusOnStartup(final Content content) {
+  public boolean isToFocus(final Content content, final String condition) {
     final String id = content.getUserData(ViewImpl.ID);
     return getLayout().isToFocusOnStartup(id);
   }
 
-  public LayoutViewOptions setFocusOnStartup(@Nullable final Content content) {
+  public LayoutViewOptions setToFocus(@Nullable final Content content, final String condition) {
     getLayout().setToFocusOnStartup(content != null ? content.getUserData(ViewImpl.ID) : null);
     return this;
   }

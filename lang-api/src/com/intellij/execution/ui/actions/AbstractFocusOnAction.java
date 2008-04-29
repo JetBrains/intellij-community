@@ -1,12 +1,17 @@
-package com.intellij.execution.ui.layout.actions;
+package com.intellij.execution.ui.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
-import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.ui.content.Content;
 
-public class FocusOnStartAction extends BaseViewAction implements Toggleable {
+public class AbstractFocusOnAction extends BaseViewAction implements Toggleable {
+  private String myCondition;
+
+  public AbstractFocusOnAction(String condition) {
+    myCondition = condition;
+  }
+
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     final boolean visible = content.length == 1;
     e.getPresentation().setVisible(visible);
@@ -15,12 +20,12 @@ public class FocusOnStartAction extends BaseViewAction implements Toggleable {
     }
   }
 
-  private static boolean isToFocus(final ViewContext context, final Content[] content) {
-    return context.getRunnerLayoutUi().getOptions().isFocusOnStartup(content[0]);
+  private boolean isToFocus(final ViewContext context, final Content[] content) {
+    return context.getRunnerLayoutUi().getOptions().isToFocus(content[0], myCondition);
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
     final boolean toFocus = isToFocus(context, content);
-    context.getRunnerLayoutUi().getOptions().setFocusOnStartup(toFocus ? null : content[0]);
+    context.getRunnerLayoutUi().getOptions().setToFocus(toFocus ? null : content[0], myCondition);
   }
 }
