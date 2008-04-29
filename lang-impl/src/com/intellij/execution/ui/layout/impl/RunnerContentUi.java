@@ -37,7 +37,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @NonNls public static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
 
   ContentManager myManager;
-  RunnerLayout myLayoutSettings;
+  RunnerLayoutImpl myLayoutSettings;
 
   ActionManager myActionManager;
   String mySessionName;
@@ -57,9 +57,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
 
-  Map<Grid, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<Grid, Wrapper>();
-  Map<Grid, Wrapper> myCommonActionsPlaceholder = new HashMap<Grid, Wrapper>();
-  Map<Grid, Set<Content>> myContextActions = new HashMap<Grid, Set<Content>>();
+  Map<GridImpl, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<GridImpl, Wrapper>();
+  Map<GridImpl, Wrapper> myCommonActionsPlaceholder = new HashMap<GridImpl, Wrapper>();
+  Map<GridImpl, Set<Content>> myContextActions = new HashMap<GridImpl, Set<Content>>();
 
   boolean myUiLastStateWasRestored;
 
@@ -78,7 +78,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                          RunnerLayoutUi ui,
                          ActionManager actionManager,
                          IdeFocusManager focusManager,
-                         RunnerLayout settings,
+                         RunnerLayoutImpl settings,
                          String sessionName) {
     myProject = project;
     myRunnerUi = ui;
@@ -147,10 +147,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public void propertyChange(final PropertyChangeEvent evt) {
     Content content = (Content)evt.getSource();
-    final Grid grid = getGridFor(content, false);
+    final GridImpl grid = getGridFor(content, false);
     if (grid == null) return;
 
-    final GridCell cell = grid.findCell(content);
+    final GridCellImpl cell = grid.findCell(content);
     if (cell == null) return;
 
     final String property = evt.getPropertyName();
@@ -167,10 +167,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
 
   public void bounce(Content content) {
-    final Grid grid = getGridFor(content, false);
+    final GridImpl grid = getGridFor(content, false);
     if (grid == null) return;
 
-    final GridCell cell = grid.findCell(content);
+    final GridCellImpl cell = grid.findCell(content);
     if (cell == null) return;
 
 
@@ -206,7 +206,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       public void contentRemoved(final ContentManagerEvent event) {
         event.getContent().removePropertyChangeListener(RunnerContentUi.this);
 
-        Grid grid = findGridFor(event.getContent());
+        GridImpl grid = findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());
           removeGridIfNeeded(grid);
@@ -221,8 +221,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         if (isStateBeingRestored()) return;
 
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-          Grid toSelect = findGridFor(event.getContent());
-          Grid selected = getSelectedGrid();
+          GridImpl toSelect = findGridFor(event.getContent());
+          GridImpl selected = getSelectedGrid();
 
           if (selected != null && toSelect != null && selected == toSelect) {
             select(event.getContent(), true);
@@ -239,12 +239,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     });
   }
 
-  private Grid getSelectedGrid() {
+  private GridImpl getSelectedGrid() {
     TabInfo selection = myTabs.getSelectedInfo();
     return selection != null ? getGridFor(selection) : null;
   }
 
-  private void removeGridIfNeeded(Grid grid) {
+  private void removeGridIfNeeded(GridImpl grid) {
     if (grid.isEmpty()) {
       myTabs.removeTab(myTabs.findInfo(grid));
       myMinimizedButtonsPlaceholder.remove(grid);
@@ -254,11 +254,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Nullable
-  private Grid getGridFor(Content content, boolean createIfMissing) {
-    Grid grid = findGridFor(content);
+  private GridImpl getGridFor(Content content, boolean createIfMissing) {
+    GridImpl grid = findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
 
-    grid = new Grid(this, mySessionName);
+    grid = new GridImpl(this, mySessionName);
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
@@ -293,8 +293,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Nullable
-  public GridCell findCellFor(final Content content) {
-    Grid cell = getGridFor(content, false);
+  public GridCellImpl findCellFor(final Content content) {
+    GridImpl cell = getGridFor(content, false);
     assert cell != null;
     return cell.getCellFor(content);
   }
@@ -307,7 +307,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private boolean rebuildCommonActions() {
     boolean hasToolbarContent = false;
-    for (Grid each : myCommonActionsPlaceholder.keySet()) {
+    for (GridImpl each : myCommonActionsPlaceholder.keySet()) {
       Wrapper eachPlaceholder = myCommonActionsPlaceholder.get(each);
       DefaultActionGroup groupToBuild;
       JComponent contextComponent = null;
@@ -349,7 +349,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private boolean rebuildMinimizedActions() {
-    for (Grid each : myMinimizedButtonsPlaceholder.keySet()) {
+    for (GridImpl each : myMinimizedButtonsPlaceholder.keySet()) {
       Wrapper eachPlaceholder = myMinimizedButtonsPlaceholder.get(each);
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
       ((ActionToolbar)tb).setReservePlaceAutoPopupIcon(false);
@@ -384,7 +384,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     String title = getTabFor(tab).getDisplayName();
     Icon icon = getTabFor(tab).getIcon();
 
-    Grid grid = getGridFor(tab);
+    GridImpl grid = getGridFor(tab);
     boolean hasToolbarContent = grid.updateGridUI();
 
     List<Content> contents = grid.getContents();
@@ -445,7 +445,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
 
     for (TabInfo each : myTabs.getTabs()) {
-      Tab tab = getTabFor(each);
+      TabImpl tab = getTabFor(each);
       if (tab.getIndex() == index) {
         myTabs.select(each, true);
         break;
@@ -457,27 +457,27 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (isStateBeingRestored()) return;
 
     for (TabInfo each : myTabs.getTabs()) {
-      Grid eachGrid = getGridFor(each);
+      GridImpl eachGrid = getGridFor(each);
       eachGrid.saveUiState();
     }
   }
 
-  public Tab getTabFor(final Grid grid) {
+  public TabImpl getTabFor(final GridImpl grid) {
     TabInfo info = myTabs.findInfo(grid);
     return getTabFor(info);
   }
 
-  private Tab getTabFor(final TabInfo tab) {
-    return ((Tab)tab.getObject());
+  private TabImpl getTabFor(final TabInfo tab) {
+    return ((TabImpl)tab.getObject());
   }
 
-  private Grid getGridFor(TabInfo tab) {
-    return (Grid)tab.getComponent();
+  private GridImpl getGridFor(TabInfo tab) {
+    return (GridImpl)tab.getComponent();
   }
 
   @Nullable
-  public Grid findGridFor(Content content) {
-    Tab tab = getStateFor(content).getTab();
+  public GridImpl findGridFor(Content content) {
+    TabImpl tab = getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       if (getTabFor(each).equals(tab)) return getGridFor(each);
     }
@@ -485,8 +485,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return null;
   }
 
-  private ArrayList<Grid> getGrids() {
-    ArrayList<Grid> result = new ArrayList<Grid>();
+  private ArrayList<GridImpl> getGrids() {
+    ArrayList<GridImpl> result = new ArrayList<GridImpl>();
     for (TabInfo each : myTabs.getTabs()) {
       result.add(getGridFor(each));
     }
@@ -496,7 +496,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public void setHorizontalToolbar(final boolean state) {
     myLayoutSettings.setToolbarHorizontal(state);
-    for (Grid each : getGrids()) {
+    for (GridImpl each : getGrids()) {
       each.setToolbarHorizontal(state);
     }
 
@@ -592,7 +592,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private LayoutAttractionPolicy getOrCreatePolicyFor(Content content) {
-    final String id = content.getUserData(View.ID);
+    final String id = content.getUserData(ViewImpl.ID);
     LayoutAttractionPolicy policy = myAttractions.get(id);
     if (policy == null) {
       policy = new LayoutAttractionPolicy.Bounce();
@@ -607,7 +607,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     Content[] contents = manager.getContents();
     for (Content content : contents) {
-      String kind = content.getUserData(View.ID);
+      String kind = content.getUserData(ViewImpl.ID);
       if (key.equals(kind)) {
         return content;
       }
@@ -711,7 +711,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     updateTabsUI(false);
   }
 
-  private static boolean willBeEmptyOnRemove(Grid grid, List<Content> toRemove) {
+  private static boolean willBeEmptyOnRemove(GridImpl grid, List<Content> toRemove) {
     List<Content> attachedToGrid = grid.getAttachedContents();
     for (Content each : attachedToGrid) {
       if (!toRemove.contains(each)) return false;
@@ -725,7 +725,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     List<Content> contents = Arrays.asList(content);
 
     for (Content each : content) {
-      Grid eachGrid = getGridFor(each, false);
+      GridImpl eachGrid = getGridFor(each, false);
       if (willBeEmptyOnRemove(eachGrid, contents)) {
         myTabs.findInfo(eachGrid).setHidden(true);
       }
@@ -745,7 +745,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private void showHiddenTabs() {
     List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo eachInfos : tabs) {
-      Grid eachGrid = (Grid)eachInfos.getComponent();
+      GridImpl eachGrid = (GridImpl)eachInfos.getComponent();
       if (eachGrid.getAttachedContents().size() > 0) {
         eachInfos.setHidden(false);
       }
@@ -809,11 +809,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myActionManager;
   }
 
-  public RunnerLayout getLayoutSettings() {
+  public RunnerLayoutImpl getLayoutSettings() {
     return myLayoutSettings;
   }
 
-  public View getStateFor(final Content content) {
+  public ViewImpl getStateFor(final Content content) {
     return myLayoutSettings.getStateFor(content);
   }
 
@@ -822,7 +822,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
-    final Grid grid = findGridFor(content);
+    final GridImpl grid = findGridFor(content);
     if (grid == null) return new ActionCallback.Done();
 
 

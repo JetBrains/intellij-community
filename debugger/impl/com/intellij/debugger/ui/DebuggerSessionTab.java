@@ -29,6 +29,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.CommonActionsManager;

@@ -32,15 +32,15 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-public class GridCell implements Disposable {
+public class GridCellImpl implements Disposable {
 
-  private Grid myContainer;
+  private GridImpl myContainer;
 
   private MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
   private Set<Content> myMinimizedContents = new HashSet<Content>();
 
   private JBTabs myTabs;
-  private Grid.Placeholder myPlaceholder;
+  private GridImpl.Placeholder myPlaceholder;
   private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
 
   private ViewContext myContext;
@@ -48,7 +48,7 @@ public class GridCell implements Disposable {
   private JBPopup myPopup;
   private boolean myDisposed;
 
-  public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, RunnerLayoutUi.PlaceInGrid placeInGrid) {
+  public GridCellImpl(ViewContext context, GridImpl container, GridImpl.Placeholder placeholder, RunnerLayoutUi.PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
 
@@ -288,7 +288,7 @@ public class GridCell implements Disposable {
   }
 
   private void saveState(Content content, boolean minimized) {
-    View state = myContext.getStateFor(content);
+    ViewImpl state = myContext.getStateFor(content);
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
     state.assignTab(myContainer.getTabIndex());

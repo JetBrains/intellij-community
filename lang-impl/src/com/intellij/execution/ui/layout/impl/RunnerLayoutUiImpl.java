@@ -26,7 +26,7 @@ import java.awt.*;
 
 public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
    private Project myProject;
-  private RunnerLayout myLayout;
+  private RunnerLayoutImpl myLayout;
   private JPanel myContentPanel;
   private RunnerContentUi myContentUI;
 
@@ -102,7 +102,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
                                @Nullable final JComponent toFocus) {
     final Content content = getContentFactory().createContent(withActions.getComponent(), displayName, false);
     content.putUserData(CONTENT_TYPE, contentId);
-    content.putUserData(View.ID, contentId);
+    content.putUserData(ViewImpl.ID, contentId);
     content.setIcon(icon);
     if (toFocus != null) {
       content.setPreferredFocusableComponent(toFocus);
@@ -125,7 +125,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return ContentFactory.SERVICE.getInstance();
   }
 
-  public RunnerLayout getLayout() {
+  public RunnerLayoutImpl getLayout() {
     return myLayout;
   }
 
@@ -152,12 +152,12 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   }
 
   public boolean isFocusOnStartup(final Content content) {
-    final String id = content.getUserData(View.ID);
+    final String id = content.getUserData(ViewImpl.ID);
     return getLayout().isToFocusOnStartup(id);
   }
 
   public LayoutViewOptions setFocusOnStartup(@Nullable final Content content) {
-    getLayout().setToFocusOnStartup(content != null ? content.getUserData(View.ID) : null);
+    getLayout().setToFocusOnStartup(content != null ? content.getUserData(ViewImpl.ID) : null);
     return this;
   }
 

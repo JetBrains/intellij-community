@@ -1,8 +1,8 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.impl.Grid;
-import com.intellij.execution.ui.layout.impl.GridCell;
-import com.intellij.execution.ui.layout.impl.Tab;
+import com.intellij.execution.ui.layout.impl.GridImpl;
+import com.intellij.execution.ui.layout.impl.GridCellImpl;
+import com.intellij.execution.ui.layout.impl.TabImpl;
 import com.intellij.execution.ui.layout.impl.ViewContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -45,13 +45,13 @@ public abstract class BaseRunnerViewAction extends AnAction {
   }
 
   protected static boolean isDetached(ViewContext context, Content content) {
-    final GridCell cell = context.findCellFor(content);
+    final GridCellImpl cell = context.findCellFor(content);
     return cell != null ? cell.isDetached() : false;
   }
 
-  protected static Tab getTabFor(final ViewContext context, final Content[] content) {
-    Grid grid = context.findGridFor(content[0]);
-    Tab tab = context.getTabFor(grid);
+  protected static TabImpl getTabFor(final ViewContext context, final Content[] content) {
+    GridImpl grid = context.findGridFor(content[0]);
+    TabImpl tab = context.getTabFor(grid);
     return tab;
   }
 

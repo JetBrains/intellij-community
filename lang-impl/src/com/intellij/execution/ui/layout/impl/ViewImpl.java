@@ -5,27 +5,27 @@ import com.intellij.openapi.util.Key;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import org.jdom.Element;
 
-public class View {
+public class ViewImpl {
 
   public static final Key<String> ID = Key.create("ViewID");
 
   private String myID;
 
-  private Tab myTab;
+  private TabImpl myTab;
   private int myTabIndex;
 
   private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
 
   private boolean myMinimizedInGrid;
 
-  public View(String id, Tab tab, final RunnerLayoutUi.PlaceInGrid placeInGrid, boolean minimizedInGrid) {
+  public ViewImpl(String id, TabImpl tab, final RunnerLayoutUi.PlaceInGrid placeInGrid, boolean minimizedInGrid) {
     myID = id;
     myTab = tab;
     myPlaceInGrid = placeInGrid;
     myMinimizedInGrid = minimizedInGrid;
   }
 
-  public View(RunnerLayout settings, Element element) {
+  public ViewImpl(RunnerLayoutImpl settings, Element element) {
     XmlSerializer.deserializeInto(this, element);
     assignTab(settings.getOrCreateTab(myTabIndex));
   }
@@ -34,7 +34,7 @@ public class View {
     content.addContent(XmlSerializer.serialize(this));
   }
 
-  public Tab getTab() {
+  public TabImpl getTab() {
     return myTab;
   }
 
@@ -64,7 +64,7 @@ public class View {
     myPlaceInGrid = placeInGrid;
   }
 
-  public void assignTab(final Tab tab) {
+  public void assignTab(final TabImpl tab) {
     myTab = tab;
   }
 
@@ -90,9 +90,9 @@ public class View {
       myMinimizedInGrid = minimizedInGrid;
     }
 
-    public View createView(RunnerLayout settings) {
-      final Tab tab = myTabID == Integer.MAX_VALUE ? settings.createNewTab() : settings.getOrCreateTab(myTabID);
-      return new View(myID, tab, myPlaceInGrid, myMinimizedInGrid);
+    public ViewImpl createView(RunnerLayoutImpl settings) {
+      final TabImpl tab = myTabID == Integer.MAX_VALUE ? settings.createNewTab() : settings.getOrCreateTab(myTabID);
+      return new ViewImpl(myID, tab, myPlaceInGrid, myMinimizedInGrid);
     }
 
     public RunnerLayoutUi.PlaceInGrid getPlaceInGrid() {

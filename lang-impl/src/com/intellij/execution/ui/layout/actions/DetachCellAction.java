@@ -1,7 +1,7 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.impl.Grid;
-import com.intellij.execution.ui.layout.impl.GridCell;
+import com.intellij.execution.ui.layout.impl.GridImpl;
+import com.intellij.execution.ui.layout.impl.GridCellImpl;
 import com.intellij.execution.ui.layout.impl.ViewContext;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,13 +14,13 @@ public class DetachCellAction extends BaseRunnerViewAction {
       return;
     }
 
-    Grid grid = context.findGridFor(content[0]);
+    GridImpl grid = context.findGridFor(content[0]);
 
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace()) || (ViewContext.TAB_POPUP_PLACE.equals(e.getPlace()))) {
       setEnabled(e, grid.getContents().size() == 1);
     }
     else {
-      GridCell cell = grid.getCellFor(content[0]);
+      GridCellImpl cell = grid.getCellFor(content[0]);
       if (ViewContext.CELL_TOOLBAR_PLACE.equals(e.getPlace()) && content.length == 1) {
         setEnabled(e, cell.getContentCount() == 1);
       } else {

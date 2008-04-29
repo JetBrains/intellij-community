@@ -1,8 +1,8 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.impl.Grid;
+import com.intellij.execution.ui.layout.impl.GridImpl;
 import com.intellij.execution.ui.layout.impl.ViewContext;
-import com.intellij.execution.ui.layout.impl.Tab;
+import com.intellij.execution.ui.layout.impl.TabImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 
@@ -17,8 +17,8 @@ public class MoveToTabAction extends BaseRunnerViewAction {
       return;
     }
 
-    Grid grid = context.findGridFor(content[0]);
-    Tab tab = context.getTabFor(grid);
+    GridImpl grid = context.findGridFor(content[0]);
+    TabImpl tab = context.getTabFor(grid);
 
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace())) {
       setEnabled(e, false);

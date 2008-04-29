@@ -23,9 +23,9 @@ public interface ViewContext extends Disposable {
 
   CellTransform.Facade getCellTransform();
 
-  Tab getTabFor(final Grid grid);
+  TabImpl getTabFor(final GridImpl grid);
 
-  View getStateFor(Content content);
+  ViewImpl getStateFor(Content content);
 
   void saveUiState();
 
@@ -33,7 +33,7 @@ public interface ViewContext extends Disposable {
 
   ContentManager getContentManager();
 
-  RunnerLayout getLayoutSettings();
+  RunnerLayoutImpl getLayoutSettings();
 
   ActionManager getActionManager();
 
@@ -41,9 +41,9 @@ public interface ViewContext extends Disposable {
 
   RunnerLayoutUi getRunnerLayoutUi();
 
-  GridCell findCellFor(final Content content);
+  GridCellImpl findCellFor(final Content content);
 
-  Grid findGridFor(Content content);
+  GridImpl findGridFor(Content content);
 
   ActionCallback select(Content content, boolean requestFocus);
 

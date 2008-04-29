@@ -6,7 +6,7 @@ import org.jdom.Element;
 
 import javax.swing.*;
 
-public class Tab {
+public class TabImpl {
 
   private int myIndex;
   private String myDisplayName;
@@ -24,7 +24,7 @@ public class Tab {
 
   boolean myBottomDetached = false;
 
-  public Tab(Element element) {
+  public TabImpl(Element element) {
     read(element);
   }
 
@@ -32,7 +32,7 @@ public class Tab {
     XmlSerializer.deserializeInto(this, element);
   }
 
-  public Tab(final int index, final String displayName, final Icon icon) {
+  public TabImpl(final int index, final String displayName, final Icon icon) {
     myIndex = index;
     myDisplayName = displayName;
     myIcon = icon;
@@ -170,8 +170,8 @@ public class Tab {
       myIcon = icon;
     }
 
-    public Tab createTab() {
-      return new Tab(myIndex, myDisplayName, myIcon);
+    public TabImpl createTab() {
+      return new TabImpl(myIndex, myDisplayName, myIcon);
     }
   }
 

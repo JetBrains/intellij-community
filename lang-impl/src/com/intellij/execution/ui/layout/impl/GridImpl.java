@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class Grid extends Wrapper implements Disposable, CellTransform.Facade, DataProvider {
+public class GridImpl extends Wrapper implements Disposable, CellTransform.Facade, DataProvider {
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
 
-  private HashMap<RunnerLayoutUi.PlaceInGrid, GridCell> myPlaceInGrid2Cell = new HashMap<RunnerLayoutUi.PlaceInGrid, GridCell>();
+  private HashMap<RunnerLayoutUi.PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new HashMap<RunnerLayoutUi.PlaceInGrid, GridCellImpl>();
 
   private Placeholder myLeft = new Placeholder();
   private Placeholder myCenter = new Placeholder();
@@ -32,7 +32,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   private String mySessionName;
 
   private List<Content> myContents = new ArrayList<Content>();
-  private Map<Content, GridCell> myContent2Cell = new java.util.HashMap<Content, GridCell>();
+  private Map<Content, GridCellImpl> myContent2Cell = new java.util.HashMap<Content, GridCellImpl>();
 
   private Comparator<Content> myContentComparator = new Comparator<Content>() {
     public int compare(final Content o1, final Content o2) {
@@ -43,16 +43,16 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   private boolean myLastUiStateWasRestored;
   private ViewContext myViewContext;
 
-  public Grid(ViewContext viewContext, String sessionName) {
+  public GridImpl(ViewContext viewContext, String sessionName) {
     myViewContext = viewContext;
     mySessionName = sessionName;
 
     Disposer.register(myViewContext, this);
 
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.left, new GridCell(myViewContext, this, myLeft, RunnerLayoutUi.PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.center, new GridCell(myViewContext, this, myCenter, RunnerLayoutUi.PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.right, new GridCell(myViewContext, this, myRight, RunnerLayoutUi.PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.bottom, new GridCell(myViewContext, this, myBottom, RunnerLayoutUi.PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.left, new GridCellImpl(myViewContext, this, myLeft, RunnerLayoutUi.PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.center, new GridCellImpl(myViewContext, this, myCenter, RunnerLayoutUi.PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.right, new GridCellImpl(myViewContext, this, myRight, RunnerLayoutUi.PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.bottom, new GridCellImpl(myViewContext, this, myBottom, RunnerLayoutUi.PlaceInGrid.bottom));
 
     setContent(mySplitter);
     setOpaque(false);
@@ -71,7 +71,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     super.addNotify();
 
 
-    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.restoreProportions();
     }
 
@@ -83,7 +83,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
 
     if (Disposer.isDisposed(this)) return;
 
-    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.saveProportions();
     }
 
@@ -91,14 +91,14 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   }
 
   private void updateSelection(boolean isShowing) {
-    for (GridCell each: myPlaceInGrid2Cell.values()) {
+    for (GridCellImpl each: myPlaceInGrid2Cell.values()) {
       each.updateSelection(isShowing);
     }
   }
 
 
   public void add(final Content content, final boolean select) {
-    GridCell cell = getCellFor(content);
+    GridCellImpl cell = getCellFor(content);
     cell.add(content);
     myContents.add(content);
     myContent2Cell.put(content, cell);
@@ -112,25 +112,25 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   }
 
   public void setToolbarHorizontal(boolean horizontal) {
-    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.setToolbarHorizontal(horizontal);
     }
   }
 
-  public GridCell getCellFor(final Content content) {
-    final GridCell cell = myPlaceInGrid2Cell.get(getStateFor(content).getPlaceInGrid());
+  public GridCellImpl getCellFor(final Content content) {
+    final GridCellImpl cell = myPlaceInGrid2Cell.get(getStateFor(content).getPlaceInGrid());
     assert cell != null : "Unknown place in grid: " + getStateFor(content).getPlaceInGrid().name();
     return cell;
   }
 
-  View getStateFor(final Content content) {
+  ViewImpl getStateFor(final Content content) {
     return myViewContext.getStateFor(content);
   }
 
   public boolean updateGridUI() {
     boolean hasToolbarContent = true;
     boolean wasHidden = false;
-    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       final boolean eachToHide = myContents.size() == 1 && !cell.isDetached();
       cell.setHideTabs(eachToHide);
       wasHidden |= eachToHide;
@@ -152,7 +152,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   public ActionCallback restoreLastUiState() {
     myLastUiStateWasRestored = true;
     final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.values().size());
-    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.restoreLastUiState().notifyWhenDone(result);
     }
 
@@ -160,12 +160,12 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   }
 
   public void saveUiState() {
-    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.saveUiState();
     }
   }
 
-  public Tab getTabIndex() {
+  public TabImpl getTabIndex() {
     return getTab();
   }
 
@@ -174,12 +174,12 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   }
 
   public void alert(final Content content) {
-    GridCell cell = getCellFor(content);
+    GridCellImpl cell = getCellFor(content);
     cell.alert(content);
   }
 
   @Nullable
-  public GridCell findCell(final Content content) {
+  public GridCellImpl findCell(final Content content) {
     return myContent2Cell.get(content);
   }
 
@@ -235,7 +235,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     }
   }
 
-  public Tab getTab() {
+  public TabImpl getTab() {
     return myViewContext.getTabFor(this);
   }
 

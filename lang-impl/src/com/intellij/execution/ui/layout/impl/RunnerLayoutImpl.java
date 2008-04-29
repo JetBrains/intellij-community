@@ -13,31 +13,31 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class RunnerLayout {
+public class RunnerLayoutImpl {
 
   private String myID;
 
-  protected Map<String, View> myViews = new HashMap<String, View>();
-  private Map<String, View.Default> myDefaultViews = new HashMap<String, View.Default>();
+  protected Map<String, ViewImpl> myViews = new HashMap<String, ViewImpl>();
+  private Map<String, ViewImpl.Default> myDefaultViews = new HashMap<String, ViewImpl.Default>();
 
-  protected Set<Tab> myTabs = new TreeSet<Tab>(new Comparator<Tab>() {
-    public int compare(final Tab o1, final Tab o2) {
+  protected Set<TabImpl> myTabs = new TreeSet<TabImpl>(new Comparator<TabImpl>() {
+    public int compare(final TabImpl o1, final TabImpl o2) {
       return o1.getIndex() - o2.getIndex();
     }
   });
-  private Map<Integer, Tab.Default> myDefaultTabs = new HashMap<Integer, Tab.Default>();
+  private Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
 
   protected General myGeneral = new General();
   private String myDefaultToFocus;
 
 
-  public RunnerLayout(final String ID) {
+  public RunnerLayoutImpl(final String ID) {
     myID = ID;
   }
 
   @NotNull
-  public Tab getOrCreateTab(final int index) {
-    Tab tab = findTab(index);
+  public TabImpl getOrCreateTab(final int index) {
+    TabImpl tab = findTab(index);
     if (tab != null) return tab;
 
     tab = createNewTab(index);
@@ -45,14 +45,14 @@ public class RunnerLayout {
     return tab;
   }
 
-  public Tab getDefaultTab() {
+  public TabImpl getDefaultTab() {
     return getOrCreateTab(0);
   }
 
-  private Tab createNewTab(final int index) {
-    final Tab tab;
+  private TabImpl createNewTab(final int index) {
+    final TabImpl tab;
 
-    final Tab.Default defaultTab = getOrCreateDefaultTab(index);
+    final TabImpl.Default defaultTab = getOrCreateDefaultTab(index);
     tab = defaultTab.createTab();
 
     myTabs.add(tab);
@@ -60,18 +60,18 @@ public class RunnerLayout {
     return tab;
   }
 
-  private Tab.Default getOrCreateDefaultTab(final int index) {
-    Tab.Default tab = myDefaultTabs.get(index);
+  private TabImpl.Default getOrCreateDefaultTab(final int index) {
+    TabImpl.Default tab = myDefaultTabs.get(index);
     if (tab == null) {
-      tab = new Tab.Default(index, null, null);
+      tab = new TabImpl.Default(index, null, null);
       myDefaultTabs.put(index, tab);
     }
     return tab;
   }
 
-  public Tab createNewTab() {
+  public TabImpl createNewTab() {
     int index = 0;
-    for (Tab each : myTabs) {
+    for (TabImpl each : myTabs) {
       if (!isUsed(each)) return each;
 
       if (each.getIndex() < Integer.MAX_VALUE) {
@@ -85,8 +85,8 @@ public class RunnerLayout {
     return createNewTab(index);
   }
 
-  private boolean isUsed(Tab tab) {
-    for (View each : myViews.values()) {
+  private boolean isUsed(TabImpl tab) {
+    for (ViewImpl each : myViews.values()) {
       if (each.getTab() == tab) return true;
     }
 
@@ -94,8 +94,8 @@ public class RunnerLayout {
   }
 
   @Nullable
-  protected Tab findTab(int index) {
-    for (Tab each : myTabs) {
+  protected TabImpl findTab(int index) {
+    for (TabImpl each : myTabs) {
       if (index == each.getIndex()) return each;
     }
 
@@ -111,15 +111,15 @@ public class RunnerLayout {
   }
 
   public Element read(final Element parentNode) {
-    List tabs = parentNode.getChildren(StringUtil.getShortName(Tab.class.getName()));
+    List tabs = parentNode.getChildren(StringUtil.getShortName(TabImpl.class.getName()));
     for (Object eachTabElement : tabs) {
-      Tab eachTab = new Tab((Element)eachTabElement);
+      TabImpl eachTab = new TabImpl((Element)eachTabElement);
       getOrCreateTab(eachTab.getIndex()).read((Element)eachTabElement);
     }
 
-    final List views = parentNode.getChildren(StringUtil.getShortName(View.class.getName()));
+    final List views = parentNode.getChildren(StringUtil.getShortName(ViewImpl.class.getName()));
     for (Object content : views) {
-      final View state = new View(this, (Element)content);
+      final ViewImpl state = new ViewImpl(this, (Element)content);
       myViews.put(state.getID(), state);
     }
 
@@ -129,11 +129,11 @@ public class RunnerLayout {
   }
 
   public Element write(final Element parentNode) {
-    for (View eachState : myViews.values()) {
+    for (ViewImpl eachState : myViews.values()) {
       eachState.write(parentNode);
     }
 
-    for (Tab eachTab : myTabs) {
+    for (TabImpl eachTab : myTabs) {
       eachTab.write(parentNode);
     }
 
@@ -156,31 +156,31 @@ public class RunnerLayout {
     myGeneral.horizontalToolbar = horizontal;
   }
 
-  public View getStateFor(Content content) {
+  public ViewImpl getStateFor(Content content) {
     return getOrCreateView(getOrCreateContentId(content));
   }
 
   private static String getOrCreateContentId(final Content content) {
-    @NonNls String id = content.getUserData(View.ID);
+    @NonNls String id = content.getUserData(ViewImpl.ID);
     if (id == null) {
       id = "UnknownView-" + content.getDisplayName();
-      content.putUserData(View.ID, id);
+      content.putUserData(ViewImpl.ID, id);
     }
     return id;
   }
 
-  private View getOrCreateView(String id) {
+  private ViewImpl getOrCreateView(String id) {
     if (myViews.containsKey(id)) {
       return myViews.get(id);
     } else {
-      final View.Default defaultView = getOrCreateDefault(id);
-      final View view = defaultView.createView(this);
+      final ViewImpl.Default defaultView = getOrCreateDefault(id);
+      final ViewImpl view = defaultView.createView(this);
       myViews.put(id, view);
       return view;
     }
   }
 
-  private View.Default getOrCreateDefault(String id) {
+  private ViewImpl.Default getOrCreateDefault(String id) {
     if (myDefaultViews.containsKey(id)) {
       return myDefaultViews.get(id);
     } else {
@@ -189,14 +189,14 @@ public class RunnerLayout {
   }
 
 
-  public Tab.Default setDefault(int tabID, String displayName, Icon icon) {
-    final Tab.Default tab = new Tab.Default(tabID, displayName, icon);
+  public TabImpl.Default setDefault(int tabID, String displayName, Icon icon) {
+    final TabImpl.Default tab = new TabImpl.Default(tabID, displayName, icon);
     myDefaultTabs.put(tabID, tab);
     return tab;
   }
 
-  public View.Default setDefault(String id, int tabIndex, RunnerLayoutUi.PlaceInGrid placeInGrid, boolean isMinimized) {
-    final View.Default view = new View.Default(id, tabIndex, placeInGrid, isMinimized);
+  public ViewImpl.Default setDefault(String id, int tabIndex, RunnerLayoutUi.PlaceInGrid placeInGrid, boolean isMinimized) {
+    final ViewImpl.Default view = new ViewImpl.Default(id, tabIndex, placeInGrid, isMinimized);
     myDefaultViews.put(id, view);
     return view;
   }
