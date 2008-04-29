@@ -21,8 +21,7 @@ import org.intellij.plugins.xpathView.util.MyPsiUtil;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -127,7 +126,7 @@ public class XPathExpressionGenerator {
         return null;
     }
 
-    private static class PathVisitor extends PsiElementVisitor {
+    private static class PathVisitor extends XmlElementVisitor {
         private final XmlTag context;
         private String uniquePath;
         private String path;
@@ -155,9 +154,7 @@ public class XPathExpressionGenerator {
             return tag.getName();
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-        }
-
+        @Override
         public void visitElement(PsiElement element) {
             if (element instanceof XmlProcessingInstruction) {
                 visitProcessingInstruction(((XmlProcessingInstruction)element));
@@ -166,10 +163,12 @@ public class XPathExpressionGenerator {
             }
         }
 
+        @Override
         public void visitXmlAttribute(XmlAttribute attribute) {
             uniquePath = getUniquePath(attribute);
             path = getPath(attribute);
         }
+
         public String getPath(XmlAttribute attribute) {
             StringBuilder result = new StringBuilder();
 
@@ -221,10 +220,12 @@ public class XPathExpressionGenerator {
         }
 
 
+        @Override
         public void visitXmlTag(XmlTag tag) {
             uniquePath = getUniquePath(tag);
             path = getPath(tag);
         }
+
         private String getUniquePath(XmlTag tag) {
             XmlTag parent = tag.getParentTag();
 
@@ -260,6 +261,7 @@ public class XPathExpressionGenerator {
             return getPath(parent) + "/" + getXPathNameStep(tag);
         }
 
+        @Override
         public void visitXmlComment(XmlComment comment) {
             uniquePath = getUniquePath(comment);
             path = getPath(comment);
@@ -277,6 +279,7 @@ public class XPathExpressionGenerator {
                     : "comment()", comment);
         }
 
+        @Override
         public void visitXmlText(XmlText text) {
             uniquePath = getUniquePath(text);
             path = getPath(text);
