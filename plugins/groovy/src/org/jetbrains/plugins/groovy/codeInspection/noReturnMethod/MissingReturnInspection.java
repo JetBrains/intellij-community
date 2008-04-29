@@ -16,6 +16,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
@@ -58,7 +60,10 @@ public class MissingReturnInspection extends LocalInspectionTool {
     if (hasValueReturns(block)) {
       Instruction[] flow = block.getControlFlow();
       if (!ControlFlowUtil.alwaysReturns(flow)) {
-        holder.registerProblem(block.getLastChild(), GroovyInspectionBundle.message("no.return.message"));
+        GrStatement[] statements = block.getStatements();
+        if (statements.length > 0 && !(statements[statements.length - 1] instanceof GrExpression)) {
+          holder.registerProblem(block.getLastChild(), GroovyInspectionBundle.message("no.return.message"));
+        }
       }
     }
   }
