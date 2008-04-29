@@ -133,7 +133,7 @@ public class MethodReturnBooleanFix implements IntentionAction {
 
     public void addReturnForMethod(final PsiFile file, final PsiMethod method) {
       final PsiModifierList modifiers = method.getModifierList();
-      if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if ((modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) || (method.getBody() == null)) {
         return;
       }
 
