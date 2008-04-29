@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
@@ -53,7 +54,8 @@ public class RemoveInvalidElementsDialog<E extends RemoveInvalidElementsDialog.E
   public static <E extends ErrorDescription> List<E> showDialog(@NotNull Project project, @NotNull String title, @NotNull String description,
                                                                 final String removeConfirmation, @NotNull List<E> elements) {
     if (elements.size() == 1) {
-      String message = elements.get(0).getDescription() + "\n" + removeConfirmation;
+      E element = elements.get(0);
+      String message = element.getDescription() + "\n" + MessageFormat.format(removeConfirmation, element.getElementName());
       String[] options = {CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()};
       final int answer = Messages.showDialog(project, message, title, options, 1, Messages.getErrorIcon());
       return answer == 0 ? new ArrayList<E>(elements) : Collections.<E>emptyList();
