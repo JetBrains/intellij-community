@@ -15,11 +15,11 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -833,7 +833,15 @@ public class HighlightUtil {
 
       PsiType type = expr.getType();
       if (!TypeConversionUtil.isBooleanType(type)) {
-        return createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expr.getTextRange());
+        final HighlightInfo info = createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expr.getTextRange());
+        if (expr instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) expr;
+          final PsiMethod method = methodCall.resolveMethod();
+          if (PsiType.VOID.equals(method.getReturnType())) {
+            QuickFixAction.registerQuickFixAction(info, new MethodReturnBooleanFix(method, PsiType.BOOLEAN));
+          }
+        }
+        return info;
       }
     }
     return null;

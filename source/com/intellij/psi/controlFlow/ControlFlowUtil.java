@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
@@ -446,10 +447,47 @@ public class ControlFlowUtil {
     depthFirstSearch(flow, visitor);
     return visitor.getResult().booleanValue();
   }
+  
+  public static boolean checkReturns(final ControlFlow flow, final ReturnStatementsVisitor afterVisitor) throws IncorrectOperationException {
+    final ConvertReturnClientVisitor instructionsVisitor = new ConvertReturnClientVisitor(flow, afterVisitor);
+    
+    depthFirstSearch(flow, instructionsVisitor);
+
+    instructionsVisitor.afterProcessing();
+    return instructionsVisitor.getResult().booleanValue();
+  }
+
+  private static class ConvertReturnClientVisitor extends ReturnPresentClientVisitor {
+    private final List<PsiReturnStatement> myAffectedReturns;
+    private final ReturnStatementsVisitor myVisitor;
+
+    ConvertReturnClientVisitor(final ControlFlow flow, final ReturnStatementsVisitor visitor) {
+      super(flow);
+      myAffectedReturns = new ArrayList<PsiReturnStatement>();
+      myVisitor = visitor;
+    }
+
+    public void visitGoToInstruction(final GoToInstruction instruction, final int offset, final int nextOffset) {
+      super.visitGoToInstruction(instruction, offset, nextOffset);
+
+      if (instruction.isReturn) {
+        final PsiElement element = myFlow.getElement(offset);
+        if ((element != null) && (element instanceof PsiReturnStatement)) {
+          final PsiReturnStatement returnStatement = (PsiReturnStatement) element;
+          myAffectedReturns.add(returnStatement);
+        }
+      }
+    }
+
+    public void afterProcessing() throws IncorrectOperationException {
+      myVisitor.visit(myAffectedReturns);
+    }
+  }
+
   private static class ReturnPresentClientVisitor extends InstructionClientVisitor<Boolean> {
     // false if control flow at this offset terminates either by return called or exception thrown
     private final boolean[] isNormalCompletion;
-    private final ControlFlow myFlow;
+    protected final ControlFlow myFlow;
 
     public ReturnPresentClientVisitor(ControlFlow flow) {
       myFlow = flow;

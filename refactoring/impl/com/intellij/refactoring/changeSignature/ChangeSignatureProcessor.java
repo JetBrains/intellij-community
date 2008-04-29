@@ -422,6 +422,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
 
+      // to be able to do filtering
+      preprocessCovariantOverriders(covariantOverriderInfos);
+
       if (!covariantOverriderInfos.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode() || !isProcessCovariantOverriders()) {
           for (UsageInfo usageInfo : covariantOverriderInfos) {
@@ -430,6 +433,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+  }
+
+  protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
   }
 
   protected boolean isProcessCovariantOverriders() {
