@@ -269,7 +269,7 @@ public class TagNameReference implements PsiReference {
     if (parentTag == null) return true;
     final XmlTag childTag = parentTag.createChildTag(containedDescriptor.getName(), containedDescriptorNs, "", false);
     childTag.putUserData(XmlElement.INCLUDING_ELEMENT, parentTag);
-    return elementDescriptor != null && elementDescriptor.getElementDescriptor(childTag) != null;
+    return elementDescriptor != null && elementDescriptor.getElementDescriptor(childTag, parentTag) != null;
   }
 
   private static boolean isAcceptableNs(final XmlTag element, final XmlElementDescriptor elementDescriptor,

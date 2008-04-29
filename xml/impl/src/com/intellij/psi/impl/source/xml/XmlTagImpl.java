@@ -335,17 +335,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   private XmlElementDescriptor getDomDescriptor() {
     final DomElement domElement = DomManager.getDomManager(getProject()).getDomElement(this);
     if (domElement != null) {
+      final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
+      if (definesXml != null) {
+        return new DomElementXmlDescriptor(domElement);
+      }
       if (parent instanceof XmlTag) {
         final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
 
         if (descriptor != null && descriptor instanceof DomElementXmlDescriptor) {
-          return descriptor.getElementDescriptor(this);
-        }
-      }
-      else {
-        final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
-        if (definesXml != null) {
-          return new DomElementXmlDescriptor(domElement);
+          return descriptor.getElementDescriptor(this, (XmlTag)parent);
         }
       }
     }
@@ -367,7 +365,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
 
         if (descriptor != null) {
-          elementDescriptor = descriptor.getElementDescriptor(this);
+          elementDescriptor = descriptor.getElementDescriptor(this, (XmlTag)parent);
 
           if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
             return elementDescriptor;

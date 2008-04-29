@@ -102,7 +102,7 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
     }
   };
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag element){
+  public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag){
     return myElementDescriptorsMapCache.get(null, this, element).get(element.getName());
   }
 

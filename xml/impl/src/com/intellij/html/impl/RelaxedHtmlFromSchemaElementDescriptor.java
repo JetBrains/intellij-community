@@ -22,8 +22,8 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     super(tag);
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag childTag) {
-    XmlElementDescriptor elementDescriptor = super.getElementDescriptor(childTag);
+  public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
+    XmlElementDescriptor elementDescriptor = super.getElementDescriptor(childTag, contextTag);
 
     if (elementDescriptor == null) {
       return getRelaxedDescriptor(this, childTag);

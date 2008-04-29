@@ -70,9 +70,19 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
   }
 
   @Nullable
-  public XmlElementDescriptor getElementDescriptor(final XmlTag childTag) {
-    final DomElement domElement = myManager.getDomElement(childTag);
-    if (domElement == null) return null;
+  public XmlElementDescriptor getElementDescriptor(@NotNull final XmlTag childTag, @Nullable XmlTag contextTag) {
+    DomElement domElement = myManager.getDomElement(childTag);
+    if (domElement == null) {
+      domElement = myManager.getDomElement(contextTag);
+      if (domElement != null) {
+        AbstractDomChildrenDescription description = myManager.findChildrenDescription(childTag, domElement);
+        if (description instanceof DomChildrenDescription) {
+          return new DomElementXmlDescriptor((DomChildrenDescription)description, myManager);
+        }
+      }
+
+      return null;
+    }
 
     final DomElement parent = domElement.getParent();
     if (parent == null) return new DomElementXmlDescriptor(domElement);

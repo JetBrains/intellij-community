@@ -34,7 +34,7 @@ public class NullElementDescriptor implements XmlElementDescriptor {
     return new XmlElementDescriptor[0];
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag childTag) {
+  public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     return null;
   }
 

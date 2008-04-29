@@ -222,7 +222,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if (parentDescriptor != null) {
-        elementDescriptor = XmlExtension.getExtension((XmlFile)tag.getContainingFile()).getElementDescriptor(tag);
+        elementDescriptor = XmlExtension.getExtension((XmlFile)tag.getContainingFile()).getElementDescriptor(tag, parentTag);
       }
 
       if (parentDescriptor != null &&

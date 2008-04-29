@@ -43,7 +43,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return temp;
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag element) {
+  public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag) {
     String name = element.getName();
     if (!myCaseSensitive) name = name.toLowerCase();
 

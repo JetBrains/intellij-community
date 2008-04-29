@@ -581,7 +581,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if(parentDescriptor != null){
-        XmlElementDescriptor elementDescriptorFromParent = parentDescriptor.getElementDescriptor(tag);
+        XmlElementDescriptor elementDescriptorFromParent = parentDescriptor.getElementDescriptor(tag, parentTag);
 
         if (elementDescriptorFromParent == null) {
           elementDescriptorFromParent = getDescriptorFromParent(tag, elementDescriptorFromParent);
@@ -611,7 +611,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     final PsiElement parent = tag.getParent();
     if (parent instanceof XmlTag) {
       final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
-      if (descriptor != null) elementDescriptor = descriptor.getElementDescriptor(tag);
+      if (descriptor != null) elementDescriptor = descriptor.getElementDescriptor(tag, (XmlTag)parent);
     }
     return elementDescriptor;
   }

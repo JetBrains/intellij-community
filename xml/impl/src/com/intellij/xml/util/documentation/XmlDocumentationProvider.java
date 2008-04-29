@@ -260,13 +260,13 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
 
         XmlTag tagFromText = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagText +"/>");
         XmlElementDescriptor parentDescriptor = xmlTag.getDescriptor();
-        elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText):null;
+        elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText, xmlTag):null;
 
         if (elementDescriptor==null) {
           PsiElement parent = xmlTag.getParent();
           if (parent instanceof XmlTag) {
             parentDescriptor = ((XmlTag)parent).getDescriptor();
-            elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText):null;
+            elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText, (XmlTag)parent):null;
           }
         }
 

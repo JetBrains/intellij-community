@@ -387,7 +387,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return null;
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag element){
+  public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag){
     final XmlElement context = (XmlElement)element.getParent();
 
     XmlElementDescriptor elementDescriptor = getElementDescriptor(
@@ -403,7 +403,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       else if (context instanceof XmlTag && ((XmlTag)context).getAttributeValue("xsi:type") != null && askParentDescriptorViaXsi()) {
         final XmlElementDescriptor parentXmlDescriptorByType = XmlUtil.findXmlDescriptorByType(((XmlTag)context));
         if (parentXmlDescriptorByType != null) {
-          elementDescriptor = parentXmlDescriptorByType.getElementDescriptor(element);
+          elementDescriptor = parentXmlDescriptorByType.getElementDescriptor(element, contextTag);
         }
       }
     }
