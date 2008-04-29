@@ -48,8 +48,8 @@ public class PyInheritorsSearchTest extends CodeInsightTestCase {
 
   private PyClass findClass(final String name) {
     final Collection<PyClass> classes = StubIndex.getInstance().get(PyClassNameIndex.KEY, name, myProject,
-                                                                    ProjectScope.getAllScope(myProject));
-    assert classes.size() == 1;
+                                                                    ProjectScope.getProjectScope(myProject));
+    assertEquals(1, classes.size());
     return classes.iterator().next();
   }
 }
