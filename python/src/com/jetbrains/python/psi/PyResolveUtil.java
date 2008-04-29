@@ -49,7 +49,7 @@ public class PyResolveUtil {
         }
       }
       if (cur instanceof PsiFile) break;
-      cur = cur.getPrevSibling();
+      cur = cur.getContext(); //!!! was: cur.getPrevSibling();
     }
     while (cur != null);
 
