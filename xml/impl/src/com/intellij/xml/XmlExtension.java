@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 import java.util.Set;
@@ -67,9 +68,9 @@ public abstract class XmlExtension {
   }
 
   public abstract void insertNamespaceDeclaration(@NotNull final XmlFile file,
-                                                    @NotNull final Editor editor, 
-                                                    @NotNull final Set<String> possibleNamespaces,
-                                                    @Nullable final String nsPrefix,
+                                                    @NotNull final Editor editor,
+                                                    @NonNls @NotNull final Set<String> possibleNamespaces,
+                                                    @NonNls @Nullable final String nsPrefix,
                                                     @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;
 
   @Nullable

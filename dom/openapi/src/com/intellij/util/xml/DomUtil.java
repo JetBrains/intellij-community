@@ -276,6 +276,12 @@ public class DomUtil {
   }
 
   @Nullable
+  public static <T> T getContextElement(@Nullable final Editor editor, Class<T> clazz) {
+    final DomElement element = getContextElement(editor);
+    return getParentOfType(element, clazz, false);
+  }
+
+  @Nullable
   public static DomElement getContextElement(@Nullable final Editor editor) {
     if(editor == null) return null;
 
