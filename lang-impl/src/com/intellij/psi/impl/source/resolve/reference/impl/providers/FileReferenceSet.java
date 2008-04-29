@@ -225,8 +225,10 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  private Collection<PsiFileSystemItem> getContextByFile(final @NotNull PsiFile file) {
-
+  private Collection<PsiFileSystemItem> getContextByFile(@NotNull PsiFile file) {
+    final PsiElement context = file.getContext();
+    if (context != null) file = context.getContainingFile();
+    
     final Project project = file.getProject();
     final FileContextProvider contextProvider = FileContextProvider.getProvider(file);
     if (contextProvider != null) {
@@ -241,7 +243,12 @@ public class FileReferenceSet {
         }
       }
     }
-    final VirtualFile virtualFile = file.getVirtualFile();
+
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null && file.getOriginalFile() != null) {
+      virtualFile = file.getOriginalFile().getVirtualFile();
+    }
+
     if (virtualFile != null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
       final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
