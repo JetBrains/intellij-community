@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 /**
  * @author peter
 */
-public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extends PsiDocCommentOwnerMemberChooserObject implements ClassMember {
+public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extends PsiDocCommentOwnerMemberChooserObject implements ClassMemberWithElement {
   private final T myPsiMember;
   private final PsiSubstitutor mySubstitutor;
 

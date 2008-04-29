@@ -485,8 +485,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     if (key.equals(LangDataKeys.PSI_ELEMENT)) {
       if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
         T selectedElement = mySelectedElements.iterator().next();
-        if (selectedElement instanceof PsiElementClassMember) {
-          sink.put(LangDataKeys.PSI_ELEMENT, ((PsiElementClassMember) selectedElement).getElement());
+        if (selectedElement instanceof ClassMemberWithElement) {
+          sink.put(LangDataKeys.PSI_ELEMENT, ((ClassMemberWithElement) selectedElement).getElement());
         }
       }
     }
