@@ -45,7 +45,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(
   name = "AntConfiguration",
@@ -93,6 +95,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
   private volatile long myModificationCount = 0;
+  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
     super(project);
@@ -105,19 +108,32 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     myStartupManager = StartupManager.getInstance(project);
     addAntConfigurationListener(new AntConfigurationListener() {
       public void configurationLoaded() {
-        daemon.restart();
+        restartDaemon();
       }
       public void buildFileChanged(final AntBuildFile buildFile) {
-        daemon.restart();
+        restartDaemon();
       }
       public void buildFileAdded(final AntBuildFile buildFile) {
-        daemon.restart();
+        restartDaemon();
       }
       public void buildFileRemoved(final AntBuildFile buildFile) {
-        daemon.restart();
+        restartDaemon();
+      }
+      private void restartDaemon() {
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          daemon.restart();
+        }
+        else {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              daemon.restart();
+            }
+          });
+        }
       }
     });
   }
+
 
   public Element getState() {
     try {
@@ -618,6 +634,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
+                // first, remove existing files
+                final AntBuildFile[] currentFiles = getBuildFiles();
+                for (AntBuildFile file : currentFiles) {
+                  removeBuildFile(file);
+                }
+                // then fill the configuration with the files configured in xml
                 for (Pair<Element, VirtualFile> pair : files) {
                   final Element element = pair.getFirst();
                   final VirtualFile file = pair.getSecond();
