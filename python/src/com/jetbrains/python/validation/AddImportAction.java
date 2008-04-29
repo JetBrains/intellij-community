@@ -24,6 +24,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AddImportAction implements HintAction, QuestionAction {
   private final PsiReference myReference;
@@ -45,13 +46,21 @@ public class AddImportAction implements HintAction, QuestionAction {
     return "import";
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return isAvailable();
+  @Nullable
+  protected String getRefName() {
+    return ((PyReferenceExpression)myReference).getReferencedName();
+  }
+  
+  protected PsiFile[] getRefFiles(final String referenceName) {
+    PsiFile[] files = FilenameIndex.getFilesByName(myProject, referenceName + ".py", GlobalSearchScope.allScope(myProject));
+    if (files == null) files = PsiFile.EMPTY_ARRAY;
+    return files;
   }
 
-  private boolean isAvailable() {
-    final String referenceName = ((PyReferenceExpression)myReference).getReferencedName();
-    final PsiFile[] files = FilenameIndex.getFilesByName(myProject, referenceName + ".py", GlobalSearchScope.allScope(myProject));
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    if (myReference.getElement().getParent() instanceof PyImportStatement) return false;
+    final String referenceName = getRefName();
+    final PsiFile[] files = getRefFiles(referenceName);
     return files != null && files.length > 0;
   }
 
@@ -62,8 +71,8 @@ public class AddImportAction implements HintAction, QuestionAction {
   private void execute(final PsiFile file) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final String referenceName = ((PyReferenceExpression)myReference).getReferencedName();
-        final PsiFile[] files = FilenameIndex.getFilesByName(myProject, referenceName + ".py", GlobalSearchScope.allScope(myProject));
+        final String referenceName = getRefName();
+        final PsiFile[] files = getRefFiles(referenceName);
         if (files.length == 1) {
           final PyImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createImportStatementFromText(myProject, "import " + referenceName);
           try {
@@ -89,8 +98,10 @@ public class AddImportAction implements HintAction, QuestionAction {
   }
 
   public boolean showHint(final Editor editor) {
-    if (!isAvailable()) return false;
-    String hintText = ShowAutoImportPass.getMessage(false, ((PyReferenceExpression)myReference).getReferencedName());
+    final String referenceName = getRefName();
+    final PsiFile[] files = getRefFiles(referenceName);
+    if (!(files != null && files.length > 0)) return false;
+    String hintText = ShowAutoImportPass.getMessage(false, getRefName());
     HintManager.getInstance().showQuestionHint(editor, hintText, myReference.getElement().getTextOffset(),
                                                myReference.getElement().getTextRange().getEndOffset(), this);
     return true;
@@ -100,4 +111,5 @@ public class AddImportAction implements HintAction, QuestionAction {
     execute(myReference.getElement().getContainingFile());
     return true;
   }
+
 }
