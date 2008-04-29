@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -28,7 +29,7 @@ import java.util.Map;
  *
  * @author Vladimir Kondratyev
  */
-public abstract class EditorComposite{
+public abstract class EditorComposite implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorComposite");
 
   /**
@@ -143,6 +144,20 @@ public abstract class EditorComposite{
     mySelectedEditor = editors[0];
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
+
+    myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
+      @Override
+      public void selectionChanged(final FileEditorManagerEvent event) {
+        final VirtualFile oldFile = event.getOldFile();
+        final VirtualFile newFile = event.getNewFile();
+        if (oldFile == newFile && getFile() == newFile) {
+          final FileEditor oldEditor = event.getOldEditor();
+          if (oldEditor != null) oldEditor.deselectNotify();
+          final FileEditor newEditor = event.getNewEditor();
+          if (newEditor != null) newEditor.selectNotify();
+        }
+      }
+    }, this);
   }
 
   private JComponent createEditorComponent(final FileEditor editor) {
@@ -352,5 +367,8 @@ public abstract class EditorComposite{
         }
       }
     }
+  }
+
+  public void dispose() {
   }
 }

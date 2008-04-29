@@ -1055,6 +1055,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       editor1.removePropertyChangeListener(myEditorPropertyChangeListener);
       provider.disposeEditor(editor1);
     }
+
+    Disposer.dispose(editor);
   }
 
   EditorComposite getLastSelected() {

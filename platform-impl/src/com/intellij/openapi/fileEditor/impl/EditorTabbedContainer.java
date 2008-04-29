@@ -4,6 +4,8 @@ import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -17,6 +19,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.UIUtil;
@@ -77,7 +80,20 @@ final class EditorTabbedContainer implements Disposable {
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-    }).setGhostsAlwaysVisible(true);
+    }).setGhostsAlwaysVisible(true).addListener(new TabsListener() {
+      public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
+        final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+        final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
+        if (oldEditor != null) {
+          oldEditor.deselectNotify();
+        }
+
+        final FileEditor newEditor = editorManager.getSelectedEditor((VirtualFile)newSelection.getObject());
+        if (newEditor != null) {
+          newEditor.selectNotify();
+        }
+      }
+    });
 
     updateTabBorder();
 

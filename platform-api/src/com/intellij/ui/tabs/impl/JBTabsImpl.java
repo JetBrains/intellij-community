@@ -211,8 +211,8 @@ public class JBTabsImpl extends JComponent
     myActivePopup = null;
     myInfo2Label.clear();
     myInfo2Toolbar.clear();
+    myTabListeners.clear();
   }
-
 
   private void processFocusChange() {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
