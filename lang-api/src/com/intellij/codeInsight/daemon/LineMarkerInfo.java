@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public RangeHighlighter highlighter;
   public final int updatePass;
 
-  @Nullable private final Function<T, String> myTooltipProvider;
+  @Nullable private final Function<? super T, String> myTooltipProvider;
   private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
@@ -34,7 +33,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         int startOffset,
                         Icon icon,
                         int updatePass,
-                        @Nullable Function<T, String> tooltipProvider,
+                        @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         GutterIconRenderer.Alignment alignment) {
     myIcon = icon;
@@ -50,7 +49,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         int startOffset,
                         Icon icon,
                         int updatePass,
-                        @Nullable Function<T, String> tooltipProvider,
+                        @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, startOffset, icon, updatePass, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
   }
