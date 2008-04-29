@@ -177,11 +177,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
     TextRange range = new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
     final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-    assert manipulator != null : "Cannot find manipulator for " + getElement().getClass();
-    final PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
-    range = new TextRange(range.getStartOffset(), range.getStartOffset() + newName.length());
-    myJavaClassReferenceSet.reparse(finalElement, range);
-    return finalElement;
+    if (manipulator != null) {
+      final PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
+      range = new TextRange(range.getStartOffset(), range.getStartOffset() + newName.length());
+      myJavaClassReferenceSet.reparse(finalElement, range);
+      return finalElement;
+    }
+    return element;
   }
 
   public PsiElement resolveInner() {
