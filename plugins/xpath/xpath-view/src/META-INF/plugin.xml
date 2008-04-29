@@ -69,7 +69,7 @@
     <lang.findUsagesProvider language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathFindUsagesProvider" />
     <lang.namesValidator language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathNamesValidator" />
     <lang.refactoringSupport language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathRefactoringSupportProvider" />
-    <lang.syntaxHighlighterFactory language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
+    <lang.syntaxHighlighterFactory key="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
   </extensions>
