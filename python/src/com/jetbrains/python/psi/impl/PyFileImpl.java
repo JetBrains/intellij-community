@@ -82,10 +82,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       if (!processor.execute(e, substitutor)) return false;
     }
 
-    final String fileName = getName();
-    if (!fileName.equals("__builtin__.py")) {
-      final PyFile builtins = PyBuiltinCache.getInstance(getProject()).getBuiltinsFile();
-      if (builtins != null && !builtins.processDeclarations(processor, substitutor, null, place)) return false;
+    for(PyExpression e: getImportTargets()) {
+      if (e == lastParent) continue;
+      if (!processor.execute(e, substitutor)) return false;
+    }
+
+    // if we're in a stmt (not place itself), try buitins:
+    if (lastParent != null) {
+      final String fileName = getName();
+      if (!fileName.equals("__builtin__.py")) {
+        final PyFile builtins = PyBuiltinCache.getInstance(getProject()).getBuiltinsFile();
+        if (builtins != null && !builtins.processDeclarations(processor, substitutor, null, place)) return false;
+      }
     }
 
     return true;
@@ -122,6 +130,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
 
   public List<PyTargetExpression> getTopLevelAttributes() {
     return getTopLevelItems(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
+  }
+
+  public List<PyExpression> getImportTargets() {
+    List<PyExpression> ret = new ArrayList<PyExpression>();
+    List<PyImportStatement> imports = getTopLevelItems(PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
+    for (PyImportStatement one: imports) {
+      for (PyImportElement elt: one.getImportElements()) {
+        PyExpression target = elt.getAsName();
+        if (target != null) ret.add(target);
+        else {
+          target = elt.getImportReference();
+          if (target != null) ret.add(target);
+        }
+      }
+    }
+    return ret;
   }
 
   private <T> List<T> getTopLevelItems(final IElementType elementType, final Class itemClass) {
