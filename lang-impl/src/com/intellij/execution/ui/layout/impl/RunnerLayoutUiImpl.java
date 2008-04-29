@@ -61,8 +61,8 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return this;
   }
 
-  public LayoutStateDefaults initStartupContent(final String id) {
-    getLayout().setDefaultToFocusOnstartup(id);
+  public LayoutStateDefaults initFocusContent(@NotNull final String id, @NotNull final String condition) {
+    getLayout().setDefaultToFocus(id, condition);
     return this;
   }
 
@@ -151,16 +151,16 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
 
   public boolean isToFocus(final Content content, final String condition) {
     final String id = content.getUserData(ViewImpl.ID);
-    return getLayout().isToFocusOnStartup(id);
+    return getLayout().isToFocus(id, condition);
   }
 
   public LayoutViewOptions setToFocus(@Nullable final Content content, final String condition) {
-    getLayout().setToFocusOnStartup(content != null ? content.getUserData(ViewImpl.ID) : null);
+    getLayout().setToFocus(content != null ? content.getUserData(ViewImpl.ID) : null, condition);
     return this;
   }
 
   public void focusStartupContent() {
-    final String toFocus = getLayout().getToFocusOnStartup();
+    final String toFocus = getLayout().getToFocus(LayoutViewOptions.STARTUP);
     if (toFocus != null) {
       selectAndFocus(findContent(toFocus), true);
     }

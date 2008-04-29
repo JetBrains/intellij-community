@@ -9,6 +9,6 @@ public interface LayoutStateDefaults {
 
   LayoutStateDefaults initTabDefaults(int tabId, @Nullable String defaultTabText, @Nullable Icon defaultTabIcon);
 
-  LayoutStateDefaults initStartupContent(@NotNull String id);
+  LayoutStateDefaults initFocusContent(@NotNull String id, final String condition);
 
 }

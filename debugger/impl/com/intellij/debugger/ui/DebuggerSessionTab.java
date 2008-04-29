@@ -33,6 +33,7 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -97,7 +98,9 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
 
-    myUi.getDefaults().initTabDefaults(0, "Debugger", null).initStartupContent(DebuggerContentInfo.FRAME_CONTENT);
+    myUi.getDefaults().initTabDefaults(0, "Debugger", null).
+        initFocusContent(DebuggerContentInfo.FRAME_CONTENT, LayoutViewOptions.STARTUP);
+
     myUi.getOptions().setAttractionPolicy(DebuggerContentInfo.FRAME_CONTENT, new LayoutAttractionPolicy.FocusOnce());
 
     final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();

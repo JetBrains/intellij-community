@@ -28,7 +28,7 @@ public class RunnerLayout  {
   private Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
 
   protected General myGeneral = new General();
-  private String myDefaultToFocus;
+  private Map<String, String> myDefaultFocus = new HashMap<String, String>();
 
 
   public RunnerLayout(final String ID) {
@@ -209,26 +209,26 @@ public class RunnerLayout  {
     return 0;
   }
 
-  public boolean isToFocusOnStartup(final String id) {
-    return ComparableObjectCheck.equals(id, getToFocusOnStartup());
+  public boolean isToFocus(final String id, final String condition) {
+    return ComparableObjectCheck.equals(id, getToFocus(condition));
   }
 
-  public void setToFocusOnStartup(final String id) {
-    myGeneral.focusOnStart = id;
+  public void setToFocus(final String id, final String condition) {
+    myGeneral.focusOnCondition.put(condition, id);
   }
 
-  public void setDefaultToFocusOnstartup(String id) {
-    myDefaultToFocus = id;
+  public void setDefaultToFocus(String id, final String condition) {
+    myDefaultFocus.put(condition, id);
   }
 
   @Nullable
-  public String getToFocusOnStartup() {
-    return myGeneral.focusOnStart != null ? myGeneral.focusOnStart : myDefaultToFocus;
+  public String getToFocus(final String condition) {
+    return myGeneral.focusOnCondition.containsKey(condition) ? myGeneral.focusOnCondition.get(condition) : myDefaultFocus.get(condition);
   }
 
   public static class General {
     public volatile boolean horizontalToolbar = false;
     public volatile int selectedTab = 0;
-    public volatile String focusOnStart;
+    public volatile Map<String, String> focusOnCondition = new HashMap<String, String>();
   }
 }
