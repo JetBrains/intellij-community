@@ -421,10 +421,11 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param processor   the processor receiving the declarations.
    * @param state
-   *@param lastParent  the child of this element which was processed during the previous
+   * @param lastParent  the child of this element has been processed during the previous
    *                    step of the tree up walk (declarations under this element do not need
    *                    to be processed again)
-   * @param place       the original element from which the tree up walk was initiated. @return true if the declaration processing should continue or false if it should be stopped.
+   * @param place       the original element from which the tree up walk was initiated.
+   * @return true if the declaration processing should continue or false if it should be stopped.
    */
   boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                               @NotNull ResolveState state,
