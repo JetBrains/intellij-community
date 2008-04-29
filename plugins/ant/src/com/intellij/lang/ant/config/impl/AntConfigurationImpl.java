@@ -47,12 +47,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(
-  name = "AntConfiguration",
-  storages = {@Storage(id = "default", file = "$PROJECT_FILE$"), @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/ant.xml",
-                                                                          scheme = StorageScheme.DIRECTORY_BASED)})
+    name = "AntConfiguration",
+    storages = {
+      @Storage(id = "default", file = "$PROJECT_FILE$"), 
+      @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    }
+)
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {
 
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<AntReference>("defaultAnt", AntReference.BUNDLED_ANT);
@@ -95,7 +97,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
   private volatile long myModificationCount = 0;
-  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
     super(project);
