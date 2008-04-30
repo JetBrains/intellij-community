@@ -33,6 +33,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return false;
   }
 
+  protected Pair<String, Boolean> parseActionHintImpl(final PsiFile file, String contents) {
+    return parseActionHint(file, contents);
+  }
+
   protected void doTestFor(final String testName) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
@@ -44,7 +48,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             try {
               String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)), "\n");
               configureFromFileText(ioFile.getName(), contents);
-              final Pair<String, Boolean> pair = parseActionHint(getFile(), contents);
+              final Pair<String, Boolean> pair = parseActionHintImpl(getFile(), contents);
               final String text = pair.getFirst();
               final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
 
@@ -75,6 +79,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents) {
+    return parseActionHint(file, contents, " \"([^\"]*)\" \"(\\S*)\".*");
+  }
+
+  public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents, String actionPattern) {
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(file);
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
@@ -83,7 +91,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       comment = commenter.getBlockCommentPrefix();
     }
     // "quick fix action text to perform" "should be available"
-    Pattern pattern = Pattern.compile("^" + comment + " \"([^\"]*)\" \"(\\S*)\".*", Pattern.DOTALL);
+    Pattern pattern = Pattern.compile("^" + comment + actionPattern, Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
     assertTrue(matcher.matches());
     final String text = matcher.group(1);

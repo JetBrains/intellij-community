@@ -903,17 +903,23 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant) {
+  static void checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant, final HighlightInfoHolder holder) {
     PsiClass containingClass = enumConstant.getContainingClass();
     if (enumConstant.getInitializingClass() == null) {
       HighlightInfo highlightInfo = HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, enumConstant.getNameIdentifier());
-      if (highlightInfo != null) return highlightInfo;
+      if (highlightInfo != null) {
+        holder.add(highlightInfo);
+        return;
+      }
       highlightInfo = HighlightClassUtil.checkClassWithAbstractMethods(enumConstant.getContainingClass(), enumConstant.getNameIdentifier());
-      if (highlightInfo != null) return highlightInfo;
+      if (highlightInfo != null) {
+        holder.add(highlightInfo);
+        return;
+      }
     }
     PsiClassType type = JavaPsiFacade.getInstance(enumConstant.getProject()).getElementFactory().createType(containingClass);
 
-    return HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null);
+    HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, holder);
   }
 
   public static HighlightInfo checkEnumSuperConstructorCall(PsiMethodCallExpression expr) {

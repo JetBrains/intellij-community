@@ -333,7 +333,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitEnumConstant(PsiEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant));
+    if (!myHolder.hasErrorResults()) GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant, myHolder);
     if (!myHolder.hasErrorResults()) registerConstructorCall(enumConstant);
   }
 
@@ -641,7 +641,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNewOfStaticClass(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkNewExpression(expression));
+    if (!myHolder.hasErrorResults()) HighlightMethodUtil.checkNewExpression(expression, myHolder);
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()));
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
@@ -772,7 +772,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else {
       PsiElement parent = expression.getParent();
       if (parent instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)parent).getMethodExpression() == expression) {
-        myHolder.add(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)parent, myResolveHelper));
+        myHolder.addAll(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)parent, myResolveHelper));
       }
     }
 
