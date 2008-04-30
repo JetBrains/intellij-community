@@ -34,7 +34,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
     finally {
       // in case we added our listener too late, we may have lost processDetached notification,
       // so check here if process is detached
-      if (!debugProcess.isAttached()) {
+      if (!debugProcess.isDetached()) {
         debugProcess.removeDebugProcessListener(listener);
         notifyProcessDetached();
       }
