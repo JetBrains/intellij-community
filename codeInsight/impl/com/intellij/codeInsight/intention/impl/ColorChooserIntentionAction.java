@@ -26,8 +26,8 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
     if (PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(PsiNewExpression.class)).accepts(element)) {
-      final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
-      assert expression != null;
+      final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false);
+      assert expression != null : element;
       final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(expression, PsiJavaCodeReferenceElement.class);
       if (referenceElement != null) {
         final PsiReference reference = referenceElement.getReference();
