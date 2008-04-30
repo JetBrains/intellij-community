@@ -5,10 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -109,14 +106,19 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (existing != null) {
         PsiMethod existingMethod = (PsiMethod)existing.getElement();
         assert existingMethod != null;
-        if (existingMethod != method) {
-          PsiType returnType1 = method.getReturnType();
-          PsiType returnType2 = existingMethod.getReturnType();
-          if (returnType1 != null && returnType2 != null) {
-            returnType1 = info.getSubstitutor().substitute(returnType1);
-            returnType2 = existing.getSubstitutor().substitute(returnType2);
-            if (returnType1.isAssignableFrom(returnType2)) iterator.remove();
-          }
+        PsiElement scope1 = info.getCurrentFileResolveScope();
+        PsiElement scope2 = existing.getCurrentFileResolveScope();
+        if (scope1 instanceof PsiClass && scope2 instanceof PsiClass &&
+        PsiTreeUtil.isAncestor(scope1, scope2, true) && !existing.isAccessible()) {
+          signatures.put(signature, info);
+          continue;
+        }
+        PsiType returnType1 = method.getReturnType();
+        PsiType returnType2 = existingMethod.getReturnType();
+        if (returnType1 != null && returnType2 != null) {
+          returnType1 = info.getSubstitutor().substitute(returnType1);
+          returnType2 = existing.getSubstitutor().substitute(returnType2);
+          if (returnType1.isAssignableFrom(returnType2)) iterator.remove();
         }
         continue;
       }
