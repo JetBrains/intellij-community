@@ -256,4 +256,17 @@ public class MavenRepositoryIndicesTest extends MavenTestCase {
     myIndex.add(new MavenRepositoryInfo("local1", myDataTestFixture.getTestDataPath("local1"), false));
     assertUnorderedElementsAreEqual(myIndex.getGroupIds()); // shouldn't throw
   }
+
+  public void testGettingArtifactInfosAfterReload() throws Exception {
+    MavenRepositoryInfo i = new MavenRepositoryInfo("local", myDataTestFixture.getTestDataPath("local1"), false);
+    myIndex.add(i);
+    myIndex.update(i, new EmptyProgressIndicator());
+
+    myIndex.save();
+    shutdownIndex();
+    initIndex();
+    myIndex.load();
+    
+    assertUnorderedElementsAreEqual(myIndex.getGroupIds(), "junit");
+  }
 }

@@ -135,6 +135,7 @@ public class MavenRepositoryIndices {
     try {
       IndexData data = new IndexData();
       data.context = createContext(i);
+      data.cache = createCache(i);
       myIndicesData.put(i, data);
     }
     catch (IOException e) {
@@ -156,8 +157,18 @@ public class MavenRepositoryIndices {
         NexusIndexer.FULL_INDEX);
   }
 
+  private IndexCache createCache(MavenRepositoryInfo i) throws IOException {
+    File cacheDir = getCacheDir(i);
+    cacheDir.mkdirs();
+    return new IndexCache(cacheDir);
+  }
+
   private File getIndexDir(MavenRepositoryInfo i) {
     return new File(myIndicesDir, i.getId());
+  }
+
+  private File getCacheDir(MavenRepositoryInfo info) {
+    return new File(getIndexDir(info), CACHES_DIR);
   }
 
   public void change(MavenRepositoryInfo i, String id, String repositoryPathOrUrl, boolean isRemote) throws MavenRepositoryException {
@@ -206,13 +217,10 @@ public class MavenRepositoryIndices {
 
   private void updateIndexCache(MavenRepositoryInfo info) throws IOException {
     MavenRepositoryIndices.IndexData data = myIndicesData.get(info);
-    closeIndexCache(data);
 
-    File cacheDir = new File(getIndexDir(info), CACHES_DIR);
-    FileUtil.delete(cacheDir);
-    cacheDir.mkdirs();
-
-    data.cache = new IndexCache(cacheDir);
+    data.cache.close();
+    FileUtil.delete(getCacheDir(info));
+    data.cache = createCache(info);
 
     Map<String, List<String>> artifactIds = new HashMap<String, List<String>>();
     Map<String, List<String>> versions = new HashMap<String, List<String>>();
@@ -241,6 +249,10 @@ public class MavenRepositoryIndices {
     for (Map.Entry<String, List<String>> each : versions.entrySet()) {
       data.cache.versions.put(each.getKey(), each.getValue());
     }
+
+    data.cache.groupIds.flush();
+    data.cache.artifactIds.flush();
+    data.cache.versions.flush();
   }
 
   private List<String> getOrCreate(Map<String, List<String>> map, String key) {
@@ -264,11 +276,7 @@ public class MavenRepositoryIndices {
 
   private void closeIndexData(IndexData data) throws IOException {
     myIndexer.removeIndexingContext(data.context, false);
-    closeIndexCache(data);
-  }
-
-  private void closeIndexCache(IndexData data) throws IOException {
-    if (data.cache != null) data.cache.close();
+    data.cache.close();
   }
 
   public List<MavenRepositoryInfo> getInfos() {
