@@ -150,9 +150,14 @@ public class PsiSuperMethodImplUtil {
         if (existing == null) {
           map.put(superSignature, copy(hierarchicalMethodSignature));
         }
-        else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
+        else if (isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) && isSuperMethod(aClass, hierarchicalMethodSignature, existing)) {
+          HierarchicalMethodSignatureImpl newSuper = copy(hierarchicalMethodSignature);
+          mergeSupers(newSuper, existing);
+          map.put(superSignature, newSuper);
+        }
+        else if (/*isReturnTypeIsMoreSpecificThan(existing, hierarchicalMethodSignature) && */isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
           mergeSupers(existing, hierarchicalMethodSignature);
-        }                                                                 
+        }
         // just drop an invalid method declaration there - to highlight accordingly
         else if (!result.containsKey(superSignature)) {
           result.put(superSignature, hierarchicalMethodSignature);
@@ -169,6 +174,12 @@ public class PsiSuperMethodImplUtil {
     }
 
     return result;
+  }
+
+  private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature existing, @NotNull HierarchicalMethodSignature hierarchicalMethodSignature) {
+    PsiType existingRet = existing.getMethod().getReturnType();
+    PsiType hierRet = hierarchicalMethodSignature.getMethod().getReturnType();
+    return hierRet != null && existingRet != null && !hierRet.equals(existingRet) && TypeConversionUtil.isAssignable(hierRet, existingRet);
   }
 
   private static void mergeSupers(final HierarchicalMethodSignatureImpl existing, final HierarchicalMethodSignature superSignature) {
@@ -192,7 +203,7 @@ public class PsiSuperMethodImplUtil {
     }
   }
 
-  private static boolean isSuperMethod(PsiClass aClass, HierarchicalMethodSignatureImpl hierarchicalMethodSignature,
+  private static boolean isSuperMethod(PsiClass aClass, HierarchicalMethodSignature hierarchicalMethodSignature,
                                        HierarchicalMethodSignature superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiClass superClass = superMethod.getContainingClass();
