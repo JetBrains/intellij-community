@@ -26,10 +26,9 @@ public class MavenPluginModelDocumentationProvider implements DocumentationProvi
     return null;
   }
 
-  private String getDocForMavenPluginParameter(final PsiElement element) {
-    Parameter parameter = element.getUserData(MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY);
-    if (parameter == null) return null;
-
-    return parameter.getDescription().getStringValue();
+  private String getDocForMavenPluginParameter(PsiElement element) {
+    Parameter p = element.getUserData(MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY);
+    if (p == null) return null;
+    return p.getDescription().getStringValue();
   }
 }

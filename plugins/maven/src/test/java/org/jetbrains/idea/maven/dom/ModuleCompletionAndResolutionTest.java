@@ -57,7 +57,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  <module><caret></module>" +
                      "</modules>");
 
-    assertComplectionVariants(myProjectPom, "m1", "m2", "m2/m3");
+    assertCompletionVariants(myProjectPom, "m1", "m2", "m2/m3");
 
     updateModulePom("m2",
                     "<groupId>test</groupId>" +
@@ -70,7 +70,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                     "  <module><caret></module>" +
                     "</modules>");
 
-    assertComplectionVariants(module2Pom, "..", "../m1", "m3");
+    assertCompletionVariants(module2Pom, "..", "../m1", "m3");
   }
 
   public void testDoesNotCompeteIfThereIsNoModules() throws Exception {
@@ -89,7 +89,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  <module><caret></module>" +
                      "</modules>");
 
-    assertComplectionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom);
   }
 
   public void testIncludesAllThePomsAvailable() throws Exception {
@@ -118,7 +118,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  <module><caret></module>" +
                      "</modules>");
 
-    assertComplectionVariants(myProjectPom, "subDir1", "subDir1/subDir2");
+    assertCompletionVariants(myProjectPom, "subDir1", "subDir1/subDir2");
   }
 
   public void testResolution() throws Exception {

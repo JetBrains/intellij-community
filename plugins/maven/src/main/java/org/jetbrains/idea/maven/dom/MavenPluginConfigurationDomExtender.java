@@ -41,12 +41,11 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
       pluginElement = (Plugin)parent;
     }
 
-    MavenPluginModel mavenPlugin = getMavenPlugin(p, pluginElement);
+    MavenPluginModel pluginModel = getMavenPlugin(p, pluginElement);
+    if (pluginModel == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    for (Parameter each : getParameters(mavenPlugin, executionElement)) {
-      DomExtension e = r.registerFixedNumberChildExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
-      e.putUserData(DomExtension.KEY_DECLARATION, each);
-      each.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, each);
+    for (Parameter each : collectParameters(pluginModel, executionElement)) {
+      registerPluginParameter(r, each);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -54,6 +53,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
 
   private MavenPluginModel getMavenPlugin(Project p, Plugin pluginElement) {
     VirtualFile pluginXmlFile = getPluginXmlFile(p, pluginElement);
+    if (pluginXmlFile == null) return null;
     return getMavenPluginElement(p, pluginXmlFile);
   }
 
@@ -63,19 +63,21 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     String version = pluginElement.getVersion().getStringValue();
 
     String pluginPath = MavenPluginsRepository.getInstance(p).findPluginPath(groupId, artifactId, version);
+    if (pluginPath == null) return null;
 
     VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByPath(pluginPath);
+    if (pluginFile == null) return null;
+
     VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);
     return pluginJarRoot.findFileByRelativePath(MavenPluginsRepository.MAVEN_PLUGIN_DESCRIPTOR);
   }
 
-  private MavenPluginModel getMavenPluginElement(Project p, VirtualFile plugin) {
-    PsiFile psiFile =  PsiManager.getInstance(p).findFile(plugin);
-    DomFileElement<MavenPluginModel> element = DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenPluginModel.class);
-    return element.getRootElement();
+  private MavenPluginModel getMavenPluginElement(Project p, VirtualFile pluginXml) {
+    PsiFile psiFile =  PsiManager.getInstance(p).findFile(pluginXml);
+    return DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenPluginModel.class).getRootElement();
   }
 
-  private Collection<Parameter> getParameters(MavenPluginModel mavenPlugin, PluginExecution executionElement) {
+  private Collection<Parameter> collectParameters(MavenPluginModel pluginModel, PluginExecution executionElement) {
     List<String> selectedGoals = null;
     if (executionElement != null) {
       selectedGoals = new ArrayList<String>();
@@ -86,10 +88,12 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
 
     Map <String, Parameter> namesWithParameters = new HashMap<String, Parameter>();
 
-    for (Mojo eachMojo : mavenPlugin.getMojos().getMojos()) {
+    for (Mojo eachMojo : pluginModel.getMojos().getMojos()) {
       String goal = eachMojo.getGoal().getStringValue();
       if (selectedGoals == null || selectedGoals.contains(goal)) {
         for (Parameter eachParameter : eachMojo.getParameters().getParameters()) {
+          if (!eachParameter.getEditable().getValue()) continue;
+
           String name = eachParameter.getName().getStringValue();
           if (namesWithParameters.containsKey(name)) continue;
           namesWithParameters.put(name, eachParameter);
@@ -98,5 +102,11 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     }
 
     return namesWithParameters.values();
+  }
+
+  private void registerPluginParameter(DomExtensionsRegistrar r, Parameter each) {
+    DomExtension e = r.registerFixedNumberChildExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
+    e.putUserData(DomExtension.KEY_DECLARATION, each);
+    each.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, each);
   }
 }

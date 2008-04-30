@@ -47,7 +47,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "  </dependency>" +
                      "</dependencies>");
     
-    assertComplectionVariants(myProjectPom, "junit", "jmock");
+    assertCompletionVariants(myProjectPom, "junit", "jmock");
   }
 
   public void testArtifactIdCompletion() throws Exception {
@@ -62,7 +62,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertComplectionVariants(myProjectPom, "junit");
+    assertCompletionVariants(myProjectPom, "junit");
   }
 
   public void testDownNotCompleteArtifactIdOnUnknownGroup() throws Exception {
@@ -77,7 +77,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertComplectionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom);
   }
   
   public void testVersionCompletion() throws Exception {
@@ -93,7 +93,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertComplectionVariants(myProjectPom, "3.8.1", "3.8.2", "4.0");
+    assertCompletionVariants(myProjectPom, "3.8.1", "3.8.2", "4.0");
   }
 
   public void testDoesNotCompleteVersionOnUnknownGroupOrArtifact() throws Exception {
@@ -109,7 +109,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertComplectionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom);
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -123,7 +123,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertComplectionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom);
   }
 
   public void testDoesNotHighlightCorrectValues() throws Throwable {
