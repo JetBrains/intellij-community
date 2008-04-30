@@ -222,7 +222,7 @@ public class XmlUtil {
   }
 
   public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project) {
-    final Collection<VirtualFile> files = XmlNamespaceIndex.getFilesByNamespace(namespace);
+    final Collection<VirtualFile> files = XmlNamespaceIndex.getFilesByNamespace(namespace, project);
     return ContainerUtil.map2List(files, new NullableFunction<VirtualFile, XmlFile>() {
       public XmlFile fun(final VirtualFile file) {
         return (XmlFile)PsiManager.getInstance(project).findFile(file);

@@ -1,7 +1,7 @@
 package com.intellij.xml.index;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -16,8 +16,8 @@ import java.util.Map;
  */
 public class XmlTagNamesIndex extends XmlIndex<Void> {
 
-  public static Collection<VirtualFile> getFilesByTagName(String tagName) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, tagName, VirtualFileFilter.ALL);
+  public static Collection<VirtualFile> getFilesByTagName(String tagName, final Project project) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, tagName, createFilter(project));
   }
 
   public static Collection<String> getAllTagNames() {

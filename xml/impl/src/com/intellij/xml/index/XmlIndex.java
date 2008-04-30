@@ -1,6 +1,10 @@
 package com.intellij.xml.index;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -20,6 +24,19 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
       return extension != null && extension.equals("xsd");
     }
   };
+
+  protected static VirtualFileFilter createFilter(final Project project) {
+
+    return new VirtualFileFilter() {
+
+      private final ProjectFileIndex myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      private final VirtualFile myStandardSchemas = ExternalResourcesRootsProvider.getStandardSchemas();
+
+      public boolean accept(final VirtualFile file) {
+        return myFileIndex.isInContent(file) || myFileIndex.isInLibraryClasses(file) || file.getParent() == myStandardSchemas;
+      }
+    };
+  }
 
   public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {
     return KEY_DESCRIPTOR;

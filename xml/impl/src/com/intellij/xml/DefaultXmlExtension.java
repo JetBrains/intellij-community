@@ -228,13 +228,12 @@ public class DefaultXmlExtension extends XmlExtension {
     return false;
   }
 
-  public static Set<String> guessNamespace(final PsiFile file, String tagName) {
+  private static Set<String> guessNamespace(final PsiFile file, String tagName) {
     final Project project = file.getProject();
-    final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName);
-//    final Set<String> strings = ExternalResourceManagerEx.getInstanceEx().getNamespacesByTagName(tagName, project);
+    final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName, project);
     final Set<String> possibleUris = new LinkedHashSet<String>(files.size());
     for (VirtualFile virtualFile : files) {
-      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile);
+      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project);
       if (namespace != null) {
         possibleUris.add(namespace);
       }

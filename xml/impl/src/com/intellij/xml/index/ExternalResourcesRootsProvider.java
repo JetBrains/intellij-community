@@ -15,8 +15,8 @@ import java.util.Set;
  */
 public class ExternalResourcesRootsProvider implements IndexedRootsProvider {
 
-  private VirtualFile getStandardSchemas() {
-    final URL resource = getClass().getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS);
+  public static VirtualFile getStandardSchemas() {
+    final URL resource = ExternalResourcesRootsProvider.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS);
     return VfsUtil.findFileByURL(resource);
   }
 
