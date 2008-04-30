@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +28,7 @@ public class ModifierFix implements IntentionAction {
   private final PsiModifierList myModifierList;
   private final String myModifier;
   private final boolean myShouldHave;
-  private boolean myShowContainingClass;
+  private final boolean myShowContainingClass;
 
   public ModifierFix(PsiModifierList modifierList, String modifier, boolean shouldHave, boolean showContainingClass) {
     myModifierList = modifierList;
@@ -104,7 +103,6 @@ public class ModifierFix implements IntentionAction {
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     PsiElement owner = myModifierList.getParent();
     if (owner instanceof PsiMethod) {
-      PsiSearchHelper helper = PsiManager.getInstance(project).getSearchHelper();
       PsiModifierList copy = (PsiModifierList)myModifierList.copy();
       changeModifierList(copy);
       final int accessLevel = PsiUtil.getAccessLevel(copy);
@@ -139,8 +137,9 @@ public class ModifierFix implements IntentionAction {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        PsiFile containingFile = myModifierList.getContainingFile();
         changeModifierList(myModifierList);
-        UndoUtil.markPsiFileForUndo(file);
+        UndoUtil.markPsiFileForUndo(containingFile);
       }
     });
   }

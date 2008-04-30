@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class UndoUtil {
   private UndoUtil() {}
@@ -16,7 +17,7 @@ public class UndoUtil {
    * make undoable action in current document in order to Undo action work from current file
    * @param file to make editors of to respond to undo action.
    */
-  public static void markPsiFileForUndo(final PsiFile file) {
+  public static void markPsiFileForUndo(@NotNull final PsiFile file) {
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;

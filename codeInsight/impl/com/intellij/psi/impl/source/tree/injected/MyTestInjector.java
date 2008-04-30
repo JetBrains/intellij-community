@@ -168,7 +168,7 @@ public class MyTestInjector {
           }
         }
         // inject to all string literal initializers of variables named 'ql'
-        if (host instanceof PsiLiteralExpression) {
+        if (host instanceof PsiLiteralExpression && ((PsiLiteralExpression)host).getValue() instanceof String) {
           PsiVariable variable = PsiTreeUtil.getParentOfType(host, PsiVariable.class);
           if (variable == null) return;
           if (host.getParent() instanceof PsiBinaryExpression) return;
