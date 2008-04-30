@@ -102,8 +102,11 @@ public class JavaResolveUtil {
     // check only classes since interface members are public,  and if placeClass is interface,
     // then its members are static, and cannot refer to nonstatic members of memberClass
     if (memberClass.isInterface() || placeClass.isInterface()) return true;
-    if (placeClass.isInheritor(memberClass, true)) {
-      PsiClass superClass = placeClass.getSuperClass();
+    PsiClass clazz = accessObjectClass != null ?
+                     accessObjectClass :
+                     placeClass.getSuperClass(); //may start from super class
+    if (clazz != null && clazz.isInheritor(memberClass, true)) {
+      PsiClass superClass = clazz;
       while (!manager.areElementsEquivalent(superClass, memberClass)) {
         if (superClass == null || !JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(superClass, memberClass)) return false;
         superClass = superClass.getSuperClass();
