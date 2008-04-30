@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -95,7 +96,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       String grailsPath = GrailsConfigUtils.getGrailsInstallPath(module);
 
       String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 ||
-          groovyPath == null || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
+                        groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
 
       libPath = libPath.replace(File.separatorChar, '/');
       VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
@@ -300,9 +301,17 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {
-    if (compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true).length == 0) return true;
+    VirtualFile[] files = compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
+    if (files.length == 0) return true;
+    Set<Module> modules = new HashSet<Module>();
+    for (VirtualFile file : files) {
+      Module module = VfsUtil.getModuleForFile(myProject, file);
+      if (module != null) {
+        modules.add(module);
+      }
+    }
 
-    for (Module module : compileScope.getAffectedModules()) {
+    for (Module module : modules) {
       final String groovyInstallPath = GroovyConfigUtils.getGroovyInstallPath(module);
       final String grailsInstallPath = GrailsConfigUtils.getGrailsInstallPath(module);
       if (groovyInstallPath.length() == 0 &&
@@ -319,14 +328,14 @@ public class GroovyCompiler implements TranslatingCompiler {
     }
 
     if (!nojdkModules.isEmpty()) {
-      final Module[] modules = nojdkModules.toArray(new Module[nojdkModules.size()]);
-      if (modules.length == 1) {
-        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk", modules[0].getName()), GroovyBundle.message("cannot.compile"));
+      final Module[] noJdkArray = nojdkModules.toArray(new Module[nojdkModules.size()]);
+      if (noJdkArray.length == 1) {
+        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk", noJdkArray[0].getName()), GroovyBundle.message("cannot.compile"));
       } else {
         StringBuffer modulesList = new StringBuffer();
-        for (int i = 0; i < modules.length; i++) {
+        for (int i = 0; i < noJdkArray.length; i++) {
           if (i > 0) modulesList.append(", ");
-          modulesList.append(modules[i].getName());
+          modulesList.append(noJdkArray[i].getName());
         }
         Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk.mult", modulesList.toString()), GroovyBundle.message("cannot.compile"));
       }
