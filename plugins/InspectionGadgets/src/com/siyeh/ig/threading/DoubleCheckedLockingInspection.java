@@ -15,10 +15,16 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -93,43 +99,64 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
                     outerCondition)) {
                 return;
             }
-            if (ignoreOnVolatileVariables &&
-                    ifStatementAssignsVolatileVariable(innerIf)) {
-                return;
+          PsiField field = null;
+          if (ignoreOnVolatileVariables) {
+            field = statementAssignsField(innerIf);
+            if (field != null && field.hasModifierProperty(PsiModifier.VOLATILE)) {
+              return;
             }
-            registerStatementError(statement);
+          }
+          registerStatementError(statement, field);
         }
 
-        private boolean ifStatementAssignsVolatileVariable(
+        private PsiField statementAssignsField(
                 PsiIfStatement statement) {
             PsiStatement innerThen = statement.getThenBranch();
             innerThen = ControlFlowUtils.stripBraces(innerThen);
             if (!(innerThen instanceof PsiExpressionStatement)) {
-                return false;
+                return null;
             }
             final PsiExpressionStatement expressionStatement =
                     (PsiExpressionStatement)innerThen;
             final PsiExpression expression =
                     expressionStatement.getExpression();
             if (!(expression instanceof PsiAssignmentExpression)) {
-                return false;
+                return null;
             }
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)expression;
             final PsiExpression lhs =
                     assignmentExpression.getLExpression();
             if (!(lhs instanceof PsiReferenceExpression)) {
-                return false;
+                return null;
             }
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression)lhs;
             final PsiElement element =
                     referenceExpression.resolve();
             if (!(element instanceof PsiField)) {
-                return false;
+                return null;
             }
-            final PsiField field = (PsiField)element;
-            return field.hasModifierProperty(PsiModifier.VOLATILE);
+          return (PsiField)element;
         }
     }
+
+  protected InspectionGadgetsFix buildFix(final Object... infos) {
+    if (infos == null || infos.length == 0 || infos[0] == null) return null;
+    final PsiField field = (PsiField)infos[0];
+    final IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(field.getModifierList(), PsiModifier.VOLATILE, true, true);
+
+    return new InspectionGadgetsFix() {
+      protected void doFix(final Project project, final ProblemDescriptor descriptor) throws IncorrectOperationException {
+        if (action.isAvailable(project, null, null)) {
+          action.invoke(project, null, null);
+        }
+      }
+
+      @NotNull
+      public String getName() {
+        return action.getText();
+      }
+    };
+  }
 }
