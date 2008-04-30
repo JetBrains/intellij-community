@@ -57,11 +57,11 @@ public class MissingReturnInspection extends LocalInspectionTool {
   }
 
   private void check(GrCodeBlock block, ProblemsHolder holder) {
-    if (hasValueReturns(block)) {
-      Instruction[] flow = block.getControlFlow();
-      if (!ControlFlowUtil.alwaysReturns(flow)) {
-        GrStatement[] statements = block.getStatements();
-        if (statements.length > 0 && !(statements[statements.length - 1] instanceof GrExpression)) {
+    GrStatement[] statements = block.getStatements();
+    if (statements.length > 0 && !(statements[statements.length - 1] instanceof GrExpression)) {
+      if (hasValueReturns(block)) {
+        Instruction[] flow = block.getControlFlow();
+        if (!ControlFlowUtil.alwaysReturns(flow)) {
           holder.registerProblem(block.getLastChild(), GroovyInspectionBundle.message("no.return.message"));
         }
       }
