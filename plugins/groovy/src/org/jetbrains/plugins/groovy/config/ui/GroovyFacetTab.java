@@ -147,6 +147,7 @@ public class GroovyFacetTab extends FacetEditorTab {
       } else {
         Library library = libraries[0];
         if (library != null &&
+            library.getName() != null &&
             LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(library.getName()) != null) {
           myComboBox.selectLibrary(library);
           oldGroovyLibName = newGroovyLibName;
