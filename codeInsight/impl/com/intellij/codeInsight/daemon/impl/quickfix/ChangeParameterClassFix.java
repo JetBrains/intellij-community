@@ -86,14 +86,16 @@ public class ChangeParameterClassFix extends ExtendsListFix {
   }
 
   public static void registerQuickFixActions(PsiMethodCallExpression methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {
-    PsiMethod method = (PsiMethod)methodCall.getMethodExpression().resolve();
+    final JavaResolveResult result = methodCall.getMethodExpression().advancedResolve(false);
+    PsiMethod method = (PsiMethod) result.getElement();
+    final PsiSubstitutor substitutor = result.getSubstitutor();
     PsiExpression[] expressions = list.getExpressions();
     if (method == null || method.getParameterList().getParametersCount() != expressions.length) return;
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expression = expressions[i];
       PsiParameter parameter = method.getParameterList().getParameters()[i];
       PsiType expressionType = expression.getType();
-      PsiType parameterType = parameter.getType();
+      PsiType parameterType = substitutor.substitute(parameter.getType());
       if (expressionType == null || expressionType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(expressionType) || expressionType instanceof PsiArrayType ) continue;
       if (parameterType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(parameterType) || parameterType instanceof PsiArrayType ) continue;
       if (parameterType.isAssignableFrom(expressionType)) continue;
