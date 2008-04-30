@@ -418,6 +418,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           public void run() {
             new Task.Modal(null, "Updating index", false) {
               public void run(@NotNull final ProgressIndicator indicator) {
+                indicator.setIndeterminate(true);
                 rebuildRunnable.run();
               }
             }.queue();
