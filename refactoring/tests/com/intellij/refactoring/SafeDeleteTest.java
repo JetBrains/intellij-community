@@ -45,6 +45,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("IFoo");
   }
 
+  public void testExtendsList() throws Exception {
+    myDoCompare = false;
+    doTest("B");
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
