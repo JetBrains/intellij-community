@@ -101,17 +101,25 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       CandidateInfo info = iterator.next();
       PsiMethod method = (PsiMethod)info.getElement();
       assert method != null;
+      PsiClass class1 = method.getContainingClass();
       MethodSignature signature = method.getSignature(info.getSubstitutor());
       CandidateInfo existing = signatures.get(signature);
       if (existing != null) {
         PsiMethod existingMethod = (PsiMethod)existing.getElement();
         assert existingMethod != null;
-        PsiElement scope1 = info.getCurrentFileResolveScope();
-        PsiElement scope2 = existing.getCurrentFileResolveScope();
-        if (scope1 instanceof PsiClass && scope2 instanceof PsiClass &&
-        PsiTreeUtil.isAncestor(scope1, scope2, true) && !existing.isAccessible()) {
+        PsiClass class2 = existingMethod.getContainingClass();
+        if (class1.isInterface() && "java.lang.Object".equals(class2.getQualifiedName())) { //prefer interface methods to methods from Object
           signatures.put(signature, info);
           continue;
+        }
+        if (method == existingMethod) {
+          PsiElement scope1 = info.getCurrentFileResolveScope();
+          PsiElement scope2 = existing.getCurrentFileResolveScope();
+          if (scope1 instanceof PsiClass && scope2 instanceof PsiClass &&
+          PsiTreeUtil.isAncestor(scope1, scope2, true) && !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
+            signatures.put(signature, info);
+            continue;
+          }
         }
         PsiType returnType1 = method.getReturnType();
         PsiType returnType2 = existingMethod.getReturnType();
