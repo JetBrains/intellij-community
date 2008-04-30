@@ -64,7 +64,7 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
     });
     Arrays.sort(versions, new Comparator<String>() {
       public int compare(String o1, String o2) {
-        return o1.compareToIgnoreCase(o2);
+        return -o1.compareToIgnoreCase(o2);
       }
     });
     return versions;

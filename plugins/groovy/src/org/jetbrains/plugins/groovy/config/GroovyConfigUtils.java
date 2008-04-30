@@ -38,7 +38,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
-import org.jetbrains.plugins.grails.config.util.GrailsSDK;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -135,8 +134,7 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovySdkLibrary(Library library) {
-    return library != null && library.getName() != null && library.getName().matches(GROOVY_LIB_PATTERN) ||
-        GrailsConfigUtils.isGrailsSdkLibrary(library);
+    return library != null && library.getName() != null && library.getName().matches(GROOVY_LIB_PATTERN);
   }
 
   @Nullable
@@ -147,11 +145,7 @@ public class GroovyConfigUtils {
   public static GroovySDK[] getGroovySDKs() {
     return ContainerUtil.map2Array(getGroovyLibraries(), GroovySDK.class, new Function<Library, GroovySDK>() {
       public GroovySDK fun(final Library library) {
-        if (GrailsConfigUtils.isGrailsSdkLibrary(library)) {
-          return new GrailsSDK(library);
-        } else {
-          return new GroovySDK(library);
-        }
+        return new GroovySDK(library);
       }
     });
   }
@@ -313,7 +307,8 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovyConfigured(Module module) {
-    return module != null && getGroovyLibrariesByModule(module).length > 0;
+    return module != null && getGroovyLibrariesByModule(module).length > 0 ||
+        GrailsConfigUtils.isGrailsConfigured(module);
   }
 
   @NotNull
