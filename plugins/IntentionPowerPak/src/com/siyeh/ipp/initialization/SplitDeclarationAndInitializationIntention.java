@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.initialization;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.project.Project;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.HighlightUtil;
@@ -41,7 +42,18 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
         if (initializer == null) {
             return;
         }
-        final String initializerText = initializer.getText();
+        final String initializerText;
+        if (initializer instanceof PsiArrayInitializerExpression) {
+            final PsiType type = initializer.getType();
+            if (type == null) {
+                initializerText = initializer.getText();
+            } else {
+                initializerText = "new " + type.getCanonicalText() +
+                        initializer.getText();
+            }
+        } else {
+            initializerText = initializer.getText();
+        }
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass == null) {
             return;
@@ -67,7 +79,9 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
             }
         }
         final PsiManager manager = field.getManager();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final Project project = manager.getProject();
+        final PsiElementFactory elementFactory =
+                JavaPsiFacade.getInstance(project).getElementFactory();
         if (classInitializer == null) {
             classInitializer = elementFactory.createClassInitializer();
             classInitializer = (PsiClassInitializer)
