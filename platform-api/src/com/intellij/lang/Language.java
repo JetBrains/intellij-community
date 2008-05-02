@@ -38,6 +38,7 @@ public abstract class Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
+  private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
   public static final Language ANY = new Language("", "") { };
@@ -49,6 +50,11 @@ public abstract class Language {
   }
 
   protected Language(@NonNls final String ID, @NonNls final String... mimeTypes) {
+    this(null, ID, mimeTypes);
+  }
+
+  protected Language(Language baseLanguage, @NonNls final String ID, @NonNls final String... mimeTypes) {
+    myBaseLanguage = baseLanguage;
     myID = ID;
     myMimeTypes = mimeTypes;
     Class<? extends Language> langClass = getClass();
@@ -116,9 +122,9 @@ public abstract class Language {
     return Collections.emptyList();
   }
 
-  @NotNull
+  @Nullable
   public Language getBaseLanguage() {
-    return this;
+    return myBaseLanguage;
   }
 
   public String getDisplayName() {
@@ -137,9 +143,7 @@ public abstract class Language {
     Language l = this;
     while (l != null) {
       if (l.is(another)) return true;
-      final Language base = l.getBaseLanguage();
-      if (base == l) break;
-      l = base;
+      l = l.getBaseLanguage();
     }
     return false;
   }
