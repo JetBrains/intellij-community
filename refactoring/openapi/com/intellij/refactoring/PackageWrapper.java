@@ -19,6 +19,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a package. 
@@ -26,9 +27,9 @@ import com.intellij.psi.PsiPackage;
  */
 public class PackageWrapper {
   private final PsiManager myManager;
-  private final String myQualifiedName;
+  @NotNull private final String myQualifiedName;
 
-  public PackageWrapper(PsiManager manager, String qualifiedName) {
+  public PackageWrapper(PsiManager manager, @NotNull String qualifiedName) {
     myManager = manager;
     myQualifiedName = qualifiedName;
   }
@@ -53,6 +54,7 @@ public class PackageWrapper {
     return JavaPsiFacade.getInstance(myManager.getProject()).findPackage(myQualifiedName) != null;
   }
 
+  @NotNull
   public String getQualifiedName() {
     return myQualifiedName;
   }

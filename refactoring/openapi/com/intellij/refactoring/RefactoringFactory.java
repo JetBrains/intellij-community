@@ -39,7 +39,7 @@ public abstract class RefactoringFactory {
   /**
    * Creates move destination for a specified package that preserves source folders for moved items.
    */
-  public abstract MoveDestination createSourceFolderPreservingMoveDestination(String targetPackageQualifiedName);
+  public abstract MoveDestination createSourceFolderPreservingMoveDestination(@NotNull String targetPackageQualifiedName);
 
   /**
    * Creates move destination for a specified package that moves all items to a specifed source folder

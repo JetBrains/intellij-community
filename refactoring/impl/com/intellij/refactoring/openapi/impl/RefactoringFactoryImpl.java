@@ -35,11 +35,11 @@ public class RefactoringFactoryImpl extends RefactoringFactory {
     return new MoveInnerRefactoringImpl(myProject, innerClass, newName, passOuterClass, parameterName, targetContainer);
   }
 
-  public MoveDestination createSourceFolderPreservingMoveDestination(String targetPackage) {
+  public MoveDestination createSourceFolderPreservingMoveDestination(@NotNull String targetPackage) {
     return new MultipleRootsMoveDestination(createPackageWrapper(targetPackage));
   }
 
-  private PackageWrapper createPackageWrapper(String targetPackage) {
+  private PackageWrapper createPackageWrapper(@NotNull String targetPackage) {
     return new PackageWrapper(PsiManager.getInstance(myProject), targetPackage);
   }
 
