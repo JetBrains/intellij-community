@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -61,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
+import java.util.Collections;
 import java.util.EnumSet;
 
 /**
@@ -189,6 +191,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public PsiType getNominalType() {
+    return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doInference(new Computable<PsiType>() {
+      public PsiType compute() {
+        return getNominalTypeImpl();
+      }
+    }, Collections.<String, PsiType>emptyMap());
+  }
+
+  private PsiType getNominalTypeImpl() {
     IElementType dotType = getDotTokenType();
 
     final GroovyResolveResult resolveResult = advancedResolve();
@@ -221,7 +231,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else if (resolved instanceof GrVariableBase) {
-      result = ((GrVariableBase) resolved).getDeclaredType();
+      result = ((GrVariableBase) resolved).getTypeGroovy();
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
@@ -330,7 +340,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
-      final PsiType nominal = refExpr.getNominalType();
+      final PsiType nominal = refExpr.getNominalTypeImpl();
       if (inferred == null || inferred == PsiType.NULL) return nominal;
       if (nominal == null) return inferred;
       if (!TypeConversionUtil.isAssignable(nominal, inferred, false)) {
