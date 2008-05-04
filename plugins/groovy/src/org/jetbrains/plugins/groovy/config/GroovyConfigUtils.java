@@ -138,6 +138,7 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovySdkLibrary(Library library) {
+    if (library == null) return false;
     VirtualFile[] classFiles = library.getFiles(OrderRootType.CLASSES);
     for (VirtualFile file : classFiles) {
       String path = file.getPath();
