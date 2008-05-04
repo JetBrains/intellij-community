@@ -565,6 +565,8 @@ public class PsiUtil {
   }
 
   public static boolean mightBeLVlaue(GrExpression expr) {
+    if (expr instanceof GrParenthesizedExpression) return mightBeLVlaue(((GrParenthesizedExpression) expr).getOperand());
+    
     if (expr instanceof GrListOrMap) {
       GrListOrMap listOrMap = (GrListOrMap) expr;
       if (listOrMap.isMap()) return false;
