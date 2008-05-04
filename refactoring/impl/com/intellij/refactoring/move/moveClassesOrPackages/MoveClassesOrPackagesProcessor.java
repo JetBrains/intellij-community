@@ -74,13 +74,28 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   public boolean verifyValidPackageName() {
-    PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
     String qName = myTargetPackage.getQualifiedName();
-    if (qName.length() > 0 && !helper.isQualifiedName(qName)) {
-      Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"), "Invalid package name", Messages.getErrorIcon());
-      return false;
+    if (qName.isEmpty()) {
+      if (hasClasses()) {
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.default.package"), "Cannot Move", Messages.getErrorIcon());
+        return false;
+      }
+    } else {
+      PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+      if (!helper.isQualifiedName(qName)) {
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"), "Invalid Package Name",
+                                   Messages.getErrorIcon());
+        return false;
+      }
     }
     return true;
+  }
+
+  private boolean hasClasses() {
+    for (PsiElement element : getElements()) {
+      if (element instanceof PsiClass) return true;
+    }
+    return false;
   }
 
   public boolean isSearchInComments() {
