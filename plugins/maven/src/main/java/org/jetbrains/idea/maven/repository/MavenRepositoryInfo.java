@@ -42,6 +42,10 @@ public class MavenRepositoryInfo {
     return isRemote ? repositoryPathOrUrl : null;
   }
 
+  public String getRepositoryPathOrUrl() {
+    return repositoryPathOrUrl;
+  }
+
   public boolean isRemote() {
     return isRemote;
   }

@@ -13,7 +13,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MavenRepositoriesConfigurable extends BaseConfigurable {
@@ -25,6 +24,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   private JButton myAddButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
+  private JButton myUpdateButton;
   private JButton myUpdateAllButton;
 
   public MavenRepositoriesConfigurable(Project project, MavenRepositoryManager m) {
@@ -53,6 +53,12 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
       }
     });
 
+    myUpdateButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        doUpdateRepository();
+      }
+    });
+
     myUpdateAllButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         doUpdateAllRepositories();
@@ -70,11 +76,19 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        boolean empty = myTable.getSelectionModel().isSelectionEmpty();
-        myEditButton.setEnabled(empty);
-        myRemoveButton.setEnabled(empty);
+        updateButtonsState();
       }
     });
+    updateButtonsState();
+  }
+
+  private void updateButtonsState() {
+    boolean canEdit = canEdit();
+    myEditButton.setEnabled(canEdit);
+    myRemoveButton.setEnabled(canEdit);
+
+    boolean hasSelection = !myTable.getSelectionModel().isSelectionEmpty();
+    myUpdateButton.setEnabled(hasSelection);
   }
 
   private void doAddRepository() {
@@ -95,9 +109,9 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   }
 
   private void doEditRepository() {
-    MavenRepositoryInfo i = getSelectedIndexInfo();
-    if (i == null) return;
+    if (!canEdit()) return;
 
+    MavenRepositoryInfo i = getSelectedIndexInfo();
     EditMavenRepositoryDialog d = new EditMavenRepositoryDialog(
         myProject, i.getId(), i.getRepositoryUrl());
 
@@ -115,10 +129,9 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   }
 
   private void doRemoveRepository() {
+    if (!canEdit()) return;
     try {
-      MavenRepositoryInfo i = getSelectedIndexInfo();
-      if (i == null) return;
-      myManager.remove(i);
+      myManager.remove(getSelectedIndexInfo());
       reset();
     }
     catch (MavenRepositoryException e) {
@@ -127,13 +140,22 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
     setModified(true);
   }
 
+  private void doUpdateRepository() {
+    MavenRepositoryInfo i = getSelectedIndexInfo();
+    myManager.startUpdate(i);
+  }
+
   private void doUpdateAllRepositories() {
     myManager.startUpdateAll();
   }
 
+  private boolean canEdit() {
+    return myTable.getSelectedRow() > 0;
+  }
+
   private MavenRepositoryInfo getSelectedIndexInfo() {
     int sel = myTable.getSelectedRow();
-    if (sel == -1) return null;
+    if (sel < 0) return null;
     return ((MyTableModel)myTable.getModel()).getIndexInfo(sel);
   }
 
@@ -159,11 +181,10 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   }
 
   public void reset() {
-    List<MavenRepositoryInfo> infos = new ArrayList<MavenRepositoryInfo>();
-    for (MavenRepositoryInfo i : myManager.getInfos()) {
-      if (i.isRemote()) infos.add(i);
-    }
-    myTable.setModel(new MyTableModel(infos));
+    myTable.setModel(new MyTableModel(myManager.getLocalRepository(),
+                                      myManager.getUserRepositories()));
+    myTable.getColumnModel().getColumn(0).setPreferredWidth(100);
+    myTable.getColumnModel().getColumn(1).setPreferredWidth(400);
   }
 
   public void disposeUIResources() {
@@ -172,10 +193,12 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   private static class MyTableModel extends AbstractTableModel {
     private static final String[] COLUMNS = new String[] { "ID", "URL" };
 
-    private List<MavenRepositoryInfo> myInfos;
+    private MavenRepositoryInfo myLocal;
+    private List<MavenRepositoryInfo> myUserInfos;
 
-    public MyTableModel(List<MavenRepositoryInfo> infos) {
-      myInfos = infos;
+    public MyTableModel(MavenRepositoryInfo local, List<MavenRepositoryInfo> user) {
+      myLocal = local;
+      myUserInfos = user;
     }
 
     public int getColumnCount() {
@@ -188,20 +211,21 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
     }
 
     public int getRowCount() {
-      return myInfos.size();
+      return myUserInfos.size() + 1;
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
       MavenRepositoryInfo i = getIndexInfo(rowIndex);
       switch (columnIndex) {
         case 0: return i.getId();
-        case 1: return i.getRepositoryUrl();
+        case 1: return i.getRepositoryPathOrUrl();
       }
       throw new RuntimeException();
     }
 
     public MavenRepositoryInfo getIndexInfo(int rowIndex) {
-      return myInfos.get(rowIndex);
+      if (rowIndex == 0) return myLocal;
+      return myUserInfos.get(rowIndex - 1);
     }
   }
 }
