@@ -106,7 +106,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         }
       }
     });
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    final Runnable nothingFoundRunnable = new Runnable() {
       public void run() {
         if (dupCount[0] == 0) {
           final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
@@ -114,7 +114,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
           Messages.showInfoMessage(project, message, REFACTORING_NAME);
         }
       }
-    }, ModalityState.NON_MODAL);
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      nothingFoundRunnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
+    }
   }
 
   private static boolean invokeOnElements(final Project project, final PsiFile file, final PsiMethod method) {
@@ -122,10 +127,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     if (progressIndicator != null && progressIndicator.isCanceled()) return false;
     final List<Match> duplicates = hasDuplicates(file, method);
     if (duplicates.isEmpty()) return false;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    final Runnable replaceRunnable = new Runnable() {
       public void run() {
         final VirtualFile virtualFile = file.getVirtualFile();
-        LOG.assertTrue(virtualFile != null);
+        if (virtualFile == null || !virtualFile.isValid()) return;
         if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
         final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
         LOG.assertTrue(editor != null);
@@ -145,7 +150,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
-            PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
+            PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
               public void run() {
                 DuplicatesImpl.invoke(project, editor, new MethodDuplicatesMatchProvider(method, duplicates));
               }
@@ -155,7 +160,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
         WindowManager.getInstance().getStatusBar(project).setInfo("");
       }
-    }, ModalityState.NON_MODAL);
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      replaceRunnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(replaceRunnable, ModalityState.NON_MODAL);
+    }
     return true;
   }
 
