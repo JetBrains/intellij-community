@@ -55,7 +55,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
-  private boolean isMapLiteral() {
+  public boolean isMap() {
     return findChildByType(MAP_LITERAL_TOKEN_SET) != null;
   }
 
@@ -73,7 +73,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     public PsiType fun(GrListOrMapImpl listOrMap) {
       PsiManager manager = listOrMap.getManager();
       final GlobalSearchScope scope = listOrMap.getResolveScope();
-      if (listOrMap.isMapLiteral()) {
+      if (listOrMap.isMap()) {
         return inferMapInitializerType(listOrMap, manager, scope);
       }
 

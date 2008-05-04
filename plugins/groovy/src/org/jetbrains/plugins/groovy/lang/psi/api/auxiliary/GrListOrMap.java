@@ -38,4 +38,6 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
    */
   @NotNull
   GrNamedArgument[] getNamedArguments();
+
+  boolean isMap();
 }
