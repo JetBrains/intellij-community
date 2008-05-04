@@ -123,9 +123,9 @@ public class DuplicatesFinder {
                   final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
                   if (idx >= parameters.length) { //vararg parameter
                     idx = parameters.length - 1;
-                  }
-                  if (idx > 0) { //incomplete code
-                    type = parameters[idx].getType();
+                    if (idx >= 0) { //incomplete code
+                      type = parameters[idx].getType();
+                    }
                   }
                   if (type instanceof PsiEllipsisType) {
                     type = ((PsiEllipsisType)type).getComponentType();
