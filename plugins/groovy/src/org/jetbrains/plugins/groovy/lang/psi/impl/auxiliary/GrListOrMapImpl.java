@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
@@ -86,7 +87,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
-      return inferListInitializedType(listOrMap, manager, scope);
+      return getTupleType(listOrMap.getInitializers(), listOrMap.getManager(), listOrMap.getResolveScope());
     }
 
     private PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap, PsiManager manager, GlobalSearchScope scope) {
@@ -114,21 +115,12 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       return null;
     }
 
-    private PsiType inferListInitializedType(GrListOrMapImpl listOrMap, PsiManager manager, GlobalSearchScope scope) {
-      PsiClass listClass = manager.findClass("java.util.List", scope);
-      if (listClass != null) {
-        PsiTypeParameter[] typeParameters = listClass.getTypeParameters();
-        if (typeParameters.length == 1) {
-          GrExpression[] initializers = listOrMap.getInitializers();
-          PsiType initializerType = getInitializerType(initializers);
-          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(typeParameters[0], initializerType);
-          return manager.getElementFactory().createType(listClass, substitutor);
-        } else {
-          return manager.getElementFactory().createType(listClass);
-        }
+    private PsiClassType getTupleType(GrExpression[] initializers, PsiManager manager, GlobalSearchScope scope) {
+      PsiType[] result = new PsiType[initializers.length];
+      for (int i = 0; i < result.length; i++) {
+        result[i] = initializers[i].getType();
       }
-
-      return null;
+      return new GrTupleType(result, manager, scope);
     }
 
     private PsiType getInitializerType(GrExpression[] initializers) {

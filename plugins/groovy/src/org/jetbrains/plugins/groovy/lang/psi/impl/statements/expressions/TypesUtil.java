@@ -136,7 +136,7 @@ public class TypesUtil {
       lType = boxPrimitiveType(lType, manager, scope);
     }
 
-    return TypeConversionUtil.isAssignable(lType, rType);
+    return lType.isAssignableFrom(rType);
   }
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
