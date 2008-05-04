@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -119,6 +120,26 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myImporterSettings = getImporterPreferences();
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myArtifactSettings = getArtifactPreferences();
     project.getComponent(MavenCore.class).loadState(myCoreSettings);
+
+    enusreRepositoryPathMacro();
+  }
+
+  private void enusreRepositoryPathMacro() {
+    final File repo = myCoreSettings.getEffectiveLocalRepository();
+    if (repo == null) return;
+
+    final PathMacros macros = PathMacros.getInstance();
+
+    for (String each : macros.getAllMacroNames()) {
+      String path = macros.getValue(each);
+      if (path == null) continue;
+      if (new File(path).equals(repo)) return;
+    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        macros.setMacro("MAVEN_REPOSITORY", repo.getPath(), null);
+      }
+    });
   }
 
   public Project getUpdatedProject() {
