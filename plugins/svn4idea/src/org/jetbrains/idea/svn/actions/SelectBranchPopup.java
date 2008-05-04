@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -32,6 +33,8 @@ import java.util.List;
  * @author yole
  */
 public class SelectBranchPopup {
+  private final static String CONFIGURE_MESSAGE = SvnBundle.message("configure.branches.item");
+
   private SelectBranchPopup() {
   }
 
@@ -59,7 +62,7 @@ public class SelectBranchPopup {
     for (String url : configuration.getBranchUrls()) {
       items.add(url);
     }
-    items.add(SvnBundle.message("configure.branches.item"));
+    items.add(CONFIGURE_MESSAGE);
 
     BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title);
     JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
@@ -71,6 +74,8 @@ public class SelectBranchPopup {
     private final SvnBranchConfiguration myConfiguration;
     private final boolean myTopLevel;
     private BranchSelectedCallback myCallback;
+
+    private static final String REFRESH_MESSAGE = SvnBundle.message("refresh.branches.item");
 
     protected BranchBasesPopupStep(final Project project, final VirtualFile vcsRoot, final SvnBranchConfiguration configuration, boolean topLevel,
                                    final BranchSelectedCallback callback) {
@@ -90,7 +95,8 @@ public class SelectBranchPopup {
 
     @Override
     public ListSeparator getSeparatorAbove(final String value) {
-      return value.equals(SvnBundle.message("configure.branches.item")) ? new ListSeparator("") : null;
+      return (CONFIGURE_MESSAGE.equals(value)) ||
+             (REFRESH_MESSAGE.equals(value)) ? new ListSeparator("") : null;
     }
 
     @NotNull
@@ -113,7 +119,7 @@ public class SelectBranchPopup {
 
     @Override
     public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-      if (selectedValue.equals(SvnBundle.message("configure.branches.item"))) {
+      if (CONFIGURE_MESSAGE.equals(selectedValue)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             BranchConfigurationDialog.configureBranches(myProject, myVcsRoot);
@@ -130,23 +136,36 @@ public class SelectBranchPopup {
       else {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            showBranchPopup(selectedValue);
+            showBranchPopup(selectedValue, true);
           }
         });
       }
       return null;
     }
 
-    private void showBranchPopup(final String selectedValue) {
-      List<SvnBranchItem> branches;
+    @Nullable
+    private List<SvnBranchItem> loadBranches(final String selectedBranchesHolder, final boolean cached) {
       try {
-        branches = myConfiguration.getBranches(selectedValue, myProject);
+        return cached ? myConfiguration.getBranches(selectedBranchesHolder, myProject, true) :
+            myConfiguration.reloadBranches(selectedBranchesHolder, myProject);
       }
       catch (SVNException e) {
         Messages.showErrorDialog(myProject, e.getMessage(), SvnBundle.message("compare.with.branch.list.error"));
+        return null;
+      }
+    }
+
+    private void showBranchPopup(final String selectedValue, final boolean cached) {
+      List<SvnBranchItem> branches = loadBranches(selectedValue, cached);
+      if (branches == null) {
         return;
       }
-      final JList branchList = new JList(branches.toArray());
+
+      final Object[] items = new Object[branches.size() + 1];
+      System.arraycopy(branches.toArray(), 0, items, 0, branches.size());
+      items[items.length - 1] = REFRESH_MESSAGE;
+
+      final JList branchList = new JList(items);
       branchList.setCellRenderer(new BranchRenderer());
       JBPopupFactory.getInstance().createListPopupBuilder(branchList)
               .setTitle(SVNPathUtil.tail(selectedValue))
@@ -154,6 +173,10 @@ public class SelectBranchPopup {
               .setDimensionServiceKey("Svn.CompareWithBranchPopup")
               .setItemChoosenCallback(new Runnable() {
                 public void run() {
+                  if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
+                    showBranchPopup(selectedValue, false);
+                    return;
+                  }
                   SvnBranchItem item = (SvnBranchItem) branchList.getSelectedValue();
                   if (item != null) {
                     myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
@@ -162,41 +185,6 @@ public class SelectBranchPopup {
               })
               .createPopup().showCenteredInCurrentWindow(myProject);
     }
-
-    /*private List<SvnBranchItem> getBranches(final String url) throws SVNException {
-      final ArrayList<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
-      final Ref<SVNException> ex = new Ref<SVNException>();
-      boolean rc = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          if (indicator != null) {
-            indicator.setIndeterminate(true);
-          }
-          final SVNLogClient logClient;
-          try {
-            logClient = SvnVcs.getInstance(myProject).createLogClient();
-            logClient.doList(SVNURL.parseURIEncoded(url), SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
-              public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-                ProgressManager.getInstance().checkCanceled();
-                final String url = dirEntry.getURL().toString();
-                result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
-              }
-            });
-            Collections.sort(result);
-          }
-          catch (SVNException e) {
-            ex.set(e);
-          }
-        }
-      }, SvnBundle.message("compare.with.branch.progress.loading.branches"), true, myProject);
-      if (!rc) {
-        return Collections.emptyList();
-      }
-      if (!ex.isNull()) {
-        throw ex.get();
-      }
-      return result;
-    }*/
   }
 
   private static class BranchRenderer extends JPanel implements ListCellRenderer {
@@ -220,10 +208,15 @@ public class SelectBranchPopup {
       else {
         setBackground(UIUtil.getListBackground());
       }
-      SvnBranchItem item = (SvnBranchItem) value;
-      myUrlLabel.setText(SVNPathUtil.tail(item.getUrl()));
-      final Date creationDate = item.getCreationDate();
-      myDateLabel.setText(creationDate != null ? SimpleDateFormat.getDateInstance(DateFormat.SHORT).format(creationDate) : "");
+      if (value instanceof String) {
+        myUrlLabel.setText((String) value);
+        myDateLabel.setText("");
+      } else {
+        SvnBranchItem item = (SvnBranchItem) value;
+        myUrlLabel.setText(SVNPathUtil.tail(item.getUrl()));
+        final Date creationDate = item.getCreationDate();
+        myDateLabel.setText(creationDate != null ? SimpleDateFormat.getDateInstance(DateFormat.SHORT).format(creationDate) : "");
+      }
       return this;
     }
   }

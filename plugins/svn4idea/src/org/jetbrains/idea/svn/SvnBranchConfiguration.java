@@ -19,6 +19,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,13 @@ import java.util.*;
  */
 public class SvnBranchConfiguration {
   private String myTrunkUrl;
-  private List<String> myBranchUrls = new ArrayList<String>();
+  private List<String> myBranchUrls;
+  private Map<String, List<SvnBranchItem>> myBranchMap;
+
+  public SvnBranchConfiguration() {
+    myBranchUrls = new ArrayList<String>();
+    myBranchMap = new HashMap<String, List<SvnBranchItem>>();
+  }
 
   public void setTrunkUrl(final String trunkUrl) {
     myTrunkUrl = trunkUrl;
@@ -49,6 +56,8 @@ public class SvnBranchConfiguration {
 
   public void setBranchUrls(final List<String> branchUrls) {
     myBranchUrls = branchUrls;
+    
+    Collections.sort(myBranchUrls);
   }
 
   public String getTrunkUrl() {
@@ -59,10 +68,22 @@ public class SvnBranchConfiguration {
     return myBranchUrls;
   }
 
-  public SvnBranchConfiguration clone() {
+  public Map<String, List<SvnBranchItem>> getBranchMap() {
+    return myBranchMap;
+  }
+
+  public void setBranchMap(final Map<String, List<SvnBranchItem>> branchMap) {
+    myBranchMap = branchMap;
+  }
+
+  public SvnBranchConfiguration copy() {
     SvnBranchConfiguration result = new SvnBranchConfiguration();
     result.myTrunkUrl = myTrunkUrl;
     result.myBranchUrls = new ArrayList<String>(myBranchUrls);
+    result.myBranchMap = new HashMap<String, List<SvnBranchItem>>();
+    for (Map.Entry<String, List<SvnBranchItem>> entry : myBranchMap.entrySet()) {
+      result.myBranchMap.put(entry.getKey(), new ArrayList<SvnBranchItem>(entry.getValue()));
+    }
     return result;
   }
 
@@ -125,26 +146,6 @@ public class SvnBranchConfiguration {
     iterator.iterateUrls(branchSearcher);
 
     return branchSearcher.getResult();
-    /*SVNURL candidate = urlIsParent(myTrunkUrl, someUrl);
-    if (candidate != null) {
-      return candidate;
-    }
-
-    for (String branchUrl : myBranchUrls) {
-      candidate = urlIsParent(branchUrl, someUrl);
-      if (candidate != null) {
-        return candidate;
-      }
-
-      final List<SvnBranchItem> children = getBranches(branchUrl, project);
-      for (SvnBranchItem child : children) {
-        candidate = urlIsParent(child.getUrl(), someUrl);
-        if (candidate != null) {
-          return candidate;
-        }
-      }
-    }
-    return null;*/
   }
 
   private class UrlIterator {
@@ -161,7 +162,7 @@ public class SvnBranchConfiguration {
 
       for (String branchUrl : myBranchUrls) {
         // use more exact comparison first (paths longer)
-        final List<SvnBranchItem> children = getBranchesWithoutProgress(myProject, branchUrl);
+        final List<SvnBranchItem> children = getBranches(branchUrl, myProject, false);
         for (SvnBranchItem child : children) {
           if (listener.accept(child.getUrl())) {
             return;
@@ -175,6 +176,7 @@ public class SvnBranchConfiguration {
     }
   }
 
+  @Nullable
   public Map<String,String> getUrl2FileMappings(final Project project, final VirtualFile root) {
     try {
       final BranchRootSearcher searcher = new BranchRootSearcher(SvnVcs.getInstance(project), root);
@@ -186,7 +188,7 @@ public class SvnBranchConfiguration {
     }
   }
 
-  private class BranchRootSearcher implements UrlListener {
+  private static class BranchRootSearcher implements UrlListener {
     private final VirtualFile myRoot;
     private final SVNURL myRootUrl;
     // url path to file path
@@ -250,7 +252,37 @@ public class SvnBranchConfiguration {
     return null;
   }
 
-  public static List<SvnBranchItem> getBranches(final String url, final Project project) throws SVNException {
+  public void loadBranches(final Project project, final boolean underProgress) {
+    for (String branchUrl : myBranchUrls) {
+      try {
+        getBranches(branchUrl, project, underProgress);
+      }
+      catch (SVNException e) {
+        // clear current (may be incomplete; better to detect it and reload on demand)
+        myBranchMap.remove(branchUrl);
+      }
+    }
+  }
+
+  public List<SvnBranchItem> reloadBranches(final String url, final Project project) throws SVNException {
+    final List<SvnBranchItem> result = getBranchesUnderProgress(url, project);
+    myBranchMap.put(url, result);
+
+    return result;
+  }
+
+  public List<SvnBranchItem> getBranches(final String url, final Project project, final boolean underProgress) throws SVNException {
+    List<SvnBranchItem> result = myBranchMap.get(url);
+    if (result != null) {
+      return result;
+    }
+    result = underProgress ? getBranchesUnderProgress(url, project) : getBranchesWithoutProgress(url, project);
+    myBranchMap.put(url, result);
+
+    return result;
+  }
+
+  private static List<SvnBranchItem> getBranchesUnderProgress(final String url, final Project project) throws SVNException {
     final ArrayList<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
     final Ref<SVNException> ex = new Ref<SVNException>();
     boolean rc = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -276,7 +308,7 @@ public class SvnBranchConfiguration {
     return result;
   }
 
-  private static List<SvnBranchItem> getBranchesWithoutProgress(final Project project, final String url) throws SVNException {
+  private static List<SvnBranchItem> getBranchesWithoutProgress(final String url, final Project project) throws SVNException {
     final ArrayList<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
     getBranchesImpl(project, url, result, false);
     return result;
@@ -296,5 +328,19 @@ public class SvnBranchConfiguration {
         }
       });
       Collections.sort(result);
+  }
+
+  public boolean urlsMissing(final SvnBranchConfiguration branch) {
+    if (! Comparing.equal(myTrunkUrl, branch.getTrunkUrl())) {
+      return true;
+    }
+
+    for (String url : branch.getBranchUrls()) {
+      if (! myBranchUrls.contains(url)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

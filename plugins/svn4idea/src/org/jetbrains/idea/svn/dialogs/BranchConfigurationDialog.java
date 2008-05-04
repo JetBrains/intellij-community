@@ -30,8 +30,8 @@ import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -161,11 +161,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
       return;
     }
 
-    final SvnBranchConfiguration clonedConfiguration = configuration.clone();
+    final SvnBranchConfiguration clonedConfiguration = configuration.copy();
     BranchConfigurationDialog dlg = new BranchConfigurationDialog(project, clonedConfiguration, rootUrl);
     dlg.show();
     if (dlg.isOK()) {
-      SvnBranchConfigurationManager.getInstance(project).setConfiguration(vcsRoot, clonedConfiguration);
+      SvnBranchConfigurationManager.getInstance(project).setConfiguration(vcsRoot, clonedConfiguration, true);
     }
   }
 

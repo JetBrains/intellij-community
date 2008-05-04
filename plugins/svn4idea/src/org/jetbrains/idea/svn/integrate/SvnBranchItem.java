@@ -13,9 +13,26 @@ public class SvnBranchItem implements Comparable<SvnBranchItem> {
   private Date myCreationDate;
   private long myRevision;
 
+  // to be serializable
+  public SvnBranchItem() {
+  }
+
   public SvnBranchItem(final String url, final Date creationDate, final long revision) {
     myUrl = url;
+    // descendant can be passed (and is passed) (java.util.Date is not final)
+    myCreationDate = new Date(creationDate.getTime());
+    myRevision = revision;
+  }
+
+  public void setUrl(final String url) {
+    myUrl = url;
+  }
+
+  public void setCreationDate(final Date creationDate) {
     myCreationDate = creationDate;
+  }
+
+  public void setRevision(final long revision) {
     myRevision = revision;
   }
 

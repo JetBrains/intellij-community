@@ -76,7 +76,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     if (configuration == null) {
       configuration = load(vcsRoot);
 
-      setConfiguration(vcsRoot, configuration);
+      setConfiguration(vcsRoot, configuration, false);
     }
     return configuration;
   }
@@ -132,9 +132,16 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     }
   }
 
-  public void setConfiguration(VirtualFile vcsRoot, SvnBranchConfiguration configuration) {
-    myConfigurationBean.myConfigurationMap.put(vcsRoot.getPath(), configuration);
-    
+  public void setConfiguration(VirtualFile vcsRoot, SvnBranchConfiguration configuration, final boolean underProgress) {
+    final String key = vcsRoot.getPath();
+    final SvnBranchConfiguration oldConfiguration = myConfigurationBean.myConfigurationMap.get(key);
+    if ((oldConfiguration == null) || (oldConfiguration.getBranchMap().isEmpty()) || (oldConfiguration.urlsMissing(configuration))) {
+      configuration.loadBranches(myProject, underProgress);
+    } else {
+      configuration.setBranchMap(oldConfiguration.getBranchMap());
+    }
+
+    myConfigurationBean.myConfigurationMap.put(key, configuration);
     SvnBranchMapperManager.getInstance().notifyMappingChanged(myProject, vcsRoot, configuration);
   }
 
