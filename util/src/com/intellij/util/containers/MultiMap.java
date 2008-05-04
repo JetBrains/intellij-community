@@ -16,6 +16,8 @@
 
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
@@ -64,8 +66,10 @@ public class MultiMap<K, V> {
     return false;
   }
 
+  @NotNull
   public Collection<V> get(final K key) {
-    return myMap.get(key);
+    final Collection<V> collection = myMap.get(key);
+    return collection == null ? Collections.<V>emptyList() : collection;
   }
 
   public Set<K> keySet() {

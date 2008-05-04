@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
@@ -23,13 +22,13 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class LegacyCompletionContributor extends CompletionContributor{
+public class LegacyCompletionContributor extends CompletionContributor {
   public static boolean DEBUG = false;
 
-  public void registerCompletionProviders(final CompletionRegistrar registrar) {
+  public LegacyCompletionContributor() {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
-    registrar.extend(CompletionType.BASIC, everywhere, new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+    extend(CompletionType.BASIC, everywhere, new CompletionProvider<CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final PsiFile file = parameters.getOriginalFile();
         final int startOffset = parameters.getOffset();
         final PsiElement lastElement = file.findElementAt(startOffset - 1);

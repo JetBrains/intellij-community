@@ -4,21 +4,52 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.keymap.KeymapUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public abstract class CompletionContributor implements Disposable {
+public abstract class CompletionContributor extends AbstractCompletionContributor<CompletionParameters>{
   public static final ExtensionPointName<CompletionContributor> EP_NAME = ExtensionPointName.create("com.intellij.completion.contributor");
 
-  public abstract void registerCompletionProviders(CompletionRegistrar registrar);
-
+  /**
+   * Invoked before completion is started. Is used mainly for determining custom offsets in editor, and to change default dummy identifier.
+   * @param context
+   */
   public void beforeCompletion(@NotNull CompletionInitializationContext context) {
   }
 
-  public void dispose() {
+  /**
+   * @param parameters
+   * @return text to be shown at the bottom of lookup list
+   */
+  @Nullable
+  public String advertise(@NotNull CompletionParameters parameters) {
+    return null;
   }
+
+  /**
+   *
+   * @param parameters
+   * @return hint text to be shown if no variants are found, typically "No suggestions"
+   */
+  @Nullable
+  public String handleEmptyLookup(@NotNull CompletionParameters parameters) {
+    return null;
+  }
+
+  /**
+   * @param actionId
+   * @return String representation of action shortcut. Useful while advertising something
+   * @see #advertise(CompletionParameters)
+   */
+  protected static String getActionShortcut(@NonNls final String actionId) {
+    return KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
+  }
+
 }

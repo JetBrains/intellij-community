@@ -27,13 +27,13 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   }
 
   public void itemSelected(LookupItem item) {
-    StatisticsManager.getInstance().incUseCount(CompletionRegistrar.STATISTICS_KEY, item, myLocation);
+    StatisticsManager.getInstance().incUseCount(CompletionService.STATISTICS_KEY, item, myLocation);
   }
 
   public Comparable[] getWeight(final LookupItem<?> item) {
     if (item.getUserData(LookupItem.WEIGHT) != null) return item.getUserData(LookupItem.WEIGHT);
 
-    final Comparable[] result = new Comparable[]{WeighingService.weigh(CompletionRegistrar.WEIGHER_KEY, item, myLocation)};
+    final Comparable[] result = new Comparable[]{WeighingService.weigh(CompletionService.WEIGHER_KEY, item, myLocation)};
 
     item.putUserData(LookupItem.WEIGHT, result);
 
@@ -55,7 +55,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private WeighingComparable<LookupElement<?>, CompletionLocation> preselectWeigh(final LookupItem item) {
     WeighingComparable<LookupElement<?>, CompletionLocation> data = item.getUserData(PRESELECT_WEIGHT);
     if (data == null) {
-      item.putUserData(PRESELECT_WEIGHT, data = WeighingService.weigh(CompletionRegistrar.PRESELECT_KEY, (LookupElement<?>)item, myLocation));
+      item.putUserData(PRESELECT_WEIGHT, data = WeighingService.weigh(CompletionService.PRESELECT_KEY, (LookupElement<?>)item, myLocation));
     }
     return data;
   }

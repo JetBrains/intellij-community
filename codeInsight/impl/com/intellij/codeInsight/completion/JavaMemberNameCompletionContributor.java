@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
@@ -14,7 +13,6 @@ import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -22,19 +20,16 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class JavaMemberNameCompletionContributor extends CompletionContributor{
-  @NonNls public static final String VARIABLE_NAME = "VARIABLE_NAME";
-  @NonNls public static final String METHOD_NAME = "METHOD_NAME";
+public class JavaMemberNameCompletionContributor extends CompletionContributor {
   private static final ElementPattern INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeaf(psiElement().withText("?").afterLeaf(psiElement().withText("<")));
 
-
-  public void registerCompletionProviders(final CompletionRegistrar registrar) {
-    registrar.extend(
+  public JavaMemberNameCompletionContributor() {
+    extend(
         CompletionType.BASIC,
         psiElement(PsiIdentifier.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).withParent(
             or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class))),
-        new CompletionProvider<LookupElement, CompletionParameters>() {
-          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+        new CompletionProvider<CompletionParameters>() {
+          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
             final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
@@ -46,9 +41,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor{
             }
           }
         });
-    registrar.extend(
-        CompletionType.BASIC, psiElement(PsiIdentifier.class).withParent(PsiField.class), new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+    extend(
+        CompletionType.BASIC, psiElement(PsiIdentifier.class).withParent(PsiField.class), new CompletionProvider<CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -62,10 +57,10 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor{
         }
       }
     });
-    registrar.extend(
+    extend(
         CompletionType.BASIC, PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)),
-        new CompletionProvider<LookupElement, CompletionParameters>() {
-          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+        new CompletionProvider<CompletionParameters>() {
+          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
             final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {

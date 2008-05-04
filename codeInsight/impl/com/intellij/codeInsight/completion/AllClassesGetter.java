@@ -185,7 +185,7 @@ public class AllClassesGetter {
     myFilter = filter;
   }
 
-  public void getClasses(final PsiElement context, CompletionResultSet<LookupElement> set, boolean afterNew, final int offset,
+  public void getClasses(final PsiElement context, CompletionResultSet set, boolean afterNew, final int offset,
                          final boolean filterByScope) {
     if(context == null || !context.isValid()) return;
 

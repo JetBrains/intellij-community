@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -38,14 +37,13 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class JavaSmartCompletionContributor extends CompletionContributor{
+public class JavaSmartCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaSmartCompletionContributor");
   private static final JavaSmartCompletionData SMART_DATA = new JavaSmartCompletionData();
 
-  public void registerCompletionProviders(final CompletionRegistrar registrar) {
-
-    registrar.extend(CompletionType.SMART, psiElement(), new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+  public JavaSmartCompletionContributor() {
+    extend(CompletionType.SMART, psiElement(), new CompletionProvider<CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
         final PsiElement identifierCopy = parameters.getPosition();
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
@@ -136,7 +134,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
     });
   }
 
-  private static void addExpectedType(final CompletionResultSet<LookupElement> result, final DefaultInsertHandler defaultHandler,
+  private static void addExpectedType(final CompletionResultSet result, final DefaultInsertHandler defaultHandler,
                                       final ExpectedTypeInfo[] expectedInfos, final PsiType type) {
     if (!InheritorsGetter.hasAccessibleConstructor(type)) return;
 

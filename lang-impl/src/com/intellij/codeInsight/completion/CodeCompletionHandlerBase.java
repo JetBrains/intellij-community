@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.impl.CompletionService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -34,7 +35,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.AsyncConsumer;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
@@ -139,7 +141,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType, insertedInfo.getFirst().getStartOffset(),
                                                                              invocationCount);
-    final String adText = CompletionService.getCompletionService().getAdvertisementText(parameters);
+    final String adText = getAdvertisementText(parameters);
 
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst());
 
@@ -193,6 +195,15 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     flushQueue(queue);
+  }
+
+  @Nullable
+  private static String getAdvertisementText(final CompletionParametersImpl parameters) {
+    for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+      final String s = contributor.advertise(parameters);
+      if (s != null) return s;
+    }
+    return null;
   }
 
   private static void flushQueue(final Queue<AWTEvent> queue) {
@@ -373,10 +384,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   @Nullable
   protected LookupData computeLookupData(final PsiElement insertedElement, final CompletionContext context,
-                                         final CompletionParametersImpl parameters, final CompletionProgressIndicator indicator) {
+                                         final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
     final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
-    CompletionService.getCompletionService().performAsyncCompletion(myCompletionType, parameters, new AsyncConsumer<LookupElement>() {
+    CompletionService.getCompletionService().getVariantsFromContributors(CompletionContributor.EP_NAME, parameters, null, new Consumer<LookupElement>() {
       public void consume(final LookupElement lookupElement) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -473,11 +484,14 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Editor editor = context.editor;
 
     LOG.assertTrue(lookupData.items.length == 0);
-    final String text = CompletionService.getCompletionService().getEmptyLookupText(parameters);
-    if (StringUtil.isNotEmpty(text)) {
-      HintManager.getInstance().showErrorHint(editor, text);
-      for (final LightweightHint hint : HintManager.getInstance().getAllHints()) {
-        hint.getComponent().putClientProperty(COMPLETION_EMPTY_MESSAGE, indicator);
+    for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+      final String text = contributor.handleEmptyLookup(parameters);
+      if (StringUtil.isNotEmpty(text)) {
+        HintManager.getInstance().showErrorHint(editor, text);
+        for (final LightweightHint hint : HintManager.getInstance().getAllHints()) {
+          hint.getComponent().putClientProperty(COMPLETION_EMPTY_MESSAGE, indicator);
+        }
+        break;
       }
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);

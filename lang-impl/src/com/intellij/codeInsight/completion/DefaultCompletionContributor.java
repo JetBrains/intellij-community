@@ -4,11 +4,9 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.lang.LangBundle;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import com.intellij.util.ProcessingContext;
 import com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction;
 import com.intellij.codeInsight.hint.actions.ShowImplementationsAction;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,60 +16,56 @@ import java.util.Random;
 /**
  * @author peter
  */
-public class DefaultCompletionContributor extends CompletionContributor{
+public class DefaultCompletionContributor extends CompletionContributor {
 
-  public void registerCompletionProviders(final CompletionRegistrar registrar) {
-    registrar.extend(psiElement(), new CompletionAdvertiser() {
-      public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context) {
-        if (shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE)) {
-          final String shortcut = getShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
-          if (shortcut != null) {
-            return LangBundle.message("completion.replace.ad", shortcut);
-          }
-        }
-
-        final Random random = new Random();
-        if (random.nextInt(5) < 2 && shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC)) {
-          return LangBundle.message("completion.dot.etc.ad");
-        }
-        if (random.nextInt(5) < 2 && shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
-          final String shortcut = getShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT);
-          if (shortcut != null) {
-            return LangBundle.message("completion.smart.enter.ad", shortcut);
-          }
-        }
-
-        if (random.nextInt(5) < 2 &&
-            (shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_FEATURE) || shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE))) {
-          final String shortcut = getShortcut(IdeActions.ACTION_QUICK_JAVADOC);
-          if (shortcut != null) {
-            return LangBundle.message("completion.quick.javadoc.ad", shortcut);
-          }
-        }
-
-        if (shouldShowFeature(parameters, ShowImplementationsAction.CODEASSISTS_QUICKDEFINITION_FEATURE) ||
-            shouldShowFeature(parameters, ShowImplementationsAction.CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE)) {
-          final String shortcut = getShortcut(IdeActions.ACTION_QUICK_IMPLEMENTATIONS);
-          if (shortcut != null) {
-            return LangBundle.message("completion.quick.implementations.ad", shortcut);
-          }
-        }
-
-        if (Calendar.getInstance().get(Calendar.MONTH) == 3 && Calendar.getInstance().get(Calendar.DATE) == 1 ||
-            CompletionData.findPrefixStatic(parameters.getPosition(), parameters.getOffset()).length() > 42) {
-          final int i = random.nextInt(data.length * 5);
-          if (i < data.length) {
-            return new String(data[i]);
-          }
-        }
-
-        return null;
+  public String advertise(@NotNull final CompletionParameters parameters) {
+    if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE)) {
+      final String shortcut = getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
+      if (shortcut != null) {
+        return LangBundle.message("completion.replace.ad", shortcut);
       }
+    }
 
-      public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final ProcessingContext context) {
-        return LangBundle.message("completion.no.suggestions");
+    final Random random = new Random();
+    if (random.nextInt(5) < 2 && CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC)) {
+      return LangBundle.message("completion.dot.etc.ad");
+    }
+    if (random.nextInt(5) < 2 && CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
+      final String shortcut = getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT);
+      if (shortcut != null) {
+        return LangBundle.message("completion.smart.enter.ad", shortcut);
       }
-    });
+    }
+
+    if (random.nextInt(5) < 2 &&
+        (CompletionUtil.shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_FEATURE) || CompletionUtil.shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE))) {
+      final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
+      if (shortcut != null) {
+        return LangBundle.message("completion.quick.javadoc.ad", shortcut);
+      }
+    }
+
+    if (CompletionUtil.shouldShowFeature(parameters, ShowImplementationsAction.CODEASSISTS_QUICKDEFINITION_FEATURE) ||
+        CompletionUtil.shouldShowFeature(parameters, ShowImplementationsAction.CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE)) {
+      final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_IMPLEMENTATIONS);
+      if (shortcut != null) {
+        return LangBundle.message("completion.quick.implementations.ad", shortcut);
+      }
+    }
+
+    if (Calendar.getInstance().get(Calendar.MONTH) == 3 && Calendar.getInstance().get(Calendar.DATE) == 1 ||
+        CompletionData.findPrefixStatic(parameters.getPosition(), parameters.getOffset()).length() > 42) {
+      final int i = random.nextInt(data.length * 5);
+      if (i < data.length) {
+        return new String(data[i]);
+      }
+    }
+
+    return null;
+  }
+
+  public String handleEmptyLookup(@NotNull final CompletionParameters parameters) {
+    return LangBundle.message("completion.no.suggestions");
   }
 
   // So. You've managed to find this and now you can rather easily figure out what's written here. But is it necessary? Won't it be

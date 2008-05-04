@@ -10,13 +10,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class CompletionProvider<T, V extends CompletionParameters> {
-  public static final CompletionProvider EMPTY_PROVIDER = new CompletionProvider() {
-    public void addCompletions(@NotNull final CompletionParameters parameters,
-                               final ProcessingContext context, @NotNull final CompletionResultSet result) {
-    }
-  };
+public abstract class CompletionProvider<V extends CompletionParameters> {
 
-  public abstract void addCompletions(@NotNull V parameters, final ProcessingContext context, @NotNull CompletionResultSet<T> result);
+  public abstract void addCompletions(@NotNull V parameters, final ProcessingContext context, @NotNull CompletionResultSet result);
 
 }

@@ -4,23 +4,21 @@
 package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NotNull;
-import com.intellij.util.AsyncConsumer;
+import com.intellij.codeInsight.lookup.LookupElement;
 
 /**
  * @author peter
  */
-public abstract class CompletionResultSet<Result> {
+public abstract class CompletionResultSet {
   private PrefixMatcher myPrefixMatcher;
+  private final PrefixMatcher myDefaultMatcher;
 
   protected CompletionResultSet(final PrefixMatcher prefixMatcher) {
     myPrefixMatcher = prefixMatcher;
+    myDefaultMatcher = prefixMatcher;
   }
 
-  public abstract void addElement(@NotNull final Result result);
-
-  public abstract void setSuccessorFilter(AsyncConsumer<Result> consumer);
-
-  public abstract void stopHere();
+  public abstract void addElement(@NotNull final LookupElement result);
 
   public void setPrefixMatcher(@NotNull PrefixMatcher matcher) {
     myPrefixMatcher = matcher;

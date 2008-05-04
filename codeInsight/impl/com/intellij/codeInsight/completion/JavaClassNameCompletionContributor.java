@@ -6,7 +6,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class JavaClassNameCompletionContributor extends CompletionContributor{
+public class JavaClassNameCompletionContributor extends CompletionContributor {
   private static final PsiJavaElementPattern.Capture<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(
       psiElement().withText(PsiKeyword.NEW).afterLeaf(PsiKeyword.THROW));
   private static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
@@ -39,9 +38,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
   private static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE = psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(
       PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
 
-  public void registerCompletionProviders(final CompletionRegistrar registrar) {
-    registrar.extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+  public JavaClassNameCompletionContributor() {
+    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         PsiElement insertedElement = parameters.getPosition();
         String prefix = result.toString();
 

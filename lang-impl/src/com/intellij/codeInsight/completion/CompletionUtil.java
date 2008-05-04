@@ -19,6 +19,7 @@ import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
@@ -171,4 +172,7 @@ public class CompletionUtil {
   }
 
 
+  public static boolean shouldShowFeature(final CompletionParameters parameters, @NonNls final String id) {
+    return FeatureUsageTracker.getInstance().isToBeShown(id, parameters.getPosition().getProject());
+  }
 }
