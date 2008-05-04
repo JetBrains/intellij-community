@@ -530,15 +530,19 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkAssignmentExpression(GrAssignmentExpression assignment, AnnotationHolder holder) {
-    IElementType opToken = assignment.getOperationToken();
-    if (opToken == GroovyTokenTypes.mASSIGN) {
-      GrExpression lValue = assignment.getLValue();
-      GrExpression rValue = assignment.getRValue();
-      if (rValue != null) {
-        PsiType lType = lValue.getNominalType();
-        PsiType rType = rValue.getType();
-        if (lType != null && rType != null) {
-          checkAssignability(holder, lType, rType, rValue);
+    GrExpression lValue = assignment.getLValue();
+    if (!PsiUtil.mightBeLVlaue(lValue)) {
+      holder.createErrorAnnotation(lValue, GroovyBundle.message("invalid.lvalue"));
+    } else {
+      IElementType opToken = assignment.getOperationToken();
+      if (opToken == GroovyTokenTypes.mASSIGN) {
+        GrExpression rValue = assignment.getRValue();
+        if (rValue != null) {
+          PsiType lType = lValue.getNominalType();
+          PsiType rType = rValue.getType();
+          if (lType != null && rType != null) {
+            checkAssignability(holder, lType, rType, rValue);
+          }
         }
       }
     }

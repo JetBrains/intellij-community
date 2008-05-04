@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -561,5 +562,19 @@ public class PsiUtil {
     if (parent instanceof GrTypeDefinition) return (PsiClass) parent;
     else if (parent instanceof GroovyFile) return ((GroovyFile) parent).getScriptClass();
     return null;
+  }
+
+  public static boolean mightBeLVlaue(GrExpression expr) {
+    if (expr instanceof GrListOrMap) {
+      GrListOrMap listOrMap = (GrListOrMap) expr;
+      if (listOrMap.isMap()) return false;
+      GrExpression[] initializers = listOrMap.getInitializers();
+      for (GrExpression initializer : initializers) {
+        if (!mightBeLVlaue(initializer)) return false;
+      }
+      return true;
+    }
+    return expr instanceof GrReferenceExpression ||
+        expr instanceof GrIndexProperty;
   }
 }
