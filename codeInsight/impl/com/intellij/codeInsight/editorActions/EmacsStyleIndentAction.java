@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -12,9 +13,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 
 public class EmacsStyleIndentAction extends BaseCodeInsightAction{
@@ -26,7 +26,8 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction{
   }
 
   protected boolean isValidForFile(final Project project, final Editor editor, final PsiFile file) {
-    return file instanceof PsiJavaFile || file instanceof XmlFile;
+    final PsiElement context = file.findElementAt(editor.getCaretModel().getOffset());
+    return context != null && LanguageFormatting.INSTANCE.forContext(context) != null;
   }
 
   //----------------------------------------------------------------------
