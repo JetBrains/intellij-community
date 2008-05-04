@@ -174,32 +174,28 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     LOG.assertTrue(body != null);
     final PsiStatement[] statements = body.getStatements();
     final DuplicatesFinder duplicatesFinder;
-    final PsiElement[] pattern;
+    PsiElement[] pattern = statements;
+    ReturnValue matchedReturnValue = null;
     if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
       final PsiStatement lastStatement = statements[statements.length - 1];
       if (lastStatement instanceof PsiReturnStatement) {
         final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
-        if (returnValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)returnValue).resolve() instanceof PsiVariable) {
-          pattern = new PsiElement[statements.length - 1];
-          System.arraycopy(statements, 0, pattern, 0, statements.length - 1);
+        if (returnValue instanceof PsiReferenceExpression) {
+          final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
+          if (resolved instanceof PsiVariable) {
+            pattern = new PsiElement[statements.length - 1];
+            System.arraycopy(statements, 0, pattern, 0, statements.length - 1);
+            matchedReturnValue = new VariableReturnValue((PsiVariable)resolved);
+          }
         }
-        else {
-          pattern = statements;
-        }
-      }
-      else {
-        pattern = statements;
       }
     } else {
       final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
       if (returnValue != null) {
         pattern = new PsiElement[]{returnValue};
       }
-      else {
-        pattern = statements;
-      }
     }
-    duplicatesFinder = new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()),
+    duplicatesFinder = new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()), matchedReturnValue,
                                             new ArrayList<PsiVariable>());
 
     return duplicatesFinder.findDuplicates(file);

@@ -1,5 +1,6 @@
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -33,11 +34,14 @@ public class DuplicatesFinder {
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints = false;
+  private final ReturnValue myReturnValue;
 
   public DuplicatesFinder(PsiElement[] pattern,
                           List<? extends PsiVariable> parameters,
+                          ReturnValue returnValue,
                           List<? extends PsiVariable> outputParameters
   ) {
+    myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
     myPatternAsList = Arrays.asList(myPattern);
@@ -72,6 +76,12 @@ public class DuplicatesFinder {
     }
     catch (AnalysisCanceledException e) {
     }
+  }
+
+  public DuplicatesFinder(final PsiElement[] pattern,
+                          final List<? extends PsiVariable> psiParameters,
+                          final List<? extends PsiVariable> psiVariables) {
+    this(pattern, psiParameters, null, psiVariables);
   }
 
   private void removeParametersUsedInExitsOnly(PsiElement codeFragment, Collection<PsiStatement> exitStatements, ControlFlow controlFlow, int startOffset, int endOffset) {
@@ -209,7 +219,7 @@ public class DuplicatesFinder {
     return match;
   }
 
-  private static boolean checkPostVariableUsages(final ArrayList<PsiElement> candidates, final Match match) {
+  private boolean checkPostVariableUsages(final ArrayList<PsiElement> candidates, final Match match) {
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(candidates.get(0));
     try {
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeFragment.getProject()).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
@@ -230,7 +240,28 @@ public class DuplicatesFinder {
       ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       final PsiVariable[] outVariables = ControlFlowUtil.getOutputVariables(controlFlow, startOffset, endOffset, exitPoints.toArray());
 
-      if ((match.getReturnValue() != null ? 1 : 0) + outVariables.length > 1) return true;
+      if (outVariables.length > 0) {
+        if (outVariables.length == 1) {
+          ReturnValue returnValue = match.getReturnValue();
+          if (returnValue == null) {
+            returnValue = myReturnValue;
+          }
+          if (returnValue instanceof VariableReturnValue) {
+            final ReturnValue value = match.getOutputVariableValue(((VariableReturnValue)returnValue).getVariable());
+            if (value != null) {
+              if (value.isEquivalent(new VariableReturnValue(outVariables[0]))) return false;
+              if (value instanceof ExpressionReturnValue) {
+                final PsiExpression expression = ((ExpressionReturnValue)value).getExpression();
+                if (expression instanceof PsiReferenceExpression) {
+                  final PsiElement variable = ((PsiReferenceExpression)expression).resolve();
+                  return variable == null || !PsiEquivalenceUtil.areElementsEquivalent(variable, outVariables[0]);
+                }
+              }
+            }
+          }
+        }
+        return true;
+      }
     }
     catch (AnalysisCanceledException e) {
     }
