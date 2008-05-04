@@ -25,6 +25,4 @@ public interface GrTopStatement extends GroovyPsiElement {
 
   GrTopStatement[] EMPTY_ARRAY = new GrTopStatement[0];
 
-
-
 }
