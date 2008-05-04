@@ -144,10 +144,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     ProjectImpl project;
     try {
-      project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(), null);
-      if (useDefaultProjectSettings) {
-        project.getStateStore().loadProjectFromTemplate((ProjectImpl)getDefaultProject());
-      }
+      project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
+                              useDefaultProjectSettings ? getDefaultProject() : null, null);
       project.init();
     }
     catch (final Exception e) {
@@ -160,7 +158,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
-                                    @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException {
+                                    @Nullable Project template, @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException {
     final ProjectImpl project;
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
@@ -174,7 +172,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     try {
-      project.getStateStore().load();
+      if (template != null) {
+        project.getStateStore().loadProjectFromTemplate((ProjectImpl)template);
+      } else {
+        project.getStateStore().load();
+      }
     }
     catch (IOException e) {
       Disposer.dispose(project);
@@ -202,7 +204,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Nullable
   private Project loadProject(String filePath, Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
     filePath = canonicalize(filePath);
-    ProjectImpl project = createProject(filePath, false, false, false, additionalPicoContainerComponents);
+    ProjectImpl project = createProject(filePath, false, false, false, null, additionalPicoContainerComponents);
     try {
       project.init();
     }
@@ -231,9 +233,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
       try {
-        myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null);
+        myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null, null);
         myDefaultProjectRootElement = null;
-        myDefaultProject.getStateStore().load();
         myDefaultProject.init();
       }
       catch (IOException e) {
