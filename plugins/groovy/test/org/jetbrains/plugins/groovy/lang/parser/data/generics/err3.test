@@ -27,6 +27,8 @@ Groovy script
           PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('t')
+      PsiErrorElement:';', '}' or new line expected
+        <empty list>
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')

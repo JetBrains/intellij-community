@@ -20,7 +20,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Field
           PsiElement(identifier)('code')
-      PsiErrorElement:';' or new line expected
+      PsiErrorElement:';', '}' or new line expected
         <empty list>
       PsiWhiteSpace(' ')
       Variable definitions
