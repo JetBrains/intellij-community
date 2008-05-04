@@ -8,8 +8,8 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.JavaAwareFilter;
@@ -92,7 +92,7 @@ public class RerunFailedTestsAction extends AnAction {
                 final Location location = proxy.getLocation(project);
                 if (location != null) {
                   final PsiElement element = location.getPsiElement();
-                  if (element instanceof PsiMethod) {
+                  if (element instanceof PsiMethod && element.isValid()) {
                     final PsiMethod psiMethod = (PsiMethod)element;
                     final PsiClass psiClass = psiMethod.getContainingClass();
                     Collection<PsiMethod> psiMethods = classes.get(psiClass);
