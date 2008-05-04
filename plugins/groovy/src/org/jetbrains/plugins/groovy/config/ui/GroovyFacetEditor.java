@@ -16,8 +16,6 @@
 package org.jetbrains.plugins.groovy.config.ui;
 
 import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.ui.FacetEditorValidator;
-import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -26,10 +24,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.GrailsBundle;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import javax.swing.*;
@@ -163,20 +159,6 @@ public class GroovyFacetEditor {
         super.setEnabled(!myAddNewGdkCb.isSelected() && enabled);
       }
     };
-  }
-
-  private class MyFacetEditorValidator extends FacetEditorValidator {
-    public ValidationResult check() {
-      if (myAddNewGdkCb.isEnabled()) {
-        final Object o = myPathToGroovy.getTextField().getText();
-        if (o != null) {
-          final VirtualFile relativeFile = VfsUtil.findRelativeFile(o.toString(), null);
-          if (relativeFile != null && GroovyConfigUtils.isGroovySdkHome(relativeFile)) return ValidationResult.OK;
-        }
-        return new ValidationResult(GrailsBundle.message("invalid.grails.sdk.path.message"));
-      }
-      return ValidationResult.OK;
-    }
   }
 
   private class MyLibraryListener implements LibraryTable.Listener {
