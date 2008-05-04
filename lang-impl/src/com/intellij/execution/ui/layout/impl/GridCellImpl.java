@@ -43,12 +43,12 @@ public class GridCellImpl implements GridCell, Disposable {
   private GridImpl.Placeholder myPlaceholder;
   private PlaceInGrid myPlaceInGrid;
 
-  private ViewContext myContext;
+  private ViewContextEx myContext;
   private CellTransform.Restore.List myRestoreFromDetach;
   private JBPopup myPopup;
   private boolean myDisposed;
 
-  public GridCellImpl(ViewContext context, GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
+  public GridCellImpl(ViewContextEx context, GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
 
@@ -78,7 +78,7 @@ public class GridCellImpl implements GridCell, Disposable {
         return new UiDecoration(null, new Insets(1, -1, 1, -1));
       }
     });
-    myTabs.setSideComponentVertical(!((ViewContextEx)context).getLayoutSettings().isToolbarHorizontal());
+    myTabs.setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal());
     myTabs.setStealthTabMode(true);
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -92,8 +92,7 @@ public class GridCellImpl implements GridCell, Disposable {
         }
       }
     });
-    myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(RunnerContentUi.VIEW_POPUP),
-                         ViewContext.CELL_POPUP_PLACE, true);
+    rebuildPopupGroup();
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         updateSelection(myTabs.getComponent().isShowing());
@@ -105,6 +104,11 @@ public class GridCellImpl implements GridCell, Disposable {
         }
       }
     });
+  }
+
+  public void rebuildPopupGroup() {
+    myTabs.setPopupGroup(myContext.getCellPopupGroup(ViewContext.CELL_POPUP_PLACE),
+                         ViewContext.CELL_POPUP_PLACE, true);
   }
 
   public PlaceInGrid getPlaceInGrid() {

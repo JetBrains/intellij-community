@@ -23,11 +23,14 @@ public interface LayoutViewOptions {
 
   @NotNull
   LayoutViewOptions setAttractionPolicy(@NotNull String contentId, LayoutAttractionPolicy policy);
+  LayoutViewOptions setConditionAttractionPolicy(@NotNull String condition, LayoutAttractionPolicy policy);
 
   boolean isToFocus(Content content, final String condition);
 
   LayoutViewOptions setToFocus(@Nullable Content content, final String condition);
 
   AnAction getLayoutActions();
+
+  LayoutViewOptions setAdditionalFocusActions(ActionGroup group);
 
 }

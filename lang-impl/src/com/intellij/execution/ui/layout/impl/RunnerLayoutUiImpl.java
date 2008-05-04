@@ -1,7 +1,10 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
+import com.intellij.execution.ui.layout.LayoutStateDefaults;
+import com.intellij.execution.ui.layout.LayoutViewOptions;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -12,10 +15,7 @@ import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,11 +159,8 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return this;
   }
 
-  public void focusStartupContent() {
-    final String toFocus = getLayout().getToFocus(LayoutViewOptions.STARTUP);
-    if (toFocus != null) {
-      selectAndFocus(findContent(toFocus), true);
-    }
+  public void attractBy(@NotNull final String condition) {
+    myContentUI.attractByCondition(condition, true);
   }
 
   public void removeContent(String id, final boolean dispose) {
@@ -206,9 +203,6 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     myContentUI.bounce(content);
   }
 
-  public void attract(@Nullable final Content content) {
-    myContentUI.attract(content);
-  }
 
   public boolean isDisposed() {
     return getContentManager().isDisposed();
@@ -232,6 +226,11 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return this;
   }
 
+  public LayoutViewOptions setConditionAttractionPolicy(@NotNull final String condition, final LayoutAttractionPolicy policy) {
+    myContentUI.setConditionPolicy(condition, policy);
+    return this;
+  }
+
   @NotNull
   public LayoutStateDefaults getDefaults() {
     return this;
@@ -239,6 +238,11 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
 
   @NotNull
   public LayoutViewOptions getOptions() {
+    return this;
+  }
+
+  public LayoutViewOptions setAdditionalFocusActions(final ActionGroup group) {
+    myContentUI.setAdditionalFocusActions(group);
     return this;
   }
 }

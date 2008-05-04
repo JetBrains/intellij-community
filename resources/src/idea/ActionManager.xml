@@ -369,6 +369,7 @@
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction" icon="/debugger/addToWatch.png"/>
+      <action id="Debugger.FocusOnBreakpoint" class="com.intellij.debugger.ui.breakpoints.actions.FocusOnBreakpointAction"/>
 
     </group>
 

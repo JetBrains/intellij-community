@@ -7,9 +7,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.AlertIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 

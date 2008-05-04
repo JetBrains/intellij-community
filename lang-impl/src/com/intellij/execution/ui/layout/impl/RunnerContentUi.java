@@ -1,8 +1,9 @@
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
-import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -73,6 +74,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private RunnerLayoutUi myRunnerUi;
 
   private Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<String, LayoutAttractionPolicy>();
+  private Map<String, LayoutAttractionPolicy> myConditionAttractions = new HashMap<String, LayoutAttractionPolicy>();
+
+  private ActionGroup myAdditonalFocusActions;
+
+  private ActionCallback myInitialized = new ActionCallback();
 
   public RunnerContentUi(Project project,
                          RunnerLayoutUi ui,
@@ -94,6 +100,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myActionsPlace = place;
 
     rebuildCommonActions();
+  }
+
+  public void setAdditionalFocusActions(final ActionGroup group) {
+    myAdditonalFocusActions = group;
+    rebuildTabPopup();
   }
 
   public void setLeftToolbar(ActionGroup group, String place) {
@@ -122,8 +133,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
             return null;
           }
         }).setInnerInsets(new Insets(1, 0, 0, 0));
-    final ActionGroup popup = (ActionGroup)myActionManager.getAction(VIEW_POPUP);
-    myTabs.setPopupGroup(popup, TAB_POPUP_PLACE, true);
+    rebuildTabPopup();
     myTabs.setPaintBorder(-1, 0, 0, 0);
     myTabs.setPaintFocus(false);
     myTabs.setRequestFocusOnLastFocusedComponent(true);
@@ -136,7 +146,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
-        if (!myTabs.getComponent().isShowing()) return;
+         if (!myTabs.getComponent().isShowing()) return;
 
         if (newSelection != null) {
           newSelection.stopAlerting();
@@ -144,6 +154,55 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       }
     });
   }
+
+  int consoleCount;
+
+  private void rebuildTabPopup() {
+    myTabs.setPopupGroup(getCellPopupGroup(TAB_POPUP_PLACE), TAB_POPUP_PLACE, true);
+
+    final ArrayList<GridImpl> grids = getGrids();
+    for (GridImpl each : grids) {
+      each.rebuildTabPopup();
+    }
+
+  }
+
+  public ActionGroup getCellPopupGroup(final String place) {
+    final ActionGroup original = (ActionGroup)myActionManager.getAction(VIEW_POPUP);
+    final ActionGroup focusPlaceholder = (ActionGroup)myActionManager.getAction("Runner.Focus");
+
+    DefaultActionGroup group = new DefaultActionGroup(VIEW_POPUP, original.isPopup());
+
+    final AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(), place, new Presentation(),
+                                                  ActionManager.getInstance(), 0);
+    final AnAction[] originalActions = original.getChildren(event);
+
+
+    for (int i = 0; i < originalActions.length; i++) {
+      final AnAction each = originalActions[i];
+      if (each == focusPlaceholder) {
+        final AnAction[] focusActions = ((ActionGroup)each).getChildren(event);
+        for (AnAction eachFocus : focusActions) {
+          group.add(eachFocus);
+        }
+        if (myAdditonalFocusActions != null) {
+          final AnAction[] addins = myAdditonalFocusActions.getChildren(event);
+          for (AnAction eachAddin : addins) {
+            group.add(eachAddin);
+          }
+        }
+
+      } else {
+        group.add(each);
+      }
+    }
+    return group;
+  }
+
+  public void doWhenInitialized(final Runnable runnable) {
+    myInitialized.doWhenDone(runnable);
+  }
+
 
   public void propertyChange(final PropertyChangeEvent evt) {
     Content content = (Content)evt.getSource();
@@ -155,7 +214,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     final String property = evt.getPropertyName();
     if (Content.PROP_ALERT.equals(property)) {
-      attract(content);
+      attract(content, true);
     } else if (Content.PROP_DISPLAY_NAME.equals(property)
                || Content.PROP_ICON.equals(property)
                || Content.PROP_ACTIONS.equals(property)
@@ -221,19 +280,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         if (isStateBeingRestored()) return;
 
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-          Grid toSelect = findGridFor(event.getContent());
-          GridImpl selected = getSelectedGrid();
-
-          if (selected != null && toSelect != null && selected == toSelect) {
-            select(event.getContent(), true);
-          }
-          else {
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                select(event.getContent(), true);
-              }
-            });
-          }
+          select(event.getContent(), false);
         }
       }
     });
@@ -428,7 +475,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         getGridFor(each).restoreLastUiState().notifyWhenDone(result);
       }
 
-      restoreLastSelectedTab();
+      //restoreLastSelectedTab();
 
       return result;
     }
@@ -591,12 +638,15 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myAttractions.put(contentId, policy);
   }
 
-  private LayoutAttractionPolicy getOrCreatePolicyFor(Content content) {
-    final String id = content.getUserData(ViewImpl.ID);
-    LayoutAttractionPolicy policy = myAttractions.get(id);
+  public void setConditionPolicy(final String condition, final LayoutAttractionPolicy policy) {
+    myConditionAttractions.put(condition, policy);
+  }
+
+  private LayoutAttractionPolicy getOrCreatePolicyFor(String key, Map<String, LayoutAttractionPolicy> map, LayoutAttractionPolicy defaultPolicy) {
+    LayoutAttractionPolicy policy = map.get(key);
     if (policy == null) {
-      policy = new LayoutAttractionPolicy.Bounce();
-      myAttractions.put(id, policy);
+      policy = defaultPolicy;
+      map.put(key, policy);
     }
     return policy;
   }
@@ -616,9 +666,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return null;
   }
 
-  public void attract(final Content content) {
-    getOrCreatePolicyFor(content).attract(content, myRunnerUi);
-  }
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
 
@@ -651,7 +698,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
               public void run() {
                 if (!myWasEverAdded) {
                   myWasEverAdded = true;
-                  ((RunnerLayoutUiImpl)myRunnerUi).focusStartupContent();
+                  attractByCondition(LayoutViewOptions.STARTUP, false);
+                  myInitialized.setDone();
                 }
               }
             });
@@ -668,6 +716,26 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       saveUiState();
     }
   }
+
+  public void attract(final Content content, boolean afterInitialized) {
+    attract(content.getUserData(ViewImpl.ID), myAttractions, new LayoutAttractionPolicy.Bounce(), afterInitialized);
+  }
+
+  public void attractByCondition(String condition, boolean afterInitialized) {
+    attract(myLayoutSettings.getToFocus(condition), myConditionAttractions, new LayoutAttractionPolicy.FocusOnce(), afterInitialized);
+  }
+
+  private void attract(final String contentId, final Map<String, LayoutAttractionPolicy> policyMap, final LayoutAttractionPolicy defaultPolicy, boolean afterInitialized) {
+    myInitialized.processOnDone(new Runnable() {
+      public void run() {
+        Content content = findContent(contentId);
+        if (content == null) return;
+
+         getOrCreatePolicyFor(contentId, policyMap, defaultPolicy).attract(content, myRunnerUi);
+      }
+    }, afterInitialized);
+  }
+
 
   public static boolean ensureValid(JComponent c) {
     if (c.getRootPane() == null) return false;
@@ -829,12 +897,19 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final TabInfo info = myTabs.findInfo(grid);
     if (info == null) return new ActionCallback.Done();
 
+
     final ActionCallback result = new ActionCallback();
-    myTabs.select(info, false).doWhenDone(new Runnable() {
-      public void run() {
+    if (grid.isDetached(content)) {
+      if (requestFocus) {
         grid.select(content, requestFocus).notifyWhenDone(result);
       }
-    });
+    } else {
+      myTabs.select(info, false).doWhenDone(new Runnable() {
+        public void run() {
+          grid.select(content, requestFocus).notifyWhenDone(result);
+        }
+      });
+    }
 
     return result;
   }

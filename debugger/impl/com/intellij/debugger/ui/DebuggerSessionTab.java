@@ -30,10 +30,8 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
-import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -91,6 +89,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private ExecutionEnvironment myEnvironment;
   private RunProfile myConfiguration;
 
+  public static final String BREAKPOINT_CONDITION = "breakpoint";
+
   public DebuggerSessionTab(Project project, String sessionName) {
     myProject = project;
     myManager = new LogFilesManager(project, this);
@@ -99,9 +99,12 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
 
     myUi.getDefaults().initTabDefaults(0, "Debugger", null).
-        initFocusContent(DebuggerContentInfo.FRAME_CONTENT, LayoutViewOptions.STARTUP);
+        initFocusContent(DebuggerContentInfo.FRAME_CONTENT, BREAKPOINT_CONDITION).
+        initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP);
 
-    myUi.getOptions().setAttractionPolicy(DebuggerContentInfo.FRAME_CONTENT, new LayoutAttractionPolicy.FocusOnce());
+    final DefaultActionGroup focus = new DefaultActionGroup();
+    focus.add(ActionManager.getInstance().getAction("Debugger.FocusOnBreakpoint"));
+    myUi.getOptions().setAdditionalFocusActions(focus);
 
     final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -143,8 +146,11 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myFramesPanel = new FramesPanel(getProject(), getContextManager());
 
 
+    final AlertIcon breakpointAlert = new AlertIcon(IconLoader.getIcon("/debugger/breakpointAlert.png"));
+
     Content watches = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchPanel, XDebuggerBundle.message("debugger.session.tab.watches.title"),
                                          XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+    watches.setAlertIcon(breakpointAlert);
     final DefaultActionGroup watchesGroup = new DefaultActionGroup();
     addAction(watchesGroup, DebuggerActions.NEW_WATCH);
     addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
@@ -155,7 +161,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
                                                XDebuggerUIConstants.FRAMES_TAB_ICON, null);
-    framesContent.setAlertIcon(new AlertIcon(IconLoader.getIcon("/debugger/breakpointAlert.png")));
+    framesContent.setAlertIcon(breakpointAlert);
 
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
@@ -171,6 +177,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
     Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
                                       XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
+    vars.setAlertIcon(breakpointAlert);
     final DefaultActionGroup varsGroup = new DefaultActionGroup();
     addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
     varsGroup.add(new WatchLastMethodReturnValueAction());
@@ -441,10 +448,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
   private void attractFramesOnPause(final int event) {
     if (DebuggerSession.EVENT_PAUSE == event) {
-      final Content frames = myUi.findContent(DebuggerContentInfo.FRAME_CONTENT);
-      if (frames != null) {
-        frames.fireAlert();
-      }
+      myUi.attractBy(BREAKPOINT_CONDITION);
     }
   }
 

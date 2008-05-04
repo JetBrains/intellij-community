@@ -362,7 +362,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
         for (Content each : old) {
           removeFromSelection(each);
-          mySelection.clear();
         }
 
         addSelectedContent(content);
@@ -371,7 +370,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     };
 
     if (focused || requestFocus) {
-      myFocusProxy.requestFocus(selection);
+      getFocusManager().requestFocus(myFocusProxy, true).doWhenDone(selection);
     }
     else {
       selection.run();
@@ -464,12 +463,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     assert myContents.contains(toSelect);
 
 
-    IdeFocusManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable(content) {
+    getFocusManager().requestFocus(new ActionCallback.Runnable(content) {
       public ActionCallback run() {
         doRequestFocus(toSelect);
         return new ActionCallback.Done();
       }
     }, forced);
+  }
+
+  private IdeFocusManager getFocusManager() {
+    return IdeFocusManager.getInstance(myProject);
   }
 
   private void doRequestFocus(final Content toSelect) {

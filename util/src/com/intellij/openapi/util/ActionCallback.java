@@ -68,6 +68,15 @@ public class ActionCallback {
     });
   }
 
+  public final ActionCallback processOnDone(java.lang.Runnable runnable, boolean requiresDone) {
+    if (requiresDone) {
+      return doWhenDone(runnable);
+    } else {
+      runnable.run();
+      return this;
+    }
+  }
+
   public static class Done extends ActionCallback {
     public Done() {
       setDone();

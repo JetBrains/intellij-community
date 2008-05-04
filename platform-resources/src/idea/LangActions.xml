@@ -551,9 +551,6 @@
         <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="/actions/cross.png"/>
       </group>
 
-      <group id="Runner.Layout.Focus">
-
-      </group>
 
       <group id="Runner.View.Toolbar">
         <reference ref="Runner.MoveViewToGrid"/>

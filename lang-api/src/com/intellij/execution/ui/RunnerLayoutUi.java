@@ -44,6 +44,8 @@ public interface RunnerLayoutUi  {
 
   void removeListener(@NotNull final ContentManagerListener listener);
 
+  void attractBy(@NotNull String condition);
+
   void bounce(@NotNull Content content);
 
   @NotNull

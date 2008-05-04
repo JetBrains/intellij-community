@@ -41,9 +41,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   };
 
   private boolean myLastUiStateWasRestored;
-  private ViewContext myViewContext;
+  private ViewContextEx myViewContext;
 
-  public GridImpl(ViewContext viewContext, String sessionName) {
+  public GridImpl(ViewContextEx viewContext, String sessionName) {
     myViewContext = viewContext;
     mySessionName = sessionName;
 
@@ -183,6 +183,13 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     return myContent2Cell.get(content);
   }
 
+  public void rebuildTabPopup() {
+    final List<Content> contents = getContents();
+    for (Content each : contents) {
+      findCell(each).rebuildPopupGroup();
+    }
+  }
+
   static class Placeholder extends Wrapper implements NullableComponent {
 
     private JComponent myContent;
@@ -305,7 +312,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
 
-  private boolean isDetached(Content content) {
+  public boolean isDetached(Content content) {
     return getCellFor(content).isDetached();
   }
 
