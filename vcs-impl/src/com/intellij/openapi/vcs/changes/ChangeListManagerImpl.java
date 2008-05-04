@@ -259,7 +259,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myCurrentUpdate = ourUpdateAlarm.schedule(new Runnable() {
       public void run() {
         if (myDisposed) return;
-        if (!myInitialized) {
+        if ((! myInitialized) || (ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning())) {
           scheduleUpdate();
           return;
         }
