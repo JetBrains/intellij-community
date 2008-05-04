@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureCo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -44,6 +45,7 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -57,10 +59,12 @@ public class GroovyConfigUtils {
   private static final String GROOVY_STARTER_FILE_NAME = "groovy";
   public static final String UNDEFINED_VERSION = "undefined";
   public static final String GROOVY_LIB_PATTERN = "groovy-\\d.*";
-  public static final String GRAILS_LIB_PATTERN = "grails-\\d.*";
-  public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
-  public static final String GROOVY_JAR_PATTERN = "groovy-all-\\d.*\\.jar";
+  public static final String GROOVY_JAR_PATTERN = "groovy-all-\\d.*jar";
   public static final String GROOVY_LIB_PREFIX = "groovy-";
+
+  public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
+  public static final String DGM_CLASS_PATH = "org/codehaus/groovy/runtime/DefaultGroovyMethods.class";
+  public static final String CLOSURE_CLASS_PATH = "org/codehaus/groovy/runtime/DefaultGroovyMethods.class";
 
   public static boolean isGroovySdkHome(final VirtualFile file) {
     final Ref<Boolean> result = Ref.create(false);
@@ -134,7 +138,32 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovySdkLibrary(Library library) {
-    return library != null && library.getName() != null && library.getName().matches(GROOVY_LIB_PATTERN);
+    VirtualFile[] classFiles = library.getFiles(OrderRootType.CLASSES);
+    for (VirtualFile file : classFiles) {
+      String path = file.getPath();
+      if (path != null && "jar".equals(file.getExtension())) {
+        path = StringUtil.trimEnd(path, "!/");
+        String name = file.getName();
+        if ((name.matches(GROOVY_JAR_PATTERN) || name.matches(GROOVY_LIB_PATTERN))) {
+          File realFile = new File(path);
+          if (realFile.exists()) {
+            try {
+              JarFile jarFile = new JarFile(realFile);
+              return isGroovyJar(jarFile) && !GrailsConfigUtils.isGrailsSdkLibrary(library);
+            } catch (IOException e) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean isGroovyJar(JarFile jarFile) {
+    return jarFile.getJarEntry(MANIFEST_PATH) != null &&
+        jarFile.getJarEntry(CLOSURE_CLASS_PATH) != null &&
+        jarFile.getJarEntry(DGM_CLASS_PATH) != null;
   }
 
   @Nullable
