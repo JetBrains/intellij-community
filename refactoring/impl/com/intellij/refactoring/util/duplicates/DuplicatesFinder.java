@@ -378,7 +378,8 @@ public class DuplicatesFinder {
       final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)pattern).getQualifier();
       final PsiElement contextClass = qualifier == null ? PsiTreeUtil.getParentOfType(pattern, PsiClass.class) : qualifier.resolve();
       if (candidate instanceof PsiReferenceExpression) {
-        return contextClass instanceof PsiClass && match.registerInstanceExpression(((PsiReferenceExpression)candidate.getParent()).getQualifierExpression(),
+        final PsiElement parent = candidate.getParent();
+        return parent instanceof PsiReferenceExpression && contextClass instanceof PsiClass && match.registerInstanceExpression(((PsiReferenceExpression)parent).getQualifierExpression(),
                                                                                     (PsiClass)contextClass);
       } else if (candidate instanceof PsiThisExpression) {
         final PsiJavaCodeReferenceElement candidateQualifier = ((PsiThisExpression)candidate).getQualifier();
