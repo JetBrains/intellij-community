@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -18,10 +19,10 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
@@ -75,7 +76,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   public boolean verifyValidPackageName() {
     String qName = myTargetPackage.getQualifiedName();
-    if (qName.isEmpty()) {
+    if (StringUtil.isEmpty(qName)) {
       if (hasClasses()) {
         Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.default.package"), "Cannot Move", Messages.getErrorIcon());
         return false;
