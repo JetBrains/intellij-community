@@ -22,20 +22,18 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.List;
 import java.util.EventObject;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -45,18 +43,17 @@ public class DynamicMethodDialog extends DynamicDialog {
   public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
     super(referenceExpression);
 
-    final DItemElement methodElement = getItemElement();
+    assert getSettings().isMethod();
 
-    assert methodElement instanceof DMethodElement;
-
-    setupParameterTable(((DMethodElement) methodElement).getPairs());
-    setupParameterList(((DMethodElement) methodElement).getPairs());
+    final List<MyPair> pairs = getSettings().getPairs();
+    setupParameterTable(pairs);
+    setupParameterList(pairs);
     setTitle(GroovyBundle.message("add.dynamic.method"));
     setUpTypeLabel(GroovyBundle.message("dynamic.method.return.type"));
   }
 
   protected void setUpTableNameLabel(String text) {
-    super.setUpTableNameLabel(getItemElement().getPairs().isEmpty() ? GroovyBundle.message("dynamic.properties.table.no.arguments") : text);
+    super.setUpTableNameLabel(getSettings().getPairs().isEmpty() ? GroovyBundle.message("dynamic.properties.table.no.arguments") : text);
   }
 
   private void setupParameterTable(final List<MyPair> pairs) {
@@ -82,10 +79,6 @@ public class DynamicMethodDialog extends DynamicDialog {
       public void editingCanceled(ChangeEvent e) {
       }
     });
-  }
-
-  protected DMethodElement getItemElement() {
-    return ((DMethodElement) super.getItemElement());
   }
 
   protected boolean isTableVisible() {

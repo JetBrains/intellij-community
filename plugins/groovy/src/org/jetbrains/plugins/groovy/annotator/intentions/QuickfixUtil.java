@@ -17,8 +17,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -154,4 +156,24 @@ public class QuickfixUtil {
   }
 
 
+  public static DynamicElementSettings createSettings(GrReferenceExpression referenceExpression) {
+    DynamicElementSettings settings = new DynamicElementSettings();
+    final PsiClass containingClass = findTargetClass(referenceExpression);
+
+    assert containingClass != null;
+    settings.setContainingClassName(containingClass.getQualifiedName());
+    settings.setName(referenceExpression.getName());
+
+    if (isCall(referenceExpression)) {
+      final PsiType[] types = PsiUtil.getArgumentTypes(referenceExpression, false, false);
+      final String[] names = getMethodArgumentsNames(referenceExpression.getProject(), types);
+      final List<MyPair> pairs = swapArgumentsAndTypes(names, types);
+
+      settings.setMethod(true);
+      settings.setPairs(pairs);
+    } else {
+      settings.setMethod(false);
+    }
+    return settings;
+  }
 }

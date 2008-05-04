@@ -23,6 +23,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 
 import java.util.Collection;
 import java.util.List;
@@ -75,9 +76,9 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
    */
   public abstract void removeDynamicChangeListener(DynamicChangeListener listener);
 
-  public abstract void addProperty(DClassElement classElement, DPropertyElement propertyElement);
+  public abstract void addProperty(DynamicElementSettings settings);
 
-  public abstract void addMethod(DClassElement classElement, DMethodElement methodElement);
+  public abstract void addMethod(DynamicElementSettings settings);
 
   public abstract void removeClassElement(DClassElement classElement);
 
@@ -114,4 +115,6 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   public abstract Iterable<PsiMethod> getMethods(String classQname);
 
   public abstract Iterable<PsiVariable> getProperties(String classQname);
+
+  public abstract DItemElement createDynamicElement(DynamicElementSettings settings);
 }

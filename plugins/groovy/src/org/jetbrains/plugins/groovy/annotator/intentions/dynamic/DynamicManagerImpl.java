@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -78,8 +79,12 @@ public class DynamicManagerImpl extends DynamicManager {
   public void initComponent() {
   }
 
-  public void addProperty(DClassElement classElement, DPropertyElement propertyElement) {
-    if (classElement == null) return;
+  public void addProperty(DynamicElementSettings settings) {
+    assert settings != null;
+    assert !settings.isMethod();
+
+    final DPropertyElement propertyElement = (DPropertyElement) createDynamicElement(settings);
+    final DClassElement classElement = getOrCreateClassElement(myProject, settings.getContainingClassName());
 
     ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch window before adding
     classElement.addProperty(propertyElement);
@@ -180,8 +185,12 @@ public class DynamicManagerImpl extends DynamicManager {
     return res;
   }
 
-  public void addMethod(DClassElement classElement, DMethodElement methodElement) {
-    if (classElement == null) return;
+  public void addMethod(DynamicElementSettings settings) {
+    if (settings == null) return;
+    assert settings.isMethod();
+
+    final DMethodElement methodElement = (DMethodElement) createDynamicElement(settings);
+    final DClassElement classElement = getOrCreateClassElement(myProject, settings.getContainingClassName());
 
     ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch window before adding
     classElement.addMethod(methodElement);
@@ -313,6 +322,8 @@ public class DynamicManagerImpl extends DynamicManager {
 
   public void removeItemElement(DItemElement element) {
     DClassElement classElement = getClassElementByItem(element);
+    if (classElement == null) return;
+    
     if (element instanceof DPropertyElement) {
       removePropertyElement(((DPropertyElement) element));
     } else if (element instanceof DMethodElement) {
@@ -452,5 +463,15 @@ public class DynamicManagerImpl extends DynamicManager {
    */
   public void loadState(Element element) {
     myRootElement = XmlSerializer.deserialize(element, myRootElement.getClass());
+  }
+
+  public DItemElement createDynamicElement(DynamicElementSettings settings) {
+    DItemElement itemElement;
+    if (settings.isMethod()) {
+      itemElement = new DMethodElement(settings.getName(), settings.getType(), settings.getPairs());
+    } else {
+      itemElement = new DPropertyElement(settings.getName(), settings.getType());
+    }
+    return itemElement;
   }
 }

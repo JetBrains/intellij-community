@@ -110,8 +110,11 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       myToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
       myToolWindow.setToHideOnEmptyContent(true);
 
-      buildBigPanel();
-      myToolWindow.getComponent().add(getContentPane());
+      final JPanel panel = buildBigPanel();
+      final JComponent component = myToolWindow.getComponent();
+      if (component != null) {
+        component.add(panel);
+      }
     }
 
     return myToolWindow;
@@ -301,7 +304,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
                 final DClassElement oldClassElement = rootElement.getClassElement(oldClassName);
                 final TreeNode oldClassNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode) myTreeRoot, oldClassElement);
 
-                DynamicManager.getInstance(myProject).replaceClassName(oldClassElement, newClassName);                
+                DynamicManager.getInstance(myProject).replaceClassName(oldClassElement, newClassName);
                 myTreeTableModel.nodeChanged(oldClassNode);
               }
             }
@@ -477,12 +480,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     int idx = myTreeTableModel.getIndexOfChild(parent, child);
     child.removeFromParent();
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
-  }
-
-  private JPanel getContentPane() {
-    getToolWindow();
-
-    return myBigPanel;
   }
 
   public void projectOpened() {

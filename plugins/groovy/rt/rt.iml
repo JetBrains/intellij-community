@@ -5,9 +5,36 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="1.4" jdkType="JavaSDK" />
+    <orderEntry type="jdk" jdkName="1.6" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="groovyj" level="project" />
+    <orderEntry type="module-library">
+      <library name="groovy">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/ant-junit-1.7.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/xstream-1.2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/commons-cli-1.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/servlet-api-2.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/bsf-2.4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/asm-util-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/groovy-1.5.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/xpp3_min-1.1.3.4.O.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/asm-analysis-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/ant-1.7.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/jsp-api-2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/junit-3.8.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/mockobjects-core-0.09.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/commons-logging-1.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/asm-tree-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/jline-0.9.93.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/antlr-2.7.6.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/mx4j-3.0.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/ant-launcher-1.7.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../groovy/groovy-binary-1.5.4/groovy-1.5.4/lib/asm-2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
   <component name="copyright">

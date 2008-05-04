@@ -22,7 +22,9 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialog;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicMethodDialog;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPropertyDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -83,7 +85,25 @@ public class DynamicFix implements IntentionAction {
     dialog.show();
   }
 
+  public void invoke(Project project) throws IncorrectOperationException {
+    final DynamicElementSettings settings = QuickfixUtil.createSettings(myReferenceExpression);
+
+    if (myIsMethod) {
+      DynamicManager.getInstance(project).addMethod(settings);
+    } else {
+      DynamicManager.getInstance(project).addProperty(settings);
+    }
+  }
+
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public boolean isMethod() {
+    return myIsMethod;
+  }
+
+  public GrReferenceExpression getReferenceExpression() {
+    return myReferenceExpression;
   }
 }

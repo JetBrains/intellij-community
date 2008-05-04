@@ -46,6 +46,7 @@
           </value>
         </option>
         <option name="FIELD_NAME_PREFIX" value="my" />
+        <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="true" />
         <ADDITIONAL_INDENT_OPTIONS fileType="">
           <option name="INDENT_SIZE" value="4" />
           <option name="CONTINUATION_INDENT_SIZE" value="8" />
@@ -128,7 +129,12 @@
         <option name="myLocal" value="false" />
       </profile>
     </profiles>
-    <list size="0" />
+    <list size="4">
+      <item index="0" class="java.lang.String" itemvalue="SERVER PROBLEM" />
+      <item index="1" class="java.lang.String" itemvalue="INFO" />
+      <item index="2" class="java.lang.String" itemvalue="WARNING" />
+      <item index="3" class="java.lang.String" itemvalue="ERROR" />
+    </list>
   </component>
   <component name="JavacSettings">
     <option name="DEBUGGING_INFO" value="true" />
@@ -296,7 +302,7 @@
       <module fileurl="file://$PROJECT_DIR$/rt/rt.iml" filepath="$PROJECT_DIR$/rt/rt.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="Project Idea jdk" project-jdk-type="IDEA JDK">
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 7821" project-jdk-type="IDEA JDK">
     <output url="file://$PROJECT_DIR$/classes" />
   </component>
   <component name="ResourceManagerContainer">
@@ -312,6 +318,26 @@
     <option name="GENERATE_NO_WARNINGS" value="false" />
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+  </component>
+  <component name="SvnBranchConfigurationManager">
+    <option name="myConfigurationMap">
+      <map>
+        <entry key="$PROJECT_DIR$">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="branchUrls">
+                <list>
+                  <option value="http://svn.jetbrains.org/idea/BRANCHES" />
+                  <option value="http://svn.jetbrains.org/idea/Test" />
+                  <option value="http://svn.jetbrains.org/idea/TestSSL" />
+                </list>
+              </option>
+              <option name="trunkUrl" value="http://svn.jetbrains.org/idea/Trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="TeamCityRootDirectoryHolder">
     <option name="myRelativeRootDirectory" />
@@ -478,26 +504,6 @@
       <option name="fileLocation" value="1" />
       <option name="useAlternate" value="false" />
     </LanguageOptions>
-  </component>
-  <component name="libraryTable">
-    <library name="groovyj">
-      <CLASSES>
-        <root url="jar://$PROJECT_DIR$/GDK/junit-3.8.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/jsp-api-2.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/groovy-all.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/asm-tree-2.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/commons-cli-1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/servlet-api-2.4.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/openejb-loader-1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/asm-util-2.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/antlr.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/asm-2.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/bsf-2.4.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/GDK/mockobjects-core-0.09.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
   </component>
   <UsedPathMacros>
     <macro name="TEMPLATE" />
