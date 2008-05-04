@@ -163,8 +163,7 @@ public class GrTupleType extends PsiClassType {
   public boolean isAssignableFrom(@NotNull PsiType type) {
     if (type instanceof GrTupleType) {
       PsiType[] otherComponents = ((GrTupleType) type).myComponentTypes;
-      if (otherComponents.length < myComponentTypes.length) return false;
-      for (int i = 0; i < myComponentTypes.length; i++) {
+      for (int i = 0; i < Math.min(myComponentTypes.length, otherComponents.length); i++) {
         PsiType componentType = myComponentTypes[i];
         PsiType otherComponent = otherComponents[i];
         if (otherComponent == null) {
