@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -87,7 +88,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
-      return getTupleType(listOrMap.getInitializers(), listOrMap.getManager(), listOrMap.getResolveScope());
+      return getTupleType(listOrMap.getInitializers(), listOrMap);
     }
 
     private PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap, PsiManager manager, GlobalSearchScope scope) {
@@ -115,12 +116,13 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       return null;
     }
 
-    private PsiClassType getTupleType(GrExpression[] initializers, PsiManager manager, GlobalSearchScope scope) {
+    private PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
       PsiType[] result = new PsiType[initializers.length];
+      boolean isLValue = PsiUtil.isLValue(listOrMap);
       for (int i = 0; i < result.length; i++) {
-        result[i] = initializers[i].getType();
+        result[i] = isLValue ? initializers[i].getNominalType() : initializers[i].getType();
       }
-      return new GrTupleType(result, manager, scope);
+      return new GrTupleType(result, listOrMap.getManager(), listOrMap.getResolveScope());
     }
 
     private PsiType getInitializerType(GrExpression[] initializers) {
