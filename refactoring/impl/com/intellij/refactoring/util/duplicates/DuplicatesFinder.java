@@ -10,6 +10,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -347,8 +348,17 @@ public class DuplicatesFinder {
             PsiClass contextClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
             try {
               final Pair<PsiVariable, PsiType> parameter = patternQualifier.getUserData(PARAMETER);
-              return parameter != null && contextClass != null &&
-                     match.putParameter(parameter, RefactoringUtil.createThisExpression(patternQualifier.getManager(), contextClass));
+
+              if (parameter != null) {
+                final PsiClass thisClass = RefactoringUtil.getThisClass(parameter.first);
+
+                if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
+                  contextClass = thisClass;
+                }
+                return contextClass != null && match.putParameter(parameter, RefactoringUtil.createThisExpression(patternQualifier.getManager(), contextClass));
+              }
+
+              return false;
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
