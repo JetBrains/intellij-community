@@ -19,11 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,13 +43,13 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
     IElementType type = node.getElementType();
 
     if (BLOCK_SET.contains(type) || type == CLOSABLE_BLOCK) {
-      if (isMultiline(element, document)) {
+      if (isMultiline(element)) {
         descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       }
     }
     // comments
     if ((type.equals(mML_COMMENT) || type.equals(GROOVY_DOC_COMMENT)) &&
-        isMultiline(element, document) &&
+        isMultiline(element) &&
         isWellEndedComment(element)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
@@ -69,9 +67,9 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
     return text != null && text.endsWith("*/");
   }
 
-  private boolean isMultiline(PsiElement element, Document document) {
-    final TextRange range = element.getTextRange();
-    return document.getLineNumber(range.getStartOffset()) < document.getLineNumber(range.getEndOffset());
+  private static boolean isMultiline(PsiElement element) {
+    String text = element.getText();
+    return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
   }
 
   public String getPlaceholderText(ASTNode node) {

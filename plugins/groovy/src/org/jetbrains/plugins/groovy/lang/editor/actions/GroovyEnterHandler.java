@@ -33,9 +33,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +124,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         mGDOC_COMMENT_END != type) {
       int lineOffset = document.getLineStartOffset(document.getLineNumber(caret));
       if (lineOffset > caret) return false;
-      String line = text.substring(lineOffset, caret).replaceAll(" ", "");
+      String line = text.substring(lineOffset, caret).replaceAll(" ", "").trim();
       if (!line.startsWith("*") &&
           !line.startsWith(DOC_COMMENT_START) &&
           type != mGDOC_COMMENT_START) {
