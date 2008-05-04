@@ -51,6 +51,11 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
     return null;
   }
 
+  @Nullable
+  public PsiType getDeclaredType() {
+    return null;
+  }
+
   public void accept(GroovyElementVisitor visitor) {
   }
 

@@ -25,4 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public interface GrVariableBase extends PsiVariable, GroovyPsiElement {
   @Nullable
   PsiType getTypeGroovy();
+
+  @Nullable
+  PsiType getDeclaredType();
 }

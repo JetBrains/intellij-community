@@ -40,7 +40,4 @@ public interface GrVariable extends GrVariableBase, GrNamedElement {
 
   @Nullable
   GrTypeElement getTypeElementGroovy();
-
-  @Nullable
-  PsiType getDeclaredType();
 }
