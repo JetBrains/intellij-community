@@ -11,6 +11,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -19,6 +20,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,16 +79,19 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       showErrorMessage(message, project);
       return;
     }
-    AnalysisScope scope = new AnalysisScope(file);
+    final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtil.findModuleForPsiElement(file);
-    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
+    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
                                                                 RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
                                                                 project, scope, module != null ? module.getName() : null, false);
     dlg.show();
     if (dlg.isOK()) {
-      scope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
-
-      invokeOnScope(project, method, scope);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+          invokeOnScope(project, method, dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module));
+        }
+      }, "Locate method duplicates", true, project) ;
     }
   }
 
@@ -100,46 +106,56 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         }
       }
     });
-    if (dupCount[0] == 0) {
-      final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
-                                                       ApplicationNamesInfo.getInstance().getProductName());
-      Messages.showInfoMessage(project, message, REFACTORING_NAME);
-    }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (dupCount[0] == 0) {
+          final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
+                                                           ApplicationNamesInfo.getInstance().getProductName());
+          Messages.showInfoMessage(project, message, REFACTORING_NAME);
+        }
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private static boolean invokeOnElements(final Project project, final PsiFile file, final PsiMethod method) {
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (progressIndicator != null && progressIndicator.isCanceled()) return false;
     final List<Match> duplicates = hasDuplicates(file, method);
     if (duplicates.isEmpty()) return false;
-    final VirtualFile virtualFile = file.getVirtualFile();
-    LOG.assertTrue(virtualFile != null);
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
-    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
-    LOG.assertTrue(editor != null);
-    final int duplicatesNo = duplicates.size();
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    for (final Match match : duplicates) {
-      DuplicatesImpl.highlightMatch(project, editor, match, highlighters);
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final MethodDuplicatesDialog dialog = new MethodDuplicatesDialog(project, method, duplicatesNo);
-      dialog.show();
-      for (final RangeHighlighter rangeHighlighter : highlighters) {
-        HighlightManager.getInstance(project).removeSegmentHighlighter(editor, rangeHighlighter);
-      }
-      if (!dialog.isOK()) return true;
-    }
-    WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
-          public void run() {
-            DuplicatesImpl.invoke(project, editor, new MethodDuplicatesMatchProvider(method, duplicates));
+        final VirtualFile virtualFile = file.getVirtualFile();
+        LOG.assertTrue(virtualFile != null);
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
+        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+        LOG.assertTrue(editor != null);
+        final int duplicatesNo = duplicates.size();
+        final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+        for (final Match match : duplicates) {
+          DuplicatesImpl.highlightMatch(project, editor, match, highlighters);
+        }
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          final MethodDuplicatesDialog dialog = new MethodDuplicatesDialog(project, method, duplicatesNo);
+          dialog.show();
+          for (final RangeHighlighter rangeHighlighter : highlighters) {
+            HighlightManager.getInstance(project).removeSegmentHighlighter(editor, rangeHighlighter);
           }
-        });
-      }
-    }, REFACTORING_NAME, null);
+          if (!dialog.isOK()) return;
+        }
+        WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
+              public void run() {
+                DuplicatesImpl.invoke(project, editor, new MethodDuplicatesMatchProvider(method, duplicates));
+              }
+            });
+          }
+        }, REFACTORING_NAME, null);
 
-    WindowManager.getInstance().getStatusBar(project).setInfo("");
+        WindowManager.getInstance().getStatusBar(project).setInfo("");
+      }
+    }, ModalityState.NON_MODAL);
     return true;
   }
 
