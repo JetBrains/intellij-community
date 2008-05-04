@@ -158,7 +158,6 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
                      "  </plugins>" +
                      "</build>");
 
-
     assertDocumentation("The -source argument for the Java compiler.");
   }
 }

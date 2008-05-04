@@ -8,10 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -86,10 +83,14 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     PsiFile psiFile = getPsiFile(myProjectPom);
 
     PsiElement originalElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
-    PsiElement element = DocumentationManager.getInstance(myProject).findTargetElement(editor, psiFile, originalElement);
+    PsiElement targetElement = DocumentationManager.getInstance(myProject).findTargetElement(editor, psiFile, originalElement);
 
-    DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    assertEquals(expectedText, provider.generateDoc(element, originalElement));
+    DocumentationProvider provider = DocumentationManager.getProviderFromElement(targetElement);
+    assertEquals(expectedText, provider.generateDoc(targetElement, originalElement));
+
+    // should work for lookup as well as for tags
+    PsiElement lookupElement = provider.getDocumentationElementForLookupItem(PsiManager.getInstance(myProject), originalElement.getText(), originalElement);
+    assertSame(targetElement, lookupElement);
   }
 
   protected PsiFile getPsiFile(VirtualFile f) {
