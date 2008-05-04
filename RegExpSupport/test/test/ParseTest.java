@@ -17,9 +17,9 @@ package test;
 
 public class ParseTest extends BaseParseTestcase {
 
-    public void test0() throws Throwable {
-        myFixture.testHighlighting("test0.regexp");
-    }
+    //public void test0() throws Throwable {
+    //    myFixture.testHighlighting("test0.regexp");
+    //}
     public void test1() throws Throwable {
         myFixture.testHighlighting("test1.regexp");
     }

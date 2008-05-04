@@ -16,8 +16,6 @@
 package test;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.application.PathManager;
-
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -32,7 +30,6 @@ import java.util.regex.PatternSyntaxException;
 
 public class MainParseTest extends BaseParseTestcase {
 
-    private static final File OUT = new File("testData/psi/gen");
     private ByteArrayOutputStream myOut;
 
     enum Result {
@@ -53,9 +50,9 @@ public class MainParseTest extends BaseParseTestcase {
     private Map<String, Test> myMap = new LinkedHashMap<String, Test>();
 
     protected void setUp() throws Exception {
-        final Document document = new SAXBuilder().build(new File(PathManager.getPluginsPath()+"/RegExpSupport/testData/RETest.xml"));
+        final Document document = new SAXBuilder().build(new File(getTestDataRoot(), "/RETest.xml"));
         final List<Element> list = XPath.selectNodes(document.getRootElement(), "//test");
-        OUT.mkdirs();
+        new File(getTestDataPath()).mkdirs();
 
         int i = 0;
         for (Element element : list) {
@@ -71,7 +68,7 @@ public class MainParseTest extends BaseParseTestcase {
             final boolean info = "true".equals(element.getAttributeValue("info"));
             myMap.put(name, new Test(result, warn, info));
 
-            final File file = new File(OUT, name);
+            final File file = new File(getTestDataPath(), name);
             file.getParentFile().mkdirs();
 
             final FileWriter stream = new FileWriter(file);
@@ -97,7 +94,7 @@ public class MainParseTest extends BaseParseTestcase {
     }
 
     protected String getTestDataPath() {
-        return OUT.getPath() + "/";
+        return super.getTestDataPath()+"/gen/";
     }
 
     public void testSimple() throws Exception {
@@ -169,7 +166,8 @@ public class MainParseTest extends BaseParseTestcase {
                 myFixture.testHighlighting(test.showWarnings, true, test.showInfo, name);
 
                 if (test.expectedResult == Result.ERR) {
-                    System.out.println("  FAILED. Expression incorrectly parsed OK: " + FileUtil.loadTextAndClose(new FileReader(new File(OUT, name))));
+                    System.out.println("  FAILED. Expression incorrectly parsed OK: " + FileUtil.loadTextAndClose(new FileReader(new File(
+                        getTestDataPath(), name))));
                     failed++;
                 } else {
                     System.out.println("  OK");
@@ -178,7 +176,7 @@ public class MainParseTest extends BaseParseTestcase {
                 if (test.expectedResult == Result.ERR) {
                     System.out.println("  OK");
                 } else {
-                    System.out.println("  FAILED. Expression = " + FileUtil.loadTextAndClose(new FileReader(new File(OUT, name))));
+                    System.out.println("  FAILED. Expression = " + FileUtil.loadTextAndClose(new FileReader(new File(getTestDataPath(), name))));
                     if (myOut.size() > 0) {
                         String line;
                         final BufferedReader reader = new BufferedReader(new StringReader(myOut.toString()));
