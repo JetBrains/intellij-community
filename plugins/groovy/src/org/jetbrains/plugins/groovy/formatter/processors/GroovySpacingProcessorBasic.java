@@ -17,20 +17,17 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import static com.intellij.psi.codeStyle.CodeStyleSettings.END_OF_LINE;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -142,8 +139,9 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return IMPORT_OTHER_SPACING;
     }
 
-    if (VARIABLE_DEFINITION.equals(leftType) ||
-        VARIABLE_DEFINITION.equals(rightNode.getElementType())) {
+    if ((VARIABLE_DEFINITION.equals(leftType) ||
+        VARIABLE_DEFINITION.equals(rightNode.getElementType())) &&
+        !(leftNode.getTreeNext() instanceof PsiErrorElement)) {
       return Spacing.createSpacing(0, 0, 1, false, 100);
     }
 
