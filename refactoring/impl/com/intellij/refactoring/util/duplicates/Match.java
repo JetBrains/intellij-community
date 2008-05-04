@@ -131,7 +131,7 @@ public final class Match {
       if (myInstanceExpression.get() == null) {
         myInstanceExpression.set(instanceExpression);
 
-        return true;
+        return instanceExpression == null;
       }
       else {
         if (instanceExpression != null) {

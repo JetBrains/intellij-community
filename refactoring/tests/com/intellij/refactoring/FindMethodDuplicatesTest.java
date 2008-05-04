@@ -118,7 +118,7 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   }
 
   public void testMappingField2This() throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testMappingLocalVar2Expression() throws Exception {
