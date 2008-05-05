@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -246,9 +247,23 @@ public class TypesUtil {
         }
       }
       return new GrTupleType(components3, manager, tuple1.getScope().intersectWith(tuple2.getResolveScope()));
-    }/* else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
-      PsiParameter[] params1 = ((GrClosureType) type1).getClosureParameterTypes();
-    }*/
+    } else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
+      GrClosureType clType1 = (GrClosureType) type1;
+      GrClosureType clType2 = (GrClosureType) type2;
+      PsiType[] parameterTypes1 = clType1.getClosureParameterTypes();
+      PsiType[] parameterTypes2 = clType2.getClosureParameterTypes();
+      if (parameterTypes1.length == parameterTypes2.length) {
+        PsiType[] paramTypes = new PsiType[parameterTypes1.length];
+        boolean[] opts = new boolean[parameterTypes1.length];
+        for (int i = 0; i < paramTypes.length; i++) {
+          paramTypes[i] = GenericsUtil.getGreatestLowerBound(parameterTypes1[i], parameterTypes2[i]);
+          opts[i] = clType1.isOptionalParameter(i) && clType2.isOptionalParameter(i);
+        }
+        PsiType returnType = getLeastUpperBound(clType1.getClosureReturnType(), clType2.getClosureReturnType(), manager);
+        GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
+        return GrClosureType.create(returnType, paramTypes, opts, manager, scope);
+      }
+    }
 
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
   }

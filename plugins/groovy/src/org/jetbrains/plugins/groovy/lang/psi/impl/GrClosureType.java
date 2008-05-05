@@ -31,14 +31,14 @@ public class GrClosureType extends PsiClassType {
   private GlobalSearchScope myScope;
   private PsiType myReturnType;
   private PsiType[] myParameterTypes;
-  private boolean[] myDefaults;
+  private boolean[] myOptionals;
   private PsiManager myManager;
 
-  private GrClosureType(GlobalSearchScope scope, PsiType returnType, PsiType[] parameters, boolean[] defaults, PsiManager manager) {
+  private GrClosureType(GlobalSearchScope scope, PsiType returnType, PsiType[] parameters, boolean[] optionals, PsiManager manager) {
     myScope = scope;
     myReturnType = returnType;
     myParameterTypes = parameters;
-    myDefaults = defaults;
+    myOptionals = optionals;
     myManager = manager;
     myLanguageLevel = LanguageLevel.JDK_1_5;
   }
@@ -57,7 +57,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public boolean isOptionalParameter(int parameterIndex) {
-    return myDefaults[parameterIndex];
+    return myOptionals[parameterIndex];
   }
 
   public String getClassName() {
@@ -128,6 +128,20 @@ public class GrClosureType extends PsiClassType {
     return myReturnType == null || myReturnType.isValid();
   }
 
+  public boolean isAssignableFrom(@NotNull PsiType type) {
+    if (type instanceof GrClosureType) {
+      GrClosureType other = (GrClosureType) type;
+      if (!myReturnType.isAssignableFrom(other.myReturnType)) return false;
+      if (myParameterTypes.length != other.myParameterTypes.length) return false;
+      for (int i = 0; i < myParameterTypes.length; i++) {
+        if (myOptionals[i] != other.myOptionals[i]) return false;
+        if (!other.myParameterTypes[i].isAssignableFrom(myParameterTypes[i])) return false;
+      }
+      return true;
+    }
+    return super.isAssignableFrom(type);
+  }
+
   public boolean equalsToText(@NonNls String text) {
     return text.equals(GrClosableBlock.GROOVY_LANG_CLOSURE);
   }
@@ -143,7 +157,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrClosureType copy = create(myReturnType, myParameterTypes, myDefaults, myManager, myScope);
+    GrClosureType copy = create(myReturnType, myParameterTypes, myOptionals, myManager, myScope);
     copy.myLanguageLevel = languageLevel;
     return copy;
   }

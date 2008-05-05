@@ -685,7 +685,7 @@ public class GroovyAnnotator implements Annotator {
         if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
           checkMethodApplicability(resolveResult, refExpr, holder);
         } else {
-          checkClosureApplicability(resolveResult, refExpr, holder);
+          checkClosureApplicability(resolveResult, refExpr.getType(), refExpr, holder);
         }
       }
       if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
@@ -897,12 +897,11 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkClosureApplicability(GroovyResolveResult resolveResult, PsiElement place, AnnotationHolder holder) {
+  private void checkClosureApplicability(GroovyResolveResult resolveResult, PsiType type, PsiElement place, AnnotationHolder holder) {
     final PsiElement element = resolveResult.getElement();
     if (!(element instanceof GrVariable)) return;
-    final GrVariable variable = (GrVariable) element;
-    final PsiType type = variable.getTypeGroovy();
     if (!(type instanceof GrClosureType)) return;
+    final GrVariable variable = (GrVariable) element;
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false, true);
     if (argumentTypes == null) return;
 
