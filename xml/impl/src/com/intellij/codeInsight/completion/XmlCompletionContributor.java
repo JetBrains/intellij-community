@@ -93,7 +93,12 @@ public class XmlCompletionContributor extends CompletionContributor {
           for (Pair<String, String> pair : names) {
             final String name = pair.getFirst();
             final String ns = pair.getSecond();
-            final LookupItem item = new LookupItem<String>(name, name);
+            final LookupItem item = new LookupItem<String>(name, name) {
+              public int hashCode() {
+                final int hashCode = name.hashCode() * 239;
+                return ns == null ? hashCode : hashCode + ns.hashCode();
+              }
+            };
             final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, ns, namespacePrefix);
             item.setInsertHandler(insertHandler);
             if (!StringUtil.isEmpty(ns)) {
