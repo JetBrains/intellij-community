@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.Dependency;
-import org.jetbrains.idea.maven.repository.MavenRepositoryException;
-import org.jetbrains.idea.maven.repository.MavenRepositoryManager;
+import org.jetbrains.idea.maven.repository.MavenIndexException;
+import org.jetbrains.idea.maven.repository.MavenIndicesManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,12 +31,12 @@ public abstract class DependencyConverter extends ResolvingConverter<String> {
       String artifactId = dep.getArtifactId().getStringValue();
 
       Project p = context.getModule().getProject();
-      return getVariants(MavenRepositoryManager.getInstance(p), groupId, artifactId);
+      return getVariants(MavenIndicesManager.getInstance(p), groupId, artifactId);
     }
-    catch (MavenRepositoryException e) {
+    catch (MavenIndexException e) {
       return Collections.emptyList();
     }
   }
 
-  protected abstract Set<String> getVariants(MavenRepositoryManager manager, String groupId, String artifactId) throws MavenRepositoryException;
+  protected abstract Set<String> getVariants(MavenIndicesManager manager, String groupId, String artifactId) throws MavenIndexException;
 }

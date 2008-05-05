@@ -7,8 +7,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.repository.MavenRepositoryException;
-import org.jetbrains.idea.maven.repository.MavenRepositoryManager;
+import org.jetbrains.idea.maven.repository.MavenIndexException;
+import org.jetbrains.idea.maven.repository.MavenIndicesManager;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import javax.swing.*;
@@ -110,7 +110,7 @@ public class RepositorySearchDialog extends DialogWrapper {
 
   private void doSearch() {
     try {
-      MavenRepositoryManager m = MavenRepositoryManager.getInstance(myProject);
+      MavenIndicesManager m = MavenIndicesManager.getInstance(myProject);
       final List<ArtifactInfo> result = m.findByArtifactId(mySearchField.getText() + "*");
       final AbstractListModel model = new AbstractListModel() {
         public int getSize() {
@@ -128,7 +128,7 @@ public class RepositorySearchDialog extends DialogWrapper {
         }
       });
     }
-    catch (MavenRepositoryException e) {
+    catch (MavenIndexException e) {
       throw new RuntimeException(e);
     }
   }

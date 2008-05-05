@@ -29,19 +29,19 @@ import org.sonatype.nexus.index.ArtifactInfo;
 import java.io.File;
 import java.util.*;
 
-public class MavenRepositoryManager extends DummyProjectComponent {
-  private static final String LOCAL_INDICES = "local";
-  private static final String PROJECT_INDICIES = "project";
+public class MavenIndicesManager extends DummyProjectComponent {
+  private static final String LOCAL_INDEX = "local";
+  private static final String PROJECT_INDEX = "project";
 
   private MavenEmbedder myEmbedder;
-  private MavenRepositoryIndices myIndices;
+  private MavenIndices myIndices;
   private Project myProject;
 
-  public static MavenRepositoryManager getInstance(Project p) {
-    return p.getComponent(MavenRepositoryManager.class);
+  public static MavenIndicesManager getInstance(Project p) {
+    return p.getComponent(MavenIndicesManager.class);
   }
 
-  public MavenRepositoryManager(Project p) {
+  public MavenIndicesManager(Project p) {
     myProject = p;
   }
 
@@ -57,9 +57,10 @@ public class MavenRepositoryManager extends DummyProjectComponent {
           StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
             public void run() {
               try {
-                ensureHasLocalRepository();
+                checkLocalIndex();
+                checkProjectIndex();
               }
-              catch (MavenRepositoryException e) {
+              catch (MavenIndexException e) {
                 showErrorWhenProjectIsOpen(new MavenException(e));
               }
             }
@@ -76,7 +77,7 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         MavenLog.LOG.warn(e);
-        new MavenImportToolWindow(myProject, "Maven Repository Manager").displayErrors(e);
+        new MavenImportToolWindow(myProject, RepositoryBundle.message("maven.indices")).displayErrors(e);
       }
     });
   }
@@ -84,12 +85,12 @@ public class MavenRepositoryManager extends DummyProjectComponent {
   @TestOnly
   public void initIndex() throws MavenException {
     myEmbedder = MavenFactory.createEmbedderForExecute(getSettings());
-    myIndices = new MavenRepositoryIndices(myEmbedder, getIndicesDir());
+    myIndices = new MavenIndices(myEmbedder, getIndicesDir());
 
     try {
       myIndices.load();
     }
-    catch (MavenRepositoryException e) {
+    catch (MavenIndexException e) {
       new MavenException("Couldn't load Maven Repositories: " + e.getMessage());
     }
   }
@@ -128,55 +129,71 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     FileUtil.delete(getIndicesDir());
   }
 
-  private void ensureHasLocalRepository() throws MavenRepositoryException {
+  private void checkLocalIndex() throws MavenIndexException {
     File localRepoFile = getSettings().getEffectiveLocalRepository();
 
-    MavenRepositoryInfo index = findLocalRepository();
+    MavenIndex index = findLocalIndex();
     if (index == null) {
-      index = new MavenRepositoryInfo(LOCAL_INDICES, localRepoFile.getPath(), false);
+      index = new MavenIndex(LOCAL_INDEX, localRepoFile.getPath(), MavenIndex.Kind.LOCAL);
       myIndices.add(index);
       startUpdate(index);
       return;
     }
 
     if (!index.getRepositoryFile().equals(localRepoFile)) {
-      myIndices.change(index, LOCAL_INDICES, localRepoFile.getPath(), false);
+      myIndices.change(index, LOCAL_INDEX, localRepoFile.getPath());
       startUpdate(index);
     }
   }
 
-  private MavenRepositoryInfo findLocalRepository() {
-    for (MavenRepositoryInfo i : myIndices.getInfos()) {
+  private void checkProjectIndex() throws MavenIndexException {
+    //MavenIndex i = findProjectIndex();
+    //if (i == null) {
+    //  i = new MavenIndex(PROJECT_INDEX, null, MavenIndex.Kind.PROJECT);
+    //  myIndices.add(i);
+    //  startUpdate(i);
+    //}
+  }
+
+  private MavenIndex findLocalIndex() {
+    for (MavenIndex i : myIndices.getIndices()) {
       if (isLocal(i)) return i;
     }
     return null;
   }
 
-  private boolean isLocal(MavenRepositoryInfo i) {
-    return LOCAL_INDICES.equals(i.getId());
+  private MavenIndex findProjectIndex() {
+    for (MavenIndex i : myIndices.getIndices()) {
+      if (isLocal(i)) return i;
+    }
+    return null;
+  }
+
+  private boolean isLocal(MavenIndex i) {
+    return LOCAL_INDEX.equals(i.getId());
   }
 
   public Configurable createConfigurable() {
-    return new MavenRepositoriesConfigurable(myProject, this);
+    return new MavenIndicesConfigurable(myProject, this);
   }
 
   public void save() {
     myIndices.save();
   }
 
-  public void add(MavenRepositoryInfo i) throws MavenRepositoryException {
+  public void add(MavenIndex i) throws MavenIndexException {
     myIndices.add(i);
   }
 
-  public void change(MavenRepositoryInfo i, String id, String repositoryPathOrUrl, boolean isRemote) throws MavenRepositoryException {
-    myIndices.change(i, id, repositoryPathOrUrl, isRemote);
+  public void change(MavenIndex i, String id, String repositoryPathOrUrl) throws MavenIndexException {
+    myIndices.change(i, id, repositoryPathOrUrl);
   }
 
-  public void remove(MavenRepositoryInfo i) throws MavenRepositoryException {
+  public void remove(MavenIndex i) throws MavenIndexException {
     myIndices.remove(i);
   }
 
-  public void startUpdate(MavenRepositoryInfo i) {
+  public void startUpdate(MavenIndex i) {
     doStartUpdate(i);
   }
 
@@ -184,14 +201,14 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     doStartUpdate(null);
   }
 
-  private void doStartUpdate(final MavenRepositoryInfo info) {
-    new Task.Backgroundable(myProject, "Updating Maven Repositories...", true) {
+  private void doStartUpdate(final MavenIndex info) {
+    new Task.Backgroundable(myProject, RepositoryBundle.message("maven.indices.updating"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<MavenRepositoryInfo> infos = info != null ? Collections.singletonList(info) : myIndices.getInfos();
+          List<MavenIndex> infos = info != null ? Collections.singletonList(info) : myIndices.getIndices();
 
-          for (MavenRepositoryInfo each : infos) {
-            indicator.setText("Updating [" + each.getId() + "]");
+          for (MavenIndex each : infos) {
+            indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getId()));
             myIndices.update(each, indicator);
           }
 
@@ -201,7 +218,7 @@ public class MavenRepositoryManager extends DummyProjectComponent {
             }
           });
         }
-        catch (MavenRepositoryException e) {
+        catch (MavenIndexException e) {
           showErrorWhenProjectIsOpen(new MavenException(e));
         }
       }
@@ -213,40 +230,40 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
-  public MavenRepositoryInfo getLocalRepository() {
-    return findLocalRepository();
+  public MavenIndex getLocalIndex() {
+    return findLocalIndex();
   }
 
-  public List<MavenRepositoryInfo> getUserRepositories() {
-    List<MavenRepositoryInfo> result = new ArrayList<MavenRepositoryInfo>();
-    for (MavenRepositoryInfo each : myIndices.getInfos()) {
+  public List<MavenIndex> getUserIndices() {
+    List<MavenIndex> result = new ArrayList<MavenIndex>();
+    for (MavenIndex each : myIndices.getIndices()) {
       if (isLocal(each)) continue;
       result.add(each);
     }
     return result;
   }
 
-  public Set<String> getGroupIds() throws MavenRepositoryException {
+  public Set<String> getGroupIds() throws MavenIndexException {
     return myIndices.getGroupIds();
   }
 
-  public Set<String> getArtifactIds(String groupId) throws MavenRepositoryException {
+  public Set<String> getArtifactIds(String groupId) throws MavenIndexException {
     return myIndices.getArtifactIds(groupId);
   }
 
-  public Set<String> getVersions(String groupId, String artifactId) throws MavenRepositoryException {
+  public Set<String> getVersions(String groupId, String artifactId) throws MavenIndexException {
     return myIndices.getVersions(groupId, artifactId);
   }
 
-  public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenRepositoryException {
+  public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenIndexException {
     return myIndices.findByArtifactId(pattern);
   }
 
-  public List<ArtifactInfo> findByGroupId(String groupId) throws MavenRepositoryException {
+  public List<ArtifactInfo> findByGroupId(String groupId) throws MavenIndexException {
     return myIndices.findByGroupId(groupId);
   }
 
-  public Collection<ArtifactInfo> search(Query q) throws MavenRepositoryException {
+  public Collection<ArtifactInfo> search(Query q) throws MavenIndexException {
     return myIndices.search(q);
   }
 }

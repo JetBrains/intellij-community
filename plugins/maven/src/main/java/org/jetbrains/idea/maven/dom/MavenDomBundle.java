@@ -8,13 +8,13 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
-public class DomBundle {
+public class MavenDomBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
   private static final String BUNDLE = "DomBundle";
 
-  private DomBundle() {
+  private MavenDomBundle() {
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {

@@ -1,12 +1,12 @@
 package org.jetbrains.idea.maven.dom;
 
-import org.jetbrains.idea.maven.repository.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.repository.MavenRepositoryManager;
+import org.jetbrains.idea.maven.repository.MavenIndex;
+import org.jetbrains.idea.maven.repository.MavenIndicesManager;
 import org.jetbrains.idea.maven.repository.MavenWithDataTestFixture;
 
 public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
   private MavenWithDataTestFixture myDataTestFixture;
-  private MavenRepositoryManager myRepositoryManager;
+  private MavenIndicesManager myRepositoryManager;
 
   @Override
   protected void setUp() throws Exception {
@@ -14,10 +14,10 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     myDataTestFixture = new MavenWithDataTestFixture(myDir);
     myDataTestFixture.setUp();
 
-    myRepositoryManager = MavenRepositoryManager.getInstance(myProject);
+    myRepositoryManager = MavenIndicesManager.getInstance(myProject);
     myRepositoryManager.initIndex();
-    myRepositoryManager.add(new MavenRepositoryInfo("local1", myDataTestFixture.getTestDataPath("local1"), false));
-    myRepositoryManager.add(new MavenRepositoryInfo("local2", myDataTestFixture.getTestDataPath("local2"), false));
+    myRepositoryManager.add(new MavenIndex("local1", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL));
+    myRepositoryManager.add(new MavenIndex("local2", myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL));
     myRepositoryManager.startUpdateAll();
   }
 

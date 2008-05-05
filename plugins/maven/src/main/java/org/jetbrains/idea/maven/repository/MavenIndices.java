@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.repository;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.*;
@@ -25,7 +26,7 @@ import org.sonatype.nexus.index.updater.IndexUpdater;
 import java.io.*;
 import java.util.*;
 
-public class MavenRepositoryIndices {
+public class MavenIndices {
   protected static final String INDICES_LIST_FILE = "list.dat";
   private static final String CACHES_DIR = "caches";
   private static final String GROUP_IDS_FILE = "groupIds.dat";
@@ -37,9 +38,9 @@ public class MavenRepositoryIndices {
 
   private IndexUpdater myUpdater;
   private File myIndicesDir;
-  private LinkedHashMap<MavenRepositoryInfo, IndexData> myIndicesData = new LinkedHashMap<MavenRepositoryInfo, IndexData>();
+  private LinkedHashMap<MavenIndex, IndexData> myIndicesData = new LinkedHashMap<MavenIndex, IndexData>();
 
-  public MavenRepositoryIndices(MavenEmbedder e, File indicesDir) {
+  public MavenIndices(MavenEmbedder e, File indicesDir) {
     myEmbedder = e;
     myIndicesDir = indicesDir;
 
@@ -53,7 +54,7 @@ public class MavenRepositoryIndices {
     }
   }
 
-  public void load() throws MavenRepositoryException {
+  public void load() throws MavenIndexException {
     try {
       try {
         File f = getListFile();
@@ -63,21 +64,21 @@ public class MavenRepositoryIndices {
 
         try {
           DataInputStream is = new DataInputStream(fs);
-          myIndicesData = new LinkedHashMap<MavenRepositoryInfo, IndexData>();
+          myIndicesData = new LinkedHashMap<MavenIndex, IndexData>();
           int size = is.readInt();
           while (size-- > 0) {
-            add(new MavenRepositoryInfo(is));
+            add(new MavenIndex(is));
           }
         }
         finally {
           fs.close();
         }
       }
-      catch (Exception e){
-        throw new MavenRepositoryException(e);
+      catch (Exception e) {
+        throw new MavenIndexException(e);
       }
     }
-    catch (MavenRepositoryException e) {
+    catch (MavenIndexException e) {
       closeOpenIndices();
       clearIndices();
 
@@ -94,9 +95,9 @@ public class MavenRepositoryIndices {
       FileOutputStream fs = new FileOutputStream(getListFile());
       try {
         DataOutputStream os = new DataOutputStream(fs);
-        List<MavenRepositoryInfo> infos = getInfos();
+        List<MavenIndex> infos = getIndices();
         os.writeInt(infos.size());
-        for (MavenRepositoryInfo i : infos) {
+        for (MavenIndex i : infos) {
           i.write(os);
         }
       }
@@ -131,7 +132,7 @@ public class MavenRepositoryIndices {
     }
   }
 
-  public void add(MavenRepositoryInfo i) throws MavenRepositoryException {
+  public void add(MavenIndex i) throws MavenIndexException {
     try {
       IndexData data = new IndexData();
       data.context = createContext(i);
@@ -139,51 +140,81 @@ public class MavenRepositoryIndices {
       myIndicesData.put(i, data);
     }
     catch (IOException e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
     catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
   }
 
-  private IndexingContext createContext(MavenRepositoryInfo i) throws IOException, UnsupportedExistingLuceneIndexException {
-    return myIndexer.addIndexingContext(
-        i.getId(),
-        i.getId(),
-        i.getRepositoryFile(),
-        getIndexDir(i),
-        i.getRepositoryUrl(),
-        null, // repo update url
-        NexusIndexer.FULL_INDEX);
+  private IndexingContext createContext(MavenIndex i) throws IOException, UnsupportedExistingLuceneIndexException {
+    return myIndexer
+        .addIndexingContext(i.getId(),
+                            i.getId(),
+                            i.getRepositoryFile(),
+                            getIndexDir(i),
+                            i.getRepositoryUrl(),
+                            null, // repo update url
+                            NexusIndexer.FULL_INDEX);
   }
 
-  private IndexCache createCache(MavenRepositoryInfo i) throws IOException {
+  private IndexCache createCache(MavenIndex i) throws IOException {
     File cacheDir = getCacheDir(i);
     cacheDir.mkdirs();
     return new IndexCache(cacheDir);
   }
 
-  private File getIndexDir(MavenRepositoryInfo i) {
+  private File getIndexDir(MavenIndex i) {
     return new File(myIndicesDir, i.getId());
   }
 
-  private File getCacheDir(MavenRepositoryInfo info) {
+  private File getCacheDir(MavenIndex info) {
     return new File(getIndexDir(info), CACHES_DIR);
   }
 
-  public void change(MavenRepositoryInfo i, String id, String repositoryPathOrUrl, boolean isRemote) throws MavenRepositoryException {
+  public void change(MavenIndex i, String id, String repositoryPathOrUrl) throws MavenIndexException {
     remove(i);
 
-    i.set(id, repositoryPathOrUrl, isRemote);
+    i.set(id, repositoryPathOrUrl, i.getKind());
     add(i);
   }
 
-  public void update(MavenRepositoryInfo i, ProgressIndicator progress) throws MavenRepositoryException {
+  public void update(MavenIndex i, ProgressIndicator progress) throws MavenIndexException {
+    update(i, null, progress);
+  }
+
+  public void update(MavenIndex i, Project project, ProgressIndicator progress) throws MavenIndexException {
     try {
-      if (i.isRemote()) {
+      updateIndexContext(i, project, progress);
+      updateIndexCache(i);
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
+    catch (UnsupportedExistingLuceneIndexException e) {
+      throw new MavenIndexException(e);
+    }
+  }
+
+  private void updateIndexContext(MavenIndex i, Project project, ProgressIndicator progress)
+      throws IOException, UnsupportedExistingLuceneIndexException, MavenIndexException {
+    switch (i.getKind()) {
+      case LOCAL:
+        progress.setIndeterminate(true);
+
+        // NexusIndexer.scan does not overwrite an existing index, so we have to
+        // remove it manually.
+        remove(i);
+        add(i);
+
+        myIndexer.scan(myIndicesData.get(i).context);
+        return;
+      case PROJECT:
+        return;
+      case REMOTE:
         Proxy proxy = myEmbedder.getSettings().getActiveProxy();
         ProxyInfo proxyInfo = null;
-        if(proxy != null) {
+        if (proxy != null) {
           proxyInfo = new ProxyInfo();
           proxyInfo.setHost(proxy.getHost());
           proxyInfo.setPort(proxy.getPort());
@@ -195,28 +226,12 @@ public class MavenRepositoryIndices {
 
         IndexingContext c = myIndicesData.get(i).context;
         myUpdater.fetchAndUpdateIndex(c, new TransferListenerAdapter(progress), proxyInfo);
-      } else {
-        progress.setIndeterminate(true);
-
-        // NexusIndexer.scan does not overwrite an existing index, so we have to
-        // remove it manually.
-        remove(i);
-        add(i);
-
-        myIndexer.scan(myIndicesData.get(i).context);
-      }
-      updateIndexCache(i);
-    }
-    catch (IOException e) {
-      throw new MavenRepositoryException(e);
-    }
-    catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenRepositoryException(e);
+        return;
     }
   }
 
-  private void updateIndexCache(MavenRepositoryInfo info) throws IOException {
-    MavenRepositoryIndices.IndexData data = myIndicesData.get(info);
+  private void updateIndexCache(MavenIndex info) throws IOException {
+    MavenIndices.IndexData data = myIndicesData.get(info);
 
     data.cache.close();
     FileUtil.delete(getCacheDir(info));
@@ -264,13 +279,13 @@ public class MavenRepositoryIndices {
     return result;
   }
 
-  public void remove(MavenRepositoryInfo i) throws MavenRepositoryException {
+  public void remove(MavenIndex i) throws MavenIndexException {
     try {
       closeIndexData(myIndicesData.remove(i));
       FileUtil.delete(getIndexDir(i));
     }
     catch (IOException e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
   }
 
@@ -279,45 +294,45 @@ public class MavenRepositoryIndices {
     data.cache.close();
   }
 
-  public List<MavenRepositoryInfo> getInfos() {
-    return new ArrayList<MavenRepositoryInfo>(myIndicesData.keySet());
+  public List<MavenIndex> getIndices() {
+    return new ArrayList<MavenIndex>(myIndicesData.keySet());
   }
 
-  public List<ArtifactInfo> findByGroupId(String pattern) throws MavenRepositoryException {
+  public List<ArtifactInfo> findByGroupId(String pattern) throws MavenIndexException {
     return doFind(pattern, ArtifactInfo.GROUP_ID);
   }
 
-  public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenRepositoryException {
+  public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenIndexException {
     return doFind(pattern, ArtifactInfo.ARTIFACT_ID);
   }
 
-  private List<ArtifactInfo> doFind(String pattern, String term) throws MavenRepositoryException {
+  private List<ArtifactInfo> doFind(String pattern, String term) throws MavenIndexException {
     try {
       Query q = new WildcardQuery(new Term(term, pattern));
       Collection<ArtifactInfo> result = myIndexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
       return new ArrayList<ArtifactInfo>(result);
     }
     catch (IOException e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
     catch (IndexContextInInconsistentStateException e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
   }
 
-  public Collection<ArtifactInfo> search(Query q) throws MavenRepositoryException {
+  public Collection<ArtifactInfo> search(Query q) throws MavenIndexException {
     try {
       return myIndexer.searchFlat(q);
     }
     catch (IOException e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
     catch (IndexContextInInconsistentStateException e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
   }
 
-  public Set<String> getGroupIds() throws MavenRepositoryException {
+  public Set<String> getGroupIds() throws MavenIndexException {
     return processCaches(new CacheProcessor() {
       public Collection<String> process(final IndexCache cache) throws Exception {
         final Set<String> result = new HashSet<String>();
@@ -333,7 +348,7 @@ public class MavenRepositoryIndices {
     });
   }
 
-  public Set<String> getArtifactIds(final String groupId) throws MavenRepositoryException {
+  public Set<String> getArtifactIds(final String groupId) throws MavenIndexException {
     return processCaches(new CacheProcessor() {
       public Collection<String> process(IndexCache cache) throws Exception {
         return cache.artifactIds.get(groupId);
@@ -341,7 +356,7 @@ public class MavenRepositoryIndices {
     });
   }
 
-  public Set<String> getVersions(final String groupId, final String artifactId) throws MavenRepositoryException {
+  public Set<String> getVersions(final String groupId, final String artifactId) throws MavenIndexException {
     return processCaches(new CacheProcessor() {
       public Collection<String> process(IndexCache cache) throws Exception {
         return cache.versions.get(groupId + ":" + artifactId);
@@ -349,7 +364,7 @@ public class MavenRepositoryIndices {
     });
   }
 
-  private Set<String> processCaches(CacheProcessor p) throws MavenRepositoryException {
+  private Set<String> processCaches(CacheProcessor p) throws MavenIndexException {
     try {
       final Set<String> result = new HashSet<String>();
       for (final IndexData data : myIndicesData.values()) {
@@ -360,7 +375,7 @@ public class MavenRepositoryIndices {
       return result;
     }
     catch (Exception e) {
-      throw new MavenRepositoryException(e);
+      throw new MavenIndexException(e);
     }
   }
 
@@ -385,9 +400,7 @@ public class MavenRepositoryIndices {
     }
 
     private PersistentHashMap<String, List<String>> createPersistentMap(File f) throws IOException {
-      return new PersistentHashMap<String, List<String>>(f,
-                                                         new EnumeratorStringDescriptor(),
-                                                         new EnumeratorListDescriptor());
+      return new PersistentHashMap<String, List<String>>(f, new EnumeratorStringDescriptor(), new EnumeratorListDescriptor());
     }
 
     public void close() throws IOException {
@@ -408,7 +421,7 @@ public class MavenRepositoryIndices {
     public List<String> read(DataInput s) throws IOException {
       List<String> result = new ArrayList<String>();
       int count = s.readInt();
-      while(count-- > 0) {
+      while (count-- > 0) {
         result.add(s.readUTF());
       }
       return result;
