@@ -59,7 +59,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
     }
 
     registerOnTheFlyDetector(StdFileTypes.XML, fileNamePattern, XmlPatterns.xmlFile().withRootTag(XmlPatterns.xmlTag().withName(rootTag)),
-                             convertDetector(detector));
+                             convertDetector(detector), underlyingFacetSelector);
   }
 
   public void registerUniversalDetector(@NotNull final FileType fileType, @NotNull final VirtualFilePattern virtualFilePattern,
@@ -83,11 +83,19 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   public void registerOnTheFlyDetector(@NotNull final FileType fileType, @NotNull final VirtualFilePattern virtualFilePattern,
                        @NotNull final ElementPattern psiFilePattern,
                        @NotNull final FacetDetector<PsiFile, C> facetDetector) {
+    registerOnTheFlyDetector(fileType, virtualFilePattern, psiFilePattern, facetDetector, null);
+  }
+
+  public <U extends FacetConfiguration> void registerOnTheFlyDetector(@NotNull final FileType fileType,
+                                       @NotNull final VirtualFilePattern virtualFilePattern,
+                                       @NotNull final ElementPattern psiFilePattern,
+                                       @NotNull final FacetDetector<PsiFile, C> facetDetector,
+                                       final UnderlyingFacetSelector<VirtualFile, U> selector) {
     registerOnTheFlyDetector(fileType, new MyPatternFilter(virtualFilePattern), new Condition<PsiFile>() {
       public boolean value(final PsiFile psiFile) {
         return psiFilePattern.accepts(psiFile);
       }
-    }, facetDetector);
+    }, facetDetector, selector);
   }
 
 
@@ -106,11 +114,19 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
     }
   }
 
+  public <U extends FacetConfiguration> void registerOnTheFlyDetector(@NotNull final FileType fileType,
+                                                                      @NotNull final VirtualFileFilter virtualFileFilter,
+                                                                      @NotNull final Condition<PsiFile> psiFileFilter,
+                                                                      @NotNull final FacetDetector<PsiFile, C> facetDetector,
+                                                                      @Nullable UnderlyingFacetSelector<VirtualFile, U> selector) {
+    if (myOnTheFlyDelegate != null) {
+      myOnTheFlyDelegate.register(fileType, virtualFileFilter, psiFileFilter, facetDetector, selector);
+    }
+  }
+
   public void registerOnTheFlyDetector(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final Condition<PsiFile> psiFileFilter,
                                        @NotNull final FacetDetector<PsiFile, C> facetDetector) {
-    if (myOnTheFlyDelegate != null) {
-      myOnTheFlyDelegate.register(fileType, virtualFileFilter, psiFileFilter, facetDetector);
-    }
+    registerOnTheFlyDetector(fileType, virtualFileFilter, psiFileFilter, facetDetector, null);
   }
 
   private static class MyPatternFilter implements VirtualFileFilter {

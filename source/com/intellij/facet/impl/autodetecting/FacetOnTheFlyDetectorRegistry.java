@@ -21,6 +21,8 @@ public interface FacetOnTheFlyDetectorRegistry<C extends FacetConfiguration> {
   void register(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter,
                 @NotNull FacetDetector<VirtualFile, C> detector);
 
+  <U extends FacetConfiguration>
   void register(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter,
-                @NotNull Condition<PsiFile> psiFileFilter, @NotNull FacetDetector<PsiFile, C> detector);
+                @NotNull Condition<PsiFile> psiFileFilter, @NotNull FacetDetector<PsiFile, C> detector,
+                final UnderlyingFacetSelector<VirtualFile, U> selector);
 }

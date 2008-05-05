@@ -60,7 +60,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private DisabledAutodetectionInfo myDisabledAutodetectionInfo = new DisabledAutodetectionInfo();
   private final EventDispatcher<ImplicitFacetListener> myImplicitFacetDispatcher = EventDispatcher.create(ImplicitFacetListener.class);
   private boolean myDetectionInProgress;
-  private Set<FacetType<?,?>> myFacetTypesWithDetectors = new THashSet<FacetType<?,?>>();
+  private final Set<FacetType<?,?>> myFacetTypesWithDetectors = new THashSet<FacetType<?,?>>();
   private final EnableAutodetectionWorker myEnableAutodetectionWorker;
 
   public FacetAutodetectingManagerImpl(final Project project, PsiManager psiManager, FacetPointersManager facetPointersManager) {
@@ -146,7 +146,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     if (detectors == null) return;
 
     List<Facet> facets = null;
-    for (FacetDetectorWrapper<?,?,?> detector : detectors) {
+    for (FacetDetectorWrapper<?,?,?,?> detector : detectors) {
       facets = process(virtualFile, detector, facets);
     }
 
@@ -180,7 +180,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     }
   }
 
-  private List<Facet> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ? extends FacetConfiguration, ?> detector,
+  private List<Facet> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ?, ?,?> detector,
                                                          List<Facet> facets) {
     if (!myDetectionInProgress && detector.getVirtualFileFilter().accept(virtualFile)) {
       try {
@@ -331,13 +331,14 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
 
     public void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
       myHasDetectors = true;
-      myDetectors.put(fileType, new FacetByVirtualFileDetectorWrapper<C, F>(fileType, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector));
+      myDetectors.put(fileType, new FacetByVirtualFileDetectorWrapper<C, F, FacetConfiguration>(fileType, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector));
     }
 
-    public void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final Condition<PsiFile> psiFileFilter,
-                         @NotNull final FacetDetector<PsiFile, C> facetDetector) {
+    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,
+                                                        @NotNull final Condition<PsiFile> psiFileFilter, @NotNull final FacetDetector<PsiFile, C> facetDetector,
+                                                        final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;
-      myDetectors.put(fileType, new FacetByPsiFileDetectorWrapper<C, F>(fileType, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector, psiFileFilter));
+      myDetectors.put(fileType, new FacetByPsiFileDetectorWrapper<C, F, U>(fileType, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector, psiFileFilter, selector));
     }
 
     public boolean hasDetectors() {

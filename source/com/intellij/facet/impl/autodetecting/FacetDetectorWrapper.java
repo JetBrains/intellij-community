@@ -11,10 +11,10 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,21 +27,24 @@ import java.util.Map;
 /**
  * @author nik
  */
-public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F extends Facet<C>> {
+public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.FacetDetectorWrapper");
   private final FileType myFileType;
   private final AutodetectionFilter myAutodetectionFilter;
   private final VirtualFileFilter myVirtualFileFilter;
   private final FacetDetector<S,C> myFacetDetector;
+  private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
   private final FacetType<F,C> myFacetType;
 
   protected FacetDetectorWrapper(final FileType fileType, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
-                                 final FacetDetector<S, C> facetDetector) {
+                                 final FacetDetector<S, C> facetDetector,
+                                 final UnderlyingFacetSelector<VirtualFile, U> selector) {
     myFileType = fileType;
     myFacetType = facetType;
     myAutodetectionFilter = autodetectionFilter;
     myVirtualFileFilter = virtualFileFilter;
     myFacetDetector = facetDetector;
+    myUnderlyingFacetSelector = selector;
   }
 
   public FileType getFileType() {
@@ -66,20 +69,19 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
     Facet underlyingFacet = null;
     FacetTypeId underlyingFacetType = myFacetType.getUnderlyingFacetType();
     if (underlyingFacetType != null) {
-      //todo[nik] check that underlying facet implements FacetRootsProvider
-      //noinspection unchecked
-      underlyingFacet = FacetFinder.getInstance(module.getProject()).findFacet(virtualFile, underlyingFacetType);
+      if (myUnderlyingFacetSelector != null) {
+        Map<U, ? extends Facet> underlyingFacets = collectFacets(module, underlyingFacetType);
+        FacetConfiguration undelyingConfiguration =
+            myUnderlyingFacetSelector.selectUnderlyingFacet(virtualFile, Collections.unmodifiableCollection(underlyingFacets.keySet()));
+        underlyingFacet = underlyingFacets.get(undelyingConfiguration);
+      }
       if (underlyingFacet == null) {
         LOG.debug("Underlying " + underlyingFacetType + " facet not found for " + virtualFile.getUrl());
         return null;
       }
     }
 
-    Collection<F> facets = FacetManager.getInstance(module).getFacetsByType(myFacetType.getId());
-    Map<C, F> configurations = new HashMap<C, F>();
-    for (F facet : facets) {
-      configurations.put(facet.getConfiguration(), facet);
-    }
+    Map<C, F> configurations = collectFacets(module, myFacetType.getId());
 
     final C detectedConfiguration = myFacetDetector.detectFacet(source, Collections.unmodifiableCollection(configurations.keySet()));
     if (detectedConfiguration == null) {
@@ -114,6 +116,15 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
         result.setResult(facet);
       }
     }.execute().getResultObject();
+  }
+
+  private static <C extends FacetConfiguration, F extends Facet<C>> Map<C, F> collectFacets(final Module module, final FacetTypeId<F> typeId) {
+    Collection<F> facets = FacetManager.getInstance(module).getFacetsByType(typeId);
+    Map<C, F> configurations = new HashMap<C, F>();
+    for (F facet : facets) {
+      configurations.put(facet.getConfiguration(), facet);
+    }
+    return configurations;
   }
 
   private String generateName(final Module module) {

@@ -20,14 +20,14 @@ import com.intellij.psi.PsiManager;
 /**
  * @author nik
  */
-public class FacetByPsiFileDetectorWrapper<C extends FacetConfiguration, F extends Facet<C>> extends FacetDetectorWrapper<PsiFile, C, F> {
-  private Condition<PsiFile> myPsiFileFilter;
+public class FacetByPsiFileDetectorWrapper<C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> extends FacetDetectorWrapper<PsiFile, C, F, U> {
+  private final Condition<PsiFile> myPsiFileFilter;
 
   public FacetByPsiFileDetectorWrapper(final FileType fileType, FacetType<F, C> facetType,
                                        final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
                                        final FacetDetector<PsiFile, C> facetDetector,
-                                       Condition<PsiFile> psiFileFilter) {
-    super(fileType, facetType, autodetectionFilter, virtualFileFilter, facetDetector);
+                                       Condition<PsiFile> psiFileFilter, final UnderlyingFacetSelector<VirtualFile, U> selector) {
+    super(fileType, facetType, autodetectionFilter, virtualFileFilter, facetDetector, selector);
     myPsiFileFilter = psiFileFilter;
   }
 

@@ -19,11 +19,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class FacetByVirtualFileDetectorWrapper<C extends FacetConfiguration, F extends Facet<C>> extends FacetDetectorWrapper<VirtualFile, C, F> {
+public class FacetByVirtualFileDetectorWrapper<C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> extends FacetDetectorWrapper<VirtualFile, C, F, U> {
   public FacetByVirtualFileDetectorWrapper(final FileType fileType, FacetType<F, C> facetType,
                                            final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
                                            final FacetDetector<VirtualFile, C> facetDetector) {
-    super(fileType, facetType, autodetectionFilter, virtualFileFilter, facetDetector);
+    super(fileType, facetType, autodetectionFilter, virtualFileFilter, facetDetector, null);
   }
 
   @Nullable
