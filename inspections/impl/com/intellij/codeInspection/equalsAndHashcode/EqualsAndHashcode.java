@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * @author max
  */
@@ -20,33 +22,38 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
 
   private PsiMethod myHashCode;
   private PsiMethod myEquals;
+  private JavaPsiFacade myPsiFacade;
+  private AtomicBoolean myInitialized = new AtomicBoolean();
 
   public void projectOpened(Project project) {
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiClass>() {
-          @Nullable
-          public PsiClass compute() {
-            return JavaPsiFacade.getInstance(psiManager.getProject()).findClass("java.lang.Object");
-          }
-        }
-    );
-    if (psiObjectClass != null) {
-      PsiMethod[] methods = psiObjectClass.getMethods();
-      for (PsiMethod method : methods) {
-        @NonNls final String name = method.getName();
-        if ("equals".equals(name)) {
-          myEquals = method;
-        }
-        else if ("hashCode".equals(name)) {
-          myHashCode = method;
-        }
-      }
-    }
+    myPsiFacade = JavaPsiFacade.getInstance(project);
   }
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!myInitialized.getAndSet(true)) {
+      final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiClass>() {
+            @Nullable
+            public PsiClass compute() {
+              return myPsiFacade.findClass("java.lang.Object");
+            }
+          }
+      );
+      if (psiObjectClass != null) {
+        PsiMethod[] methods = psiObjectClass.getMethods();
+        for (PsiMethod method : methods) {
+          @NonNls final String name = method.getName();
+          if ("equals".equals(name)) {
+            myEquals = method;
+          }
+          else if ("hashCode".equals(name)) {
+            myHashCode = method;
+          }
+        }
+      }
+    }
+
     //jdk wasn't configured for the project
     if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return new PsiElementVisitor() {};
 
@@ -102,5 +109,6 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
   public void projectClosed(Project project) {
     myEquals = null;
     myHashCode = null;
+    myPsiFacade = null;
   }
 }

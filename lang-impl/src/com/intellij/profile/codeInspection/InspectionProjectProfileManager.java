@@ -219,7 +219,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void updateStatusBar() {
-    myTogglePopupHintsPanel.updateStatus();
+    if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();
   }
 
 }
