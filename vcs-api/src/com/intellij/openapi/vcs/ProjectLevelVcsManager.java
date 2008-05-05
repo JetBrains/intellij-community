@@ -233,4 +233,6 @@ public abstract class ProjectLevelVcsManager {
 
   @Nullable
   public abstract AbstractVcs findVersioningVcs(VirtualFile file);
+
+  public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 }

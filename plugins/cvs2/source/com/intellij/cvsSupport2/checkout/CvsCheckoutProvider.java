@@ -46,6 +46,11 @@ public class CvsCheckoutProvider implements CheckoutProvider {
                                CvsBundle.message("operation.name.check.out.project"));
     }
 
+    refreshAfterCheckout(listener, selectedElements, checkoutDirectory, useAlternateCheckoutPath);
+  }
+
+  public void refreshAfterCheckout(final Listener listener, final CvsElement[] selectedElements, final File checkoutDirectory,
+                                   final boolean useAlternateCheckoutPath) {
     VirtualFileManager.getInstance().refresh(true, new Runnable() {
       public void run() {
         // shouldn't hold write action when calling this (IDEADEV-20086)

@@ -132,7 +132,8 @@ public class BrowserPanel extends JPanel implements DataProvider {
         }
       };
 
-      new CheckoutAction().actionPerformed(context, checkoutHandler);
+      new CheckoutAction(new CvsElement[]{selectedElement}, myCheckoutHelper.getCheckoutLocation(), false).
+          actionPerformed(context, checkoutHandler);
     }
   }
 

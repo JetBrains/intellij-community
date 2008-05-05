@@ -9,6 +9,7 @@ import com.intellij.cvsSupport2.application.CvsStorageComponent;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsRollbackEnvironment;
+import com.intellij.cvsSupport2.checkout.CvsCheckoutProvider;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -62,6 +63,8 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private final CvsHistoryProvider myCvsHistoryProvider;
   private final CvsCheckinEnvironment myCvsCheckinEnvironment;
+  private final CvsCheckoutProvider myCvsCheckoutProvider;
+  
   private RollbackEnvironment myCvsRollbackEnvironment;
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
@@ -83,6 +86,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     super(project);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
     myCvsCheckinEnvironment = new CvsCheckinEnvironment(getProject());
+    myCvsCheckoutProvider = new CvsCheckoutProvider();
     myCvsStandardOperationsProvider = new CvsStandardOperationsProvider(project);
     myCvsUpdateEnvironment = new CvsUpdateEnvironment(project);
     myCvsStatusEnvironment = new CvsStatusEnvironment(myProject);
@@ -359,5 +363,8 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return child != null && child.isDirectory();
   }
 
+  public CvsCheckoutProvider getCheckoutProvider() {
+    return myCvsCheckoutProvider;
+  }
 }
 
