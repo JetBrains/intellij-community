@@ -17,7 +17,7 @@ static Serializable asd() {
 protected static def getGeneratedFileNames() {
     def foo = 0
     while (true) {
-        Serializable result
+        String result
         Serializable foo1 = 42
         println(foo1)
         foo1 = ""
