@@ -37,6 +37,7 @@ public abstract class ChangeListManager {
 
   public abstract void scheduleUpdate();
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
+  public abstract void invokeAfterUpdate(final Runnable afterUpdate);
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   @NotNull

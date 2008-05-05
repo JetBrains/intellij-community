@@ -56,6 +56,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private static ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater");
 
+  // just markers
+  private final List<Runnable> myWaitingUpdateCompletionQueue;
+
   private ScheduledFuture<?> myCurrentUpdate = null;
 
   private boolean myInitialized = false;
@@ -119,6 +122,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myIgnoredFilesHolder = new VirtualFileHolder(project);
     myLockedFoldersHolder = new VirtualFileHolder(project);
     mySwitchedFilesHolder = new SwitchedFileHolder(project);
+
+    myWaitingUpdateCompletionQueue = new ArrayList<Runnable>();
   }
 
   public void projectOpened() {
@@ -153,13 +158,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public void projectClosed() {
-    myDisposed = true;
     ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
     if (myUpdateChangesProgressIndicator != null) {
       myUpdateChangesProgressIndicator.cancel();
     }
-    cancelUpdates();
+
     synchronized(myPendingUpdatesLock) {
+      myDisposed = true;
+      cancelUpdates();
+      if (! myWaitingUpdateCompletionQueue.isEmpty()) {
+        for (Runnable runnable : myWaitingUpdateCompletionQueue) {
+          invokeWaiter(runnable);
+        }
+        myWaitingUpdateCompletionQueue.clear();
+      }
       waitForUpdateDone(null);
     }
   }
@@ -182,6 +194,25 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void disposeComponent() {
   }
 
+  /**
+   * update itself might produce actions done on AWT thread (invoked-after),
+   * so waiting for its completion on AWT thread is not good
+   *
+   * runnable is invoked on AWT thread
+   */
+  public void invokeAfterUpdate(final Runnable afterUpdate) {
+    if (!myInitialized) return;
+
+    synchronized (myPendingUpdatesLock) {
+      scheduleUpdate(10, true, new Runnable() {
+        public void run() {
+          afterUpdate.run();
+          ChangesViewManager.getInstance(myProject).refreshView();
+        }
+      });
+    }
+  }
+
   public boolean ensureUpToDate(boolean canBeCanceled) {
     if (!myInitialized) return true;
 
@@ -193,7 +224,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
 
         synchronized (myPendingUpdatesLock) {
-          scheduleUpdate(10, true);
+          scheduleUpdate(10, true, null);
           waitForUpdateDone(indicator);
         }
       }
@@ -254,11 +285,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private static class DisposedException extends RuntimeException {}
 
-  private void scheduleUpdate(int millis, final boolean updateUnversionedFiles) {
-    cancelUpdates();
-    myCurrentUpdate = ourUpdateAlarm.schedule(new Runnable() {
+  private void scheduleUpdate(int millis, final boolean updateUnversionedFiles, final Runnable waiter) {
+    final Runnable actualUpdate = new Runnable() {
       public void run() {
-        if (myDisposed) return;
+        synchronized (myPendingUpdatesLock) {
+          if (myDisposed) return;
+        }
         if ((! myInitialized) || (ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning())) {
           scheduleUpdate();
           return;
@@ -266,21 +298,45 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         updateImmediately(updateUnversionedFiles);
       }
-    }, millis, TimeUnit.MILLISECONDS);
+    };
+
+    // synchronized: to do NOT lost future tasks kept in myCurrentUpdate (two threads entered simultaneosly, did cancel, put
+    // new value into myCurrentUpdate twice - one task is scheduled but reference lost)
+    LOG.info("schedule: schedule: before");
+    synchronized (myPendingUpdatesLock) {
+      LOG.info("schedule: schedule: after");
+      if (myDisposed) {
+        // cancel updates scheduling
+        if (waiter != null) {
+          invokeWaiter(waiter);
+        }
+        return;
+      }
+      cancelUpdates();
+
+      // before scheduling the action, put marker
+      if (waiter != null) {
+        myWaitingUpdateCompletionQueue.add(waiter);
+      }
+
+      myCurrentUpdate = ourUpdateAlarm.schedule(actualUpdate, millis, TimeUnit.MILLISECONDS);
+    }
   }
 
   public void scheduleUpdate() {
-    scheduleUpdate(300, true);
+    scheduleUpdate(300, true, null);
   }
 
   public void scheduleUpdate(boolean updateUnversionedFiles) {
-    scheduleUpdate(300, updateUnversionedFiles);
+    scheduleUpdate(300, updateUnversionedFiles, null);
   }
 
   private void updateImmediately(final boolean updateUnversionedFiles) {
+    final Collection<Runnable> updateWaiters = new ArrayList<Runnable>();
     try {
       synchronized (myPendingUpdatesLock) {
         myUpdateInProgress = true;
+        updateWaiters.addAll(myWaitingUpdateCompletionQueue);
       }
 
       if (myDisposed) throw new DisposedException();
@@ -526,6 +582,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myListeners.getMulticaster().changeListUpdateDone();
       synchronized (myPendingUpdatesLock) {
         myUpdateInProgress = false;
+
+        myWaitingUpdateCompletionQueue.removeAll(updateWaiters);
+        
+        // this indicates that at least one update action had completed since the request for it
+        for (Runnable updateWaiter : updateWaiters) {
+          invokeWaiter(updateWaiter);
+        }
+
         myPendingUpdatesLock.notifyAll();
       }
     }
@@ -1217,4 +1281,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myListeners.getMulticaster().changeListCommentChanged(list, oldComment);
   }
 
+  private void invokeWaiter(final Runnable waiter) {
+    ApplicationManager.getApplication().invokeLater(waiter);
+  }
 }

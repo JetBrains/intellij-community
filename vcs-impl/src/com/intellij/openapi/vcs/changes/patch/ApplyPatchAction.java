@@ -43,8 +43,8 @@ import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -272,17 +272,20 @@ public class ApplyPatchAction extends AnAction {
   }
 
   public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList) {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (targetChangeList != changeListManager.getDefaultChangeList()) {
-      changeListManager.ensureUpToDate(false);
-      List<Change> changes = new ArrayList<Change>();
-      for(FilePath file: files) {
-        final Change change = changeListManager.getChange(file);
-        if (change != null) {
-          changes.add(change);
+      changeListManager.invokeAfterUpdate(new Runnable() {
+        public void run() {
+          List<Change> changes = new ArrayList<Change>();
+          for(FilePath file: files) {
+            final Change change = changeListManager.getChange(file);
+            if (change != null) {
+              changes.add(change);
+            }
+          }
+          changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
         }
-      }
-      changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
+      });
     }
   }
 
