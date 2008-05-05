@@ -46,7 +46,6 @@
           </value>
         </option>
         <option name="FIELD_NAME_PREFIX" value="my" />
-        <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="true" />
         <ADDITIONAL_INDENT_OPTIONS fileType="">
           <option name="INDENT_SIZE" value="4" />
           <option name="CONTINUATION_INDENT_SIZE" value="8" />

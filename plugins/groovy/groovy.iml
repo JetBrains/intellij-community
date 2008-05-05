@@ -9,10 +9,10 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
-    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="rt" />
-    <orderEntry type="library" name="groovy" level="application" />
+    <orderEntry type="library" name="groovyj" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
