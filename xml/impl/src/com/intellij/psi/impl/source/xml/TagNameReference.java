@@ -1,5 +1,8 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -129,12 +132,13 @@ public class TagNameReference implements PsiReference {
     return element.getManager().areElementsEquivalent(element, resolve());
   }
 
-  public String[] getVariants(){
+  public Object[] getVariants(){
 
     final PsiElement element = getElement();
     if(!myStartTagFlag){
       if (element instanceof XmlTag) {
-        return new String[]{((XmlTag)element).getName()};
+        return new LookupElement[]{LookupElementFactory.getInstance().createLookupElement(((XmlTag)element).getName()).setAutoCompletionPolicy(
+            AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)};
       } else {
         return new String[0];
       }

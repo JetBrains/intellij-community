@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -37,7 +38,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
               }
             });
             for (final LookupItem item : lookupSet) {
-              result.addElement(item);
+              result.addElement(item.setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE));
             }
           }
         });

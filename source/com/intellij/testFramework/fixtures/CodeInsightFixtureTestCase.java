@@ -5,6 +5,9 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -104,7 +107,10 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
     myFixture.configureByText(fileType, text.replaceAll("\\|", "<caret>"));
     tuneCompletionFile(myFixture.getFile());
     final LookupElement[] elements = myFixture.completeBasic();
-    if (elements != null && elements.length > 0) {
+    if (elements != null && elements.length == 1) {
+      ((LookupImpl)LookupManager.getInstance(getProject()).getActiveLookup()).finishLookup(Lookup.NORMAL_SELECT_CHAR);
+    }
+    else if (elements != null && elements.length > 0) {
       fail(Arrays.toString(elements));
     }
     myFixture.checkResult(resultText.replaceAll("\\|", "<caret>"));

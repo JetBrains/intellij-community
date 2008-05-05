@@ -7,6 +7,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -147,7 +148,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     JavaAwareCompletionData.setShowFQN(item);
 
     if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      item.setAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR, "");
+      item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
     item.setInsertHandler(new AnalyzingInsertHandler(expectedInfos, defaultHandler));

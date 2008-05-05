@@ -39,11 +39,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private boolean myInitialized;
   private int myCount;
 
-  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext completionContext) {
+  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext contextCopy, final CompletionContext contextOriginal) {
     myEditor = editor;
     myHandler = handler;
 
-    final String prefix = CompletionData.findPrefixStatic(parameters.getPosition(), completionContext.getStartOffset());
+    final String prefix = CompletionData.findPrefixStatic(parameters.getPosition(), contextCopy.getStartOffset());
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], prefix, new CompletionPreferencePolicy(
         prefix, parameters), adText);
 
@@ -55,7 +55,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (item == null) return;
 
         myHandler.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
-                                   event.getCompletionChar(), completionContext, new LookupData(myLookup.getItems(), completionContext.getPrefix()));
+                                   event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems(), contextCopy.getPrefix()));
       }
 
       public void lookupCanceled(final LookupEvent event) {

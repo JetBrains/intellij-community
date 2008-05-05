@@ -2,7 +2,7 @@
   <macrodef name="md">
     <attribute name="at"/>
     <sequential>
-      <echo message="@{<caret>}"/>
+      <echo message="@{a<caret>}"/>
     </sequential>
   </macrodef>
   <target name="t"/>

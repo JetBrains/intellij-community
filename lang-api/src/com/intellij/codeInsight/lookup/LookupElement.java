@@ -70,4 +70,6 @@ public interface LookupElement<T> extends UserDataHolder{
   LookupElement<T> setCaseSensitive(boolean caseSensitive);
 
   LookupElement<T> setBold();
+
+  LookupElement<T> setAutoCompletionPolicy(AutoCompletionPolicy policy);
 }

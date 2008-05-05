@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -49,8 +50,8 @@ import java.util.LinkedHashSet;
 
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
-  protected final CompletionType myCompletionType;
-  public static final Key COMPLETION_EMPTY_MESSAGE = Key.create("COMPLETION_EMPTY_MESSAGE");
+  private final CompletionType myCompletionType;
+  private static final Key COMPLETION_EMPTY_MESSAGE = Key.create("COMPLETION_EMPTY_MESSAGE");
 
   protected CodeCompletionHandlerBase(final CompletionType completionType) {
     myCompletionType = completionType;
@@ -144,7 +145,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                                                              invocationCount);
     final String adText = getAdvertisementText(parameters);
 
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst());
+    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst(), context);
 
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
@@ -245,11 +246,17 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (items.length != 1) return false;
 
     final LookupItem item = items[0];
-    if (item.getAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) != null) return false;
-    if (item.getAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR) != null) return true;
+    final AutoCompletionPolicy policy = item.getAutoCompletionPolicy();
+    if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return false;
+    if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return true;
 
-    if (!isAutocompleteOnInvocation()) return false;
-    return context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) == context.getSelectionEndOffset(); //give a chance to use tab
+    if (policy == AutoCompletionPolicy.SETTINGS_DEPENDENT && !isAutocompleteOnInvocation()) return false;
+
+    if (context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) return false;
+    if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;
+
+    if (StringUtil.isEmpty(item.getUserData(CompletionUtil.PREFIX_MATCHER).getPrefix()) && myCompletionType != CompletionType.SMART) return false;
+    return true;
   }
 
   protected void handleSingleItem(final int offset2, final CompletionContext context, final LookupData data,

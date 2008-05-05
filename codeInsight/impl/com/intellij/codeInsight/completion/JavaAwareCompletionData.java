@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.StandardPatterns.character;
@@ -187,6 +188,14 @@ public class JavaAwareCompletionData extends CompletionData{
 
     final Map<Object, Serializable> itemProperties = variant.getItemProperties();
     for (final Object key : itemProperties.keySet()) {
+      if (key == LookupItem.DO_AUTOCOMPLETE_ATTR) {
+        ret.setAutoCompletionPolicy(AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE);
+        continue;
+      } else if (key == LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) {
+        ret.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+        continue;
+      }
+
       if (key == LookupItem.FORCE_SHOW_FQN_ATTR && ret.getObject() instanceof PsiClass) {
         setShowFQN(ret);
       }

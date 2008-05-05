@@ -61,6 +61,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   @NotNull private CompletionCharHandler<T> myCompletionCharHandler = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER;
   private final Set<String> myAllLookupStrings = new THashSet<String>();
   private String myPresentable;
+  private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
 
   public LookupItem(T o, @NotNull @NonNls String lookupString){
     setObject(o);
@@ -190,6 +191,15 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   public LookupItem<T> setBold() {
     setAttribute(HIGHLIGHTED_ATTR, "");
     return this;
+  }
+
+  public LookupItem<T> setAutoCompletionPolicy(final AutoCompletionPolicy policy) {
+    myAutoCompletionPolicy = policy;
+    return this;
+  }
+
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return myAutoCompletionPolicy;
   }
 
   @NotNull
