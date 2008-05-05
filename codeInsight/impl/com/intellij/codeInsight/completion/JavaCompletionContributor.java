@@ -222,11 +222,6 @@ public class JavaCompletionContributor extends CompletionContributor {
           scope = scope.getParent();
         }
       }
-      if(PsiKeyword.DEFAULT.equals(((PsiKeyword)completion).getText())){
-        if (!(position.getParent() instanceof PsiAnnotationMethod)) {
-          item.setTailType(TailType.CASE_COLON);
-        }
-      }
       if(PsiKeyword.SYNCHRONIZED.equals(((PsiKeyword)completion).getText())){
         if (PsiTreeUtil.getParentOfType(position, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock){
           item.setTailType(TailTypes.SYNCHRONIZED_LPARENTH);
