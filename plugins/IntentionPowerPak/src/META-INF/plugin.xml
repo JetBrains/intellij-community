@@ -295,6 +295,10 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithFormatStringIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.concatenation.JoinConcatenatedStringLiteralsIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

@@ -1,5 +1,0 @@
-public class X {
-  String f() {
-    return <spot>"1" + "2"</spot>;
-  }
-}
