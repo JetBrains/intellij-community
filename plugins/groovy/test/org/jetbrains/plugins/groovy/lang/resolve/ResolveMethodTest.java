@@ -447,4 +447,9 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("defaultOverloaded3/A.groovy").getElement();
     assertNotNull(ref.resolve());
   }
+
+  public void testMultipleAssignment1() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("multipleAssignment1/A.groovy").getElement();
+    assertNotNull(ref.resolve());
+  }
 }

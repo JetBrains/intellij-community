@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
@@ -57,9 +58,33 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
   }
 
   private GrExpression getInitializer(PsiElement element) {
-    if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null &&
-          element.getParent() instanceof GrAssignmentExpression) {
-        return ((GrAssignmentExpression) element.getParent()).getRValue();
+    if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {
+      if (element.getParent() instanceof GrAssignmentExpression) {
+          return ((GrAssignmentExpression) element.getParent()).getRValue();
+      } else if (element.getParent() instanceof GrListOrMap) {
+        GrListOrMap list = (GrListOrMap) element.getParent();
+        if (list.getParent() instanceof GrAssignmentExpression) {
+          GrAssignmentExpression assignment = (GrAssignmentExpression) list.getParent(); //multiple assignment
+          if (assignment.getRValue() instanceof GrListOrMap) {
+            GrListOrMap rList = (GrListOrMap) assignment.getRValue();
+            if (rList != null && !rList.isMap()) {
+              int idx = -1;
+              GrExpression[] initializers = list.getInitializers();
+              for (int i = 0; i < initializers.length; i++) {
+                GrExpression initializer = initializers[i];
+                if (element == initializer) {
+                   idx = i;
+                  break;
+                }
+              }
+              if (idx >= 0) {
+                GrExpression[] rInitializers = rList.getInitializers();
+                if (idx < rInitializers.length) return rInitializers[idx];
+              }
+            }
+          }
+        }
+      }
     } else if (element instanceof GrVariable && !(element instanceof GrParameter)) {
       return ((GrVariable) element).getInitializerGroovy();
     }
