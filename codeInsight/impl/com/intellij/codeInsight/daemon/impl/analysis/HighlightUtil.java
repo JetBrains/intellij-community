@@ -366,7 +366,7 @@ public class HighlightUtil {
     return errorResult;
   }
 
-  private static IElementType convertEQtoOperation(IElementType eqOpSign) {
+  public static IElementType convertEQtoOperation(IElementType eqOpSign) {
     IElementType opSign = null;
     if (eqOpSign == JavaTokenType.ANDEQ) {
       opSign = JavaTokenType.AND;

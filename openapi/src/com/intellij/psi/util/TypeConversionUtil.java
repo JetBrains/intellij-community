@@ -405,6 +405,10 @@ public class TypeConversionUtil {
     if (lOperand == null || rOperand == null) return true;
     final PsiType ltype = lOperand.getType();
     final PsiType rtype = rOperand.getType();
+    return isBinaryOperatorApplicable(tokenType, ltype, rtype, strict);
+  }
+
+  public static boolean isBinaryOperatorApplicable(final IElementType tokenType, final PsiType ltype, final PsiType rtype, final boolean strict) {
     if (ltype == null || rtype == null) return true;
     int resultTypeRank = BOOL_RANK;
     boolean isApplicable = false;
@@ -495,7 +499,10 @@ public class TypeConversionUtil {
   public static boolean isUnaryOperatorApplicable(PsiJavaToken token, PsiExpression operand) {
     if (operand == null) return false;
     PsiType type = operand.getType();
-    if (type == null) return false;
+    return type != null && isUnaryOperatorApplicable(token, type);
+  }
+
+  public static boolean isUnaryOperatorApplicable(final PsiJavaToken token, final PsiType type) {
     IElementType i = token.getTokenType();
     int typeRank = getTypeRank(type);
     if (i == JavaTokenType.MINUSMINUS || i == JavaTokenType.PLUSPLUS) {
