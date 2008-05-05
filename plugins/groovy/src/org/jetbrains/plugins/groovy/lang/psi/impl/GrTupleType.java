@@ -37,6 +37,7 @@ public class GrTupleType extends PsiClassType {
     myComponentTypes = componentTypes;
     myManager = manager;
     myScope = scope;
+    myLanguageLevel = LanguageLevel.JDK_1_5;
   }
 
   @Nullable
