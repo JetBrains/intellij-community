@@ -54,6 +54,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component[] myFocusOwners = new Component[0];
 
   private String myAd;
+  private boolean myFocusable = true;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -104,6 +105,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
+  public ComponentPopupBuilder setFocusable(final boolean focusable) {
+    myFocusable = focusable;
+    return this;
+  }
+
+  @NotNull
   public ComponentPopupBuilder setForceHeavyweight(final boolean forceHeavyweight) {
     myForceHeavyweight = forceHeavyweight;
     return this;
@@ -143,7 +150,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @NotNull
   public JBPopup createPopup() {
-    final JBPopupImpl popup = new JBPopupImpl(myProject, myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
+    final JBPopupImpl popup = new JBPopupImpl(myProject, myComponent, myPrefferedFocusedComponent, myRequestFocus, myFocusable, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,

@@ -43,6 +43,9 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setRequestFocus(boolean requestFocus);
 
   @NotNull
+  ComponentPopupBuilder setFocusable(boolean focusable);
+
+  @NotNull
   ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition);
 
   @NotNull

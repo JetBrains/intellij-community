@@ -259,7 +259,7 @@ public class GridCellImpl implements GridCell, Disposable {
     }
 
     if (!isRestoringFromDetach() && myContainer.getTab().isDetached(myPlaceInGrid)) {
-      detach().notifyWhenDone(result);
+      _detach(!myContext.isStateBeingRestored()).notifyWhenDone(result);
     } else {
       result.setDone();
     }
@@ -338,6 +338,10 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   public ActionCallback detach() {
+    return _detach(true);
+  }
+
+  private ActionCallback _detach(final boolean requestFocus) {
     myContext.saveUiState();
 
     final DimensionService dimService = DimensionService.getInstance();
@@ -360,9 +364,9 @@ public class GridCellImpl implements GridCell, Disposable {
         myContext.validate(myContents.getKeys().iterator().next(), new ActionCallback.Runnable() {
           public ActionCallback run() {
             if (!myTabs.getComponent().isShowing()) {
-              detachTo(targetBounds.getLocation(), targetBounds.getSize(), false).notifyWhenDone(result);
+              detachTo(targetBounds.getLocation(), targetBounds.getSize(), false, requestFocus).notifyWhenDone(result);
             } else {
-              detachForShowingTabs().notifyWhenDone(result);
+              detachForShowingTabs(requestFocus).notifyWhenDone(result);
             }
 
             return new ActionCallback.Done();
@@ -373,16 +377,16 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     }
 
-    detachTo(targetBounds.getLocation(), targetBounds.getSize(), false).notifyWhenDone(result);
+    detachTo(targetBounds.getLocation(), targetBounds.getSize(), false, requestFocus).notifyWhenDone(result);
 
     return result;
   }
 
-  private ActionCallback detachForShowingTabs() {
-    return detachTo(myTabs.getComponent().getLocationOnScreen(), myTabs.getComponent().getSize(), false);
+  private ActionCallback detachForShowingTabs(boolean requestFocus) {
+    return detachTo(myTabs.getComponent().getLocationOnScreen(), myTabs.getComponent().getSize(), false, requestFocus);
   }
 
-  private ActionCallback detachTo(Point screenPoint, Dimension size, boolean dragging) {
+  private ActionCallback detachTo(Point screenPoint, Dimension size, boolean dragging, final boolean requestFocus) {
     if (isDetached()) return new ActionCallback.Done();
 
     final Content[] contents = getContents();
@@ -398,7 +402,7 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     });
 
-    myPopup = createPopup(dragging);
+    myPopup = createPopup(dragging, requestFocus);
     myPopup.setSize(size);
     myPopup.setLocation(screenPoint);
     myPopup.show(myContext.getContentManager().getComponent());
@@ -416,13 +420,14 @@ public class GridCellImpl implements GridCell, Disposable {
     }
   }
 
-  private JBPopup createPopup(boolean dragging) {
+  private JBPopup createPopup(boolean dragging, final boolean requestFocus) {
     Wrapper wrapper = new Wrapper(myTabs.getComponent());
     wrapper.setBorder(new EmptyBorder(1, 0, 0, 0));
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(wrapper, myTabs.getComponent())
       .setTitle(myContainer.getSessionName())
       .setMovable(true)
-      .setRequestFocus(true)
+      .setRequestFocus(requestFocus)
+      .setFocusable(true)
       .setResizable(true)
       .setDimensionServiceKey(myContext.getProject(), getDimensionKey(), true)
       .setCancelOnOtherWindowOpen(false)
