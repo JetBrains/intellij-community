@@ -96,13 +96,14 @@ public final class JavaMethod implements AnnotatedElement{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    if (myAnnotationsMap == null) {
-      myAnnotationsMap = new THashMap<Class, Annotation>();
-    } else if (myAnnotationsMap.containsKey(annotationClass)) {
-      return (T)myAnnotationsMap.get(annotationClass);
-    }
+    synchronized (ourMethods) {
+      if (myAnnotationsMap == null) {
+        myAnnotationsMap = new THashMap<Class, Annotation>();
+      }
+      else if (myAnnotationsMap.containsKey(annotationClass)) {
+        return (T)myAnnotationsMap.get(annotationClass);
+      }
 
-    synchronized (myAnnotationsMap) {
       final T value = mySignature.findAnnotation(annotationClass, myDeclaringClass);
       myAnnotationsMap.put(annotationClass, value);
       return value;
