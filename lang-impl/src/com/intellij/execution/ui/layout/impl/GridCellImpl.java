@@ -80,6 +80,7 @@ public class GridCellImpl implements GridCell, Disposable {
     });
     myTabs.setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal());
     myTabs.setStealthTabMode(true);
+    myTabs.setFocusCycle(false);
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {

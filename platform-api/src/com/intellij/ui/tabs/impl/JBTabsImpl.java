@@ -174,24 +174,7 @@ public class JBTabsImpl extends JComponent
     Disposer.register(this, myAnimator);
 
     setFocusCycleRoot(true);
-
-    setFocusTraversalPolicy(new FocusTraversalPolicy() {
-      public Component getComponentAfter(final Container aContainer, final Component aComponent) {
-        return getToFocus();
-      }
-
-      public Component getComponentBefore(final Container aContainer, final Component aComponent) {
-        return getToFocus();
-      }
-
-      public Component getFirstComponent(final Container aContainer) {
-        return getToFocus();
-      }
-
-      public Component getLastComponent(final Container aContainer) {
-        return getToFocus();
-      }
-
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
       public Component getDefaultComponent(final Container aContainer) {
         return getToFocus();
       }
@@ -465,6 +448,11 @@ public class JBTabsImpl extends JComponent
 
   private boolean isMyChildIsFocusedNow() {
     final Component owner = getFocusOwner();
+
+    if (mySelectedInfo != null) {
+      if (!SwingUtilities.isDescendingFrom(owner, mySelectedInfo.getComponent())) return false;
+    }
+
     return owner != null && SwingUtilities.isDescendingFrom(owner, this);
   }
 
@@ -1748,6 +1736,11 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  public JBTabs setFocusCycle(final boolean root) {
+    setFocusCycleRoot(root);
+    return this;
+  }
+
   public static void removeScrollBorder(final Component c) {
     new AwtVisitor(c) {
       public boolean visit(final Component component) {
@@ -1990,4 +1983,6 @@ public class JBTabsImpl extends JComponent
       return new UiDecoration(null, new Insets(2, 8, 2, 8));
     }
   }
+
+
 }

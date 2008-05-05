@@ -127,5 +127,5 @@ public interface JBTabs {
   @NotNull
   JBTabs setAdjustBorders(boolean adjust);
 
-
+  JBTabs setFocusCycle(final boolean root);
 }
