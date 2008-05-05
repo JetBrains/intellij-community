@@ -356,7 +356,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testRename(final String fileAfter, final String newName) throws Throwable {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Throwable {
-        PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+        PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
         assert element != null: "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
         new RenameProcessor(myProjectFixture.getProject(), element, newName, false, false).run();
         checkResultByFile(fileAfter, myFile, false);
