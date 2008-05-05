@@ -285,10 +285,14 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       final PsiType type = ((GrVariable) element).getTypeGroovy();
       if (type instanceof GrClosureType) {
         PsiType[] parameterTypes = ((GrClosureType) type).getClosureParameterTypes();
-        for (int i = 0; i < parameterTypes.length; i++) {
-          if (i > 0) buffer.append(", ");
-          PsiType parameterType = ((GrClosureType) type).getClosureParameterTypes()[i];
-          buffer.append(parameterType.getPresentableText());
+        if (parameterTypes.length > 0) {
+          for (int i = 0; i < parameterTypes.length; i++) {
+            if (i > 0) buffer.append(", ");
+            PsiType parameterType = ((GrClosureType) type).getClosureParameterTypes()[i];
+            buffer.append(parameterType.getPresentableText());
+          }
+        } else {
+          buffer.append("no parameters");
         }
       }
     }
