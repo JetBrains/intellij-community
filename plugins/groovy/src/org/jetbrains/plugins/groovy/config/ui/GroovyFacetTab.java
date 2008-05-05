@@ -89,7 +89,11 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    return !oldGroovyLibName.equals(newGroovyLibName);
+    if (!oldGroovyLibName.equals(newGroovyLibName)) return true;
+    for (GroovySDKComboBox.DefaultGroovySDKComboBoxItem item : myComboBox.getAllItems()) {
+      if (item instanceof GroovySDKComboBox.GroovySDKPointerItem) return true;
+    }
+    return false;
   }
 
   public void onFacetInitialized(@NotNull Facet facet) {
