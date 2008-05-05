@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HttpFileEditorProvider implements FileEditorProvider {
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file) {
-    return file instanceof HttpVirtualFile;
+    return file instanceof HttpVirtualFile && !file.isDirectory();
   }
 
   @NotNull
