@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MatchProvider;
+import com.intellij.refactoring.util.duplicates.VariableReturnValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -382,7 +383,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
     else {
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables));
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), Arrays.asList(myInputVariables), myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
 
