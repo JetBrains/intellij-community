@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -349,7 +350,7 @@ public class ReachingDefinitionsCollector {
             if (t.isAssignableFrom(myType)) {
               myType = t;
             } else {
-              myType = GenericsUtil.getLeastUpperBound(myType, t, myManager);
+              myType = TypesUtil.getLeastUpperBound(myType, t, myManager);
             }
           }
         }

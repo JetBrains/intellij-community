@@ -14,12 +14,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -50,7 +49,7 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
           if (t1 != null && t2 != null) {
             if (t1.isAssignableFrom(t2)) result.put(name, t1);
             else if (t2.isAssignableFrom(t1)) result.put(name, t2);
-            else result.put(name, GenericsUtil.getLeastUpperBound(t1, t2, myManager));
+            else result.put(name, TypesUtil.getLeastUpperBound(t1, t2, myManager));
           } else {
             result.put(name, null);
           }

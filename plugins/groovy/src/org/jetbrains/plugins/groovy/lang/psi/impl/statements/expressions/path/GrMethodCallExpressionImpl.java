@@ -16,10 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -69,7 +72,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
 
           if (result == null || returnType.isAssignableFrom(result)) result = returnType;
           else if (!result.isAssignableFrom(returnType))
-            result = GenericsUtil.getLeastUpperBound(result, returnType, manager);
+            result = TypesUtil.getLeastUpperBound(result, returnType, manager);
         }
 
         if (result == null) return null;

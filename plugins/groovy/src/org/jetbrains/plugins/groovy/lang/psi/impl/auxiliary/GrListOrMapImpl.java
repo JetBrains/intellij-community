@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ilyas
@@ -135,7 +136,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         if (result == null) result = other;
         if (result.isAssignableFrom(other)) continue;
         if (other.isAssignableFrom(result)) result = other;
-        result = GenericsUtil.getLeastUpperBound(result, other, manager);
+        result = TypesUtil.getLeastUpperBound(result, other, manager);
       }
 
       return result;

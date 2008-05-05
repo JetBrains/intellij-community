@@ -71,7 +71,7 @@ public class MethodTypeInferencer implements Computable<PsiType> {
     if (type2 == null) return type1;
     if (type1.isAssignableFrom(type2)) return type1;
     if (type2.isAssignableFrom(type1)) return type2;
-    return GenericsUtil.getLeastUpperBound(type1, type2, manager);
+    return TypesUtil.getLeastUpperBound(type1, type2, manager);
   }
 
   private static void collectReturns(PsiElement element, List<GrReturnStatement> returns) {

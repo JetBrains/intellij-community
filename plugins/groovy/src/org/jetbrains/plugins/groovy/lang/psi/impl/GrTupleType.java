@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ven
@@ -59,7 +60,7 @@ public class GrTupleType extends PsiClassType {
       if (result == null) result = other;
       if (result.isAssignableFrom(other)) continue;
       if (other.isAssignableFrom(result)) result = other;
-      result = GenericsUtil.getLeastUpperBound(result, other, myManager);
+      result = TypesUtil.getLeastUpperBound(result, other, myManager);
     }
 
     return new PsiType[]{result};
@@ -180,5 +181,9 @@ public class GrTupleType extends PsiClassType {
 
   public PsiType[] getComponentTypes() {
     return myComponentTypes;
+  }
+
+  public GlobalSearchScope getScope() {
+    return myScope;
   }
 }

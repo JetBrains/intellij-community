@@ -10,6 +10,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -226,5 +227,27 @@ public class TypesUtil {
 
   public static PsiClassType getJavaLangObject(GroovyPsiElement context) {
     return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
+  }
+
+  public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
+    if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
+      GrTupleType tuple1 = (GrTupleType) type1;
+      GrTupleType tuple2 = (GrTupleType) type2;
+      PsiType[] components1 = tuple1.getComponentTypes();
+      PsiType[] components2 = tuple2.getComponentTypes();
+      PsiType[] components3 = new PsiType[Math.min(components1.length, components2.length)];
+      for (int i = 0; i < components3.length; i++) {
+        PsiType c1 = components1[i];
+        PsiType c2 = components2[i];
+        if (c1 == null || c2 == null) {
+          components3[i] = null;
+        } else {
+          components3[i] = getLeastUpperBound(c1, c2, manager);
+        }
+      }
+      return new GrTupleType(components3, manager, tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+    }
+
+    return GenericsUtil.getLeastUpperBound(type1, type2, manager);
   }
 }
