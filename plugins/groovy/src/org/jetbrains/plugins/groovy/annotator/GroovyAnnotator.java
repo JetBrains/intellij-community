@@ -903,11 +903,10 @@ public class GroovyAnnotator implements Annotator {
     final GrVariable variable = (GrVariable) element;
     final PsiType type = variable.getTypeGroovy();
     if (!(type instanceof GrClosureType)) return;
-    PsiParameter[] parameters = ((GrClosureType) type).getClosureParameters();
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false, true);
     if (argumentTypes == null) return;
 
-    final PsiType[] paramTypes = PsiUtil.skipOptionalParametersAndSubstitute(argumentTypes.length, parameters, PsiSubstitutor.EMPTY);
+    final PsiType[] paramTypes = PsiUtil.skipOptionalClosureParameters(argumentTypes.length, (GrClosureType) type);
     if (!areTypesCompatibleForCallingClosure(argumentTypes, paramTypes, place.getManager(), place.getResolveScope())) {
       final String typesString = buildArgTypesList(argumentTypes);
       String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);

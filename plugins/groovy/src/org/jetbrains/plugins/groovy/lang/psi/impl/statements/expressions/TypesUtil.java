@@ -246,7 +246,9 @@ public class TypesUtil {
         }
       }
       return new GrTupleType(components3, manager, tuple1.getScope().intersectWith(tuple2.getResolveScope()));
-    }
+    }/* else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
+      PsiParameter[] params1 = ((GrClosureType) type1).getClosureParameterTypes();
+    }*/
 
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
   }
