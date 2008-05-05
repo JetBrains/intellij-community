@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypesSemilattice;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Collections;
 
 /**
  * @author ven
@@ -81,6 +82,10 @@ public class TypeInferenceHelper {
   }
 
   private ThreadLocal<Map<String, PsiType>> myCurrentEnvironment = new ThreadLocal<Map<String, PsiType>>();
+
+  public PsiType doWithInferenceDisabled (Computable<PsiType> computable) {
+    return doInference(computable, Collections.<String, PsiType>emptyMap());
+  }
 
   public PsiType doInference(Computable<PsiType> computable, @NotNull Map<String, PsiType> bindings) {
     final Map<String, PsiType> oldBindings = myCurrentEnvironment.get();

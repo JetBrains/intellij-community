@@ -62,7 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
-import java.util.Collections;
 import java.util.EnumSet;
 
 /**
@@ -191,11 +190,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public PsiType getNominalType() {
-    return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doInference(new Computable<PsiType>() {
+    return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doWithInferenceDisabled(new Computable<PsiType>() {
       public PsiType compute() {
         return getNominalTypeImpl();
       }
-    }, Collections.<String, PsiType>emptyMap());
+    });
   }
 
   private PsiType getNominalTypeImpl() {
@@ -231,7 +230,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else if (resolved instanceof GrVariableBase) {
-      result = ((GrVariableBase) resolved).getTypeGroovy();
+      result = ((GrVariableBase) resolved).getDeclaredType();
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else

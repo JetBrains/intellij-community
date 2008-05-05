@@ -16,8 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 
-import java.util.Collections;
-
 /**
  * @author ilyas
  */
@@ -34,11 +32,11 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
   public PsiType getNominalType() {
     final TypeInferenceHelper helper = GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper();
 
-    return helper.doInference(new Computable<PsiType>() {
+    return helper.doWithInferenceDisabled(new Computable<PsiType>() {
       public PsiType compute() {
         return getType();
       }
-    }, Collections.<String, PsiType>emptyMap());
+    });
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {
