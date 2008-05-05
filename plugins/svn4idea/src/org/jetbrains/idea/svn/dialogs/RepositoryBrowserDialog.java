@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -659,7 +660,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     public void actionPerformed(AnActionEvent e) {
-      doCheckout(null);
+      doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener());
     }
   }
 
