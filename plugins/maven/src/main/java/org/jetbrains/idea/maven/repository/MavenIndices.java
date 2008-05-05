@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.*;
+import com.intellij.util.xml.DomFileElement;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -15,6 +16,9 @@ import org.apache.maven.settings.Proxy;
 import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.dom.PomDescriptor;
+import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.sonatype.nexus.index.ArtifactInfo;
 import org.sonatype.nexus.index.NexusIndexer;
@@ -179,14 +183,10 @@ public class MavenIndices {
     add(i);
   }
 
-  public void update(MavenIndex i, ProgressIndicator progress) throws MavenIndexException {
-    update(i, null, progress);
-  }
-
   public void update(MavenIndex i, Project project, ProgressIndicator progress) throws MavenIndexException {
     try {
       updateIndexContext(i, project, progress);
-      updateIndexCache(i);
+      updateIndexCache(i, project);
     }
     catch (IOException e) {
       throw new MavenIndexException(e);
@@ -201,15 +201,12 @@ public class MavenIndices {
     switch (i.getKind()) {
       case LOCAL:
         progress.setIndeterminate(true);
-
         // NexusIndexer.scan does not overwrite an existing index, so we have to
         // remove it manually.
         remove(i);
         add(i);
 
         myIndexer.scan(myIndicesData.get(i).context);
-        return;
-      case PROJECT:
         return;
       case REMOTE:
         Proxy proxy = myEmbedder.getSettings().getActiveProxy();
@@ -230,31 +227,46 @@ public class MavenIndices {
     }
   }
 
-  private void updateIndexCache(MavenIndex info) throws IOException {
-    MavenIndices.IndexData data = myIndicesData.get(info);
+  private void updateIndexCache(MavenIndex index, Project project) throws IOException {
+    MavenIndices.IndexData data = myIndicesData.get(index);
 
     data.cache.close();
-    FileUtil.delete(getCacheDir(info));
-    data.cache = createCache(info);
+    FileUtil.delete(getCacheDir(index));
+    data.cache = createCache(index);
 
+    Set<String> groupIds = new HashSet<String>();
     Map<String, List<String>> artifactIds = new HashMap<String, List<String>>();
     Map<String, List<String>> versions = new HashMap<String, List<String>>();
 
-    IndexReader r = data.context.getIndexReader();
-    for (int i = 0; i < r.numDocs(); i++) {
-      Document doc = r.document(i);
-      String uinfo = doc.get(ArtifactInfo.UINFO);
-      if (uinfo == null) continue;
+    if (index.getKind() == MavenIndex.Kind.PROJECT) {
+      List<DomFileElement<MavenModel>> poms = PomDescriptor.collectProjectPoms(project);
+      for (DomFileElement<MavenModel> each : poms) {
+        MavenId id = PomDescriptor.describe(each);
 
-      List<String> parts = StringUtil.split(uinfo, "|");
-      String groupId = parts.get(0);
-      String artifactId = parts.get(1);
-      String version = parts.get(2);
+        groupIds.add(id.groupId);
+        getOrCreate(artifactIds, id.groupId).add(id.artifactId);
+        getOrCreate(versions, id.groupId + ":" + id.artifactId).add(id.version);
+      }
+    } else {
+      IndexReader r = data.context.getIndexReader();
+      for (int i = 0; i < r.numDocs(); i++) {
+        Document doc = r.document(i);
+        String uinfo = doc.get(ArtifactInfo.UINFO);
+        if (uinfo == null) continue;
 
-      data.cache.groupIds.enumerate(groupId);
+        List<String> parts = StringUtil.split(uinfo, "|");
+        String groupId = parts.get(0);
+        String artifactId = parts.get(1);
+        String version = parts.get(2);
 
-      getOrCreate(artifactIds, groupId).add(artifactId);
-      getOrCreate(versions, groupId + ":" + artifactId).add(version);
+        groupIds.add(groupId);
+        getOrCreate(artifactIds, groupId).add(artifactId);
+        getOrCreate(versions, groupId + ":" + artifactId).add(version);
+      }
+    }
+
+    for (String each : groupIds) {
+      data.cache.groupIds.enumerate(each);
     }
 
     for (Map.Entry<String, List<String>> each : artifactIds.entrySet()) {

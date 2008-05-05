@@ -6,7 +6,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 
 public class MavenIndex {
-  public enum Kind { LOCAL(1), PROJECT(1), REMOTE(2);
+  public enum Kind { LOCAL(0), PROJECT(1), REMOTE(2);
     private int code;
     Kind(int code) {
       this.code = code;
@@ -39,12 +39,17 @@ public class MavenIndex {
   }
 
   public MavenIndex(DataInputStream s) throws IOException {
-    this(s.readUTF(), s.readUTF(), Kind.forCode(s.readInt()));
+    myId = s.readUTF();
+    boolean hasRepo = s.readBoolean();
+    if (hasRepo) myRepositoryPathOrUrl = s.readUTF();
+    myKind = Kind.forCode(s.readInt());
   }
 
   public void write(DataOutputStream s) throws IOException {
     s.writeUTF(myId);
-    s.writeUTF(myRepositoryPathOrUrl);
+    boolean hasRepo = myRepositoryPathOrUrl != null;
+    s.writeBoolean(hasRepo);
+    if (hasRepo) s.writeUTF(myRepositoryPathOrUrl);
     s.writeInt(myKind.getCode());
   }
 

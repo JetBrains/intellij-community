@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
-import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.sonatype.nexus.index.ArtifactInfo;
 
@@ -13,7 +13,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.List;
 
-public class MavenIndicesTest extends MavenTestCase {
+public class MavenIndicesTest extends MavenImportingTestCase {
   private MavenWithDataTestFixture myDataTestFixture;
   private MavenIndices myIndex;
   private MavenEmbedder myEmbedder;
@@ -49,7 +49,7 @@ public class MavenIndicesTest extends MavenTestCase {
   public void testAddingLocal() throws Exception {
     MavenIndex i = new MavenIndex("local", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     List<ArtifactInfo> result = myIndex.findByArtifactId("junit*");
     assertEquals(3, result.size());
@@ -61,8 +61,8 @@ public class MavenIndicesTest extends MavenTestCase {
     MavenIndex i2 = new MavenIndex("local2", myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
     myIndex.add(i1);
     myIndex.add(i2);
-    myIndex.update(i1, new EmptyProgressIndicator());
-    myIndex.update(i2, new EmptyProgressIndicator());
+    myIndex.update(i1, myProject, new EmptyProgressIndicator());
+    myIndex.update(i2, myProject, new EmptyProgressIndicator());
 
     List<ArtifactInfo> result = myIndex.findByArtifactId("junit*");
     assertEquals(3, result.size());
@@ -83,42 +83,83 @@ public class MavenIndicesTest extends MavenTestCase {
     MavenIndex i = new MavenIndex("local", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndex.add(i);
 
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
     assertEquals(3, myIndex.findByArtifactId("junit*").size());
 
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
     assertEquals(3, myIndex.findByArtifactId("junit*").size());
   }
 
   public void testAddingRemote() throws Exception {
     MavenIndex i = new MavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     List<ArtifactInfo> result = myIndex.findByArtifactId("junit*");
     assertEquals(3, result.size());
     assertEquals("4.0", result.get(0).version);
   }
 
-  public void testAddingProject() throws Exception {
-    MavenIndex i = new MavenIndex("project", null, MavenIndex.Kind.PROJECT);
+  public void testAddingProjectIndex() throws Exception {
+    importProject("<groupId>group</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>version</version>");
+
+    createModulePom("m1",
+                    "<groupId>group1</groupId>" +
+                    "<artifactId>module1</artifactId>" +
+                    "<version>version1</version>");
+
+    createModulePom("m2",
+                    "<groupId>group2</groupId>" +
+                    "<artifactId>module2</artifactId>" +
+                    "<version>version2</version>");
+
+    MavenIndex i = new MavenIndex("project", myProject.getBaseDir().getPath(), MavenIndex.Kind.PROJECT);
     myIndex.add(i);
 
-    assertTrue(myIndex.findByArtifactId("*").isEmpty());
+    assertTrue(myIndex.getGroupIds().isEmpty());
 
     myIndex.update(i, myProject, new EmptyProgressIndicator());
+
+    assertUnorderedElementsAreEqual(myIndex.getGroupIds(), "group", "group1", "group2");
+    assertUnorderedElementsAreEqual(myIndex.getArtifactIds("group"), "project");
+    assertUnorderedElementsAreEqual(myIndex.getArtifactIds("group1"), "module1");
+    assertUnorderedElementsAreEqual(myIndex.getArtifactIds("group2"), "module2");
+    assertUnorderedElementsAreEqual(myIndex.getVersions("group", "project"), "version");
+    assertUnorderedElementsAreEqual(myIndex.getVersions("group1", "module1"), "version1");
+    assertUnorderedElementsAreEqual(myIndex.getVersions("group2", "module2"), "version2");
+  }
+
+  public void testSavingAndRestoringProjectIndex() throws Exception {
+    importProject("<groupId>group</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>version</version>");
+
+    MavenIndex i = new MavenIndex("project", myProject.getBaseDir().getPath(), MavenIndex.Kind.PROJECT);
+    myIndex.add(i);
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
+
+    myIndex.save();
+    shutdownIndex();
+    initIndex();
+    myIndex.load();
+
+    assertUnorderedElementsAreEqual(myIndex.getGroupIds(), "group");
+    assertUnorderedElementsAreEqual(myIndex.getArtifactIds("group"), "project");
+    assertUnorderedElementsAreEqual(myIndex.getVersions("group", "project"), "version");
   }
 
   public void testChanging() throws Exception {
     MavenIndex i = new MavenIndex("local1", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     assertEquals(3, myIndex.findByArtifactId("junit*").size());
     assertEquals(0, myIndex.findByArtifactId("jmock*").size());
 
     myIndex.change(i, "local2", myDataTestFixture.getTestDataPath("local2"));
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     assertEquals(0, myIndex.findByArtifactId("junit*").size());
     assertEquals(3, myIndex.findByArtifactId("jmock*").size());
@@ -127,10 +168,10 @@ public class MavenIndicesTest extends MavenTestCase {
   public void testChangingWithSameID() throws Exception {
     MavenIndex i = new MavenIndex("local", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     myIndex.change(i, "local", myDataTestFixture.getTestDataPath("local2"));
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     assertEquals(3, myIndex.findByArtifactId("jmock*").size());
   }
@@ -138,7 +179,7 @@ public class MavenIndicesTest extends MavenTestCase {
   public void testRemoving() throws Exception {
     MavenIndex i = new MavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     myIndex.remove(i);
     assertEquals(0, myIndex.findByArtifactId("junit*").size());
@@ -147,7 +188,7 @@ public class MavenIndicesTest extends MavenTestCase {
   public void testDoNotSaveIndexAfterRemoving() throws Exception {
     MavenIndex i = new MavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     myIndex.remove(i);
     myIndex.add(i);
@@ -159,8 +200,8 @@ public class MavenIndicesTest extends MavenTestCase {
     MavenIndex i2 = new MavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndex.add(i1);
     myIndex.add(i2);
-    myIndex.update(i1, new EmptyProgressIndicator());
-    myIndex.update(i2, new EmptyProgressIndicator());
+    myIndex.update(i1, myProject, new EmptyProgressIndicator());
+    myIndex.update(i2, myProject, new EmptyProgressIndicator());
 
     myIndex.save();
 
@@ -232,14 +273,14 @@ public class MavenIndicesTest extends MavenTestCase {
   public void testAddingIndexWithExistingDirectoryDoesNotThrowException() throws Exception {
     MavenIndex i = new MavenIndex("local", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     myIndex.save();
     shutdownIndex();
     
     initIndex();
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator()); // shouldn't throw
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
   }
 
   public void testGettingArtifactInfos() throws Exception {
@@ -247,8 +288,8 @@ public class MavenIndicesTest extends MavenTestCase {
     MavenIndex i2 = new MavenIndex("local2", myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
     myIndex.add(i1);
     myIndex.add(i2);
-    myIndex.update(i1, new EmptyProgressIndicator());
-    myIndex.update(i2, new EmptyProgressIndicator());
+    myIndex.update(i1, myProject, new EmptyProgressIndicator());
+    myIndex.update(i2, myProject, new EmptyProgressIndicator());
 
     assertUnorderedElementsAreEqual(myIndex.getGroupIds(), "junit", "jmock");
 
@@ -269,7 +310,7 @@ public class MavenIndicesTest extends MavenTestCase {
   public void testGettingArtifactInfosAfterReload() throws Exception {
     MavenIndex i = new MavenIndex("local", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndex.add(i);
-    myIndex.update(i, new EmptyProgressIndicator());
+    myIndex.update(i, myProject, new EmptyProgressIndicator());
 
     myIndex.save();
     shutdownIndex();

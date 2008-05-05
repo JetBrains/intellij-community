@@ -126,6 +126,33 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     assertCompletionVariants(myProjectPom);
   }
 
+  public void testCompletionFromProjectArtifacts() throws Exception {
+    createModulePom("m1",
+                    "<groupId>project-group</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    createModulePom("m2",
+                    "<groupId>project-group</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>2</version>");
+
+    myRepositoryManager.updateProjectIndex();
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "m1", "m2");
+  }
+
   public void testDoesNotHighlightCorrectValues() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

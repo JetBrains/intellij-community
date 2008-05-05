@@ -374,7 +374,46 @@
           <root url="jar://$MODULE_DIR$/lib/lucene-core-2.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/analyzers/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/highlighter/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/analyzers/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/spellchecker/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/wikipedia/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/spellchecker/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/benchmark/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/xml-query-parser/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/wordnet/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb-je/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/benchmark/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/queries/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/snowball/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/lucli/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/memory/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/miscellaneous/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb-je/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/regex/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/ant/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/regex/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/snowball/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/db/bdb/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/demo" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/miscellaneous/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/memory/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/surround/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/queries/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/surround/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/ant/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/wikipedia/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/highlighter/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/swing/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/swing/src/java" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/gcj" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/contrib/xml-query-parser/src/test" />
+          <root url="jar://$MODULE_DIR$/../../../lucene-2.3.1-src.zip!/lucene-2.3.1/src/java" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

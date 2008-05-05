@@ -48,27 +48,27 @@ public class MavenIndicesManager extends DummyProjectComponent {
   public void initComponent() {
     StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
       public void run() {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return;
+        if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
+
         try {
-          if (ApplicationManager.getApplication().isUnitTestMode()) return;
-          if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
-
           initIndex();
-
-          StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-            public void run() {
-              try {
-                checkLocalIndex();
-                checkProjectIndex();
-              }
-              catch (MavenIndexException e) {
-                showErrorWhenProjectIsOpen(new MavenException(e));
-              }
-            }
-          });
         }
         catch (MavenException e) {
           showErrorWhenProjectIsOpen(e);
         }
+
+        StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+          public void run() {
+            try {
+              checkLocalIndex();
+              checkProjectIndex();
+            }
+            catch (MavenIndexException e) {
+              showErrorWhenProjectIsOpen(new MavenException(e));
+            }
+          }
+        });
       }
     });
   }
@@ -91,7 +91,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
       myIndices.load();
     }
     catch (MavenIndexException e) {
-      new MavenException("Couldn't load Maven Repositories: " + e.getMessage());
+      throw new MavenException("Couldn't load Maven Repositories: " + e.getMessage());
     }
   }
 
@@ -147,30 +147,33 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   private void checkProjectIndex() throws MavenIndexException {
-    //MavenIndex i = findProjectIndex();
-    //if (i == null) {
-    //  i = new MavenIndex(PROJECT_INDEX, null, MavenIndex.Kind.PROJECT);
-    //  myIndices.add(i);
-    //  startUpdate(i);
-    //}
+    MavenIndex i = findProjectIndex();
+    if (i == null) {
+      i = new MavenIndex(PROJECT_INDEX, myProject.getBaseDir().getPath(), MavenIndex.Kind.PROJECT);
+      myIndices.add(i);
+    } else {
+      myIndices.change(i, PROJECT_INDEX, myProject.getBaseDir().getPath());
+    }
+    startUpdate(i);
   }
 
   private MavenIndex findLocalIndex() {
     for (MavenIndex i : myIndices.getIndices()) {
-      if (isLocal(i)) return i;
+      if (i.getKind() == MavenIndex.Kind.LOCAL) return i;
     }
     return null;
   }
 
   private MavenIndex findProjectIndex() {
     for (MavenIndex i : myIndices.getIndices()) {
-      if (isLocal(i)) return i;
+      if (i.getKind() == MavenIndex.Kind.PROJECT) return i;
     }
     return null;
   }
 
-  private boolean isLocal(MavenIndex i) {
-    return LOCAL_INDEX.equals(i.getId());
+  @TestOnly
+  public void updateProjectIndex() throws MavenIndexException {
+    checkProjectIndex();
   }
 
   public Configurable createConfigurable() {
@@ -209,7 +212,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
 
           for (MavenIndex each : infos) {
             indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getId()));
-            myIndices.update(each, indicator);
+            myIndices.update(each, myProject, indicator);
           }
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -234,11 +237,16 @@ public class MavenIndicesManager extends DummyProjectComponent {
     return findLocalIndex();
   }
 
+  public MavenIndex getProjectIndex() {
+    return findProjectIndex();
+  }
+
   public List<MavenIndex> getUserIndices() {
     List<MavenIndex> result = new ArrayList<MavenIndex>();
     for (MavenIndex each : myIndices.getIndices()) {
-      if (isLocal(each)) continue;
-      result.add(each);
+      if (each.getKind() == MavenIndex.Kind.REMOTE)  {
+        result.add(each);
+      }
     }
     return result;
   }

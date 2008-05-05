@@ -149,7 +149,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   private boolean canEdit() {
-    return myTable.getSelectedRow() > 0;
+    return myTable.getSelectedRow() >= 2;
   }
 
   private MavenIndex getSelectedIndexInfo() {
@@ -180,7 +180,9 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   public void reset() {
-    myTable.setModel(new MyTableModel(myManager.getLocalIndex(), myManager.getUserIndices()));
+    myTable.setModel(new MyTableModel(myManager.getLocalIndex(),
+                                      myManager.getProjectIndex(),
+                                      myManager.getUserIndices()));
     myTable.getColumnModel().getColumn(0).setPreferredWidth(100);
     myTable.getColumnModel().getColumn(1).setPreferredWidth(400);
   }
@@ -193,10 +195,12 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
         new String[]{RepositoryBundle.message("maven.index.id"), RepositoryBundle.message("maven.index.url")};
 
     private MavenIndex myLocalIndex;
+    private MavenIndex myProjectIndex;
     private List<MavenIndex> myUserIndices;
 
-    public MyTableModel(MavenIndex localIndex, List<MavenIndex> userIndices) {
+    public MyTableModel(MavenIndex localIndex, MavenIndex projectIndex, List<MavenIndex> userIndices) {
       myLocalIndex = localIndex;
+      myProjectIndex = projectIndex;
       myUserIndices = userIndices;
     }
 
@@ -210,7 +214,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     }
 
     public int getRowCount() {
-      return myUserIndices.size() + 1;
+      return myUserIndices.size() + 2;
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
@@ -226,7 +230,8 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
 
     public MavenIndex getIndex(int rowIndex) {
       if (rowIndex == 0) return myLocalIndex;
-      return myUserIndices.get(rowIndex - 1);
+      if (rowIndex == 1) return myProjectIndex;
+      return myUserIndices.get(rowIndex - 2);
     }
   }
 }
