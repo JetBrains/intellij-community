@@ -141,14 +141,24 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   private static class MyTypeCalculator implements Function<GrMethod, PsiType> {
 
     public PsiType fun(GrMethod method) {
-      GrTypeElement element = method.getReturnTypeElementGroovy();
-      if (element == null) {
-        final GrOpenBlock block = method.getBlock();
-        if (block == null) return null;
-        return GroovyPsiManager.getInstance(method.getProject()).inferType(method, new MethodTypeInferencer(block));
-      }
-      return element.getType();
+      PsiType nominal = getNominalType(method);
+      if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
+      PsiType inferred = getInferredType(method);
+      if (inferred == null) return nominal;
+      return inferred;
     }
+
+    private PsiType getNominalType(GrMethod method) {
+      GrTypeElement element = method.getReturnTypeElementGroovy();
+      return element != null ? element.getType() : null;
+    }
+
+    private PsiType getInferredType(GrMethod method) {
+      final GrOpenBlock block = method.getBlock();
+      if (block == null) return null;
+      return GroovyPsiManager.getInstance(method.getProject()).inferType(method, new MethodTypeInferencer(block));
+    }
+
   }
 
   private static MyTypeCalculator ourTypesCalculator = new MyTypeCalculator();

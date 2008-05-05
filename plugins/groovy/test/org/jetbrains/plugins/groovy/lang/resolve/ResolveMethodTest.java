@@ -22,9 +22,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -450,6 +450,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testMultipleAssignment1() throws Exception {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("multipleAssignment1/A.groovy").getElement();
+    assertNotNull(ref.resolve());
+  }
+
+  public void testMultipleAssignment2() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("multipleAssignment2/A.groovy").getElement();
     assertNotNull(ref.resolve());
   }
 }

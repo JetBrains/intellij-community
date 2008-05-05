@@ -176,4 +176,8 @@ public class GrTupleType extends PsiClassType {
 
     return super.isAssignableFrom(type);
   }
+
+  public PsiType[] getComponentTypes() {
+    return myComponentTypes;
+  }
 }
