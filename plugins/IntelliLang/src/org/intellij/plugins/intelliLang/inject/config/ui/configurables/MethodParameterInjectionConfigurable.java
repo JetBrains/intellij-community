@@ -17,26 +17,25 @@ package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Icons;
-
-import javax.swing.*;
-
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.MethodParameterPanel;
 
+import javax.swing.*;
+
 public class MethodParameterInjectionConfigurable extends InjectionConfigurable<MethodParameterInjection, MethodParameterPanel> {
-    public MethodParameterInjectionConfigurable(MethodParameterInjection injection, Runnable treeUpdater, Project project) {
-        super(injection, treeUpdater, project);
-    }
+  public MethodParameterInjectionConfigurable(MethodParameterInjection injection, Runnable treeUpdater, Project project) {
+    super(injection, treeUpdater, project);
+  }
 
-    protected MethodParameterPanel createOptionsPanelImpl() {
-        return new MethodParameterPanel(myInjection, myProject);
-    }
+  protected MethodParameterPanel createOptionsPanelImpl() {
+    return new MethodParameterPanel(myInjection, myProject);
+  }
 
-    public String getBannerSlogan() {
-        return "Edit Method Parameter Injection";
-    }
+  public String getBannerSlogan() {
+    return "Edit Method Parameter Injection";
+  }
 
-    public Icon getIcon() {
-        return Icons.METHOD_ICON;
-    }
+  public Icon getIcon() {
+    return Icons.METHOD_ICON;
+  }
 }

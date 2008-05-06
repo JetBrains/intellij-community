@@ -27,6 +27,10 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.pattern.compiler.AnnotationBasedInstrumentingCompiler;
+import org.intellij.plugins.intelliLang.pattern.compiler.Instrumenter;
+import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassWriter;
 
@@ -34,79 +38,73 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.pattern.compiler.AnnotationBasedInstrumentingCompiler;
-import org.intellij.plugins.intelliLang.pattern.compiler.Instrumenter;
-import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
-
 public class PatternValidationCompiler extends AnnotationBasedInstrumentingCompiler {
 
-    private final Map<String, String> myAnnotations = new HashMap<String, String>();
+  private final Map<String, String> myAnnotations = new HashMap<String, String>();
 
-    public PatternValidationCompiler(Project project) {
-        super(project);
-    }
+  public PatternValidationCompiler(Project project) {
+    super(project);
+  }
 
-    protected String[] getAnnotationNames() {
-        synchronized (myAnnotations) {
-            myAnnotations.clear();
-            final Pair<String,? extends Set<String>> patternAnnotation = Configuration.getInstance().getPatternAnnotationPair();
+  protected String[] getAnnotationNames() {
+    synchronized (myAnnotations) {
+      myAnnotations.clear();
+      final Pair<String, ? extends Set<String>> patternAnnotation = Configuration.getInstance().getPatternAnnotationPair();
 
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-            final PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(patternAnnotation.first, scope);
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+      final PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(patternAnnotation.first, scope);
 
-            if (psiClass == null) {
-                // annotation is not present in project's classpath, nothing to instrument
-                return ArrayUtil.EMPTY_STRING_ARRAY;
-            }
+      if (psiClass == null) {
+        // annotation is not present in project's classpath, nothing to instrument
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
 
-            final Query<PsiMember> query = AnnotatedMembersSearch.search(psiClass, GlobalSearchScope.allScope(myProject));
+      final Query<PsiMember> query = AnnotatedMembersSearch.search(psiClass, GlobalSearchScope.allScope(myProject));
 
-            query.forEach(new Processor<PsiMember>() {
-                public boolean process(PsiMember psiMember) {
-                    if (psiMember instanceof PsiClass) {
-                        final PsiClass clazz = (PsiClass)psiMember;
-                        if (clazz.isAnnotationType()) {
-                            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, patternAnnotation.second);
-                            if (annotation != null) {
-                                final String s = AnnotationUtilEx.calcAnnotationValue(annotation, "value");
-                                if (s != null) {
-                                    myAnnotations.put(clazz.getQualifiedName(), s);
-                                }
-                            }
-                        }
-                    }
-                    return true;
+      query.forEach(new Processor<PsiMember>() {
+        public boolean process(PsiMember psiMember) {
+          if (psiMember instanceof PsiClass) {
+            final PsiClass clazz = (PsiClass)psiMember;
+            if (clazz.isAnnotationType()) {
+              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, patternAnnotation.second);
+              if (annotation != null) {
+                final String s = AnnotationUtilEx.calcAnnotationValue(annotation, "value");
+                if (s != null) {
+                  myAnnotations.put(clazz.getQualifiedName(), s);
                 }
-            });
-
-            myAnnotations.put(patternAnnotation.first, null);
-
-            final Set<String> names = myAnnotations.keySet();
-            return names.toArray(new String[names.size()]);
+              }
+            }
+          }
+          return true;
         }
-    }
+      });
 
-    protected boolean isEnabled() {
-        final Configuration.InstrumentationType option = Configuration.getInstance().getInstrumentation();
-        return option == Configuration.InstrumentationType.ASSERT ||
-                option == Configuration.InstrumentationType.EXCEPTION;
-    }
+      myAnnotations.put(patternAnnotation.first, null);
 
-    @NotNull
-    protected Instrumenter createInstrumenter(ClassWriter classwriter) {
-        synchronized (myAnnotations) {
-            final Configuration.InstrumentationType instrumentation = Configuration.getInstance().getInstrumentation();
-            return new PatternValidationInstrumenter(new HashMap<String, String>(myAnnotations), classwriter, instrumentation);
-        }
+      final Set<String> names = myAnnotations.keySet();
+      return names.toArray(new String[names.size()]);
     }
+  }
 
-    protected String getProgressMessage() {
-        return "Inserting @Pattern assertions";
-    }
+  protected boolean isEnabled() {
+    final Configuration.InstrumentationType option = Configuration.getInstance().getInstrumentation();
+    return option == Configuration.InstrumentationType.ASSERT || option == Configuration.InstrumentationType.EXCEPTION;
+  }
 
-    @NotNull
-    public String getDescription() {
-        return "Pattern Validation";
+  @NotNull
+  protected Instrumenter createInstrumenter(ClassWriter classwriter) {
+    synchronized (myAnnotations) {
+      final Configuration.InstrumentationType instrumentation = Configuration.getInstance().getInstrumentation();
+      return new PatternValidationInstrumenter(new HashMap<String, String>(myAnnotations), classwriter, instrumentation);
     }
+  }
+
+  protected String getProgressMessage() {
+    return "Inserting @Pattern assertions";
+  }
+
+  @NotNull
+  public String getDescription() {
+    return "Pattern Validation";
+  }
 }

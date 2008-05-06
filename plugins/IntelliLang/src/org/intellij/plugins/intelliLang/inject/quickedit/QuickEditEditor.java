@@ -17,11 +17,7 @@
 package org.intellij.plugins.intelliLang.inject.quickedit;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -40,150 +36,149 @@ import com.intellij.ui.plaf.beg.BegBorders;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 
 // Adapted from QuickEditHotspot that came with the source of the first designer release ;)
 public class QuickEditEditor {
 
-    private final Project myProject;
-    private final JComponent myPanel;
-    private final QuickEditSaver mySaver;
+  private final Project myProject;
+  private final JComponent myPanel;
+  private final QuickEditSaver mySaver;
 
-    private EditorEx myEditor;
-    private JBPopup myPopup;
-    private Boolean myCancelFlag;
+  private EditorEx myEditor;
+  private JBPopup myPopup;
+  private Boolean myCancelFlag;
 
-    public QuickEditEditor(Document document, Project project, FileType ft, @NotNull QuickEditSaver saver) {
-        myProject = project;
-        mySaver = saver;
-        myEditor = (EditorImpl)EditorFactory.getInstance().createEditor(document, project);
-        myEditor.setHighlighter(HighlighterFactory.createHighlighter(project, ft));
-        myEditor.setEmbeddedIntoDialogWrapper(true);
+  public QuickEditEditor(Document document, Project project, FileType ft, @NotNull QuickEditSaver saver) {
+    myProject = project;
+    mySaver = saver;
+    myEditor = (EditorImpl)EditorFactory.getInstance().createEditor(document, project);
+    myEditor.setHighlighter(HighlighterFactory.createHighlighter(project, ft));
+    myEditor.setEmbeddedIntoDialogWrapper(true);
 
-        EditorSettings settings = myEditor.getSettings();
-        settings.setFoldingOutlineShown(false);
-        settings.setLineMarkerAreaShown(false);
-        settings.setLineNumbersShown(false);
-        settings.setVirtualSpace(false);
-        settings.setAdditionalLinesCount(2);
+    EditorSettings settings = myEditor.getSettings();
+    settings.setFoldingOutlineShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setVirtualSpace(false);
+    settings.setAdditionalLinesCount(2);
 
-        myPanel = new MyPanel();
+    myPanel = new MyPanel();
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myEditor.getContentComponent();
+  }
+
+  public Editor getEditor() {
+    return myEditor;
+  }
+
+  private class MyPanel extends JPanel implements DataProvider {
+
+    public MyPanel() {
+      super(new BorderLayout());
+
+      add(myEditor.getComponent(), BorderLayout.CENTER);
+
+      setBorder(new BegBorders.FlatLineBorder());
+      setPreferredSize(new Dimension(400, 100));
     }
 
-    public JComponent getPreferredFocusedComponent() {
-        return myEditor.getContentComponent();
-    }
-
-    public Editor getEditor() {
+    public Object getData(String s) {
+      if (DataKeys.EDITOR.getName().equals(s)) {
         return myEditor;
+      }
+      return null;
     }
+  }
 
-    private class MyPanel extends JPanel implements DataProvider {
+  public void setCancel(boolean cancel) {
+    if (myCancelFlag == null) myCancelFlag = cancel;
+  }
 
-        public MyPanel() {
-            super(new BorderLayout());
+  private String releaseEditor() {
+    if (myEditor != null) {
+      final Document document = myEditor.getDocument();
+      final String text = document.getText();
+      PsiDocumentManager.getInstance(myProject).commitDocument(document);
+      EditorFactory.getInstance().releaseEditor(myEditor);
+      myEditor = null;
+      return text;
+    }
+    return "";
+  }
 
-            add(myEditor.getComponent(), BorderLayout.CENTER);
+  public void install(JBPopup popup) {
+    myPopup = popup;
+    final JComponent component = myEditor.getContentComponent();
+    component.requestFocus();
 
-            setBorder(new BegBorders.FlatLineBorder());
-            setPreferredSize(new Dimension(400, 100));
+    new EscAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), component);
+    new SaveAction(this)
+        .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_MASK)), component);
+
+    setStatusBarText("Press Ctrl+Enter to save, Escape to cancel.");
+  }
+
+  private void setStatusBarText(String text) {
+    WindowManager wm = WindowManager.getInstance();
+    final StatusBar statusBar = wm.getStatusBar(myProject);
+    statusBar.setInfo(text);
+  }
+
+  public void uninstall() {
+    setStatusBarText("");
+
+    final String text = releaseEditor();
+
+    assert myCancelFlag != null;
+    if (!myCancelFlag) {
+      new WriteCommandAction(myProject) {
+        protected void run(Result result) throws Throwable {
+          mySaver.save(text);
         }
+      }.execute();
+    }
+    myPopup = null;
+  }
 
-        public Object getData(String s) {
-            if (DataKeys.EDITOR.getName().equals(s)) {
-                return myEditor;
-            }
-            return null;
-        }
+  public JComponent getComponent() {
+    return myPanel;
+  }
+
+  public interface QuickEditSaver {
+    void save(String text);
+  }
+
+  private static class EscAction extends AnAction {
+    private final QuickEditEditor myEditor;
+
+    public EscAction(QuickEditEditor editor) {
+      super("Esc");
+      myEditor = editor;
     }
 
-    public void setCancel(boolean cancel) {
-        if (myCancelFlag == null) myCancelFlag = cancel;
+    public void actionPerformed(AnActionEvent event) {
+      myEditor.setCancel(true);
+      myEditor.myPopup.cancel();
+    }
+  }
+
+  private static class SaveAction extends AnAction {
+    private final QuickEditEditor myEditor;
+
+    public SaveAction(QuickEditEditor editor) {
+      super("Save");
+      myEditor = editor;
     }
 
-    private String releaseEditor() {
-        if (myEditor != null) {
-            final Document document = myEditor.getDocument();
-            final String text = document.getText();
-            PsiDocumentManager.getInstance(myProject).commitDocument(document);
-            EditorFactory.getInstance().releaseEditor(myEditor);
-            myEditor = null;
-            return text;
-        }
-        return "";
+    public void actionPerformed(AnActionEvent event) {
+      myEditor.setCancel(false);
+      myEditor.myPopup.cancel();
     }
-
-    public void install(JBPopup popup) {
-        myPopup = popup;
-        final JComponent component = myEditor.getContentComponent();
-        component.requestFocus();
-
-        new EscAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), component);
-        new SaveAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_MASK)),
-                component);
-
-        setStatusBarText("Press Ctrl+Enter to save, Escape to cancel.");
-    }
-
-    private void setStatusBarText(String text) {
-        WindowManager wm = WindowManager.getInstance();
-        final StatusBar statusBar = wm.getStatusBar(myProject);
-        statusBar.setInfo(text);
-    }
-
-    public void uninstall() {
-        setStatusBarText("");
-
-        final String text = releaseEditor();
-
-        assert myCancelFlag != null;
-        if (!myCancelFlag) {
-            new WriteCommandAction(myProject) {
-                protected void run(Result result) throws Throwable {
-                    mySaver.save(text);
-                }
-            }.execute();
-        }
-        myPopup = null;
-    }
-
-    public JComponent getComponent() {
-        return myPanel;
-    }
-
-    public interface QuickEditSaver {
-        void save(String text);
-    }
-
-    private static class EscAction extends AnAction {
-        private final QuickEditEditor myEditor;
-
-        public EscAction(QuickEditEditor editor) {
-            super("Esc");
-            myEditor = editor;
-        }
-
-        public void actionPerformed(AnActionEvent event) {
-            myEditor.setCancel(true);
-            myEditor.myPopup.cancel();
-        }
-    }
-
-    private static class SaveAction extends AnAction {
-        private final QuickEditEditor myEditor;
-
-        public SaveAction(QuickEditEditor editor) {
-            super("Save");
-            myEditor = editor;
-        }
-
-        public void actionPerformed(AnActionEvent event) {
-            myEditor.setCancel(false);
-            myEditor.myPopup.cancel();
-        }
-    }
+  }
 }
 
 

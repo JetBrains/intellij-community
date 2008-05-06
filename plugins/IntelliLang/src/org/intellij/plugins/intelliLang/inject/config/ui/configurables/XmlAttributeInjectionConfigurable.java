@@ -17,26 +17,25 @@ package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Icons;
-
-import javax.swing.*;
-
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlAttributePanel;
 
+import javax.swing.*;
+
 public class XmlAttributeInjectionConfigurable extends InjectionConfigurable<XmlAttributeInjection, XmlAttributePanel> {
-    public XmlAttributeInjectionConfigurable(XmlAttributeInjection injection, Runnable treeUpdater, Project project) {
-        super(injection, treeUpdater, project);
-    }
+  public XmlAttributeInjectionConfigurable(XmlAttributeInjection injection, Runnable treeUpdater, Project project) {
+    super(injection, treeUpdater, project);
+  }
 
-    protected XmlAttributePanel createOptionsPanelImpl() {
-        return new XmlAttributePanel(myInjection, myProject);
-    }
+  protected XmlAttributePanel createOptionsPanelImpl() {
+    return new XmlAttributePanel(myInjection, myProject);
+  }
 
-    public String getBannerSlogan() {
-        return "Edit XML Attribute Injection";
-    }
+  public String getBannerSlogan() {
+    return "Edit XML Attribute Injection";
+  }
 
-    public Icon getIcon() {
-        return Icons.ANNOTATION_TYPE_ICON;
-    }
+  public Icon getIcon() {
+    return Icons.ANNOTATION_TYPE_ICON;
+  }
 }

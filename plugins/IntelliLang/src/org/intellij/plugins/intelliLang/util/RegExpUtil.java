@@ -29,34 +29,35 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class RegExpUtil {
-    @Nullable
-    public static Set<String> getEnumValues(Project project, String regExp) {
-        final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-        final PsiFile file = factory.createFileFromText("dummy.regexp", RegExpFileType.INSTANCE, regExp);
-        final RegExpPattern pattern = (RegExpPattern)file.getFirstChild();
-        if (pattern == null) {
-            return null;
-        }
-        final RegExpBranch[] branches = pattern.getBranches();
-        final Set<String> values = new HashSet<String>();
-        for (RegExpBranch branch : branches) {
-            if (analyzeBranch(branch)) {
-                values.add(branch.getUnescapedText());
-            }
-        }
-        return values;
+  @Nullable
+  public static Set<String> getEnumValues(Project project, String regExp) {
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+    final PsiFile file = factory.createFileFromText("dummy.regexp", RegExpFileType.INSTANCE, regExp);
+    final RegExpPattern pattern = (RegExpPattern)file.getFirstChild();
+    if (pattern == null) {
+      return null;
     }
+    final RegExpBranch[] branches = pattern.getBranches();
+    final Set<String> values = new HashSet<String>();
+    for (RegExpBranch branch : branches) {
+      if (analyzeBranch(branch)) {
+        values.add(branch.getUnescapedText());
+      }
+    }
+    return values;
+  }
 
-    private static boolean analyzeBranch(RegExpBranch branch) {
-        final RegExpAtom[] atoms = branch.getAtoms();
-        for (RegExpAtom atom : atoms) {
-            if (!(atom instanceof RegExpChar) || ((RegExpChar)atom).getValue() == null) {
-                return false;
-            } else if (((RegExpChar)atom).getType() != RegExpChar.Type.CHAR) {
-                // this could probably allow more, such as escape sequences
-                return false;
-            }
-        }
-        return true;
+  private static boolean analyzeBranch(RegExpBranch branch) {
+    final RegExpAtom[] atoms = branch.getAtoms();
+    for (RegExpAtom atom : atoms) {
+      if (!(atom instanceof RegExpChar) || ((RegExpChar)atom).getValue() == null) {
+        return false;
+      }
+      else if (((RegExpChar)atom).getType() != RegExpChar.Type.CHAR) {
+        // this could probably allow more, such as escape sequences
+        return false;
+      }
     }
+    return true;
+  }
 }

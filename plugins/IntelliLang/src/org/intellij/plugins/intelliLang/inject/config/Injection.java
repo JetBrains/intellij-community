@@ -31,29 +31,29 @@ import java.util.List;
  * <li>injection range (based on value-pattern for XML-related injections)
  * <li>friendly name for displaying the entry
  * </ul>
- * */
+ */
 public interface Injection<T extends PsiElement> {
-    @NotNull
-    String getInjectedLanguageId();
+  @NotNull
+  String getInjectedLanguageId();
 
-    @NotNull
-    String getPrefix();
+  @NotNull
+  String getPrefix();
 
-    @NotNull
-    String getSuffix();
+  @NotNull
+  String getSuffix();
 
-    @NotNull
-    List<TextRange> getInjectedArea(T element);
+  @NotNull
+  List<TextRange> getInjectedArea(T element);
 
-    /**
-     * Determines whether the injection should be applied to the supplied element
-     */
-    boolean isApplicable(@NotNull T element);
+  /**
+   * Determines whether the injection should be applied to the supplied element
+   */
+  boolean isApplicable(@NotNull T element);
 
-    /**
-     * Determines how the injection would like being displayed (e.g. attributes
-     * return a qualified TAG-NAME/@ATT-NAME combination name instead of just
-     * the plain name.
-     */
-    String getDisplayName();
+  /**
+   * Determines how the injection would like being displayed (e.g. attributes
+   * return a qualified TAG-NAME/@ATT-NAME combination name instead of just
+   * the plain name.
+   */
+  String getDisplayName();
 }

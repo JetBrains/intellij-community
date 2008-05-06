@@ -16,45 +16,44 @@
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.openapi.project.Project;
+import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 
 import javax.swing.*;
 
-import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
-
 public class XmlTagPanel extends AbstractInjectionPanel<XmlTagInjection> {
 
-    // read by reflection
-    LanguagePanel myLanguagePanel;
-    TagPanel myPanel;
-    AdvancedPanel myAdvancedPanel;
+  // read by reflection
+  LanguagePanel myLanguagePanel;
+  TagPanel myPanel;
+  AdvancedPanel myAdvancedPanel;
 
-    private JPanel myRoot;
+  private JPanel myRoot;
 
-    public XmlTagPanel(XmlTagInjection injection, Project project) {
-        super(injection, project);
-        $$$setupUI$$$(); // see IDEA-9987
+  public XmlTagPanel(XmlTagInjection injection, Project project) {
+    super(injection, project);
+    $$$setupUI$$$(); // see IDEA-9987
 
-        init(injection.copy());
-    }
+    init(injection.copy());
+  }
 
-    protected void apply(XmlTagInjection other) {
-        // nothing to do, TagPanel.apply() already does this
-    }
+  protected void apply(XmlTagInjection other) {
+    // nothing to do, TagPanel.apply() already does this
+  }
 
-    protected void resetImpl() {
-        // same here^
-    }
+  protected void resetImpl() {
+    // same here^
+  }
 
-    public JPanel getComponent() {
-        return myRoot;
-    }
+  public JPanel getComponent() {
+    return myRoot;
+  }
 
-    private void createUIComponents() {
-        myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
-        myPanel = new TagPanel(myProject, myOrigInjection);
-        myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
-    }
+  private void createUIComponents() {
+    myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
+    myPanel = new TagPanel(myProject, myOrigInjection);
+    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
+  }
 
-    private void $$$setupUI$$$() {
-    }
+  private void $$$setupUI$$$() {
+  }
 }

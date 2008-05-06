@@ -19,90 +19,82 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.util.RemoveAnnotationFix;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class InjectionNotApplicable extends LocalInspectionTool {
 
-    @NotNull
-    public HighlightDisplayLevel getDefaultLevel() {
-        return HighlightDisplayLevel.ERROR;
-    }
+  @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.ERROR;
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    @NotNull
-    public String getGroupDisplayName() {
-        return InspectionProvider.LANGUAGE_INJECTION;
-    }
+  @NotNull
+  public String getGroupDisplayName() {
+    return InspectionProvider.LANGUAGE_INJECTION;
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return "Injection Annotation not applicable";
-    }
+  @NotNull
+  public String getDisplayName() {
+    return "Injection Annotation not applicable";
+  }
 
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-        return new JavaElementVisitor() {
-            final String annotationName = Configuration.getInstance().getLanguageAnnotationClass();
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      final String annotationName = Configuration.getInstance().getLanguageAnnotationClass();
 
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-            }
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      }
 
-            @Override
-            public void visitAnnotation(PsiAnnotation annotation) {
-                final String name = annotation.getQualifiedName();
-                if (annotationName.equals(name)) {
-                    checkAnnotation(annotation, holder);
-                } else if (name != null) {
-                    final PsiClass psiClass = JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope());
-                    if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, false)) {
-                        checkAnnotation(annotation, holder);
-                    }
-                }
-            }
-        };
-    }
-
-    private void checkAnnotation(PsiAnnotation annotation, ProblemsHolder holder) {
-        final PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
-        if (owner instanceof PsiVariable) {
-            final PsiType type = ((PsiVariable)owner).getType();
-            if (!PsiUtilEx.isStringOrStringArray(type)) {
-                registerProblem(annotation, holder);
-            }
-        } else if (owner instanceof PsiMethod) {
-            final PsiType type = ((PsiMethod)owner).getReturnType();
-            if (type == null || !PsiUtilEx.isStringOrStringArray(type)) {
-                registerProblem(annotation, holder);
-            }
+      @Override
+      public void visitAnnotation(PsiAnnotation annotation) {
+        final String name = annotation.getQualifiedName();
+        if (annotationName.equals(name)) {
+          checkAnnotation(annotation, holder);
         }
-    }
+        else if (name != null) {
+          final PsiClass psiClass = JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope());
+          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, false)) {
+            checkAnnotation(annotation, holder);
+          }
+        }
+      }
+    };
+  }
 
-    private void registerProblem(PsiAnnotation annotation, ProblemsHolder holder) {
-        holder.registerProblem(annotation, "Language Injection is only applicable to elements of type String", new RemoveAnnotationFix(this));
+  private void checkAnnotation(PsiAnnotation annotation, ProblemsHolder holder) {
+    final PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
+    if (owner instanceof PsiVariable) {
+      final PsiType type = ((PsiVariable)owner).getType();
+      if (!PsiUtilEx.isStringOrStringArray(type)) {
+        registerProblem(annotation, holder);
+      }
     }
+    else if (owner instanceof PsiMethod) {
+      final PsiType type = ((PsiMethod)owner).getReturnType();
+      if (type == null || !PsiUtilEx.isStringOrStringArray(type)) {
+        registerProblem(annotation, holder);
+      }
+    }
+  }
 
-    @NotNull
-    @NonNls
-    public String getShortName() {
-        return "InjectionNotApplicable";
-    }
+  private void registerProblem(PsiAnnotation annotation, ProblemsHolder holder) {
+    holder.registerProblem(annotation, "Language Injection is only applicable to elements of type String", new RemoveAnnotationFix(this));
+  }
+
+  @NotNull
+  @NonNls
+  public String getShortName() {
+    return "InjectionNotApplicable";
+  }
 }

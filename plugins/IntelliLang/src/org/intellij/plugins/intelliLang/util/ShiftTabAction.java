@@ -16,56 +16,55 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
+import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.Container;
-import java.awt.FocusTraversalPolicy;
-import java.awt.Component;
+import java.awt.event.KeyEvent;
 
 /**
  * Provides Shift-Tab support in EditorTextFields which otherwise don't support this keystroke to
  * move the input focus to the previous component.
  */
-@SuppressWarnings({ "ComponentNotRegistered" })
+@SuppressWarnings({"ComponentNotRegistered"})
 public class ShiftTabAction extends AnAction {
-    private static final CustomShortcutSet SHIFT_TAB;
-    static {
-        final KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK);
-        SHIFT_TAB = new CustomShortcutSet(keyStroke);
+  private static final CustomShortcutSet SHIFT_TAB;
+
+  static {
+    final KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK);
+    SHIFT_TAB = new CustomShortcutSet(keyStroke);
+  }
+
+  private final EditorTextField myEditor;
+
+  private ShiftTabAction(EditorTextField editor) {
+    super("Shift-Tab");
+    myEditor = editor;
+  }
+
+  public void actionPerformed(AnActionEvent event) {
+    Container container = myEditor.getParent();
+    while (container != null && container.getFocusTraversalPolicy() == null) {
+      container = container.getParent();
     }
-
-    private final EditorTextField myEditor;
-
-    private ShiftTabAction(EditorTextField editor) {
-        super("Shift-Tab");
-        myEditor = editor;
-    }
-
-    public void actionPerformed(AnActionEvent event) {
-        Container container = myEditor.getParent();
-        while (container != null && container.getFocusTraversalPolicy() == null) {
-            container = container.getParent();
+    if (container != null) {
+      final FocusTraversalPolicy ftp = container.getFocusTraversalPolicy();
+      if (ftp != null) {
+        final Component prev = ftp.getComponentBefore(container, myEditor);
+        if (prev != null) {
+          prev.requestFocus();
         }
-        if (container != null) {
-            final FocusTraversalPolicy ftp = container.getFocusTraversalPolicy();
-            if (ftp != null) {
-                final Component prev = ftp.getComponentBefore(container, myEditor);
-                if (prev != null) {
-                    prev.requestFocus();
-                }
-            }
-        }
+      }
     }
+  }
 
-    /**
-     * Call this method to enable Sift-Tab support for the supplied EditorTextField.
-     */
-    public static void attachTo(EditorTextField textField) {
-        new ShiftTabAction(textField).registerCustomShortcutSet(SHIFT_TAB, textField);
-    }
+  /**
+   * Call this method to enable Sift-Tab support for the supplied EditorTextField.
+   */
+  public static void attachTo(EditorTextField textField) {
+    new ShiftTabAction(textField).registerCustomShortcutSet(SHIFT_TAB, textField);
+  }
 }

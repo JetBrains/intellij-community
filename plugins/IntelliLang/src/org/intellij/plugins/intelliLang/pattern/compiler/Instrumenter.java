@@ -18,5 +18,5 @@ package org.intellij.plugins.intelliLang.pattern.compiler;
 import org.objectweb.asm.ClassVisitor;
 
 public interface Instrumenter extends ClassVisitor {
-    boolean instrumented();
+  boolean instrumented();
 }

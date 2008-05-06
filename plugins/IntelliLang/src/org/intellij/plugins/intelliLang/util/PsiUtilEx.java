@@ -15,81 +15,83 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiUtilEx {
-    @NonNls
-    private static final String JAVA_LANG_STRING = "java.lang.String";
+  @NonNls
+  private static final String JAVA_LANG_STRING = "java.lang.String";
 
-    private PsiUtilEx() {
-    }
+  private PsiUtilEx() {
+  }
 
-    public static boolean isInSourceContent(PsiElement e) {
-        final VirtualFile file = e.getContainingFile().getVirtualFile();
-        if (file == null) return false;
-        final ProjectFileIndex index = ProjectRootManager.getInstance(e.getProject()).getFileIndex();
-        return index.isInContent(file);
-    }
+  public static boolean isInSourceContent(PsiElement e) {
+    final VirtualFile file = e.getContainingFile().getVirtualFile();
+    if (file == null) return false;
+    final ProjectFileIndex index = ProjectRootManager.getInstance(e.getProject()).getFileIndex();
+    return index.isInContent(file);
+  }
 
-    @Nullable
-    public static PsiParameter getParameterForArgument(PsiExpression element) {
-        final PsiExpressionList list = PsiTreeUtil.getParentOfType(element, PsiExpressionList.class, true, PsiStatement.class);
-        if (list != null) {
-            final PsiElement parent = list.getParent();
-            if (parent instanceof PsiCallExpression) {
-                final PsiExpression[] arguments = list.getExpressions();
-                for (int i = 0; i < arguments.length; i++) {
-                    final PsiExpression argument = arguments[i];
-                    if (argument == element) {
-                        final PsiCallExpression call = (PsiCallExpression)parent;
-                        final PsiMethod method = call.resolveMethod();
-                        if (method != null) {
-                            final PsiParameter[] parameters = method.getParameterList().getParameters();
-                            if (parameters.length > i) {
-                                return parameters[i];
-                            } else if (parameters.length > 0) {
-                                final PsiParameter lastParam = parameters[parameters.length - 1];
-                                if (lastParam.getType() instanceof PsiEllipsisType) {
-                                    return lastParam;
-                                }
-                            }
-                        }
-                        break;
-                    }
+  @Nullable
+  public static PsiParameter getParameterForArgument(PsiExpression element) {
+    final PsiExpressionList list = PsiTreeUtil.getParentOfType(element, PsiExpressionList.class, true, PsiStatement.class);
+    if (list != null) {
+      final PsiElement parent = list.getParent();
+      if (parent instanceof PsiCallExpression) {
+        final PsiExpression[] arguments = list.getExpressions();
+        for (int i = 0; i < arguments.length; i++) {
+          final PsiExpression argument = arguments[i];
+          if (argument == element) {
+            final PsiCallExpression call = (PsiCallExpression)parent;
+            final PsiMethod method = call.resolveMethod();
+            if (method != null) {
+              final PsiParameter[] parameters = method.getParameterList().getParameters();
+              if (parameters.length > i) {
+                return parameters[i];
+              }
+              else if (parameters.length > 0) {
+                final PsiParameter lastParam = parameters[parameters.length - 1];
+                if (lastParam.getType() instanceof PsiEllipsisType) {
+                  return lastParam;
                 }
+              }
             }
+            break;
+          }
         }
-        return null;
+      }
     }
+    return null;
+  }
 
-    public static boolean isStringLiteral(PsiElement value) {
-        if (value instanceof PsiLiteralExpression) {
-            final PsiLiteralExpression expression = ((PsiLiteralExpression)value);
-            final PsiType type = expression.getType();
-            if (type != null && isString(type)) {
-                return true;
-            }
-        }
-        return false;
+  public static boolean isStringLiteral(PsiElement value) {
+    if (value instanceof PsiLiteralExpression) {
+      final PsiLiteralExpression expression = ((PsiLiteralExpression)value);
+      final PsiType type = expression.getType();
+      if (type != null && isString(type)) {
+        return true;
+      }
     }
+    return false;
+  }
 
-    public static boolean isString(@NotNull PsiType type) {
-        // PsiType.equalsToText() seems to be kinda expensive (says the profiler)
-        return JAVA_LANG_STRING.equals(type.getCanonicalText());
+  public static boolean isString(@NotNull PsiType type) {
+    // PsiType.equalsToText() seems to be kinda expensive (says the profiler)
+    return JAVA_LANG_STRING.equals(type.getCanonicalText());
+  }
+
+  public static boolean isStringOrStringArray(@NotNull PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return isString(((PsiArrayType)type).getComponentType());
     }
-    
-    public static boolean isStringOrStringArray(@NotNull PsiType type) {
-        if (type instanceof PsiArrayType) {
-            return isString(((PsiArrayType)type).getComponentType());
-        } else {
-            return isString(type);
-        }
+    else {
+      return isString(type);
     }
+  }
 }

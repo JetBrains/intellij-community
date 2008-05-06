@@ -15,35 +15,36 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiAnnotationMethod;
-import com.intellij.psi.PsiAnnotation;
+import org.jetbrains.annotations.Nullable;
 
 enum InitializerRequirement {
-    NONE_REQUIRED, VALUE_REQUIRED, OTHER_REQUIRED;
+  NONE_REQUIRED, VALUE_REQUIRED, OTHER_REQUIRED;
 
-    public static InitializerRequirement calcInitializerRequirement(@Nullable PsiClass psiClass) {
-        if (psiClass == null || !psiClass.isAnnotationType()) {
-            return InitializerRequirement.NONE_REQUIRED;
-        }
-
-        InitializerRequirement r = NONE_REQUIRED;
-        final PsiMethod[] methods = psiClass.getMethods();
-        for (PsiMethod method : methods) {
-            if (method instanceof PsiAnnotationMethod) {
-                final PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
-                if (annotationMethod.getDefaultValue() == null) {
-                    if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(annotationMethod.getName())) {
-                        return VALUE_REQUIRED;
-                    } else {
-                        r = OTHER_REQUIRED;
-                    }
-                }
-            }
-        }
-
-        return r;
+  public static InitializerRequirement calcInitializerRequirement(@Nullable PsiClass psiClass) {
+    if (psiClass == null || !psiClass.isAnnotationType()) {
+      return InitializerRequirement.NONE_REQUIRED;
     }
+
+    InitializerRequirement r = NONE_REQUIRED;
+    final PsiMethod[] methods = psiClass.getMethods();
+    for (PsiMethod method : methods) {
+      if (method instanceof PsiAnnotationMethod) {
+        final PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
+        if (annotationMethod.getDefaultValue() == null) {
+          if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(annotationMethod.getName())) {
+            return VALUE_REQUIRED;
+          }
+          else {
+            r = OTHER_REQUIRED;
+          }
+        }
+      }
+    }
+
+    return r;
+  }
 }

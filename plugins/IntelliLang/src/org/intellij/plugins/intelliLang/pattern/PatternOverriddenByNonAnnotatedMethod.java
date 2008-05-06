@@ -19,73 +19,68 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.*;
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.util.AnnotateFix;
+import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.util.AnnotateFix;
-import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
-
 public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
 
-    @NotNull
-    public HighlightDisplayLevel getDefaultLevel() {
-        return HighlightDisplayLevel.WARNING;
-    }
+  @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.WARNING;
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    @NotNull
-    public String getGroupDisplayName() {
-        return InspectionProvider.PATTERN_VALIDATION;
-    }
+  @NotNull
+  public String getGroupDisplayName() {
+    return InspectionProvider.PATTERN_VALIDATION;
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return "Non-annotated Method overrides @Pattern Method";
-    }
+  @NotNull
+  public String getDisplayName() {
+    return "Non-annotated Method overrides @Pattern Method";
+  }
 
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-        return new JavaElementVisitor() {
-            final Pair<String,? extends Set<String>> annotationName = Configuration.getInstance().getPatternAnnotationPair();
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      final Pair<String, ? extends Set<String>> annotationName = Configuration.getInstance().getPatternAnnotationPair();
 
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-            }
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      }
 
-            @Override
-            public void visitMethod(PsiMethod method) {
-                final PsiIdentifier psiIdentifier = method.getNameIdentifier();
-                if (psiIdentifier == null) {
-                    return;
-                }
+      @Override
+      public void visitMethod(PsiMethod method) {
+        final PsiIdentifier psiIdentifier = method.getNameIdentifier();
+        if (psiIdentifier == null) {
+          return;
+        }
 
-                final PsiAnnotation[] annotationFrom = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, false);
-                if (annotationFrom.length == 0) {
-                    final PsiAnnotation[] annotationFromHierarchy = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, true);
-                    if (annotationFromHierarchy.length > 0) {
-                        final String annotationClassname = annotationFromHierarchy[annotationFromHierarchy.length - 1].getQualifiedName();
-                        final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
-                        holder.registerProblem(psiIdentifier, "Non-annotated Method overrides @Pattern Method", new AnnotateFix(method, annotationClassname, argList));
-                    }
-                }
-            }
-        };
-    }
+        final PsiAnnotation[] annotationFrom = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, false);
+        if (annotationFrom.length == 0) {
+          final PsiAnnotation[] annotationFromHierarchy = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, true);
+          if (annotationFromHierarchy.length > 0) {
+            final String annotationClassname = annotationFromHierarchy[annotationFromHierarchy.length - 1].getQualifiedName();
+            final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
+            holder.registerProblem(psiIdentifier, "Non-annotated Method overrides @Pattern Method",
+                                   new AnnotateFix(method, annotationClassname, argList));
+          }
+        }
+      }
+    };
+  }
 
-    @NotNull
-    @NonNls
-    public String getShortName() {
-        return "PatternOverriddenByNonAnnotatedMethod";
-    }
+  @NotNull
+  @NonNls
+  public String getShortName() {
+    return "PatternOverriddenByNonAnnotatedMethod";
+  }
 }

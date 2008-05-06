@@ -22,50 +22,50 @@ import org.jetbrains.annotations.NotNull;
 
 class InstrumentationItem implements FileProcessingCompiler.ProcessingItem {
 
-    private final VirtualFile myClassFile;
-    private final boolean myJDK6;
+  private final VirtualFile myClassFile;
+  private final boolean myJDK6;
 
-    public InstrumentationItem(@NotNull VirtualFile classFile, boolean jdk6) {
-        myJDK6 = jdk6;
-        myClassFile = classFile;
-    }
+  public InstrumentationItem(@NotNull VirtualFile classFile, boolean jdk6) {
+    myJDK6 = jdk6;
+    myClassFile = classFile;
+  }
 
-    @NotNull
-    public VirtualFile getFile() {
-        return myClassFile;
-    }
+  @NotNull
+  public VirtualFile getFile() {
+    return myClassFile;
+  }
 
-    @NotNull
-    public VirtualFile getClassFile() {
-        return myClassFile;
-    }
+  @NotNull
+  public VirtualFile getClassFile() {
+    return myClassFile;
+  }
 
-    public ValidityState getValidityState() {
+  public ValidityState getValidityState() {
 //        return new TimestampValidityState(myClassFile.getModificationStamp());
-        return null;
-    }
+    return null;
+  }
 
-    @SuppressWarnings({ "RedundantIfStatement" })
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+  @SuppressWarnings({"RedundantIfStatement"})
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-        final InstrumentationItem item = (InstrumentationItem)o;
+    final InstrumentationItem item = (InstrumentationItem)o;
 
-        if (!myClassFile.equals(item.myClassFile)) return false;
+    if (!myClassFile.equals(item.myClassFile)) return false;
 
-        return true;
-    }
+    return true;
+  }
 
-    public int hashCode() {
-        return myClassFile.hashCode();
-    }
+  public int hashCode() {
+    return myClassFile.hashCode();
+  }
 
-    public String toString() {
-        return "Item: " + myClassFile.getPresentableUrl();
-    }
+  public String toString() {
+    return "Item: " + myClassFile.getPresentableUrl();
+  }
 
-    public boolean isJDK6() {
-        return myJDK6;
-    }
+  public boolean isJDK6() {
+    return myJDK6;
+  }
 }

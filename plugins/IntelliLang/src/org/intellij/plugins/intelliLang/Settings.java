@@ -37,7 +37,7 @@ import java.awt.*;
  * Provides UI for global {@link org.intellij.plugins.intelliLang.Configuration}. This is
  * split into this and the SettingsUI class to avoid holding strong application-wide
  * references on the UI objects.
- *
+ * <p/>
  * Even though this class is an application component, it determines the currently focused
  * Project and passes it to the SettingsUI instance. This is kinda unconventional, but has
  * the benefit of having a centralized IDE-wide configuration that doesn't need to be
@@ -45,108 +45,109 @@ import java.awt.*;
  * that will allow to browse the current project's classes.
  */
 public class Settings implements ApplicationComponent, Configurable, JDOMExternalizable {
-    private static final Logger LOG = Logger.getInstance(Settings.class.getName());
+  private static final Logger LOG = Logger.getInstance(Settings.class.getName());
 
-    @NonNls
-    private static final String SETTINGS_UI_NAME = "SETTINGS_UI";
+  @NonNls
+  private static final String SETTINGS_UI_NAME = "SETTINGS_UI";
 
-    private final Configuration myConfiguration;
-    private MasterDetailsComponent.UIState mySettingsUIState = new MasterDetailsComponent.UIState();
+  private final Configuration myConfiguration;
+  private MasterDetailsComponent.UIState mySettingsUIState = new MasterDetailsComponent.UIState();
 
-    Settings(Configuration configuration) {
-        myConfiguration = configuration;
+  Settings(Configuration configuration) {
+    myConfiguration = configuration;
+  }
+
+  private SettingsUI mySettingsUI;
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return "IntelliLangSettings";
+  }
+
+  public String getDisplayName() {
+    return "IntelliLang";
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return IconLoader.findIcon("icon.png");
+  }
+
+  @Nullable
+  @NonNls
+  public String getHelpTopic() {
+    return "IntelliLang.Configuration";
+  }
+
+  public JComponent createComponent() {
+    final ProjectManager projectManager = ProjectManager.getInstance();
+    final Project[] projects = projectManager.getOpenProjects();
+
+    Project project = null;
+    if (projects.length == 0) {
+      project = projectManager.getDefaultProject();
     }
-
-    private SettingsUI mySettingsUI;
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return "IntelliLangSettings";
-    }
-
-    public String getDisplayName() {
-        return "IntelliLang";
-    }
-
-    @Nullable
-    public Icon getIcon() {
-        return IconLoader.findIcon("icon.png");
-    }
-
-    @Nullable
-    @NonNls
-    public String getHelpTopic() {
-        return "IntelliLang.Configuration";
-    }
-
-    public JComponent createComponent() {
-        final ProjectManager projectManager = ProjectManager.getInstance();
-        final Project[] projects = projectManager.getOpenProjects();
-
-        Project project = null;
-        if (projects.length == 0) {
-            project = projectManager.getDefaultProject();
-        } else {
-            final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
-            final Window focusedWindow = windowManager.getMostRecentFocusedWindow();
-            if (focusedWindow != null) {
-                for (Project p : projects) {
-                    final Window w = windowManager.suggestParentWindow(p);
-                    if (w == focusedWindow || w.isAncestorOf(focusedWindow) || focusedWindow.isAncestorOf(w)) {
-                        project = p;
-                        break;
-                    }
-                }
-            }
-            if (project == null) {
-                project = projectManager.getDefaultProject();
-            }
+    else {
+      final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
+      final Window focusedWindow = windowManager.getMostRecentFocusedWindow();
+      if (focusedWindow != null) {
+        for (Project p : projects) {
+          final Window w = windowManager.suggestParentWindow(p);
+          if (w == focusedWindow || w.isAncestorOf(focusedWindow) || focusedWindow.isAncestorOf(w)) {
+            project = p;
+            break;
+          }
         }
-
-        mySettingsUI = new SettingsUI(project, myConfiguration);
-        mySettingsUI.loadState(mySettingsUIState);
-
-        return mySettingsUI.createComponent();
+      }
+      if (project == null) {
+        project = projectManager.getDefaultProject();
+      }
     }
 
-    public boolean isModified() {
-        return mySettingsUI != null && mySettingsUI.isModified();
-    }
+    mySettingsUI = new SettingsUI(project, myConfiguration);
+    mySettingsUI.loadState(mySettingsUIState);
 
-    public void apply() throws ConfigurationException {
-        mySettingsUI.apply();
-    }
+    return mySettingsUI.createComponent();
+  }
 
-    public void reset() {
-        mySettingsUI.reset();
-    }
+  public boolean isModified() {
+    return mySettingsUI != null && mySettingsUI.isModified();
+  }
 
-    public void disposeUIResources() {
-        if (mySettingsUI != null) {
-            // the order of these calls seems odd, but the MasterDetailsComponent
-            // requires it that way.
-            mySettingsUI.disposeUIResources();
-            mySettingsUIState = mySettingsUI.getState();
-        }
-        mySettingsUI = null;
-    }
+  public void apply() throws ConfigurationException {
+    mySettingsUI.apply();
+  }
 
-    public void readExternal(Element element) throws InvalidDataException {
-        final Element child = element.getChild(SETTINGS_UI_NAME);
-        if (child != null) {
-            DefaultJDOMExternalizer.readExternal(mySettingsUIState, child);
-        }
-    }
+  public void reset() {
+    mySettingsUI.reset();
+  }
 
-    public void writeExternal(Element element) throws WriteExternalException {
-        final Element e = new Element(SETTINGS_UI_NAME);
-        element.addContent(e);
-        DefaultJDOMExternalizer.writeExternal(mySettingsUIState, e);
+  public void disposeUIResources() {
+    if (mySettingsUI != null) {
+      // the order of these calls seems odd, but the MasterDetailsComponent
+      // requires it that way.
+      mySettingsUI.disposeUIResources();
+      mySettingsUIState = mySettingsUI.getState();
     }
+    mySettingsUI = null;
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    final Element child = element.getChild(SETTINGS_UI_NAME);
+    if (child != null) {
+      DefaultJDOMExternalizer.readExternal(mySettingsUIState, child);
+    }
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    final Element e = new Element(SETTINGS_UI_NAME);
+    element.addContent(e);
+    DefaultJDOMExternalizer.writeExternal(mySettingsUIState, e);
+  }
 }

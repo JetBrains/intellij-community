@@ -42,196 +42,204 @@ import java.util.regex.Pattern;
  *
  * @see org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy
  */
-public abstract class AbstractTagInjection<T extends AbstractTagInjection, I extends PsiElement> extends BaseInjection<T,I> {
+public abstract class AbstractTagInjection<T extends AbstractTagInjection, I extends PsiElement> extends BaseInjection<T, I> {
 
-    @NotNull @NonNls
-    private StringMatcher myTagName = StringMatcher.ANY;
+  @NotNull @NonNls
+  private StringMatcher myTagName = StringMatcher.ANY;
 
-    @NotNull @NonNls 
-    private String myTagNamespace = "";
+  @NotNull @NonNls
+  private String myTagNamespace = "";
 
-    @NotNull @NonNls
-    private String myValuePattern = "";
-    protected Pattern myCompiledValuePattern;
+  @NotNull @NonNls
+  private String myValuePattern = "";
+  protected Pattern myCompiledValuePattern;
 
-    @NotNull @NonNls
-    private String myXPathCondition = "";
-    private Object myCompiledXPathCondition;
+  @NotNull @NonNls
+  private String myXPathCondition = "";
+  private Object myCompiledXPathCondition;
 
-    @NotNull
-    public String getTagName() {
-        return myTagName.getPattern();
+  @NotNull
+  public String getTagName() {
+    return myTagName.getPattern();
+  }
+
+  public void setTagName(@NotNull @NonNls String tagName) {
+    myTagName = StringMatcher.create(tagName);
+  }
+
+  @NotNull
+  public String getTagNamespace() {
+    return myTagNamespace;
+  }
+
+  public void setTagNamespace(@NotNull @NonNls String tagNamespace) {
+    myTagNamespace = tagNamespace;
+  }
+
+  @NotNull
+  public String getValuePattern() {
+    return myValuePattern;
+  }
+
+  public void setValuePattern(@Nullable String pattern) {
+    try {
+      if (pattern != null && pattern.length() > 0) {
+        myValuePattern = pattern;
+        myCompiledValuePattern = Pattern.compile(pattern, Pattern.DOTALL);
+      }
+      else {
+        myValuePattern = "";
+        myCompiledValuePattern = null;
+      }
     }
-
-    public void setTagName(@NotNull @NonNls String tagName) {
-        myTagName = StringMatcher.create(tagName);
+    catch (Exception e1) {
+      myCompiledValuePattern = null;
+      Logger.getInstance(getClass().getName()).info("Invalid pattern", e1);
     }
+  }
 
-    @NotNull
-    public String getTagNamespace() {
-        return myTagNamespace;
+  @NotNull
+  public String getXPathCondition() {
+    return myXPathCondition;
+  }
+
+  @Nullable
+  public XPath getCompiledXPathCondition() {
+    if (isInvalid(myCompiledXPathCondition)) {
+      return null;
     }
-
-    public void setTagNamespace(@NotNull @NonNls String tagNamespace) {
-        myTagNamespace = tagNamespace;
+    else if (myCompiledXPathCondition != null) {
+      return (XPath)myCompiledXPathCondition;
     }
-
-    @NotNull
-    public String getValuePattern() {
-        return myValuePattern;
-    }
-
-    public void setValuePattern(@Nullable String pattern) {
-        try {
-            if (pattern != null && pattern.length() > 0) {
-                myValuePattern = pattern;
-                myCompiledValuePattern = Pattern.compile(pattern, Pattern.DOTALL);
-            } else {
-                myValuePattern = "";
-                myCompiledValuePattern = null;
-            }
-        } catch (Exception e1) {
-            myCompiledValuePattern = null;
-            Logger.getInstance(getClass().getName()).info("Invalid pattern", e1);
+    else if (myXPathCondition != null && myXPathCondition.length() > 0) {
+      try {
+        final XPathSupportProxy xPathSupport = XPathSupportProxy.getInstance();
+        if (xPathSupport != null) {
+          return (XPath)(myCompiledXPathCondition = xPathSupport.createXPath(myXPathCondition));
         }
-    }
-
-    @NotNull
-    public String getXPathCondition() {
-        return myXPathCondition;
-    }
-
-    @Nullable
-    public XPath getCompiledXPathCondition() {
-        if (isInvalid(myCompiledXPathCondition)) {
-            return null;
-        } else if (myCompiledXPathCondition != null) {
-            return (XPath)myCompiledXPathCondition;
-        } else if (myXPathCondition != null && myXPathCondition.length() > 0) {
-            try {
-                final XPathSupportProxy xPathSupport = XPathSupportProxy.getInstance();
-                if (xPathSupport != null) {
-                    return (XPath)(myCompiledXPathCondition = xPathSupport.createXPath(myXPathCondition));
-                } else {
-                    myCompiledXPathCondition = XPathSupportProxy.UNSUPPORTED;
-                }
-            } catch (JaxenException e) {
-                myCompiledXPathCondition = XPathSupportProxy.INVALID;
-                Logger.getInstance(getClass().getName()).info("Invalid XPath expression", e);
-            }
+        else {
+          myCompiledXPathCondition = XPathSupportProxy.UNSUPPORTED;
         }
-        return null;
+      }
+      catch (JaxenException e) {
+        myCompiledXPathCondition = XPathSupportProxy.INVALID;
+        Logger.getInstance(getClass().getName()).info("Invalid XPath expression", e);
+      }
     }
+    return null;
+  }
 
-    private static boolean isInvalid(Object expr) {
-        return expr == XPathSupportProxy.INVALID || expr == XPathSupportProxy.UNSUPPORTED;
+  private static boolean isInvalid(Object expr) {
+    return expr == XPathSupportProxy.INVALID || expr == XPathSupportProxy.UNSUPPORTED;
+  }
+
+  public void setXPathCondition(@Nullable String condition) {
+    myXPathCondition = condition != null ? condition : "";
+    myCompiledXPathCondition = null;
+  }
+
+  @SuppressWarnings({"RedundantIfStatement"})
+  protected boolean matches(@Nullable XmlTag tag) {
+    if (tag == null) {
+      return false;
     }
-
-    public void setXPathCondition(@Nullable String condition) {
-        myXPathCondition = condition != null ? condition : "";
-        myCompiledXPathCondition = null;
+    if (!myTagName.matches(tag.getLocalName())) {
+      return false;
     }
-
-    @SuppressWarnings({ "RedundantIfStatement" })
-    protected boolean matches(@Nullable XmlTag tag) {
-        if (tag == null) {
-            return false;
-        }
-        if (!myTagName.matches(tag.getLocalName())) {
-            return false;
-        }
-        if (!myTagNamespace.equals(tag.getNamespace())) {
-            return false;
-        }
-        return true;
+    if (!myTagNamespace.equals(tag.getNamespace())) {
+      return false;
     }
+    return true;
+  }
 
-    /**
-     * Determines if further injections should be examined if <code>isApplicable</code> has returned true.
-     * <p />
-     * This is determined by the presence of a value-pattern: If none is present, the entry is considered
-     * to be a terminal one.
-     *
-     * @return true to stop, false to continue 
-     */
-    public boolean isTerminal() {
-        return myCompiledValuePattern == null;
+  /**
+   * Determines if further injections should be examined if <code>isApplicable</code> has returned true.
+   * <p/>
+   * This is determined by the presence of a value-pattern: If none is present, the entry is considered
+   * to be a terminal one.
+   *
+   * @return true to stop, false to continue
+   */
+  public boolean isTerminal() {
+    return myCompiledValuePattern == null;
+  }
+
+  public void copyFrom(@NotNull T other) {
+    super.copyFrom(other);
+    myTagName = other.myTagName;
+    myTagNamespace = other.myTagNamespace;
+    setValuePattern(other.getValuePattern());
+    setXPathCondition(other.getXPathCondition());
+  }
+
+  protected void readExternalImpl(Element e) {
+    setTagName(JDOMExternalizer.readString(e, "TAGNAME"));
+    setTagNamespace(JDOMExternalizer.readString(e, "TAGNAMESPACE"));
+    setValuePattern(JDOMExternalizer.readString(e, "VALUE_PATTERN"));
+    setXPathCondition(JDOMExternalizer.readString(e, "XPATH_CONDITION"));
+  }
+
+  protected void writeExternalImpl(Element e) {
+    JDOMExternalizer.write(e, "TAGNAME", myTagName.getPattern());
+    JDOMExternalizer.write(e, "TAGNAMESPACE", myTagNamespace);
+    JDOMExternalizer.write(e, "VALUE_PATTERN", myValuePattern);
+    JDOMExternalizer.write(e, "XPATH_CONDITION", myXPathCondition);
+  }
+
+  @SuppressWarnings({"RedundantIfStatement"})
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    final AbstractTagInjection that = (AbstractTagInjection)o;
+
+    if (!myTagName.equals(that.myTagName)) return false;
+    if (!myTagNamespace.equals(that.myTagNamespace)) return false;
+    if (!myValuePattern.equals(that.myValuePattern)) return false;
+    if (!myXPathCondition.equals(that.myXPathCondition)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myTagName.hashCode();
+    result = 31 * result + myTagNamespace.hashCode();
+    result = 31 * result + myValuePattern.hashCode();
+    result = 31 * result + myXPathCondition.hashCode();
+    return result;
+  }
+
+  protected static List<TextRange> getMatchingRanges(Matcher matcher, int offset) {
+    final List<TextRange> list = new SmartList<TextRange>();
+    int start = 0;
+    while (matcher.find(start)) {
+      final String group = matcher.group(1);
+      if (group != null) {
+        start = matcher.start(1);
+        final int length = group.length();
+        list.add(TextRange.from(start + offset, length));
+        start += length;
+      }
+      else {
+        break;
+      }
     }
+    return list;
+  }
 
-    public void copyFrom(@NotNull T other) {
-        super.copyFrom(other);
-        myTagName = other.myTagName;
-        myTagNamespace = other.myTagNamespace;
-        setValuePattern(other.getValuePattern());
-        setXPathCondition(other.getXPathCondition());
+  protected boolean matchXPath(XmlElement context) {
+    final XPath condition = getCompiledXPathCondition();
+    if (condition != null) {
+      try {
+        return condition.booleanValueOf(context);
+      }
+      catch (JaxenException e) {
+        myCompiledXPathCondition = XPathSupportProxy.INVALID;
+        return false;
+      }
     }
-
-    protected void readExternalImpl(Element e) {
-        setTagName(JDOMExternalizer.readString(e, "TAGNAME"));
-        setTagNamespace(JDOMExternalizer.readString(e, "TAGNAMESPACE"));
-        setValuePattern(JDOMExternalizer.readString(e, "VALUE_PATTERN"));
-        setXPathCondition(JDOMExternalizer.readString(e, "XPATH_CONDITION"));
-    }
-
-    protected void writeExternalImpl(Element e) {
-        JDOMExternalizer.write(e, "TAGNAME", myTagName.getPattern());
-        JDOMExternalizer.write(e, "TAGNAMESPACE", myTagNamespace);
-        JDOMExternalizer.write(e, "VALUE_PATTERN", myValuePattern);
-        JDOMExternalizer.write(e, "XPATH_CONDITION", myXPathCondition);
-    }
-
-    @SuppressWarnings({ "RedundantIfStatement" })
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        final AbstractTagInjection that = (AbstractTagInjection)o;
-
-        if (!myTagName.equals(that.myTagName)) return false;
-        if (!myTagNamespace.equals(that.myTagNamespace)) return false;
-        if (!myValuePattern.equals(that.myValuePattern)) return false;
-        if (!myXPathCondition.equals(that.myXPathCondition)) return false;
-
-        return true;
-    }
-
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + myTagName.hashCode();
-        result = 31 * result + myTagNamespace.hashCode();
-        result = 31 * result + myValuePattern.hashCode();
-        result = 31 * result + myXPathCondition.hashCode();
-        return result;
-    }
-
-    protected static List<TextRange> getMatchingRanges(Matcher matcher, int offset) {
-        final List<TextRange> list = new SmartList<TextRange>();
-        int start = 0;
-        while (matcher.find(start)) {
-            final String group = matcher.group(1);
-            if (group != null) {
-                start = matcher.start(1);
-                final int length = group.length();
-                list.add(TextRange.from(start + offset, length));
-                start += length;
-            } else {
-                break;
-            }
-        }
-        return list;
-    }
-
-    protected boolean matchXPath(XmlElement context) {
-        final XPath condition = getCompiledXPathCondition();
-        if (condition != null) {
-            try {
-                return condition.booleanValueOf(context);
-            } catch (JaxenException e) {
-                myCompiledXPathCondition = XPathSupportProxy.INVALID;
-                return false;
-            }
-        }
-        return myXPathCondition.length() == 0;
-    }
+    return myXPathCondition.length() == 0;
+  }
 }

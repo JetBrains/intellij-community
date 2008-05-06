@@ -34,41 +34,41 @@ import java.util.Collections;
 import java.util.List;
 
 public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
-    public static final Key<List<String>> URI_MODEL = Key.create("URI_MODEL");
-    
-    private JPanel myRoot;
+  public static final Key<List<String>> URI_MODEL = Key.create("URI_MODEL");
 
-    private EditorTextField myLocalName;
-    private ComboBox myNamespace;
+  private JPanel myRoot;
 
-    public TagPanel(Project project, AbstractTagInjection injection) {
-        super(injection, project);
-        $$$setupUI$$$();
+  private EditorTextField myLocalName;
+  private ComboBox myNamespace;
 
-        myNamespace.setModel(createNamespaceUriModel(myProject));
-        myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
+  public TagPanel(Project project, AbstractTagInjection injection) {
+    super(injection, project);
+    $$$setupUI$$$();
+
+    myNamespace.setModel(createNamespaceUriModel(myProject));
+    myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
+  }
+
+  public static ComboBoxModel createNamespaceUriModel(Project project) {
+    final List<String> data = project.getUserData(URI_MODEL);
+    if (data != null) {
+      return new DefaultComboBoxModel(data.toArray());
     }
 
-    public static ComboBoxModel createNamespaceUriModel(Project project) {
-        final List<String> data = project.getUserData(URI_MODEL);
-        if (data != null) {
-            return new DefaultComboBoxModel(data.toArray());
+    final List<String> urls = new ArrayList<String>(Arrays.asList(ExternalResourceManager.getInstance().getResourceUrls(null, true)));
+    Collections.sort(urls);
+
+    final JspManager jspManager = JspManager.getInstance(project);
+    if (jspManager != null) {
+      final List<String> tlds = new ArrayList<String>();
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      for (Module module : modules) {
+        final String[] tldUris = jspManager.getPossibleTldUris(module);
+        for (String uri : tldUris) {
+          if (!tlds.contains(uri)) {
+            tlds.add(uri);
+          }
         }
-
-        final List<String> urls = new ArrayList<String>(Arrays.asList(ExternalResourceManager.getInstance().getResourceUrls(null, true)));
-        Collections.sort(urls);
-
-        final JspManager jspManager = JspManager.getInstance(project);
-        if (jspManager != null) {
-            final List<String> tlds = new ArrayList<String>();
-            final Module[] modules = ModuleManager.getInstance(project).getModules();
-            for (Module module : modules) {
-                final String[] tldUris = jspManager.getPossibleTldUris(module);
-                for (String uri : tldUris) {
-                    if (!tlds.contains(uri)) {
-                        tlds.add(uri);
-                    }
-                }
 
 // That's the OpenAPI way, but TldInfoManager is always null:
 //                final TldInfoManager manager = TldInfoManager.getTldInfoManager(module);
@@ -78,41 +78,41 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
 //                        tlds.add(info.getUri());
 //                    }
 //                }
-            }
-            Collections.sort(tlds);
+      }
+      Collections.sort(tlds);
 
-            // TLD URIs are intentionally kept above the other URIs to make it easier to find them
-            urls.addAll(0, tlds);
-        }
-
-        project.putUserData(URI_MODEL, urls);
-        return new DefaultComboBoxModel(urls.toArray());
+      // TLD URIs are intentionally kept above the other URIs to make it easier to find them
+      urls.addAll(0, tlds);
     }
 
-    public JPanel getComponent() {
-        return myRoot;
-    }
+    project.putUserData(URI_MODEL, urls);
+    return new DefaultComboBoxModel(urls.toArray());
+  }
 
-    protected void resetImpl() {
-        myLocalName.setText(myOrigInjection.getTagName());
-        myNamespace.getEditor().setItem(myOrigInjection.getTagNamespace());
-    }
+  public JPanel getComponent() {
+    return myRoot;
+  }
 
-    protected void apply(AbstractTagInjection i) {
-        i.setTagName(myLocalName.getText());
-        i.setTagNamespace(getNamespace());
-    }
+  protected void resetImpl() {
+    myLocalName.setText(myOrigInjection.getTagName());
+    myNamespace.getEditor().setItem(myOrigInjection.getTagNamespace());
+  }
 
-    private String getNamespace() {
-        final String s = (String)myNamespace.getEditor().getItem();
-        return s != null ? s : "";
-    }
+  protected void apply(AbstractTagInjection i) {
+    i.setTagName(myLocalName.getText());
+    i.setTagNamespace(getNamespace());
+  }
 
-    private void createUIComponents() {
-        myLocalName = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getTagName());
-    }
+  private String getNamespace() {
+    final String s = (String)myNamespace.getEditor().getItem();
+    return s != null ? s : "";
+  }
 
-    private void $$$setupUI$$$() {
-    }
+  private void createUIComponents() {
+    myLocalName = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getTagName());
+  }
+
+  private void $$$setupUI$$$() {
+  }
 }
 

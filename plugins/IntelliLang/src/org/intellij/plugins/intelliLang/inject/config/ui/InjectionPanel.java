@@ -21,24 +21,24 @@ import javax.swing.*;
 
 public interface InjectionPanel<T extends Injection> {
 
-    /**
-     * Initialize with copied item - should only be called by "terminal" implementations (i.e. classes that aren't
-     * aggregated anywhere else) to prevent the presence of multiple copies.
-     */
-    void init(T copy);
+  /**
+   * Initialize with copied item - should only be called by "terminal" implementations (i.e. classes that aren't
+   * aggregated anywhere else) to prevent the presence of multiple copies.
+   */
+  void init(T copy);
 
-    boolean isModified();
+  boolean isModified();
 
-    void reset();
+  void reset();
 
-    void apply();
+  void apply();
 
-    JPanel getComponent();
+  JPanel getComponent();
 
-    /**
-     * Returns item that represents current UI-state.
-     */
-    T getInjection();
+  /**
+   * Returns item that represents current UI-state.
+   */
+  T getInjection();
 
-    void addUpdater(Runnable updater);
+  void addUpdater(Runnable updater);
 }

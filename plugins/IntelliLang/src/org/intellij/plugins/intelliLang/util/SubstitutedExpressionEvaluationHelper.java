@@ -19,12 +19,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.util.SmartList;
+import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
-
-import org.intellij.plugins.intelliLang.Configuration;
 
 /**
  * Computes the constant value of an expression while considering the substitution annotation for non-compile-time
@@ -34,117 +33,125 @@ import org.intellij.plugins.intelliLang.Configuration;
  */
 public class SubstitutedExpressionEvaluationHelper {
 
-    private final PsiConstantEvaluationHelper myHelper;
-    private final Configuration myConfiguration;
+  private final PsiConstantEvaluationHelper myHelper;
+  private final Configuration myConfiguration;
 
-    public SubstitutedExpressionEvaluationHelper() {
-        myHelper = new PsiConstantEvaluationHelperImpl(); // TODO: where's this one gone?
-        myConfiguration = Configuration.getInstance();
+  public SubstitutedExpressionEvaluationHelper() {
+    myHelper = new PsiConstantEvaluationHelperImpl(); // TODO: where's this one gone?
+    myConfiguration = Configuration.getInstance();
+  }
+
+  @Nullable
+  public Object computeSimpleExpression(PsiExpression e) {
+    if (e instanceof PsiLiteralExpression) {
+      return myHelper.computeConstantExpression(e);
     }
-
-    @Nullable
-    public Object computeSimpleExpression(PsiExpression e) {
-        if (e instanceof PsiLiteralExpression) {
-            return myHelper.computeConstantExpression(e);
-        } else if (e instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression ref = ((PsiReferenceExpression)e);
-            final PsiElement psiElement = ref.resolve();
-            if (psiElement != null) {
-                final Object o = myHelper.computeConstantExpression(e);
-                if (o != null) {
-                    return o;
-                } else if (psiElement instanceof PsiModifierListOwner) {
-                    // find substitution
-                    final Set<String> annotationNames = myConfiguration.getSubstAnnotationPair().second;
-                    final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)psiElement, annotationNames);
-                    if (annotation != null) {
-                        return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
-                    }
-                }
-            } else {
-                // unresolvable... no luck
-            }
-        } else if (e instanceof PsiParenthesizedExpression) {
-            return computeSimpleExpression(((PsiParenthesizedExpression)e).getExpression());
-        } else if (e instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression c = ((PsiMethodCallExpression)e);
-            final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
-            if (m != null && m.getReturnType() != PsiType.VOID) {
-                // find substitution
-                final PsiAnnotation annotation = AnnotationUtil.findAnnotation(m, myConfiguration.getSubstAnnotationPair().second);
-                if (annotation != null) {
-                    return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
-                }
-            }
+    else if (e instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression ref = ((PsiReferenceExpression)e);
+      final PsiElement psiElement = ref.resolve();
+      if (psiElement != null) {
+        final Object o = myHelper.computeConstantExpression(e);
+        if (o != null) {
+          return o;
         }
-        return null;
+        else if (psiElement instanceof PsiModifierListOwner) {
+          // find substitution
+          final Set<String> annotationNames = myConfiguration.getSubstAnnotationPair().second;
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)psiElement, annotationNames);
+          if (annotation != null) {
+            return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
+          }
+        }
+      }
+      else {
+        // unresolvable... no luck
+      }
     }
-
-    /**
-     * Computes the value for the passed expression.
-     *
-     * @param e The expression whose value to compute
-     * @param nonConstant list that returns non-constant and non-substituted expressions
-     * @return the computed value, or null if the expression isn't compile time constant and not susbtituted
-     */
-    @Nullable
-    public static String computeExpression(final PsiExpression e, @Nullable List<PsiExpression> nonConstant) {
-        final StringBuilder builder = new StringBuilder();
-        final List<PsiExpression> list = nonConstant != null ? nonConstant : new SmartList<PsiExpression>();
-        final PsiElementVisitor processor = new JavaRecursiveElementVisitor() {
-            SubstitutedExpressionEvaluationHelper helper = new SubstitutedExpressionEvaluationHelper();
-
-            @Override
-            public void visitConditionalExpression(PsiConditionalExpression expression) {
-                final PsiExpression c = expression.getCondition();
-                final Object o = helper.myHelper.computeConstantExpression(c);
-                if (Boolean.TRUE.equals(o)) {
-                    final PsiExpression then = expression.getThenExpression();
-                    if (then != null) {
-                        execute(then);
-                    }
-                } else if (Boolean.FALSE.equals(o)) {
-                    final PsiExpression elseExpr = expression.getElseExpression();
-                    if (elseExpr != null) {
-                        execute(elseExpr);
-                    }
-                } else if (o == null) {
-                    list.add(expression);
-                }
-            }
-
-            @Override
-            public void visitLiteralExpression(PsiLiteralExpression expression) {
-                execute(expression);
-            }
-
-            @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-                execute(expression);
-            }
-
-            @Override
-            public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-                execute(expression);
-            }
-
-            @Override
-            public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-                final PsiExpression expr = expression.getRExpression();
-                if (expr != null) expr.accept(this);
-            }
-
-            public void execute(PsiExpression e) {
-                final Object s = helper.computeSimpleExpression(e);
-                if (s != null) {
-                    builder.append(String.valueOf(s));
-                } else {
-                    list.add(e);
-                }
-            }
-        };
-        e.accept(processor);
-
-        return list.size() == 0 ? builder.toString() : null;
+    else if (e instanceof PsiParenthesizedExpression) {
+      return computeSimpleExpression(((PsiParenthesizedExpression)e).getExpression());
     }
+    else if (e instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression c = ((PsiMethodCallExpression)e);
+      final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
+      if (m != null && m.getReturnType() != PsiType.VOID) {
+        // find substitution
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(m, myConfiguration.getSubstAnnotationPair().second);
+        if (annotation != null) {
+          return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Computes the value for the passed expression.
+   *
+   * @param e           The expression whose value to compute
+   * @param nonConstant list that returns non-constant and non-substituted expressions
+   * @return the computed value, or null if the expression isn't compile time constant and not susbtituted
+   */
+  @Nullable
+  public static String computeExpression(final PsiExpression e, @Nullable List<PsiExpression> nonConstant) {
+    final StringBuilder builder = new StringBuilder();
+    final List<PsiExpression> list = nonConstant != null ? nonConstant : new SmartList<PsiExpression>();
+    final PsiElementVisitor processor = new JavaRecursiveElementVisitor() {
+      SubstitutedExpressionEvaluationHelper helper = new SubstitutedExpressionEvaluationHelper();
+
+      @Override
+      public void visitConditionalExpression(PsiConditionalExpression expression) {
+        final PsiExpression c = expression.getCondition();
+        final Object o = helper.myHelper.computeConstantExpression(c);
+        if (Boolean.TRUE.equals(o)) {
+          final PsiExpression then = expression.getThenExpression();
+          if (then != null) {
+            execute(then);
+          }
+        }
+        else if (Boolean.FALSE.equals(o)) {
+          final PsiExpression elseExpr = expression.getElseExpression();
+          if (elseExpr != null) {
+            execute(elseExpr);
+          }
+        }
+        else if (o == null) {
+          list.add(expression);
+        }
+      }
+
+      @Override
+      public void visitLiteralExpression(PsiLiteralExpression expression) {
+        execute(expression);
+      }
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        execute(expression);
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        execute(expression);
+      }
+
+      @Override
+      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        final PsiExpression expr = expression.getRExpression();
+        if (expr != null) expr.accept(this);
+      }
+
+      public void execute(PsiExpression e) {
+        final Object s = helper.computeSimpleExpression(e);
+        if (s != null) {
+          builder.append(String.valueOf(s));
+        }
+        else {
+          list.add(e);
+        }
+      }
+    };
+    e.accept(processor);
+
+    return list.size() == 0 ? builder.toString() : null;
+  }
 }

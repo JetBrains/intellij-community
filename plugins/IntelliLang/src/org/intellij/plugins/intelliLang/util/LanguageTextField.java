@@ -33,58 +33,61 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LanguageTextField extends EditorTextField {
-    private final Language myLanguage;
-    private final Project myProject;
+  private final Language myLanguage;
+  private final Project myProject;
 
-    public LanguageTextField(Language language, @NotNull Project project) {
-        this(language, project, "", null);
+  public LanguageTextField(Language language, @NotNull Project project) {
+    this(language, project, "", null);
+  }
+
+  public LanguageTextField(Language language, @NotNull Project project, @NotNull String value) {
+    this(language, project, value, null);
+  }
+
+  public LanguageTextField(@Nullable Language language,
+                           @NotNull Project project,
+                           @NotNull String value,
+                           @Nullable Consumer<PsiFile> tagger) {
+    super(createDocument(value, language, project, tagger), project,
+          language != null ? language.getAssociatedFileType() : StdFileTypes.PLAIN_TEXT, language == null);
+
+    myLanguage = language;
+    myProject = project;
+
+    setEnabled(language != null);
+
+    ShiftTabAction.attachTo(this);
+  }
+
+  private static Document createDocument(String value, @Nullable Language language, Project project, @Nullable Consumer<PsiFile> tagger) {
+    if (language != null) {
+      final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+      final FileType fileType = language.getAssociatedFileType();
+      assert fileType != null;
+
+      final long stamp = LocalTimeCounter.currentTime();
+      final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false);
+      if (tagger != null) {
+        tagger.consume(psiFile);
+      }
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+      assert document != null;
+      return document;
     }
-
-    public LanguageTextField(Language language, @NotNull Project project,  @NotNull String value) {
-        this(language, project, value, null);
+    else {
+      return EditorFactory.getInstance().createDocument(value);
     }
+  }
 
-    public LanguageTextField(@Nullable Language language, @NotNull Project project, @NotNull String value, @Nullable Consumer<PsiFile> tagger) {
-        super(createDocument(value, language, project, tagger), project,
-                language != null ? language.getAssociatedFileType() : StdFileTypes.PLAIN_TEXT,
-                language == null);
-        
-        myLanguage = language;
-        myProject = project;
+  protected EditorEx createEditor() {
+    final EditorEx ex = super.createEditor();
 
-        setEnabled(language != null);
-
-        ShiftTabAction.attachTo(this);
+    if (myLanguage != null) {
+      final FileType fileType = myLanguage.getAssociatedFileType();
+      ex.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
     }
+    ex.setEmbeddedIntoDialogWrapper(true);
 
-    private static Document createDocument(String value, @Nullable Language language, Project project, @Nullable Consumer<PsiFile> tagger) {
-        if (language != null) {
-            final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-            final FileType fileType = language.getAssociatedFileType();
-            assert fileType != null;
-
-            final long stamp = LocalTimeCounter.currentTime();
-            final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false);
-            if (tagger != null) {
-                tagger.consume(psiFile);
-            }
-            final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-            assert document != null;
-            return document;
-        } else {
-            return EditorFactory.getInstance().createDocument(value);
-        }
-    }
-
-    protected EditorEx createEditor() {
-        final EditorEx ex = super.createEditor();
-
-        if (myLanguage != null) {
-            final FileType fileType = myLanguage.getAssociatedFileType();
-            ex.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
-        }
-        ex.setEmbeddedIntoDialogWrapper(true);
-
-        return ex;
-    }
+    return ex;
+  }
 }

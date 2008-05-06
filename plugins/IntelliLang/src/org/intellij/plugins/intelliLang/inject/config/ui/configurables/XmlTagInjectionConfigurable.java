@@ -17,26 +17,25 @@ package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Icons;
-
-import javax.swing.*;
-
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlTagPanel;
 
+import javax.swing.*;
+
 public class XmlTagInjectionConfigurable extends InjectionConfigurable<XmlTagInjection, XmlTagPanel> {
-    public XmlTagInjectionConfigurable(XmlTagInjection injection, Runnable treeUpdater, Project project) {
-        super(injection, treeUpdater, project);
-    }
+  public XmlTagInjectionConfigurable(XmlTagInjection injection, Runnable treeUpdater, Project project) {
+    super(injection, treeUpdater, project);
+  }
 
-    public String getBannerSlogan() {
-        return "Edit XML Text Injection";
-    }
+  public String getBannerSlogan() {
+    return "Edit XML Text Injection";
+  }
 
-    protected XmlTagPanel createOptionsPanelImpl() {
-        return new XmlTagPanel(myInjection, myProject);
-    }
+  protected XmlTagPanel createOptionsPanelImpl() {
+    return new XmlTagPanel(myInjection, myProject);
+  }
 
-    public Icon getIcon() {
-        return Icons.XML_TAG_ICON;
-    }
+  public Icon getIcon() {
+    return Icons.XML_TAG_ICON;
+  }
 }

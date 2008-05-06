@@ -26,55 +26,55 @@ import javax.swing.*;
 
 public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInjection> {
 
-    private JPanel myRoot;
+  private JPanel myRoot;
 
-    // read by reflection
-    LanguagePanel myLanguagePanel;
-    TagPanel myTagPanel;
-    AdvancedPanel myAdvancedPanel;
+  // read by reflection
+  LanguagePanel myLanguagePanel;
+  TagPanel myTagPanel;
+  AdvancedPanel myAdvancedPanel;
 
-    private EditorTextField myLocalName;
-    private ComboBox myNamespace;
+  private EditorTextField myLocalName;
+  private ComboBox myNamespace;
 
-    public XmlAttributePanel(XmlAttributeInjection injection, Project project) {
-        super(injection, project);
-        $$$setupUI$$$(); // see IDEA-9987
+  public XmlAttributePanel(XmlAttributeInjection injection, Project project) {
+    super(injection, project);
+    $$$setupUI$$$(); // see IDEA-9987
 
-        myNamespace.setModel(TagPanel.createNamespaceUriModel(project));
+    myNamespace.setModel(TagPanel.createNamespaceUriModel(project));
 
-        init(injection.copy());
+    init(injection.copy());
 
-        // be sure to add the listener after initializing the textfield's value
-        myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
-    }
+    // be sure to add the listener after initializing the textfield's value
+    myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
+  }
 
-    public JPanel getComponent() {
-        return myRoot;
-    }
+  public JPanel getComponent() {
+    return myRoot;
+  }
 
-    protected void resetImpl() {
-        myLocalName.setText(myOrigInjection.getAttributeName());
-        myNamespace.getEditor().setItem(myOrigInjection.getAttributeNamespace());
-    }
+  protected void resetImpl() {
+    myLocalName.setText(myOrigInjection.getAttributeName());
+    myNamespace.getEditor().setItem(myOrigInjection.getAttributeNamespace());
+  }
 
-    protected void apply(XmlAttributeInjection i) {
-        i.setAttributeName(myLocalName.getText());
-        i.setAttributeNamespace(getNamespace());
-    }
+  protected void apply(XmlAttributeInjection i) {
+    i.setAttributeName(myLocalName.getText());
+    i.setAttributeNamespace(getNamespace());
+  }
 
-    private String getNamespace() {
-        final String s = (String)myNamespace.getEditor().getItem();
-        return s != null ? s : "";
-    }
+  private String getNamespace() {
+    final String s = (String)myNamespace.getEditor().getItem();
+    return s != null ? s : "";
+  }
 
-    private void createUIComponents() {
-        myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
-        myTagPanel = new TagPanel(myProject, myOrigInjection);
-        myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
-        
-        myLocalName = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getAttributeName());
-    }
+  private void createUIComponents() {
+    myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
+    myTagPanel = new TagPanel(myProject, myOrigInjection);
+    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
 
-    private void $$$setupUI$$$() {
-    }
+    myLocalName = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getAttributeName());
+  }
+
+  private void $$$setupUI$$$() {
+  }
 }

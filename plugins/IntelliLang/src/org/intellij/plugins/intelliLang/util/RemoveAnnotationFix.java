@@ -22,34 +22,34 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.plugins.intelliLang.inject.validation.InjectionNotApplicable;
 import org.jetbrains.annotations.NotNull;
 
-import org.intellij.plugins.intelliLang.inject.validation.InjectionNotApplicable;
-
 public class RemoveAnnotationFix implements LocalQuickFix {
-    private final LocalInspectionTool myTool;
+  private final LocalInspectionTool myTool;
 
-    public RemoveAnnotationFix(LocalInspectionTool tool) {
-        myTool = tool;
-    }
+  public RemoveAnnotationFix(LocalInspectionTool tool) {
+    myTool = tool;
+  }
 
-    @NotNull
-    public String getName() {
-        return "Remove Annotation";
-    }
+  @NotNull
+  public String getName() {
+    return "Remove Annotation";
+  }
 
-    @NotNull
-    public String getFamilyName() {
-        return myTool.getGroupDisplayName();
-    }
+  @NotNull
+  public String getFamilyName() {
+    return myTool.getGroupDisplayName();
+  }
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        if (CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) {
-            try {
-                descriptor.getPsiElement().delete();
-            } catch (IncorrectOperationException e) {
-                Logger.getInstance(InjectionNotApplicable.class.getName()).error(e);
-            }
-        }
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    if (CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) {
+      try {
+        descriptor.getPsiElement().delete();
+      }
+      catch (IncorrectOperationException e) {
+        Logger.getInstance(InjectionNotApplicable.class.getName()).error(e);
+      }
     }
+  }
 }

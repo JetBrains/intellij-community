@@ -16,7 +16,7 @@
 package org.intellij.plugins.intelliLang.pattern.compiler;
 
 public class InstrumentationException extends RuntimeException {
-    public InstrumentationException(String s, Exception e) {
-        super(s, e);
-    }
+  public InstrumentationException(String s, Exception e) {
+    super(s, e);
+  }
 }

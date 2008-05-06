@@ -20,80 +20,73 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.Language;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
-
 public class UnknownLanguageID extends LocalInspectionTool {
-    private static final PsiConstantEvaluationHelperImpl CONSTANT_EVALUATION_HELPER = new PsiConstantEvaluationHelperImpl();
+  private static final PsiConstantEvaluationHelperImpl CONSTANT_EVALUATION_HELPER = new PsiConstantEvaluationHelperImpl();
 
-    @NotNull
-    public HighlightDisplayLevel getDefaultLevel() {
-        return HighlightDisplayLevel.ERROR;
-    }
+  @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.ERROR;
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    @NotNull
-    public String getGroupDisplayName() {
-        return InspectionProvider.LANGUAGE_INJECTION;
-    }
+  @NotNull
+  public String getGroupDisplayName() {
+    return InspectionProvider.LANGUAGE_INJECTION;
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return "Unknown Language ID";
-    }
+  @NotNull
+  public String getDisplayName() {
+    return "Unknown Language ID";
+  }
 
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-        return new JavaElementVisitor() {
-            final String annotationName = Configuration.getInstance().getLanguageAnnotationClass();
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      final String annotationName = Configuration.getInstance().getLanguageAnnotationClass();
 
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-            }
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      }
 
-            @Override
-            public void visitNameValuePair(PsiNameValuePair valuePair) {
-                final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(valuePair, PsiAnnotation.class);
-                if (annotation != null) {
-                    final String qualifiedName = annotation.getQualifiedName();
-                    if (annotationName.equals(qualifiedName)) {
-                        final String name = valuePair.getName();
-                        if (name == null || "value".equals(name)) {
-                            final PsiAnnotationMemberValue value = valuePair.getValue();
-                            if (value instanceof PsiExpression) {
-                                final PsiExpression expression = (PsiExpression)value;
-                                final Object id = CONSTANT_EVALUATION_HELPER.computeConstantExpression(expression);
-                                if (id instanceof String) {
-                                    final Language language = InjectedLanguage.findLanguageById((String)id);
-                                    if (language == null) {
-                                        holder.registerProblem(expression, "Unknown language '" + id + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-                                    }
-                                }
-                            }
-                        }
-                    }
+      @Override
+      public void visitNameValuePair(PsiNameValuePair valuePair) {
+        final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(valuePair, PsiAnnotation.class);
+        if (annotation != null) {
+          final String qualifiedName = annotation.getQualifiedName();
+          if (annotationName.equals(qualifiedName)) {
+            final String name = valuePair.getName();
+            if (name == null || "value".equals(name)) {
+              final PsiAnnotationMemberValue value = valuePair.getValue();
+              if (value instanceof PsiExpression) {
+                final PsiExpression expression = (PsiExpression)value;
+                final Object id = CONSTANT_EVALUATION_HELPER.computeConstantExpression(expression);
+                if (id instanceof String) {
+                  final Language language = InjectedLanguage.findLanguageById((String)id);
+                  if (language == null) {
+                    holder.registerProblem(expression, "Unknown language '" + id + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                  }
                 }
+              }
             }
-        };
-    }
+          }
+        }
+      }
+    };
+  }
 
-    @NotNull
-    @NonNls
-    public String getShortName() {
-        return "UnknownLanguage";
-    }
+  @NotNull
+  @NonNls
+  public String getShortName() {
+    return "UnknownLanguage";
+  }
 }

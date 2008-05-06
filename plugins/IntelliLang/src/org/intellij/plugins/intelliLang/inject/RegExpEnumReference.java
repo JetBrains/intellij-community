@@ -16,13 +16,13 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
 import org.intellij.plugins.intelliLang.util.RegExpUtil;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
 import org.jetbrains.annotations.Nullable;
@@ -34,37 +34,37 @@ import java.util.Set;
  * <pre>@Pattern("abc|xyz|123")</pre>.
  */
 final class RegExpEnumReference extends StringLiteralReference {
-    private final String myPattern;
+  private final String myPattern;
 
-    public RegExpEnumReference(PsiLiteralExpression expression, String pattern) {
-        super(expression);
-        myPattern = pattern;
-    }
+  public RegExpEnumReference(PsiLiteralExpression expression, String pattern) {
+    super(expression);
+    myPattern = pattern;
+  }
 
-    public Object[] getVariants() {
-        final Set<String> values = getEnumValues();
-        if (values == null || values.size() == 0) {
-            return ArrayUtil.EMPTY_OBJECT_ARRAY;
-        }
-        return ContainerUtil.map2Array(values, new Function<String, Object>() {
-            public Object fun(String s) {
-                return LookupElementFactory.getInstance().createLookupElement(s).setIcon(Icons.ENUM_ICON);
-            }
-        });
+  public Object[] getVariants() {
+    final Set<String> values = getEnumValues();
+    if (values == null || values.size() == 0) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
+    return ContainerUtil.map2Array(values, new Function<String, Object>() {
+      public Object fun(String s) {
+        return LookupElementFactory.getInstance().createLookupElement(s).setIcon(Icons.ENUM_ICON);
+      }
+    });
+  }
 
-    public boolean isSoft() {
-        return true;
-    }
+  public boolean isSoft() {
+    return true;
+  }
 
-    @Nullable
-    public PsiElement resolve() {
-        final Set<String> values = getEnumValues();
-        return values != null ? values.contains(getValue()) ? myValue : null : null;
-    }
+  @Nullable
+  public PsiElement resolve() {
+    final Set<String> values = getEnumValues();
+    return values != null ? values.contains(getValue()) ? myValue : null : null;
+  }
 
-    @Nullable
-    private Set<String> getEnumValues() {
-        return RegExpUtil.getEnumValues(myValue.getProject(), myPattern);
-    }
+  @Nullable
+  private Set<String> getEnumValues() {
+    return RegExpUtil.getEnumValues(myValue.getProject(), myPattern);
+  }
 }

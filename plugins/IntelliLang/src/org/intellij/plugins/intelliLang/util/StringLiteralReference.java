@@ -26,39 +26,39 @@ import org.jetbrains.annotations.Nullable;
  * Base class for references in String literals.
  */
 public abstract class StringLiteralReference implements PsiReference {
-    protected final PsiLiteralExpression myValue;
+  protected final PsiLiteralExpression myValue;
 
-    public StringLiteralReference(PsiLiteralExpression value) {
-        myValue = value;
-    }
+  public StringLiteralReference(PsiLiteralExpression value) {
+    myValue = value;
+  }
 
-    public PsiElement getElement() {
-        return myValue;
-    }
+  public PsiElement getElement() {
+    return myValue;
+  }
 
-    public TextRange getRangeInElement() {
-        return TextRange.from(1, myValue.getTextLength() - 1);
-    }
+  public TextRange getRangeInElement() {
+    return TextRange.from(1, myValue.getTextLength() - 1);
+  }
 
-    public String getCanonicalText() {
-        return myValue.getText();
-    }
+  public String getCanonicalText() {
+    return myValue.getText();
+  }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        return myValue;
-    }
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return myValue;
+  }
 
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-        return myValue;
-    }
+  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    return myValue;
+  }
 
-    public boolean isReferenceTo(PsiElement element) {
-        return resolve() == element;
-    }
+  public boolean isReferenceTo(PsiElement element) {
+    return resolve() == element;
+  }
 
-    @Nullable
-    protected String getValue() {
-        return (String)myValue.getValue();
-    }
+  @Nullable
+  protected String getValue() {
+    return (String)myValue.getValue();
+  }
 
 }

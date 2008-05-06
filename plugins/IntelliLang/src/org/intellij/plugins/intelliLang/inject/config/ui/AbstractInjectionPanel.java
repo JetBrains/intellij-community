@@ -18,126 +18,126 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-
 /**
  * Abstract base class for the different configuration panels that tries to simplify the use of
  * of nested forms
  */
-public abstract class AbstractInjectionPanel<T extends BaseInjection> implements InjectionPanel<T>{
-    private final List<Field> myOtherPanels = new ArrayList<Field>(3);
-    private final List<Runnable> myUpdaters = new ArrayList<Runnable>(1);
+public abstract class AbstractInjectionPanel<T extends BaseInjection> implements InjectionPanel<T> {
+  private final List<Field> myOtherPanels = new ArrayList<Field>(3);
+  private final List<Runnable> myUpdaters = new ArrayList<Runnable>(1);
 
-    protected final Project myProject;
+  protected final Project myProject;
 
-    /**
-     * The orignal item - must not be modified unless apply() is called.
-     */
-    @NotNull
-    protected final T myOrigInjection;
+  /**
+   * The orignal item - must not be modified unless apply() is called.
+   */
+  @NotNull
+  protected final T myOrigInjection;
 
-    /**
-     * Represents the current UI state. Outside access should use {@link #getInjection()}
-     */
-    private T myEditCopy;
+  /**
+   * Represents the current UI state. Outside access should use {@link #getInjection()}
+   */
+  private T myEditCopy;
 
-    protected AbstractInjectionPanel(@NotNull T injection, @NotNull Project project) {
-        myOrigInjection = injection;
-        myProject = project;
+  protected AbstractInjectionPanel(@NotNull T injection, @NotNull Project project) {
+    myOrigInjection = injection;
+    myProject = project;
 
-        final Field[] declaredFields = getClass().getDeclaredFields();
-        for (Field field : declaredFields) {
-            if (InjectionPanel.class.isAssignableFrom(field.getType())) {
-                field.setAccessible(true);
-                myOtherPanels.add(field);
-            }
-        }
+    final Field[] declaredFields = getClass().getDeclaredFields();
+    for (Field field : declaredFields) {
+      if (InjectionPanel.class.isAssignableFrom(field.getType())) {
+        field.setAccessible(true);
+        myOtherPanels.add(field);
+      }
+    }
+  }
+
+  public final T getInjection() {
+    apply(myEditCopy);
+    return myEditCopy;
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public final void init(@NotNull T copy) {
+    myEditCopy = copy;
+
+    for (Field panel : myOtherPanels) {
+      final InjectionPanel p = getField(panel);
+      p.init(copy);
+    }
+    reset();
+  }
+
+  public final boolean isModified() {
+    apply(myEditCopy);
+
+    for (Field panel : myOtherPanels) {
+      final InjectionPanel p = getField(panel);
+      p.isModified();
     }
 
-    public final T getInjection() {
-        apply(myEditCopy);
-        return myEditCopy;
+    return !myEditCopy.equals(myOrigInjection);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public final void apply() {
+    apply(myOrigInjection);
+
+    for (Field panel : myOtherPanels) {
+      getField(panel).apply();
     }
 
-    @SuppressWarnings({"unchecked"})
-    public final void init(@NotNull T copy) {
-        myEditCopy = copy;
+    myEditCopy.copyFrom(myOrigInjection);
+  }
 
-        for (Field panel : myOtherPanels) {
-            final InjectionPanel p = getField(panel);
-            p.init(copy);
-        }
-        reset();
+  protected abstract void apply(T other);
+
+  @SuppressWarnings({"unchecked"})
+  public final void reset() {
+    for (Field panel : myOtherPanels) {
+      getField(panel).reset();
     }
+    myEditCopy.copyFrom(myOrigInjection);
 
-    public final boolean isModified() {
-        apply(myEditCopy);
+    resetImpl();
+  }
 
-        for (Field panel : myOtherPanels) {
-            final InjectionPanel p = getField(panel);
-            p.isModified();
-        }
+  protected abstract void resetImpl();
 
-        return !myEditCopy.equals(myOrigInjection);
+  public void addUpdater(Runnable updater) {
+    myUpdaters.add(updater);
+    for (Field panel : myOtherPanels) {
+      final InjectionPanel field = getField(panel);
+      field.addUpdater(updater);
     }
+  }
 
-    @SuppressWarnings({"unchecked"})
-    public final void apply() {
-        apply(myOrigInjection);
-
-        for (Field panel : myOtherPanels) {
-            getField(panel).apply();
-        }
-
-        myEditCopy.copyFrom(myOrigInjection);
+  private InjectionPanel getField(Field field) {
+    try {
+      return ((InjectionPanel)field.get(this));
     }
-
-    protected abstract void apply(T other);
-
-    @SuppressWarnings({"unchecked"})
-    public final void reset() {
-        for (Field panel : myOtherPanels) {
-            getField(panel).reset();
-        }
-        myEditCopy.copyFrom(myOrigInjection);
-
-        resetImpl();
+    catch (IllegalAccessException e) {
+      throw new Error(e);
     }
+  }
 
-    protected abstract void resetImpl();
-
-    public void addUpdater(Runnable updater) {
-        myUpdaters.add(updater);
-        for (Field panel : myOtherPanels) {
-            final InjectionPanel field = getField(panel);
-            field.addUpdater(updater);
-        }
+  protected void updateTree() {
+    apply(myEditCopy);
+    for (Runnable updater : myUpdaters) {
+      updater.run();
     }
+  }
 
-    private InjectionPanel getField(Field field) {
-        try {
-            return ((InjectionPanel)field.get(this));
-        } catch (IllegalAccessException e) {
-            throw new Error(e);
-        }
+  protected class TreeUpdateListener extends DocumentAdapter {
+    public void documentChanged(DocumentEvent e) {
+      updateTree();
     }
-
-    protected void updateTree() {
-        apply(myEditCopy);
-        for (Runnable updater : myUpdaters) {
-            updater.run();
-        }
-    }
-
-    protected class TreeUpdateListener extends DocumentAdapter {
-        public void documentChanged(DocumentEvent e) {
-            updateTree();
-        }
-    }
+  }
 }

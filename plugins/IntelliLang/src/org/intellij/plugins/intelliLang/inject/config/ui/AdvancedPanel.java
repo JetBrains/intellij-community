@@ -29,52 +29,51 @@ import javax.swing.*;
 
 public class AdvancedPanel extends AbstractInjectionPanel<AbstractTagInjection> {
 
-    private JPanel myRoot;
+  private JPanel myRoot;
 
-    private EditorTextField myValuePattern;
-    private EditorTextField myXPathCondition;
+  private EditorTextField myValuePattern;
+  private EditorTextField myXPathCondition;
 
-    public AdvancedPanel(Project project, AbstractTagInjection injection) {
-        super(injection, project);
-        $$$setupUI$$$(); // see IDEA-9987
-    }
+  public AdvancedPanel(Project project, AbstractTagInjection injection) {
+    super(injection, project);
+    $$$setupUI$$$(); // see IDEA-9987
+  }
 
-    protected void apply(AbstractTagInjection other) {
-        other.setValuePattern(myValuePattern.getText());
-        other.setXPathCondition(myXPathCondition.getText());
-    }
+  protected void apply(AbstractTagInjection other) {
+    other.setValuePattern(myValuePattern.getText());
+    other.setXPathCondition(myXPathCondition.getText());
+  }
 
-    protected void resetImpl() {
-        myValuePattern.setText(myOrigInjection.getValuePattern());
-        myXPathCondition.setText(myOrigInjection.getXPathCondition());
-    }
+  protected void resetImpl() {
+    myValuePattern.setText(myOrigInjection.getValuePattern());
+    myXPathCondition.setText(myOrigInjection.getXPathCondition());
+  }
 
-    public JPanel getComponent() {
-        return myRoot;
-    }
+  public JPanel getComponent() {
+    return myRoot;
+  }
 
-    private void createUIComponents() {
-        myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new Consumer<PsiFile>() {
-            public void consume(PsiFile psiFile) {
-                psiFile.putCopyableUserData(ValueRegExpAnnotator.KEY, Boolean.TRUE);
-            }
-        });
+  private void createUIComponents() {
+    myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new Consumer<PsiFile>() {
+      public void consume(PsiFile psiFile) {
+        psiFile.putCopyableUserData(ValueRegExpAnnotator.KEY, Boolean.TRUE);
+      }
+    });
 
-        // don't even bother to look up the language when xpath-evaluation isn't possible
-        final XPathSupportProxy proxy = XPathSupportProxy.getInstance();
-        myXPathCondition = new LanguageTextField(proxy != null ?
-                InjectedLanguage.findLanguageById("XPath") : null,
-                myProject, myOrigInjection.getXPathCondition(), new Consumer<PsiFile>() {
-            public void consume(PsiFile psiFile) {
-                // important to get proper validation & completion for Jaxen's built-in and PSI functions
-                // like lower-case(), file-type(), file-ext(), file-name(), etc.
-                if (proxy != null) {
-                    proxy.attachContext(psiFile);
-                }
-            }
-        });
-    }
+    // don't even bother to look up the language when xpath-evaluation isn't possible
+    final XPathSupportProxy proxy = XPathSupportProxy.getInstance();
+    myXPathCondition = new LanguageTextField(proxy != null ? InjectedLanguage.findLanguageById("XPath") : null, myProject,
+                                             myOrigInjection.getXPathCondition(), new Consumer<PsiFile>() {
+      public void consume(PsiFile psiFile) {
+        // important to get proper validation & completion for Jaxen's built-in and PSI functions
+        // like lower-case(), file-type(), file-ext(), file-name(), etc.
+        if (proxy != null) {
+          proxy.attachContext(psiFile);
+        }
+      }
+    });
+  }
 
-    private void $$$setupUI$$$() {
-    }
+  private void $$$setupUI$$$() {
+  }
 }

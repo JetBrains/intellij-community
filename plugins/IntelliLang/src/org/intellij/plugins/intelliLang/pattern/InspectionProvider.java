@@ -21,25 +21,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class InspectionProvider implements ApplicationComponent, InspectionToolProvider {
-    public static final String PATTERN_VALIDATION = "Pattern Validation";
+  public static final String PATTERN_VALIDATION = "Pattern Validation";
 
-    @NonNls
-    @NotNull
-    public String getComponentName() {
-        return "IntelliLang.PatternInspectionProvider";
-    }
+  @NonNls
+  @NotNull
+  public String getComponentName() {
+    return "IntelliLang.PatternInspectionProvider";
+  }
 
-    public void initComponent() {
-    }
+  public void initComponent() {
+  }
 
-    public void disposeComponent() {
-    }
+  public void disposeComponent() {
+  }
 
-    public Class[] getInspectionClasses() {
-        return new Class[]{
-                PatternValidator.class, 
-                PatternAnnotationNotApplicable.class,
-                PatternOverriddenByNonAnnotatedMethod.class
-        };
-    }
+  public Class[] getInspectionClasses() {
+    return new Class[]{PatternValidator.class, PatternAnnotationNotApplicable.class, PatternOverriddenByNonAnnotatedMethod.class};
+  }
 }

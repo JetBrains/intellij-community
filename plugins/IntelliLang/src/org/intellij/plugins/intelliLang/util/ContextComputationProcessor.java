@@ -29,68 +29,67 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ContextComputationProcessor implements PsiElementProcessor<PsiElement> {
 
-    private final PsiExpression myElement;
-    private final SubstitutedExpressionEvaluationHelper myEvaluationHelper;
+  private final PsiExpression myElement;
+  private final SubstitutedExpressionEvaluationHelper myEvaluationHelper;
 
-    private final StringBuilder prefix = new StringBuilder();
-    private StringBuilder suffix;
-    private StringBuilder buf = prefix;
+  private final StringBuilder prefix = new StringBuilder();
+  private StringBuilder suffix;
+  private StringBuilder buf = prefix;
 
-    private ContextComputationProcessor(PsiExpression element) {
-        myEvaluationHelper = new SubstitutedExpressionEvaluationHelper();
-        myElement = element;
+  private ContextComputationProcessor(PsiExpression element) {
+    myEvaluationHelper = new SubstitutedExpressionEvaluationHelper();
+    myElement = element;
+  }
+
+  public boolean execute(PsiElement e) {
+    if (e == myElement) {
+      buf = suffix = new StringBuilder();
     }
-
-    public boolean execute(PsiElement e) {
-        if (e == myElement) {
-            buf = suffix = new StringBuilder();
-        } else if (e instanceof PsiExpression) {
-            final Object s = myEvaluationHelper.computeSimpleExpression((PsiExpression)e);
-            if (s != null) {
-                buf.append(String.valueOf(s));
-            }
-        }
-        return true;
+    else if (e instanceof PsiExpression) {
+      final Object s = myEvaluationHelper.computeSimpleExpression((PsiExpression)e);
+      if (s != null) {
+        buf.append(String.valueOf(s));
+      }
     }
+    return true;
+  }
 
-    public void getPrefix(StringBuilder prefix) {
-        prefix.append(this.prefix);
+  public void getPrefix(StringBuilder prefix) {
+    prefix.append(this.prefix);
+  }
+
+  public void getSuffix(StringBuilder suffix) {
+    if (this.suffix != null) suffix.append(this.suffix);
+  }
+
+  private static PsiElement getContext(PsiElement place) {
+    PsiElement parent = place;
+    while (isAcceptableContext(parent.getParent())) {
+      parent = parent.getParent();
     }
+    return parent;
+  }
 
-    public void getSuffix(StringBuilder suffix) {
-        if (this.suffix != null) suffix.append(this.suffix);
+  private static boolean isAcceptableContext(PsiElement parent) {
+    return parent instanceof PsiBinaryExpression || parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression;
+  }
+
+  /**
+   * Computes the prefix/suffix for an element.
+   *
+   * @param place the expression to compute the prefix/suffix for
+   * @return the processor instance that the prefix/suffix canbe obtained from, or null if the values cannot
+   *         be determined
+   */
+  @Nullable
+  public static ContextComputationProcessor calcContext(PsiElement place) {
+    PsiElement parent = getContext(place);
+
+    if (parent instanceof PsiBinaryExpression) {
+      final ContextComputationProcessor processor = new ContextComputationProcessor((PsiExpression)place);
+      PsiTreeUtil.processElements(parent, processor);
+      return processor;
     }
-
-    private static PsiElement getContext(PsiElement place) {
-        PsiElement parent = place;
-        while (isAcceptableContext(parent.getParent())) {
-            parent = parent.getParent();
-        }
-        return parent;
-    }
-
-    private static boolean isAcceptableContext(PsiElement parent) {
-        return parent instanceof PsiBinaryExpression ||
-                parent instanceof PsiParenthesizedExpression ||
-                parent instanceof PsiTypeCastExpression;
-    }
-
-    /**
-     * Computes the prefix/suffix for an element.
-     *
-     * @param place the expression to compute the prefix/suffix for
-     * @return the processor instance that the prefix/suffix canbe obtained from, or null if the values cannot
-     * be determined
-     */
-    @Nullable
-    public static ContextComputationProcessor calcContext(PsiElement place) {
-        PsiElement parent = getContext(place);
-
-        if (parent instanceof PsiBinaryExpression) {
-            final ContextComputationProcessor processor = new ContextComputationProcessor((PsiExpression)place);
-            PsiTreeUtil.processElements(parent, processor);
-            return processor;
-        }
-        return null;
-    }
+    return null;
+  }
 }

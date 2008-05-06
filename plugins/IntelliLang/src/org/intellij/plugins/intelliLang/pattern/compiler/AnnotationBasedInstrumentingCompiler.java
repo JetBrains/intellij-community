@@ -19,27 +19,19 @@ package org.intellij.plugins.intelliLang.pattern.compiler;
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.ClassInstrumentingCompiler;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.ValidityState;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.Processor;
@@ -59,165 +51,166 @@ import java.util.Set;
  * Based on NotNullVerifyingCompiler, kindly provided by JetBrains for reference.
  */
 public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstrumentingCompiler {
-    private static final Logger LOG = Logger.getInstance("org.intellij.lang.pattern.compiler.AnnotationBasedInstrumentingCompiler");
+  private static final Logger LOG = Logger.getInstance("org.intellij.lang.pattern.compiler.AnnotationBasedInstrumentingCompiler");
 
-    protected final Project myProject;
+  protected final Project myProject;
 
-    public AnnotationBasedInstrumentingCompiler(Project project) {
-        myProject = project;
+  public AnnotationBasedInstrumentingCompiler(Project project) {
+    myProject = project;
+  }
+
+  @NotNull
+  public ProcessingItem[] getProcessingItems(final CompileContext context) {
+    if (!isEnabled()) {
+      return ProcessingItem.EMPTY_ARRAY;
     }
 
-    @NotNull
-    public ProcessingItem[] getProcessingItems(final CompileContext context) {
-        if (!isEnabled()) {
-            return ProcessingItem.EMPTY_ARRAY;
+    final Set<InstrumentationItem> result = new HashSet<InstrumentationItem>();
+    final PsiSearchHelper searchHelper = PsiManager.getInstance(myProject).getSearchHelper();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final String[] names = getAnnotationNames();
+        for (String name : names) {
+          final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
+
+          final PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(name, GlobalSearchScope.allScope(myProject));
+          if (psiClass == null) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Cannot find class " + name, null, -1, -1);
+            continue;
+          }
+
+          // wow, this is a sweet trick... ;)
+          searchHelper.processAllFilesWithWord(StringUtil.getShortName(name), scope, new Processor<PsiFile>() {
+            public boolean process(PsiFile psifile) {
+              if (StdLanguages.JAVA == psifile.getLanguage() && psifile.getVirtualFile() != null && psifile instanceof PsiJavaFile) {
+                addClassFiles((PsiJavaFile)psifile, result);
+              }
+              return true;
+            }
+          }, true);
         }
+      }
+    });
+    return result.toArray(new ProcessingItem[result.size()]);
+  }
 
-        final Set<InstrumentationItem> result = new HashSet<InstrumentationItem>();
-        final PsiSearchHelper searchHelper = PsiManager.getInstance(myProject).getSearchHelper();
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-                final String[] names = getAnnotationNames();
-                for (String name : names) {
-                    final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
+  private void addClassFiles(PsiJavaFile srcFile, Set<InstrumentationItem> result) {
 
-                    final PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(name, GlobalSearchScope.allScope(myProject));
-                    if (psiClass == null) {
-                        context.addMessage(CompilerMessageCategory.ERROR, "Cannot find class " + name, null, -1, -1);
-                        continue;
-                    }
+    final VirtualFile sourceFile = srcFile.getVirtualFile();
+    assert sourceFile != null;
 
-                    // wow, this is a sweet trick... ;)
-                    searchHelper.processAllFilesWithWord(StringUtil.getShortName(name), scope, new Processor<PsiFile>() {
-                        public boolean process(PsiFile psifile) {
-                            if (StdLanguages.JAVA == psifile.getLanguage() &&
-                                    psifile.getVirtualFile() != null &&
-                                    psifile instanceof PsiJavaFile)
-                            {
-                                addClassFiles((PsiJavaFile)psifile, result);
-                            }
-                            return true;
-                        }
-                    }, true);
-                }
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final Module module = index.getModuleForFile(sourceFile);
+    if (module != null) {
+      final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
+      final boolean jdk6;
+      if (jdk != null) {
+        final String versionString = jdk.getVersionString();
+        jdk6 = versionString != null && (versionString.contains("1.6") || versionString.contains("6.0"));
+      }
+      else {
+        jdk6 = false;
+      }
+
+      final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+      final VirtualFile compilerOutputPath = extension != null ? extension.getCompilerOutputPath() : null;
+      if (compilerOutputPath != null) {
+        final String packageName = srcFile.getPackageName();
+        final VirtualFile packageDir =
+            packageName.length() > 0 ? compilerOutputPath.findFileByRelativePath(packageName.replace('.', '/')) : compilerOutputPath;
+
+        if (packageDir != null && packageDir.isDirectory()) {
+          final PsiClass[] classes = srcFile.getClasses();
+          final VirtualFile[] children = packageDir.getChildren();
+          for (VirtualFile classFile : children) {
+            if (classFile.isDirectory() || !"class".equals(classFile.getExtension())) {
+              // no point in looking at directories or non-class files
+              continue;
             }
-        });
-        return result.toArray(new ProcessingItem[result.size()]);
-    }
-
-    private void addClassFiles(PsiJavaFile srcFile, Set<InstrumentationItem> result) {
-
-        final VirtualFile sourceFile = srcFile.getVirtualFile();
-        assert sourceFile != null;
-
-        final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-        final Module module = index.getModuleForFile(sourceFile);
-        if (module != null) {
-            final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-            final boolean jdk6;
-            if (jdk != null) {
-                final String versionString = jdk.getVersionString();
-                jdk6 = versionString != null && (versionString.contains("1.6") || versionString.contains("6.0"));
-            } else {
-                jdk6 = false;
+            final String name = classFile.getName();
+            for (PsiClass clazz : classes) {
+              final String className = clazz.getName();
+              if (className != null && name.startsWith(className)) {
+                result.add(new InstrumentationItem(classFile, jdk6));
+              }
             }
-
-            final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
-            final VirtualFile compilerOutputPath = extension != null ? extension.getCompilerOutputPath() : null;
-            if (compilerOutputPath != null) {
-                final String packageName = srcFile.getPackageName();
-                final VirtualFile packageDir = packageName.length() > 0 ?
-                        compilerOutputPath.findFileByRelativePath(packageName.replace('.', '/')) :
-                        compilerOutputPath;
-
-                if (packageDir != null && packageDir.isDirectory()) {
-                    final PsiClass[] classes = srcFile.getClasses();
-                    final VirtualFile[] children = packageDir.getChildren();
-                    for (VirtualFile classFile : children) {
-                        if (classFile.isDirectory() || !"class".equals(classFile.getExtension())) {
-                            // no point in looking at directories or non-class files
-                            continue;
-                        }
-                        final String name = classFile.getName();
-                        for (PsiClass clazz : classes) {
-                            final String className = clazz.getName();
-                            if (className != null && name.startsWith(className)) {
-                                result.add(new InstrumentationItem(classFile, jdk6));
-                            }
-                        }
-                    }
-                }
-            }
+          }
         }
+      }
     }
-    
-    public ProcessingItem[] process(final CompileContext context, final ProcessingItem items[]) {
-        final ProgressIndicator progressIndicator = context.getProgressIndicator();
-        progressIndicator.setText(getProgressMessage());
+  }
 
-        final ArrayList<ProcessingItem> result = new ArrayList<ProcessingItem>(items.length);
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
+  public ProcessingItem[] process(final CompileContext context, final ProcessingItem items[]) {
+    final ProgressIndicator progressIndicator = context.getProgressIndicator();
+    progressIndicator.setText(getProgressMessage());
 
-            public void run() {
-                int filesProcessed = 0;
+    final ArrayList<ProcessingItem> result = new ArrayList<ProcessingItem>(items.length);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
 
-                for (ProcessingItem pi : items) {
-                    final InstrumentationItem item = ((InstrumentationItem)pi);
-                    final VirtualFile classFile = item.getClassFile();
+      public void run() {
+        int filesProcessed = 0;
 
-                    try {
-                        final byte[] bytes = classFile.contentsToByteArray();
-                        final ClassReader classreader;
-                        try {
-                            classreader = new ClassReader(bytes, 0, bytes.length);
-                        } catch (Exception e) {
-                            LOG.debug("ASM failed to read class file <" + classFile.getPresentableUrl() + ">", e);
-                            continue;
-                        }
+        for (ProcessingItem pi : items) {
+          final InstrumentationItem item = ((InstrumentationItem)pi);
+          final VirtualFile classFile = item.getClassFile();
 
-                        final ClassWriter classwriter = new PsiClassWriter(myProject, item.isJDK6());
-                        final Instrumenter instrumenter = createInstrumenter(classwriter);
-
-                        classreader.accept(instrumenter, 0);
-
-                        if (instrumenter.instrumented()) {
-                            // only dump the class if it has actually been instrumented
-                            final FileOutputStream out = new FileOutputStream(classFile.getPath());
-                            try {
-                                out.write(classwriter.toByteArray());
-                            } finally {
-                                out.close();
-                            }
-                        }
-
-                        result.add(item);
-                        progressIndicator.setFraction(++filesProcessed / (double)items.length);
-                    } catch (InstrumentationException e) {
-                        context.addMessage(CompilerMessageCategory.ERROR, "[" + getDescription() + "]: " + e.getLocalizedMessage(), null, -1, -1);
-                    } catch (IOException e) {
-                        context.addMessage(CompilerMessageCategory.ERROR, "[" + getDescription() + "]: " + e.getLocalizedMessage(), null, -1, -1);
-                    }
-                }
+          try {
+            final byte[] bytes = classFile.contentsToByteArray();
+            final ClassReader classreader;
+            try {
+              classreader = new ClassReader(bytes, 0, bytes.length);
             }
-        });
-        return result.toArray(new ProcessingItem[result.size()]);
-    }
+            catch (Exception e) {
+              LOG.debug("ASM failed to read class file <" + classFile.getPresentableUrl() + ">", e);
+              continue;
+            }
 
-    protected abstract boolean isEnabled();
+            final ClassWriter classwriter = new PsiClassWriter(myProject, item.isJDK6());
+            final Instrumenter instrumenter = createInstrumenter(classwriter);
 
-    protected abstract String[] getAnnotationNames();
+            classreader.accept(instrumenter, 0);
 
-    protected abstract Instrumenter createInstrumenter(ClassWriter classwriter);
+            if (instrumenter.instrumented()) {
+              // only dump the class if it has actually been instrumented
+              final FileOutputStream out = new FileOutputStream(classFile.getPath());
+              try {
+                out.write(classwriter.toByteArray());
+              }
+              finally {
+                out.close();
+              }
+            }
 
-    protected abstract String getProgressMessage();
+            result.add(item);
+            progressIndicator.setFraction(++filesProcessed / (double)items.length);
+          }
+          catch (InstrumentationException e) {
+            context.addMessage(CompilerMessageCategory.ERROR, "[" + getDescription() + "]: " + e.getLocalizedMessage(), null, -1, -1);
+          }
+          catch (IOException e) {
+            context.addMessage(CompilerMessageCategory.ERROR, "[" + getDescription() + "]: " + e.getLocalizedMessage(), null, -1, -1);
+          }
+        }
+      }
+    });
+    return result.toArray(new ProcessingItem[result.size()]);
+  }
 
-    public boolean validateConfiguration(CompileScope compilescope) {
-        return true;
-    }
+  protected abstract boolean isEnabled();
 
-    @Nullable
-    public ValidityState createValidityState(DataInputStream datainputstream) throws IOException {
+  protected abstract String[] getAnnotationNames();
+
+  protected abstract Instrumenter createInstrumenter(ClassWriter classwriter);
+
+  protected abstract String getProgressMessage();
+
+  public boolean validateConfiguration(CompileScope compilescope) {
+    return true;
+  }
+
+  @Nullable
+  public ValidityState createValidityState(DataInputStream datainputstream) throws IOException {
 //        return TimestampValidityState.load(datainputstream);
-        return null;
-    }
+    return null;
+  }
 }

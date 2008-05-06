@@ -34,36 +34,36 @@ import org.jetbrains.annotations.Nullable;
  */
 final class LanguageReference extends StringLiteralReference {
 
-    public LanguageReference(PsiLiteralExpression value) {
-        super(value);
-    }
+  public LanguageReference(PsiLiteralExpression value) {
+    super(value);
+  }
 
-    @Nullable
-    public PsiElement resolve() {
-        return InjectedLanguage.findLanguageById(getValue()) != null ? myValue : null;
-    }
+  @Nullable
+  public PsiElement resolve() {
+    return InjectedLanguage.findLanguageById(getValue()) != null ? myValue : null;
+  }
 
-    public boolean isSoft() {
-        return false;
-    }
+  public boolean isSoft() {
+    return false;
+  }
 
-    public Object[] getVariants() {
-        final String[] ids = InjectedLanguage.getAvailableLanguageIDs();
-        return ContainerUtil.map2Array(ids, LookupElement.class, new Function<String, LookupElement>() {
-            public LookupElement fun(String s) {
-                final Language l = InjectedLanguage.findLanguageById(s);
-                assert l != null;
+  public Object[] getVariants() {
+    final String[] ids = InjectedLanguage.getAvailableLanguageIDs();
+    return ContainerUtil.map2Array(ids, LookupElement.class, new Function<String, LookupElement>() {
+      public LookupElement fun(String s) {
+        final Language l = InjectedLanguage.findLanguageById(s);
+        assert l != null;
 
-                final FileType ft = l.getAssociatedFileType();
-                if (ft != null) {
-                  return LookupElementFactoryImpl.getInstance().createLookupElement(s).setIcon(ft.getIcon()).setTypeText(ft.getDescription());
+        final FileType ft = l.getAssociatedFileType();
+        if (ft != null) {
+          return LookupElementFactoryImpl.getInstance().createLookupElement(s).setIcon(ft.getIcon()).setTypeText(ft.getDescription());
 //                } else if (l == StdLanguages.EL) {
 //                    // IDEA-10012
 //                    return new LanguageLookupValue(s, StdFileTypes.JSP.getIcon(), "Expression Language");
-                }
-                return LookupElementFactory.getInstance().createLookupElement(s).setIcon(new EmptyIcon(16));
-            }
-        });
-    }
+        }
+        return LookupElementFactory.getInstance().createLookupElement(s).setIcon(new EmptyIcon(16));
+      }
+    });
+  }
 
 }
