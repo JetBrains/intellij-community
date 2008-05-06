@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>UnnecessaryCallToStringValueOf.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary call to 'String.valueOf()'</problem_class>
+    <description>&lt;code&gt;String.valueOf(7)&lt;/code&gt; can be simplified to 'PsiLiteralExpression:7'</description>
+  </problem>
+
+</problems>
