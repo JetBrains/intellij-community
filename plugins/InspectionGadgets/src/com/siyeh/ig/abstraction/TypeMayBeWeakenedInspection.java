@@ -18,32 +18,30 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.*;
 
 public class TypeMayBeWeakenedInspection extends BaseInspection {
@@ -343,8 +341,10 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression)referenceParent;
                 final PsiType type = binaryExpression.getType();
-                if (!checkType(type, weakestTypeClasses)) {
-                    return Collections.EMPTY_LIST;
+                if (variableOrMethodType.equals(type)) {
+                    if (!checkType(type, weakestTypeClasses)) {
+                        return Collections.EMPTY_LIST;
+                    }
                 }
             } else if (referenceParent instanceof PsiSwitchStatement) {
                 // only enums and primitives can be a switch expression
@@ -431,7 +431,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 if (qualifier != null) {
                     final PsiType qualifierType = qualifier.getType();
                     if (qualifierType instanceof PsiClassType) {
-                        PsiClassType classType = (PsiClassType) qualifierType;
+                        final PsiClassType classType = (PsiClassType) qualifierType;
                         final PsiType[] parameterTypes =
                                 classType.getParameters();
                         if (parameterTypes.length > 0) {
@@ -774,7 +774,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 if (variable instanceof PsiParameter) {
                     final PsiElement parent = variable.getParent();
                     if (parent instanceof PsiForeachStatement) {
-                        PsiForeachStatement foreachStatement =
+                        final PsiForeachStatement foreachStatement =
                                 (PsiForeachStatement) parent;
                         final PsiExpression iteratedValue =
                                 foreachStatement.getIteratedValue();
