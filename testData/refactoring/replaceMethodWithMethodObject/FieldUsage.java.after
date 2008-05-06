@@ -1,0 +1,18 @@
+class Test{
+
+    void bar(Test t){
+    t.new InnerClass(1).foo();
+  }
+
+    class InnerClass {
+        private int i;
+
+        public InnerClass(int i) {
+            this.i = i;
+        }
+
+        public void foo() {
+    i++;
+  }
+    }
+}

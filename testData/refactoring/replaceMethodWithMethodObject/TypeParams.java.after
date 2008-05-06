@@ -1,0 +1,16 @@
+class Test {
+
+    void bar() {
+     new InnerClass<String>("").foo();
+   }
+
+    class InnerClass<T> {
+        private T t;
+
+        public InnerClass(T t) {
+            this.t = t;
+        }
+
+        public void foo() {}
+    }
+}

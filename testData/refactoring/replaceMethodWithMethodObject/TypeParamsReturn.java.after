@@ -1,0 +1,9 @@
+class Test {
+    void bar(){
+    String s = new InnerClass<String>().foo();
+  }
+
+    class InnerClass<T> {
+        public T foo() {return null;}
+    }
+}

@@ -1,0 +1,9 @@
+class Test {
+    void bar() {
+    InnerClass.foo();
+  }
+
+    static class InnerClass {
+        static void foo(){}
+    }
+}
