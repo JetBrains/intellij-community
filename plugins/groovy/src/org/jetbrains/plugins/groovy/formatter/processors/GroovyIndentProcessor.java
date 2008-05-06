@@ -27,8 +27,10 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
@@ -105,7 +107,9 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     //For parameter lists
-    if (psiParent instanceof GrParameterList) {
+    if (psiParent instanceof GrParameterList ||
+        psiParent instanceof GrExtendsClause ||
+        psiParent instanceof GrThrowsClause) {
       if (parent.getIndent() != null) {
         return Indent.getContinuationWithoutFirstIndent();
       }
@@ -113,7 +117,8 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     // For arguments
-    if (psiParent instanceof GrArgumentList || psiParent instanceof GrCommandArgumentList) {
+    if (psiParent instanceof GrArgumentList ||
+        psiParent instanceof GrCommandArgumentList) {
       if (child.getElementType() != GroovyTokenTypes.mLPAREN &&
           child.getElementType() != GroovyTokenTypes.mRPAREN) {
         return Indent.getContinuationIndent();
