@@ -45,8 +45,18 @@ public class CompressingContentStorage implements IContentStorage {
     try {
       ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-      InputStream s = createInflaterOutputStream(mySubject.load(id));
-      FileUtil.copy(s, output);
+      byte[] content = mySubject.load(id);
+      InputStream s = createInflaterOutputStream(content);
+      try {
+        FileUtil.copy(s, output);
+      }
+      catch (IOException e) {
+        // todo hook for IDEADEV-25408.
+        String m = "Failed to copy content. id = " + id + " length=" + content.length;
+        IOException newEx = new IOException(m);
+        newEx.initCause(e);
+        throw newEx;
+      }
       s.close();
       myInflater.reset();
 
