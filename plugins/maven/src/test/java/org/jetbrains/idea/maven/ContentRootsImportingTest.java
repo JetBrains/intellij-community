@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven;
 
+import java.io.File;
+
 public class ContentRootsImportingTest extends MavenImportingTestCase {
   public void testSimpleProjectStructure() throws Exception {
     createStdProjectFolders();
@@ -301,6 +303,64 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     assertSources("project", "src/main/java", "src/main/resources", "src");
+  }
+
+  public void testDownloadingPluginsOnImport() throws Exception {
+    String pathToPlugin = "org/codehaus/mojo/build-helper-maven-plugin";
+    removeFromLocalRepository(pathToPlugin);
+
+    assertFalse(new File(getRepositoryPath(), pathToPlugin).exists());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.mojo</groupId>" +
+                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertTrue(new File(getRepositoryPath(), pathToPlugin).exists());
+  }
+
+  public void testDownloadingNecessaryPlugins() throws Exception {
+    String pathToPlugin = "org/codehaus/mojo/build-helper-maven-plugin";
+    removeFromLocalRepository(pathToPlugin);
+
+    assertFalse(new File(getRepositoryPath(), pathToPlugin).exists());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.mojo</groupId>" +
+                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>someId</id>" +
+                  "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>src</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertTrue(new File(getRepositoryPath(), pathToPlugin).exists());
   }
 
   public void testBuildHelperPluginWithoutConfiguration() throws Exception {
