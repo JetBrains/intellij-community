@@ -181,6 +181,23 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       }
     });
   }
+  
+  public Self referencing(final ElementPattern<? extends PsiElement> targetPattern) {
+    return with(new PatternCondition<T>("referencing") {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        final PsiReference[] references = t.getReferences();
+        for (final PsiReference reference : references) {
+          if (targetPattern.accepts(reference.resolve(), context)) return true;
+          if (reference instanceof PsiPolyVariantReference) {
+            for (final ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(true)) {
+              if (targetPattern.accepts(result.getElement(), context)) return true;
+            }
+          }
+        }
+        return false;
+      }
+    });
+  }
 
   public static class Capture<T extends PsiElement> extends PsiElementPattern<T,Capture<T>> {
 

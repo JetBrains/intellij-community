@@ -39,7 +39,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
 
   public JavaClassNameCompletionContributor() {
-    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>(true, false) {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         PsiElement insertedElement = parameters.getPosition();
         String prefix = result.toString();

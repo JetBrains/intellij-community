@@ -201,13 +201,7 @@ public class JavaAwareCompletionData extends CompletionData{
       }
       else {
         if (completion instanceof PsiMember && key == LookupItem.FORCE_QUALIFY) {
-          final PsiMember completionElement = (PsiMember)completion;
-          final PsiClass containingClass = completionElement.getContainingClass();
-          if (containingClass != null) {
-            final String className = containingClass.getName();
-            ret.setLookupString(className + "." + ret.getLookupString());
-            ret.setAttribute(key, itemProperties.get(key));
-          }
+          qualify(ret);
         }
         ret.setAttribute(key, itemProperties.get(key));
       }
@@ -218,6 +212,17 @@ public class JavaAwareCompletionData extends CompletionData{
     }
 
     return null;
+  }
+
+  public static LookupItem qualify(final LookupItem ret) {
+    final PsiMember completionElement = (PsiMember)ret.getObject();
+    final PsiClass containingClass = completionElement.getContainingClass();
+    if (containingClass != null) {
+      final String className = containingClass.getName();
+      ret.setLookupString(className + "." + ret.getLookupString());
+    }
+    ret.setAttribute(LookupItem.FORCE_QUALIFY, "");
+    return ret;
   }
 
 

@@ -5,6 +5,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
@@ -29,13 +31,17 @@ public abstract class AbstractCompletionContributor<Params extends CompletionPar
    * @param parameters
    * @param result
    * @return Whether to continue variants collecting process. If false, remaining non-visited completion contributors are ignored.
-   * @see CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName
+   * @see CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName, CompletionParameters, AbstractCompletionContributor, com.intellij.util.Consumer) 
    */
   public boolean fillCompletionVariants(final Params parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<Params>> pair : myMap.get(parameters.getCompletionType())) {
       final ProcessingContext context = new ProcessingContext();
-      if (pair.first.accepts(parameters.getPosition(), context)) {
-        pair.second.addCompletions(parameters, context, result);
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return pair.first.accepts(parameters.getPosition(), context);
+        }
+      }).booleanValue()) {
+        if (!pair.second.addCompletionVariants(parameters, context, result)) return false;
       }
     }
     return true;

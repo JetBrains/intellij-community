@@ -5,13 +5,37 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.util.ProcessingContext;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public abstract class CompletionProvider<V extends CompletionParameters> {
+  private final boolean myStartInReadAction;
+  private final boolean myReturnValue;
 
-  public abstract void addCompletions(@NotNull V parameters, final ProcessingContext context, @NotNull CompletionResultSet result);
+  protected CompletionProvider() {
+    this(true, true);
+  }
 
+  protected CompletionProvider(final boolean returnValue, final boolean startInReadAction) {
+    myReturnValue = returnValue;
+    myStartInReadAction = startInReadAction;
+  }
+
+  protected abstract void addCompletions(@NotNull V parameters, final ProcessingContext context, @NotNull CompletionResultSet result);
+
+  public final boolean addCompletionVariants(@NotNull final V parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+    if (myStartInReadAction) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          addCompletions(parameters, context, result);
+        }
+      });
+    } else {
+      addCompletions(parameters, context, result);
+    }
+    return myReturnValue;
+  }
 }
