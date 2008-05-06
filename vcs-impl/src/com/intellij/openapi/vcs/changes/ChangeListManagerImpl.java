@@ -302,9 +302,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     // synchronized: to do NOT lost future tasks kept in myCurrentUpdate (two threads entered simultaneosly, did cancel, put
     // new value into myCurrentUpdate twice - one task is scheduled but reference lost)
-    LOG.info("schedule: schedule: before");
     synchronized (myPendingUpdatesLock) {
-      LOG.info("schedule: schedule: after");
       if (myDisposed) {
         // cancel updates scheduling
         if (waiter != null) {
