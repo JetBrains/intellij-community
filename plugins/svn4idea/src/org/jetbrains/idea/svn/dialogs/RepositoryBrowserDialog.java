@@ -20,6 +20,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -661,6 +662,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     public void actionPerformed(AnActionEvent e) {
       doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener());
+      if (! ModalityState.NON_MODAL.equals(ModalityState.current())) {
+        doOKAction();
+      }
     }
   }
 
