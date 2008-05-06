@@ -80,10 +80,9 @@ public interface XDebugSession {
 
   /**
    * Call this method when position is reached (e.g. after "Run to cursor" or "Step over" command)
-   * @param position current position
    * @param suspendContext context
    */
-  void positionReached(@NotNull XSourcePosition position, @NotNull XSuspendContext suspendContext);
+  void positionReached(@NotNull XSuspendContext suspendContext);
 
   boolean isStopped();
 

@@ -353,14 +353,7 @@ public class XDebugSessionImpl implements XDebugSession {
       return false;
     }
 
-    myPaused = true;
-    XSourcePosition position = breakpoint.getSourcePosition();
-    if (position != null) {
-      positionReached(position, suspendContext);
-    }
-    else {
-      myDispatcher.getMulticaster().sessionPaused();
-    }
+    positionReached(suspendContext);
     return true;
   }
 
@@ -387,16 +380,17 @@ public class XDebugSessionImpl implements XDebugSession {
     ((ConsoleView)mySessionTab.getConsole()).print(message + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
-  public void positionReached(@NotNull final XSourcePosition position, @NotNull final XSuspendContext suspendContext) {
+  public void positionReached(@NotNull final XSuspendContext suspendContext) {
     enableBreakpoints();
     mySuspendContext = suspendContext;
     XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
-    if (executionStack != null) {
-      myCurrentStackFrame = executionStack.getTopFrame();
-    }
-    myCurrentPosition = position;
+    myCurrentStackFrame = executionStack != null ? executionStack.getTopFrame() : null;
+    myCurrentPosition = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
+
     myPaused = true;
-    myDebuggerManager.updateExecutionPosition(this, position, false);
+    if (myCurrentPosition != null) {
+      myDebuggerManager.updateExecutionPosition(this, myCurrentPosition, false);
+    }
     myDispatcher.getMulticaster().sessionPaused();
   }
 
