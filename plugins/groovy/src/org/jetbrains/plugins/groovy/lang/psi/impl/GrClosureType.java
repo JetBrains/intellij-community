@@ -15,10 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,5 +199,14 @@ public class GrClosureType extends PsiClassType {
   public static GrClosureType create(PsiType returnType, PsiType[] parameterTypes, boolean[] optionals,
                                       PsiManager manager, GlobalSearchScope scope) {
     return new GrClosureType(scope, returnType, parameterTypes, optionals, manager);
+  }
+
+  public PsiType curry(int num) {
+    if (num > myParameterTypes.length) return null;
+    PsiType[] newParameterTypes = new PsiType[myParameterTypes.length - num];
+    boolean[] newOptionals = new boolean[myParameterTypes.length - num];
+    System.arraycopy(myParameterTypes, num, newParameterTypes, 0, newParameterTypes.length);
+    System.arraycopy(myOptionals, num, newOptionals, 0, newOptionals.length);
+    return create(myReturnType, newParameterTypes, newOptionals, myManager, myScope);
   }
 }

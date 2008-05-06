@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -59,7 +56,11 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
           PsiElement resolved = resolveResult.getElement();
           PsiType returnType = null;
           if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
-            returnType = ((PsiMethod) resolved).getReturnType();
+            PsiMethod method = (PsiMethod) resolved;
+            returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
+            if (returnType == null) {
+              returnType = method.getReturnType();
+            }
           } else if (resolved instanceof GrVariable) {
             PsiType refType = refExpr.getType();
             final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
@@ -88,6 +89,27 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
       return null;
     }
   };
+
+  private static PsiType getClosureCallOrCurryReturnType(GrMethodCallExpressionImpl callExpression,
+                                                         GrReferenceExpression refExpr, PsiMethod resolved) {
+    PsiClass clazz = resolved.getContainingClass();
+    if (clazz != null && GrClosableBlock.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
+      if ("call".equals(resolved.getName()) || "curry".equals(resolved.getName())) {
+        GrExpression qualifier = refExpr.getQualifierExpression();
+        if (qualifier != null) {
+          PsiType qType = qualifier.getType();
+          if (qType instanceof GrClosureType) {
+            if ("call".equals(resolved.getName())) {
+              return ((GrClosureType) qType).getClosureReturnType();
+            } else if ("curry".equals(resolved.getName())) {
+              return ((GrClosureType) qType).curry(callExpression.getExpressionArguments().length);
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
 
   public GrMethodCallExpressionImpl(@NotNull ASTNode node) {
     super(node);
