@@ -10,6 +10,8 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -72,14 +74,14 @@ public abstract class FilePatch {
     return StringUtil.join(components, skipDirs, components.length, "/");
   }
 
-  public ApplyPatchStatus apply(ApplyPatchContext context) throws ApplyPatchException, IOException {
+  public ApplyPatchStatus apply(ApplyPatchContext context, final Project project) throws ApplyPatchException, IOException {
     VirtualFile fileToPatch = findFileToPatch(context);
 
     if (fileToPatch == null) {
       throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
     }
 
-    return apply(fileToPatch, context);
+    return apply(fileToPatch, context, project);
   }
 
   public FilePath getTarget(final VirtualFile file) {
@@ -89,7 +91,7 @@ public abstract class FilePatch {
     return new FilePathImpl(file);
   }
 
-  public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context) throws IOException, ApplyPatchException {
+  public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context, final Project project) throws IOException, ApplyPatchException {
     context.addAffectedFile(getTarget(fileToPatch));
     if (isNewFile()) {
       if (fileToPatch.findChild(getBeforeFileName()) != null) {
@@ -99,6 +101,7 @@ public abstract class FilePatch {
       applyCreate(newFile);
     }
     else if (isDeletedFile()) {
+      FileEditorManagerImpl.getInstance(project).closeFile(fileToPatch);
       fileToPatch.delete(this);
     }
     else {

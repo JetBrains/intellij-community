@@ -183,7 +183,7 @@ public class ApplyPatchAction extends AnAction {
     }
 
     try {
-      return patch.apply(file, context);
+      return patch.apply(file, context, project);
     }
     catch(ApplyPatchException ex) {
       if (!patch.isNewFile() && !patch.isDeletedFile() && patch instanceof TextFilePatch) {
