@@ -9,6 +9,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.lucene.search.Query;
@@ -21,6 +24,7 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
+import org.jetbrains.idea.maven.project.Constants;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenImportToolWindow;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -33,9 +37,12 @@ public class MavenIndicesManager extends DummyProjectComponent {
   private static final String LOCAL_INDEX = "local";
   private static final String PROJECT_INDEX = "project";
 
+  private boolean isInitialized;
+
   private MavenEmbedder myEmbedder;
   private MavenIndices myIndices;
   private Project myProject;
+  private VirtualFileAdapter myFileListener;
 
   public static MavenIndicesManager getInstance(Project p) {
     return p.getComponent(MavenIndicesManager.class);
@@ -46,44 +53,38 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   public void initComponent() {
-    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         if (ApplicationManager.getApplication().isUnitTestMode()) return;
         if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
 
-        try {
-          initIndex();
-        }
-        catch (MavenException e) {
-          showErrorWhenProjectIsOpen(e);
-        }
-
-        StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-          public void run() {
-            try {
-              checkLocalIndex();
-              checkProjectIndex();
-            }
-            catch (MavenIndexException e) {
-              showErrorWhenProjectIsOpen(new MavenException(e));
-            }
-          }
-        });
+        doInit();
       }
     });
   }
 
-  private void showErrorWhenProjectIsOpen(final MavenException e) {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        MavenLog.LOG.warn(e);
-        new MavenImportToolWindow(myProject, RepositoryBundle.message("maven.indices")).displayErrors(e);
+  public void doInit() {
+    isInitialized = true;
+
+    try {
+      initIndices();
+
+      try {
+        checkLocalIndex();
+        checkProjectIndex();
       }
-    });
+      catch (MavenIndexException e) {
+        throw new MavenException(e);
+      }
+    }
+    catch (MavenException e) {
+      showError(e);
+    }
+
+    listenForArtifactChanges();
   }
 
-  @TestOnly
-  public void initIndex() throws MavenException {
+  private void initIndices() throws MavenException {
     myEmbedder = MavenFactory.createEmbedderForExecute(getSettings());
     myIndices = new MavenIndices(myEmbedder, getIndicesDir());
 
@@ -93,6 +94,37 @@ public class MavenIndicesManager extends DummyProjectComponent {
     catch (MavenIndexException e) {
       throw new MavenException("Couldn't load Maven Repositories: " + e.getMessage());
     }
+  }
+
+  private void listenForArtifactChanges() {
+    myFileListener = new VirtualFileAdapter() {
+      @Override
+      public void fileCreated(VirtualFileEvent event) {
+        doUpdate(event);
+      }
+
+      @Override
+      public void beforeContentsChange(VirtualFileEvent event) {
+        doUpdate(event);
+      }
+
+      @Override
+      public void fileDeleted(VirtualFileEvent event) {
+        doUpdate(event);
+      }
+      
+      private void doUpdate(final VirtualFileEvent event) {
+        if (!event.getFileName().equals(Constants.POM_XML)) return;
+        startUpdate(findProjectIndex());
+      }
+    };
+    VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
+  }
+
+
+  private void showError(final MavenException e) {
+    MavenLog.LOG.warn(e);
+    new MavenImportToolWindow(myProject, RepositoryBundle.message("maven.indices")).displayErrors(e);
   }
 
   private MavenCoreSettings getSettings() {
@@ -105,6 +137,9 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   public void disposeComponent() {
+    if (!isInitialized) return;
+
+    VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
     closeIndex();
   }
 
@@ -171,11 +206,6 @@ public class MavenIndicesManager extends DummyProjectComponent {
     return null;
   }
 
-  @TestOnly
-  public void updateProjectIndex() throws MavenIndexException {
-    checkProjectIndex();
-  }
-
   public Configurable createConfigurable() {
     return new MavenIndicesConfigurable(myProject, this);
   }
@@ -222,7 +252,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
           });
         }
         catch (MavenIndexException e) {
-          showErrorWhenProjectIsOpen(new MavenException(e));
+          showError(new MavenException(e));
         }
       }
     }.queue();

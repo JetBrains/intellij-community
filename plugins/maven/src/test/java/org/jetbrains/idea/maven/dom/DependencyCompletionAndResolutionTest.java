@@ -1,8 +1,11 @@
 package org.jetbrains.idea.maven.dom;
 
-import org.jetbrains.idea.maven.repository.MavenIndex;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.repository.MavenIndicesManager;
 import org.jetbrains.idea.maven.repository.MavenWithDataTestFixture;
+
+import java.io.File;
 
 public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
   private MavenWithDataTestFixture myDataTestFixture;
@@ -14,11 +17,13 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     myDataTestFixture = new MavenWithDataTestFixture(myDir);
     myDataTestFixture.setUp();
 
+    FileUtil.copyDir(new File(myDataTestFixture.getTestDataPath("local2")),
+                     new File(myDataTestFixture.getTestDataPath("local1")));
+
+    getMavenCoreSettings().setLocalRepository(myDataTestFixture.getTestDataPath("local1"));
+
     myRepositoryManager = MavenIndicesManager.getInstance(myProject);
-    myRepositoryManager.initIndex();
-    myRepositoryManager.add(new MavenIndex("local1", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL));
-    myRepositoryManager.add(new MavenIndex("local2", myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL));
-    myRepositoryManager.startUpdateAll();
+    myRepositoryManager.doInit();
   }
 
   @Override
@@ -31,9 +36,8 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
   @Override
   protected void tearDown() throws Exception {
-    myRepositoryManager.closeIndex();
-    myRepositoryManager.clearIndices();
     super.tearDown();
+    myRepositoryManager.clearIndices();
   }
 
   public void testGroupIdCompletion() throws Exception {
@@ -47,7 +51,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "  </dependency>" +
                      "</dependencies>");
     
-    assertCompletionVariants(myProjectPom, "junit", "jmock");
+    assertCompletionVariants(myProjectPom, "junit", "jmock", "test");
   }
 
   public void testArtifactIdCompletion() throws Exception {
@@ -126,7 +130,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testCompletionFromProjectArtifacts() throws Exception {
+  public void testAddingCreatedProjectsIntoCompletion() throws Exception {
     createModulePom("m1",
                     "<groupId>project-group</groupId>" +
                     "<artifactId>m1</artifactId>" +
@@ -136,8 +140,6 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                     "<groupId>project-group</groupId>" +
                     "<artifactId>m2</artifactId>" +
                     "<version>2</version>");
-
-    myRepositoryManager.updateProjectIndex();
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -151,6 +153,79 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "</dependencies>");
 
     assertCompletionVariants(myProjectPom, "m1", "m2");
+  }
+
+  public void testChaningExistingProjects() throws Exception {
+    createModulePom("m1",
+                    "<groupId>project-group</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "m1");
+
+    updateModulePom("m1",
+                    "<groupId>project-group</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "m2");
+  }
+
+  public void testRemovingExistingProjects() throws Exception {
+    VirtualFile m =createModulePom("m1",
+                    "<groupId>project-group</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "m1");
+
+    m.delete(null);
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom);
   }
 
   public void testDoesNotHighlightCorrectValues() throws Throwable {
