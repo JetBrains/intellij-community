@@ -10,6 +10,9 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Set;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -18,23 +21,31 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class PsiFileBase extends PsiFileImpl {
-  @NotNull private Language myLanguage;
-  @NotNull private ParserDefinition myParserDefinition;
+  @NotNull private final Language myLanguage;
+  @NotNull private final ParserDefinition myParserDefinition;
 
   protected PsiFileBase(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider);
-    initLanguage(language);
-  }
-
-  private void initLanguage(final Language language) {
-    myLanguage = language;
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    myLanguage = findLanguage(language);
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
     if (parserDefinition == null) {
       throw new RuntimeException("PsiFileBase: language.getParserDefinition() returned null.");
     }
     myParserDefinition = parserDefinition;
     final IFileElementType nodeType = parserDefinition.getFileNodeType();
     init(nodeType, nodeType);
+  }
+
+  private Language findLanguage(Language baseLanguage) {
+    final FileViewProvider viewProvider = getViewProvider();
+    final Set<Language> languages = viewProvider.getLanguages();
+    for (final Language actualLanguage : languages) {
+      if (actualLanguage.isKindOf(baseLanguage)) {
+        return actualLanguage;
+      }
+    }
+    throw new AssertionError(
+        "Language " + baseLanguage + " doesn't participate in view provider " + viewProvider + ": " + new ArrayList<Language>(languages));
   }
 
   @NotNull

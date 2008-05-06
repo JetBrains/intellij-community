@@ -4,7 +4,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -20,18 +19,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileViewProvider {
+public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileViewProvider {
   private final ConcurrentHashMap<Language, PsiFile> myRoots = new ConcurrentHashMap<Language, PsiFile>(1, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal = null;
-
-  public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile file) {
-    super(manager, file);
-  }
 
   public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile virtualFile, boolean physical) {
     super(manager, virtualFile, physical);
   }
 
+  @NotNull
+  public abstract Language getBaseLanguage();
 
   @NotNull
   public List<PsiFile> getAllFiles() {
@@ -95,22 +92,13 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
     //TODO
   }
 
-  public FileViewProvider clone() {
-    final MultiplePsiFilesPerDocumentFileViewProvider copy = (MultiplePsiFilesPerDocumentFileViewProvider)cloneInner(new LightVirtualFile(getVirtualFile(), getContents(), getModificationStamp()));
-    if (myOriginal == null) {
-      copy.myOriginal = this;
-    }
-    else {
-      copy.myOriginal = myOriginal;
-    }
-
+  public final MultiplePsiFilesPerDocumentFileViewProvider createCopy(final LightVirtualFile fileCopy) {
+    final MultiplePsiFilesPerDocumentFileViewProvider copy = cloneInner(fileCopy);
+    copy.myOriginal = myOriginal == null ? this : myOriginal;
     return copy;
   }
 
-  protected FileViewProvider cloneInner(VirtualFile fileCopy) {
-    fileCopy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
-    return new MultiplePsiFilesPerDocumentFileViewProvider(getManager(), fileCopy, false);
-  }
+  protected abstract MultiplePsiFilesPerDocumentFileViewProvider cloneInner(VirtualFile fileCopy);
 
   @Nullable
   public PsiElement findElementAt(int offset, Class<? extends Language> lang) {

@@ -56,10 +56,14 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical) {
+    this(manager, virtualFile, physical, calcBaseLanguage(virtualFile, manager.getProject()));
+  }
+
+  private SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean physical, @NotNull Language language) {
     myManager = manager;
     myVirtualFile = virtualFile;
     myEventSystemEnabled = physical;
-    myBaseLanguage = calcBaseLanguage(virtualFile);
+    myBaseLanguage = language;
     setContent(new VirtualFileContent());
     calcPhysical();
   }
@@ -69,7 +73,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return myBaseLanguage;
   }
 
-  private static Language calcBaseLanguage(VirtualFile file) {
+  private static Language calcBaseLanguage(VirtualFile file, Project project) {
     if (file instanceof LightVirtualFile) {
       final Language language = ((LightVirtualFile)file).getLanguage();
       if (language != null) {
@@ -78,18 +82,22 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
 
     final FileType fileType = file.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      if (fileType != StdFileTypes.JAVA && isTooLarge(file)) return FileTypes.PLAIN_TEXT.getLanguage();
+    for (final LanguageSubstitutor substitutor : LanguageSubstitutors.INSTANCE.allForFileType(fileType)) {
+      final Language language = substitutor.getLanguage(file, project);
+      if (language != null) return language;
+    }
 
-      final LanguageFileType languageFileType = (LanguageFileType)fileType;
-      return languageFileType.getLanguage();
+    if (isTooLarge(file)) return PlainTextLanguage.INSTANCE;
+
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).getLanguage();
     }
     else if (fileType instanceof CustomFileType ||
              fileType == StdFileTypes.GUI_DESIGNER_FORM ||
              fileType == StdFileTypes.IDEA_MODULE ||
              fileType == StdFileTypes.IDEA_PROJECT ||
              fileType == StdFileTypes.IDEA_WORKSPACE) {
-      return FileTypes.PLAIN_TEXT.getLanguage();
+      return PlainTextLanguage.INSTANCE;
     }
     return Language.ANY;
   }
@@ -233,23 +241,20 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   protected PsiFile creatFile(final Project project, final VirtualFile vFile, final FileType fileType) {
-    if (fileType instanceof LanguageFileType) {
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      if (!isTooLarge(vFile)) {
-        final PsiFile psiFile = createFile(language);
-        if (psiFile != null) return psiFile;
-      }
-    }
-
     if (fileType.isBinary()) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
+
+    if (!isTooLarge(vFile)) {
+      final PsiFile psiFile = createFile(getBaseLanguage());
+      if (psiFile != null) return psiFile;
+    }
+
     return new PsiPlainTextFileImpl(this);
   }
 
   public static boolean isTooLarge(final VirtualFile vFile) {
-    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 &&
-           fileSizeIsGreaterThan(vFile, FileManagerImpl.MAX_INTELLISENSE_FILESIZE);
+    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 && fileSizeIsGreaterThan(vFile, FileManagerImpl.MAX_INTELLISENSE_FILESIZE);
   }
 
   private static boolean fileSizeIsGreaterThan(final VirtualFile vFile, final long maxInBytes) {
@@ -292,7 +297,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myVirtualFile = file;
     myDocument.clear();
     myPsiFile.set(null);
-    myBaseLanguage = calcBaseLanguage(file);
+    myBaseLanguage = calcBaseLanguage(file, getManager().getProject());
     calcPhysical();
   }
 
@@ -301,10 +306,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     final Document document = myDocument != null ? myDocument.get() : null;
     if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
-  }
-
-  public void setDocument(final SoftReference<Document> document) {
-    myDocument = document;
   }
 
   public Document getDocument() {
@@ -323,9 +324,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     final VirtualFile origFile = getVirtualFile();
     LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), getModificationStamp());
     copy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
-
     copy.setCharset(origFile.getCharset());
-    return new SingleRootFileViewProvider(getManager(), copy, false);
+    return createCopy(copy);
+  }
+
+  public SingleRootFileViewProvider createCopy(final LightVirtualFile copy) {
+    return new SingleRootFileViewProvider(getManager(), copy, false, myBaseLanguage);
   }
 
   public PsiReference findReferenceAt(final int offset) {

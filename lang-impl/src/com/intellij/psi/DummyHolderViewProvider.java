@@ -133,6 +133,10 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return false;
   }
 
+  public FileViewProvider createCopy(final LightVirtualFile copy) {
+    throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
+  }
+
   public PsiElement findElementAt(final int offset) {
     final LeafElement element = ((PsiFileImpl)getPsi(getBaseLanguage())).calcTreeElement().findLeafElementAt(offset);
     return element != null ? element.getPsi() : null;

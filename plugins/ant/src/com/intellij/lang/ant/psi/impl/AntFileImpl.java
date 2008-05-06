@@ -196,15 +196,20 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     synchronized (PsiLock.LOCK) {
       final AntFileImpl copy = new AntFileImpl(viewProvider);
 
-      final HashMap<String, AntTypeDefinition> defs = new HashMap<String, AntTypeDefinition>(myTypeDefinitions);
-      for (Map.Entry<String, AntTypeDefinition> entry : defs.entrySet()) {
-        final AntTypeDefinitionImpl original = (AntTypeDefinitionImpl)entry.getValue();
-        if (original != null) {
-          defs.put(entry.getKey(), new AntTypeDefinitionImpl(original));
+      final HashMap<String, AntTypeDefinition> defs;
+      if (myTypeDefinitions != null) {
+        defs = new HashMap<String, AntTypeDefinition>();
+        for (Map.Entry<String, AntTypeDefinition> entry : myTypeDefinitions.entrySet()) {
+          final AntTypeDefinitionImpl original = (AntTypeDefinitionImpl)entry.getValue();
+          if (original != null) {
+            defs.put(entry.getKey(), new AntTypeDefinitionImpl(original));
+          }
         }
+      } else {
+        defs = null;
       }
       copy.myTypeDefinitions = defs;
-      copy.myProjectElements = new HashMap<AntTypeId, String>(myProjectElements);
+      copy.myProjectElements = myProjectElements == null ? null : new HashMap<AntTypeId, String>(myProjectElements);
       copy.myClassLoader = myClassLoader;
       copy.myExternalProperties = myExternalProperties != null? new HashMap<String, String>(myExternalProperties) : null;
 

@@ -17,7 +17,6 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -31,6 +30,7 @@ import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTree;
@@ -232,16 +232,15 @@ public class BlockSupportImpl extends BlockSupport {
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else {
-      final PsiFileFactoryImpl fileFactory = (PsiFileFactoryImpl)PsiFileFactory.getInstance(fileImpl.getProject());
       final FileViewProvider viewProvider = fileImpl.getViewProvider();
-      final PsiFileImpl newFile = (PsiFileImpl) fileFactory.
-        createFileFromText(fileImpl.getName(), viewProvider.getVirtualFile().getFileType(), viewProvider.getBaseLanguage(), 
-                           fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
+      final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), viewProvider.getVirtualFile().getFileType(), newFileText,
+                                                              fileImpl.getModificationStamp());
+      final PsiFileImpl newFile = (PsiFileImpl)viewProvider.createCopy(lightFile).getPsi(fileImpl.getLanguage());
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
-
+                                                            
       final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
       if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
 

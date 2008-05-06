@@ -654,7 +654,8 @@ public class InjectedLanguageUtil {
           assert myHostPsiFile.getText().equals(myHostDocument.getText());
           
           DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
-          VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
+          final Language baseLanguage = myLanguage instanceof LanguageDialect ? myLanguage.getBaseLanguage() : myLanguage;
+          VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(baseLanguage, myHostVirtualFile, documentWindow, outChars);
 
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);

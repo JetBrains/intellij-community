@@ -62,15 +62,17 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return plainTextFile;
   }
 
-  private PsiFile trySetupPsiForFile(final boolean useLanguage, final LightVirtualFile virtualFile, final Language language,
+  private PsiFile trySetupPsiForFile(final boolean useLanguage, final LightVirtualFile virtualFile, Language language,
                                      final boolean physical, final boolean markAsCopy) {
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = null;
     if (!useLanguage) {
       final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
       viewProvider = factory != null? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
     }
     if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
+
+    language = viewProvider.getBaseLanguage();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition != null) {
       final PsiFile psiFile;
       if (useLanguage) {

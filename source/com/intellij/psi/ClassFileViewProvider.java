@@ -37,9 +37,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return null;
   }
 
-  public FileViewProvider clone() {
-    final VirtualFile origFile = getVirtualFile();
-    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), getModificationStamp());
+  public SingleRootFileViewProvider createCopy(final LightVirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
   }
 }
