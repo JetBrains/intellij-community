@@ -653,7 +653,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public Content findContent(final String key) {
     final ContentManager manager = getContentManager();
-    if (manager == null) return null;
+    if (manager == null || key == null) return null;
 
     Content[] contents = manager.getContents();
     for (Content content : contents) {

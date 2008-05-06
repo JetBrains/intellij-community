@@ -448,12 +448,14 @@ public class JBTabsImpl extends JComponent
 
   private boolean isMyChildIsFocusedNow() {
     final Component owner = getFocusOwner();
+    if (owner == null) return false;
+
 
     if (mySelectedInfo != null) {
       if (!SwingUtilities.isDescendingFrom(owner, mySelectedInfo.getComponent())) return false;
     }
 
-    return owner != null && SwingUtilities.isDescendingFrom(owner, this);
+    return SwingUtilities.isDescendingFrom(owner, this);
   }
 
   @Nullable
