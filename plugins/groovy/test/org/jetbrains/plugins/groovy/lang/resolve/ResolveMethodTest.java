@@ -462,4 +462,9 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("multipleAssignment3/A.groovy").getElement();
     assertNotNull(ref.resolve());
   }
+
+  public void testClosureIntersect() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closureIntersect/A.groovy").getElement();
+    assertNotNull(ref.resolve());
+  }
 }

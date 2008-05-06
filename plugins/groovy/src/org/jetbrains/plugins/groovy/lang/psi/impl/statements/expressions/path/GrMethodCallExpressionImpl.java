@@ -61,7 +61,8 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
           if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
             returnType = ((PsiMethod) resolved).getReturnType();
           } else if (resolved instanceof GrVariable) {
-            final PsiType type = ((GrVariable) resolved).getTypeGroovy();
+            PsiType refType = refExpr.getType();
+            final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
             if (type instanceof GrClosureType) {
               returnType = ((GrClosureType) type).getClosureReturnType();
             }
