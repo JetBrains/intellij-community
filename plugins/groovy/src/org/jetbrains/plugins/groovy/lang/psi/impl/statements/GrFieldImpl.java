@@ -101,7 +101,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
 
     mySetter = null;
 
-    if (isProperty()) {
+    if (isProperty() && !hasModifierProperty(PsiModifier.FINAL)) {
       String name = getName();
       if (name != null) {
         name = "set" + StringUtil.capitalize(name);

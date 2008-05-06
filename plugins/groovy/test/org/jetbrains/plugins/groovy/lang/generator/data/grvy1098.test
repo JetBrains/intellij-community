@@ -11,10 +11,6 @@ public class A extends groovy.lang.GroovyObjectSupport {
     return null;
   }
 
-  public static final void setTEST(java.lang.Object TEST) {
-    return ;
-  }
-
   private static final java.lang.Object TEST = null;
 }
 ---
