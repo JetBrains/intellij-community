@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -303,7 +304,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           String qName = PsiUtil.getQualifiedReferenceText(ref);
 
           if (kind == CLASS_OR_PACKAGE_FQ || kind == CLASS_FQ) {
-            if (qName.indexOf('.') > 0) {
+            if (qName.indexOf('.') > 0 || ((GroovyFileBase) ref.getContainingFile()).getPackageName().length() == 0) {
               PsiClass aClass = manager.findClass(qName, ref.getResolveScope());
               if (aClass != null) {
                 boolean isAccessible = PsiUtil.isAccessible(ref, aClass);

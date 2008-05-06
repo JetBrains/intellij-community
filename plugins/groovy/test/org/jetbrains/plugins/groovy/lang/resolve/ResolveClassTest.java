@@ -94,6 +94,11 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
+  public void testGrvy1461() throws Exception {
+    PsiReference ref = configureByFile("grvy1461/AssertionUtils.groovy");
+    assertNotNull(ref.resolve());
+  }
+
 
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
