@@ -86,7 +86,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
   }
 
   public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {
-    return EnumeratorStringDescriptor.INSTANCE;
+    return new EnumeratorStringDescriptor();
   }
 
   public FileBasedIndex.InputFilter getInputFilter() {
