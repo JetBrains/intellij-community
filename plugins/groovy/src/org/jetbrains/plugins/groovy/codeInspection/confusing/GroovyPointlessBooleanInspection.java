@@ -42,7 +42,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return "Pointless boolean expression";
+    return GroovyInspectionBundle.message("pointless.boolean.display.name");
   }
 
   @NotNull
@@ -61,11 +61,11 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrBinaryExpression) {
       return GroovyInspectionBundle.message(
-          "pointless.boolean.error.string",
+          "pointless.boolean.problem.descriptor",
           calculateSimplifiedBinaryExpression((GrBinaryExpression) args[0]));
     } else {
       return GroovyInspectionBundle.message(
-          "pointless.boolean.error.string",
+          "pointless.boolean.problem.descriptor",
           calculateSimplifiedPrefixExpression((GrUnaryExpression) args[0]));
     }
   }
@@ -160,9 +160,10 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   private static class BooleanLiteralComparisonFix
       extends GroovyFix {
+
     @NotNull
     public String getName() {
-      return "Simplify";
+      return GroovyInspectionBundle.message("pointless.boolean.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
