@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
@@ -47,6 +52,7 @@ import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -572,6 +578,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     else {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     }
+    result.add(new CreatePatchFromChangesAction());
     result.add(new MyGetVersionAction());
     result.add(new MyAnnotateAction());
     AnAction[] additionalActions = getHistoryProvider().getAdditionalActions(this);
@@ -911,6 +918,21 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     else if (VcsDataConstants.VCS_FILE_REVISIONS.equals(dataId)) {
       return getSelectedRevisions();
     }
+    else if (VcsDataKeys.CHANGES.getName().equals(dataId)) {
+      final VcsFileRevision[] revisions = getSelectedRevisions();
+      
+      Arrays.sort(revisions, new Comparator<VcsFileRevision>() {
+        public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
+          return o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
+        }
+      });
+
+      final ContentRevision startRevision = new LoadedContentRevision(myFilePath, revisions[0]);
+      final ContentRevision endRevision = (revisions.length == 1) ? new CurrentContentRevision(myFilePath) :
+                                            new LoadedContentRevision(myFilePath, revisions[revisions.length - 1]);
+
+      return new Change[]{new Change(startRevision, endRevision)};
+    }
     else if (VcsDataConstants.VCS_VIRTUAL_FILE.equals(dataId)) {
       if (firstSelectedRevision == null) return null;
       return createVirtualFileForRevision(firstSelectedRevision);
@@ -935,6 +957,36 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     else {
       return super.getData(dataId);
+    }
+  }
+
+  private static class LoadedContentRevision implements ContentRevision {
+    private final FilePath myFile;
+    private final VcsFileRevision myRevision;
+
+    private LoadedContentRevision(final FilePath file, final VcsFileRevision revision) {
+      myFile = file;
+      myRevision = revision;
+    }
+
+    public String getContent() throws VcsException {
+      myRevision.loadContent();
+      try {
+        return LoadTextUtil.getTextByBinaryPresentation(myRevision.getContent(), myFile.getVirtualFile(), false).toString();
+      }
+      catch (IOException e) {
+        throw new VcsException(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()));
+      }
+    }
+
+    @NotNull
+    public FilePath getFile() {
+      return myFile;
+    }
+
+    @NotNull
+    public VcsRevisionNumber getRevisionNumber() {
+      return myRevision.getRevisionNumber();
     }
   }
 

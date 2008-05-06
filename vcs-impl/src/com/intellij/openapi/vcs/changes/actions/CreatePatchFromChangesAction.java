@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -27,6 +28,11 @@ import java.util.List;
  * @author yole
  */
 public class CreatePatchFromChangesAction extends AnAction {
+  public CreatePatchFromChangesAction() {
+    super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
+          VcsBundle.message("action.description.create.patch.for.selected.revisions"), IconLoader.getIcon("/actions/createPatch.png"));
+  }
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
