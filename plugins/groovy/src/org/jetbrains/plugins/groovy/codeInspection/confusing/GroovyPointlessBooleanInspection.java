@@ -60,9 +60,13 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrBinaryExpression) {
-      return GroovyInspectionBundle.message("pointless.boolean.error.string", calculateSimplifiedBinaryExpression((GrBinaryExpression) args[0]));
+      return GroovyInspectionBundle.message(
+          "pointless.boolean.error.string",
+          calculateSimplifiedBinaryExpression((GrBinaryExpression) args[0]));
     } else {
-      return GroovyInspectionBundle.message("pointless.boolean.error.string", calculateSimplifiedPrefixExpression((GrUnaryExpression) args[0]));
+      return GroovyInspectionBundle.message(
+          "pointless.boolean.error.string",
+          calculateSimplifiedPrefixExpression((GrUnaryExpression) args[0]));
     }
   }
 
@@ -125,7 +129,9 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
           ComparisonUtils.getNegatedComparison(sign);
       final GrExpression lhs = binaryExpression.getLeftOperand();
       final GrExpression rhs = binaryExpression.getRightOperand();
-      assert rhs != null;
+      if (rhs == null) {
+        return lhs.getText() + negatedComparison;
+      }
       return lhs.getText() + negatedComparison + rhs.getText();
     } else {
       final String baseText = exp.getText();
@@ -180,8 +186,9 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   private static class PointlessBooleanExpressionVisitor
       extends BaseInspectionVisitor {
+
     private final Set<IElementType> booleanTokens =
-        new HashSet<IElementType>(10);
+        new HashSet<IElementType>(5);
 
     {
       booleanTokens.add(GroovyTokenTypes.mLAND);
