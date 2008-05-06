@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,6 +161,17 @@ public class GrTupleType extends PsiClassType {
     GrTupleType copy = new GrTupleType(myComponentTypes, myManager, myScope);
     copy.myLanguageLevel = languageLevel;
     return copy;
+  }
+
+  public boolean equals(Object obj) {
+    if (obj instanceof GrTupleType) {
+      PsiType[] otherComponents = ((GrTupleType) obj).myComponentTypes;
+      for (int i = 0; i < Math.min(myComponentTypes.length, otherComponents.length); i++) {
+        if (!Comparing.equal(myComponentTypes[i], otherComponents[i])) return false;
+      }
+      return true;
+    }
+    return super.equals(obj);
   }
 
   public boolean isAssignableFrom(@NotNull PsiType type) {

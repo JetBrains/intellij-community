@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +30,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 */
 public class GrClosureType extends PsiClassType {
   private GlobalSearchScope myScope;
-  private PsiType myReturnType;
+  @Nullable private PsiType myReturnType;
   private PsiType[] myParameterTypes;
   private boolean[] myOptionals;
   private PsiManager myManager;
 
-  private GrClosureType(GlobalSearchScope scope, PsiType returnType, PsiType[] parameters, boolean[] optionals, PsiManager manager) {
+  private GrClosureType(GlobalSearchScope scope, @Nullable PsiType returnType, PsiType[] parameters, boolean[] optionals, PsiManager manager) {
     myScope = scope;
     myReturnType = returnType;
     myParameterTypes = parameters;
@@ -128,9 +129,27 @@ public class GrClosureType extends PsiClassType {
     return myReturnType == null || myReturnType.isValid();
   }
 
+  public boolean equals(Object obj) {
+    if (obj instanceof GrClosureType) {
+      GrClosureType other = (GrClosureType) obj;
+      if (!Comparing.equal(myReturnType, other.myReturnType)) return false;
+      if (myParameterTypes.length != other.myParameterTypes.length) return false;
+      for (int i = 0; i < myParameterTypes.length; i++) {
+        if (myOptionals[i] != other.myOptionals[i]) return false;
+        if (!other.myParameterTypes[i].equals(myParameterTypes[i])) return false;
+      }
+      return true;
+    }
+
+    return super.equals(obj);
+  }
+
   public boolean isAssignableFrom(@NotNull PsiType type) {
     if (type instanceof GrClosureType) {
       GrClosureType other = (GrClosureType) type;
+      if (myReturnType == null || other.myReturnType == null) {
+        return myReturnType == null && other.myReturnType == null;
+      }
       if (!myReturnType.isAssignableFrom(other.myReturnType)) return false;
       if (myParameterTypes.length != other.myParameterTypes.length) return false;
       for (int i = 0; i < myParameterTypes.length; i++) {
