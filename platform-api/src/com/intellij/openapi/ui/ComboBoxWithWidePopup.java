@@ -20,23 +20,23 @@ import javax.swing.*;
 import java.util.Vector;
 import java.awt.*;
 
-public class JBComboBox extends JComboBox {
+public class ComboBoxWithWidePopup extends JComboBox {
 
   private boolean myLayingOut = false;
 
-  public JBComboBox(final ComboBoxModel aModel) {
+  public ComboBoxWithWidePopup(final ComboBoxModel aModel) {
     super(aModel);
   }
 
-  public JBComboBox(final Object items[]) {
+  public ComboBoxWithWidePopup(final Object items[]) {
     super(items);
   }
 
-  public JBComboBox(final Vector<?> items) {
+  public ComboBoxWithWidePopup(final Vector<?> items) {
     super(items);
   }
 
-  public JBComboBox() {
+  public ComboBoxWithWidePopup() {
   }
 
   public void doLayout() {

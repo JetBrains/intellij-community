@@ -30,7 +30,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.JBComboBox;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.ui.PopupHandler;
 import com.sun.jdi.ObjectCollectedException;
 
@@ -59,7 +59,7 @@ public class FramesPanel extends UpdatableDebuggerView {
 
     setLayout(new BorderLayout());
 
-    myThreadsCombo = new JBComboBox();
+    myThreadsCombo = new ComboBoxWithWidePopup();
     myThreadsCombo.setRenderer(new DebuggerComboBoxRenderer());
     myThreadsListener = new ThreadsListener();
     myThreadsCombo.addItemListener(myThreadsListener);

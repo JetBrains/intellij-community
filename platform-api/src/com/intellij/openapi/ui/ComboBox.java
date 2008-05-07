@@ -36,7 +36,7 @@ import java.awt.event.KeyEvent;
  *
  * @author Vladimir Kondratyev
  */
-public class ComboBox extends JBComboBox {
+public class ComboBox extends ComboBoxWithWidePopup {
   private int myMinimumAndPreferredWidth;
 
   public ComboBox() {
