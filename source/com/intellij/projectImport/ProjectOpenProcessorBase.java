@@ -112,7 +112,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
                                                          projectFile.getName(),
                                                          projectFile.getParent(),
                                                          virtualFile.getName()),
-                                       CommonBundle.message("title.error"),
+                                       IdeBundle.message("title.open.project"),
                                        new String[] {"Re-import", "Open the existing", CommonBundle.message("button.cancel")},
                                        0,
                                        Messages.getQuestionIcon());
