@@ -131,7 +131,9 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   }
 
   public void onFacetSelected() {
-    onTabSelected(myEditorTabs[mySelectedTabIndex]);
+    if (mySelectedTabIndex < myEditorTabs.length) {
+      onTabSelected(myEditorTabs[mySelectedTabIndex]);
+    }
   }
 
   public FacetEditorTab[] getEditorTabs() {
