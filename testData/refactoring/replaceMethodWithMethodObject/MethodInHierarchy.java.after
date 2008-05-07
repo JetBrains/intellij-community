@@ -1,6 +1,6 @@
 class Test {
   void bar() {
-    new B<String>().new InnerClass("").foo();
+    new B<String>().foo("");
   }
 
   class A<T> {

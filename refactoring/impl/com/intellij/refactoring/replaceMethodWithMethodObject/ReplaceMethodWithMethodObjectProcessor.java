@@ -51,13 +51,15 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    PsiReference[] refs =
-        ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    for (PsiReference ref : refs) {
-      final PsiElement element = ref.getElement();
-      if (element != null && element.isValid()) {
-        result.add(new UsageInfo(element));
+    if (OverridingMethodsSearch.search(myMethod).findAll().isEmpty() && myMethod.findSuperMethods().length == 0) {
+      PsiReference[] refs =
+          ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
+      for (PsiReference ref : refs) {
+        final PsiElement element = ref.getElement();
+        if (element != null && element.isValid()) {
+          result.add(new UsageInfo(element));
+        }
       }
     }
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
@@ -108,8 +110,13 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
               return parameterName;
             }
           }, ", ");
+      @NonNls String statementText = "";
+      if (myMethod.getReturnType() != PsiType.VOID) {
+        statementText = "return ";
+      }
+      statementText += "new " + innerClass.getName() + "(" + parametersList + ")." + myMethod.getName() + "();";
       final PsiStatement innerClassMethodCallStatement = myElementFactory
-          .createStatementFromText("new " + innerClass.getName() + "(" + parametersList + ")." + myMethod.getName() + "();", null);
+          .createStatementFromText(statementText, null);
       block.add(innerClassMethodCallStatement);
       body.replace(block);
     } else {

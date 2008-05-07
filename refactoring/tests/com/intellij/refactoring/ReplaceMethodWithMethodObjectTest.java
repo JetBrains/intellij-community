@@ -57,4 +57,8 @@ public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
   public void testFieldUsage() throws Exception {
     doTest();
   }
+
+  public void testMethodInHierarchyReturn() throws Exception {
+    doTest();
+  }
 }
