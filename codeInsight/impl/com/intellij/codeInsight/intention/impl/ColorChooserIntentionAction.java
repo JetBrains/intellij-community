@@ -27,15 +27,16 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
     if (PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(PsiNewExpression.class)).accepts(element)) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false);
-      assert expression != null : element;
-      final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(expression, PsiJavaCodeReferenceElement.class);
-      if (referenceElement != null) {
-        final PsiReference reference = referenceElement.getReference();
-        if (reference != null) {
-          final PsiElement psiElement = reference.resolve();
-          if (psiElement instanceof PsiClass && "java.awt.Color".equals(((PsiClass)psiElement).getQualifiedName())) {
-            setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
-            return true;
+      if (expression != null) {
+        final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(expression, PsiJavaCodeReferenceElement.class);
+        if (referenceElement != null) {
+          final PsiReference reference = referenceElement.getReference();
+          if (reference != null) {
+            final PsiElement psiElement = reference.resolve();
+            if (psiElement instanceof PsiClass && "java.awt.Color".equals(((PsiClass)psiElement).getQualifiedName())) {
+              setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
+              return true;
+            }
           }
         }
       }
@@ -114,7 +115,7 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
       final PsiManager manager = expression.getManager();
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final PsiExpression newCall = factory.createExpressionFromText(
-        "new java.awt.Color(" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ")", expression);
+          "new java.awt.Color(" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ")", expression);
       final PsiElement insertedElement = expression.replace(newCall);
       final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
       codeStyleManager.reformat(insertedElement);
