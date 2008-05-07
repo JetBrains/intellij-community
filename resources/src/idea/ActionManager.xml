@@ -159,7 +159,6 @@
 
     <group id="JavaCompletion">
       <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
-      <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
       <add-to-group group-id="CodeCompletionGroup" anchor="after" relative-to-action="CodeCompletion"/>
     </group>
 

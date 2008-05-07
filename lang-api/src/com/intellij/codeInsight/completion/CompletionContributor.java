@@ -7,6 +7,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,10 +37,11 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
   /**
    *
    * @param parameters
+   * @param editor
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
   @Nullable
-  public String handleEmptyLookup(@NotNull CompletionParameters parameters) {
+  public String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
     return null;
   }
 

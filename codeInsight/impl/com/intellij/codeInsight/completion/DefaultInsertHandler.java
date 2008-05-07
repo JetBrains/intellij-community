@@ -696,8 +696,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
-    CharSequence chars = document.getCharsSequence();
-    int length = document.getTextLength();
     int newStartOffset = startOffset;
 
     final PsiReference reference = file.findReferenceAt(startOffset);
@@ -709,9 +707,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
 
-    final RangeMarker toDelete = insertSpace(endOffset, document);
     String name = aClass.getName();
     document.replaceString(startOffset, endOffset, name);
+    PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
+
+    final RangeMarker toDelete = insertSpace(endOffset, document);
     endOffset = startOffset + name.length();
 
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
@@ -721,24 +721,27 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified()){
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
-        final PsiElement pointerElement = pointer.getElement();
-        if(pointerElement instanceof PsiClass){
-          if (!(ref instanceof PsiImportStaticReferenceElement)) {
-            final String oldText = parent.getParent().getText();
-            final String oldText1 = parent.getText();
-            PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
-            newRef = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newRef);
-            LOG.assertTrue(newRef != null, oldText + "$$$" + oldText1);
-            final TextRange textRange = newRef.getTextRange();
-            endOffset = textRange.getEndOffset();
-            newStartOffset = textRange.getStartOffset();
-          }
-          else {
-            PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass) pointerElement);
-            statement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(statement);
-            final TextRange textRange = statement.getTextRange();
-            endOffset = textRange.getEndOffset();
-            newStartOffset = textRange.getStartOffset();
+
+        if (!aClass.getManager().areElementsEquivalent(aClass, resolveReference(ref))) {
+          final PsiElement pointerElement = pointer.getElement();
+          if (pointerElement instanceof PsiClass) {
+            if (!(ref instanceof PsiImportStaticReferenceElement)) {
+              final String oldText = parent.getParent().getText();
+              final String oldText1 = parent.getText();
+              PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
+              newRef = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newRef);
+              LOG.assertTrue(newRef != null, oldText + "$$$" + oldText1);
+              final TextRange textRange = newRef.getTextRange();
+              endOffset = textRange.getEndOffset();
+              newStartOffset = textRange.getStartOffset();
+            }
+            else {
+              PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement);
+              statement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(statement);
+              final TextRange textRange = statement.getTextRange();
+              endOffset = textRange.getEndOffset();
+              newStartOffset = textRange.getStartOffset();
+            }
           }
         }
       }
@@ -767,6 +770,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     toDelete.setGreedyToLeft(true);
     toDelete.setGreedyToRight(true);
     return toDelete;
+  }
+
+  static PsiElement resolveReference(final PsiReference psiReference) {
+    if (psiReference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(true);
+      if (results.length == 1) return results[0].getElement();
+    }
+    return psiReference.resolve();
   }
 
   public static class InsertHandlerState{

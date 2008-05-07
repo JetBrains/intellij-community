@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
@@ -16,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
@@ -140,12 +142,24 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public String handleEmptyLookup(@NotNull final CompletionParameters parameters) {
+  public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     final String ad = advertise(parameters);
     final String suffix = ad == null ? "" : "; " + StringUtil.decapitalize(ad);
     if (parameters.getCompletionType() == CompletionType.SMART) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+
+        final Project project = parameters.getPosition().getProject();
+        final PsiFile file = parameters.getOriginalFile();
+
+        PsiExpression expression = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
+        if (expression != null && expression.getParent() instanceof PsiExpressionList) {
+          int lbraceOffset = expression.getParent().getTextRange().getStartOffset();
+          new ShowParameterInfoHandler().invoke(project, editor, file, lbraceOffset, null);
+        }
+      }
+
       final ExpectedTypeInfo[] expectedTypes = JavaCompletionUtil.getExpectedTypes(parameters);
       if (expectedTypes != null) {
         PsiType type = expectedTypes.length == 1 ? expectedTypes[0].getType() : null;

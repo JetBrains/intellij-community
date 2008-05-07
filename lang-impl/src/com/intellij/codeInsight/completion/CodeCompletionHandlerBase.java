@@ -408,17 +408,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     });
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
-    final LookupData data = ApplicationManager.getApplication().runReadAction(new Computable<LookupData>() {
-      public LookupData compute() {
-        return createLookupData(context, items, insertedElement);
-      }
-    });
+    final LookupData data = new LookupData(items, context.getPrefix());
     data.itemPreferencePolicy = new CompletionPreferencePolicy(context.getPrefix(), parameters);
     return data;
-  }
-
-  protected LookupData createLookupData(final CompletionContext context, final LookupItem[] items, final PsiElement insertedElement) {
-    return new LookupData(items, context.getPrefix());
   }
 
   private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final String dummyIdentifier) {
@@ -494,7 +486,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     LOG.assertTrue(lookupData.items.length == 0);
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
-      final String text = contributor.handleEmptyLookup(parameters);
+      final String text = contributor.handleEmptyLookup(parameters, editor);
       if (StringUtil.isNotEmpty(text)) {
         HintManager.getInstance().showErrorHint(editor, text);
         for (final LightweightHint hint : HintManager.getInstance().getAllHints()) {

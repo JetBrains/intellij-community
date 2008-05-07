@@ -8,6 +8,7 @@ import com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction;
 import com.intellij.codeInsight.hint.actions.ShowImplementationsAction;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Calendar;
@@ -64,7 +65,7 @@ public class DefaultCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public String handleEmptyLookup(@NotNull final CompletionParameters parameters) {
+  public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     return LangBundle.message("completion.no.suggestions");
   }
 
