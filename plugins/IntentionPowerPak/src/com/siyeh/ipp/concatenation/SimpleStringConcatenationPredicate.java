@@ -20,7 +20,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class ReplaceConcatenationWithStringBufferPredicate
+class SimpleStringConcatenationPredicate
         implements PsiElementPredicate{
 
     public boolean satisfiedBy(PsiElement element){

@@ -30,7 +30,7 @@ public class ReplaceConcatenationWithFormatStringIntention
 
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
-        return new ReplaceConcatenationWithFormatStringPredicate();
+        return new SimpleStringConcatenationPredicate();
     }
 
     protected void processIntention(@NotNull PsiElement element)

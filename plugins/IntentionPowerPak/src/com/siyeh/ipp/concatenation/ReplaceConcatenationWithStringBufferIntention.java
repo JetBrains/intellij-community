@@ -30,7 +30,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention {
 
     @NotNull
     public PsiElementPredicate getElementPredicate() {
-        return new ReplaceConcatenationWithStringBufferPredicate();
+        return new SimpleStringConcatenationPredicate();
     }
 
     public void processIntention(@NotNull PsiElement element)
