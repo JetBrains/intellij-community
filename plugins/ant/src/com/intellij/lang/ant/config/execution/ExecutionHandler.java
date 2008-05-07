@@ -168,7 +168,7 @@ public final class ExecutionHandler {
             errorView.removeProgressPanel();
             ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
             if (toolWindow != null) { // can be null if project is closed
-              toolWindow.activate(null);
+              toolWindow.activate(null, false);
               long buildTime = new Date().getTime() - startTime;
               errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener);
             }
