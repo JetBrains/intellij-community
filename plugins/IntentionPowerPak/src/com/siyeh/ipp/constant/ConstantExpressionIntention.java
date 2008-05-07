@@ -48,6 +48,16 @@ public class ConstantExpressionIntention extends Intention {
                             '\'';
         } else if (value instanceof Long) {
             newExpression = value.toString() + 'L';
+        } else if (value instanceof Double) {
+          double v = ((Double)value).doubleValue();
+          if (Double.isNaN(v)) newExpression = "java.lang.Double.NaN";
+          else if (Double.isInfinite(v)) newExpression = v > 0 ? "java.lang.Double.POSITIVE_INFINITY" : "java.lang.Double.NEGATIVE_INFINITY";
+          else newExpression = Double.toString(v); 
+        } else if (value instanceof Float) {
+          float v = ((Float)value).floatValue();
+          if (Float.isNaN(v)) newExpression = "java.lang.Float.NaN";
+          else if (Float.isInfinite(v)) newExpression = v > 0 ? "java.lang.Float.POSITIVE_INFINITY" : "java.lang.Float.NEGATIVE_INFINITY";
+          else newExpression = Float.toString(v) + "f";
         } else if (value == null) {
             newExpression = "null";
         } else {
