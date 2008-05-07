@@ -920,18 +920,21 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     else if (VcsDataKeys.CHANGES.getName().equals(dataId)) {
       final VcsFileRevision[] revisions = getSelectedRevisions();
-      
-      Arrays.sort(revisions, new Comparator<VcsFileRevision>() {
-        public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
-          return o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
-        }
-      });
 
-      final ContentRevision startRevision = new LoadedContentRevision(myFilePath, revisions[0]);
-      final ContentRevision endRevision = (revisions.length == 1) ? new CurrentContentRevision(myFilePath) :
+      if (revisions.length > 0) {
+        Arrays.sort(revisions, new Comparator<VcsFileRevision>() {
+          public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
+            return o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
+          }
+        });
+
+        final ContentRevision startRevision = new LoadedContentRevision(myFilePath, revisions[0]);
+        final ContentRevision endRevision = (revisions.length == 1) ? new CurrentContentRevision(myFilePath) :
                                             new LoadedContentRevision(myFilePath, revisions[revisions.length - 1]);
 
-      return new Change[]{new Change(startRevision, endRevision)};
+        return new Change[]{new Change(startRevision, endRevision)};
+      }
+      return null;
     }
     else if (VcsDataConstants.VCS_VIRTUAL_FILE.equals(dataId)) {
       if (firstSelectedRevision == null) return null;
