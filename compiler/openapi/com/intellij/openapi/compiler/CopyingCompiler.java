@@ -23,8 +23,8 @@ import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -89,8 +89,8 @@ public abstract class CopyingCompiler implements PackagingCompiler{
     return true;
   }
 
-  public ValidityState createValidityState(DataInputStream is) throws IOException {
-    return new DestinationFileInfo(IOUtil.readString(is), true);
+  public ValidityState createValidityState(DataInput in) throws IOException {
+    return new DestinationFileInfo(IOUtil.readString(in), true);
   }
 
   private static class CopyItem implements FileProcessingCompiler.ProcessingItem {
@@ -139,8 +139,8 @@ public abstract class CopyingCompiler implements PackagingCompiler{
       return (myFileExists == destinationFileInfo.myFileExists) && (destinationPath.equals(destinationFileInfo.destinationPath));
     }
 
-    public void save(DataOutputStream os) throws IOException {
-      IOUtil.writeString(destinationPath, os);
+    public void save(DataOutput out) throws IOException {
+      IOUtil.writeString(destinationPath, out);
     }
 
     public String getDestinationPath() {

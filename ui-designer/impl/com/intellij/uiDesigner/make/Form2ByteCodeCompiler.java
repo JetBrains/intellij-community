@@ -12,13 +12,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.roots.ProjectClasspathTraversing;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -31,7 +31,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
+import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -161,7 +161,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
           }
         }
         finally {
-          bindingsCache.save();
+          bindingsCache.close();
         }
       }
     });
@@ -344,8 +344,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     }
   }
 
-  public ValidityState createValidityState(final DataInputStream is) throws IOException {
-    return TimestampValidityState.load(is);
+  public ValidityState createValidityState(final DataInput in) throws IOException {
+    return TimestampValidityState.load(in);
   }
 
   private static final class MyInstrumentationItem implements FileProcessingCompiler.ProcessingItem {

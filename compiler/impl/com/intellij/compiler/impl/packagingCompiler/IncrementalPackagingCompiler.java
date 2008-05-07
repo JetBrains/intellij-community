@@ -5,7 +5,6 @@
 package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.impl.TimestampCache;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
@@ -49,7 +48,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   private static final Key<List<ManifestFileInfo>> MANIFEST_FILES_KEY = Key.create("manifest_files");
   private static final Key<Map<ExplodedDestinationInfo, BuildParticipant>> DESTINATION_OWNERS_KEY = Key.create("exploded_destination_owners");
   private static final Key<Map<VirtualFile, PackagingProcessingItem>> ITEMS_BY_SOURCE_KEY = Key.create("items_by_source");
-  @Nullable private TimestampCache myOutputItemsCache;
+  @Nullable private PackagingCompilerCache myOutputItemsCache;
   private final Project myProject;
 
   public IncrementalPackagingCompiler(Project project) {
@@ -57,9 +56,9 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
   @NotNull
-  private TimestampCache getOutputItemsCache() {
+  private PackagingCompilerCache getOutputItemsCache() {
     if (myOutputItemsCache == null) {
-      myOutputItemsCache = new TimestampCache(CompilerPaths.getCompilerSystemDirectory(myProject).getPath(), INCREMENTAL_PACKAGING_CACHE_ID);
+      myOutputItemsCache = new PackagingCompilerCache(CompilerPaths.getCompilerSystemDirectory(myProject).getPath() + File.separator + INCREMENTAL_PACKAGING_CACHE_ID + "_timestamp.dat");
     }
     return myOutputItemsCache;
   }
@@ -368,7 +367,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
 
-  public ValidityState createValidityState(final DataInputStream is) throws IOException {
+  public ValidityState createValidityState(final DataInput is) throws IOException {
     return new PackagingItemValidityState(is);
   }
 

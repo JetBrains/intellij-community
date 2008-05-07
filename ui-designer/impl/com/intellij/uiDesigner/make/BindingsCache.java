@@ -7,9 +7,11 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.impl.StateCache;
 import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
@@ -18,22 +20,44 @@ import org.jetbrains.annotations.NonNls;
 import java.io.*;
 
 final class BindingsCache {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.BindingsCache");
   @NonNls
   private static final String BINDINGS_FILE_NAME = "formbinding.dat";
-  private final StateCache<MyState> myCache;
+  private StateCache<MyState> myCache;
 
   public BindingsCache(final Project project) {
     final File cacheStoreDirectory = CompilerPaths.getCacheStoreDirectory(project);
-    myCache = cacheStoreDirectory != null ? new StateCache<MyState>(cacheStoreDirectory + File.separator + BINDINGS_FILE_NAME) {
-      public MyState read(final DataInputStream stream) throws IOException {
+    try {
+      myCache = cacheStoreDirectory != null ? createCache(cacheStoreDirectory) : null;
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      for (File file : cacheStoreDirectory.listFiles()) {
+        if (file.getName().startsWith(BINDINGS_FILE_NAME)) {
+          FileUtil.delete(file);
+        }
+      }
+      try {
+        myCache = createCache(cacheStoreDirectory);
+      }
+      catch (IOException e1) {
+        LOG.info(e1);
+        myCache = null;
+      }
+    }
+  }
+
+  private static StateCache<MyState> createCache(final File cacheStoreDirectory) throws IOException {
+    return new StateCache<MyState>(new File(cacheStoreDirectory, BINDINGS_FILE_NAME)) {
+      public MyState read(final DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stream.readUTF());
       }
 
-      public void write(final MyState myState, final DataOutputStream stream) throws IOException {
-        stream.writeLong(myState.getFormTimeStamp());
-        stream.writeUTF(myState.getClassName());
+      public void write(final MyState myState, final DataOutput out) throws IOException {
+        out.writeLong(myState.getFormTimeStamp());
+        out.writeUTF(myState.getClassName());
       }
-    } : null;
+    };
   }
 
   public String getBoundClassName(final VirtualFile formFile) throws Exception {
@@ -49,20 +73,19 @@ final class BindingsCache {
     return classToBind;
   }
 
-  public void save() {
-    if (myCache != null) {
-      myCache.save();
-    }
-  }
-
   private String getSavedBinding(final VirtualFile formFile) {
     if (myCache != null) {
-      final String formUrl = formFile.getUrl();
-      final MyState state = myCache.getState(formUrl);
-      if (state != null) {
-        if (formFile.getTimeStamp() == state.getFormTimeStamp()) {
-          return state.getClassName();
+      try {
+        final String formUrl = formFile.getUrl();
+        final MyState state = myCache.getState(formUrl);
+        if (state != null) {
+          if (formFile.getTimeStamp() == state.getFormTimeStamp()) {
+            return state.getClassName();
+          }
         }
+      }
+      catch (IOException e) {
+        myCache.wipe();
       }
     }
     return null;
@@ -70,7 +93,29 @@ final class BindingsCache {
     
   private void updateCache(final VirtualFile formFile, final String classToBind) {
     if (myCache != null) {
-      myCache.update(formFile.getUrl(), new MyState(formFile.getTimeStamp(), classToBind));
+      final String url = formFile.getUrl();
+      final MyState state = new MyState(formFile.getTimeStamp(), classToBind);
+      try {
+        myCache.update(url, state);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        myCache.wipe();
+        try {
+          myCache.update(url, state);
+        }
+        catch (IOException ignored) {
+        }
+      }
+    }
+  }
+
+  public void close() {
+    try {
+      myCache.close();
+    }
+    catch (IOException e) {
+      LOG.info(e);
     }
   }
 

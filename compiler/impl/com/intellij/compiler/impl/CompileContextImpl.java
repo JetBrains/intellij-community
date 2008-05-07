@@ -30,6 +30,7 @@ import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -196,19 +197,24 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       return null;
     }
     TranslatingCompiler[] compilers = CompilerManager.getInstance(myProject).getCompilers(TranslatingCompiler.class);
-    for (TranslatingCompiler compiler : compilers) {
-      final TranslatingCompilerStateCache translatingCompilerCache = myCompileDriver.getTranslatingCompilerCache(compiler);
-      if (translatingCompilerCache == null) {
-        continue;
+    try {
+      for (TranslatingCompiler compiler : compilers) {
+        final TranslatingCompilerStateCache translatingCompilerCache = myCompileDriver.getTranslatingCompilerCache(compiler);
+        if (translatingCompilerCache == null) {
+          continue;
+        }
+        final String sourceUrl = translatingCompilerCache.getSourceUrl(outputFile.getPath());
+        if (sourceUrl == null) {
+          continue;
+        }
+        final VirtualFile sourceFile = VirtualFileManager.getInstance().findFileByUrl(sourceUrl);
+        if (sourceFile != null) {
+          return sourceFile;
+        }
       }
-      final String sourceUrl = translatingCompilerCache.getSourceUrl(outputFile.getPath());
-      if (sourceUrl == null) {
-        continue;
-      }
-      final VirtualFile sourceFile = VirtualFileManager.getInstance().findFileByUrl(sourceUrl);
-      if (sourceFile != null) {
-        return sourceFile;
-      }
+    }
+    catch (IOException ignored) {
+      LOG.info(ignored);
     }
     return null;
   }

@@ -11,8 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.IOUtil;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class PackagingItemValidityState implements ValidityState {
     }
   }
 
-  public PackagingItemValidityState(DataInputStream input) throws IOException {
+  public PackagingItemValidityState(DataInput input) throws IOException {
     int size = input.readInt();
     myDestinations = new SmartList<Pair<String, Long>>();
     while (size-- > 0) {
@@ -59,7 +59,7 @@ public class PackagingItemValidityState implements ValidityState {
   }
 
 
-  public void save(final DataOutputStream output) throws IOException {
+  public void save(final DataOutput output) throws IOException {
     output.writeInt(myDestinations.size());
     for (Pair<String, Long> pair : myDestinations) {
       IOUtil.writeString(pair.getFirst(), output);

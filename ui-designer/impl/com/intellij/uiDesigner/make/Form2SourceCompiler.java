@@ -18,7 +18,7 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
+import java.io.DataInput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -121,7 +121,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           }
         }
         finally {
-          bindingsCache.save();
+          bindingsCache.close();
         }
       }
     });
@@ -216,8 +216,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     }
   }
 
-  public ValidityState createValidityState(final DataInputStream is) throws IOException {
-    return TimestampValidityState.load(is);
+  public ValidityState createValidityState(final DataInput in) throws IOException {
+    return TimestampValidityState.load(in);
   }
 
   private static final class MyInstrumentationItem implements ProcessingItem {

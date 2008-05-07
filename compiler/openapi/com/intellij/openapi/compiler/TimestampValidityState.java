@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.compiler;
 
-import java.io.DataOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.DataInputStream;
 
 /**
  * A simple implementation of ValidityState that is enough for most cases.
@@ -45,11 +45,11 @@ public final class TimestampValidityState implements ValidityState {
   /**
    * Saves the validity state to the specified stream.
    *
-   * @param os the stream to save the validity state to.
+   * @param out
    * @throws IOException if the stream write fails.
    */
-  public void save(DataOutputStream os) throws IOException {
-    os.writeLong(myTimestamp);
+  public void save(DataOutput out) throws IOException {
+    out.writeLong(myTimestamp);
   }
 
   /**
@@ -59,7 +59,7 @@ public final class TimestampValidityState implements ValidityState {
    * @throws IOException if the stream read fails.
    * @since 5.0.2
    */
-  public static TimestampValidityState load(DataInputStream is) throws IOException {
+  public static TimestampValidityState load(DataInput is) throws IOException {
     return new TimestampValidityState(is.readLong());
   }
 }

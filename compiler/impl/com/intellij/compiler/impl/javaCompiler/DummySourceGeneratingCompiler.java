@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
+import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -91,7 +91,7 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
     return findMyModule() != null;
   }
 
-  public ValidityState createValidityState(DataInputStream is) throws IOException {
+  public ValidityState createValidityState(DataInput in) throws IOException {
     return null;
   }
 

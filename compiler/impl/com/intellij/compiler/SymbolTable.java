@@ -26,6 +26,10 @@ public class SymbolTable {
 
   public SymbolTable(File file) throws CacheCorruptedException {
     try {
+      if (!file.exists()) {
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+      }
       myTrie = new PersistentStringEnumerator(file);
     }
     catch (PersistentStringEnumerator.CorruptedException e) {

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
-import java.io.DataOutputStream;
+import java.io.DataOutput;
 import java.io.IOException;
 
 /**
@@ -33,9 +33,9 @@ public interface ValidityState {
   /**
    * Invoked by make subsystem in order to store the state.
    *
-   * @param os the stream in which the state should be stored.
+   * @param out the output to which the state should be stored.
    * @throws IOException if the save operation failed because of an I/O error.
    * @see TimestampValidityState#load(java.io.DataInputStream)
    */
-  void save(DataOutputStream os) throws IOException;
+  void save(DataOutput out) throws IOException;
 }

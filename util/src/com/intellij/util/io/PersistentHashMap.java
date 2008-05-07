@@ -103,17 +103,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   private static File checkDataFile(final File file) {
-    final File dataFile = getDataFile(file);
     if (!file.exists()) {
+      final File dataFile = getDataFile(file);
+      final String baseName = dataFile.getName();
       final File[] files = dataFile.getParentFile().listFiles(new FileFilter() {
         public boolean accept(final File pathname) {
-          return pathname.getName().startsWith(dataFile.getName());
+          return pathname.getName().startsWith(baseName);
         }
       });
-      for (File f : files) {
-        FileUtil.delete(f);
+      if (files != null) {
+        for (File f : files) {
+          FileUtil.delete(f);
+        }
       }
-      
     }
     return file;
   }

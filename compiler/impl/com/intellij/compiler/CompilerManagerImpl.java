@@ -8,6 +8,7 @@ import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingCompiler;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -21,12 +22,13 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class CompilerManagerImpl extends CompilerManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerManagerImpl");
   private final Project myProject;
 
   private List<Compiler> myCompilers = new ArrayList<Compiler>();
@@ -271,13 +273,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public OutputToSourceMapping getJavaCompilerOutputMapping() {
-    final String cachesDir = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
-    final JavaCompiler[] javaCompilers = getCompilers(JavaCompiler.class);
-    final TranslatingCompilerStateCache[] caches = new TranslatingCompilerStateCache[javaCompilers.length];
-    for (int idx = 0; idx < javaCompilers.length; idx++) {
-      caches[idx] = new TranslatingCompilerStateCache(cachesDir, CompileDriver.getCompilerIdString(javaCompilers[idx]));
-    }
-    return new OutputToSourceMappingImpl(caches);
+    return new OutputToSourceMappingImpl(getCompilers(JavaCompiler.class));
   }
 
   public CompileScope createFilesCompileScope(final VirtualFile[] files) {
@@ -344,18 +340,23 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
-  private static class OutputToSourceMappingImpl implements OutputToSourceMapping {
-    private final TranslatingCompilerStateCache[] myCaches;
+  private class OutputToSourceMappingImpl implements OutputToSourceMapping {
+    private final TranslatingCompiler[] myCompilers;
 
-    public OutputToSourceMappingImpl(final TranslatingCompilerStateCache[] caches) {
-      myCaches = caches;
+    public OutputToSourceMappingImpl(final TranslatingCompiler[] compilers) {
+      myCompilers = compilers;
     }
 
     public String getSourcePath(final String outputPath) {
-      for (TranslatingCompilerStateCache cache : myCaches) {
-        final String sourceUrl = cache.getSourceUrl(outputPath);
-        if (sourceUrl != null) {
-          return VirtualFileManager.extractPath(sourceUrl);
+      for (TranslatingCompiler compiler : myCompilers) {
+        try {
+          final String sourceUrl = CompilerCacheManager.getInstance(myProject).getTranslatingCompilerCache(compiler).getSourceUrl(outputPath);
+          if (sourceUrl != null) {
+            return VirtualFileManager.extractPath(sourceUrl);
+          }
+        }
+        catch (IOException ignored) {
+          LOG.info(ignored);
         }
       }
       return null;

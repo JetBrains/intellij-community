@@ -66,7 +66,7 @@ public class CompilerPaths {
    */
   public static File getCacheStoreDirectory(final Project project) {
     //noinspection HardCodedStringLiteral
-    final File cacheStoreDirectory = new File(getCompilerSystemDirectory(project), ".dependency-info");
+    final File cacheStoreDirectory = new File(getCompilerSystemDirectory(project), ".caches");
     cacheStoreDirectory.mkdirs();
     return cacheStoreDirectory;
   }

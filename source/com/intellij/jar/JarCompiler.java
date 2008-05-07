@@ -8,8 +8,8 @@ import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,8 +27,8 @@ import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -55,8 +55,8 @@ public class JarCompiler implements PackagingCompiler {
     }
   }
 
-  public ValidityState createValidityState(DataInputStream is) throws IOException {
-    return new MyValState(is);
+  public ValidityState createValidityState(DataInput in) throws IOException {
+    return new MyValState(in);
   }
 
   static class MyValState implements ValidityState {
@@ -114,7 +114,7 @@ public class JarCompiler implements PackagingCompiler {
       }
     }
 
-    public MyValState(final DataInputStream is) throws IOException {
+    public MyValState(final DataInput is) throws IOException {
       myModuleName = IOUtil.readString(is);
       int size = is.readInt();
       sourceUrls = new String[size];
@@ -129,18 +129,18 @@ public class JarCompiler implements PackagingCompiler {
       outputJarTimestamp = is.readLong();
     }
 
-    public void save(DataOutputStream os) throws IOException {
-      IOUtil.writeString(myModuleName,os);
+    public void save(DataOutput out) throws IOException {
+      IOUtil.writeString(myModuleName, out);
       int size = sourceUrls.length;
-      os.writeInt(size);
+      out.writeInt(size);
       for (int i=0;i<size;i++) {
         String url = sourceUrls[i];
         long timestamp = timestamps[i];
-        IOUtil.writeString(url, os);
-        os.writeLong(timestamp);
+        IOUtil.writeString(url, out);
+        out.writeLong(timestamp);
       }
-      IOUtil.writeString(outputJarUrl, os);
-      os.writeLong(outputJarTimestamp);
+      IOUtil.writeString(outputJarUrl, out);
+      out.writeLong(outputJarTimestamp);
     }
 
     public String getOutputJarUrl() {

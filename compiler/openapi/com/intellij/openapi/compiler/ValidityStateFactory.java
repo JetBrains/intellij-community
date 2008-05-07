@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.compiler;
 
-import java.io.DataInputStream;
+import java.io.DataInput;
 import java.io.IOException;
+
 /**
  * A factory for creating {@link ValidityState} objects.
  */
@@ -24,6 +25,7 @@ public interface ValidityStateFactory {
   /**
    * Used for deserialization of ValidityState objects from compiler internal caches.
    * @see ValidityState
+   * @param in
    */ 
-  ValidityState createValidityState(DataInputStream is) throws IOException;
+  ValidityState createValidityState(DataInput in) throws IOException;
 }

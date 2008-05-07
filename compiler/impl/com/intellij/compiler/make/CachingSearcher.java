@@ -1,14 +1,14 @@
 package com.intellij.compiler.make;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.SoftHashMap;
 
 import java.util.Collection;
 import java.util.Map;
@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public class CachingSearcher {
   private final Project myProject;
-  private final Map<Pair<PsiElement, Boolean>, Collection<PsiReference>> myElementToReferencersMap = new HashMap<Pair<PsiElement, Boolean>, Collection<PsiReference>>();
+  private final Map<Pair<PsiElement, Boolean>, Collection<PsiReference>> myElementToReferencersMap = new SoftHashMap<Pair<PsiElement, Boolean>, Collection<PsiReference>>();
 
   public CachingSearcher(Project project) {
     myProject = project;

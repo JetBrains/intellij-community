@@ -7,67 +7,27 @@ package com.intellij.compiler.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 
 public class TimestampCache extends StateCache <Long> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TimestampCache");
-  public TimestampCache(String storeDirectory, String idPrefix) {
-    super(storeDirectory + File.separator + idPrefix + "_timestamp.dat");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TsCache");
+  public TimestampCache(File storeDirectory) throws IOException {
+    super(new File(storeDirectory, "timestamps"));
   }
 
-  public void update(String url, Long state) {
+  public void update(String url, Long state) throws IOException {
     LOG.assertTrue(state != null);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TimestampCache.update: " + url + "; " + state);
-    }
     super.update(url, state);
   }
 
-  public Long read(DataInputStream stream) throws IOException {
-    return new Long(stream.readLong());
+  public Long read(DataInput stream) throws IOException {
+    return stream.readLong();
   }
 
-  public void write(Long aLong, DataOutputStream stream) throws IOException {
-    stream.writeLong(aLong.longValue());
+  public void write(Long aLong, DataOutput out) throws IOException {
+    out.writeLong(aLong.longValue());
   }
-
-  protected boolean load() {
-    final boolean notInitialized = (myMap == null);
-    if (LOG.isDebugEnabled() && notInitialized) {
-      LOG.debug("TimestampCache.load");
-    }
-    try {
-      return super.load();
-    }
-    finally {
-      if (LOG.isDebugEnabled() && notInitialized) {
-        LOG.debug("TimestampCache.loaded: " + (myMap != null? myMap.size() + " items" : "empty map"));
-      }
-    }
-  }
-
-  public void save() {
-    if (LOG.isDebugEnabled() && myMap != null) {
-      LOG.debug("TimestampCache.save");
-    }
-    super.save();
-  }
-
-  public boolean wipe() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TimestampCache.wipe");
-    }
-    return super.wipe();
-  }
-
-  public void remove(final String url) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TimestampCache.remove: " + url);
-    }
-    super.remove(url);
-  }
-
 }

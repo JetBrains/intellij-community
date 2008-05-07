@@ -12,28 +12,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Collection;
 
 public class FileProcessingCompilerStateCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.FileProcessingCompilerStateCache");
   private final StateCache<MyState> myCache;
 
-  public FileProcessingCompilerStateCache(String storeDirectory, String idPrefix, final ValidityStateFactory stateFactory) {
-    myCache = new StateCache<MyState>(storeDirectory + File.separator + idPrefix + "_timestamp.dat") {
-      public MyState read(DataInputStream stream) throws IOException {
+  public FileProcessingCompilerStateCache(File storeDirectory, final ValidityStateFactory stateFactory) throws IOException {
+    myCache = new StateCache<MyState>(new File(storeDirectory, "timestamps")) {
+      public MyState read(DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stateFactory.createValidityState(stream));
       }
 
-      public void write(MyState state, DataOutputStream stream) throws IOException {
-        stream.writeLong(state.getTimestamp());
+      public void write(MyState state, DataOutput out) throws IOException {
+        out.writeLong(state.getTimestamp());
         final ValidityState extState = state.getExtState();
         if (extState != null) {
-          extState.save(stream);
+          extState.save(out);
         }
       }
     };
   }
 
-  public void update(VirtualFile sourceFile, ValidityState extState) {
+  public void update(VirtualFile sourceFile, ValidityState extState) throws IOException {
     if (!sourceFile.isValid()) {
       LOG.error("Source file must be valid " + sourceFile.getPresentableUrl() +
                 ", state.getClass() = " + (extState != null ? extState.getClass().getName() : "null"));
@@ -41,11 +42,11 @@ public class FileProcessingCompilerStateCache {
     myCache.update(sourceFile.getUrl(), new MyState(sourceFile.getTimeStamp(), extState));
   }
 
-  public void remove(String url) {
+  public void remove(String url) throws IOException {
     myCache.remove(url);
   }
 
-  public long getTimestamp(String url) {
+  public long getTimestamp(String url) throws IOException {
     final Serializable savedState = myCache.getState(url);
     if (savedState != null) {
       LOG.assertTrue(savedState instanceof MyState);
@@ -54,16 +55,16 @@ public class FileProcessingCompilerStateCache {
     return (state != null)? state.getTimestamp() : -1L;
   }
 
-  public ValidityState getExtState(String url) {
+  public ValidityState getExtState(String url) throws IOException {
     MyState state = myCache.getState(url);
     return (state != null)? state.getExtState() : null;
   }
 
-  public void save() {
-    myCache.save();
+  public void force() {
+    myCache.force();
   }
 
-  public String[] getUrls() {
+  public Collection<String> getUrls() throws IOException {
     return myCache.getUrls();
   }
 
@@ -71,8 +72,13 @@ public class FileProcessingCompilerStateCache {
     return myCache.wipe();
   }
 
-  public boolean isDirty() {
-    return myCache.isDirty();
+  public void close() {
+    try {
+      myCache.close();
+    }
+    catch (IOException ignored) {
+      LOG.info(ignored);
+    }
   }
 
   private static class MyState implements Serializable {

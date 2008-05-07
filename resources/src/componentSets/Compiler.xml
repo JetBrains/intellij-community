@@ -27,7 +27,7 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.compiler.SymbolTableProvider</implementation-class>
+      <implementation-class>com.intellij.compiler.impl.CompilerCacheManager</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>

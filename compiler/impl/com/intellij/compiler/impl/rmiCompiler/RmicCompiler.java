@@ -30,8 +30,8 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -354,8 +354,8 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   */
 
 
-  public ValidityState createValidityState(DataInputStream is) throws IOException {
-    return new RemoteClassValidityState(is.readLong(), is.readLong(), is.readLong(), is.readLong());
+  public ValidityState createValidityState(DataInput in) throws IOException {
+    return new RemoteClassValidityState(in.readLong(), in.readLong(), in.readLong(), in.readLong());
   }
 
   private static String getCompilationClasspath(Module module) {
@@ -414,11 +414,11 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
       return false;
     }
 
-    public void save(DataOutputStream os) throws IOException {
-      os.writeLong(myRemoteClassTimestamp);
-      os.writeLong(myStubTimestamp);
-      os.writeLong(mySkelTimestamp);
-      os.writeLong(myTieTimestamp);
+    public void save(DataOutput out) throws IOException {
+      out.writeLong(myRemoteClassTimestamp);
+      out.writeLong(myStubTimestamp);
+      out.writeLong(mySkelTimestamp);
+      out.writeLong(myTieTimestamp);
     }
   }
   private static final class RmicProcessingItem implements ProcessingItem {
