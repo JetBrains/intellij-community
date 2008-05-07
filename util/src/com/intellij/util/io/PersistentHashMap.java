@@ -223,8 +223,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   public synchronized void close() throws IOException {
     myAppendCache.clear();
-    super.close();
-    myValueStorage.dispose();
+    try {
+      super.close();
+    }
+    finally {
+      myValueStorage.dispose();
+    }
   }
   
   // made public for tests
