@@ -535,10 +535,10 @@ public class ClsStubBuilder {
     if (value instanceof Double) {
       final double d = ((Double)value).doubleValue();
       if (Double.isInfinite(d)) {
-        return d > 0 ? "Double.POSITIVE_INFINITY" : "Double.NEGATIVE_INFINITY";
+        return d > 0 ? "1.0 / 0.0" : "-1.0 / 0.0";
       }
       else if (Double.isNaN(d)) {
-        return "Double.NaN";
+        return "0.0d / 0.0";
       }
       return Double.toString(d);
     }
@@ -547,10 +547,10 @@ public class ClsStubBuilder {
       final float v = ((Float)value).floatValue();
 
       if (Float.isInfinite(v)) {
-        return v > 0 ? "Float.POSITIVE_INFINITY" : "Float.NEGATIVE_INFINITY";
+        return v > 0 ? "1.0f / 0.0" : "-1.0f / 0.0";
       }
       else if (Float.isNaN(v)) {
-        return "Float.NaN";
+        return "0.0f / 0.0";
       }
       else {
         return Float.toString(v) + "f";
