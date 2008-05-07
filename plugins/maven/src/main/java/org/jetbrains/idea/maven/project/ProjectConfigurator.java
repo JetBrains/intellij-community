@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
+import java.io.IOException;
 
 
 public class ProjectConfigurator {
@@ -110,11 +113,25 @@ public class ProjectConfigurator {
 
     Module module = myMapping.getModule(node);
     if (module == null) {
-      module = myModuleModel.newModule(myMapping.getModuleFilePath(node), StdModuleTypes.JAVA);
+      String path = myMapping.getModuleFilePath(node);
+      // for some reason newModule opens the existing iml file, so we
+      // have to remove it beforehand. 
+      removeExistingIml(path);
+      module = myModuleModel.newModule(path, StdModuleTypes.JAVA);
     }
 
     new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject).config();
     return module;
+  }
+
+  private void removeExistingIml(String path)  {
+    VirtualFile existingFile = LocalFileSystem.getInstance().findFileByPath(path);
+    if (existingFile == null) return;
+    try {
+      existingFile.delete(this);
+    }
+    catch (IOException ignore) {
+    }
   }
 
   private void configModuleGroups() {
