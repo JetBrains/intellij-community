@@ -1,6 +1,6 @@
 class Test {
      void bar() {
-       String str = InnerClass.<String>foo();
+       String str = InnerClass.foo();
      }
 
     static class InnerClass {

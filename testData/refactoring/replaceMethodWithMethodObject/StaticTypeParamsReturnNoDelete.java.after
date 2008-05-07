@@ -1,0 +1,15 @@
+class Test {
+    static <T> T foo() {
+        return InnerClass.foo();
+    }
+
+    void bar() {
+       foo();
+    }
+
+    static class InnerClass {
+        static <T> T foo() {
+            return null;
+        }
+    }
+}

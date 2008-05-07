@@ -75,30 +75,30 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
 
       final PsiModifierList classModifierList = innerClass.getModifierList();
       LOG.assertTrue(classModifierList != null);
-      final boolean isStatic = classModifierList.hasModifierProperty(PsiModifier.STATIC);
+
       @NonNls String staticqualifier = null;
-      if (isStatic) {
+      if (classModifierList.hasModifierProperty(PsiModifier.STATIC)) {
         final int packageNameLength = ((PsiClassOwner)innerClass.getContainingFile()).getPackageName().length();
         final String innerClassName = innerClass.getQualifiedName();
         LOG.assertTrue(innerClassName != null);
         staticqualifier = packageNameLength > 0 ? innerClassName.substring(packageNameLength + 1) : innerClassName;
       }
 
+      final String innerClassName = innerClass.getName();
       for (UsageInfo usage : usages) {
         final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(usage.getElement(), PsiMethodCallExpression.class);
         if (methodCallExpression != null) {
-          replaceMethodCallExpression(innerClass, isStatic, staticqualifier, methodCallExpression);
+          replaceMethodCallExpression(innerClassName, staticqualifier, inferTypeArguments(methodCallExpression), methodCallExpression);
         }
       }
-
-      processMethodDeclaration(innerClass);
+      processMethodDeclaration(innerClassName, staticqualifier);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
 
-  private void processMethodDeclaration(final PsiClass innerClass) throws IncorrectOperationException {
+  private void processMethodDeclaration(final String innerClass, final String staticqualifier) throws IncorrectOperationException {
     if (myDeleteOriginalMethod) {
       myMethod.delete();
     }
@@ -114,36 +114,44 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
               return parameterName;
             }
           }, ", ");
-      @NonNls String statementText = "";
-      if (myMethod.getReturnType() != PsiType.VOID) {
-        statementText = "return ";
-      }
-      statementText += "new " + innerClass.getName() + "(" + parametersList + ")." + myMethod.getName() + "();";
+      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)myElementFactory.createExpressionFromText(myMethod.getName() + "(" + parametersList + ")", null);
+      final String typeArguments = myMethod.getTypeParameters().length > 0 ?
+                                   "<" + StringUtil.join(Arrays.asList(myMethod.getTypeParameters()),
+                                                         new Function<PsiTypeParameter, String>() {
+                                                           public String fun(final PsiTypeParameter typeParameter) {
+                                                             final String typeParameterName =
+                                                                 typeParameter.getName();
+                                                             LOG.assertTrue(typeParameterName != null);
+                                                             return typeParameterName;
+                                                           }
+                                                         }, ", ") + ">"
+                                   : "";
+      methodCallExpression = replaceMethodCallExpression(innerClass, staticqualifier, typeArguments, methodCallExpression);
       final PsiStatement innerClassMethodCallStatement = myElementFactory
-          .createStatementFromText(statementText, null);
+          .createStatementFromText((myMethod.getReturnType() == PsiType.VOID ? "" : "return ") + methodCallExpression.getText() + ";", null);
       block.add(innerClassMethodCallStatement);
       body.replace(block);
     }
   }
 
-  private void replaceMethodCallExpression(final PsiClass innerClass,
-                                           final boolean isStatic,
-                                           final String staticqualifier,
-                                           final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  private PsiMethodCallExpression replaceMethodCallExpression(final String innerClassName,
+                                                              final String staticqualifier,
+                                                              final String inferredTypeArguments,
+                                                              final PsiMethodCallExpression methodCallExpression)
+      throws IncorrectOperationException {
     @NonNls String newReplacement;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    final String inferredTypeArguments = inferTypeArguments(methodCallExpression);
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-    if (isStatic) {
+    if (staticqualifier != null) {
       newReplacement = argumentList.getExpressions().length > 0
                        ? "new " + staticqualifier + inferredTypeArguments + argumentList.getText() + "."
-                       : staticqualifier + "." + inferredTypeArguments;
+                       : staticqualifier + ".";
     } else {
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       final String qualifier = qualifierExpression != null ? qualifierExpression.getText() + "." : "";
-      newReplacement = qualifier + "new " + innerClass.getName() + inferredTypeArguments + argumentList.getText()+ ".";
+      newReplacement = qualifier + "new " + innerClassName + inferredTypeArguments + argumentList.getText()+ ".";
     }
-    methodCallExpression.replace(myElementFactory.createExpressionFromText(newReplacement + myMethod.getName() + "()", null));
+    return (PsiMethodCallExpression)methodCallExpression.replace(myElementFactory.createExpressionFromText(newReplacement + myMethod.getName() + "()", null));
   }
 
   @NotNull

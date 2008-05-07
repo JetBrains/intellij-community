@@ -6,6 +6,7 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -14,12 +15,20 @@ import com.intellij.refactoring.replaceMethodWithMethodObject.ReplaceMethodWithM
 public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
 
   private void doTest() throws Exception {
+    doTest(new Condition<PsiMethod>() {
+      public boolean value(final PsiMethod method) {
+        return OverridingMethodsSearch.search(method).findAll().isEmpty() && method.findSuperMethods().length == 0;
+      }
+    });
+  }
+
+  private void doTest(final Condition<PsiMethod> deleteOriginalMethod) throws Exception {
     final String testName = getTestName(true);
     configureByFile("/refactoring/replaceMethodWithMethodObject/" + testName + ".java");
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
-    new ReplaceMethodWithMethodObjectProcessor(method, "InnerClass", OverridingMethodsSearch.search(method).findAll().isEmpty() && method.findSuperMethods().length == 0).run();
+    new ReplaceMethodWithMethodObjectProcessor(method, "InnerClass", deleteOriginalMethod.value(method)).run();
     checkResultByFile("/refactoring/replaceMethodWithMethodObject/" + testName + ".java" + ".after");
   }
 
@@ -61,5 +70,9 @@ public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
 
   public void testMethodInHierarchyReturn() throws Exception {
     doTest();
+  }
+
+  public void testStaticTypeParamsReturnNoDelete() throws Exception {
+    doTest(Condition.FALSE);
   }
 }
