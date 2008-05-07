@@ -21,6 +21,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   private IdeaGateway myGateway;
   private LocalHistoryFacade myFacade;
 
+  private boolean isFirstTimeRefresh = true;
   private boolean isRefreshing;
   private CacheUpdaterProcessor myProcessor;
 
@@ -36,8 +37,16 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
+    if (checkFirstTimeRefresh() && !isRefreshing) return;
+    
     isRefreshing = false;
     myFacade.finishRefreshing();
+  }
+
+  private boolean checkFirstTimeRefresh() {
+    if (!isFirstTimeRefresh) return false;
+    isFirstTimeRefresh = false;
+    return true;
   }
 
   public VirtualFile[] queryNeededFiles() {

@@ -87,7 +87,7 @@ public class LocalHistoryFacade {
     for (String s : Reversed.list(myLog)) {
       log += s + "\n";
     }
-    throw new RuntimeException(log);
+    throw new AssertionError(log);
   }
 
   public void create(VirtualFile f) {

@@ -79,10 +79,10 @@ public class EventDispatcherCommandProcessingTest extends EventDispatcherTestCas
 
     d.commandStarted(e);
     fireCreated(new TestVirtualFile("root/one", null, -1));
-    d.beforeRefreshStart(false);
+    fireRefreshStarted();
     fireCreated(new TestVirtualFile("root/two", null, -1));
     fireCreated(new TestVirtualFile("root/three", null, -1));
-    d.afterRefreshFinish(false);
+    fireRefreshFinished();
     fireCreated(new TestVirtualFile("root/four", null, -1));
     d.commandFinished(e);
 

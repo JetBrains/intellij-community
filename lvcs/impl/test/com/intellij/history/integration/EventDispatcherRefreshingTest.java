@@ -1,5 +1,6 @@
 package com.intellij.history.integration;
 
+import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.openapi.command.CommandEvent;
 import org.junit.Ignore;
@@ -15,7 +16,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     fireRefreshStarted();
     fireCreated(new TestVirtualFile("root/one", null, -1));
     fireCreated(new TestVirtualFile("root/two", null, -1));
-    fireRefreshFinished();
+    updateAndFireRefreshFinished();
 
     assertEquals(2, vcs.getRevisionsFor("root").size());
   }
@@ -25,7 +26,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     vcs.createDirectory("root");
 
     fireRefreshStarted();
-    fireRefreshFinished();
+    updateAndFireRefreshFinished();
     fireCreated(new TestVirtualFile("root/one", null, -1));
     fireCreated(new TestVirtualFile("root/two", null, -1));
 
@@ -38,14 +39,14 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
 
     fireRefreshStarted();
     fireCreated(new TestVirtualFile("root/f", null, -1));
-    fireRefreshFinished();
+    updateAndFireRefreshFinished();
 
     Revision r = vcs.getRevisionsFor("root").get(0);
     assertEquals("External change", r.getCauseChangeName());
   }
 
   @Test
-  @Ignore("its good idea to make it work")
+  @Ignore("it's a good idea to make it work")
   public void testStartingRefreshingTwiceThrowsException() {
     fireRefreshStarted();
     try {
@@ -57,10 +58,10 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   }
 
   @Test
-  @Ignore("its good idea to make it work")
+  @Ignore("it's a good idea to make it work")
   public void testFinishingRefreshingBeforeStartingItThrowsException() {
     try {
-      fireRefreshFinished();
+      updateAndFireRefreshFinished();
       fail();
     }
     catch (IllegalStateException e) {
@@ -79,7 +80,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     fireCreated(new TestVirtualFile("root/three", null, -1));
     d.commandFinished(e);
     fireCreated(new TestVirtualFile("root/four", null, -1));
-    fireRefreshFinished();
+    updateAndFireRefreshFinished();
 
     assertEquals(2, vcs.getRevisionsFor("root").size());
   }
@@ -92,7 +93,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     fireRefreshStarted();
     fireContentChanged(testFile("f1", "new"));
     fireCreated(testFile("f2", ""));
-    d.afterRefreshFinish(false);
+    fireRefreshFinished();
 
     assertEquals(c("old"), vcs.getEntry("f1").getContent());
     assertFalse(vcs.hasEntry("f2"));
@@ -125,7 +126,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     assertTrue(vcs.hasEntry("dir"));
     assertFalse(vcs.hasEntry("dir/f"));
 
-    d.afterRefreshFinish(false);
+    fireRefreshFinished();
 
     CacheUpdaterHelper.performUpdate(d);
     assertTrue(vcs.hasEntry("dir/f"));
@@ -135,17 +136,17 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   public void testClearingRefreshTemporariesAfterRefreshFinishes() {
     fireRefreshStarted();
     fireCreated(new TestVirtualFile("f1", null, -1));
-    fireRefreshFinished();
+    updateAndFireRefreshFinished();
 
     fireRefreshStarted();
     fireCreated(new TestVirtualFile("f2", null, -1));
-    fireRefreshFinished();  // shouldn't throw 'already exists' exception
+    updateAndFireRefreshFinished();  // shouldn't throw 'already exists' exception
   }
 
   @Test
   public void testSeveralUpdatesInsideOneRefresh() {
     vcs.createDirectory("dir");
-    d.beforeRefreshStart(false);
+    fireRefreshStarted();
 
     fireCreated(new TestVirtualFile("dir/f1", null, -1));
     assertFalse(vcs.hasEntry("dir/f1"));
@@ -159,13 +160,13 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     CacheUpdaterHelper.performUpdate(d);
     assertTrue(vcs.hasEntry("dir/f2"));
 
-    d.afterRefreshFinish(false);
+    fireRefreshFinished();
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
     assertEquals(2, rr.size());
     assertEquals("External change", rr.get(0).getCauseChangeName());
   }
-  
+
   @Test
   public void testChangeSetsDuringSeveralUpdatersInsideOneRefresh() {
     vcs.createDirectory("dir");
@@ -174,7 +175,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
 
-    d.beforeRefreshStart(false);
+    fireRefreshStarted();
 
     vcs.createDirectory("dir/dir1");
     long timestamp3 = -1;
@@ -186,9 +187,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     long timestamp1 = -1;
     vcs.createFile("dir/f2", null, timestamp1, false);
 
-    CacheUpdaterHelper.performUpdate(d);
-
-    d.afterRefreshFinish(false);
+    updateAndFireRefreshFinished();
 
     assertEquals(3, vcs.getRevisionsFor("dir").size());
 
@@ -199,25 +198,77 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
 
   @Test
   public void testEmptyRefresh() {
-    d.beforeRefreshStart(false);
-    CacheUpdaterHelper.performUpdate(d);
-    d.afterRefreshFinish(false);
+    fireRefreshStarted();
+    updateAndFireRefreshFinished();
   }
 
   @Test
   public void testEmptyRefreshWithSeveralUpdates() {
-    d.beforeRefreshStart(false);
+    fireRefreshStarted();
     CacheUpdaterHelper.performUpdate(d);
     CacheUpdaterHelper.performUpdate(d);
-    d.afterRefreshFinish(false);
+    updateAndFireRefreshFinished();
   }
 
-  private void fireRefreshStarted() {
-    d.beforeRefreshStart(false);
+  @Test
+  public void testStartingInsideRefreshes() throws Exception {
+    refreshCount = 2;
+    initDispatcher();
+
+    fireRefreshFinished();
+    fireRefreshFinished();
+
+    assertExtraRefreshFinishWillFail();
   }
 
-  private void fireRefreshFinished() {
+  @Test
+  public void testEventsWhenStartingInsideRefreshes() throws Exception {
+    refreshCount = 2;
+    initDispatcher();
+
+    fireCreated(new TestVirtualFile("f1", null, -1));
+    fireCreated(new TestVirtualFile("f2", null, -1));
+
+    fireRefreshFinished();
+    fireRefreshFinished();
+
+    assertExtraRefreshFinishWillFail();
+
+    // This is not the ideal case: ideally, if we started inside a refresh we would
+    // treat all the changes as external and merge them into one changeset.
+    // But since it is qute hard to implement and the situation ir rather uncommon
+    // I leave it as it is.
+    List<Change> changes = vcs.getChangeList().getChanges();
+    assertEquals(2, changes.size());
+  }
+
+  @Test
+  public void testInnerRefreshesWhenStartingInsideRefreshes() throws Exception {
+    refreshCount = 2;
+    initDispatcher();
+
+    fireRefreshStarted();
+    fireRefreshFinished();
+
+    fireRefreshFinished();
+    fireRefreshFinished();
+
+    assertExtraRefreshFinishWillFail();
+  }
+
+  private void assertExtraRefreshFinishWillFail() {
+    boolean thrown = false;
+    try {
+      // fircing one extra finish
+      d.afterRefreshFinish(false);
+    } catch(AssertionError e) {
+      thrown = true;
+    }
+    assertTrue(thrown);
+  }
+
+  private void updateAndFireRefreshFinished() {
     CacheUpdaterHelper.performUpdate(d);
-    d.afterRefreshFinish(false);
+    fireRefreshFinished();
   }
 }

@@ -19,9 +19,14 @@ public class EventDispatcherTestCase extends LocalVcsTestCase {
   Project project;
   TestIdeaGateway gateway;
   EventDispatcher d;
+  int refreshCount = 0;
 
   @Before
   public void setUp() {
+    initDispatcher();
+  }
+
+  protected void initDispatcher() {
     project = createMock(Project.class);
     gateway = new TestIdeaGateway(project);
     d = new EventDispatcher(vcs, gateway);
@@ -77,5 +82,19 @@ public class EventDispatcherTestCase extends LocalVcsTestCase {
 
   protected void fireDeletion(VirtualFile f, VirtualFile parent) {
     d.fileDeleted(new VirtualFileEvent(null, f, null, parent));
+  }
+
+  protected void fireRefreshStarted() {
+    // VFS behaviour emulation
+    if (refreshCount++ == 0) {
+      d.beforeRefreshStart(false);
+    }
+  }
+
+  protected void fireRefreshFinished() {
+    // VFS behaviour emulation
+    if (--refreshCount == 0) {
+      d.afterRefreshFinish(false);
+    }
   }
 }
