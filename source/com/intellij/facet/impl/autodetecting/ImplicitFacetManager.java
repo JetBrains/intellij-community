@@ -84,6 +84,8 @@ public class ImplicitFacetManager implements Disposable {
 
         Runnable runnable = new Runnable() {
           public void run() {
+            if (isDisposed()) return;
+
             if (someFacetsDeleted && myNotificationPopup != null) {
               myNotificationPopup.cancel();
             }
