@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
-import java.io.DataInputStream;
+import java.io.DataInput;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -209,7 +209,7 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
   }
 
   @Nullable
-  public ValidityState createValidityState(DataInputStream datainputstream) throws IOException {
+  public ValidityState createValidityState(DataInput datainputstream) throws IOException {
 //        return TimestampValidityState.load(datainputstream);
     return null;
   }
