@@ -16,8 +16,8 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -212,9 +212,11 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
     final PsiModifierList innerClassModifierList = innerClass.getModifierList();
     LOG.assertTrue(innerClassModifierList != null);
 
-    final String accessModifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(methodModifierList));
-    LOG.assertTrue(accessModifier != null);
-    innerClassModifierList.setModifierProperty(accessModifier, true);
+    if (!myDeleteOriginalMethod) {
+      innerClassModifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    } else {
+      innerClassModifierList.setModifierProperty(VisibilityUtil.getVisibilityModifier(methodModifierList), true);
+    }
     final boolean isStatic = methodModifierList.hasModifierProperty(PsiModifier.STATIC);
     innerClassModifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     return isStatic;

@@ -12,7 +12,7 @@ class Test {
         new InnerClass(e).foo();
     }
 
-      class InnerClass {
+      private class InnerClass {
           private E e;
 
           public InnerClass(E e) {

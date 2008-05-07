@@ -10,7 +10,7 @@ class Test {
          return new InnerClass().foo();
      }
 
-       class InnerClass {
+       private class InnerClass {
            public String foo() {
        return null;
            }
