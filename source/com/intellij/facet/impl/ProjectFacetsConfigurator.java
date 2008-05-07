@@ -184,7 +184,10 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
 
     myModels.clear();
     for (Facet facet : myChangedFacets) {
-      facet.getModule().getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+      Module module = facet.getModule();
+      if (!module.isDisposed()) {
+        module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+      }
     }
     myChangedFacets.clear();
   }
