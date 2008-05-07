@@ -20,7 +20,7 @@ public class CompletionInitializationContext {
   public static final OffsetKey SELECTION_END_OFFSET = OffsetKey.create("selectionEnd");
   public static final OffsetKey IDENTIFIER_END_OFFSET = OffsetKey.create("identifierEnd");
 
-  public static @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
+  public static @NonNls final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
   private final Editor myEditor;
   private final PsiFile myFile;
   private final CompletionType myCompletionType;
