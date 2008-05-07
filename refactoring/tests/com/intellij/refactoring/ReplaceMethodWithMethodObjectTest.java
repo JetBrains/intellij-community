@@ -8,6 +8,7 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.replaceMethodWithMethodObject.ReplaceMethodWithMethodObjectProcessor;
 
 public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
@@ -18,7 +19,7 @@ public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
-    new ReplaceMethodWithMethodObjectProcessor(method, "InnerClass").run();
+    new ReplaceMethodWithMethodObjectProcessor(method, "InnerClass", OverridingMethodsSearch.search(method).findAll().isEmpty() && method.findSuperMethods().length == 0).run();
     checkResultByFile("/refactoring/replaceMethodWithMethodObject/" + testName + ".java" + ".after");
   }
 

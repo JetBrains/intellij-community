@@ -8,6 +8,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +20,8 @@ import java.awt.*;
 
 public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
   private final PsiMethod myMethod;
-  private JTextField myInnerClassNameField = new JTextField();
+  private final JTextField myInnerClassNameField = new JTextField();
+  private final JCheckBox myDeleteMethodCb = new JCheckBox(RefactoringBundle.message("replace.method.with.object.delete.original.method.combo"), true);
 
   protected ReplaceMethodWithMethodObjectDialog(@NotNull PsiMethod method) {
     super(method.getProject(), false);
@@ -28,7 +31,7 @@ public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
   }
 
   protected void doAction() {
-    final ReplaceMethodWithMethodObjectProcessor processor = new ReplaceMethodWithMethodObjectProcessor(myMethod, myInnerClassNameField.getText());
+    final ReplaceMethodWithMethodObjectProcessor processor = new ReplaceMethodWithMethodObjectProcessor(myMethod, myInnerClassNameField.getText(), myDeleteMethodCb.isEnabled() && myDeleteMethodCb.isSelected());
     invokeRefactoring(processor);
   }
 
@@ -47,7 +50,9 @@ public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
                                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-    panel.add(new JLabel("Class Name:"), gc);
+    final JLabel classNameLabel = new JLabel(RefactoringBundle.message("replace.method.with.object.class.name.label"));
+    classNameLabel.setLabelFor(myInnerClassNameField);
+    panel.add(classNameLabel, gc);
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.weightx = 1;
 
@@ -65,6 +70,13 @@ public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
         validateButtons();
       }
     });
+    gc.gridy = 1;
+    gc.gridwidth = 2;
+    gc.anchor = GridBagConstraints.EAST;
+    gc.fill = GridBagConstraints.NONE;
+    myDeleteMethodCb.setMnemonic('D');
+    myDeleteMethodCb.setEnabled(OverridingMethodsSearch.search(myMethod).findAll().isEmpty() && myMethod.findSuperMethods().length == 0);
+    panel.add(myDeleteMethodCb, gc);
     return panel;
   }
 

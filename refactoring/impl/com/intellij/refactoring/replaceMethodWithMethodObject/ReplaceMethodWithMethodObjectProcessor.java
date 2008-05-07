@@ -14,7 +14,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -37,11 +36,13 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
   private PsiMethod myMethod;
   private final PsiElementFactory myElementFactory;
   private String myInnerClassName;
+  private final boolean myDeleteOriginalMethod;
 
-  public ReplaceMethodWithMethodObjectProcessor(PsiMethod method, @NonNls final String innerClassName) {
+  public ReplaceMethodWithMethodObjectProcessor(PsiMethod method, @NonNls final String innerClassName, final boolean deleteOriginalMethod) {
     super(method.getProject());
     myMethod = method;
     myInnerClassName = innerClassName;
+    myDeleteOriginalMethod = deleteOriginalMethod;
     myElementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
   }
 
@@ -52,7 +53,7 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
   @NotNull
   protected UsageInfo[] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    if (OverridingMethodsSearch.search(myMethod).findAll().isEmpty() && myMethod.findSuperMethods().length == 0) {
+    if (myDeleteOriginalMethod) {
       PsiReference[] refs =
           ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference ref : refs) {
@@ -98,7 +99,10 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
   }
 
   private void processMethodDeclaration(final PsiClass innerClass) throws IncorrectOperationException {
-    if (!OverridingMethodsSearch.search(myMethod).findAll().isEmpty() || myMethod.findSuperMethods().length > 0) {
+    if (myDeleteOriginalMethod) {
+      myMethod.delete();
+    }
+    else {
       final PsiCodeBlock body = myMethod.getBody();
       LOG.assertTrue(body != null);
       final PsiCodeBlock block = myElementFactory.createCodeBlock();
@@ -119,8 +123,6 @@ public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProce
           .createStatementFromText(statementText, null);
       block.add(innerClassMethodCallStatement);
       body.replace(block);
-    } else {
-      myMethod.delete();
     }
   }
 
