@@ -39,7 +39,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
   public static final String[] TEMPLATES = {
       "GroovyClass.groovy",
       "GroovyScript.groovy",
-      "GrailsTests.groovy",
+      "GroovyControllerTests.groovy",
   };
 
   public static final String GSP_TEMPLATE = "GroovyServerPage.gsp";
