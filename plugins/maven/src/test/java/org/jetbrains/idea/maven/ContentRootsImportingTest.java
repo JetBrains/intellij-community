@@ -305,28 +305,6 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
     assertSources("project", "src/main/java", "src/main/resources", "src");
   }
 
-  public void testDownloadingPluginsOnImport() throws Exception {
-    String pathToPlugin = "org/codehaus/mojo/build-helper-maven-plugin";
-    removeFromLocalRepository(pathToPlugin);
-
-    assertFalse(new File(getRepositoryPath(), pathToPlugin).exists());
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.mojo</groupId>" +
-                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertTrue(new File(getRepositoryPath(), pathToPlugin).exists());
-  }
-
   public void testDownloadingNecessaryPlugins() throws Exception {
     String pathToPlugin = "org/codehaus/mojo/build-helper-maven-plugin";
     removeFromLocalRepository(pathToPlugin);
