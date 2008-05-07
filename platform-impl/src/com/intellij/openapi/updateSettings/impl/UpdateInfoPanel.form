@@ -116,10 +116,7 @@
           </grid>
           <gridbag weightx="1.0" weighty="1.0"/>
         </constraints>
-        <properties>
-          <horizontalScrollBarPolicy value="31"/>
-          <verticalScrollBarPolicy value="21"/>
-        </properties>
+        <properties/>
         <border type="none"/>
         <children>
           <grid id="a0e0" binding="myUpdatedPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
