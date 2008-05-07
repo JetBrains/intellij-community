@@ -21,7 +21,7 @@ import java.awt.*;
 public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
   private final PsiMethod myMethod;
   private final JTextField myInnerClassNameField = new JTextField();
-  private final JCheckBox myDeleteMethodCb = new JCheckBox(RefactoringBundle.message("replace.method.with.object.delete.original.method.combo"), true);
+  private final JCheckBox myDeleteMethodCb = new JCheckBox(RefactoringBundle.message("replace.method.with.object.delete.original.method.combo"), false);
 
   protected ReplaceMethodWithMethodObjectDialog(@NotNull PsiMethod method) {
     super(method.getProject(), false);
@@ -74,7 +74,6 @@ public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
     gc.gridwidth = 2;
     gc.anchor = GridBagConstraints.EAST;
     gc.fill = GridBagConstraints.NONE;
-    myDeleteMethodCb.setMnemonic('D');
     myDeleteMethodCb.setEnabled(OverridingMethodsSearch.search(myMethod).findAll().isEmpty() && myMethod.findSuperMethods().length == 0);
     panel.add(myDeleteMethodCb, gc);
     return panel;

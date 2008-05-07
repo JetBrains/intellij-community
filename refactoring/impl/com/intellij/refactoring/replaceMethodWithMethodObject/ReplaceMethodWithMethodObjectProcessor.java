@@ -33,9 +33,9 @@ import java.util.List;
 public class ReplaceMethodWithMethodObjectProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#" + ReplaceMethodWithMethodObjectProcessor.class.getName());
   @NonNls public static final String REFACTORING_NAME = "Replace Method with Method Object";
-  private PsiMethod myMethod;
+  private final PsiMethod myMethod;
   private final PsiElementFactory myElementFactory;
-  private String myInnerClassName;
+  private final String myInnerClassName;
   private final boolean myDeleteOriginalMethod;
 
   public ReplaceMethodWithMethodObjectProcessor(PsiMethod method, @NonNls final String innerClassName, final boolean deleteOriginalMethod) {
