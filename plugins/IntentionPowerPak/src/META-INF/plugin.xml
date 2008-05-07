@@ -292,15 +292,19 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithStringBufferIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithFormatStringIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.concatenation.CopyConcatenatedStringToClipboardIntention</className>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.JoinConcatenatedStringLiteralsIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.MakeAppendChainIntoAppendSequenceIntention</className>
@@ -324,11 +328,11 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.chartostring.CharToStringIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.chartostring.StringToCharIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.asserttoif.AssertToIfIntention</className>
