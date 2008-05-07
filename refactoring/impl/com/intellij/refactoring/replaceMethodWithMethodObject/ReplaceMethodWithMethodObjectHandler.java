@@ -31,6 +31,7 @@ public class ReplaceMethodWithMethodObjectHandler implements RefactoringActionHa
     if (method.isConstructor()) {
       String message = RefactoringBundle.getCannotRefactorMessage("Replace method with method object doesn't work on constructors");
       showErrorMessage(message, project);
+      return;
     }
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
