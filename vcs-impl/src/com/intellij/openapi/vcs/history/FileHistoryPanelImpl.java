@@ -922,6 +922,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       final VcsFileRevision[] revisions = getSelectedRevisions();
 
       if (revisions.length > 0) {
+        for (VcsFileRevision revision : revisions) {
+          if (! myHistorySession.isContentAvailable(revision)) {
+            return null;
+          }
+        }
+
         Arrays.sort(revisions, new Comparator<VcsFileRevision>() {
           public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
             return o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
