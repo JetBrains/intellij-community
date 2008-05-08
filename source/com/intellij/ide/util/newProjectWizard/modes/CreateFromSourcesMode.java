@@ -15,10 +15,12 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.module.StdModuleTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class CreateFromSourcesMode extends WizardMode {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
@@ -50,7 +52,15 @@ public class CreateFromSourcesMode extends WizardMode {
     sequence.addCommonStep(new LibrariesDetectionStep(projectBuilder, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page1"));
     sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, icon, "reference.dialogs.new.project.fromCode.page2"));
     sequence.addCommonStep(factory.createProjectJdkStep(context));
-    sequence.addCommonStep(new FacetDetectionStep(projectBuilder, icon));
+
+    FacetDetectionStep facetDetectionStep = new FacetDetectionStep(icon, StdModuleTypes.JAVA) {
+      protected List<ModuleDescriptor> getModuleDescriptors() {
+        return projectBuilder.getModules();
+      }
+    };
+    projectBuilder.addConfigurationUpdater(facetDetectionStep);
+    sequence.addCommonStep(facetDetectionStep);
+
     return sequence;
   }
 

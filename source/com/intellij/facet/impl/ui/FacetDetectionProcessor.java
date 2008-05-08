@@ -17,6 +17,7 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,19 +28,21 @@ import java.util.*;
  */
 public class FacetDetectionProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetDetectionProcessor");
-  private Map<FacetConfiguration, DetectedFacetInfo> myDetectedFacets = new LinkedHashMap<FacetConfiguration, DetectedFacetInfo>();
-  private Map<FacetTypeId, List<FacetConfiguration>> myDetectedConfigurations = new HashMap<FacetTypeId, List<FacetConfiguration>>();
+  private final Map<FacetConfiguration, DetectedFacetInfo> myDetectedFacets = new LinkedHashMap<FacetConfiguration, DetectedFacetInfo>();
+  private final Map<FacetTypeId, List<FacetConfiguration>> myDetectedConfigurations = new HashMap<FacetTypeId, List<FacetConfiguration>>();
   private final ProgressIndicator myProgressIndicator;
-  private FileTypeManager myFileTypeManager;
-  private List<MultiValuesMap<FileType, MyFacetDetectorWrapper>> myDetectors = new ArrayList<MultiValuesMap<FileType, MyFacetDetectorWrapper>>();
+  private final FileTypeManager myFileTypeManager;
+  private final List<MultiValuesMap<FileType, MyFacetDetectorWrapper>> myDetectors = new ArrayList<MultiValuesMap<FileType, MyFacetDetectorWrapper>>();
 
-  public FacetDetectionProcessor(final ProgressIndicator progressIndicator) {
+  public FacetDetectionProcessor(final ProgressIndicator progressIndicator, final ModuleType moduleType) {
     myProgressIndicator = progressIndicator;
     myFileTypeManager = FileTypeManager.getInstance();
     FacetType[] types = FacetTypeRegistry.getInstance().getFacetTypes();
     for (FacetType<?,?> type : types) {
-      registerDetectors(type);
-      myDetectedConfigurations.put(type.getId(), new ArrayList<FacetConfiguration>());
+      if (type.isSuitableModuleType(moduleType)) {
+        registerDetectors(type);
+        myDetectedConfigurations.put(type.getId(), new ArrayList<FacetConfiguration>());
+      }
     }
   }
 
@@ -112,9 +115,9 @@ public class FacetDetectionProcessor {
   private class MyFacetDetectorWrapper<C extends FacetConfiguration, U extends FacetConfiguration> {
     private final FacetType<?, C> myFacetType;
     private final FileType myFileType;
-    private VirtualFileFilter myVirtualFileFilter;
-    private FacetDetector<VirtualFile, C> myDetector;
-    private UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
+    private final VirtualFileFilter myVirtualFileFilter;
+    private final FacetDetector<VirtualFile, C> myDetector;
+    private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
 
     public MyFacetDetectorWrapper(final FacetType<?, C> facetType, final FileType fileType, final VirtualFileFilter virtualFileFilter, final FacetDetector<VirtualFile, C> detector,
                                   final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
@@ -230,9 +233,9 @@ public class FacetDetectionProcessor {
 
 
   public static class DetectedFacetInfo {
-    private FacetInfo myFacetInfo;
-    private VirtualFile myFile;
-    private FacetDetector myFacetDetector;
+    private final FacetInfo myFacetInfo;
+    private final VirtualFile myFile;
+    private final FacetDetector myFacetDetector;
 
     public DetectedFacetInfo(final FacetInfo facetInfo, final VirtualFile file, final FacetDetector facetDetector) {
       myFacetInfo = facetInfo;

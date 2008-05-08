@@ -8,13 +8,14 @@ import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsTreeCompon
 import com.intellij.facet.impl.ui.FacetDetectionProcessor;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,22 +30,21 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>>>
+public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>>>
   implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
-  private Icon myIcon;
-  private ProjectFromSourcesBuilder myProjectBuilder;
+  private final Icon myIcon;
+  private final ModuleType myModuleType;
   private List<File> myLastRoots = null;
-  private DetectedFacetsTreeComponent myDetectedFacetsComponent;
+  private final DetectedFacetsTreeComponent myDetectedFacetsComponent;
   private JPanel myMainPanel;
   private JPanel myFacetsTreePanel;
   private JLabel myFacetsDetectedLabel;
 
-  public FacetDetectionStep(final ProjectFromSourcesBuilder projectBuilder, final Icon icon) {
+  public FacetDetectionStep(final Icon icon, ModuleType moduleType) {
     super(ProjectBundle.message("message.text.stop.searching.for.facets", ApplicationNamesInfo.getInstance().getProductName()));
-    myProjectBuilder = projectBuilder;
     myIcon = icon;
+    myModuleType = moduleType;
     myDetectedFacetsComponent = new DetectedFacetsTreeComponent();
-    projectBuilder.addConfigurationUpdater(this);
   }
 
   public void updateDataModel() {
@@ -70,11 +70,11 @@ public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescr
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
     Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>> result = new HashMap<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>>();
-    for (ModuleDescriptor moduleDescriptor : myProjectBuilder.getModules()) {
+    for (ModuleDescriptor moduleDescriptor : getModuleDescriptors()) {
 
       Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>> root2Facets = new HashMap<File, List<FacetDetectionProcessor.DetectedFacetInfo>>();
       for (File root : moduleDescriptor.getContentRoots()) {
-        FacetDetectionProcessor processor = new FacetDetectionProcessor(progressIndicator);
+        FacetDetectionProcessor processor = new FacetDetectionProcessor(progressIndicator, myModuleType);
         processor.process(root);
         List<FacetDetectionProcessor.DetectedFacetInfo> facets = processor.getDetectedFacetsInfos();
         if (!facets.isEmpty()) {
@@ -90,9 +90,11 @@ public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescr
     return result;
   }
 
+  protected abstract List<ModuleDescriptor> getModuleDescriptors();
+
   private List<File> getRoots() {
     List<File> roots = new ArrayList<File>();
-    for (ModuleDescriptor moduleDescriptor : myProjectBuilder.getModules()) {
+    for (ModuleDescriptor moduleDescriptor : getModuleDescriptors()) {
       roots.addAll(moduleDescriptor.getContentRoots());
     }
     return roots;
