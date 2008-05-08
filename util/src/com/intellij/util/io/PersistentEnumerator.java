@@ -92,7 +92,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  public static CacheKey sharedKey(Object key, PersistentEnumerator owner) {
+  private static CacheKey sharedKey(Object key, PersistentEnumerator owner) {
     ourFlyweight.key = key;
     ourFlyweight.owner = owner;
     return ourFlyweight;
@@ -141,7 +141,13 @@ public class PersistentEnumerator<Data> implements Forceable {
       final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
       if (cachedId != null) return cachedId.intValue();
     }
-    return enumerateImpl(value, false);
+    final int id = enumerateImpl(value, false);
+    if (id != NULL_ID) {
+      synchronized (ourEnumerationCache) {
+        ourEnumerationCache.put(new CacheKey(value, this), id);
+      }
+    }
+    return id;
   }
   
   public synchronized int enumerate(Data value) throws IOException {
