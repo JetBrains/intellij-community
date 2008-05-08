@@ -1,9 +1,7 @@
 package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
-import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -121,6 +119,10 @@ public class PeerFactoryImpl extends PeerFactory {
 
     public void installTreeTableSpeedSearch(TreeTable treeTable) {
       new TreeTableSpeedSearch(treeTable);
+    }
+
+    public void installTreeTableSpeedSearch(final TreeTable treeTable, final Convertor<TreePath, String> convertor) {
+      new TreeTableSpeedSearch(treeTable, convertor);
     }
 
     public void installTreeSpeedSearch(JTree tree) {

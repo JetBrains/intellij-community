@@ -47,6 +47,8 @@ public interface UIHelper {
 
   void installTreeTableSpeedSearch(TreeTable treeTable);
 
+  void installTreeTableSpeedSearch(TreeTable treeTable, Convertor<TreePath, String> convertor);
+
   void installTreeSpeedSearch(JTree tree);
 
   void installTreeSpeedSearch(JTree tree, Convertor<TreePath, String> convertor);
