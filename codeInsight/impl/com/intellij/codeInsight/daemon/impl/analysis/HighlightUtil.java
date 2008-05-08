@@ -1048,21 +1048,98 @@ public class HighlightUtil {
     return null;
   }
 
+  public static void checkArrayInitalizer(final PsiExpression initializer, final HighlightInfoHolder holder) {
+    if (! (initializer instanceof PsiArrayInitializerExpression)) return;
+    
+    final PsiType arrayInitializerType = initializer.getType();
+    if (! (arrayInitializerType instanceof PsiArrayType)) return;
+
+    final PsiType componentType = ((PsiArrayType) arrayInitializerType).getComponentType();
+    final PsiArrayInitializerExpression arrayInitializer = (PsiArrayInitializerExpression) initializer;
+
+    boolean arrayTypeFixChecked = false;
+    VariableArrayTypeFix fix = null;
+
+    final PsiExpression[] initializers = arrayInitializer.getInitializers();
+    for (PsiExpression expression : initializers) {
+
+      final HighlightInfo info = checkArrayInitalizerCompatibleTypes(expression, componentType);
+      if (info != null) {
+        holder.add(info);
+
+        if (! arrayTypeFixChecked) {
+          final TypeGetter<PsiExpression> typeGetter = (expression.getType() == null) ?
+                                                       ByInnerInitializerTypeGetter.ourInstance : PsiExpressionTypeGetter.ourInstance;
+          final Pair<PsiType, Boolean> checkResult = sameType(initializers, typeGetter);
+          fix = Boolean.TRUE.equals(checkResult.second) ? new VariableArrayTypeFix(arrayInitializer, checkResult.first) : null;
+          arrayTypeFixChecked = true;
+        }
+        if (fix != null) {
+          QuickFixAction.registerQuickFixAction(info, fix);
+        }
+      }
+    }
+  }
+
+  private interface TypeGetter<T> {
+    @Nullable
+    PsiType getType(T element);
+  }
+
+  private static class PsiExpressionTypeGetter implements TypeGetter<PsiExpression> {
+    private static final PsiExpressionTypeGetter ourInstance = new PsiExpressionTypeGetter();
+
+    @Nullable
+    public PsiType getType(final PsiExpression element) {
+      return element.getType();
+    }
+  }
+
+  private static class ByInnerInitializerTypeGetter implements TypeGetter<PsiExpression> {
+    private static final ByInnerInitializerTypeGetter ourInstance = new ByInnerInitializerTypeGetter();
+    @Nullable
+    public PsiType getType(final PsiExpression element) {
+      if (element instanceof PsiArrayInitializerExpression) {
+        return getArrayInitializerType((PsiArrayInitializerExpression) element);
+      } else {
+        return element.getType();
+      }
+    }
+
+    @Nullable
+    private PsiType getArrayInitializerType(final PsiArrayInitializerExpression element) {
+      final Pair<PsiType, Boolean> typeCheckResult = sameType(element.getInitializers(), this);
+      if (Boolean.TRUE.equals(typeCheckResult.second)) {
+        return typeCheckResult.first.createArrayType();
+      }
+      return null;
+    }
+  }
+
+  private static<T> Pair<PsiType, Boolean> sameType(final T[] expressions, final TypeGetter<T> typeGetter) {
+    PsiType type = null;
+    for (T expression : expressions) {
+      final PsiType currentType = typeGetter.getType(expression);
+      if (type == null) {
+        type = currentType;
+        continue;
+      }
+      if (! Comparing.equal(type, currentType)) {
+        return new Pair<PsiType, Boolean>(null, Boolean.FALSE);
+      }
+    }
+    return new Pair<PsiType, Boolean>(type, Boolean.TRUE);
+  }
 
   @Nullable
-  public static HighlightInfo checkArrayInitalizerCompatibleTypes(PsiExpression initializer) {
-    if (!(initializer.getParent() instanceof PsiArrayInitializerExpression)) return null;
-    PsiType arrayInitializerType = ((PsiArrayInitializerExpression)initializer.getParent()).getType();
-    PsiType componentType = arrayInitializerType instanceof PsiArrayType ? ((PsiArrayType)arrayInitializerType).getComponentType() : arrayInitializerType;
-    if (!(arrayInitializerType instanceof PsiArrayType)) return null;
-
+  private static HighlightInfo checkArrayInitalizerCompatibleTypes(PsiExpression initializer, final PsiType componentType) {
     PsiType initializerType = initializer.getType();
     if (initializerType == null) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, initializer,
                                                JavaErrorMessages.message("illegal.initializer", formatType(componentType)));
     }
     PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
-    return checkAssignability(((PsiArrayType)arrayInitializerType).getComponentType(), initializerType, expression, initializer);
+    return checkAssignability(componentType, initializerType, expression, initializer);
   }
 
   @Nullable
