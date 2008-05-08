@@ -393,10 +393,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (highlightInfo != null) {
           final XmlFile xmlFile = (XmlFile)tag.getContainingFile();
           if (xmlFile != null) {
-            final IntentionAction fix = XmlExtension.getExtension(xmlFile).createAddAttributeFix(attribute);
-            if (fix != null) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, fix);
-            }
+            XmlExtension.getExtension(xmlFile).createAddAttributeFix(attribute, highlightInfo);
           }
         }
       }

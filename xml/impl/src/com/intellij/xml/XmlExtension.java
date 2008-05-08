@@ -1,6 +1,8 @@
 package com.intellij.xml;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -15,9 +17,9 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 import java.util.Set;
@@ -101,9 +103,16 @@ public abstract class XmlExtension {
     return XmlBundle.message("namespace.alias");
   }
 
-  @Nullable
-  public IntentionAction createAddAttributeFix(@NotNull final XmlAttribute attribute) {
-    return null;
+  public void createAddAttributeFix(@NotNull final XmlAttribute attribute, final HighlightInfo highlightInfo) {
+    final XmlTag tag = attribute.getParent();
+    final String namespace = attribute.getNamespace();
+    final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
+    if (nsDescriptor instanceof XmlUndefinedElementFixProvider) {
+      final IntentionAction[] actions = ((XmlUndefinedElementFixProvider)nsDescriptor).createFixes(attribute);
+      for (IntentionAction action : actions) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, action);
+      }
+    }
   }
 
   public boolean canBeDuplicated(XmlAttribute attribute) {

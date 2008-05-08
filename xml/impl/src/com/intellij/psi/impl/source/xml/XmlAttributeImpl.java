@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
@@ -301,7 +303,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return attributeDescr == null ? descr.getAttributeDescriptor(getName(), tag) : attributeDescr;
   }
 
-  private class MyPsiReference implements PsiReference {
+  private class MyPsiReference implements PsiReference, QuickFixProvider {
     private final XmlElementDescriptor myTagDescr;
     private final XmlAttributeDescriptor myDescr;
 
@@ -400,6 +402,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     public boolean isSoft() {
       return false;
+    }
+
+    public void registerQuickfix(final HighlightInfo info, final PsiReference reference) {
+      if (myDescr instanceof QuickFixProvider) {
+        ((QuickFixProvider)myDescr).registerQuickfix(info, reference);
+      }
     }
   }
 
