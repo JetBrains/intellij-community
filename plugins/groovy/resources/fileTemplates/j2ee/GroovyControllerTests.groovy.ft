@@ -1,6 +1,7 @@
-class ${NAME}ControllerTests extends GroovyTestCase
-{
-  public void testSomething ()
-  {
+class ${NAME}ControllerTests extends GroovyTestCase{
+
+  public void testSomething (){
+    
   }
+
 }
