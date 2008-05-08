@@ -108,7 +108,7 @@ public class ModuleConfigurator {
 
   @Nullable
   private String extractLanguageLevel() {
-    return ProjectUtil.findPluginConfiguration(myMavenProject,
+    return ProjectUtil.findPluginConfigurationValue(myMavenProject,
                                                myProfiles,
                                                "org.apache.maven.plugins",
                                                "maven-compiler-plugin",
