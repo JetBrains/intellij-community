@@ -30,6 +30,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="platform-api" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
