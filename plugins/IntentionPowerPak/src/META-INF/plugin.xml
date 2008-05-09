@@ -47,10 +47,12 @@
       <categoryKey>intention.category.boolean</categoryKey>
     </intentionAction>
 
+<!--
     <intentionAction>
       <className>com.siyeh.ipp.bool.FlipConjunctionIntention</className>
       <categoryKey>intention.category.boolean</categoryKey>
     </intentionAction>
+-->
 
     <intentionAction>
       <className>com.siyeh.ipp.equality.ReplaceEqualsWithEqualityIntention</className>
