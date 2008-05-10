@@ -236,8 +236,10 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
         try {
           GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(newTypeValue);
-          String canonical = typeElement.getType().getCanonicalText();
-          if (canonical != null) newTypeValue = canonical;
+          if (typeElement != null) {
+            String canonical = typeElement.getType().getCanonicalText();
+            if (canonical != null) newTypeValue = canonical;
+          }
         } catch (IncorrectOperationException ex) {
           //do nothing in case bad string is entered
         }
