@@ -230,7 +230,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else if (resolved instanceof GrVariableBase) {
-      result = ((GrVariableBase) resolved).getDeclaredType();
+      result = ((GrVariableBase) resolved).getTypeGroovy(); //still infer from the initializer
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else

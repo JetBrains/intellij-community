@@ -23,6 +23,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypesSemilattice;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author ven
@@ -58,9 +60,6 @@ public class TypeInferenceHelper {
 
   @Nullable
   public PsiType getInferredType(GrReferenceExpression refExpr) {
-    if (isInferenceInProgress()) {
-      return getTypeBinding(refExpr);
-    }
 
     GroovyPsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class, GrClassInitializer.class, GroovyFileBase.class);
     if (scope instanceof GrMethod) {
@@ -69,19 +68,36 @@ public class TypeInferenceHelper {
       scope = ((GrClassInitializer) scope).getBlock();
     }
 
+
     if (scope != null) {
-      Map<GrReferenceExpression, PsiType> map = myCalculatedTypeInferences.get(scope);
-      if (map == null) {
-        map = inferTypes((GrControlFlowOwner) scope);
-        myCalculatedTypeInferences.put(scope, map);
+      Set<GroovyPsiElement> scopes = myScopesBeingInferred.get();
+      if (scopes == null) {
+        scopes = new HashSet<GroovyPsiElement>();
+        myScopesBeingInferred.set(scopes);
       }
-      return map.get(refExpr);
+
+      if (scopes.contains(scope)) {
+        return getTypeBinding(refExpr);
+      }
+
+      try {
+        scopes.add(scope);
+        Map<GrReferenceExpression, PsiType> map = myCalculatedTypeInferences.get(scope);
+        if (map == null) {
+          map = inferTypes((GrControlFlowOwner) scope);
+          myCalculatedTypeInferences.put(scope, map);
+        }
+        return map.get(refExpr);
+      } finally {
+        scopes.remove(scope);
+      }
     }
 
     return null;
   }
 
   private ThreadLocal<Map<String, PsiType>> myCurrentEnvironment = new ThreadLocal<Map<String, PsiType>>();
+  private ThreadLocal<Set<GroovyPsiElement>> myScopesBeingInferred = new ThreadLocal<Set<GroovyPsiElement>>();
 
   public PsiType doWithInferenceDisabled (Computable<PsiType> computable) {
     return doInference(computable, Collections.<String, PsiType>emptyMap());
@@ -95,10 +111,6 @@ public class TypeInferenceHelper {
     } finally {
       myCurrentEnvironment.set(oldBindings);
     }
-  }
-
-  public boolean isInferenceInProgress() {
-    return myCurrentEnvironment.get() != null;
   }
 
   public PsiType getTypeBinding(GrReferenceExpression refExpr) {
