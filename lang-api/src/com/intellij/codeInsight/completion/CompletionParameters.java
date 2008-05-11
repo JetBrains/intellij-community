@@ -12,20 +12,48 @@ import com.intellij.psi.PsiFile;
 /**
  * @author peter
  */
-public interface CompletionParameters {
+public class CompletionParameters {
+  private final PsiElement myPosition;
+  private final PsiFile myOriginalFile;
+  private final CompletionType myCompletionType;
+  private final int myOffset;
+  private final int myInvocationCount;
+
+  public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
+                                  final CompletionType completionType, int offset, final int invocationCount) {
+    assert offset >= position.getTextRange().getStartOffset();
+    myPosition = position;
+    myOriginalFile = originalFile;
+    myCompletionType = completionType;
+    myOffset = offset;
+    myInvocationCount = invocationCount;
+  }
+
   @NotNull
-  PsiElement getPosition();
+  public PsiElement getPosition() {
+    return myPosition;
+  }
 
   @Nullable
-  PsiElement getOriginalPosition();
+  public PsiElement getOriginalPosition() {
+    return myOriginalFile.findElementAt(myPosition.getTextRange().getStartOffset());
+  }
 
   @NotNull
-  PsiFile getOriginalFile();
+  public PsiFile getOriginalFile() {
+    return myOriginalFile;
+  }
 
   @NotNull
-  CompletionType getCompletionType();
+  public CompletionType getCompletionType() {
+    return myCompletionType;
+  }
 
-  int getOffset();
-  
-  int getInvocationCount();
+  public int getOffset() {
+    return myOffset;
+  }
+
+  public int getInvocationCount() {
+    return myInvocationCount;
+  }
 }

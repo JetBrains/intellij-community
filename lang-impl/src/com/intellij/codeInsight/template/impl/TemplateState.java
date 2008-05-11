@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.CompletionParametersImpl;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.*;
@@ -410,7 +410,7 @@ public class TemplateState implements Disposable {
         final Lookup lookup = lookupManager.showLookup(myEditor,
                                                        lookupItems,
                                                        "",
-                                                       new CompletionPreferencePolicy("", new CompletionParametersImpl(psiFile, psiFile,
+                                                       new CompletionPreferencePolicy("", new CompletionParameters(psiFile, psiFile,
                                                                                                                        CompletionType.BASIC, myEditor.getCaretModel().getOffset(),
                                                                                                                        1)));
         lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result

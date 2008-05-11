@@ -141,7 +141,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final PsiElement insertedElement = insertedInfo.getSecond();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, insertedInfo.getFirst());
 
-    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType, insertedInfo.getFirst().getStartOffset(),
+    final CompletionParameters parameters = new CompletionParameters(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType, insertedInfo.getFirst().getStartOffset(),
                                                                              invocationCount);
     final String adText = getAdvertisementText(parameters);
 
@@ -200,7 +200,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   @Nullable
-  private static String getAdvertisementText(final CompletionParametersImpl parameters) {
+  private static String getAdvertisementText(final CompletionParameters parameters) {
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
       final String s = contributor.advertise(parameters);
       if (s != null) return s;
@@ -215,7 +215,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   protected void computingFinished(final LookupData data, final CompletionProgressIndicator indicator, final CompletionContext context,
-                                   final CompletionParametersImpl parameters, final int offset1, final int offset2) {
+                                   final CompletionParameters parameters, final int offset1, final int offset2) {
     if (data == null) {
       indicator.closeAndFinish();
       return;

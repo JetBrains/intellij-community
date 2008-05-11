@@ -8,6 +8,13 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +24,27 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CompletionContributor extends AbstractCompletionContributor<CompletionParameters>{
   public static final ExtensionPointName<CompletionContributor> EP_NAME = ExtensionPointName.create("com.intellij.completion.contributor");
+
+  private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
+      new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();
+
+  public final void extend(CompletionType type, final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
+    myMap.putValue(type, new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>(place, provider));
+  }
+
+  public boolean fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+    for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
+      final ProcessingContext context = new ProcessingContext();
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return pair.first.accepts(parameters.getPosition(), context);
+        }
+      }).booleanValue()) {
+        if (!pair.second.addCompletionVariants(parameters, context, result)) return false;
+      }
+    }
+    return true;
+  }
 
   /**
    * Invoked before completion is started. Is used mainly for determining custom offsets in editor, and to change default dummy identifier.
