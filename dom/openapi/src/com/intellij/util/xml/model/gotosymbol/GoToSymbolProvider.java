@@ -127,7 +127,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return myPsiElement;
     }
 
-    public Icon getIcon(int flags) {
+    public Icon getIcon(boolean flags) {
       return myIcon;
     }
 

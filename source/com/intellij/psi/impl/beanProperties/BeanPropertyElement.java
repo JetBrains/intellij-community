@@ -66,7 +66,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   }
 
   @Nullable
-  public Icon getIcon(int flags) {
+  public Icon getIcon(boolean flags) {
     return BeanProperty.ICON;
   }
 

@@ -71,7 +71,7 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   }
 
   @Nullable
-  public Icon getIcon(final int flags) {
+  public final Icon getIcon(final boolean open) {
     return getIcon();
   }
 
