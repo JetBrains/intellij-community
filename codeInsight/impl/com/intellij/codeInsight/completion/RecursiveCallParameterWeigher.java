@@ -15,35 +15,39 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RecursiveCallParameterWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> element, final CompletionLocation location) {
+  public Integer weigh(@NotNull final LookupElement<?> element, final CompletionLocation location) {
     if (location.getCompletionType() != CompletionType.BASIC && location.getCompletionType() != CompletionType.SMART) return 0;
+
+    final Object object = element.getObject();
+    if (!(object instanceof PsiModifierListOwner) && !(object instanceof PsiExpression)) return 0;
 
     final PsiMethod positionMethod = JavaCompletionUtil.POSITION_METHOD.getValue(location);
     if (positionMethod == null) return 0;
 
-    final PsiMethodCallExpression expression =
-        PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiMethodCallExpression.class);
-    if (expression == null) return 0;
+    final PsiElement position = location.getCompletionParameters().getPosition();
+    final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, true, PsiClass.class);
+    final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
+    if (reference == null) return 0;
 
-    final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+    final PsiExpression qualifier = reference.getQualifierExpression();
     boolean isDelegate = qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression);
-
-    final Object object = element.getObject();
-    final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
-    if (expectedInfos != null) {
-      final PsiType itemType = JavaCompletionUtil.getPsiType(object);
-      if (itemType != null) {
-        for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-          if (positionMethod.equals(expectedInfo.getCalledMethod()) && expectedInfo.getType().isAssignableFrom(itemType)) {
-            return isDelegate ? 2 : 0;
+    if (expression != null) {
+      final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
+      if (expectedInfos != null) {
+        final PsiType itemType = JavaCompletionUtil.getPsiType(object);
+        if (itemType != null) {
+          for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
+            if (positionMethod.equals(expectedInfo.getCalledMethod()) && expectedInfo.getType().isAssignableFrom(itemType)) {
+              return isDelegate ? 2 : -1;
+            }
           }
         }
       }
+      return 0;
     }
 
-    final PsiElement position = location.getCompletionParameters().getPosition();
-    if (PsiTreeUtil.isAncestor(positionMethod, position, false) && PsiTreeUtil.isAncestor(expression.getMethodExpression(), position, false)) {
-      return isDelegate ? 2 : 0;
+    if (PsiTreeUtil.isAncestor(positionMethod, position, false) && PsiTreeUtil.isAncestor(reference, position, false)) {
+      return isDelegate ? 2 : -1;
     }
 
     return 1;
