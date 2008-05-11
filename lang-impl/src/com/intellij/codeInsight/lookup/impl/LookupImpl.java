@@ -124,17 +124,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myProcessIcon = new AsyncProcessIcon("Completion progress");
     myProcessIcon.setVisible(false);
-    myList = new JList(new DefaultListModel()) {
-      public Dimension getPreferredScrollableViewportSize() {
-        return super.getPreferredScrollableViewportSize();
-      }
-
-      public Dimension getPreferredSize() {
-        return super.getPreferredSize();
-      }
-    };
+    myList = new JList(new DefaultListModel());
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
+    myList.setMinimumSize(new Dimension(50, 1));
 
     for (final LookupItem item : items) {
       addItem(item);
