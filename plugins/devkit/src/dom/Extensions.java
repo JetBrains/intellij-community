@@ -15,6 +15,8 @@ public interface Extensions extends DomElement {
   @Attribute("defaultExtensionNs")
   @Convert(ExtensionNsConverter.class)
   GenericAttributeValue<IdeaPlugin> getDefaultExtensionNs();
-  @Attribute("defaultExtensionNs")
-  void setDefaultExtensionNs(String ns);
+
+  @NotNull
+  @Convert(ExtensionNsConverter.class)
+  GenericAttributeValue<IdeaPlugin> getXmlns();
 }

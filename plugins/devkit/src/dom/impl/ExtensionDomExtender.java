@@ -36,8 +36,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     List<Object> deps = new ArrayList<Object>();
 
-    final GenericAttributeValue<IdeaPlugin> extensionNs = extensions.getDefaultExtensionNs();
-    final IdeaPlugin plugin = extensionNs.getValue();
+    IdeaPlugin plugin = extensions.getDefaultExtensionNs().getValue();
+    if (plugin == null) plugin = extensions.getXmlns().getValue();
     if (plugin != null) {
       registerExtensions(extensions, plugin, registrar, psiManager);
       deps.add(plugin.<DomElement>getRoot());
