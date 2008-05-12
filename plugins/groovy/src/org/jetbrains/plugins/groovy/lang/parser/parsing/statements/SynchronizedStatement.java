@@ -62,12 +62,13 @@ public class SynchronizedStatement implements GroovyElementTypes {
       if (!OpenOrClosableBlock.parseOpenBlock(builder)) {
         warn.rollbackTo();
         builder.error(GroovyBundle.message("block.expression.expected"));
-        marker.done(SYNCHRONIZED_STATEMENT);
       } else {
         warn.drop();
-        marker.done(SYNCHRONIZED_STATEMENT);
       }
+    } else {
+      warn.drop(); 
     }
+    marker.done(SYNCHRONIZED_STATEMENT);
 
     return true;
   }
