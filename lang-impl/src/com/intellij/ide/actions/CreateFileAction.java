@@ -11,11 +11,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 
 public class CreateFileAction extends CreateElementActionBase {
+
   public CreateFileAction() {
     super(IdeBundle.message("action.create.new.file"), IdeBundle.message("action.create.new.file"), IconLoader.getIcon("/fileTypes/text.png"));
+  }
+
+  public CreateFileAction(final String text, final String description, final Icon icon) {
+    super(text, description, icon);
   }
 
   @NotNull
