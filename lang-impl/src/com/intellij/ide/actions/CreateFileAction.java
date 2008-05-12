@@ -20,7 +20,7 @@ public class CreateFileAction extends CreateElementActionBase {
 
   @NotNull
   protected PsiElement[] invokeDialog(final Project project, PsiDirectory directory) {
-    CreateElementActionBase.MyInputValidator validator = new MyValidator(project, directory);
+    MyInputValidator validator = new MyValidator(project, directory);
     Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
                              IdeBundle.message("title.new.file"), Messages.getQuestionIcon(), null, validator);
     return validator.getCreatedElements();
@@ -47,7 +47,7 @@ public class CreateFileAction extends CreateElementActionBase {
     return IdeBundle.message("command.create.file");
   }
 
-  private class MyValidator extends CreateElementActionBase.MyInputValidator {
+  private class MyValidator extends MyInputValidator {
     public boolean checkInput(String inputString) {
       return true;
     }
