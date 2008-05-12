@@ -16,9 +16,9 @@
 
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -72,6 +72,14 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       return new SvnRepositoryLocation(root, urls [0]);
     }
     return null;
+  }
+
+  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
+    if (repositoryPath == null) {
+      return getLocationFor(root);
+    }
+
+    return new SvnLoadingRepositoryLocation(repositoryPath, myVcs);
   }
 
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
@@ -141,6 +149,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       new ChangeListColumn.ChangeListNumberColumn(SvnBundle.message("revision.title")),
       ChangeListColumn.NAME, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION
     };
+  }
+
+  public int getUnlimitedCountValue() {
+    return 0;
   }
 
   public int getFormatVersion() {

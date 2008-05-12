@@ -335,7 +335,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
       AbstractVcsHelper.getInstance(myProject).showFileHistory(
               new SvnHistoryProvider(myVCS, node.getURL(), SVNRevision.HEAD, isDirectory),
-              VcsUtil.getFilePath(node.getURL().toString()));
+              VcsUtil.getFilePath(node.getURL().toString()), myVCS, node.getURL().toString());
       node.reload();
     }
   }

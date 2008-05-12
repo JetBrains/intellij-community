@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -133,17 +132,9 @@ public class SvnChangeList implements CommittedChangeList {
 
   @Nullable
   private FilePath getLocalPath(final String path) {
-    if (myLocation.getRootFile() == null) {
-      return null;
-    }
-    String fullPath = myRepositoryRoot + path;
-    if (fullPath.startsWith(myLocation.getURL())) {
-      String relPath = fullPath.substring(myLocation.getURL().length());
-      final String basePath = myLocation.getRootFile().getPresentableUrl();
-      File localFile = new File(basePath, relPath);
-      return VcsContextFactory.SERVICE.getInstance().createFilePathOn(localFile);
-    }
-    return null;
+    final String fullPath = myRepositoryRoot + path;
+
+    return myLocation.getLocalPath(fullPath);
   }
 
   @NotNull

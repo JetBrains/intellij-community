@@ -34,10 +34,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME = ".svn";
@@ -86,6 +83,12 @@ public class SvnUtil {
     LocationsCrawler crawler = new LocationsCrawler(vcs);
     crawlWCRoots(path, crawler, progress);
     return crawler.getLocations();
+  }
+
+  public static Map<String, File> getLocationInfoForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
+    final LocationsCrawler crawler = new LocationsCrawler(vcs);
+    crawlWCRoots(path, crawler, progress);
+    return crawler.getLocationInfos();
   }
 
   public static void doLockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
@@ -234,15 +237,20 @@ public class SvnUtil {
 
   private static class LocationsCrawler implements SvnWCRootCrawler {
     private SvnVcs myVcs;
-    private Collection<String> myLocations;
+    private Map<String, File> myLocations;
 
     public LocationsCrawler(SvnVcs vcs) {
       myVcs = vcs;
-      myLocations = new ArrayList<String>();
+      myLocations = new HashMap<String, File>();
     }
 
     public String[] getLocations() {
-      return myLocations.toArray(new String[myLocations.size()]);
+      final Set<String> set = myLocations.keySet();
+      return set.toArray(new String[set.size()]);
+    }
+
+    public Map<String, File> getLocationInfos() {
+      return Collections.unmodifiableMap(myLocations);
     }
 
     public Collection<File> handleWorkingCopyRoot(File root, ProgressIndicator progress) {
@@ -254,7 +262,7 @@ public class SvnUtil {
         SVNWCClient wcClient = myVcs.createWCClient();
         SVNInfo info = wcClient.doInfo(root, SVNRevision.WORKING);
         if (info != null && info.getURL() != null) {
-          myLocations.add(info.getURL().toString());
+          myLocations.put(info.getURL().toString(), info.getFile());
         }
       }
       catch (SVNException e) {
