@@ -178,7 +178,7 @@ public class GroovyAnnotator implements Annotator {
         String packageName = aPackage.getQualifiedName();
         if (!packageDefinition.getPackageName().equals(packageName)) {
           final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
-          annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
+          annotation.registerFix(new ChangePackageQuickFix((GroovyFile) packageDefinition.getContainingFile(), packageName));
         }
       }
     }
@@ -655,7 +655,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private static void checkGrDocMemberReference(final GrDocMemberReference reference, AnnotationHolder holder){
+  private static void checkGrDocMemberReference(final GrDocMemberReference reference, AnnotationHolder holder) {
     PsiElement resolved = reference.resolve();
     if (resolved == null) {
       Annotation annotation = holder.createErrorAnnotation(reference, GroovyBundle.message("cannot.resolve", reference.getReferenceName()));
@@ -930,6 +930,7 @@ public class GroovyAnnotator implements Annotator {
     for (IntentionAction action : actions) {
       annotation.registerFix(action);
     }
+//    OuterImportsActionCreator.createOuterImportFixesAction(refElement);
   }
 
   private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation, boolean createConstructor) {
