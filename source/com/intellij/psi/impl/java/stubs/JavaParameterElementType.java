@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.PsiParameterImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 
@@ -60,7 +61,8 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
   }
 
   public boolean shouldCreateStub(final ASTNode node) {
-    return node.getTreeParent().getElementType() != JavaElementType.CATCH_SECTION;
+    final IElementType type = node.getTreeParent().getElementType();
+    return type == JavaElementType.PARAMETER_LIST;
   }
 
   public void indexStub(final PsiParameterStub stub, final IndexSink sink) {
