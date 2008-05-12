@@ -94,6 +94,7 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     if (!stub.isAnonymous()) {
       DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
       DataInputOutputUtil.writeNAME(dataStream, stub.getQualifiedName(), nameStorage);
+      DataInputOutputUtil.writeNAME(dataStream, stub.getSourceFileName(), nameStorage);
     }
     else {
       DataInputOutputUtil.writeNAME(dataStream, stub.getBaseClassReferenceText(), nameStorage);
@@ -111,7 +112,10 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     if (!isAnonymous) {
       String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       String qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      return new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      final String sourceFileName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      final PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      classStub.setSourceFileName(sourceFileName);
+      return classStub;
     }
     else {
       String baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
