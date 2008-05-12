@@ -73,7 +73,7 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
   @NotNull
   @NonNls
   public String getLibraryName(final String name) {
-    return name;
+    return name != null ? name : super.getLibraryName(name);
   }
 
   @NotNull
