@@ -513,6 +513,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
             });
           }
         }
+
+        public void windowDeactivated(final WindowEvent e) {
+          if (!isModal()) {
+            myFocusTrackback.consume();
+          }
+        }
       });
 
       super.show();
@@ -527,6 +533,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     public void dispose() {
+      if (isShowing()) {
+        hide();
+      }
+
       if (myWindowListener != null) {
         myWindowListener.saveSize();
         removeWindowListener(myWindowListener);
