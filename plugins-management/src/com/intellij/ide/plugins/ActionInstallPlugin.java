@@ -37,9 +37,15 @@ public class ActionInstallPlugin extends AnAction {
 
     if (enabled) {
       for (IdeaPluginDescriptor descr : selection) {
+        presentation.setText(IdeBundle.message("action.download.and.install.plugin"));
+        presentation.setDescription(IdeBundle.message("action.download.and.install.plugin"));
         if (descr instanceof PluginNode) {
           int status = PluginManagerColumnInfo.getRealNodeState((PluginNode)descr);
           enabled &= status != PluginNode.STATUS_DOWNLOADED;
+          if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
+            presentation.setText(updateMessage);
+            presentation.setDescription(updateMessage);
+          }
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {
           presentation.setText(updateMessage);
