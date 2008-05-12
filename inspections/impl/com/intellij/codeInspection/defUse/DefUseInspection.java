@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.defUse;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SideEffectWarningDialog;
@@ -217,6 +218,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       final PsiElement psiInitializer = descriptor.getPsiElement();
       if (!(psiInitializer instanceof PsiExpression)) return;
       if (!(psiInitializer.getParent() instanceof PsiVariable)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(psiInitializer.getContainingFile())) return;
 
       final PsiVariable variable = (PsiVariable)psiInitializer.getParent();
       final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
