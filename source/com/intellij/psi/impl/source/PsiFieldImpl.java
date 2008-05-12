@@ -198,8 +198,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         return getInitializerText() != null;
       }
       catch (InitializerTooLongException e) {
-        getNode();
-        return hasInitializer();
+        return true;
       }
     }
 
