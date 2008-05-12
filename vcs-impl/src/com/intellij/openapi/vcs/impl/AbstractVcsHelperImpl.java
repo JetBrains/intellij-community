@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
@@ -85,11 +85,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
 
-  public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final FilePath path) {
-    showFileHistory(vcsHistoryProvider, null, path);
+  public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final FilePath path, final AbstractVcs vcs,
+                              final String repositoryPath) {
+    showFileHistory(vcsHistoryProvider, null, path, repositoryPath, vcs);
   }
 
-  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path) {
+  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path,
+                              final String repositoryPath, final AbstractVcs vcs) {
     try {
       VcsHistorySession session = vcsHistoryProvider.createSessionFor(path);
       if (session == null) return;
@@ -101,7 +103,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject).getContentManager();
 
       FileHistoryPanelImpl fileHistoryPanel =
-        new FileHistoryPanelImpl(myProject, path, session, vcsHistoryProvider, annotationProvider, contentManager);
+        new FileHistoryPanelImpl(myProject, path, repositoryPath, session, vcsHistoryProvider, annotationProvider, contentManager,
+                                 vcs.getCommittedChangesProvider());
       Content content = ContentFactory.SERVICE.getInstance().createContent(fileHistoryPanel, actionName, true);
       ContentsUtil.addOrReplaceContent(contentManager, content, true);
 

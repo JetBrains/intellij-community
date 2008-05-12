@@ -66,7 +66,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(someVFile);
     assert activeVcs != null;
     VcsHistoryProvider vcsHistoryProvider = getProvider(activeVcs);
-    AbstractVcsHelper.getInstance(project).showFileHistory(vcsHistoryProvider, activeVcs.getAnnotationProvider(), path);
+    AbstractVcsHelper.getInstance(project).showFileHistory(vcsHistoryProvider, activeVcs.getAnnotationProvider(), path, null, activeVcs);
   }
 
 

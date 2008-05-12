@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ChangeBrowserSettings implements JDOMExternalizable {
+  @NonNls public static final String HEAD = "HEAD";
+
   public interface Filter {
     boolean accepts(CommittedChangeList change);
   }
@@ -91,7 +93,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   public Long getChangeBeforeFilter() {
     if (USE_CHANGE_BEFORE_FILTER && CHANGE_BEFORE.length() > 0) {
-      if (CHANGE_BEFORE.equals("HEAD")) return null;
+      if (HEAD.equals(CHANGE_BEFORE)) return null;
       return Long.parseLong(CHANGE_BEFORE);      
     }
     return null;

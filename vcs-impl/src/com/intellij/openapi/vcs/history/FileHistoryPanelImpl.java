@@ -31,6 +31,8 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -78,7 +80,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements FileHistoryPanel {
+public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends ChangeBrowserSettings> extends PanelWithActionsAndCloseButton implements FileHistoryPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
 
   private final JEditorPane myComments;
@@ -88,10 +90,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private final VcsHistoryProvider myProvider;
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
+  private CommittedChangesProvider<S, U> myCommittedChangesProvider;
   private final FilePath myFilePath;
   private final DualView myDualView;
 
   private final Alarm myUpdateAlarm;
+
+  private final String myRepositoryPath;
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
 
@@ -217,14 +222,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
 
   public FileHistoryPanelImpl(Project project,
-                              FilePath filePath,
-                              VcsHistorySession session,
+                              FilePath filePath, final String repositoryPath, VcsHistorySession session,
                               VcsHistoryProvider provider,
                               AnnotationProvider annotationProvider,
-                              ContentManager contentManager) {
+                              ContentManager contentManager, final CommittedChangesProvider<S, U> committedChangesProvider) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
     myProvider = provider;
     myAnnotationProvider = annotationProvider;
+    myCommittedChangesProvider = committedChangesProvider;
+    myRepositoryPath = repositoryPath;
     myProject = project;
     myHistorySession = session;
     myFilePath = filePath;
@@ -578,7 +584,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     else {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     }
-    result.add(new CreatePatchFromChangesAction());
+    result.add(new CreatePatchFromChangesAction() {
+      public void update(final AnActionEvent e) {
+        e.getPresentation().setVisible(true);
+        // in order to do not load changes only for action update
+        final int selectionSize = getSelection().size();
+        e.getPresentation().setEnabled((selectionSize > 0) && (selectionSize < 3));
+      }
+    });
     result.add(new MyGetVersionAction());
     result.add(new MyAnnotateAction());
     AnAction[] additionalActions = getHistoryProvider().getAdditionalActions(this);
@@ -919,28 +932,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return getSelectedRevisions();
     }
     else if (VcsDataKeys.CHANGES.getName().equals(dataId)) {
-      final VcsFileRevision[] revisions = getSelectedRevisions();
-
-      if (revisions.length > 0) {
-        for (VcsFileRevision revision : revisions) {
-          if (! myHistorySession.isContentAvailable(revision)) {
-            return null;
-          }
-        }
-
-        Arrays.sort(revisions, new Comparator<VcsFileRevision>() {
-          public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
-            return o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
-          }
-        });
-
-        final ContentRevision startRevision = new LoadedContentRevision(myFilePath, revisions[0]);
-        final ContentRevision endRevision = (revisions.length == 1) ? new CurrentContentRevision(myFilePath) :
-                                            new LoadedContentRevision(myFilePath, revisions[revisions.length - 1]);
-
-        return new Change[]{new Change(startRevision, endRevision)};
-      }
-      return null;
+      return getChanges();
     }
     else if (VcsDataConstants.VCS_VIRTUAL_FILE.equals(dataId)) {
       if (firstSelectedRevision == null) return null;
@@ -967,6 +959,67 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     else {
       return super.getData(dataId);
     }
+  }
+
+  @Nullable
+  private Change[] getChanges() {
+    final VcsFileRevision[] revisions = getSelectedRevisions();
+
+    if (revisions.length > 0) {
+      Arrays.sort(revisions, new Comparator<VcsFileRevision>() {
+        public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
+          return o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
+        }
+      });
+
+      for (VcsFileRevision revision : revisions) {
+        if (! myHistorySession.isContentAvailable(revision)) {
+          return loadChanges(revisions);
+        }
+      }
+
+      final ContentRevision startRevision = new LoadedContentRevision(myFilePath, revisions[0]);
+      final ContentRevision endRevision = (revisions.length == 1) ? new CurrentContentRevision(myFilePath) :
+                                          new LoadedContentRevision(myFilePath, revisions[revisions.length - 1]);
+
+      return new Change[]{new Change(startRevision, endRevision)};
+    }
+    return null;
+  }
+
+  @Nullable
+  private Change[] loadChanges(final VcsFileRevision[] revisions) {
+    final List<S> lists;
+    try {
+      lists = myCommittedChangesProvider.getCommittedChanges(createSettingsForRequest(revisions),
+          myCommittedChangesProvider.getLocationFor(myFilePath, myRepositoryPath), myCommittedChangesProvider.getUnlimitedCountValue());
+    }
+    catch (VcsException e) {
+      LOG.error(e);
+      return null;
+    }
+
+    final List<Change> result = new ArrayList<Change>();
+    for (CommittedChangeList list : lists) {
+      result.addAll(list.getChanges());
+    }
+    return result.toArray(new Change[result.size()]);
+  }
+
+  private U createSettingsForRequest(final VcsFileRevision[] revisions) {
+    final U settings = myCommittedChangesProvider.createDefaultSettings();
+
+    settings.USE_DATE_AFTER_FILTER = false;
+    settings.USE_USER_FILTER = false;
+    settings.USE_DATE_BEFORE_FILTER = false;
+
+    settings.USE_CHANGE_BEFORE_FILTER = true;
+    settings.USE_CHANGE_AFTER_FILTER = true;
+
+    settings.CHANGE_AFTER = revisions[0].getRevisionNumber().asString();
+    settings.CHANGE_BEFORE = (revisions.length == 1) ? ChangeBrowserSettings.HEAD : revisions[1].getRevisionNumber().asString();
+
+    return settings;
   }
 
   private static class LoadedContentRevision implements ContentRevision {
@@ -1034,7 +1087,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return ((TreeNodeOnVcsRevision)selection.get(index)).myRevision;
   }
 
-  class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRevision, DualTreeElement {
+  static class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRevision, DualTreeElement {
     private final VcsFileRevision myRevision;
 
     public TreeNodeOnVcsRevision(VcsFileRevision revision, List<TreeItem<VcsFileRevision>> roots) {

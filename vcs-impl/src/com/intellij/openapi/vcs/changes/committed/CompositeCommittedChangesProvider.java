@@ -59,6 +59,10 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return null;
   }
 
+  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
+    return getLocationFor(root);
+  }
+
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
                                                        RepositoryLocation location, final int maxCount) throws VcsException {
     throw new UnsupportedOperationException();
@@ -78,6 +82,10 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       }
     }
     return columns.toArray(new ChangeListColumn[columns.size()]);
+  }
+
+  public int getUnlimitedCountValue() {
+    throw new UnsupportedOperationException();
   }
 
   public static class CompositeChangeBrowserSettings extends ChangeBrowserSettings {
