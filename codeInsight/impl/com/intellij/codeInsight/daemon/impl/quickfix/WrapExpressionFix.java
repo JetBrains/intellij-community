@@ -27,7 +27,7 @@ public class WrapExpressionFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    final PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
+    final PsiMethod wrapper = myExpression.isValid() ? findWrapper(myExpression.getType(), myExpectedType) : null;
     final String methodPresentation = wrapper != null ? (wrapper.getContainingClass().getName() + "." + wrapper.getName()) : "";
     return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
   }
