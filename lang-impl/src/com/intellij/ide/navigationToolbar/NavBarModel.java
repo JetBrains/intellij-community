@@ -88,13 +88,16 @@ public class NavBarModel {
       return updateModel(psiElement);
     }
     else {
-      final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
-      if (module != null) {
-        if (size() == 1 && getElement(0) == module) { //no need to update
+      Object moduleOrProject = LangDataKeys.MODULE.getData(dataContext);
+      if (moduleOrProject == null) {
+        moduleOrProject = LangDataKeys.PROJECT.getData(dataContext);
+      }
+      if (moduleOrProject != null) {
+        if (size() == 1 && getElement(0) == moduleOrProject) { //no need to update
           return false;
         }
         removeAllElements();
-        addElement(module);
+        addElement(moduleOrProject);
       }
     }
     return true;
