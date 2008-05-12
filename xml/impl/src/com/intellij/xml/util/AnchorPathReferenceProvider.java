@@ -24,7 +24,7 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);
     final String elementText = psiElement.getText();
     int offset = getOffset(psiElement, range.getStartOffset(), elementText);
-    if (offset == -1) {
+    if (offset == -1 || offset >= elementText.length()) {
       return false;
     }
     
