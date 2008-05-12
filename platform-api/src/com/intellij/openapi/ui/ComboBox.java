@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -54,6 +56,39 @@ public class ComboBox extends ComboBoxWithWidePopup {
     super(model);
     myMinimumAndPreferredWidth = minimumAndPreferredWidth;
     registerCancelOnEscape();
+
+    addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        if (!UIUtil.isUnderNativeMacLookAndFeel()) return;
+
+        if (!isShowing() || !isEditable() || getEditor() == null || !isPopupVisible()) return;
+
+        reconfigureEditor();
+      }
+    });
+  }
+
+  public void setPopupVisible(final boolean v) {
+    boolean wasVisible = isPopupVisible();
+
+    super.setPopupVisible(v);
+
+    if (v && !wasVisible && !UIUtil.isUnderNativeMacLookAndFeel()) {
+      reconfigureEditor();
+    }
+
+  }
+
+  private void reconfigureEditor() {
+    if (isEditable() && getEditor() != null) {
+
+      final Object editorItem = getEditor().getItem();
+      final Object selection = getSelectedItem();
+
+      if (editorItem == null || !editorItem.equals(selection)) {
+        configureEditor(getEditor(), getSelectedItem());
+      }
+    }
   }
 
   public ComboBox(final Object[] items, final int preferredWidth) {
@@ -75,32 +110,28 @@ public class ComboBox extends ComboBoxWithWidePopup {
   }
 
   private void registerCancelOnEscape() {
-    registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          final DialogWrapperDialog dialogWrapperDialog = getParentDialog(ComboBox.this);
-          final DialogWrapper dialogWrapper = dialogWrapperDialog == null ? null : dialogWrapperDialog.getDialogWrapper();
+    registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final DialogWrapperDialog dialogWrapperDialog = getParentDialog(ComboBox.this);
+        final DialogWrapper dialogWrapper = dialogWrapperDialog == null ? null : dialogWrapperDialog.getDialogWrapper();
 
-          if (isPopupVisible()) {
-            setPopupVisible(false);
+        if (isPopupVisible()) {
+          setPopupVisible(false);
+        }
+        else {
+          //noinspection HardCodedStringLiteral
+          final Object clientProperty = getClientProperty("tableCellEditor");
+          if (clientProperty instanceof CellEditor) {
+            // If combo box is inside editable table then we need to cancel editing
+            // and do not close heavy weight dialog container (if any)
+            ((CellEditor)clientProperty).cancelCellEditing();
           }
-          else {
-            //noinspection HardCodedStringLiteral
-            final Object clientProperty = getClientProperty("tableCellEditor");
-            if(clientProperty instanceof CellEditor){
-              // If combo box is inside editable table then we need to cancel editing
-              // and do not close heavy weight dialog container (if any)
-              ((CellEditor)clientProperty).cancelCellEditing();
-            }
-            else if (dialogWrapper != null) {
-              dialogWrapper.doCancelAction();
-            }
+          else if (dialogWrapper != null) {
+            dialogWrapper.doCancelAction();
           }
         }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-      JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-    );
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   public final void setEditor(final ComboBoxEditor editor) {
@@ -148,38 +179,37 @@ public class ComboBox extends ComboBoxWithWidePopup {
       myComboBox = comboBox;
       myDelegate = delegate;
       if (myDelegate != null) {
-        myDelegate.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(final ActionEvent e) {
-              if (myComboBox.isPopupVisible()) {
-                myComboBox.setPopupVisible(false);
+        myDelegate.addActionListener(new ActionListener() {
+          public void actionPerformed(final ActionEvent e) {
+            if (myComboBox.isPopupVisible()) {
+              myComboBox.setPopupVisible(false);
+            }
+            else {
+              //noinspection HardCodedStringLiteral
+              final Object clientProperty = myComboBox.getClientProperty("tableCellEditor");
+              if (clientProperty instanceof CellEditor) {
+                // If combo box is inside editable table then we need to cancel editing
+                // and do not close heavy weight dialog container (if any)
+                ((CellEditor)clientProperty).stopCellEditing();
               }
               else {
-                //noinspection HardCodedStringLiteral
-                final Object clientProperty = myComboBox.getClientProperty("tableCellEditor");
-                if(clientProperty instanceof CellEditor){
-                  // If combo box is inside editable table then we need to cancel editing
-                  // and do not close heavy weight dialog container (if any)
-                  ((CellEditor)clientProperty).stopCellEditing();
-                }
-                else{
-                  myComboBox.setSelectedItem(getItem());
-                  final JRootPane rootPane = myComboBox.getRootPane();
-                  if (rootPane != null) {
-                    final JButton button = rootPane.getDefaultButton();
-                    if (button != null) {
-                      button.doClick();
-                    }
+                myComboBox.setSelectedItem(getItem());
+                final JRootPane rootPane = myComboBox.getRootPane();
+                if (rootPane != null) {
+                  final JButton button = rootPane.getDefaultButton();
+                  if (button != null) {
+                    button.doClick();
                   }
                 }
               }
             }
           }
-        );
+        });
       }
     }
 
-    public void addActionListener(final ActionListener l) {}
+    public void addActionListener(final ActionListener l) {
+    }
 
     public Component getEditorComponent() {
       if (myDelegate != null) {
@@ -199,7 +229,8 @@ public class ComboBox extends ComboBoxWithWidePopup {
       }
     }
 
-    public void removeActionListener(final ActionListener l) {}
+    public void removeActionListener(final ActionListener l) {
+    }
 
     public void selectAll() {
       if (myDelegate != null) {

@@ -442,6 +442,15 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderAquaLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().indexOf("Mac OS X") >= 0;
+  }
+
+  public static boolean isUnderNativeMacLookAndFeel() {
+    return isUnderAquaLookAndFeel() || isUnderQuaquaLookAndFeel();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void removeQuaquaVisualMarginsIn(Component component) {
     if (component instanceof JComponent) {
       final JComponent jComponent = (JComponent)component;
