@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
 import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
+import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
@@ -131,6 +132,9 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
         TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
         GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
         registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, -1);
+
+        GroovyAddImportsPassFactory addImportsPassFactory = project.getComponent(GroovyAddImportsPassFactory.class);
+        registrar.registerTextEditorHighlightingPass(addImportsPassFactory, new int[]{Pass.POPUP_HINTS}, null, true, -1);
 
         WolfTheProblemSolver.getInstance(project).registerFileHighlightFilter(new Condition<VirtualFile>() {
           public boolean value(VirtualFile virtualFile) {
