@@ -6,6 +6,6 @@ import com.intellij.openapi.help.HelpManager;
 
 public class HelpTopicsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    HelpManager.getInstance().invokeHelp("");
+    HelpManager.getInstance().invokeHelp("top");
   }
 }
