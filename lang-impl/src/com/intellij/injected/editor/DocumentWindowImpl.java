@@ -109,6 +109,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     String hostText = myDelegate.getText();
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       offset -= myPrefixes[i].length();
+      if (offset < 0) return lineNumber;
       RangeMarker currentRange = myRelevantRangesInHostDocument[i];
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
       String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());

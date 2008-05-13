@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -190,8 +191,20 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         highlightInjectedIn(injectedPsi, annotationHolder);
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         for (Annotation annotation : annotationHolder) {
-          HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation);
-          TextRange textRange = documentWindow.getHostRange(highlightInfo.startOffset);
+          final TextRange fixedTextRange;
+          final int startOffset = annotation.getStartOffset();
+          TextRange textRange = documentWindow.getHostRange(startOffset);
+          if (textRange == null) {
+            // todo[cdr] check this fix. prefix/suffix code annotation case
+            textRange = findNearestTextRange(documentWindow, startOffset);
+            final boolean isBefore = startOffset < textRange.getStartOffset();
+            fixedTextRange = new TextRange(isBefore ? textRange.getStartOffset() - 1 : textRange.getEndOffset(),
+                                           isBefore ? textRange.getStartOffset() : textRange.getEndOffset() + 1);
+          }
+          else {
+            fixedTextRange = null;
+          }
+          final HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation, fixedTextRange);
           synchronized (myInjectedPsiHighlights) {
             Collection<HighlightInfo> infos = myInjectedPsiHighlights.get(textRange);
             if (infos == null) {
@@ -204,6 +217,18 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         return true;
       }
     }, "Highlight injected language fragments");
+  }
+
+  // finds the first nearest text range
+  private static TextRange findNearestTextRange(final DocumentWindow documentWindow, final int startOffset) {
+    TextRange textRange = null;
+    for (RangeMarker marker : documentWindow.getHostRanges()) {
+      TextRange curRange = InjectedLanguageUtil.toTextRange(marker);
+      if (curRange.getStartOffset() > startOffset && textRange != null) break;
+      textRange = curRange;
+    }
+    assert textRange != null;
+    return textRange;
   }
 
   private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder) {

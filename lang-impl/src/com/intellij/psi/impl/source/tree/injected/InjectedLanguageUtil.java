@@ -246,14 +246,17 @@ public class InjectedLanguageUtil {
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     final StringBuilder catLeafs = new StringBuilder();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
-      int currentHostNum = 0;
+      int currentHostNum = -1;
       LeafElement prevElement;
       String prevElementTail;
       int prevHostsCombinedLength = 0;
-      TextRange shredHostRange = new ProperTextRange(TextRange.from(shreds.get(0).prefix.length(), shreds.get(0).getRangeInsideHost().getLength()));
-      TextRange rangeInsideHost = shreds.get(currentHostNum).getRangeInsideHost();
-      String hostText = shreds.get(currentHostNum).host.getText();
-      PsiLanguageInjectionHost.Shred shred = shreds.get(currentHostNum);
+      TextRange shredHostRange;
+      TextRange rangeInsideHost;
+      String hostText;
+      PsiLanguageInjectionHost.Shred shred;
+      {
+        incHostNum(0);
+      }
 
       protected boolean visitNode(TreeElement element) {
         return true;
@@ -263,32 +266,38 @@ public class InjectedLanguageUtil {
         String leafText = leaf.getText();
         catLeafs.append(leafText);
         TextRange range = leaf.getTextRange();
-        int prefixLength = shredHostRange.getStartOffset();
-        if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
-          //LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
-          //          "However, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
-          //          "Parsed text is '"+leaf.getText()+"'");
-        }
-        if (range.getStartOffset() < shredHostRange.getEndOffset() && shredHostRange.getEndOffset() < range.getEndOffset()) {
-          //LOG.error("Suffix must not contain text that will be glued with the element body after parsing. " +
-          //          "However, parsed element of "+leaf.getClass()+" contains "+(range.getEndOffset()-shredHostRange.getEndOffset()) + " characters from the suffix. " +
-          //          "Parsed text is '"+leaf.getText()+"'");
-        }
+        int prefixLength;
+        int start;
+        int end;
+        int startOffsetInHost;
+        while (true) {
+          prefixLength = shredHostRange.getStartOffset();
+          if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
+            //LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
+            //          "However, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
+            //          "Parsed text is '"+leaf.getText()+"'");
+          }
+          if (range.getStartOffset() < shredHostRange.getEndOffset() && shredHostRange.getEndOffset() < range.getEndOffset()) {
+            //LOG.error("Suffix must not contain text that will be glued with the element body after parsing. " +
+            //          "However, parsed element of "+leaf.getClass()+" contains "+(range.getEndOffset()-shredHostRange.getEndOffset()) + " characters from the suffix. " +
+            //          "Parsed text is '"+leaf.getText()+"'");
+          }
 
-        int start = range.getStartOffset() - prevHostsCombinedLength;
-        if (start < prefixLength) return;
-        int end = range.getEndOffset() - prevHostsCombinedLength;
-        if (end > shred.range.getEndOffset() - shred.suffix.length() && end <= shred.range.getEndOffset()) return;
-        int startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
-
-        if (startOffsetInHost == -1 || startOffsetInHost == rangeInsideHost.getEndOffset()) {
-          // no way next leaf might stand more than one shred apart
-          incHostNum(range.getStartOffset());
           start = range.getStartOffset() - prevHostsCombinedLength;
+          if (start < prefixLength) return;
+          end = range.getEndOffset() - prevHostsCombinedLength;
+          if (end > shred.range.getEndOffset() - shred.suffix.length() && end <= shred.range.getEndOffset()) return;
           startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
-          assert startOffsetInHost != -1;
-        }
 
+          if (startOffsetInHost == -1 || startOffsetInHost == rangeInsideHost.getEndOffset()) {
+            // no way next leaf might stand more than one shred apart
+            incHostNum(range.getStartOffset());
+            start = range.getStartOffset() - prevHostsCombinedLength;
+            startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
+            assert startOffsetInHost != -1;
+          }
+          else break;
+        }
         String leafEncodedText = "";
         while (true) {
           if (range.getEndOffset() <= shred.range.getEndOffset()) {

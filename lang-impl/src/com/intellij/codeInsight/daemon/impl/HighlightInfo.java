@@ -277,20 +277,28 @@ public class HighlightInfo {
                              type.getSeverity(element), false, Boolean.FALSE);
   }
 
+
+
   public static HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
+    return fromAnnotation(annotation, null);
+  }
+
+  public static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange) {
     TextAttributes attributes = annotation.getEnforcedTextAttributes();
     if (attributes == null) {
       attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(annotation.getTextAttributes());
     }
-    HighlightInfo info = new HighlightInfo(attributes, convertType(annotation), annotation.getStartOffset(),
-                                           annotation.getEndOffset(), annotation.getMessage(), annotation.getTooltip(),
+    HighlightInfo info = new HighlightInfo(attributes, convertType(annotation),
+                                           fixedRange != null? fixedRange.getStartOffset() : annotation.getStartOffset(),
+                                           fixedRange != null? fixedRange.getEndOffset() : annotation.getEndOffset(),
+                                           annotation.getMessage(), annotation.getTooltip(),
                                            annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
     info.setGutterIconRenderer(annotation.getGutterIconRenderer());
     info.isFileLevelAnnotation = annotation.isFileLevelAnnotation();
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
-        QuickFixAction.registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.key);
+        QuickFixAction.registerQuickFixAction(info, fixedRange != null? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.key);
       }
     }
     return info;
