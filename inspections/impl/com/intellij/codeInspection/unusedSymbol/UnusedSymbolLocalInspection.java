@@ -37,15 +37,14 @@ import java.util.List;
  * Date: 17-Feb-2006
  */
 public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
-  public static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
+  private static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
     "javax.annotation.Resource", "javax.ejb.EJB", "javax.xml.ws.WebServiceRef", "javax.persistence.PersistenceContext",
     "javax.persistence.PersistenceUnit", "javax.persistence.GeneratedValue")));
 
-  public static List<String> ANNOTATIONS = null;
+  private static List<String> ANNOTATIONS = null;
 
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
-  @NonNls public static final String ID = HighlightInfoType.UNUSED_SYMBOL_ID;
 
   public boolean LOCAL_VARIABLE = true;
   public boolean FIELD = true;
@@ -75,7 +74,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   @NotNull
   @NonNls
   public String getID() {
-    return ID;
+    return HighlightInfoType.UNUSED_SYMBOL_ID;
   }
 
   public boolean isEnabledByDefault() {
@@ -139,7 +138,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       INJECTION_ANNOS, qualifiedName, context);
   }
 
-  public static List<String> getRegisteredAnnotations() {
+  private static List<String> getRegisteredAnnotations() {
     if (ANNOTATIONS == null) {
       ANNOTATIONS = new ArrayList<String>();
       for (Object extension : Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL)) {
@@ -153,7 +152,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   }
 
   public static boolean isInjected(final PsiModifierListOwner modifierListOwner, final UnusedSymbolLocalInspection unusedSymbolInspection) {
-    if (modifierListOwner instanceof PsiMethod && !PropertyUtil.isSimplePropertySetter(((PsiMethod)modifierListOwner))) {
+    if (modifierListOwner instanceof PsiMethod && !PropertyUtil.isSimplePropertySetter((PsiMethod)modifierListOwner)) {
       return AnnotationUtil.isAnnotated(modifierListOwner, getRegisteredAnnotations()) ||
              AnnotationUtil.isAnnotated(modifierListOwner, unusedSymbolInspection.INJECTION_ANNOS);
     }

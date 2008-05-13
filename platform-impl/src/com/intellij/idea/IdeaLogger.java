@@ -87,11 +87,11 @@ public class IdeaLogger extends Logger {
     }
     String detailString = "";
     for (String detail : details) {
-      detailString += (detail + "\n");
+      detailString += detail + "\n";
     }
 
     if (ourErrorsOccurred == null) {
-      String s = ((message != null) && (message.length() > 0)) ? "Error message is '" + message + "'" : "";
+      String s = message != null && message.length() > 0 ? "Error message is '" + message + "'" : "";
       String mess = "Logger errors occurred. See IDEA logs for details. " + s;
       ourErrorsOccurred = new Exception(mess + (detailString.length() > 0 ? "\nDetails: " + detailString : ""), t);
     }

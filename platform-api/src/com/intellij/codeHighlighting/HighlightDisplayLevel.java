@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class HighlightDisplayLevel {
   private static final Icon EMPTY = new EmptyIcon(12, 12);
-  private static Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<HighlightSeverity, HighlightDisplayLevel>();
+  private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<HighlightSeverity, HighlightDisplayLevel>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
                                                                                                         createIconByMask(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING.getDefaultAttributes().getErrorStripeColor())); 
@@ -80,15 +80,15 @@ public class HighlightDisplayLevel {
     }
   }
 
-  private static Image ourErrorMaskImage;
+  private static class ImageHolder {
+    private static final Image ourErrorMaskImage = ImageLoader.loadFromResource("/general/errorMask.png");
+  }
 
   public static Icon createIconByMask(final Color renderColor) {
-    if (ourErrorMaskImage == null) ourErrorMaskImage = ImageLoader.loadFromResource("/general/errorMask.png");
-
     return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2 = (Graphics2D)g;
-        g2.drawImage(ourErrorMaskImage, 1, 1, renderColor, null);
+        g2.drawImage(ImageHolder.ourErrorMaskImage, 1, 1, renderColor, null);
       }
 
 
