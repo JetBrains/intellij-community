@@ -15,10 +15,13 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Helper class that can compute the prefix and suffix of an expression inside a binary (usually additive) expression
@@ -27,39 +30,12 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see org.intellij.plugins.intelliLang.util.SubstitutedExpressionEvaluationHelper
  */
-public class ContextComputationProcessor implements PsiElementProcessor<PsiElement> {
+public class ContextComputationProcessor {
 
-  private final PsiExpression myElement;
   private final SubstitutedExpressionEvaluationHelper myEvaluationHelper;
 
-  private final StringBuilder prefix = new StringBuilder();
-  private StringBuilder suffix;
-  private StringBuilder buf = prefix;
-
-  private ContextComputationProcessor(PsiExpression element) {
-    myEvaluationHelper = new SubstitutedExpressionEvaluationHelper();
-    myElement = element;
-  }
-
-  public boolean execute(PsiElement e) {
-    if (e == myElement) {
-      buf = suffix = new StringBuilder();
-    }
-    else if (e instanceof PsiExpression) {
-      final Object s = myEvaluationHelper.computeSimpleExpression((PsiExpression)e);
-      if (s != null) {
-        buf.append(String.valueOf(s));
-      }
-    }
-    return true;
-  }
-
-  public void getPrefix(StringBuilder prefix) {
-    prefix.append(this.prefix);
-  }
-
-  public void getSuffix(StringBuilder suffix) {
-    if (this.suffix != null) suffix.append(this.suffix);
+  private ContextComputationProcessor(final Project project) {
+    myEvaluationHelper = new SubstitutedExpressionEvaluationHelper(project);
   }
 
   private static PsiElement getContext(PsiElement place) {
@@ -74,22 +50,53 @@ public class ContextComputationProcessor implements PsiElementProcessor<PsiEleme
     return parent instanceof PsiBinaryExpression || parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression;
   }
 
-  /**
-   * Computes the prefix/suffix for an element.
-   *
-   * @param place the expression to compute the prefix/suffix for
-   * @return the processor instance that the prefix/suffix canbe obtained from, or null if the values cannot
-   *         be determined
-   */
-  @Nullable
-  public static ContextComputationProcessor calcContext(PsiElement place) {
-    PsiElement parent = getContext(place);
+  public static List<Object> collectOperands(final PsiExpression place, final String prefix, final String suffix) {
+    final PsiElement parent = getContext(place);
+    final ArrayList<Object> result = new ArrayList<Object>();
+    addStringFragment(prefix, result);
+    new ContextComputationProcessor(place.getProject()).collectOperands(parent, result);
+    addStringFragment(suffix, result);
+    return result;
+  }
 
-    if (parent instanceof PsiBinaryExpression) {
-      final ContextComputationProcessor processor = new ContextComputationProcessor((PsiExpression)place);
-      PsiTreeUtil.processElements(parent, processor);
-      return processor;
+  private static void addStringFragment(final String string, final List<Object> result) {
+    if (StringUtil.isEmpty(string)) return;
+    final int size = result.size();
+    final Object last = size > 0? result.get(size -1) : null;
+    if (last instanceof String) {
+      result.set(size - 1, last + string);
     }
-    return null;
+    else {
+      result.add(string);
+    }
+  }
+
+  @NotNull
+  public List<Object> collectOperands(final PsiElement expression, final List<Object> result) {
+    //final PsiType type = expression instanceof PsiExpression ? ((PsiExpression)expression).getType() : null;
+    final PsiElement firstChild;
+    if (expression instanceof PsiParenthesizedExpression) {
+      collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result);
+    }
+    else if (expression instanceof PsiTypeCastExpression) {
+      collectOperands(((PsiTypeCastExpression)expression).getOperand(), result);
+    }
+    else if (expression instanceof PsiBinaryExpression &&
+             ((PsiBinaryExpression)expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
+      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      collectOperands(binaryExpression.getLOperand(), result);
+      collectOperands(binaryExpression.getROperand(), result);
+    }
+    else if (expression instanceof PsiLanguageInjectionHost &&
+             (firstChild = expression.getFirstChild()) instanceof PsiJavaToken &&
+             ((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.STRING_LITERAL) {
+      result.add(expression);
+    }
+    else {
+      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeSimpleExpression((PsiExpression)expression) : null;
+      if (o == null) result.add(expression);
+      else addStringFragment(String.valueOf(o), result);
+    }
+    return result;
   }
 }

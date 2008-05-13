@@ -17,33 +17,32 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.*;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.xml.util.XmlUtil;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.config.Injection;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This is the main part of the injection code. The component registers a language injector, the reference provider that
@@ -68,14 +67,13 @@ public final class CustomLanguageInjector implements ProjectComponent {
   }
 
   public void initComponent() {
-    PsiManager.getInstance(myProject).registerLanguageInjector(new MyLanguageInjector(this));
+    InjectedLanguageManager.getInstance(myProject).registerMultiHostInjector(new MyLanguageInjector(this));
     ReferenceProvidersRegistry.getInstance(myProject)
         .registerReferenceProvider(TrueFilter.INSTANCE, PsiLiteralExpression.class, new LanguageReferenceProvider());
   }
 
 
-  @Nullable
-  List<Pair<InjectedLanguage, TextRange>> getInjectedLanguage(PsiElement place) {
+  private void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     synchronized (myTempPlaces) {
       for (Iterator<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> it = myTempPlaces.iterator(); it.hasNext();) {
         final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair = it.next();
@@ -84,12 +82,8 @@ public final class CustomLanguageInjector implements ProjectComponent {
           it.remove();
         }
         else if (element == place) {
-          if (element instanceof XmlAttributeValue || element instanceof PsiLiteralExpression) {
-            return Collections.singletonList(Pair.create(pair.second, TextRange.from(1, element.getTextLength() - 2)));
-          }
-          else {
-            return Collections.singletonList(Pair.create(pair.second, TextRange.from(0, element.getTextLength())));
-          }
+          processor.process(pair.second.getLanguage(), Collections.singletonList(Trinity.create(element, pair.second, ElementManipulators.getManipulator(element).getRangeInElement(element))));
+          return;
         }
       }
     }
@@ -97,40 +91,55 @@ public final class CustomLanguageInjector implements ProjectComponent {
     final PsiElement child = place.getFirstChild();
     if (child != null && child instanceof PsiJavaToken) {
       if (((PsiJavaToken)child).getTokenType() == JavaTokenType.STRING_LITERAL) {
-        final PsiLiteralExpression psiExpression = (PsiLiteralExpression)place;
+        final PsiLiteralExpression firstLiteral = (PsiLiteralExpression)place;
 
-        final List<Pair<InjectedLanguage, TextRange>> list = getAnnotationInjections(psiExpression, place);
-        if (list != null) {
-          return list;
-        }
-
-        final List<MethodParameterInjection> injections = myInjectionConfiguration.getParameterInjections();
-        for (MethodParameterInjection injection : injections) {
-          if (injection.isApplicable(psiExpression)) {
-            return convertInjection(injection, psiExpression);
+        if (!processAnnotationInjections(firstLiteral, processor)) {
+          final List<MethodParameterInjection> injections = myInjectionConfiguration.getParameterInjections();
+          for (MethodParameterInjection injection : injections) {
+            if (injection.isApplicable(firstLiteral)) {
+              processInjectionWithContext(firstLiteral, injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), processor);
+              return;
+            }
           }
         }
       }
     }
-    else if (place instanceof XmlText) {
-      final XmlText xmlText = (XmlText)place;
-
-      List<Pair<InjectedLanguage, TextRange>> list = null;
-      for (XmlTagInjection injection : myInjectionConfiguration.getTagInjections()) {
-        if (injection.isApplicable(xmlText)) {
-          final List<Pair<InjectedLanguage, TextRange>> l = convertInjection(injection, xmlText);
-          if (list == null) {
-            list = l;
-          }
-          else {
-            list = addInjections(list, l);
+    else if (place instanceof XmlTag) {
+      final XmlTag xmlTag = (XmlTag)place;
+      for (final XmlTagInjection injection : myInjectionConfiguration.getTagInjections()) {
+        if (injection.isApplicable(xmlTag)) {
+          final Ref<Boolean> hasSubTags = Ref.create(Boolean.FALSE);
+          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+          xmlTag.acceptChildren(new PsiElementVisitor() {
+            @Override
+            public void visitElement(final PsiElement element) {
+              if (element instanceof XmlText) {
+                if (element.getTextLength() == 0) return;
+                final List<TextRange> list = injection.getInjectedArea((XmlText)element);
+                final InjectedLanguage l = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+                for (TextRange textRange : list) {
+                  result.add(Trinity.create((PsiLanguageInjectionHost)element, l, textRange));
+                }
+              }
+              else if (element instanceof XmlTag) {
+                hasSubTags.set(Boolean.TRUE);
+                if (injection.isApplyToSubTagTexts()) {
+                  element.acceptChildren(this);
+                }
+              }
+            }
+          });
+          if (!result.isEmpty()) {
+            final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+            if (language == null) continue;
+            result.get(0).first.putUserData(MultiHostInjector.HAS_UPARSABLE_FRAGMENTS, hasSubTags.get());
+            processor.process(language, result);
           }
           if (injection.isTerminal()) {
             break;
           }
         }
       }
-      return list;
     }
     else if (place instanceof XmlAttributeValue) {
       final XmlAttributeValue value = (XmlAttributeValue)place;
@@ -142,55 +151,32 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
       // Actually IDEA shouldn't ask for injected languages at all in this case.
       final PsiElement[] children = value.getChildren();
-      if (children.length < 3 ||
-          !(children[1] instanceof XmlToken) ||
+      if (children.length < 3 || !(children[1] instanceof XmlToken) ||
           ((XmlToken)children[1]).getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-        return null;
+        return;
       }
 
-      List<Pair<InjectedLanguage, TextRange>> list = null;
       for (XmlAttributeInjection injection : myInjectionConfiguration.getAttributeInjections()) {
         if (injection.isApplicable(value)) {
-          final List<Pair<InjectedLanguage, TextRange>> l = convertInjection(injection, value);
-          if (list == null) {
-            list = l;
+          final List<TextRange> ranges = injection.getInjectedArea(value);
+          if (ranges.isEmpty()) continue;
+          final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+          if (language == null) continue;
+          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+          final InjectedLanguage l = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+          for (TextRange textRange : ranges) {
+            result.add(Trinity.create((PsiLanguageInjectionHost)value, l, textRange));
           }
-          else {
-            list = addInjections(list, l);
-          }
+          processor.process(language, result);
           if (injection.isTerminal()) {
             break;
           }
         }
       }
-      return list;
     }
-    return null;
   }
 
-  private static List<Pair<InjectedLanguage, TextRange>> addInjections(List<Pair<InjectedLanguage, TextRange>> list,
-                                                                       List<Pair<InjectedLanguage, TextRange>> l) {
-    // check whether different injections intersect with each other, which must not happen
-    for (Iterator<Pair<InjectedLanguage, TextRange>> it = l.iterator(); it.hasNext();) {
-      final Pair<InjectedLanguage, TextRange> p1 = it.next();
-      for (Pair<InjectedLanguage, TextRange> p2 : list) {
-        if (p1.second.intersects(p2.second)) {
-          it.remove();
-          break;
-        }
-      }
-    }
-    if (!l.isEmpty()) {
-      if (!(list instanceof ArrayList)) {
-        list = new ArrayList<Pair<InjectedLanguage, TextRange>>(list);
-      }
-      list.addAll(l);
-    }
-    return list;
-  }
-
-  @Nullable
-  private List<Pair<InjectedLanguage, TextRange>> getAnnotationInjections(PsiLiteralExpression psiExpression, PsiElement place) {
+  private boolean processAnnotationInjections(final PsiExpression psiExpression, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     final PsiModifierListOwner element =
         AnnotationUtilEx.getAnnotatedElementFor(psiExpression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
     if (element != null) {
@@ -201,44 +187,48 @@ public final class CustomLanguageInjector implements ProjectComponent {
         final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
         final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
 
-        return getInjectionWithContext(place, id, prefix, suffix);
+        processInjectionWithContext(psiExpression, id, prefix, suffix, processor);
+        return true;
       }
     }
-    return null;
+    return false;
   }
 
-  private static List<Pair<InjectedLanguage, TextRange>> getInjectionWithContext(PsiElement place,
-                                                                                 String langId,
-                                                                                 String prefix,
-                                                                                 String suffix) {
-    final ContextComputationProcessor processor = ContextComputationProcessor.calcContext(place);
-    if (processor != null) {
-      final StringBuilder p = new StringBuilder();
-      final StringBuilder s = new StringBuilder();
-
-      p.append(prefix);
-      processor.getPrefix(p);
-      processor.getSuffix(s);
-      s.append(suffix);
-
-      return Collections.singletonList(
-          Pair.create(InjectedLanguage.create(langId, p.toString(), s.toString(), true), TextRange.from(1, place.getTextLength() - 2)));
+  private static void processInjectionWithContext(final PsiExpression place,
+                                                  final String langId,
+                                                  final String prefix,
+                                                  final String suffix,
+                                                  final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+    final List<Object> objects = ContextComputationProcessor.collectOperands(place, prefix, suffix);
+    if (objects.isEmpty()) return;
+    final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+    boolean hasUnparsableParts = false;
+    final boolean dynamic = !objects.isEmpty();
+    final int len = objects.size();
+    for (int i = 0; i < len; i++) {
+      String curPrefix = null;
+      String curSuffix = null;
+      PsiLanguageInjectionHost curHost = null;
+      Object o = objects.get(i);
+      if (o instanceof String) {
+        curPrefix = (String)o;
+        o = objects.get(++i);
+      }
+      if (o instanceof PsiLanguageInjectionHost) {
+        curHost = (PsiLanguageInjectionHost)o;
+        if (i == len-2) {
+          final Object next = objects.get(i + 1);
+          if (next instanceof String) {
+            i ++;
+            curSuffix = (String)next;
+          }
+        }
+      }
+      if (curHost == null) hasUnparsableParts = true;
+      else list.add(Trinity.create(curHost, InjectedLanguage.create(langId, curPrefix, curSuffix, dynamic), ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
     }
-    else {
-      return Collections
-          .singletonList(Pair.create(InjectedLanguage.create(langId, "", "", false), TextRange.from(1, place.getTextLength() - 2)));
-    }
-  }
-
-  private static <T extends PsiElement> List<Pair<InjectedLanguage, TextRange>> convertInjection(Injection<T> injection, T element) {
-    final List<TextRange> list = injection.getInjectedArea(element);
-    if (list.size() == 0) {
-      return Collections.emptyList();
-    }
-    else if (list.size() == 1 && element instanceof PsiLiteralExpression) {
-      return getInjectionWithContext(element, injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix());
-    }
-    return ContainerUtil.map2List(list, new InjectionConverter<T>(injection));
+    place.putUserData(MultiHostInjector.HAS_UPARSABLE_FRAGMENTS, hasUnparsableParts? Boolean.TRUE : Boolean.FALSE);
+    processor.process(InjectedLanguage.findLanguageById(langId), list);
   }
 
   public void disposeComponent() {
@@ -264,76 +254,87 @@ public final class CustomLanguageInjector implements ProjectComponent {
     }
   }
 
-  private static class InjectionConverter<T extends PsiElement> implements Function<TextRange, Pair<InjectedLanguage, TextRange>> {
-    private final Injection<T> myInjection;
-
-    public InjectionConverter(Injection<T> injection) {
-      myInjection = injection;
-    }
-
-    public Pair<InjectedLanguage, TextRange> fun(TextRange s) {
-      final InjectedLanguage l =
-          InjectedLanguage.create(myInjection.getInjectedLanguageId(), myInjection.getPrefix(), myInjection.getSuffix(), false);
-      return Pair.create(l, s);
-    }
-  }
-
-  private static class MyLanguageInjector implements com.intellij.psi.LanguageInjector {
+  private static class MyLanguageInjector implements MultiHostInjector {
     private CustomLanguageInjector myInjector;
 
     MyLanguageInjector(CustomLanguageInjector injector) {
-      this.myInjector = injector;
+      myInjector = injector;
     }
 
-    public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-      final List<Pair<InjectedLanguage, TextRange>> lang = myInjector.getInjectedLanguage(host);
-      if (lang != null) {
-        for (Pair<InjectedLanguage, TextRange> pair : lang) {
-          final InjectedLanguage l = pair.first;
-          if (l != null) {
-            final Language language = l.getLanguage();
-            // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
-            // Maybe IDEA core is caching a bit too aggressively here?
-            if (language != null/* && (pair.second.getLength() > 0*/) {
-              if (l.isDynamic()) {
-                // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
-                // useful cases may break. This system is far from perfect still...
-                final StringBuilder prefix = new StringBuilder(l.getPrefix());
-                final StringBuilder suffix = new StringBuilder(l.getSuffix());
-                adjustPrefixAndSuffix(getUnescapedText(host, pair.second.substring(host.getText())), prefix, suffix);
 
-                addPlaceSafe(injectionPlacesRegistrar, language, pair.second, prefix.toString(), suffix.toString());
+    @NotNull
+    public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+      return Arrays.asList(XmlTag.class, PsiLiteralExpression.class, XmlAttributeValue.class);
+    }
+
+    public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
+      final TreeSet<TextRange> ranges = new TreeSet<TextRange>(new Comparator<TextRange>() {
+        public int compare(final TextRange o1, final TextRange o2) {
+          if (o1.intersects(o2)) return 0;
+          return o1.getStartOffset() - o2.getStartOffset();
+        }
+      });
+      myInjector.getInjectedLanguage(host, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
+        public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
+          // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
+          // Maybe IDEA core is caching a bit too aggressively here?
+          if (language != null/* && (pair.second.getLength() > 0*/) {
+            try {
+              // do not handle overlapping injections
+              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> pair : list) {
+                if (ranges.contains(pair.third)) return true;
               }
-              else {
-                addPlaceSafe(injectionPlacesRegistrar, language, pair.second, l.getPrefix(), l.getSuffix());
+              registrar.startInjecting(language);
+              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> pair : list) {
+                final PsiLanguageInjectionHost host = pair.first;
+                final TextRange textRange = pair.third;
+                final InjectedLanguage injectedLanguage = pair.second;
+                ranges.add(textRange);
+                if (injectedLanguage.isDynamic()) {
+                  // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
+                  // useful cases may break. This system is far from perfect still...
+                  final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
+                  final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
+                  adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
+
+                  addPlaceSafe(registrar, language, host, textRange, prefix.toString(), suffix.toString());
+                }
+                else {
+                  addPlaceSafe(registrar, language, host, textRange, injectedLanguage.getPrefix(), injectedLanguage.getSuffix());
+                }
               }
             }
+            finally {
+              registrar.doneInjecting();
+            }
           }
+          return true;
         }
-      }
+      });
     }
 
-    private static void addPlaceSafe(InjectedLanguagePlaces registrar,
+    private static void addPlaceSafe(MultiHostRegistrar registrar,
                                      Language language,
+                                     PsiLanguageInjectionHost host,
                                      TextRange textRange,
                                      String prefix,
                                      String suffix) {
       try {
-        registrar.addPlace(language, textRange, prefix, suffix);
+        registrar.addPlace(prefix, suffix, host, textRange);
       }
       catch (AssertionError e) {
-        logError(registrar, language, textRange, e);
+        logError(language, host, textRange, e);
       }
       catch (Exception e) {
-        logError(registrar, language, textRange, e);
+        logError(language, host, textRange, e);
       }
     }
 
-    private static void logError(InjectedLanguagePlaces registrar, Language language, TextRange textRange, Throwable e) {
+    private static void logError(Language language, PsiLanguageInjectionHost host, TextRange textRange, Throwable e) {
       final Logger log = Logger.getInstance(CustomLanguageInjector.class.getName());
-      final String place = registrar.toString() +
+      final String place = host.toString() +
                            ": [" +
-                           (registrar instanceof PsiElement ? ((PsiElement)registrar).getText() : "<n/a>") +
+                           (host.getText()) +
                            " - " +
                            textRange +
                            "]";
@@ -341,7 +342,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
                e);
     }
 
-    private static String getUnescapedText(PsiLanguageInjectionHost host, String text) {
+    private static String getUnescapedText(final PsiElement host, final String text) {
       if (host instanceof PsiLiteralExpression) {
         return StringUtil.unescapeStringCharacters(text);
       }

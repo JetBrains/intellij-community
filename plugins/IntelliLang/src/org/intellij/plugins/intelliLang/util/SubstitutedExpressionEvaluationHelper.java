@@ -16,10 +16,11 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.util.SmartList;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -36,8 +37,8 @@ public class SubstitutedExpressionEvaluationHelper {
   private final PsiConstantEvaluationHelper myHelper;
   private final Configuration myConfiguration;
 
-  public SubstitutedExpressionEvaluationHelper() {
-    myHelper = new PsiConstantEvaluationHelperImpl(); // TODO: where's this one gone?
+  public SubstitutedExpressionEvaluationHelper(final Project project) {
+    myHelper = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
     myConfiguration = Configuration.getInstance();
   }
 
@@ -81,7 +82,7 @@ public class SubstitutedExpressionEvaluationHelper {
         }
       }
     }
-    return null;
+    return myHelper.computeConstantExpression(e);
   }
 
   /**
@@ -92,11 +93,11 @@ public class SubstitutedExpressionEvaluationHelper {
    * @return the computed value, or null if the expression isn't compile time constant and not susbtituted
    */
   @Nullable
-  public static String computeExpression(final PsiExpression e, @Nullable List<PsiExpression> nonConstant) {
+  public static String computeExpression(@NotNull final PsiExpression e, @Nullable List<PsiExpression> nonConstant) {
     final StringBuilder builder = new StringBuilder();
     final List<PsiExpression> list = nonConstant != null ? nonConstant : new SmartList<PsiExpression>();
     final PsiElementVisitor processor = new JavaRecursiveElementVisitor() {
-      SubstitutedExpressionEvaluationHelper helper = new SubstitutedExpressionEvaluationHelper();
+      SubstitutedExpressionEvaluationHelper helper = new SubstitutedExpressionEvaluationHelper(e.getProject());
 
       @Override
       public void visitConditionalExpression(PsiConditionalExpression expression) {
