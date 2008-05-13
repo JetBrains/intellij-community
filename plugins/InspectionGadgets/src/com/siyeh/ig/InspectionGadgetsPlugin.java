@@ -657,6 +657,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerVisibilityInspections() {
+        m_inspectionClasses.add(AmbiguousMethodCallInspection.class);
         m_inspectionClasses.add(AnonymousClassVariableHidesContainingMethodVariableInspection.class);
         m_inspectionClasses.add(ClassEscapesItsScopeInspection.class);
         m_inspectionClasses.add(FieldHidesSuperclassFieldInspection.class);
