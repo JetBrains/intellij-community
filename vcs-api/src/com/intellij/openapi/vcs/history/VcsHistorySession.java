@@ -22,7 +22,7 @@ import java.util.List;
 
 public abstract class VcsHistorySession {
   private final List<VcsFileRevision> myRevisions;
-  private VcsRevisionNumber myCachedRevisionNumber;
+  private volatile VcsRevisionNumber myCachedRevisionNumber;
 
   public VcsHistorySession(List<VcsFileRevision> revisions) {
     myRevisions = revisions;
@@ -46,7 +46,7 @@ public abstract class VcsHistorySession {
   @Nullable
   protected abstract VcsRevisionNumber calcCurrentRevisionNumber();
 
-  public synchronized final VcsRevisionNumber getCurrentRevisionNumber(){
+  public final VcsRevisionNumber getCurrentRevisionNumber() {
     return myCachedRevisionNumber;
   }
 
