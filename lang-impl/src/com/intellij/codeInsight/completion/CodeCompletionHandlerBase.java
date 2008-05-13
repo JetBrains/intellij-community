@@ -250,7 +250,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return false;
     if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return true;
 
-    if (policy == AutoCompletionPolicy.SETTINGS_DEPENDENT && !isAutocompleteOnInvocation()) return false;
+    if (!isAutocompleteOnInvocation()) return false;
 
     if (context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) return false;
     if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;

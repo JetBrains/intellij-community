@@ -1,15 +1,23 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.WeighingComparable;
 import com.intellij.psi.WeighingService;
+import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import org.jetbrains.annotations.NonNls;
+
+import javax.swing.*;
 
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public static final Key<WeighingComparable<LookupElement<?>, CompletionLocation>> PRESELECT_WEIGHT = Key.create("PRESELECT_WEIGHT");
+  @NonNls public static final String SELECTED = "selected";
+  @NonNls public static final String IGNORED = "ignored";
   private final CompletionParameters myParameters;
   private final CompletionLocation myLocation;
 
@@ -18,16 +26,28 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     myLocation = new CompletionLocation(myParameters.getCompletionType(), prefix, myParameters);
   }
 
-  public CompletionType getCompletionType() {
-    return myParameters.getCompletionType();
-  }
-
   public void setPrefix(String prefix) {
     myLocation.setPrefix(prefix);
   }
 
-  public void itemSelected(LookupItem item) {
-    StatisticsManager.getInstance().incUseCount(CompletionService.STATISTICS_KEY, item, myLocation);
+  public void itemSelected(LookupItem item, final Lookup lookup) {
+    final StatisticsManager manager = StatisticsManager.getInstance();
+    manager.incUseCount(CompletionService.STATISTICS_KEY, item, myLocation);
+    final LookupImpl lookupImpl = (LookupImpl)lookup;
+    final ListModel model = lookupImpl.getList().getModel();
+    final int count = Math.min(lookupImpl.getPreferredItemsCount(), lookupImpl.getList().getSelectedIndex());
+    for (int i = 0; i < count; i++) {
+      final LookupElement element = (LookupElement)model.getElementAt(i);
+      StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
+      if (info != null && manager.getUseCount(info) == 0) {
+        manager.incUseCount(new StatisticsInfo(composeContextWithValue(info), item == element ? SELECTED : IGNORED));
+      }
+    }
+
+  }
+
+  public static String composeContextWithValue(final StatisticsInfo info) {
+    return info.getContext() + "###" + info.getValue();
   }
 
   public Comparable[] getWeight(final LookupItem<?> item) {

@@ -3,8 +3,8 @@ package com.intellij.testFramework;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +56,19 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
 
   public LightVirtualFile(final String name, final Language language, final CharSequence text) {
     myName = name;
-    final Language typeLanguage = language instanceof LanguageDialect? ((LanguageDialect)language).getBaseLanguage() : language;
+    myContent = text;
+    myModStamp = LocalTimeCounter.currentTime();
+    setLanguage(language);
+  }
+
+  public Language getLanguage() {
+    return myLanguage;
+  }
+
+  public void setLanguage(final Language language) {
+    myLanguage = language;
+    myFileType = null;
+    final Language typeLanguage = language instanceof LanguageDialect ? language.getBaseLanguage() : language;
     for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == typeLanguage) {
         myFileType = fileType;
@@ -64,14 +76,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
       }
     }
     if (myFileType == null) myFileType = language.getAssociatedFileType();
-    if (myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
-    myContent = text;
-    myModStamp = LocalTimeCounter.currentTime();
-    myLanguage = language;
-  }
-
-  public Language getLanguage() {
-    return myLanguage;
+    if (myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(myName);
   }
 
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {

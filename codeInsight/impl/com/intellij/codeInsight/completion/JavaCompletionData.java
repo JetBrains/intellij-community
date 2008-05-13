@@ -518,16 +518,28 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       registerVariant(variant);
     }
 
+    final AndFilter startSwitch = new AndFilter(END_OF_BLOCK, new LeftNeighbour(
+          new AndFilter(new TextFilter("{"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2))));
     {
       final CompletionVariant variant = new CompletionVariant(
         new AndFilter(
           END_OF_BLOCK,
+          new NotFilter(startSwitch),
           new OrFilter(
             new ParentElementFilter(new ClassFilter(PsiSwitchLabelStatement.class)),
             new LeftNeighbour(new OrFilter(
               new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2),
               new AndFilter(new TextFilter(";", "}", ":"),new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 3)
               ))))));
+      variant.includeScopeClass(PsiElement.class, false);
+      variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
+      variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);
+      variant.addCompletionFilter(TrueFilter.INSTANCE);
+      registerVariant(variant);
+    }
+
+    {
+      final CompletionVariant variant = new CompletionVariant(startSwitch);
       variant.includeScopeClass(PsiElement.class, true);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
       variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class StatisticsManager implements SettingsSavingComponent {
+  public static final int OBLIVION_THRESHOLD = 7;
   private static final KeyedExtensionCollector<Statistician,Key> COLLECTOR = new KeyedExtensionCollector<Statistician, Key>("com.intellij.statistician") {
     protected String keyToString(final Key key) {
       return key.toString();
@@ -31,7 +32,7 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
   };
 
   @Nullable
-  private static <T,Loc> StatisticsInfo serialize(Key<? extends Statistician<T,Loc>> key, T element, Loc location) {
+  public static <T,Loc> StatisticsInfo serialize(Key<? extends Statistician<T,Loc>> key, T element, Loc location) {
     for (final Statistician<T,Loc> statistician : COLLECTOR.forKey(key)) {
       final StatisticsInfo info = statistician.serialize(element, location);
       if (info != null) return info;

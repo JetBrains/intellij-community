@@ -18,6 +18,8 @@ public class ExcludeSillyAssignment implements ElementFilter {
     final PsiAssignmentExpression expression = PsiTreeUtil.getParentOfType(context, PsiAssignmentExpression.class, false, PsiClass.class);
     if (expression == null) return true;
 
+    if (PsiTreeUtil.getParentOfType(context, PsiExpressionList.class, false, PsiAssignmentExpression.class) != null) return true;
+
     final PsiExpression left = expression.getLExpression();
     return !(left instanceof PsiReference) || !((PsiReference)left).isReferenceTo((PsiElement)element);
   }

@@ -575,8 +575,8 @@ public class InjectedLanguageUtil {
           clear();
           throw new IllegalStateException("Seems you haven't called doneInjecting()");
         }
-        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-        if (parserDefinition == null) {
+
+        if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
           throw new UnsupportedOperationException("Cannot inject language '" + language + "' since its getParserDefinition() returns null");
         }
         myLanguage = language;
@@ -661,10 +661,12 @@ public class InjectedLanguageUtil {
           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
           assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1;
           assert myHostPsiFile.getText().equals(myHostDocument.getText());
-          
+
           DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
           final Language baseLanguage = myLanguage instanceof LanguageDialect ? myLanguage.getBaseLanguage() : myLanguage;
           VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(baseLanguage, myHostVirtualFile, documentWindow, outChars);
+          myLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject);
+          virtualFile.setLanguage(myLanguage instanceof LanguageDialect ? myLanguage.getBaseLanguage() : myLanguage);
 
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);

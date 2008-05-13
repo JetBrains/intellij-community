@@ -1,6 +1,7 @@
 package com.intellij.psi.statistics.impl;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.psi.statistics.StatisticsManager;
 import gnu.trove.THashMap;
 
 import java.io.*;
@@ -9,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 
 class StatisticsUnit {
-  public static final int CHUNK_COUNT = 7;
   private static final int FORMAT_VERSION_NUMBER = 5;
 
   private final int myNumber;
@@ -37,7 +37,7 @@ class StatisticsUnit {
       myDataMap.put(key1, list = new ArrayList<String>());
     }
     list.add(key2);
-    if (list.size() > CHUNK_COUNT) {
+    if (list.size() > StatisticsManager.OBLIVION_THRESHOLD) {
       list.remove(0);
     }
   }

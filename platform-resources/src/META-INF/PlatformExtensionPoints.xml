@@ -25,9 +25,6 @@
   <extensionPoint name="fileTypeFactory"
                   interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
-  <extensionPoint name="lang.languageProvider"
-                  interface="com.intellij.lang.LanguageProvider"/>
-
   <extensionPoint name="keymapExtension"
                   interface="com.intellij.openapi.keymap.KeymapExtension"/>
 

@@ -214,11 +214,10 @@ public class PsiViewerDialog extends DialogWrapper {
           final HashSet<LanguageDialect> result = new HashSet<LanguageDialect>();
           result.add(null);
           for (Language dialect : Language.getRegisteredLanguages()) {
-            if (dialect instanceof LanguageDialect && dialect.getBaseLanguage() == lang) {
+            if (dialect.getBaseLanguage() == lang) {
               result.add((LanguageDialect)dialect);
             }
           }
-          result.addAll(lang.getAvailableLanguageDialects());
           model.setAll(result);
         }
         break;

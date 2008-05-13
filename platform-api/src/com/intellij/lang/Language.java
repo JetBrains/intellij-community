@@ -21,10 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -115,11 +112,6 @@ public abstract class Language {
 
   public void associateFileType(FileType type) {
     myFileType = type;
-  }
-
-  @NotNull
-  public Collection<? extends LanguageDialect> getAvailableLanguageDialects() {
-    return Collections.emptyList();
   }
 
   @Nullable

@@ -127,7 +127,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList = new JList(new DefaultListModel());
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
-    myList.setMinimumSize(new Dimension(50, 1));
+    myList.setFixedCellWidth(50);
 
     for (final LookupItem item : items) {
       addItem(item);
@@ -552,7 +552,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     if (item != null && myItemPreferencePolicy != null){
-      myItemPreferencePolicy.itemSelected(item);
+      myItemPreferencePolicy.itemSelected(item, this);
     }
 
     if (!myListeners.isEmpty()){

@@ -5,11 +5,9 @@ import com.intellij.ProjectTopics;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.LanguageProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
@@ -138,21 +136,12 @@ public class FileManagerImpl implements FileManager {
   }
 
   @Nullable
-  public Language getLanguage(final VirtualFile file) {
-    Language language = null;
-    final LanguageProvider[] providers = Extensions.getExtensions(LanguageProvider.EP_NAME);
-    for (LanguageProvider provider : providers) {
-      language = provider.getLanguage(file, myManager.getProject());
-      if (language != null)
-        break;
+  private Language getLanguage(final VirtualFile file) {
+    final FileType fileType = file.getFileType();
+    if (fileType instanceof LanguageFileType) {
+      return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, myManager.getProject());
     }
-    if (language == null) {
-      final FileType fileType = file.getFileType();
-      if (fileType instanceof LanguageFileType) {
-        language = ((LanguageFileType)fileType).getLanguage();
-      }
-    }
-    return language;
+    return null;
   }
 
   public void runStartupActivity() {
