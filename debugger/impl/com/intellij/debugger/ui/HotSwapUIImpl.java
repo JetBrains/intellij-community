@@ -38,6 +38,10 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
 
   private final CompilationStatusListener myListener = new CompilationStatusListener() {
     public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      
       if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
         for (HotSwapVetoableListener listener : myListeners) {
           if (!listener.shouldHotSwap(compileContext)) {
