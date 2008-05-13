@@ -69,6 +69,12 @@ public class ApplyPatchAction extends AnAction {
 
   public static void applyPatch(final Project project, final List<? extends FilePatch> patches,
                                 final ApplyPatchContext context, final LocalChangeList targetChangeList) {
+    applyPatch(project, patches, context, targetChangeList, null);
+  }
+
+  public static void applyPatch(final Project project, final List<? extends FilePatch> patches,
+                                final ApplyPatchContext context, final LocalChangeList targetChangeList,
+                                final IndirectlyModifiedPathsGetter indirectGetter) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
     if (!prepareFiles(project, patches, context, filesToMakeWritable)) {
       return;
@@ -79,7 +85,7 @@ public class ApplyPatchAction extends AnAction {
       return;
     }
     applyFilePatches(project, patches, context);
-    moveChangesToList(project, context.getAffectedFiles(), targetChangeList);
+    moveChangesToList(project, context.getAffectedFiles(), targetChangeList, indirectGetter);
   }
 
   public static ApplyPatchStatus applyFilePatches(final Project project, final List<? extends FilePatch> patches,
@@ -272,6 +278,11 @@ public class ApplyPatchAction extends AnAction {
   }
 
   public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList) {
+    moveChangesToList(project, files, targetChangeList, null);
+  }
+
+  public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList,
+                                       final IndirectlyModifiedPathsGetter indirectGetter) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (targetChangeList != changeListManager.getDefaultChangeList()) {
       changeListManager.invokeAfterUpdate(new Runnable() {
@@ -283,10 +294,19 @@ public class ApplyPatchAction extends AnAction {
               changes.add(change);
             }
           }
+
+          if (indirectGetter != null) {
+            indirectGetter.appendPaths(changeListManager, changes);
+          }
+
           changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
         }
       });
     }
+  }
+
+  public interface IndirectlyModifiedPathsGetter {
+    void appendPaths(final ChangeListManager changeListManager, final List<Change> changes);
   }
 
   private static class ApplyPatchMergeRequestFactory implements PatchMergeRequestFactory {

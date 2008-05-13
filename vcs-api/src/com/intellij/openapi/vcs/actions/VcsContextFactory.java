@@ -67,6 +67,16 @@ public interface VcsContextFactory {
   FilePath createFilePathOn(File file, boolean isDirectory);
 
   /**
+   * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses
+   * {@link DirectoryDetector#isDirectory()} to determine if the file is a directory.
+   *
+   * @param file the file for which the FilePath should be created.
+   * @param detector - called to get to know whether the file is directory, if local file is not found
+   * @return the FilePath instance.
+   */
+  FilePath createFilePathOn(final File file, final DirectoryDetector detector);
+
+  /**
    * Creates a FilePath corresponding to the specified path in a VCS repository. Does not try to locate
    * the file in the local filesystem.
    *

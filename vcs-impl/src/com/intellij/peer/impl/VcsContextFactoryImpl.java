@@ -1,17 +1,19 @@
 package com.intellij.peer.impl;
 
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.actions.VcsContextWrapper;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.actions.DirectoryDetector;
+import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -40,6 +42,20 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
     return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
       public FilePath compute() {
         return FilePathImpl.create(file);
+      }
+    });
+  }
+
+  public FilePath createFilePathOn(final File file, final DirectoryDetector detector) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
+      public FilePath compute() {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+        if (virtualFile != null) {
+          // detector information (loaded here lazily) is not needed - we have real file
+          return FilePathImpl.create(file);
+        }
+
+        return FilePathImpl.create(file, detector.isDirectory());
       }
     });
   }
