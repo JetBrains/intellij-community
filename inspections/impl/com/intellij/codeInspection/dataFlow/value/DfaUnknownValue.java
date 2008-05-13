@@ -9,13 +9,11 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 public class DfaUnknownValue extends DfaValue {
-  private static volatile DfaUnknownValue myInstance;
-
+  private static class DfaUnknownValueHolder {
+    private static final DfaUnknownValue myInstance = new DfaUnknownValue();
+  }
   public static DfaUnknownValue getInstance() {
-    if (myInstance == null) {
-      myInstance = new DfaUnknownValue();
-    }
-    return myInstance;
+    return DfaUnknownValueHolder.myInstance;
   }
 
   private DfaUnknownValue() {

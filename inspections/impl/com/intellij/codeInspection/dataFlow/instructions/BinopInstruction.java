@@ -75,7 +75,7 @@ public class BinopInstruction extends BranchingInstruction {
           states.add(new DfaInstructionState(next, trueCopy));
         }
 
-        final DfaMemoryState falseCopy = memState;
+        DfaMemoryState falseCopy = memState;
         if (falseCopy.applyCondition(dfaRelation.createNegated())) {
           falseCopy.push(factory.getConstFactory().getFalse());
           setFalseReachable();
@@ -114,7 +114,6 @@ public class BinopInstruction extends BranchingInstruction {
         }
         memState.push(DfaUnknownValue.getInstance());
       }
-
     }
     else {
       memState.push(DfaUnknownValue.getInstance());
