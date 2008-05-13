@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 
 /**
  * @author yole
@@ -37,7 +38,7 @@ import java.io.IOException;
 class SvnContentRevision implements ContentRevision {
   private final SvnVcs myVcs;
   protected final FilePath myFile;
-  private String myContent = null;
+  private SoftReference<String> myContent;
   private final SVNRevision myRevision;
   private boolean myUseBaseRevision;
 
@@ -64,18 +65,21 @@ class SvnContentRevision implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    if (myContent == null) {
+    SoftReference<String> ref = myContent;
+    String content = ref == null ? null : ref.get();
+    if (content == null) {
       try {
-        final byte[] content = getUpToDateBinaryContent();
-        if (content != null) {
-          myContent = new String(content, myFile.getCharset().name());
+        final byte[] byteContent = getUpToDateBinaryContent();
+        if (byteContent != null) {
+          content = new String(byteContent, myFile.getCharset().name());
+          myContent = new SoftReference<String>(content);
         }
       }
       catch(Exception ex) {
         throw new VcsException(ex);
       }
     }
-    return myContent;
+    return content;
   }
 
   @Nullable
