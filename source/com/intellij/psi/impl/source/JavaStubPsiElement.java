@@ -191,6 +191,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   public void subtreeChanged() {
     final CompositeElement compositeElement = calcTreeElement();
     if (compositeElement != null) compositeElement.clearCaches();
+    super.subtreeChanged();
   }
 
   @NotNull

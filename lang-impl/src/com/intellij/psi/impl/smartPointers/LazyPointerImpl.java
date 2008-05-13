@@ -49,7 +49,7 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
       myPointer = setupPointer(element);
     }
     else {
-      myAnchor = new PsiAnchor(element);
+      myAnchor = PsiAnchor.create(element);
     }
   }
 

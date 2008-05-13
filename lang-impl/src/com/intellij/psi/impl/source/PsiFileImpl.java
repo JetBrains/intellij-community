@@ -2,25 +2,35 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.StubElement;
@@ -43,7 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFileEx, PsiFileWithStubSupport {
+public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, PsiElement, Cloneable, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
 
   private IElementType myElementType;
@@ -52,7 +62,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
-  private final Object myStubLock = new Object();
+  private final Object myStubLock = PsiLock.LOCK;
   private WeakReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
   protected volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
@@ -155,10 +165,12 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
     synchronized (myStubLock) {
       FileElement treeElement = (FileElement)_getTreeElement();
       if (treeElement != null) return treeElement;
-      if (getViewProvider().isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
-        LOG.error("Access to tree elements not allowed in tests." + getViewProvider().getVirtualFile().getPresentableUrl());
-      }
+
       final FileViewProvider viewProvider = getViewProvider();
+      if (viewProvider.isPhysical() && myManager.isAssertOnFileLoading(viewProvider.getVirtualFile())) {
+        LOG.error("Access to tree elements not allowed in tests." + viewProvider.getVirtualFile().getPresentableUrl());
+      }
+
       // load document outside lock for better performance
       final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
       //synchronized (PsiLock.LOCK) {
@@ -170,7 +182,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
       treeElement.setPsi(this);
       //}
 
-      StubTree stub = myStub != null ? myStub.get() : null;
+      StubTree stub = derefStub();
       if (stub != null) {
         final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
         stubs.next(); // Skip file stub;
@@ -185,6 +197,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
       if (LOG.isDebugEnabled() && getViewProvider().isPhysical()) {
         LOG.debug("Loaded text for file " + getViewProvider().getVirtualFile().getPresentableUrl());
       }
+
       return treeElement;
     }
   }
@@ -264,6 +277,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
     clearCaches();
     myViewProvider.beforeContentsSynchronized();
     setTreeElement(null);
+    myStub = null;
   }
 
   public void clearCaches() {}
@@ -298,15 +312,30 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
   public void subtreeChanged() {
     final FileElement tree = getTreeElement();
     if (tree != null) {
+      myTreeElementPointer = tree;
       tree.clearCaches();
     }
-    else {
-      synchronized (myStubLock) {
+
+    synchronized (myStubLock) {
+      final StubTree sTree = derefStub();
+      if (sTree != null) {
+        nullStubReferences(this);
         myStub = null;
       }
     }
+
     clearCaches();
     getViewProvider().rootChanged(this);
+  }
+
+  private static void nullStubReferences(final PsiElement psiElement) {
+    if (psiElement instanceof StubBasedPsiElementBase) {
+      ((StubBasedPsiElementBase<?>)psiElement).setStub(null);
+    }
+
+    for (PsiElement element : psiElement.getChildren()) {
+      nullStubReferences(element);
+    }
   }
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
@@ -478,7 +507,6 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
     return false;
   }
 
-  @Override
   public PsiElement getContext() {
     return FileContextUtil.getFileContext(this);
   }
@@ -524,7 +552,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
   @Nullable
   public StubTree getStubTree() {
     synchronized (myStubLock) {
-      StubTree stubHolder = myStub != null ? myStub.get() : null;
+      StubTree stubHolder = derefStub();
       if (stubHolder == null) {
         if (getTreeElement() == null) {
 
@@ -538,6 +566,11 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
       }
       return stubHolder;
     }
+  }
+
+  private StubTree derefStub() {
+    StubTree stubHolder = myStub != null ? myStub.get() : null;
+    return stubHolder;
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
@@ -566,6 +599,10 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
     }
   }
 
+  public Object getStubLock() {
+    return myStubLock;
+  }
+
   public PsiManager getManager() {
     return myManager;
   }
@@ -589,5 +626,204 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
 
       return loadTreeElement();
     }
+  }
+
+
+  @NotNull
+  public PsiElement[] getChildren() {
+    return calcTreeElement().getChildrenAsPsiElements(null, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
+  }
+
+  public PsiElement getFirstChild() {
+    return SharedImplUtil.getFirstChild(calcTreeElement());
+  }
+
+  public PsiElement getLastChild() {
+    return SharedImplUtil.getLastChild(calcTreeElement());
+  }
+
+  public void acceptChildren(@NotNull PsiElementVisitor visitor) {
+    CompositeElement treeElement = calcTreeElement();
+    TreeElement childNode = treeElement.getFirstChildNode();
+
+    TreeElement prevSibling = null;
+    while (childNode != null) {
+      if (childNode instanceof ChameleonElement) {
+      TreeElement newChild = (TreeElement)childNode.getTransformedFirstOrSelf();
+        if (newChild == null) {
+          childNode = prevSibling == null ? treeElement.getFirstChildNode() : prevSibling.getTreeNext();
+          continue;
+        }
+        childNode = newChild;
+      }
+
+      final PsiElement psi;
+      if (childNode instanceof PsiElement) {
+        psi = (PsiElement)childNode;
+      }
+      else {
+        psi = childNode.getPsi();
+      }
+      psi.accept(visitor);
+
+      prevSibling = childNode;
+      childNode = childNode.getTreeNext();
+    }
+  }
+
+  public int getStartOffsetInParent() {
+    return calcTreeElement().getStartOffsetInParent();
+  }
+  public int getTextOffset() {
+    return calcTreeElement().getTextOffset();
+  }
+
+  public boolean textMatches(@NotNull CharSequence text) {
+    return calcTreeElement().textMatches(text);
+  }
+
+  public boolean textMatches(@NotNull PsiElement element) {
+    return calcTreeElement().textMatches(element);
+  }
+
+  public boolean textContains(char c) {
+    return calcTreeElement().textContains(c);
+  }
+
+  public final PsiElement copy() {
+    return (PsiElement)clone();
+  }
+
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(element);
+    calcTreeElement().addInternal(elementCopy, elementCopy, null, null);
+    elementCopy = ChangeUtil.decodeInformation(elementCopy);
+    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+  }
+
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(element);
+    calcTreeElement().addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
+    elementCopy = ChangeUtil.decodeInformation(elementCopy);
+    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+  }
+
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(element);
+    calcTreeElement().addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
+    elementCopy = ChangeUtil.decodeInformation(elementCopy);
+    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+  }
+
+  public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+  }
+
+  public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+    return SharedImplUtil.addRange(this, first, last, null, null);
+  }
+
+  public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
+    throws IncorrectOperationException {
+    return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
+  }
+
+  public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
+    throws IncorrectOperationException {
+    return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
+  }
+
+  public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    if (first == null) {
+      LOG.assertTrue(last == null);
+      return;
+    }
+    ASTNode firstElement = SourceTreeToPsiMap.psiElementToTree(first);
+    ASTNode lastElement = SourceTreeToPsiMap.psiElementToTree(last);
+    CompositeElement treeElement = calcTreeElement();
+    LOG.assertTrue(firstElement.getTreeParent() == treeElement);
+    LOG.assertTrue(lastElement.getTreeParent() == treeElement);
+    CodeEditUtil.removeChildren(treeElement, firstElement, lastElement);
+  }
+
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    CompositeElement treeElement = calcTreeElement();
+    LOG.assertTrue(treeElement.getTreeParent() != null);
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
+    treeElement.getTreeParent().replaceChildInternal(treeElement, elementCopy);
+    elementCopy = ChangeUtil.decodeInformation(elementCopy);
+    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+  }
+
+  public PsiReference getReference() {
+    return null;
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return SharedPsiElementImplUtil.getReferences(this);
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return true;
+  }
+
+  @NotNull
+  public GlobalSearchScope getResolveScope() {
+    return ((PsiManagerEx)getManager()).getFileManager().getResolveScope(this);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
+  }
+
+  // Default implementation just to make sure it compiles.
+  public ItemPresentation getPresentation() {
+    return null;
+  }
+
+  public void navigate(boolean requestFocus) {
+    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+  }
+
+  public boolean canNavigate() {
+    return EditSourceUtil.canNavigate(this);
+  }
+
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
+
+  public FileStatus getFileStatus() {
+    if (!isPhysical()) return FileStatus.NOT_CHANGED;
+    PsiFile contFile = getContainingFile();
+    if (contFile == null) return FileStatus.NOT_CHANGED;
+    VirtualFile vFile = contFile.getVirtualFile();
+    return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
+  }
+
+  @NotNull
+  public Project getProject() {
+    final PsiManager manager = getManager();
+    if (manager == null) throw new PsiInvalidElementAccessException(this);
+
+    return manager.getProject();
+  }
+
+  public ASTNode getNode() {
+    return calcTreeElement();
+  }
+
+  public boolean isEquivalentTo(final PsiElement another) {
+    return this == another;
   }
 }

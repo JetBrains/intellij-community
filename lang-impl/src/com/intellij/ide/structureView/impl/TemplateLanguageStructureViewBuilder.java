@@ -141,7 +141,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     if (expandedElements != null) {
       for (Object element : expandedElements) {
         if (element instanceof PsiElement && ((PsiElement) element).isValid()) {
-          expanded.add(new PsiAnchor((PsiElement)element));
+          expanded.add(PsiAnchor.create((PsiElement)element));
         }
       }
     }

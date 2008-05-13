@@ -705,7 +705,7 @@ public class SystemBuilder {
     final PsiElement root = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiField.class);
 
     if (root != null) {
-      final PsiAnchor anchor = new PsiAnchor(root);
+      final PsiAnchor anchor = PsiAnchor.create(root);
 
       if (!myVisitedConstructions.contains(anchor)) {
         root.accept(new JavaRecursiveElementVisitor() {

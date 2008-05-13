@@ -3,7 +3,6 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,8 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 public class StubTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubTree");
-
   private final Key<StubTree> HARD_REF_IN_STUB = new Key<StubTree>("HARD_REF_IN_STUB");
   private final PsiFileStub myRoot;
   private final List<StubElement<?>> myPlainList = new ArrayList<StubElement<?>>();

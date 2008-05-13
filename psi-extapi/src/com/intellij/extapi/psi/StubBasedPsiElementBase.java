@@ -120,6 +120,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return SharedImplUtil.getParent(getNode());
   }
 
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    setStub(null);
+  }
+
   public PsiElement getParent() {
     return SharedImplUtil.getParent(getNode());
   }
