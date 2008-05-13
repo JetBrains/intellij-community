@@ -2,13 +2,26 @@ package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class RemoteFileUtil {
   private RemoteFileUtil() {
+  }
+
+  @Nullable
+  private static FileType getFileType(@NotNull Language language) {
+    for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == language) {
+        return fileType;
+      }
+    }
+    return language.getAssociatedFileType();
   }
 
   @Nullable
@@ -23,7 +36,10 @@ public class RemoteFileUtil {
       String[] types = language.getMimeTypes();
       for (String type : types) {
         if (type.equalsIgnoreCase(mimeType)) {
-          return language.getAssociatedFileType();
+          FileType fileType = getFileType(language);
+          if (fileType != null) {
+            return fileType;
+          }
         }
       }
     }
