@@ -523,6 +523,16 @@ public class DuplicatesFinder {
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (PsiElement child : children1) {
       if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment)) {
+        if (child instanceof PsiBlockStatement) {
+          Collections.addAll(array, getFilteredChildren(child));
+          continue;
+        } else if (child instanceof PsiCodeBlock) {
+          final PsiStatement[] statements = ((PsiCodeBlock)child).getStatements();
+          if (statements.length == 1) {
+            array.add(statements[0]);
+            continue;
+          }
+        }
         array.add(child);
       }
     }

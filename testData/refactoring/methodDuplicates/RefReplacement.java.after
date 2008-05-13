@@ -1,6 +1,6 @@
 class Test {
   static void main(Test t){
-    t.foo();
+    if (true) t.foo();
   }
 
   void foo(){}
