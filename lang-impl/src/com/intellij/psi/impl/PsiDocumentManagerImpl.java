@@ -506,7 +506,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     char[] fileText = psiFile.textToCharArray();
-    @NonNls String error = "File text mismatch after reparse. File length=" + fileText.length + "; Doc length=" + documentLength + "\n";
+    @NonNls String error = "File '" + psiFile.getName() + "' text mismatch after reparse. " +
+                           "File length=" + fileText.length + "; Doc length=" + documentLength + "\n";
     int i = 0;
     for(; i < documentLength; i++){
       if (i >= fileText.length){
