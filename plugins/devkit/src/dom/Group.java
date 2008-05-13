@@ -83,8 +83,7 @@ public interface Group extends DomElement {
 	 * @return the value of the separator child.
 	 */
 	@NotNull
-	@SubTag (value = "separator", indicator = true)
-	GenericDomValue<Boolean> getSeparator();
+	List<GenericDomValue<Boolean>> getSeparators();
 
 
 	/**
