@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.actions.DirectoryDetector;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -30,19 +31,19 @@ public class LocationDetector {
   }
 
   @Nullable
-  public FilePath crawlForPath(final String fullPath) {
+  public FilePath crawlForPath(final String fullPath, final DirectoryDetector detector) {
     for (Map.Entry<String, File> entry : myMap.entrySet()) {
       final String url = entry.getKey();
       if (SVNPathUtil.isAncestor(url, fullPath)) {
-        return filePathByUrlAndPath(fullPath, url, entry.getValue().getAbsolutePath());
+        return filePathByUrlAndPath(fullPath, url, entry.getValue().getAbsolutePath(), detector);
       }
     }
     return null;
   }
 
-  static FilePath filePathByUrlAndPath(final String longPath, final String parentUrl, final String parentPath) {
+  static FilePath filePathByUrlAndPath(final String longPath, final String parentUrl, final String parentPath, final DirectoryDetector detector) {
     final String relPath = longPath.substring(parentUrl.length());
     final File localFile = new File(parentPath, relPath);
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(localFile);
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(localFile, detector);
   }
 }

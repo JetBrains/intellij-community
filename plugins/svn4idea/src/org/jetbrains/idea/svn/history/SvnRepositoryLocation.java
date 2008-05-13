@@ -2,6 +2,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.actions.DirectoryDetector;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,18 +38,18 @@ public class SvnRepositoryLocation implements RepositoryLocation {
   }
 
   @Nullable
-  protected FilePath detectWhenNoRoot(final String fullPath) {
+  protected FilePath detectWhenNoRoot(final String fullPath, final DirectoryDetector detector) {
     return null;
   }
 
   @Nullable
-  public FilePath getLocalPath(final String fullPath) {
+  public FilePath getLocalPath(final String fullPath, final DirectoryDetector detector) {
     if (myRootFile == null) {
-      return detectWhenNoRoot(fullPath);
+      return detectWhenNoRoot(fullPath, detector);
     }
 
     if (fullPath.startsWith(myURL)) {
-      return LocationDetector.filePathByUrlAndPath(fullPath, myURL, myRootFile.getPresentableUrl());
+      return LocationDetector.filePathByUrlAndPath(fullPath, myURL, myRootFile.getPresentableUrl(), detector);
     }
     return null;
   }

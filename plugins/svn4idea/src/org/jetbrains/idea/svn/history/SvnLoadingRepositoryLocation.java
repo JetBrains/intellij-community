@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.actions.DirectoryDetector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -17,7 +18,7 @@ public class SvnLoadingRepositoryLocation extends SvnRepositoryLocation {
     locationDetector = new LocationDetector(vcs);
   }
 
-  protected FilePath detectWhenNoRoot(final String fullPath) {
-    return locationDetector.crawlForPath(fullPath);
+  protected FilePath detectWhenNoRoot(final String fullPath, final DirectoryDetector detector) {
+    return locationDetector.crawlForPath(fullPath, detector);
   }
 }
