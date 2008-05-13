@@ -28,10 +28,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.ProgressBarUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -743,25 +741,7 @@ public class UIUtil {
   }
 
   public static void disposeProgress(final JProgressBar progress) {
-    final ProgressBarUI ui = progress.getUI();
-    if (ui == null) return;
-
-    final Class<? extends ProgressBarUI> uiClass = ui.getClass();
-    if (uiClass.getName().equals("apple.laf.CUIAquaProgressBar")) {
-      try {
-        final Field animatorField = uiClass.getDeclaredField("animator");
-        animatorField.setAccessible(true);
-        final Object animator = animatorField.get(ui);
-        final Class animatorClass = animator.getClass();
-        final Field timerField = animatorClass.getDeclaredField("timer");
-        timerField.setAccessible(true);
-        final javax.swing.Timer timer = (javax.swing.Timer)timerField.get(animator);
-        timer.stop();
-      }
-      catch (Exception e) {
-        // No luck...
-      }
-    }
+    progress.setValue(progress.getMaximum());
   }
 
   public static @Nullable Component findUltimateParent(Component c) {
