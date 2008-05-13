@@ -24,6 +24,7 @@ import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -134,7 +135,8 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     final THashMap<String, String> map = new THashMap<String, String>();
     JDOMExternalizer.readMap(e, map, null, "SIGNATURES");
     for (String s : map.keySet()) {
-      myParameterMap.put(s, new MethodInfo(s, map.get(s)));
+      final String fixedSignature = fixSignature(s, false);
+      myParameterMap.put(fixedSignature, new MethodInfo(fixedSignature, map.get(s)));
     }
   }
 
@@ -146,7 +148,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     for (int i = 0; i < list.size(); i++) {
       selection[i] = Boolean.parseBoolean(list.get(i));
     }
-    final String methodSignature = JDOMExternalizer.readString(e, "METHOD");
+    final String methodSignature = fixSignature(JDOMExternalizer.readString(e, "METHOD"), false);
     myParameterMap.put(methodSignature, new MethodInfo(methodSignature, selection));
   }
 
@@ -213,6 +215,36 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
                         ? StringUtil.getShortName(className) + "." + singleInfo.methodName
                         : StringUtil.getShortName(className);
     return name + " ("+StringUtil.getPackageName(className)+")";
+  }
+
+  public static String fixSignature(final String signature, final boolean parameterNames) {
+    @NonNls final StringBuilder sb = new StringBuilder();
+    final StringTokenizer st = new StringTokenizer(signature, "(,)");
+    //noinspection ForLoopThatDoesntUseLoopVariable
+    for (int i = 0; st.hasMoreTokens(); i++) {
+      final String token = st.nextToken().trim();
+      final int idx;
+      if (i > 1) sb.append(", ");
+      if (i == 0) {
+        sb.append(token).append("(");
+      }
+      else if ((idx = token.indexOf(' ')) > -1) {
+        if (parameterNames) {
+          sb.append(token);
+        }
+        else {
+          sb.append(token.substring(0, idx));
+        }
+      }
+      else {
+        sb.append(token);
+        if (parameterNames) {
+          sb.append(' ').append('p').append(i);
+        }
+      }
+    }
+    sb.append(")");
+    return sb.toString();
   }
 
   public static class MethodInfo {

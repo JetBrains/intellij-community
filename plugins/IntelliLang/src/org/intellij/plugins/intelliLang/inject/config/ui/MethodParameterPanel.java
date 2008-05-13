@@ -17,18 +17,18 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsParameterListImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
@@ -106,13 +106,17 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
         final Object o = ((DefaultMutableTreeNode)value).getUserObject();
         setIcon(o instanceof PsiMethod ? Icons.METHOD_ICON : o instanceof PsiParameter ? Icons.PARAMETER_ICON : null);
-        final String name = o instanceof PsiMethod
-                            ? PsiFormatUtil.formatMethod((PsiMethod)o, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_NAME)
-                            : o instanceof PsiParameter
-                              ? PsiFormatUtil
-                                .formatVariable((PsiParameter)o, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY)
-                              : null;
+        final String name;
+        if (o instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)o;
+          name = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+        }
+        else if (o instanceof PsiParameter) {
+          final PsiParameter parameter = (PsiParameter)o;
+          name = PsiFormatUtil.formatVariable(parameter, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
+        }
+        else name = null;
         final boolean missing = o instanceof PsiElement && !((PsiElement)o).isPhysical();
         if (name != null) {
           append(name, missing? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -195,7 +199,9 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(myData.keySet());
     Collections.sort(methods, new Comparator<PsiMethod>() {
       public int compare(final PsiMethod o1, final PsiMethod o2) {
-        return o1.getName().compareTo(o2.getName());
+        final int names = o1.getName().compareTo(o2.getName());
+        if (names != 0) return names;
+        return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
       }
     });
     for (PsiMethod method : methods) {
@@ -263,36 +269,19 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   @NotNull
   private static String buildSignature(@NotNull PsiMethod method) {
-    final PsiParameterList list = method.getParameterList();
-    final PsiParameter[] parameters = list.getParameters();
-    final String s;
-    if (parameters.length > 0) {
-      // if there are no sources, parameter names are unknown. This trick gives the "decompiled" names
-      if (list instanceof ClsParameterListImpl && parameters[0].getName() == null) {
-        s = method.getName() + list.getText();
-      }
-      else {
-        s = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                       PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_CLASS_NAMES);
-      }
-    }
-    else {
-      s = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME, 0) + "()";
-    }
-    return s;
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                      PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES);
   }
 
   @Nullable
   private PsiMethod makeMethod(String signature) {
+    if (StringUtil.isEmpty(signature)) return null;
     try {
-      if (signature.trim().length() > 0) {
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
-        final PsiElementFactory ef = facade.getElementFactory();
-        return ef.createMethodFromText("void " + signature + "{}", null);
-      }
+      return JavaPsiFacade.getInstance(myProject).getElementFactory().
+          createMethodFromText("void " + MethodParameterInjection.fixSignature(signature, true) + "{}", null);
     }
     catch (IncorrectOperationException e) {
-      // signature is not in form NAME(TYPE NAME)
+      // something wrong
     }
     return null;
   }

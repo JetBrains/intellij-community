@@ -256,6 +256,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
   private static class MyLanguageInjector implements MultiHostInjector {
     private CustomLanguageInjector myInjector;
+    private static final Logger LOG = Logger.getInstance(CustomLanguageInjector.class.getName());
 
     MyLanguageInjector(CustomLanguageInjector injector) {
       myInjector = injector;
@@ -305,7 +306,15 @@ public final class CustomLanguageInjector implements ProjectComponent {
               }
             }
             finally {
-              registrar.doneInjecting();
+              try {
+                registrar.doneInjecting();
+              }
+              catch (AssertionError e) {
+                logError(language, host, null, e);
+              }
+              catch (Exception e) {
+                logError(language, host, null, e);
+              }
             }
           }
           return true;
@@ -330,16 +339,9 @@ public final class CustomLanguageInjector implements ProjectComponent {
       }
     }
 
-    private static void logError(Language language, PsiLanguageInjectionHost host, TextRange textRange, Throwable e) {
-      final Logger log = Logger.getInstance(CustomLanguageInjector.class.getName());
-      final String place = host.toString() +
-                           ": [" +
-                           (host.getText()) +
-                           " - " +
-                           textRange +
-                           "]";
-      log.info("Failed to inject language '" + language.getID() + "' into '" + place + "'. Possibly there are overlapping injection areas.",
-               e);
+    private static void logError(Language language, @NotNull PsiElement host, TextRange textRange, Throwable e) {
+      final String place = "[" + host.getText() + " - " + textRange + "]";
+      LOG.info("Failed to inject language '" + language.getID() + "' into '" + place + "'. Possibly there are overlapping injection areas.", e);
     }
 
     private static String getUnescapedText(final PsiElement host, final String text) {
