@@ -8,11 +8,23 @@ public class AmbiguousMethodCall {
 
         class Inner extends Y {
             {
-                m();
+                m(); // ambiguous
             }
         }
     }
     class Y {
         void m() {}
+    }
+
+    class Z {
+        void n() {}
+
+        class Inner extends Object {
+            {
+                n(); // not ambiguous
+            }
+
+            void n() {}
+        }
     }
 }

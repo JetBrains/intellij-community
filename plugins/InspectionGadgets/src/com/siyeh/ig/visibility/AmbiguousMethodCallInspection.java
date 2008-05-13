@@ -37,8 +37,11 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final PsiClass superClass = (PsiClass)infos[0];
+        final PsiClass outerClass = (PsiClass)infos[1];
         return InspectionGadgetsBundle.message(
-                "ambiguous.method.call.problem.descriptor");
+                "ambiguous.method.call.problem.descriptor",
+                superClass.getName(), outerClass.getName());
     }
 
     @Nullable
@@ -61,7 +64,7 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) parent.getParent();
             final String newExpressionText =
-                    "super." + methodCallExpression.getText();
+                    "this." + methodCallExpression.getText();
             replaceExpression(methodCallExpression, newExpressionText);
         }
     }
@@ -88,16 +91,27 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
             if (containingClass == null) {
                 return;
             }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiClass methodClass = method.getContainingClass();
+            if (!containingClass.isInheritor(methodClass, true)) {
+                return;
+            }
             containingClass = ClassUtils.getContainingClass(containingClass);
             final String methodName = methodExpression.getReferenceName();
             while (containingClass != null) {
                 final PsiMethod[] methods =
                         containingClass.findMethodsByName(methodName, false);
-                if (methods.length > 0) {
-                    registerMethodCallError(expression);
+                if (methods.length > 0 &&
+                        !methodClass.equals(containingClass)) {
+                    registerMethodCallError(expression, methodClass,
+                            containingClass);
                     return;
                 }
-                containingClass = ClassUtils.getContainingClass(containingClass);
+                containingClass =
+                        ClassUtils.getContainingClass(containingClass);
             }
         }
     }
