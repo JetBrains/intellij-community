@@ -23,11 +23,14 @@
 package com.intellij.lang.injection;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface MultiHostInjector {
+  Key<Boolean> HAS_UPARSABLE_FRAGMENTS = Key.create("HAS_UPARSABLE_FRAGMENTS");
+
   void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context);
   @NotNull
   List<? extends Class<? extends PsiElement>> elementsToInjectIn();
