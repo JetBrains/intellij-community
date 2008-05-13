@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -35,4 +37,6 @@ public interface TempDirTestFixture extends IdeaTestFixture {
   VirtualFile getFile(String path);
 
   @NotNull VirtualFile createFile(final String name);
+
+  @NotNull VirtualFile createFile(final String name, String text) throws IOException;
 }

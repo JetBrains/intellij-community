@@ -88,12 +88,12 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   private static String renderDescriptionMessage(@Nullable CommonProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     @NonNls String message = descriptor != null ? descriptor.getDescriptionTemplate().replaceAll("<[^>]*>", "") : "";
+    message = StringUtil.replace(message, "#loc", "");
     message = StringUtil.replace(message, "#ref", psiElement != null && psiElement.isValid() ? psiElement.getText() : "");
     final int endIndex = message.indexOf("#end");
     if (endIndex > 0) {
       message = message.substring(0, endIndex);
     }
-    message = StringUtil.replace(message, "#loc", "");
     message = StringUtil.unescapeXml(message);
     return message;
   }

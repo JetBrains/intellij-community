@@ -402,8 +402,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     message = StringUtil.replace(message, "</code>", "'");
     //message = message.replaceAll("<[^>]*>", "");
     String text = psiElement == null ? "" : psiElement.getText();
-    message = StringUtil.replace(message, "#ref", text);
     message = StringUtil.replace(message, "#loc", "");
+    message = StringUtil.replace(message, "#ref", text);
 
     message = StringUtil.unescapeXml(message).trim();
     return message;

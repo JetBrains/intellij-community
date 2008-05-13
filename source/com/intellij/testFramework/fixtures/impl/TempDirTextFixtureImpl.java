@@ -98,6 +98,13 @@ public class TempDirTextFixtureImpl extends BaseFixture implements TempDirTestFi
     });
   }
 
+  @NotNull
+  public VirtualFile createFile(final String name, final String text) throws IOException {
+    final VirtualFile file = createFile(name);
+    VfsUtil.saveText(file, text);
+    return file;
+  }
+
   public void setUp() throws Exception {
     super.setUp();
     createTempDirectory();
