@@ -139,6 +139,10 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         @Override
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
+            final PsiType type = expression.getType();
+            if (type == null || type.equalsToText("java.lang.String")) {
+                return;
+            }
             final PsiExpression lhs = expression.getLOperand();
             final PsiType lhsType = lhs.getType();
             if (PsiType.CHAR.equals(lhsType)) {
