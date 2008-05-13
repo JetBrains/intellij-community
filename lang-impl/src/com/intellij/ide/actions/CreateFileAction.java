@@ -37,7 +37,7 @@ public class CreateFileAction extends CreateElementActionBase {
   }
 
   @NotNull
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws IncorrectOperationException {
+  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     return new PsiElement[]{directory.createFile(newName)};
   }
 
@@ -53,7 +53,7 @@ public class CreateFileAction extends CreateElementActionBase {
     return IdeBundle.message("command.create.file");
   }
 
-  private class MyValidator extends MyInputValidator {
+  protected class MyValidator extends MyInputValidator {
     public boolean checkInput(String inputString) {
       return true;
     }

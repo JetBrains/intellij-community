@@ -92,22 +92,24 @@ public abstract class CreateElementActionBase extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
+    final boolean enabled = isAvailable(dataContext);
+
+    presentation.setVisible(enabled);
+    presentation.setEnabled(enabled);
+  }
+
+  protected boolean isAvailable(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (view == null || view.getDirectories().length == 0) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
+    return true;
   }
 
   protected static String filterMessage(String message) {
