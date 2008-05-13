@@ -28,6 +28,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A newly created program runner should be registered in a corresponding plugin.xml:
+ *
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ *   &lt;programRunner implementation="RunnerClassFQN"/&gt;
+ * &lt;/extensions&gt;
+ *
+ * @param <Settings>
+ */
 public interface ProgramRunner<Settings extends JDOMExternalizable> {
   ExtensionPointName<ProgramRunner> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
 
