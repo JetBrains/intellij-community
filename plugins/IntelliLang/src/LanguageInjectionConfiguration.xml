@@ -1,256 +1,425 @@
 <!-- default configuration -->
+<?xml version="1.0" encoding="UTF-8"?>
 <component name="LanguageInjectionConfiguration">
   <TAGS>
     <entry>
       <XmlTagInjection>
-        <setting name="LANGUAGE" value="JavaScript" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="TAGNAME" value="script" />
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
+        <setting name="LANGUAGE" value="JavaScript"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="script"/>
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="APPLY_TO_SUBTAGS" value="false"/>
       </XmlTagInjection>
     </entry>
     <entry>
       <XmlTagInjection>
-        <setting name="LANGUAGE" value="CSS" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="TAGNAME" value="style" />
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
-        <setting name="XPATH_CONDITION" value="lower-case(@type)='text/css'" />
+        <setting name="LANGUAGE" value="CSS"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="style"/>
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value="lower-case(@type)='text/css'"/>
+        <setting name="APPLY_TO_SUBTAGS" value="false"/>
+      </XmlTagInjection>
+    </entry>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="mapped-statement"/>
+        <setting name="TAGNAMESPACE" value="http://www.ibatis.com/dtd/sql-map.dtd"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="APPLY_TO_SUBTAGS" value="false"/>
+      </XmlTagInjection>
+    </entry>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="sql|select|insert|update|delete|statement"/>
+        <setting name="TAGNAMESPACE" value="http://ibatis.apache.org/dtd/sql-map-2.dtd"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="APPLY_TO_SUBTAGS" value="true"/>
       </XmlTagInjection>
     </entry>
   </TAGS>
   <ATTRIBUTES>
     <entry>
       <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="JavaScript" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="TAGNAME" value="" />
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
-        <setting name="ATT_NAME" value="on.*" />
-        <setting name="ATT_NAMESPACE" value="" />
+        <setting name="LANGUAGE" value="JavaScript"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value=""/>
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="ATT_NAME" value="on.*"/>
+        <setting name="ATT_NAMESPACE" value=""/>
       </XmlAttributeInjection>
     </entry>
     <entry>
       <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="JavaScript" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="TAGNAME" value="" />
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
-        <setting name="ATT_NAME" value="href" />
-        <setting name="ATT_NAMESPACE" value="" />
-        <setting name="VALUE_PATTERN" value="^javascript:(.+)" />
-        <setting name="XPATH_CONDITION" value="" />
+        <setting name="LANGUAGE" value="JavaScript"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value=""/>
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
+        <setting name="VALUE_PATTERN" value="^javascript:(.+)"/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="ATT_NAME" value="href"/>
+        <setting name="ATT_NAMESPACE" value=""/>
       </XmlAttributeInjection>
     </entry>
     <entry>
       <XmlAttributeInjection>
-        <setting name="LANGUAGE" value="CSS" />
-        <setting name="PREFIX" value="dummy_selector {" />
-        <setting name="SUFFIX" value="}" />
-        <setting name="TAGNAME" value="" />
-        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
-        <setting name="ATT_NAME" value="style" />
-        <setting name="ATT_NAMESPACE" value="" />
+        <setting name="LANGUAGE" value="CSS"/>
+        <setting name="PREFIX" value="dummy_selector {"/>
+        <setting name="SUFFIX" value="}"/>
+        <setting name="TAGNAME" value=""/>
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="ATT_NAME" value="style"/>
+        <setting name="ATT_NAMESPACE" value=""/>
       </XmlAttributeInjection>
     </entry>
   </ATTRIBUTES>
   <PARAMETERS>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="java.util.regex.Pattern" />
-        <setting name="METHOD" value="compile(java.lang.String regex)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="1">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="RegExp"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="java.util.regex.Pattern"/>
+        <setting name="APPLY_IN_HIERARCHY" value="false"/>
+        <SIGNATURES name="compile(java.lang.String)" value="true"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="org.dom4j.Node" />
-        <setting name="METHOD" value="createXPath(java.lang.String string)" />
-        <setting name="APPLY_IN_HIERARCHY" value="true" />
-        <list size="1">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="XPath"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.dom4j.Node"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="createXPath(java.lang.String)" value="true"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="org.dom4j.Node" />
-        <setting name="METHOD" value="selectNodes(java.lang.String string)" />
-        <setting name="APPLY_IN_HIERARCHY" value="true" />
-        <list size="1">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="XPath"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.dom4j.Node"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="selectNodes(java.lang.String)" value="true"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="org.dom4j.Node" />
-        <setting name="METHOD" value="selectSingleNode(java.lang.String string)" />
-        <setting name="APPLY_IN_HIERARCHY" value="true" />
-        <list size="1">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="XPath"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.dom4j.Node"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="selectSingleNode(java.lang.String)" value="true"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="java.util.regex.Pattern" />
-        <setting name="METHOD" value="compile(java.lang.String regex, int flags)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="2">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-          <item index="1" class="java.lang.String" itemvalue="false" />
-        </list>
+        <setting name="LANGUAGE" value="RegExp"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="java.util.regex.Pattern"/>
+        <setting name="APPLY_IN_HIERARCHY" value="false"/>
+        <SIGNATURES name="compile(java.lang.String)" value="true"/>
+        <SIGNATURES name="compile(java.lang.String, int)" value="true,false"/>
+        <SIGNATURES name="matches(java.lang.String, java.lang.CharSequence)" value="true,false"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="java.lang.String" />
-        <setting name="METHOD" value="split(java.lang.String regex)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="1">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="RegExp"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="java.lang.String"/>
+        <setting name="APPLY_IN_HIERARCHY" value="false"/>
+        <SIGNATURES name="replaceAll(java.lang.String, java.lang.String)" value="true,false"/>
+        <SIGNATURES name="replaceFirst(java.lang.String, java.lang.String)" value="true,false"/>
+        <SIGNATURES name="split(java.lang.String)" value="true"/>
+        <SIGNATURES name="split(java.lang.String, int)" value="true,false"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="java.lang.String" />
-        <setting name="METHOD" value="split(java.lang.String regex, int limit)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="2">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-          <item index="1" class="java.lang.String" itemvalue="false" />
-        </list>
+        <setting name="LANGUAGE" value="XPath"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.jdom.xpath.XPath"/>
+        <setting name="APPLY_IN_HIERARCHY" value="false"/>
+        <SIGNATURES name="newInstance(java.lang.String)" value="true"/>
+        <SIGNATURES name="selectNodes(java.lang.Object, java.lang.String)" value="false,true"/>
+        <SIGNATURES name="selectSingleNode(java.lang.Object, java.lang.String)" value="false,true"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="java.lang.String" />
-        <setting name="METHOD" value="matches(java.lang.String string)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="1">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="XPath"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="javax.xml.xpath.XPath"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="compile(java.lang.String)" value="true"/>
+        <SIGNATURES name="evaluate(java.lang.String, java.lang.Object)" value="true,false"/>
+        <SIGNATURES name="evaluate(java.lang.String, java.lang.Object, javax.xml.namespace.QName)" value="true,false,false"/>
+        <SIGNATURES name="evaluate(java.lang.String, org.xml.sax.InputSource)" value="true,false"/>
+        <SIGNATURES name="evaluate(java.lang.String, org.xml.sax.InputSource, javax.xml.namespace.QName)" value="true,false,false"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="java.lang.String" />
-        <setting name="METHOD" value="replaceFirst(java.lang.String string, java.lang.String string1)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="2">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-          <item index="1" class="java.lang.String" itemvalue="false" />
-        </list>
+        <setting name="LANGUAGE" value="ANT"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="java.sql.Connection"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="nativeSQL(java.lang.String)" value="true"/>
+        <SIGNATURES name="prepareCall(java.lang.String)" value="true"/>
+        <SIGNATURES name="prepareCall(java.lang.String, int, int)" value="true,false,false"/>
+        <SIGNATURES name="prepareCall(java.lang.String, int, int, int)" value="true,false,false,false"/>
+        <SIGNATURES name="prepareStatement(java.lang.String)" value="true"/>
+        <SIGNATURES name="prepareStatement(java.lang.String, int)" value="true,false"/>
+        <SIGNATURES name="prepareStatement(java.lang.String, int, int)" value="true,false,false"/>
+        <SIGNATURES name="prepareStatement(java.lang.String, int, int, int)" value="true,false,false,false"/>
+        <SIGNATURES name="prepareStatement(java.lang.String, int[])" value="true,false"/>
+        <SIGNATURES name="prepareStatement(java.lang.String, java.lang.String[])" value="true,false"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="RegExp" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="java.lang.String" />
-        <setting name="METHOD" value="replaceAll(java.lang.String string, java.lang.String string1)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="2">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-          <item index="1" class="java.lang.String" itemvalue="false" />
-        </list>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="java.sql.Statement"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="addBatch(java.lang.String)" value="true"/>
+        <SIGNATURES name="execute(java.lang.String)" value="true"/>
+        <SIGNATURES name="execute(java.lang.String, int)" value="true,false"/>
+        <SIGNATURES name="execute(java.lang.String, int[])" value="true,false"/>
+        <SIGNATURES name="execute(java.lang.String, java.lang.String[])" value="true,false"/>
+        <SIGNATURES name="executeQuery(java.lang.String)" value="true"/>
+        <SIGNATURES name="executeUpdate(java.lang.String)" value="true"/>
+        <SIGNATURES name="executeUpdate(java.lang.String, int)" value="true,false"/>
+        <SIGNATURES name="executeUpdate(java.lang.String, int[])" value="true,false"/>
+        <SIGNATURES name="executeUpdate(java.lang.String, java.lang.String[])" value="true,false"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="org.jdom.xpath.XPath" />
-        <setting name="METHOD" value="selectNodes(java.lang.Object object, java.lang.String string)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="2">
-          <item index="0" class="java.lang.String" itemvalue="false" />
-          <item index="1" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.core.JdbcOperations"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="batchUpdate(java.lang.String, org.springframework.jdbc.core.BatchPreparedStatementSetter)" value="true,false"/>
+        <SIGNATURES name="batchUpdate(java.lang.String[])" value="true"/>
+        <SIGNATURES name="execute(java.lang.String)" value="true"/>
+        <SIGNATURES name="execute(java.lang.String, org.springframework.jdbc.core.PreparedStatementCallback)" value="true,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.ResultSetExtractor)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowCallbackHandler)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.ResultSetExtractor)"
+                    value="true,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowCallbackHandler)"
+                    value="true,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)" value="true,false,false"/>
+        <SIGNATURES
+            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.ResultSetExtractor)"
+            value="true,false,false"/>
+        <SIGNATURES
+            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowCallbackHandler)"
+            value="true,false,false"/>
+        <SIGNATURES
+            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowMapper)"
+            value="true,false,false"/>
+        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.ResultSetExtractor)" value="true,false"/>
+        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowCallbackHandler)" value="true,false"/>
+        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
+        <SIGNATURES name="queryForInt(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForList(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Class)" value="true,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
+        <SIGNATURES name="queryForLong(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForMap(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Class)" value="true,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)"
+                    value="true,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
+        <SIGNATURES name="queryForRowSet(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="update(java.lang.String)" value="true"/>
+        <SIGNATURES name="update(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="update(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="update(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter)" value="true,false"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="org.jdom.xpath.XPath" />
-        <setting name="METHOD" value="selectSingleNode(java.lang.Object object, java.lang.String string)" />
-        <setting name="APPLY_IN_HIERARCHY" value="false" />
-        <list size="2">
-          <item index="0" class="java.lang.String" itemvalue="false" />
-          <item index="1" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.core.simple.SimpleJdbcOperations"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES
+            name="query(java.lang.String, org.springframework.jdbc.core.simple.ParameterizedRowMapper&lt;T&gt;, java.lang.Object...)"
+            value="true,false,false"/>
+        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object...)" value="true,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object...)" value="true,false"/>
+        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object...)" value="true,false"/>
+        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object...)" value="true,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Class&lt;T&gt;, java.lang.Object...)" value="true,false,false"/>
+        <SIGNATURES
+            name="queryForObject(java.lang.String, org.springframework.jdbc.core.simple.ParameterizedRowMapper&lt;T&gt;, java.lang.Object...)"
+            value="true,false,false"/>
+        <SIGNATURES name="update(java.lang.String, java.lang.Object...)" value="true,false"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="javax.xml.xpath.XPath" />
-        <setting name="METHOD" value="compile(java.lang.String string)" />
-        <setting name="APPLY_IN_HIERARCHY" value="true" />
-        <list size="1">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-        </list>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.RdbmsOperation"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="setSql(java.lang.String)" value="true"/>
       </MethodParameterInjection>
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="XPath" />
-        <setting name="PREFIX" value="" />
-        <setting name="SUFFIX" value="" />
-        <setting name="CLASS" value="javax.xml.xpath.XPath" />
-        <setting name="METHOD" value="evaluate(java.lang.String string, java.lang.Object object)" />
-        <setting name="APPLY_IN_HIERARCHY" value="true" />
-        <list size="2">
-          <item index="0" class="java.lang.String" itemvalue="true" />
-          <item index="1" class="java.lang.String" itemvalue="false" />
-        </list>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.SqlOperation"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="newPreparedStatementCreator(java.lang.String, java.lang.Object[])" value="true,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.BatchSqlUpdate"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="BatchSqlUpdate(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+        <SIGNATURES name="BatchSqlUpdate(javax.sql.DataSource, java.lang.String, int[])" value="false,true,false"/>
+        <SIGNATURES name="BatchSqlUpdate(javax.sql.DataSource, java.lang.String, int[], int)" value="false,true,false,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.MappingSqlQuery"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="MappingSqlQuery(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.MappingSqlQueryWithParameters"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="MappingSqlQueryWithParameters(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.SqlCall"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="SqlCall(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.SqlFunction"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="SqlFunction(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+        <SIGNATURES name="SqlFunction(javax.sql.DataSource, java.lang.String, int[])" value="false,true,false"/>
+        <SIGNATURES name="SqlFunction(javax.sql.DataSource, java.lang.String, int[], java.lang.Class)" value="false,true,false,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.SqlQuery"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="SqlQuery(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+        <SIGNATURES name="execute(java.lang.String)" value="true"/>
+        <SIGNATURES name="execute(java.lang.String, java.util.Map)" value="true,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.SqlUpdate"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="SqlUpdate(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+        <SIGNATURES name="SqlUpdate(javax.sql.DataSource, java.lang.String, int[])" value="false,true,false"/>
+        <SIGNATURES name="SqlUpdate(javax.sql.DataSource, java.lang.String, int[], int)" value="false,true,false,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.object.UpdatableSqlQuery"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="UpdatableSqlQuery(javax.sql.DataSource, java.lang.String)" value="false,true"/>
       </MethodParameterInjection>
     </entry>
   </PARAMETERS>
-  <option name="INSTRUMENTATION" value="ASSERT" />
-  <option name="LANGUAGE_ANNOTATION" value="org.intellij.lang.annotations.Language" />
-  <option name="PATTERN_ANNOTATION" value="org.intellij.lang.annotations.Pattern" />
-  <option name="SUBST_ANNOTATION" value="org.intellij.lang.annotations.Subst" />
+  <option name="INSTRUMENTATION" value="ASSERT"/>
+  <option name="LANGUAGE_ANNOTATION" value="org.intellij.lang.annotations.Language"/>
+  <option name="PATTERN_ANNOTATION" value="org.intellij.lang.annotations.Pattern"/>
+  <option name="SUBST_ANNOTATION" value="org.intellij.lang.annotations.Subst"/>
 </component>
