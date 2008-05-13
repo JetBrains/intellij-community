@@ -44,9 +44,9 @@ public class IOResourceInspection {
     }
 
     public void foo5() throws IOException {
-        FileInputStream str = null;
+        FileInputStream str;
+        str = new FileInputStream("bar");
         try {
-            str = new FileInputStream("bar");
         } finally {
             str.close();
         }
@@ -71,7 +71,7 @@ public class IOResourceInspection {
         str.close();
     }
 
-    public void correct() throws IOException {
+    /*public void correct() throws IOException {
         FileInputStream str = null;
         InputStreamReader reader = null;
         try {
@@ -80,7 +80,7 @@ public class IOResourceInspection {
         } finally {
             reader.close();
         }
-    }
+    }*/
 
     public void correct2() throws IOException {
         FileInputStream str = new FileInputStream("xxxx");
