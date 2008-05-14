@@ -16,8 +16,13 @@
 package com.intellij.unscramble;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
 public interface UnscrambleSupport {
+  ExtensionPointName<UnscrambleSupport> EP_NAME = ExtensionPointName.create("com.intellij.unscrambleSupport");
+
+  @Nullable
   String unscramble(Project project, String text, String logName);
   String getPresentableName();
 }

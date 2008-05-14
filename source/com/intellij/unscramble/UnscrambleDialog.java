@@ -7,7 +7,10 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
@@ -18,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -34,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -132,6 +137,7 @@ public class UnscrambleDialog extends DialogWrapper{
     return PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_LAST_URL);
   }
 
+  @Nullable
   public static UnscrambleSupport getSavedUnscrambler() {
     final List<UnscrambleSupport> registeredUnscramblers = getRegisteredUnscramblers();
     final String savedUnscramblerName = PropertiesComponent.getInstance().getValue(PROPERTY_UNSCRAMBLER_NAME_USED);
@@ -188,6 +194,7 @@ public class UnscrambleDialog extends DialogWrapper{
     return text;
   }
 
+  @Nullable
   private UnscrambleSupport getSelectedUnscrambler() {
     if (!myUseUnscrambler.isSelected()) return null;
     return (UnscrambleSupport)myUnscrambleChooser.getSelectedItem();
@@ -247,8 +254,7 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   private static List<UnscrambleSupport> getRegisteredUnscramblers() {
-    List<UnscrambleSupport> unscrambleComponents = new ArrayList<UnscrambleSupport>();
-    final UnscrambleSupport[] components = ApplicationManager.getApplication().getComponents(UnscrambleSupport.class);
+    final UnscrambleSupport[] components = Extensions.getExtensions(UnscrambleSupport.EP_NAME);
     return Arrays.asList(components);
   }
 
