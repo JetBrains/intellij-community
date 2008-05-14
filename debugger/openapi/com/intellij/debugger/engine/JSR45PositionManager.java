@@ -27,10 +27,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +122,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
       myGeneratedClassPatternMatcher.reset(referenceType.name());
       if (myGeneratedClassPatternMatcher.matches()) {
         final List<Location> locations = locationsOfClassAt(referenceType, classPosition);
-        if (locations != null) {
+        if (locations != null && locations.size() > 0) {
           result.add(referenceType);
         }
       }
@@ -162,9 +159,11 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
             }
           }
         }
-        catch (ObjectCollectedException e) {
+        catch(ObjectCollectedException ignored) {
         }
-        catch (AbsentInformationException e) {
+        catch(AbsentInformationException ignored) {
+        }
+        catch(ClassNotPreparedException ignored) {                                                                                                           
         }
         catch (InternalError e) {
           myDebugProcess.getExecutionResult().getProcessHandler().notifyTextAvailable(
