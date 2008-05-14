@@ -144,7 +144,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(final Object... infos) {
     if (infos == null || infos.length == 0 || infos[0] == null) return null;
     final PsiField field = (PsiField)infos[0];
-    final IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(field.getModifierList(), PsiModifier.VOLATILE, true, true);
+    final IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(field, PsiModifier.VOLATILE, true, true);
 
     return new InspectionGadgetsFix() {
       protected void doFix(final Project project, final ProblemDescriptor descriptor) throws IncorrectOperationException {
