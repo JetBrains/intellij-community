@@ -29,6 +29,8 @@
     <xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.intellij.lang.ant.config.impl.AntBreadcrumbsInfoProvider"/>
+    <fileBasedIndex implementation="com.intellij.lang.ant.psi.impl.AntImportsIndex"/>
+    <hectorComponentProvider implementation="com.intellij.lang.ant.validation.AntHectorPanelProvider"/>
   </extensions>
 
   <application-components>

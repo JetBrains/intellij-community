@@ -68,7 +68,7 @@ public class AntElementNameReference extends AntGenericReference {
     return getElement();
   }
 
-  public PsiElement resolve() {
+  public PsiElement resolveInner() {
     final AntStructuredElement element = getElement();
     final AntTypeDefinition elementDef = element.getTypeDefinition();
     if (elementDef != null) {

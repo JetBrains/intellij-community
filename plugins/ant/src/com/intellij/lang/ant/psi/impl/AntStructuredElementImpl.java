@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.misc.PsiElementWithValueSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
@@ -495,7 +496,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private String computeAttributeValue(String value, final Set<Pair<PsiElement, String>> elementStack) {
     elementStack.add(new Pair<PsiElement, String>(this, value));
     int startProp = 0;
-    final AntFile antFile = getAntFile();
+    final AntFile self = getAntFile();
+    final AntFile antFile = AntConfigurationBase.getInstance(getProject()).getContextFile(self);
     while ((startProp = value.indexOf("${", startProp)) >= 0) {
       if (startProp > 0 && value.charAt(startProp - 1) == '$') {
         // the '$' is escaped

@@ -28,7 +28,7 @@ public class AntDefaultNSProvider implements XmlFileNSInfoProvider {
           return myNamespaces;
         }
         final VirtualFile file = xmlFile.getVirtualFile();
-        if (file != null && file.getUserData(AntLanguageExtension.ANT_FILE_SIGN) != null) {
+        if (file != null && ForcedAntFileAttribute.isAntFile(file)) {
           return myNamespaces;
         }
       }

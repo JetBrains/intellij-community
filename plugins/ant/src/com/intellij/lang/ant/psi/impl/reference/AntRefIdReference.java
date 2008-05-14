@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
@@ -47,11 +48,13 @@ public class AntRefIdReference extends AntGenericReference {
     return AntBundle.message("cannot.resolve.refid", getCanonicalRepresentationText());
   }
 
-  public PsiElement resolve() {
+  public PsiElement resolveInner() {
     final String id = getCanonicalRepresentationText();
     final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
     try {
-      return resolve(id, getElement().getAntProject(), elementsDepthStack);
+      final AntStructuredElement elem = getElement();
+      final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getContextFile(elem.getAntFile());
+      return resolve(id, contextFile.getAntProject(), elementsDepthStack);
     }
     finally {
       PsiElementSetSpinAllocator.dispose(elementsDepthStack);

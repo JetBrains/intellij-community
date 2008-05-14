@@ -1,8 +1,10 @@
 package com.intellij.lang.ant.config;
 
 import com.intellij.lang.ant.config.impl.AntInstallation;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.config.ExternalizablePropertyContainer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -53,4 +55,9 @@ public abstract class AntConfigurationBase extends AntConfiguration {
       attemptCount++;
     }
   }
+
+  public abstract void setContextFile(@NotNull AntFile file, @Nullable AntFile context);
+
+  @Nullable
+  public abstract AntFile getContextFile(@Nullable AntFile file);
 }

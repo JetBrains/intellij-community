@@ -65,7 +65,7 @@ public class AntMacroDefParameterReference extends AntGenericReference {
     return handleElementRename(((PsiNamedElement)element).getName());
   }
 
-  public PsiElement resolve() {
+  public PsiElement resolveInner() {
     final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class, true, true);
     if (macrodef != null) {
       final String name = getCanonicalText();

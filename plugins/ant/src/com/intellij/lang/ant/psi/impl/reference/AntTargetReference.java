@@ -6,8 +6,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntAntImpl;
+import com.intellij.lang.ant.quickfix.AntChangeContextFix;
 import com.intellij.lang.ant.quickfix.AntCreateTargetFix;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -77,11 +79,12 @@ public class AntTargetReference extends AntGenericReference {
   }
 
 
-  public PsiElement resolve() {
+  public PsiElement resolveInner() {
     final String name = getCanonicalRepresentationText();
     if (name == null) return null;
 
     final AntElement element = getElement();
+    final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(element.getProject());
     AntTarget result = null;
 
     if (element instanceof AntAntImpl) {
@@ -89,35 +92,45 @@ public class AntTargetReference extends AntGenericReference {
       if (psiFile != null) {
         AntFile antFile = AntSupport.getAntFile(psiFile);
         if (antFile != null) {
-          final AntProject antProject = antFile.getAntProject();
-          if (antProject != null) {
-            result = antProject.getTarget(name);
+          final AntFile context = antConfig.getContextFile(antFile);
+          
+          assert context != null;
+
+          final AntProject project = context.getAntProject();
+          if (project != null) {
+            result = resolveTargetImpl(name, project);
           }
         }
       }
     }
+    
     if (result == null) {
-      final AntProject project = element.getAntProject();
-      result = project.getTarget(name);
-      if (result == null) {
-        for (final AntTarget target : project.getImportedTargets()) {
-          if (name.equals(target.getName())) {
-            result = target;
-            break;
-          }
-        }
-        if (result == null) {
-          for (final AntTarget target : project.getImportedTargets()) {
-            if (name.equals(target.getQualifiedName())) {
-              result = target;
-              break;
-            }
-          }
-        }
-      }
+      final AntFile context = antConfig.getContextFile(element.getAntFile());
+      
+      assert context != null;
+
+      result = resolveTargetImpl(name, context.getAntProject());
     }
 
     return result;
+  }
+
+  private static AntTarget resolveTargetImpl(final String name, final AntProject project) {
+    final AntTarget result = project.getTarget(name);
+    if (result != null) {
+      return result;
+    }
+    for (final AntTarget target : project.getImportedTargets()) {
+      if (name.equals(target.getName())) {
+        return target;
+      }
+    }
+    for (final AntTarget target : project.getImportedTargets()) {
+      if (name.equals(target.getQualifiedName())) {
+        return target;
+      }
+    }
+    return null;
   }
 
   public String getUnresolvedMessagePattern() {
@@ -183,6 +196,7 @@ public class AntTargetReference extends AntGenericReference {
         result.add(new AntCreateTargetFix(this, file));
       }
     }
+    result.add(new AntChangeContextFix());
     return result.toArray(new IntentionAction[result.size()]);
   }
 

@@ -3,11 +3,13 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntElementRole;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
+import com.intellij.lang.ant.quickfix.AntChangeContextFix;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -70,10 +72,11 @@ public class AntPropertyReference extends AntGenericReference {
     return handleElementRename(((PsiNamedElement)element).getName());
   }
 
-  public PsiElement resolve() {
-    final AntFile antFile = getElement().getAntFile();
+  public PsiElement resolveInner() {
+    final AntElement elem = getElement();
+    final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getContextFile(elem.getAntFile());
     final String text = getCanonicalText();
-    final AntProperty resolved = antFile != null? antFile.getProperty(text) : null;
+    final AntProperty resolved = contextFile != null? contextFile.getProperty(text) : null;
     if (resolved != null) {
       final String propName = cutPrefix(text, resolved.getPrefix());
       final PropertiesFile propFile = resolved.getPropertiesFile();
@@ -146,6 +149,7 @@ public class AntPropertyReference extends AntGenericReference {
     finally {
       StringSetSpinAllocator.dispose(files);
     }
+    result.add(new AntChangeContextFix());
     return result.toArray(new IntentionAction[result.size()]);
   }
 

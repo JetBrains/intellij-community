@@ -29,7 +29,11 @@ public class AntFileReference extends FileReference implements AntReference {
   @Nullable
   public String getText() {
     final String _path = getElement().computeAttributeValue(super.getText());
-    return _path != null? FileUtil.toSystemIndependentName(_path) : null;
+    if (_path == null) {
+      return null;
+    }
+    final String text = FileUtil.toSystemIndependentName(_path);
+    return text.endsWith("/")? text.substring(0, text.length() - "/".length()) : text;
   }
 
   public AntStructuredElement getElement() {

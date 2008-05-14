@@ -68,13 +68,9 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   public void disposeComponent() {
   }
 
-  public static void markFileAsAntFile(final VirtualFile file, final FileViewProvider viewProvider, final boolean isAntFile) {
-    Boolean oldValue = file.getUserData(AntLanguageExtension.ANT_FILE_SIGN);
-    if (oldValue == null) {
-      oldValue = false;
-    }
-    if (oldValue.booleanValue() != isAntFile) {
-      file.putUserData(AntLanguageExtension.ANT_FILE_SIGN, (isAntFile) ? true : null);
+  public static void markFileAsAntFile(final VirtualFile file, final FileViewProvider viewProvider, final boolean value) {
+    if (ForcedAntFileAttribute.isAntFile(file) != value) {
+      ForcedAntFileAttribute.forceAntFile(file, value);
       viewProvider.contentsSynchronized();
     }
   }
