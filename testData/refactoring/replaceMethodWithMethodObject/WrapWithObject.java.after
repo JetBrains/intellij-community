@@ -1,0 +1,13 @@
+class Test {
+  void foo(int i, int... j) {
+      new Object() {
+          private void invoke(int i, int... j) {
+              if (i == 0) {
+                  for (int idx : j) {
+
+                  }
+              }
+          }
+      }.invoke(i, j);
+  }
+}

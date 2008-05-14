@@ -1,10 +1,13 @@
 class Test {
-
-    void foo() {
-        new InnerClass(5).invoke();
+    void bar(int i) {
+        new InnerClass(i).invoke();
     }
 
-    class InnerClass {
+    void foo() {
+        bar(5);
+    }
+
+    private class InnerClass {
         private int i;
 
         public InnerClass(int i) {

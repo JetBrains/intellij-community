@@ -1,9 +1,12 @@
 class Test {
-    void bar() {
-    InnerClass.invoke();
+  static void foo() {
+      InnerClass.invoke();
+  }
+  void bar() {
+    foo();
   }
 
-    static class InnerClass {
+    private static class InnerClass {
         static void invoke(){}
     }
 }

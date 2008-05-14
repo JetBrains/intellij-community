@@ -8,20 +8,22 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
   private final PsiMethod myMethod;
-  private final JTextField myInnerClassNameField = new JTextField();
-  private final JCheckBox myDeleteMethodCb = new JCheckBox(RefactoringBundle.message("replace.method.with.object.delete.original.method.combo"), false);
+  private JTextField myInnerClassNameField;
+  private JRadioButton myCreateAnonymousClassRb;
+  private JRadioButton myCreateInnerClassRb;
+  private JPanel myWholePanel;
+
 
   protected ReplaceMethodWithMethodObjectDialog(@NotNull PsiMethod method) {
     super(method.getProject(), false);
@@ -31,12 +33,13 @@ public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
   }
 
   protected void doAction() {
-    final ReplaceMethodWithMethodObjectProcessor processor = new ReplaceMethodWithMethodObjectProcessor(myMethod, myInnerClassNameField.getText(), myDeleteMethodCb.isEnabled() && myDeleteMethodCb.isSelected());
+    final ReplaceMethodWithMethodObjectProcessor processor = new ReplaceMethodWithMethodObjectProcessor(myMethod, myInnerClassNameField.getText(), myCreateInnerClassRb.isSelected());
     invokeRefactoring(processor);
   }
 
   @Override
   protected boolean areButtonsValid() {
+    if (myCreateAnonymousClassRb.isSelected()) return true;
     final String innerClassName = myInnerClassNameField.getText();
     final boolean isIdentifier =
         JavaPsiFacade.getInstance(myMethod.getProject()).getNameHelper().isIdentifier(innerClassName);
@@ -47,14 +50,6 @@ public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
   }
 
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-    final JLabel classNameLabel = new JLabel(RefactoringBundle.message("replace.method.with.object.class.name.label"));
-    classNameLabel.setLabelFor(myInnerClassNameField);
-    panel.add(classNameLabel, gc);
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.weightx = 1;
 
     String innerClassName = StringUtil.capitalize(myMethod.getName());
     int idx = 1;
@@ -62,21 +57,21 @@ public class ReplaceMethodWithMethodObjectDialog extends RefactoringDialog{
       innerClassName += idx++;
     }
     myInnerClassNameField.setText(innerClassName);
-
     myInnerClassNameField.selectAll();
-    panel.add(myInnerClassNameField, gc);
     myInnerClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         validateButtons();
       }
     });
-    gc.gridy = 1;
-    gc.gridwidth = 2;
-    gc.anchor = GridBagConstraints.EAST;
-    gc.fill = GridBagConstraints.NONE;
-    myDeleteMethodCb.setEnabled(OverridingMethodsSearch.search(myMethod).findAll().isEmpty() && myMethod.findSuperMethods().length == 0);
-    panel.add(myDeleteMethodCb, gc);
-    return panel;
+    myCreateInnerClassRb.setSelected(true);
+    final ActionListener enableDisableListener = new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        myInnerClassNameField.setEnabled(myCreateInnerClassRb.isSelected());
+      }
+    };
+    myCreateInnerClassRb.addActionListener(enableDisableListener);
+    myCreateAnonymousClassRb.addActionListener(enableDisableListener);
+    return myWholePanel;
   }
 
   @Override

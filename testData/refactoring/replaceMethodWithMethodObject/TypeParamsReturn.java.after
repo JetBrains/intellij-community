@@ -1,9 +1,12 @@
 class Test {
-    void bar(){
-    String s = new InnerClass<String>().invoke();
+  <T> T foo() {
+      return new InnerClass<T>().invoke();
+  }
+  void bar(){
+    String s = foo();
   }
 
-    class InnerClass<T> {
+    private class InnerClass<T> {
         public T invoke() {return null;}
     }
 }
