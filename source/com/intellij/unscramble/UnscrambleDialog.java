@@ -29,18 +29,21 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -54,6 +57,13 @@ public class UnscrambleDialog extends DialogWrapper{
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   @NonNls private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
+
+  private static final Icon PAUSE_ICON = IconLoader.getIcon("/debugger/threadStates/paused.png");
+  private static final Icon LOCKED_ICON = IconLoader.getIcon("/debugger/threadStates/locked.png");
+  private static final Icon RUNNING_ICON = IconLoader.getIcon("/debugger/threadStates/running.png");
+  private static final Icon SOCKET_ICON = IconLoader.getIcon("/debugger/threadStates/socket.png");
+  private static final Icon IDLE_ICON = IconLoader.getIcon("/debugger/threadStates/idle.png");
+  private static final Icon EDT_BUSY_ICON = IconLoader.getIcon("/debugger/threadStates/edtBusy.png");
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -339,6 +349,8 @@ public class UnscrambleDialog extends DialogWrapper{
     if (line.startsWith("Caused")) return true;    // Caused by message
     if (line.startsWith("- locked")) return true;  // "Locked a monitor" logging
     if (line.startsWith("- waiting")) return true; // "Waiting for monitor" logging
+    if (line.startsWith("- parking to wait")) return true;
+    if (line.startsWith("java.lang.Thread.State")) return true;
     if (line.startsWith("\"")) return true;        // Start of the new thread (thread name)
 
     return false;
@@ -380,7 +392,14 @@ public class UnscrambleDialog extends DialogWrapper{
   static boolean showUnscrambledText(UnscrambleSupport unscrambleSupport, String logName, Project project, String textToUnscramble) {
     String unscrambledTrace = unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project,textToUnscramble, logName);
     if (unscrambledTrace == null) return false;
-    final ConsoleView consoleView = addConsole(project);
+    List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
+    final ConsoleView consoleView = addConsole(project, threadStates);
+    printStacktrace(consoleView, unscrambledTrace);
+    return true;
+  }
+
+  private static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
+    consoleView.clear();
     consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
     consoleView.performWhenNoDeferredOutput(
       new Runnable() {
@@ -389,13 +408,16 @@ public class UnscrambleDialog extends DialogWrapper{
         }
       }
     );
-    return true;
   }
-  private static ConsoleView addConsole(final Project project){
+
+  private static ConsoleView addConsole(final Project project, final List<ThreadState> threadDump) {
     final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    JComponent consoleComponent = threadDump.size() > 1
+                                  ? new ThreadDumpPanel(consoleView, toolbarActions, threadDump)
+                                  : new MyConsolePanel(consoleView, toolbarActions);
     final RunContentDescriptor descriptor =
-      new RunContentDescriptor(consoleView, null, new MyConsolePanel(consoleView, toolbarActions),
+      new RunContentDescriptor(consoleView, null, consoleComponent,
                                IdeBundle.message("unscramble.unscrambled.stacktrace.tab")) {
       public boolean isContentReuseProhibited() {
         return true;
@@ -410,6 +432,7 @@ public class UnscrambleDialog extends DialogWrapper{
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     return consoleView;
   }
+
   private static final class MyConsolePanel extends JPanel {
     public MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
       super(new BorderLayout());
@@ -419,9 +442,102 @@ public class UnscrambleDialog extends DialogWrapper{
       add(consoleView.getComponent(), BorderLayout.CENTER);
     }
   }
+
+  private static class ThreadDumpPanel extends JPanel {
+    public ThreadDumpPanel(final ConsoleView consoleView, final ActionGroup toolbarActions, final List<ThreadState> threadDump) {
+      super(new BorderLayout());
+      JPanel leftPanel = new JPanel(new BorderLayout());
+      leftPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent(),
+                    BorderLayout.WEST);
+
+      final JList threadList = new JList(threadDump.toArray(new ThreadState[threadDump.size()]));
+      threadList.setCellRenderer(new ColoredListCellRenderer() {
+        protected void customizeCellRenderer(final JList list,
+                                             final Object value,
+                                             final int index,
+                                             final boolean selected,
+                                             final boolean hasFocus) {
+          ThreadState threadState = (ThreadState) value;
+          setIcon(getThreadStateIcon(threadState));
+          if (!selected) {
+            ThreadState selectedThread = (ThreadState)list.getSelectedValue();
+            if (threadState.isDeadlocked()) {
+              setBackground(LightColors.RED);
+            }
+            else if (selectedThread != null && threadState.isHoldingLock(selectedThread)) {
+              setBackground(Color.YELLOW);
+            }
+            else {
+              setBackground(UIUtil.getListBackground());
+            }
+          }
+          SimpleTextAttributes attrs = getAttributes(threadState);
+          append(threadState.getName() + " (", attrs);
+          String detail = threadState.getThreadStateDetail();
+          if (detail != null) {
+            append(detail, attrs);
+          }
+          else {
+            append(threadState.getState().trim(), attrs);
+          }
+          append(")", attrs);
+          if (threadState.getExtraState() != null) {
+            append(" [" + threadState.getExtraState() + "]", attrs);
+          }
+        }
+      });
+      threadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      threadList.addListSelectionListener(new ListSelectionListener() {
+        public void valueChanged(final ListSelectionEvent e) {
+          ThreadState selection = threadDump.get(threadList.getSelectedIndex());
+          printStacktrace(consoleView, selection.getStackTrace());
+          threadList.repaint();
+        }
+      });
+      leftPanel.add(new JScrollPane(threadList), BorderLayout.CENTER);
+
+
+      add(leftPanel, BorderLayout.WEST);
+      add(consoleView.getComponent(), BorderLayout.CENTER);
+    }
+
+    private static Icon getThreadStateIcon(final ThreadState threadState) {
+      if (threadState.isSleeping()) {
+        return PAUSE_ICON;
+      }
+      if (threadState.isLocked()) {
+        return LOCKED_ICON;
+      }
+      if (threadState.isSocketOperation()) {
+        return SOCKET_ICON;
+      }
+      if (threadState.isEDT()) {
+        if ("idle".equals(threadState.getThreadStateDetail())) {
+          return IDLE_ICON;
+        }
+        return EDT_BUSY_ICON;
+      }
+      return RUNNING_ICON;
+    }
+
+    private static SimpleTextAttributes getAttributes(final ThreadState threadState) {
+      if (threadState.isSleeping()) {
+        return SimpleTextAttributes.GRAY_ATTRIBUTES;
+      }
+      if (threadState.isEmptyStackTrace() || ThreadDumpParser.isKnownJdkThread(threadState)) {
+        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY.brighter());
+      }
+      if (threadState.isEDT()) {
+        return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+      }
+      return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+  }
+
   protected String getDimensionServiceKey(){
     return "#com.intellij.unscramble.UnscrambleDialog";
   }
+
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getContentComponent();
   }
