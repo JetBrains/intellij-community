@@ -36,7 +36,7 @@ public class MavenException extends Exception {
       myMessages.addAll(collectMessages(exception));
     }
 
-    mySummary = "";
+    mySummary = "Problems in " + pomPath + ":";
     for (String s : myMessages) {
       mySummary += mySummary.length() == 0 ? "" : "\n";
       mySummary += s;
