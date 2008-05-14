@@ -317,25 +317,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     synchronized (myStubLock) {
-      final StubTree sTree = derefStub();
-      if (sTree != null) {
-        nullStubReferences(this);
-        myStub = null;
-      }
+      myStub = null;
     }
 
     clearCaches();
     getViewProvider().rootChanged(this);
-  }
-
-  private static void nullStubReferences(final PsiElement psiElement) {
-    if (psiElement instanceof StubBasedPsiElementBase) {
-      ((StubBasedPsiElementBase<?>)psiElement).setStub(null);
-    }
-
-    for (PsiElement element : psiElement.getChildren()) {
-      nullStubReferences(element);
-    }
   }
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
