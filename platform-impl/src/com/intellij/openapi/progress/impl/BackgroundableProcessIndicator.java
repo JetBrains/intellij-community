@@ -94,17 +94,8 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myFocusTrackback.consume();
   }
 
-  public synchronized void stop() {
-    super.stop();
-    dispose();
-  }
-
-  public void cancel() {
-    super.cancel();
-    dispose();
-  }
-
-  private void dispose() {
+  public void dispose() {
+    super.dispose();
     myDisposed = true;
     myInfo = null;
     myStatusBar = null;

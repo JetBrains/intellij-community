@@ -1,6 +1,7 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -27,7 +29,7 @@ import java.awt.event.*;
 import java.io.File;
 
 @SuppressWarnings({"NonStaticInitializer"})
-public class ProgressWindow extends BlockingProgressIndicator {
+public class ProgressWindow extends BlockingProgressIndicator implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
 
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
@@ -80,6 +82,8 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, myProject, myCancelText);
     }
 
+    Disposer.register(this, myDialog);
+
     myFocusTrackback.registerFocusComponent(myDialog.getPanel());
   }
 
@@ -119,6 +123,8 @@ public class ProgressWindow extends BlockingProgressIndicator {
                 }
               });
               showDialog();
+            } else {
+              Disposer.dispose(ProgressWindow.this);
             }
           }
         }, 300, getModalityState());
@@ -199,6 +205,8 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     myStoppedAlready = true;
 
+    Disposer.dispose(this);
+
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
   }
 
@@ -263,7 +271,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     return (int)(fraction * 99 + 0.5);
   }
 
-  private class MyDialog {
+  protected class MyDialog implements Disposable {
     private long myLastTimeDrawn = -1;
     private boolean myShouldShowCancel;
     private boolean myShouldShowBackground;
@@ -397,7 +405,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     }
 
-    private void dispose() {
+    public void dispose() {
       UIUtil.disposeProgress(myProgressBar);
       UIUtil.dispose(myTitlePanel);
     }
@@ -547,11 +555,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
         protected Border createContentPaneBorder() {
         return null;
       }
-
-      protected void dispose() {
-        super.dispose();
-        MyDialog.this.dispose();
-      }
     }
   }
 
@@ -577,5 +580,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
   }
 
-
+  public void dispose() {
+  }
 }

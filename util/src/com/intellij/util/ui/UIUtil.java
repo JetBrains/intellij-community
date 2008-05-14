@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.plaf.ProgressBarUI;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
@@ -35,6 +37,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.lang.reflect.Field;
 
 /**
  * @author max
@@ -741,7 +744,35 @@ public class UIUtil {
   }
 
   public static void disposeProgress(final JProgressBar progress) {
-    progress.setValue(progress.getMaximum());
+    if (!isUnderNativeMacLookAndFeel()) return;
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (isToDispose(progress)) {
+          progress.getUI().uninstallUI(progress);
+          progress.putClientProperty("isDisposed", Boolean.TRUE);
+        }
+      }
+    });
+  }
+
+  private static boolean isToDispose(final JProgressBar progress)  {
+    final ProgressBarUI ui = progress.getUI();
+
+    if (ui == null) return false;
+    if (Boolean.TYPE.equals(progress.getClientProperty("isDisposed"))) return false;
+
+    try {
+      final Field progressBarField = ReflectionUtil.findField(ui.getClass(), JProgressBar.class, "progressBar");
+      progressBarField.setAccessible(true);
+      return progressBarField.get(ui) != null;
+    }
+    catch (NoSuchFieldException e) {
+      return true;
+    }
+    catch (IllegalAccessException e) {
+      return true;
+    }
   }
 
   public static @Nullable Component findUltimateParent(Component c) {
