@@ -316,7 +316,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     public String getPlainText() {
       int startOffset = ChunkExtractor.getStartOffset(myRangeMarkers);
       final PsiElement element = getElement();
-      if (element != null) {
+      if (element != null && startOffset != -1) {
         final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
         if (document != null) {
           int lineNumber = document.getLineNumber(startOffset);
