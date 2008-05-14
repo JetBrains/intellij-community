@@ -39,10 +39,10 @@ import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -63,19 +63,15 @@ public class SvnChangeList implements CommittedChangeList {
   private Set<String> myChangedPaths = new HashSet<String>();
   private Set<String> myAddedPaths = new HashSet<String>();
   private Set<String> myDeletedPaths = new HashSet<String>();
-  private Map<String, Boolean> myDirectories;
   private List<Change> myChanges;
 
   private File myWcRoot;
   private SVNURL myBranchUrl;
   private boolean myBranchInfoLoaded;
 
-  private SVNRepository myRepository;
-
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
-    myDirectories = new HashMap<String, Boolean>();
     myRevision = logEntry.getRevision();
     final String author = logEntry.getAuthor();
     myAuthor = author == null ? "" : author;
@@ -84,97 +80,29 @@ public class SvnChangeList implements CommittedChangeList {
     myMessage = message == null ? "" : message;
 
     myRepositoryRoot = repositoryRoot;
-    initRepository();
 
-    final Map<String, Collection<String>> deletedChildren = new HashMap<String, Collection<String>>();
-    final Map<String, String> copiedAdded = new HashMap<String, String>();
     for(Object o: logEntry.getChangedPaths().values()) {
       final SVNLogEntryPath entry = (SVNLogEntryPath) o;
       final String path = entry.getPath();
       if (entry.getType() == 'A') {
         myAddedPaths.add(path);
-        if (entry.getCopyPath() != null) {
-          copiedAdded.put(entry.getCopyPath(), path);
-        }
       }
       else if (entry.getType() == 'D') {
         myDeletedPaths.add(path);
-        final Collection<String> deleted = getChildren(path, myRevision - 1);
-        if (deleted != null) {
-          for (String name : deleted) {
-            myDeletedPaths.add(path + '/' + name);
-          }
-          deletedChildren.put(path, deleted);
-        }
       }
       else {
         myChangedPaths.add(path);
-      }
-    }
-
-    // look for renamed folders contents
-    for (Map.Entry<String, String> entry : copiedAdded.entrySet()) {
-      final Collection<String> contents = deletedChildren.get(entry.getKey());
-      if (contents != null) {
-        for (String name : contents) {
-          final String path = entry.getValue() + '/' + name;
-          myAddedPaths.add(path);
-          myDirectories.put(path, Boolean.TRUE);
-        }
       }
     }
     
     updateBranchInfo();
   }
 
-  @Nullable
-  private Collection<String> getChildren(final String path, final long revision) {
-    if (myRepository == null) {
-      return null;
-    }
-
-    try {
-      final boolean isDir = SVNNodeKind.DIR.equals(myRepository.checkPath(path, revision));
-      myDirectories.put(path, isDir);
-
-      if (! isDir) {
-        return null;
-      }
-
-      final Set<String> result = new HashSet<String>();
-
-      final SVNLogClient client = myVcs.createLogClient();
-      client.doList(myRepository.getLocation().appendPath(path, true), SVNRevision.create(revision), SVNRevision.create(revision),
-                    true, new ISVNDirEntryHandler() {
-        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-          result.add(dirEntry.getRelativePath());
-        }
-      });
-
-      return result;
-    }
-    catch (SVNException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream) throws IOException {
     myVcs = vcs;
     myLocation = location;
-    myDirectories = new HashMap<String, Boolean>();
     readFromStream(stream);
-    initRepository();
     updateBranchInfo();
-  }
-
-  private void initRepository() {
-    try {
-      myRepository = myVcs.createRepository(myRepositoryRoot);
-    }
-    catch (SVNException e) {
-      LOG.error(e);
-    }
   }
 
   public String getCommitterName() {
@@ -213,16 +141,6 @@ public class SvnChangeList implements CommittedChangeList {
 
     return myLocation.getLocalPath(fullPath, new DirectoryDetector() {
       public boolean isDirectory() {
-        try {
-          if (myDirectories.containsKey(path)) {
-            return Boolean.TRUE.equals(myDirectories.get(path));
-          }
-          return ((myRepository != null) && SVNNodeKind.DIR.equals(myRepository.checkPath(path, revision)));
-        }
-        catch (SVNException e) {
-          LOG.error(e);
-        }
-
         return false;
       }
     });
