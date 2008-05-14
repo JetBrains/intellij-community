@@ -7,6 +7,7 @@ import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
 import org.apache.maven.extension.ExtensionManager;
 import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.annotations.NonNls;
@@ -18,10 +19,7 @@ import org.jetbrains.idea.maven.project.MavenException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenFactory {
   private static final Logger LOG = Logger.getInstance("#" + MavenFactory.class.getName());
@@ -166,14 +164,14 @@ public class MavenFactory {
   }
 
   public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) throws MavenException {
-    return createEmbedder(settings, new EmbedderCustomizer(null));
+    return createEmbedder(settings, new ResolvingCustomizer(null));
   }
 
   public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) throws MavenException {
-    return createEmbedder(settings, new EmbedderCustomizer(projectMapping));
+    return createEmbedder(settings, new ResolvingCustomizer(projectMapping));
   }
 
-  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, EmbedderCustomizer customizer) throws MavenException {
+  public static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) throws MavenException {
     return createEmbedder(settings.getMavenHome(), settings.getEffectiveLocalRepository(), settings.getMavenSettingsFile(),
                           settings.getClass().getClassLoader(), customizer);
   }
@@ -182,7 +180,7 @@ public class MavenFactory {
                                               File localRepo,
                                               String userSettings,
                                               ClassLoader classLoader,
-                                              EmbedderCustomizer customizer) throws MavenException {
+                                              ContainerCustomizer customizer) throws MavenException {
     Configuration configuration = new DefaultConfiguration();
 
     configuration.setConfigurationCustomizer(customizer);
@@ -203,21 +201,36 @@ public class MavenFactory {
       configuration.setGlobalSettingsFile(globalSettingsFile);
     }
 
+    configuration.setSystemProperties(collectSystemProperties());
+
     validate(configuration);
 
     System.setProperty(PROP_MAVEN_HOME, mavenHome);
 
     try {
-      MavenEmbedder result = new MavenEmbedder(configuration);
-      if (customizer != null) {
-        customizer.postCustomize(result);
-      }
-      return result;
+      return new MavenEmbedder(configuration);
     }
     catch (MavenEmbedderException e) {
       LOG.info(e);
       throw new MavenException(e);
     }
+  }
+
+  private static Properties collectSystemProperties() {
+    Properties result = new Properties();
+    result.putAll(System.getProperties());
+
+    try {
+      Properties envVars = CommandLineUtils.getSystemEnvVars();
+      for (Map.Entry<Object, Object> each : envVars.entrySet()) {
+        result.setProperty( "env." + each.getKey().toString(), each.getValue().toString());
+      }
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn(e);
+    }
+
+    return result;
   }
 
   private static void validate(Configuration configuration) throws MavenException {
@@ -254,29 +267,21 @@ public class MavenFactory {
     }
   }
 
-  private static class EmbedderCustomizer implements ContainerCustomizer {
+  public static class ResolvingCustomizer implements ContainerCustomizer {
     private Map<ProjectId, VirtualFile> myMapping;
 
-    public EmbedderCustomizer(Map<ProjectId, VirtualFile> projectMapping) {
+    public ResolvingCustomizer(Map<ProjectId, VirtualFile> projectMapping) {
       myMapping = projectMapping;
     }
 
     public void customize(PlexusContainer c) {
+      c.getContext().put("MavenProjectsMapping", myMapping);
+
       ComponentDescriptor d = c.getComponentDescriptor(ArtifactResolver.ROLE);
       d.setImplementation(CustomArtifactResolver.class.getName());
 
       d = c.getComponentDescriptor(ExtensionManager.class.getName());
       d.setImplementation(CustomExtensionManager.class.getName());
-    }
-
-    public void postCustomize(MavenEmbedder e) {
-      try {
-        CustomArtifactResolver r = (CustomArtifactResolver)e.getPlexusContainer().lookup(ArtifactResolver.ROLE);
-        r.setMapping(myMapping);
-      }
-      catch (ComponentLookupException ex) {
-        throw new RuntimeException(ex);
-      }
     }
   }
 }

@@ -171,6 +171,43 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
+  //public void testModulesWithProperties() throws Exception {
+  //  createProjectPom("<groupId>test</groupId>" +
+  //                   "<artifactId>project</artifactId>" +
+  //                   "<packaging>pom</packaging>" +
+  //                   "<version>1</version>" +
+  //
+  //                   "<properties>" +
+  //                   "  <module1>m1</module1>" +
+  //                   "  <module2>m2</module2>" +
+  //                   "</properties>" +
+  //
+  //                   "<modules>" +
+  //                   "  <module>${module1}</module>" +
+  //                   "  <module>${module2}</module>" +
+  //                   "</modules>");
+  //
+  //  createModulePom("m1", "<groupId>test</groupId>" +
+  //                        "<artifactId>m1</artifactId>" +
+  //                        "<version>1</version>");
+  //
+  //  createModulePom("m2", "<groupId>test</groupId>" +
+  //                        "<artifactId>m2</artifactId>" +
+  //                        "<version>1</version>");
+  //
+  //  importProject();
+  //  assertModules("project", "m1", "m2");
+  //
+  //  PomTreeStructure.RootNode r = createMavenTree();
+  //
+  //  assertEquals(1, r.pomNodes.size());
+  //  assertEquals("project", r.pomNodes.get(0).getId());
+  //
+  //  assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
+  //  assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
+  //  assertEquals("m2", r.pomNodes.get(0).modulePomsNode.pomNodes.get(1).getId());
+  //}
+
   public void testParentWithoutARelativePath() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -239,14 +276,14 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
   public void testCreatingModuleGroups() throws Exception {
     VirtualFile p1 = createModulePom("project1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>project1</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project1</artifactId>" +
+                                     "<version>1</version>" +
+                                     "<packaging>pom</packaging>" +
 
-                    "<modules>" +
-                    "  <module>m1</module>" +
-                    "</modules>");
+                                     "<modules>" +
+                                     "  <module>m1</module>" +
+                                     "</modules>");
 
     createModulePom("project1/m1",
                     "<groupId>test</groupId>" +
@@ -254,14 +291,14 @@ public class StructureImportingTest extends MavenImportingTestCase {
                     "<version>1</version>");
 
     VirtualFile p2 = createModulePom("project2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>project2</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project2</artifactId>" +
+                                     "<version>1</version>" +
+                                     "<packaging>pom</packaging>" +
 
-                    "<modules>" +
-                    "  <module>m2</module>" +
-                    "</modules>");
+                                     "<modules>" +
+                                     "  <module>m2</module>" +
+                                     "</modules>");
 
     createModulePom("project2/m2",
                     "<groupId>test</groupId>" +
@@ -438,7 +475,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "<properties>" +
                      "  <xxx>1.0-beta-2</xxx>" +
                      "</properties>" +
-                                       
+
                      "<modules>" +
                      "  <module>m</module>" +
                      "</modules>"
@@ -466,7 +503,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m");
   }
-  
+
   public void testProjectWithProfilesXmlFile() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
