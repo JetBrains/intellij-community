@@ -58,7 +58,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
   }
 
   public TextRange getRangeInElement() {
-    return myRange != null ? myRange : new TextRange(1,myElement.getTextLength()-1);
+    return myRange != null ? myRange : ElementManipulators.getValueTextRange(myElement);
   }
 
   @Nullable
