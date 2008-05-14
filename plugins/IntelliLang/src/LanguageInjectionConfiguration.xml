@@ -185,7 +185,7 @@
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="ANT"/>
+        <setting name="LANGUAGE" value="SQL"/>
         <setting name="PREFIX" value=""/>
         <setting name="SUFFIX" value=""/>
         <setting name="CLASS" value="java.sql.Connection"/>
