@@ -1,9 +1,9 @@
 class Test {
      void bar() {
-       String str = InnerClass.foo();
+       String str = InnerClass.invoke();
      }
 
     static class InnerClass {
-        static <T> T foo(){return null;}
+        static <T> T invoke(){return null;}
     }
 }

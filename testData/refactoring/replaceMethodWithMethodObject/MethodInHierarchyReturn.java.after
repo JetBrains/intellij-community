@@ -7,11 +7,11 @@ class Test {
 
    class B extends A {
      String foo() {
-         return new InnerClass().foo();
+         return new InnerClass().invoke();
      }
 
        private class InnerClass {
-           public String foo() {
+           public String invoke() {
        return null;
            }
        }

@@ -75,4 +75,12 @@ public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
   public void testStaticTypeParamsReturnNoDelete() throws Exception {
     doTest(Condition.FALSE);
   }
+
+  public void testStaticTypeParamsRecursive() throws Exception {
+    doTest();
+  }
+
+  public void testRecursion() throws Exception {
+    doTest();
+  }
 }

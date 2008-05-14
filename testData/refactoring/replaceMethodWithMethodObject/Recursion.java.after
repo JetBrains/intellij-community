@@ -1,8 +1,8 @@
-class Test{
+class Test {
 
-    void bar(Test t){
-    t.new InnerClass(1).invoke();
-  }
+    void foo() {
+        new InnerClass(5).invoke();
+    }
 
     class InnerClass {
         private int i;
@@ -12,7 +12,8 @@ class Test{
         }
 
         public void invoke() {
-    i++;
-  }
+        if (i == 0) return;
+            new InnerClass(i - 1).invoke();
+        }
     }
 }

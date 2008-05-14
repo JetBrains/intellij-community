@@ -1,9 +1,9 @@
 class Test {
     void bar(){
-    String s = new InnerClass<String>().foo();
+    String s = new InnerClass<String>().invoke();
   }
 
     class InnerClass<T> {
-        public T foo() {return null;}
+        public T invoke() {return null;}
     }
 }

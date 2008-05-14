@@ -1,7 +1,7 @@
 class Test {
 
     void bar() {
-     new InnerClass<String>("").foo();
+     new InnerClass<String>("").invoke();
    }
 
     class InnerClass<T> {
@@ -11,6 +11,6 @@ class Test {
             this.t = t;
         }
 
-        public void foo() {}
+        public void invoke() {}
     }
 }
