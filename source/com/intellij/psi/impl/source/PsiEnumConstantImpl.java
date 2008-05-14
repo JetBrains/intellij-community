@@ -73,7 +73,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return (PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name));
   }
 

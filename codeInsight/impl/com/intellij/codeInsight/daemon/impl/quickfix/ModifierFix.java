@@ -29,18 +29,25 @@ public class ModifierFix implements IntentionAction {
   private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
+  private PsiVariable myVariable;
 
-  public ModifierFix(PsiModifierList modifierList, String modifier, boolean shouldHave, boolean showContainingClass) {
+  public ModifierFix(PsiModifierList modifierList, @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
     myModifierList = modifierList;
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
   }
+  public ModifierFix(@NotNull PsiModifierListOwner owner, @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
+    this(owner.getModifierList(), modifier, shouldHave, showContainingClass);
+    if (owner instanceof PsiVariable) {
+      myVariable = (PsiVariable)owner;
+    }
+  }
 
   @NotNull
   public String getText() {
     String name = null;
-    PsiElement parent = myModifierList.getParent();
+    PsiElement parent = myVariable == null ? myModifierList.getParent() : myVariable;
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }
@@ -86,7 +93,8 @@ public class ModifierFix implements IntentionAction {
     return myModifierList != null
            && myModifierList.isValid()
            && myModifierList.getManager().isInProject(myModifierList)
-           && myModifier != null;
+        && (myVariable == null || myVariable.isValid())
+           ;
   }
 
   private void changeModifierList (PsiModifierList modifierList) {
@@ -98,10 +106,28 @@ public class ModifierFix implements IntentionAction {
     }
   }
 
-  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
-
+  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
-    PsiElement owner = myModifierList.getParent();
+    final PsiFile containingFile = myModifierList.getContainingFile();
+    final PsiModifierList modifierList;
+    if (myVariable != null && myVariable.isValid()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          try {
+            myVariable.normalizeDeclaration();
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      });
+      modifierList = myVariable.getModifierList();
+      assert modifierList != null;
+    }
+    else {
+      modifierList = myModifierList;
+    }
+    PsiElement owner = modifierList.getParent();
     if (owner instanceof PsiMethod) {
       PsiModifierList copy = (PsiModifierList)myModifierList.copy();
       changeModifierList(copy);
@@ -118,7 +144,7 @@ public class ModifierFix implements IntentionAction {
         }));
     }
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(myModifierList.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
 
     if (!modifierLists.isEmpty()) {
       if (Messages.showYesNoDialog(project,
@@ -137,8 +163,7 @@ public class ModifierFix implements IntentionAction {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        PsiFile containingFile = myModifierList.getContainingFile();
-        changeModifierList(myModifierList);
+        changeModifierList(modifierList);
         UndoUtil.markPsiFileForUndo(containingFile);
       }
     });

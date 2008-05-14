@@ -28,7 +28,11 @@ public abstract class QuickFixFactory {
     return ServiceManager.getService(QuickFixFactory.class);
   }
 
-  public abstract IntentionAction createModifierListFix(PsiModifierList modifierList,
+  public abstract IntentionAction createModifierListFix(@NotNull PsiModifierList modifierList,
+                                                        @NotNull String modifier,
+                                                        boolean shouldHave,
+                                                        final boolean showContainingClass);
+  public abstract IntentionAction createModifierListFix(@NotNull PsiModifierListOwner owner,
                                                         @NotNull String modifier,
                                                         boolean shouldHave,
                                                         final boolean showContainingClass);

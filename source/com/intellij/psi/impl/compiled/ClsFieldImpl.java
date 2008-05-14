@@ -110,7 +110,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     return getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST).getPsi();
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 

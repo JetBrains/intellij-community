@@ -81,7 +81,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     return true;
   }
 
-  public boolean hasModifierProperty(String name) {
-    return (PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name));
+  public boolean hasModifierProperty(@NotNull String name) {
+    return PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name);
   }
 }

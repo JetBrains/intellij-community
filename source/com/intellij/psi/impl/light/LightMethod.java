@@ -65,7 +65,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.getHierarchicalMethodSignature();
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return myMethod.hasModifierProperty(name);
   }
 

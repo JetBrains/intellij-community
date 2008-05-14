@@ -232,7 +232,7 @@ public class HighlightUtil {
     PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
       IntentionAction fix =
-        QUICK_FIX_FACTORY.createModifierListFix(packageLocalClassInTheMiddle.getModifierList(), PsiModifier.PUBLIC, true, true);
+        QUICK_FIX_FACTORY.createModifierListFix(packageLocalClassInTheMiddle, PsiModifier.PUBLIC, true, true);
       QuickFixAction.registerQuickFixAction(errorResult, fix);
       return;
     }
@@ -254,7 +254,7 @@ public class HighlightUtil {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
-          IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement.getModifierList(), modifier, true, true);
+          IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement, modifier, true, true);
           TextRange fixRange = new TextRange(errorResult.startOffset, errorResult.endOffset);
           PsiElement ref = place.getReferenceNameElement();
           if (ref != null) {
@@ -969,19 +969,13 @@ public class HighlightUtil {
   }
 
   static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement, HighlightInfo errorResult, PsiJavaCodeReferenceElement place) {
-    PsiModifierList modifierList = null;
     if (refElement instanceof PsiModifierListOwner) {
-      modifierList = ((PsiModifierListOwner)refElement).getModifierList();
-    }
-    if (modifierList != null) {
-      QuickFixAction
-        .registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(modifierList, PsiModifier.STATIC, true, false));
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix((PsiModifierListOwner)refElement, PsiModifier.STATIC, true, false));
     }
     // make context non static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent.getModifierList(),
-                                                                                                 PsiModifier.STATIC, false, false));
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
     }
   }
 

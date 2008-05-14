@@ -28,11 +28,18 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class QuickFixFactoryImpl extends QuickFixFactory {
-  public IntentionAction createModifierListFix(PsiModifierList modifierList,
+  public IntentionAction createModifierListFix(@NotNull PsiModifierList modifierList,
                                                @NotNull String modifier,
                                                boolean shouldHave,
                                                boolean showContainingClass) {
     return new ModifierFix(modifierList, modifier, shouldHave,showContainingClass);
+  }
+
+  public IntentionAction createModifierListFix(@NotNull PsiModifierListOwner owner,
+                                               @NotNull final String modifier,
+                                               final boolean shouldHave,
+                                               final boolean showContainingClass) {
+    return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
   }
 
   public IntentionAction createMethodReturnFix(@NotNull PsiMethod method, @NotNull PsiType toReturn, boolean fixWholeHierarchy) {

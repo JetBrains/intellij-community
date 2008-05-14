@@ -64,7 +64,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return myModifierList;
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 

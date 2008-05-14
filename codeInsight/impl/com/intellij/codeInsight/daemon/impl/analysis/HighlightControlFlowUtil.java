@@ -250,7 +250,7 @@ public class HighlightControlFlowUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && !containingClass.isInterface()) {
-      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.FINAL, false, false);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.FINAL, false, false);
       QuickFixAction.registerQuickFixAction(highlightInfo, fix);
     }
     QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(field));
@@ -520,7 +520,7 @@ public class HighlightControlFlowUtil {
           HighlightInfoType.ERROR,
           expression,
           description);
-      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable.getModifierList(), PsiModifier.FINAL, false, false);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false);
       QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       QuickFixAction.registerQuickFixAction(highlightInfo, new DeferFinalAssignmentFix(variable, expression));
       return highlightInfo;
@@ -552,7 +552,7 @@ public class HighlightControlFlowUtil {
           HighlightInfoType.ERROR,
           expression,
           description);
-      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(((PsiVariable)resolved).getModifierList(), PsiModifier.FINAL, false, false);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix((PsiVariable)resolved, PsiModifier.FINAL, false, false);
       QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       return highlightInfo;
     }
@@ -594,7 +594,7 @@ public class HighlightControlFlowUtil {
           description);
       final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
       if (innerClass == null || variable instanceof PsiField) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable.getModifierList(), PsiModifier.FINAL, false, false);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false);
         QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       }
       else {

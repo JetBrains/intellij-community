@@ -83,7 +83,7 @@ public class HighlightMethodUtil {
         textRange = new TextRange(0, 0);
       }
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiUtil.getAccessModifier(superAccessLevel), true, false);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiUtil.getAccessModifier(superAccessLevel), true, false);
       QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       return highlightInfo;
     }
@@ -181,7 +181,7 @@ public class HighlightMethodUtil {
         HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                       textRange,
                                                                       message);
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod.getModifierList(), PsiModifier.FINAL, false, true);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod, PsiModifier.FINAL, false, true);
         QuickFixAction.registerQuickFixAction(errorResult, fix);
         return errorResult;
       }
@@ -621,7 +621,7 @@ public class HighlightMethodUtil {
                                                       JavaErrorMessages.message("missing.method.body"));
       if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList(),
                                                 HighlightUtil.ourMethodIncompatibleModifiers) == null) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.ABSTRACT, true, false);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, true, false);
         QuickFixAction.registerQuickFixAction(errorResult, fix);
       }
       QuickFixAction.registerQuickFixAction(errorResult, new AddMethodBodyFix(method));
@@ -642,11 +642,11 @@ public class HighlightMethodUtil {
                                                       elementToHighlight,
                                                       JavaErrorMessages.message("abstract.method.in.non.abstract.class"));
       if (method.getBody() != null) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.ABSTRACT, false, false);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false);
         QuickFixAction.registerQuickFixAction(errorResult, fix);
       }
       QuickFixAction.registerQuickFixAction(errorResult, new AddMethodBodyFix(method));
-      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.ABSTRACT, true, false);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false);
       QuickFixAction.registerQuickFixAction(errorResult, fix);
     }
     return errorResult;
@@ -717,7 +717,7 @@ public class HighlightMethodUtil {
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method));
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && aClass != null && !aClass.isInterface()) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.ABSTRACT, false, false);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false);
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       return info;
@@ -839,12 +839,12 @@ public class HighlightMethodUtil {
 
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       if (!isSuperMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, isSuperMethodStatic, false);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, isSuperMethodStatic, false);
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       if (manager.isInProject(superMethod) &&
           (!isMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, superModifierList) == null)) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod.getModifierList(), PsiModifier.STATIC, isMethodStatic, true);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod, PsiModifier.STATIC, isMethodStatic, true);
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       return info;

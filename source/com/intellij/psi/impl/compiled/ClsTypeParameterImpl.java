@@ -230,7 +230,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
     return null;
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return false;
   }
 
