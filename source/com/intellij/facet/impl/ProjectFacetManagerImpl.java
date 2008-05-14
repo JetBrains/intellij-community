@@ -40,7 +40,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pr
   @NonNls public static final String COMPONENT_NAME = "ProjectFacetManager";
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
-  private List<FacetLoadingErrorDescription> myFacetLoadingErrors = new ArrayList<FacetLoadingErrorDescription>();
+  private final List<FacetLoadingErrorDescription> myFacetLoadingErrors = new ArrayList<FacetLoadingErrorDescription>();
   private final Project myProject;
 
   public ProjectFacetManagerImpl(Project project) {
@@ -99,13 +99,11 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pr
     DefaultFacetConfigurationState state = myState.getDefaultConfigurations().get(facetType.getStringId());
     if (state != null) {
       Element defaultConfiguration = state.getDefaultConfiguration();
-      if (defaultConfiguration != null) {
-        try {
-          configuration.readExternal(defaultConfiguration);
-        }
-        catch (InvalidDataException e) {
-          LOG.info(e);
-        }
+      try {
+        FacetUtil.loadFacetConfiguration(configuration, defaultConfiguration);
+      }
+      catch (InvalidDataException e) {
+        LOG.info(e);
       }
     }
     return configuration;
@@ -118,14 +116,13 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pr
       state = new DefaultFacetConfigurationState();
       defaultConfigurations.put(facetType.getStringId(), state);
     }
-    Element element = new Element("_239");
     try {
-      configuration.writeExternal(element);
+      Element element = FacetUtil.saveFacetConfiguration(configuration);
+      state.setDefaultConfiguration(element);
     }
     catch (WriteExternalException e) {
       LOG.info(e);
     }
-    state.setDefaultConfiguration(element);
   }
 
   public void registerFacetLoadingError(@NotNull final FacetLoadingErrorDescription errorDescription) {

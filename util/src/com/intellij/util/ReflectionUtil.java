@@ -258,4 +258,19 @@ public class ReflectionUtil {
       return null;
     }
   }
+
+  public static Type resolveVariableInHierarchy(final TypeVariable variable, final Class aClass) {
+    Type type;
+    Class current = aClass;
+    while ((type = resolveVariable(variable, current, false)) == null) {
+      current = ReflectionCache.getSuperClass(current);
+      if (current == null) {
+        return null;
+      }
+    }
+    if (type instanceof TypeVariable) {
+      return resolveVariableInHierarchy((TypeVariable)type, aClass);
+    }
+    return type;
+  }
 }

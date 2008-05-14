@@ -17,15 +17,34 @@
 package com.intellij.facet;
 
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import org.jdom.Element;
 
 /**
  * @author nik
+ */
+
+/**
+ * Implement {@link com.intellij.openapi.components.PersistentStateComponent} instead of {@link com.intellij.openapi.util.JDOMExternalizable}
+ * in your implementation of {@link com.intellij.facet.FacetConfiguration}
  */
 public interface FacetConfiguration extends JDOMExternalizable {
 
   FacetEditorTab[] createEditorTabs(final FacetEditorContext editorContext, final FacetValidatorsManager validatorsManager);
 
+  /**
+   * @deprecated implement {@link com.intellij.openapi.components.PersistentStateComponent#loadState(Object)} instead
+   */
+  @Deprecated
+  void readExternal(final Element element) throws InvalidDataException;
+
+  /**
+   * @deprecated implement {@link com.intellij.openapi.components.PersistentStateComponent#getState()} instead
+   */
+  @Deprecated
+  void writeExternal(final Element element) throws WriteExternalException;
 }

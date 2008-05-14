@@ -203,9 +203,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
                                                        final ModifiableFacetModel model) throws InvalidDataException {
     final C configuration = type.createDefaultConfiguration();
     final Element config = state.getConfiguration();
-    if (config != null) {
-      configuration.readExternal(config);
-    }
+    FacetUtil.loadFacetConfiguration(configuration, config);
     String name = state.getName();
     final Facet facet = createFacet(type, name, configuration, underlyingFacet);
     facet.setImplicit(state.isImplicit());
@@ -241,10 +239,12 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       facetState.setFacetType(facet.getType().getStringId());
       facetState.setName(facet.getName());
       facetState.setImplicit(facet.isImplicit());
-      final Element config = new Element(CONFIGURATION_ELEMENT);
+      final Element config;
       try {
-        facet.getConfiguration().writeExternal(config);
+        FacetConfiguration configuration = facet.getConfiguration();
+        config = FacetUtil.saveFacetConfiguration(configuration);
         if (facet instanceof JDOMExternalizable) {
+          //todo[nik] remove
           ((JDOMExternalizable)facet).writeExternal(config);
         }
       }

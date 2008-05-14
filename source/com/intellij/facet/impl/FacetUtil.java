@@ -7,10 +7,20 @@ package com.intellij.facet.impl;
 import com.intellij.facet.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -59,6 +69,32 @@ public class FacetUtil {
   public static void deleteImplicitFacets(Project project, final FacetTypeId typeId) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       deleteImplicitFacets(module, typeId);
+    }
+  }
+
+  public static void loadFacetConfiguration(final @NotNull FacetConfiguration configuration, final @Nullable Element config)
+      throws InvalidDataException {
+    if (config != null) {
+      if (configuration instanceof PersistentStateComponent) {
+        TypeVariable<Class<PersistentStateComponent>> variable = PersistentStateComponent.class.getTypeParameters()[0];
+        Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(variable, configuration.getClass()));
+        ((PersistentStateComponent)configuration).loadState(XmlSerializer.deserialize(config, stateClass));
+      }
+      else {
+        configuration.readExternal(config);
+      }
+    }
+  }
+
+  public static Element saveFacetConfiguration(final FacetConfiguration configuration) throws WriteExternalException {
+    if (configuration instanceof PersistentStateComponent) {
+      Object state = ((PersistentStateComponent)configuration).getState();
+      return XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters());
+    }
+    else {
+      final Element config = new Element(FacetManagerImpl.CONFIGURATION_ELEMENT);
+      configuration.writeExternal(config);
+      return config;
     }
   }
 }

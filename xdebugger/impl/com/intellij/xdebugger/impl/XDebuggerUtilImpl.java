@@ -4,33 +4,31 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.settings.XDebuggerSettings;
-import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 
 /**
  * @author nik
@@ -162,23 +160,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   public static Class getStateClass(final Class<? extends PersistentStateComponent> aClass) {
-    Type type = resolveVariable(PersistentStateComponent.class.getTypeParameters()[0], aClass);
-    return ReflectionUtil.getRawType(type);
-  }
-
-  private static Type resolveVariable(final TypeVariable variable, final Class aClass) {
-    Type type;
-    Class current = aClass;
-    while ((type = ReflectionUtil.resolveVariable(variable, current, false)) == null) {
-      current = current.getSuperclass();
-      if (current == null) {
-        return null;
-      }
-    }
-    if (type instanceof TypeVariable) {
-      return resolveVariable((TypeVariable)type, aClass);
-    }
-    return type;
+    return ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], aClass));
   }
 
   @Nullable
