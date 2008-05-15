@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
@@ -23,7 +23,7 @@ import java.util.List;
 
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
-    return ApplicationManager.getApplication().getComponent(ProjectJdkTable.class);
+    return ServiceManager.getService(ProjectJdkTable.class);
   }
 
   @Nullable

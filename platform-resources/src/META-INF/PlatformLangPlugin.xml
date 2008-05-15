@@ -17,7 +17,10 @@
                         serviceImplementation="com.intellij.codeInsight.TargetElementUtilBase"/>
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
-                                                                                            
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
+    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
+
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
                     serviceImplementation="com.intellij.openapi.vcs.impl.DefaultExcludedFileIndex"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"

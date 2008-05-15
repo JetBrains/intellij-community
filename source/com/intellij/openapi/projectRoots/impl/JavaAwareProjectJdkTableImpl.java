@@ -4,19 +4,28 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 
+@State(
+  name="ProjectJdkTable",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/jdk.table.xml"
+    )}
+)
 public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
-    return (JavaAwareProjectJdkTableImpl)ApplicationManager.getApplication().getComponent(ProjectJdkTable.class);
+    return (JavaAwareProjectJdkTableImpl)ServiceManager.getService(ProjectJdkTable.class);
   }
 
   private JavaSdk myJavaSdk;
@@ -49,10 +58,10 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   }
 
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void loadState(final Element element) {
     myInternalJdk = null;
     try {
-      super.readExternal(element);
+      super.loadState(element);
     }
     finally {
       getInternalJdk();

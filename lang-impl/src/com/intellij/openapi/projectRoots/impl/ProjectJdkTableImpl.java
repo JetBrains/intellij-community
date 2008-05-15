@@ -2,15 +2,18 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +26,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExternalizable, ExportableApplicationComponent {
+@State(
+  name="ProjectJdkTable",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/jdk.table.xml"
+    )}
+)
+public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentStateComponent<Element>, ExportableComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl");
+
   private ArrayList<Sdk> myJdks = new ArrayList<Sdk>();
 
   private EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
@@ -32,15 +45,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
 
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
 
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("jdk.table")};
   }
 
   @NotNull
@@ -148,7 +155,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     return UnknownSdkType.getInstance(null);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element element) {
     myJdks.clear();
 
     final List children = element.getChildren(ELEMENT_JDK);
@@ -157,7 +164,12 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
       for (final Object aChildren : children) {
         final Element e = (Element)aChildren;
         final ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
-        jdk.readExternal(e);
+        try {
+          jdk.readExternal(e);
+        }
+        catch (InvalidDataException ex) {
+          LOG.error(ex);
+        }
         jdks.add(jdk);
       }
     }
@@ -172,21 +184,18 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("ProjectJdkTableImpl"); 
     for (Sdk jdk : myJdks) {
       final Element e = new Element(ELEMENT_JDK);
+      try {
+        ((ProjectJdkImpl)jdk).writeExternal(e);
+      }
+      catch (WriteExternalException e1) {
+        continue;
+      }
       element.addContent(e);
-      ((ProjectJdkImpl)jdk).writeExternal(e);
     }
+    return element;
   }
-
-  public String getExternalFileName() {
-    return "jdk.table";
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ProjectJdkTable";
-  }
-
 }
