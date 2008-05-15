@@ -298,4 +298,7 @@
 
   <extensionPoint name="filetype.stubBuilder"
                   beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+
+  <extensionPoint name="moduleType"
+                  beanClass="com.intellij.openapi.module.ModuleTypeEP"/>
 </extensionPoints>

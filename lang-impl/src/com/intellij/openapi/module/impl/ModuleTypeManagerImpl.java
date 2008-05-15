@@ -32,12 +32,12 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeManager;
-import com.intellij.openapi.module.UnknownModuleType;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.*;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 public class ModuleTypeManagerImpl extends ModuleTypeManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleTypeManagerImpl");
@@ -64,7 +64,13 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   public ModuleType[] getRegisteredTypes() {
-    return myModuleTypes.keySet().toArray(new ModuleType[myModuleTypes.size()]);
+    List<ModuleType> result = new ArrayList<ModuleType>();
+    result.addAll(myModuleTypes.keySet());
+    for(ModuleTypeEP moduleTypeEP: Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
+      result.add(moduleTypeEP.getModuleType());
+    }
+
+    return result.toArray(new ModuleType[result.size()]);
   }
 
   public ModuleType findByID(String moduleTypeID) {
@@ -74,11 +80,23 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
         return type;
       }
     }
+    for(ModuleTypeEP ep: Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
+      if (ep.id.equals(moduleTypeID)) {
+        return ep.getModuleType();
+      }
+    }
+
 
     return new UnknownModuleType(moduleTypeID, getDefaultModuleType());
   }
 
   public boolean isClasspathProvider(final ModuleType moduleType) {
+    for(ModuleTypeEP ep: Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
+      if (ep.id.equals(moduleType.getId())) {
+        return ep.classpathProvider;
+      }
+    }
+
     final Boolean provider = myModuleTypes.get(moduleType);
     return provider != null && provider.booleanValue();
   }
