@@ -185,7 +185,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private void initComponent(Object component) {
-    long startTime = System.nanoTime();
     if (!(component instanceof ProgressManager)) {
       final ProgressManager progressManager = ProgressManager.getInstance();
 
@@ -213,11 +212,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
     catch (Throwable ex) {
       handleInitComponentError(ex, false, component.getClass().getName());
-    }
-    long endTime = System.nanoTime();
-    long ms = (endTime - startTime) / 1000000;
-    if (ms > 10) {
-      LOG.info("Long initialization for " + component.getClass().getName() + ": " + ms + " ms");
     }
   }
 
@@ -600,11 +594,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
               Object componentInstance = null;
               try {
+                long startTime = myInitialized ? 0 : System.nanoTime();
                 componentInstance = super.getComponentInstance(picoContainer);
 
                 if (!myInitialized) {
                   myComponentsRegistry.registerComponentInstance(componentInstance);
                   initComponent(componentInstance);
+                  long endTime = System.nanoTime();
+                  long ms = (endTime - startTime) / 1000000;
+                  if (ms > 10) {
+                    LOG.info("Long initialization for " + componentInstance.getClass().getName() + ": " + ms + " ms");
+                  }
                   myInitialized = true;
                 }
               }
