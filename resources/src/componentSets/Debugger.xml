@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.debugger.settings.ThreadsViewSettings</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.debugger.settings.ViewsGeneralSettings</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.debugger.settings.DebuggerSettings</implementation-class>
     </component>
   </application-components>

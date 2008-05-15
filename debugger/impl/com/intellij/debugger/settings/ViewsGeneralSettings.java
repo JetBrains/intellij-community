@@ -1,14 +1,23 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class ViewsGeneralSettings implements NamedJDOMExternalizable, ApplicationComponent{
+@State(
+  name="ViewsSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/debugger.frameview.xml"
+    )}
+)
+public class ViewsGeneralSettings implements PersistentStateComponent<Element> {
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
@@ -18,29 +27,28 @@ public class ViewsGeneralSettings implements NamedJDOMExternalizable, Applicatio
     myNodeRendererSettings = instance;
   }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
   public static ViewsGeneralSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(ViewsGeneralSettings.class);
+    return ServiceManager.getService(ViewsGeneralSettings.class);
   }
 
-  public String getExternalFileName() {
-    return "debugger.frameview";
+  public void loadState(Element element) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+    catch (InvalidDataException e) {
+      // ignore
+    }
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public String getComponentName() {
-    return "ViewsSettings";
+  public Element getState() {
+    Element element = new Element("ViewsGeneralSettings");
+    try {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+    catch (WriteExternalException e) {
+      // ignore
+    }
+    return element;
   }
 
   void fireRendererSettingsChanged() {
