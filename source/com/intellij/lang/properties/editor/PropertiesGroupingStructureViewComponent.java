@@ -1,6 +1,5 @@
 package com.intellij.lang.properties.editor;
 
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
@@ -11,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +30,6 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   protected ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = (DefaultActionGroup)super.createActionGroup();
     actionGroup.add(new ChangeGroupSeparatorAction());
-    actionGroup.add(new ContextHelpAction("editing.propertyFile.bundleEditor"));
     return actionGroup;
   }
 
@@ -126,6 +125,11 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       }
     }
 
+  }
+
+  @NonNls
+  public String getHelpID() {
+    return "editing.propertyFile.bundleEditor";
   }
 }
 

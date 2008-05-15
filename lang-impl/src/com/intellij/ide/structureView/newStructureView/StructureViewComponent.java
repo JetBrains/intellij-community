@@ -370,7 +370,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       result.add(myAutoScrollFromSourceHandler.createToggleAction());
     }
     result.addSeparator();
-    result.add(new ContextHelpAction(ourHelpID));
+    result.add(new ContextHelpAction(getHelpID()));
     return result;
   }
 
@@ -671,7 +671,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       }
     }
     if (DataConstants.HELP_ID.equals(dataId)) {
-      return ourHelpID;
+      return getHelpID();
     }
     return null;
   }
@@ -779,5 +779,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
       return o != null ? o.hashCode() : 0;
     }
+  }
+
+  public String getHelpID() {
+    return ourHelpID;
   }
 }
