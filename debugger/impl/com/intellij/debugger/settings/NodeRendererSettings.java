@@ -4,10 +4,15 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
@@ -21,7 +26,15 @@ import java.util.List;
  * Date: Sep 18, 2003
  * Time: 8:00:25 PM
  */
-public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExternalizable {
+@State(
+  name="NodeRendererSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/debugger.renderers.xml"
+    )}
+)
+public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
   private static final @NonNls String REFERENCE_RENDERER = "Reference renderer";
   public static final @NonNls String RENDERER_TAG = "Renderer";
@@ -67,7 +80,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   }
   
   public static NodeRendererSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(NodeRendererSettings.class);
+    return ServiceManager.getService(NodeRendererSettings.class);
   }
   
   public void addPluginRenderer(NodeRenderer renderer) {
@@ -88,23 +101,10 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     return myAlternateCollectionRenderers[0].isEnabled();
   }
 
-  public String getComponentName() {
-    return "NodeRendererSettings";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public String getExternalFileName() {
-    return "debugger.renderers";
-  }
-
   public boolean equals(Object o) {
     if(!(o instanceof NodeRendererSettings)) return false;
 
-    return DebuggerUtilsEx.externalizableEqual(this, (NodeRendererSettings)o);
+    return DebuggerUtilsEx.elementsEqual(getState(), ((NodeRendererSettings)o).getState());
   }
 
   public void addListener(NodeRendererSettingsListener listener) {
@@ -116,21 +116,28 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public Element getState()  {
+    final Element element = new Element("NodeRendererSettings");
     JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, myHexRenderer.isEnabled()? "true" : "false");
     JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, areAlternateCollectionViewsEnabled()? "true" : "false");
-    element.addContent(writeRenderer(myArrayRenderer));
-    element.addContent(writeRenderer(myToStringRenderer));
-    element.addContent(writeRenderer(myClassRenderer));
-    if (myCustomRenderers.getRendererCount() > 0) {
-      final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
-      element.addContent(custom);
-      myCustomRenderers.writeExternal(custom);
+    try {
+      element.addContent(writeRenderer(myArrayRenderer));
+      element.addContent(writeRenderer(myToStringRenderer));
+      element.addContent(writeRenderer(myClassRenderer));
+      if (myCustomRenderers.getRendererCount() > 0) {
+        final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
+        element.addContent(custom);
+        myCustomRenderers.writeExternal(custom);
+      }
     }
+    catch (WriteExternalException e) {
+      // ignore
+    }
+    return element;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(final Element root) throws InvalidDataException {
+  public void loadState(final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
       myHexRenderer.setEnabled("true".equalsIgnoreCase(hexEnabled));
@@ -148,14 +155,19 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
       if (id == null) {
         continue;
       }
-      if (ArrayRenderer.UNIQUE_ID.equals(id)) {
-        myArrayRenderer.readExternal(elem);
+      try {
+        if (ArrayRenderer.UNIQUE_ID.equals(id)) {
+          myArrayRenderer.readExternal(elem);
+        }
+        else if (ToStringRenderer.UNIQUE_ID.equals(id)) {
+          myToStringRenderer.readExternal(elem);
+        }
+        else if (ClassRenderer.UNIQUE_ID.equals(id)) {
+          myClassRenderer.readExternal(elem);
+        }
       }
-      else if (ToStringRenderer.UNIQUE_ID.equals(id)) {
-        myToStringRenderer.readExternal(elem);
-      }
-      else if (ClassRenderer.UNIQUE_ID.equals(id)) {
-        myClassRenderer.readExternal(elem);
+      catch (InvalidDataException e) {
+        // ignore
       }
     }
     final Element custom = root.getChild(CUSTOM_RENDERERS_TAG_NAME);

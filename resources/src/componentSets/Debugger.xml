@@ -1,9 +1,6 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.debugger.settings.NodeRendererSettings</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.debugger.settings.ThreadsViewSettings</implementation-class>
     </component>
     <component>

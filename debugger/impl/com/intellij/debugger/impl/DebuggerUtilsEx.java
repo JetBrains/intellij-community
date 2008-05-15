@@ -276,7 +276,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return true;
   }
 
-  private static boolean elementsEqual(Element e1, Element e2) {
+  public static boolean elementsEqual(Element e1, Element e2) {
     if(e1 == null) return e2 == null;
     return Comparing.equal(e1.getName(),        e2.getName()) &&
            elementListsEqual  ((List<Element>  )e1.getChildren  (), (List<Element>  )e2.getChildren  ()) &&
