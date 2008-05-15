@@ -10,12 +10,11 @@ import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.FileViewProvider;
@@ -27,20 +26,27 @@ import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class PropertiesSeparatorManager implements JDOMExternalizable, ApplicationComponent {
+@State(
+  name="PropertiesSeparatorManager",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class PropertiesSeparatorManager implements PersistentStateComponent<Element> {
   @NonNls private static final String FILE_ELEMENT = "file";
   @NonNls private static final String URL_ELEMENT = "url";
   @NonNls private static final String SEPARATOR_ATTR = "separator";
 
   public static PropertiesSeparatorManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(PropertiesSeparatorManager.class);
+    return ServiceManager.getService(PropertiesSeparatorManager.class);
   }
 
   private final Map<VirtualFile, String> mySeparators = new THashMap<VirtualFile, String>();
@@ -106,20 +112,7 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
     mySeparators.put(file, separator);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "PropertiesSeparatorManager";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(final Element element) {
     List<Element> files = element.getChildren(FILE_ELEMENT);
     for (Element fileElement : files) {
       String url = fileElement.getAttributeValue(URL_ELEMENT, "");
@@ -145,7 +138,8 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("PropertiesSeparatorManager");
     for (VirtualFile file : mySeparators.keySet()) {
       String url;
       if (file instanceof ResourceBundleAsVirtualFile) {
@@ -170,6 +164,6 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
       fileElement.setAttribute(SEPARATOR_ATTR, encoded.toString());
       element.addContent(fileElement);
     }
+    return element;
   }
-
 }
