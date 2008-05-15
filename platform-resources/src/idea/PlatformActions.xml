@@ -115,6 +115,7 @@
           <group id="ChangeFileEncodingGroup" popup="true" text="" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
             <action id="ChangeFileEncodingGroupAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingGroup" text=""/>
           </group>
+          <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction"/>
         </group>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
@@ -291,6 +292,7 @@
       <separator/>
       <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
+      <reference ref="ChangeTemplateDataLanguage"/>
     </group>
 
     <group id="EditorTabPopupMenu">
