@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.ExportableBean;
+import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -28,8 +29,8 @@ public class ExportSettingsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ExportSettingsAction");
 
   public void actionPerformed(AnActionEvent e) {
-    List<ExportableApplicationComponent> exportableComponents = new ArrayList<ExportableApplicationComponent>();
-    Map<File,Set<ExportableApplicationComponent>> fileToComponents = getRegisteredComponentsAndFiles(exportableComponents);
+    List<ExportableComponent> exportableComponents = new ArrayList<ExportableComponent>();
+    Map<File,Set<ExportableComponent>> fileToComponents = getRegisteredComponentsAndFiles(exportableComponents);
 
     final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(exportableComponents, fileToComponents, true,
                                                                                      IdeBundle.message("title.select.components.to.export"),
@@ -37,10 +38,10 @@ public class ExportSettingsAction extends AnAction {
                                                                                        "prompt.please.check.all.components.to.export"));
     dialog.show();
     if (!dialog.isOK()) return;
-    Set<ExportableApplicationComponent> markedComponents = dialog.getExportableComponents();
+    Set<ExportableComponent> markedComponents = dialog.getExportableComponents();
     if (markedComponents.size() == 0) return;
     Set<File> exportFiles = new HashSet<File>();
-    for (final ExportableApplicationComponent markedComponent : markedComponents) {
+    for (final ExportableComponent markedComponent : markedComponents) {
       final File[] files = markedComponent.getExportFiles();
       exportFiles.addAll(Arrays.asList(files));
     }
@@ -83,16 +84,16 @@ public class ExportSettingsAction extends AnAction {
     }
   }
 
-  public static Map<File, Set<ExportableApplicationComponent>> getRegisteredComponentsAndFiles(List<ExportableApplicationComponent> exportableComponents) {
-    Map<File,Set<ExportableApplicationComponent>> fileToComponents = new HashMap<File, Set<ExportableApplicationComponent>>();
+  public static Map<File, Set<ExportableComponent>> getRegisteredComponentsAndFiles(List<ExportableComponent> exportableComponents) {
+    Map<File,Set<ExportableComponent>> fileToComponents = new HashMap<File, Set<ExportableComponent>>();
 
-    final List<ExportableApplicationComponent> components = new ArrayList<ExportableApplicationComponent>(Arrays.asList(ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class)));
+    final List<ExportableComponent> components = new ArrayList<ExportableComponent>(Arrays.asList(ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class)));
 
-    final ExportableBean[] exportableBeans = Extensions.getExtensions(ExportableApplicationComponent.EXTENSION_POINT);
+    final ExportableBean[] exportableBeans = Extensions.getExtensions(ExportableComponent.EXTENSION_POINT);
     for (ExportableBean exportableBean : exportableBeans) {
       final String serviceClass = exportableBean.serviceInterface;
       if (serviceClass == null) {
-        LOG.error("Service interface not specified in " + ExportableApplicationComponent.EXTENSION_POINT);
+        LOG.error("Service interface not specified in " + ExportableComponent.EXTENSION_POINT);
         continue;
       }
       try {
@@ -102,12 +103,12 @@ public class ExportSettingsAction extends AnAction {
           LOG.error("Can't find service: " + serviceClass);
           continue;
         }
-        if (!(service instanceof ExportableApplicationComponent)) {
+        if (!(service instanceof ExportableComponent)) {
           LOG.error("Service " + serviceClass + " is registered in exportable EP, but doesn't implement ExportableApplicationComponent");
           continue;
         }
 
-        components.add((ExportableApplicationComponent)service);
+        components.add((ExportableComponent)service);
       }
       catch (ClassNotFoundException e) {
         LOG.error(e);
@@ -115,13 +116,13 @@ public class ExportSettingsAction extends AnAction {
     }
 
 
-    for (ExportableApplicationComponent component : components) {
+    for (ExportableComponent component : components) {
       exportableComponents.add(component);
       final File[] exportFiles = component.getExportFiles();
       for (File exportFile : exportFiles) {
-        Set<ExportableApplicationComponent> componentsTied = fileToComponents.get(exportFile);
+        Set<ExportableComponent> componentsTied = fileToComponents.get(exportFile);
         if (componentsTied == null) {
-          componentsTied = new HashSet<ExportableApplicationComponent>();
+          componentsTied = new HashSet<ExportableComponent>();
           fileToComponents.put(exportFile, componentsTied);
         }
         componentsTied.add(component);

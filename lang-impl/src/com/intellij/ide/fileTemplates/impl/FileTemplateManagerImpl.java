@@ -8,7 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -40,7 +40,7 @@ import java.util.*;
  *         Date: Jul 24
  * @author 2002
  */
-public class FileTemplateManagerImpl extends FileTemplateManager implements ExportableApplicationComponent, JDOMExternalizable {
+public class FileTemplateManagerImpl extends FileTemplateManager implements ExportableComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
   @NonNls private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   @NonNls private static final String TEMPLATES_DIR = "fileTemplates";
@@ -366,17 +366,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     synchronized (LOCK) {
       myRecentList.addName(name);
     }
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "FileTemplateManager";
   }
 
   public void readExternal(Element element) throws InvalidDataException {

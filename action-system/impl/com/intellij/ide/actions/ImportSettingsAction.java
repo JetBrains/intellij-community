@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
@@ -52,17 +52,17 @@ public class ImportSettingsAction extends AnAction {
         return;
       }
 
-      final ArrayList<ExportableApplicationComponent> registeredComponents = new ArrayList<ExportableApplicationComponent>();
-      final Map<File, Set<ExportableApplicationComponent>> filesToComponents = ExportSettingsAction.getRegisteredComponentsAndFiles(registeredComponents);
-      List<ExportableApplicationComponent> components = getComponentsStored(saveFile, registeredComponents);
+      final ArrayList<ExportableComponent> registeredComponents = new ArrayList<ExportableComponent>();
+      final Map<File, Set<ExportableComponent>> filesToComponents = ExportSettingsAction.getRegisteredComponentsAndFiles(registeredComponents);
+      List<ExportableComponent> components = getComponentsStored(saveFile, registeredComponents);
       final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(components, filesToComponents, false,
                                                                        IdeBundle.message("title.select.components.to.import"),
                                                                        IdeBundle.message("prompt.check.components.to.import"));
       dialog.show();
       if (!dialog.isOK()) return;
-      final Set<ExportableApplicationComponent> chosenComponents = dialog.getExportableComponents();
+      final Set<ExportableComponent> chosenComponents = dialog.getExportableComponents();
       Set<String> relativeNamesToExtract = new HashSet<String>();
-      for (final ExportableApplicationComponent chosenComponent : chosenComponents) {
+      for (final ExportableComponent chosenComponent : chosenComponents) {
         final File[] exportFiles = chosenComponent.getExportFiles();
         for (File exportFile : exportFiles) {
           final File configPath = new File(PathManager.getConfigPath());
@@ -110,13 +110,13 @@ public class ImportSettingsAction extends AnAction {
     return IdeBundle.message("message.please.ensure.correct.settings");
   }
 
-  private static List<ExportableApplicationComponent> getComponentsStored(File zipFile,
-                                                                   ArrayList<ExportableApplicationComponent> registeredComponents)
+  private static List<ExportableComponent> getComponentsStored(File zipFile,
+                                                                   ArrayList<ExportableComponent> registeredComponents)
     throws IOException {
     final File configPath = new File(PathManager.getConfigPath());
 
-    final ArrayList<ExportableApplicationComponent> components = new ArrayList<ExportableApplicationComponent>();
-    for (ExportableApplicationComponent component : registeredComponents) {
+    final ArrayList<ExportableComponent> components = new ArrayList<ExportableComponent>();
+    for (ExportableComponent component : registeredComponents) {
       final File[] exportFiles = component.getExportFiles();
       for (File exportFile : exportFiles) {
         final String rPath = FileUtil.getRelativePath(configPath, exportFile);
