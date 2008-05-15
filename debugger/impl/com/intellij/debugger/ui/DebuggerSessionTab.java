@@ -438,6 +438,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     session.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
+        if (myUi.isDisposed()) return;
+
         attractFramesOnPause(event);
 
         myStateManager.fireStateChanged(newContext, event);
