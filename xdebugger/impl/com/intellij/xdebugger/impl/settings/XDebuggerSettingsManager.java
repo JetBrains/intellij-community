@@ -1,11 +1,10 @@
 package com.intellij.xdebugger.impl.settings;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -15,7 +14,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -31,12 +29,12 @@ import java.util.*;
       )
     }
 )
-public class XDebuggerSettingsManager implements ApplicationComponent, PersistentStateComponent<XDebuggerSettingsManager.SettingsState>{
+public class XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState>{
   @NonNls public static final String COMPONENT_NAME = "XDebuggerSettings";
   private Map<String, XDebuggerSettings<?>> mySettingsById;
 
   public static XDebuggerSettingsManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(XDebuggerSettingsManager.class);
+    return ServiceManager.getService(XDebuggerSettingsManager.class);
   }
 
   public SettingsState getState() {
@@ -83,17 +81,6 @@ public class XDebuggerSettingsManager implements ApplicationComponent, Persisten
         mySettingsById.put(settings.getId(), settings);
       }
     }
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return COMPONENT_NAME;
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public static class SettingsState {
