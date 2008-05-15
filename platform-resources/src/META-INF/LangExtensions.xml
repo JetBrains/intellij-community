@@ -53,6 +53,9 @@
                       serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.codeInspection.ex.InspectionToolRegistrar"
                       serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
+  <applicationService serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"
+                      serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
+  <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
   
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>

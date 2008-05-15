@@ -47,9 +47,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.codeInsight.template.impl.TemplateSettings</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</interface-class>
       <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</implementation-class>
     </component>

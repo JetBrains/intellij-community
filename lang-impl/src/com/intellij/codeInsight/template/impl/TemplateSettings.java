@@ -5,12 +5,15 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -26,7 +29,15 @@ import java.io.InputStream;
 import java.util.*;
 
 
-public class TemplateSettings implements JDOMExternalizable, ExportableApplicationComponent {
+@State(
+  name="TemplateSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class TemplateSettings implements PersistentStateComponent<Element>, ExportableComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateSettings");
 
@@ -94,17 +105,11 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     return CodeInsightBundle.message("templates.export.display.name");
   }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
   public static TemplateSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(TemplateSettings.class);
+    return ServiceManager.getService(TemplateSettings.class);
   }
 
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  public void loadState(Element parentNode) {
     Element element = parentNode.getChild(DEFAULT_SHORTCUT);
     if (element != null) {
       String shortcut = element.getAttributeValue(SHORTCUT);
@@ -129,7 +134,8 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     loadTemplates();
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public Element getState()  {
+    Element parentNode = new Element("TemplateSettings");
     Element element = new Element(DEFAULT_SHORTCUT);
     if (myDefaultShortcutChar == TAB_CHAR) {
       element.setAttribute(SHORTCUT, TAB);
@@ -150,6 +156,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
       }
       parentNode.addContent(deleted);
     }
+    return parentNode;
   }
 
   public String getLastSelectedTemplateKey() {
@@ -493,10 +500,4 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     }
     return buf.toString();
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "TemplateSettings";
-  }
-
 }
