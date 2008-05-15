@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -118,21 +117,8 @@ public class InjectLanguageAction implements IntentionAction {
 
   private static void buildLanguageTree(String[] langIds, Map<String, List<String>> map) {
     for (final String id : langIds) {
-      final Language lang = InjectedLanguage.findLanguageById(id);
-      if (lang instanceof LanguageDialect) {
-        final LanguageDialect ld = (LanguageDialect)lang;
-        final List<String> list = map.get(ld.getBaseLanguage().getID());
-        if (list == null) {
-          map.put(ld.getBaseLanguage().getID(), new ArrayList<String>(Arrays.asList(ld.getID())));
-        }
-        else {
-          list.add(ld.getID());
-        }
-      }
-      else {
-        if (!map.containsKey(id)) {
-          map.put(id, new ArrayList<String>());
-        }
+      if (!map.containsKey(id)) {
+        map.put(id, new ArrayList<String>());
       }
     }
   }
