@@ -79,7 +79,10 @@ public final class Match {
       if (!(value instanceof PsiExpression)) return false;
       final PsiType type = ((PsiExpression)value).getType();
       final PsiType parameterType = parameter.second;
-      if (type == null || !parameterType.isAssignableFrom(type)) return false;
+      if (type == null) return false;
+      if (!(parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter)) {
+        if (!parameterType.isAssignableFrom(type)) return false;
+      }
       myParameterValues.put(psiVariable, value);
       final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
       myParameterOccurences.put(psiVariable, elements);
@@ -156,14 +159,15 @@ public final class Match {
     }
   }
 
-  private void replaceWith(final PsiStatement statement) throws IncorrectOperationException {
+  private PsiElement replaceWith(final PsiStatement statement) throws IncorrectOperationException {
     final PsiElement matchStart = getMatchStart();
     final PsiElement matchEnd = getMatchEnd();
-    matchStart.getParent().addBefore(statement, matchStart);
+    final PsiElement element = matchStart.getParent().addBefore(statement, matchStart);
     matchStart.getParent().deleteChildRange(matchStart, matchEnd);
+    return element;
   }
 
-  public void replaceByStatement(final PsiMethodCallExpression methodCallExpression,
+  public PsiElement replaceByStatement(final PsiMethodCallExpression methodCallExpression,
                                            final PsiVariable outputVariable) throws IncorrectOperationException {
     final PsiStatement statement;
     if (outputVariable != null) {
@@ -171,7 +175,7 @@ public final class Match {
       if (returnValue == null && outputVariable instanceof PsiField) {
         returnValue = new FieldReturnValue((PsiField)outputVariable);
       }
-      if (returnValue == null) return;
+      if (returnValue == null) return null;
       statement = returnValue.createReplacement(methodCallExpression);
     }
     else if (getReturnValue() != null) {
@@ -185,7 +189,7 @@ public final class Match {
       expressionStatement.getExpression().replace(methodCallExpression);
       statement = expressionStatement;
     }
-    replaceWith(statement);
+    return replaceWith(statement);
   }
 
   public PsiExpression getInstanceExpression() {
@@ -197,18 +201,18 @@ public final class Match {
     }
   }
 
-  public void replace(final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
+  public PsiElement replace(final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
     if (getMatchStart() == getMatchEnd() && getMatchStart() instanceof PsiExpression) {
-      replaceWithExpression(methodCallExpression);
+      return replaceWithExpression(methodCallExpression);
     }
     else {
-      replaceByStatement(methodCallExpression, outputVariable);
+      return replaceByStatement(methodCallExpression, outputVariable);
     }
   }
 
-  private void replaceWithExpression(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  private PsiElement replaceWithExpression(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
     LOG.assertTrue(getMatchStart() == getMatchEnd());
-    getMatchStart().replace(methodCallExpression);
+    return getMatchStart().replace(methodCallExpression);
   }
 
   TextRange getTextRange() {
