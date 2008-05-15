@@ -8,7 +8,7 @@ class Test {
   }
 
   class B<E> extends A<E> {
-    void foo(E e) {
+    void foo(E e){
         new InnerClass(e).invoke();
     }
 
@@ -19,7 +19,9 @@ class Test {
               this.e = e;
           }
 
-          public void invoke() {}
+          public void invoke() {
+              System.out.println(e);
+          }
       }
   }
 }

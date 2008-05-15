@@ -3,6 +3,6 @@ class Test {
     a.foo();
   }
   class A {
-    void f<caret>oo(){}
+    void f<caret>oo(){int i = 0;}
   }
 }

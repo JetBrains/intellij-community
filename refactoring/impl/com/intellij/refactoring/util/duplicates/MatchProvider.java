@@ -4,6 +4,7 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * @author dsl
  */
 public interface MatchProvider {
-  void processMatch(Match match) throws IncorrectOperationException;
+  PsiElement processMatch(Match match) throws IncorrectOperationException;
 
   List<Match> getDuplicates();
 

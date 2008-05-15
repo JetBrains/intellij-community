@@ -50,13 +50,13 @@ import java.util.*;
 public class ExtractMethodProcessor implements MatchProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
 
-  private final Project myProject;
+  protected final Project myProject;
   private final Editor myEditor;
-  private final PsiElement[] myElements;
+  protected final PsiElement[] myElements;
   private final PsiBlockStatement myEnclosingBlockStatement;
   private final PsiType myForcedReturnType;
   private final String myRefactoringName;
-  private final String myInitialMethodName;
+  protected final String myInitialMethodName;
   private final String myHelpId;
 
   private final PsiManager myManager;
@@ -67,21 +67,21 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private PsiElement myCodeFragmentMember; // parent of myCodeFragment
 
-  private String myMethodName; // name for extracted method
-  private PsiType myReturnType; // return type for extracted method
-  private PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
+  protected String myMethodName; // name for extracted method
+  protected PsiType myReturnType; // return type for extracted method
+  protected PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
   private ParameterTablePanel.VariableData[] myVariableDatum; // parameter data for extracted method
-  private PsiClassType[] myThrownExceptions; // exception to declare as thrown by extracted method
-  private boolean myStatic; // whether to declare extracted method static
+  protected PsiClassType[] myThrownExceptions; // exception to declare as thrown by extracted method
+  protected boolean myStatic; // whether to declare extracted method static
 
-  private PsiClass myTargetClass; // class to create the extracted method in
+  protected PsiClass myTargetClass; // class to create the extracted method in
   private PsiElement myAnchor; // anchor to insert extracted method after it
 
   private ControlFlow myControlFlow; // control flow of myCodeFragment
   private int myFlowStart; // offset in control flow corresponding to the start of the code to be extracted
   private int myFlowEnd; // offset in control flow corresponding to position just after the end of the code to be extracted
 
-  private PsiVariable[] myInputVariables; // input variables
+  protected PsiVariable[] myInputVariables; // input variables
   private PsiVariable[] myOutputVariables; // output variables
   private PsiVariable myOutputVariable; // the only output variable
   private Collection<PsiStatement> myExitStatements;
@@ -92,9 +92,9 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myNeedChangeContext; // target class is not immediate container of the code to be extracted
 
   private boolean myShowErrorDialogs = true;
-  private boolean myCanBeStatic;
-  private boolean myCanBeChainedConstructor;
-  private boolean myIsChainedConstructor;
+  protected boolean myCanBeStatic;
+  protected boolean myCanBeChainedConstructor;
+  protected boolean myIsChainedConstructor;
   private DuplicatesFinder myDuplicatesFinder;
   private List<Match> myDuplicates;
   private String myMethodVisibility = PsiModifier.PRIVATE;
@@ -507,22 +507,32 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public boolean showDialog(final boolean direct) {
-    ExtractMethodDialog dialog = new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                                         myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor, myInitialMethodName,
-                                                         myRefactoringName, myHelpId, myElements) {
-      protected boolean areTypesDirected() {
-        return direct;
-      }
-    };
+    AbstractExtractDialog dialog = createExtractMethodDialog(direct);
     dialog.show();
     if (!dialog.isOK()) return false;
+    apply(dialog);
+    return true;
+  }
+
+  protected void apply(final AbstractExtractDialog dialog) {
     myMethodName = dialog.getChosenMethodName();
     myVariableDatum = dialog.getChosenParameters();
     myStatic |= dialog.isMakeStatic();
     myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();
+  }
 
-    return true;
+  protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
+    return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
+                                                         myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor, myInitialMethodName,
+                                                         myRefactoringName, myHelpId, myElements) {
+      {
+        init();
+      }
+      protected boolean areTypesDirected() {
+        return direct;
+      }
+    };
   }
 
   public boolean showDialog() {
@@ -829,7 +839,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return result;
   }
 
-  public void processMatch(Match match) throws IncorrectOperationException {
+  public PsiElement processMatch(Match match) throws IncorrectOperationException {
     match.changeSignature(myExtractedMethod);
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       myExtractedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
@@ -849,7 +859,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       final PsiElement parameterValue = match.getParameterValue(data.variable);
       expressions[i].replace(parameterValue);
     }
-    match.replace(methodCallExpression, myOutputVariable);
+    return match.replace(methodCallExpression, myOutputVariable);
   }
 
   private void deleteExtracted() throws IncorrectOperationException {
@@ -965,7 +975,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
 
-  private PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier) throws IncorrectOperationException {
+  protected PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier) throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
 
     final boolean skipInstanceQualifier;

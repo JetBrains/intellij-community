@@ -7,7 +7,7 @@ package com.intellij.refactoring.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.replaceMethodWithMethodObject.ReplaceMethodWithMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 
 public class ReplaceMethodWithMethodObjectAction extends BaseRefactoringAction{
   protected boolean isAvailableInEditorOnly() {
@@ -19,6 +19,6 @@ public class ReplaceMethodWithMethodObjectAction extends BaseRefactoringAction{
   }
 
   protected RefactoringActionHandler getHandler(final DataContext dataContext) {
-    return new ReplaceMethodWithMethodObjectHandler();
+    return new ExtractMethodObjectHandler();
   }
 }

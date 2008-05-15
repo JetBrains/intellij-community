@@ -6,13 +6,13 @@ class Test {
    }
 
    class B extends A {
-     String foo() {
+     String foo(){
          return new InnerClass().invoke();
      }
 
        private class InnerClass {
            public String invoke() {
-       return null;
+               return null;
            }
        }
    }

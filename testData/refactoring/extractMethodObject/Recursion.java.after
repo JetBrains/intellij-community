@@ -15,8 +15,8 @@ class Test {
         }
 
         public void invoke() {
-        if (i == 0) return;
-            new InnerClass(i - 1).invoke();
+            if (i == 0) return;
+            bar(i - 1);
         }
     }
 }

@@ -222,7 +222,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       myDuplicates = duplicates;
     }
 
-    public void processMatch(Match match) throws IncorrectOperationException {
+    public PsiElement processMatch(Match match) throws IncorrectOperationException {
       match.changeSignature(myMethod);
       final PsiClass containingClass = myMethod.getContainingClass();
       if (isEssentialStaticContextAbsent(match)) {
@@ -263,11 +263,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
           final PsiElement var = ((PsiReferenceExpression)value).resolve();
           if (var instanceof PsiVariable) {
             match.replace(methodCallExpression, (PsiVariable)var);
-            return;
+            return methodCallExpression;
           }
         }
       }
-      match.replace(methodCallExpression, null);
+      return match.replace(methodCallExpression, null);
     }
 
     private boolean isExternal(final Match match) {

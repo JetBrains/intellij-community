@@ -2,11 +2,13 @@ class Test {
      void bar() {
        String str = foo();
      }
-     static <T> T foo() {
+     static <T> T foo(){
          return InnerClass.invoke();
      }
 
     private static class InnerClass {
-        static <T> T invoke(){return null;}
+        private static <T> T invoke() {
+            return null;
+        }
     }
 }

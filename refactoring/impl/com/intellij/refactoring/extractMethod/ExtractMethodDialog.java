@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -33,7 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 
-class ExtractMethodDialog extends DialogWrapper {
+public class ExtractMethodDialog extends AbstractExtractDialog {
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -46,7 +45,7 @@ class ExtractMethodDialog extends DialogWrapper {
   private final EditorTextField myNameField;
   private final JTextArea mySignatureArea;
   private final JCheckBox myCbMakeStatic;
-  private JCheckBox myCbMakeVarargs;
+  protected JCheckBox myCbMakeVarargs;
   private JCheckBox myCbChainedConstructor;
 
   private final ParameterTablePanel.VariableData[] myVariableData;
@@ -65,7 +64,7 @@ class ExtractMethodDialog extends DialogWrapper {
                              String title,
                              String helpId,
                              final PsiElement[] elementsToExtract) {
-    super(project, true);
+    super(project);
     myProject = project;
     myTargetClass = targetClass;
     myReturnType = returnType;
@@ -126,7 +125,7 @@ class ExtractMethodDialog extends DialogWrapper {
 
     // Initialize UI
 
-    init();
+
   }
 
   protected boolean areTypesDirected() {
@@ -326,8 +325,13 @@ class ExtractMethodDialog extends DialogWrapper {
     return panel;
   }
 
-  private void updateSignature() {
+  protected void updateSignature() {
     if (mySignatureArea == null) return;
+    @NonNls StringBuffer buffer = getSignature();
+    mySignatureArea.setText(buffer.toString());
+  }
+
+  protected StringBuffer getSignature() {
     @NonNls StringBuffer buffer = new StringBuffer();
     final String visibilityString = VisibilityUtil.getVisibilityString(myVisibilityPanel.getVisibility());
     buffer.append(visibilityString);
@@ -388,10 +392,10 @@ class ExtractMethodDialog extends DialogWrapper {
         buffer.append("\n");
       }
     }
-    mySignatureArea.setText(buffer.toString());
+    return buffer;
   }
 
-  private void checkMethodConflicts(Collection<String> conflicts) {
+  protected void checkMethodConflicts(Collection<String> conflicts) {
     PsiMethod prototype;
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();

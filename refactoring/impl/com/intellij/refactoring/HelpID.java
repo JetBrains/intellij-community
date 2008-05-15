@@ -1,7 +1,9 @@
 
 package com.intellij.refactoring;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class HelpID {
@@ -62,6 +64,8 @@ public class HelpID {
   public static final String CHANGE_CLASS_SIGNATURE     = "refactoring.changeClassSignature";
   public static final String MOVE_INSTANCE_METHOD       = "refactoring.moveInstMethod";
   public static final String INVERT_BOOLEAN             = "refactoring.invertBoolean";
+  public static final String EXTRACT_METHOD_OBJECT = "refactoring.extractMethodObject";
+  public static final String REPLACE_CONSTRUCTOR_WITH_BUILDER = "refactoring.replaceConstructorWithBuilder";
 
   public static String getMoveHelpID(PsiElement element) {
     if (element instanceof PsiPackage){

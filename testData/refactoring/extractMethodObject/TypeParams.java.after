@@ -1,9 +1,9 @@
 class Test {
-   <T> void foo(T t) {
+   <T> void foo(T t){
        new InnerClass<T>(t).invoke();
    }
 
-   void bar() {
+    void bar() {
      foo("");
    }
 
@@ -14,6 +14,8 @@ class Test {
             this.t = t;
         }
 
-        public void invoke() {}
+        public void invoke() {
+            System.out.println(t);
+        }
     }
 }

@@ -3,12 +3,14 @@ class Test {
     a.foo();
   }
   class A {
-    void foo() {
+    void foo(){
         new InnerClass().invoke();
     }
 
       private class InnerClass {
-          public void invoke() {}
+          public void invoke() {
+              int i = 0;
+          }
       }
   }
 }

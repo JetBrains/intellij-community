@@ -8,9 +8,10 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.replaceMethodWithMethodObject.ReplaceMethodWithMethodObjectProcessor;
+import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
+import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 
-public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
+public class ExtractMethodObjectTest extends CodeInsightTestCase {
 
   private void doTest() throws Exception {
     doTest(true);
@@ -18,12 +19,22 @@ public class ReplaceMethodWithMethodObjectTest extends CodeInsightTestCase {
 
   private void doTest(boolean createInnerClass) throws Exception {
     final String testName = getTestName(true);
-    configureByFile("/refactoring/replaceMethodWithMethodObject/" + testName + ".java");
+    configureByFile("/refactoring/extractMethodObject/" + testName + ".java");
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
-    new ReplaceMethodWithMethodObjectProcessor(method, "InnerClass", createInnerClass).run();
-    checkResultByFile("/refactoring/replaceMethodWithMethodObject/" + testName + ".java" + ".after");
+    
+    final ExtractMethodObjectProcessor processor =
+        new ExtractMethodObjectProcessor(getProject(), getEditor(), method.getBody().getStatements(), "InnerClass");
+    final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
+    extractProcessor.setShowErrorDialogs(false);
+    extractProcessor.prepare();
+    extractProcessor.testRun();
+    processor.setCreateInnerClass(createInnerClass);
+    processor.run();
+    DuplicatesImpl.processDuplicates(extractProcessor, getProject(), getEditor());
+    processor.getMethod().delete();
+    checkResultByFile("/refactoring/extractMethodObject/" + testName + ".java" + ".after");
   }
 
   public void testStatic() throws Exception {

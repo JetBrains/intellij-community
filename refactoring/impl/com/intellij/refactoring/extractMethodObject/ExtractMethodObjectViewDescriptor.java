@@ -2,17 +2,17 @@
  * User: anna
  * Date: 06-May-2008
  */
-package com.intellij.refactoring.replaceMethodWithMethodObject;
+package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceMethodWithMethodObjectViewDescriptor implements UsageViewDescriptor {
+public class ExtractMethodObjectViewDescriptor implements UsageViewDescriptor {
   private final PsiMethod myMethod;
 
-  public ReplaceMethodWithMethodObjectViewDescriptor(final PsiMethod method) {
+  public ExtractMethodObjectViewDescriptor(final PsiMethod method) {
     myMethod = method;
   }
 

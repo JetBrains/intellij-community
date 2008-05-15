@@ -8,7 +8,7 @@ class Test {
   }
 
   class B<E> extends A<E> {
-    void fo<caret>o(E e){}
+    void fo<caret>o(E e){System.out.println(e);}
   }
 }
 

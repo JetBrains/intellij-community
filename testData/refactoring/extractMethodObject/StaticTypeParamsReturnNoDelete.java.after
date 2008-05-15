@@ -8,7 +8,7 @@ class Test {
     }
 
     private static class InnerClass {
-        static <T> T invoke() {
+        private static <T> T invoke() {
             return null;
         }
     }
