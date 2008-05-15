@@ -477,7 +477,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private void doRequestFocus(final Content toSelect) {
     JComponent toFocus = toSelect.getPreferredFocusableComponent();
-    toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+    if (toFocus != null) {
+      toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+    }
 
     if (toFocus == null) toFocus = toSelect.getPreferredFocusableComponent();
 
