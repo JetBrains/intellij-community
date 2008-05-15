@@ -57,12 +57,14 @@ public class IndexInfrastructure {
   }
 
   public static void rewriteVersion(final File file, final int version) throws IOException {
-    FileUtil.delete(file);
-    try {
-      // need this to ensure the timestamp of the newly created file will be different
-      Thread.sleep(501);
-    }
-    catch (InterruptedException ignored) {
+    if (file.exists()) {
+      FileUtil.delete(file);
+      try {
+        // need this to ensure the timestamp of the newly created file will be different
+        Thread.sleep(501);
+      }
+      catch (InterruptedException ignored) {
+      }
     }
     file.getParentFile().mkdirs();
     file.createNewFile();
