@@ -55,6 +55,8 @@
                       serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
   <applicationService serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"
                       serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
+  <applicationService serviceInterface="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"
+                      serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
   <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
   
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"

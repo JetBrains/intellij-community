@@ -257,7 +257,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   }
 
   public RunnerLayoutSettings getLayoutSettings() {
-    return ApplicationManager.getApplication().getComponent(RunnerLayoutSettings.class);
+    return RunnerLayoutSettings.getInstance();
   }
 
 

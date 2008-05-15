@@ -1,11 +1,10 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,7 +15,10 @@ import java.util.Map;
   storages = {@Storage(
     id = "other",
     file = "$APP_CONFIG$/runner.layout.xml")})
-public class RunnerLayoutSettings implements PersistentStateComponent<Element>, ApplicationComponent {
+public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
+  public static RunnerLayoutSettings getInstance() {
+    return ServiceManager.getService(RunnerLayoutSettings.class);
+  }
 
   private Map<String, RunnerLayout> myRunnerId2Settings = new LinkedHashMap<String, RunnerLayout>();
 
@@ -51,16 +53,5 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element>, 
       eachLayout.read(eachRunnerElement);
       myRunnerId2Settings.put(eachID, eachLayout);
     }
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "RunnerLayoutSettings";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

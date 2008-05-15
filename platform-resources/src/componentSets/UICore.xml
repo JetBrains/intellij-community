@@ -45,10 +45,6 @@
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.execution.ui.layout.impl.RunnerLayoutSettings</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>

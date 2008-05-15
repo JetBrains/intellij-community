@@ -9,13 +9,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
 
   public RunnerLayoutUiImpl(Project project, Disposable parent, String runnerType, String runnerTitle, String sessionName) {
     myProject = project;
-    myLayout = ApplicationManager.getApplication().getComponent(RunnerLayoutSettings.class).getLayout(runnerType);
+    myLayout = RunnerLayoutSettings.getInstance().getLayout(runnerType);
     Disposer.register(parent, this);
 
     myContentUI = new RunnerContentUi(myProject, this, ActionManager.getInstance(), IdeFocusManager.getInstance(myProject), myLayout,
