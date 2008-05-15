@@ -504,16 +504,18 @@ public class DocumentationManager implements ProjectComponent {
     PsiFile containingFile = originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
     Set<DocumentationProvider> result = new LinkedHashSet<DocumentationProvider>();
 
+    final Language containingFileLanguage = containingFile != null ? containingFile.getLanguage():null;
     DocumentationProvider originalProvider = containingFile != null ? LanguageDocumentation.INSTANCE
-      .forLanguage(containingFile.getLanguage()) : null;
+      .forLanguage(containingFileLanguage) : null;
 
     final Language elementLanguage = element != null ?element.getLanguage():null;
-    DocumentationProvider elementProvider = element == null ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
+    DocumentationProvider elementProvider = element == null || elementLanguage.is(containingFileLanguage) ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
 
     ContainerUtil.addIfNotNull(elementProvider, result);
     ContainerUtil.addIfNotNull(originalProvider, result);
     if (containingFile != null) {
-      ContainerUtil.addIfNotNull(LanguageDocumentation.INSTANCE.forLanguage(containingFile.getViewProvider().getBaseLanguage()), result);
+      final Language baseLanguage = containingFile.getViewProvider().getBaseLanguage();
+      if (!baseLanguage.is(containingFileLanguage)) ContainerUtil.addIfNotNull(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage), result);
     }
 
     if (result.isEmpty()) return null;

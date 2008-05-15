@@ -2,13 +2,12 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
@@ -204,9 +203,8 @@ public class CtrlMouseHandler implements ProjectComponent {
 
   @Nullable
   private static String generateInfo(PsiElement element) {
-    final PsiFile file = element.getContainingFile();
-    final Language language = (file != null ? file : element).getLanguage();
-    final DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
+    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
+
     if (documentationProvider != null) {
       String info = documentationProvider.getQuickNavigateInfo(element);
       if (info != null) {
