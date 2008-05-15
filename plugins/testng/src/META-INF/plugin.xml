@@ -1,11 +1,10 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
     <version>1.1.1</version>
     <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
     <idea-version since-build="6791"/>
-    <extensions xmlns="com.intellij">
+    <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGUnusedCodeExtension"/>
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGInClassConfigurationProducer"/>
@@ -13,6 +12,9 @@
         <testFramework implementation="com.theoryinpractice.testng.util.TestNGUtil"/>
         <inspectionToolProvider implementation="com.theoryinpractice.testng.inspection.TestNGInspectionsToolProvider"/>
         <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
+        <intentionAction>
+          <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
+        </intentionAction>
         <codeInsight.createTestProvider implementation="com.theoryinpractice.testng.CreateTestNGTestProvider"/>
     </extensions>
 
