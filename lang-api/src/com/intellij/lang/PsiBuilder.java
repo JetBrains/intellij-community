@@ -177,6 +177,4 @@ public interface PsiBuilder extends UserDataHolder {
 
   void enforceCommentTokens(TokenSet tokens);
 
-  @Nullable
-  LanguageDialect getLanguageDialect();
 }

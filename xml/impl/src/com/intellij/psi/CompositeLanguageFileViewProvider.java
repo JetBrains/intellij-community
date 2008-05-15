@@ -41,10 +41,6 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   private Set<PsiFile> myRootsInUpdate = new HashSet<PsiFile>(4);
 
-  public CompositeLanguageFileViewProvider(final PsiManager manager, final VirtualFile file) {
-    super(manager, file);
-  }
-
   public CompositeLanguageFileViewProvider(final PsiManager manager, final VirtualFile virtualFile, final boolean physical) {
     super(manager, virtualFile, physical);
   }

@@ -2,7 +2,6 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -388,9 +387,16 @@ public class PsiUtilBase {
       lang = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file, lang);
     }
 
-    final LanguageDialect languageDialect = file.getLanguageDialect();
-    if (languageDialect != null) lang = languageDialect;
-    return lang;
+    return narrowLanguage(lang, file.getLanguage());
+  }
+
+  public static Language getDialect(@NotNull PsiElement element) {
+    return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
+  }
+
+  public static Language narrowLanguage(final Language language, final Language candidate) {
+    if (candidate.isKindOf(language)) return candidate;
+    return language;
   }
 
   @Nullable
@@ -401,7 +407,7 @@ public class PsiUtilBase {
     final Language language = getLanguageInEditor(editor, project);
     if (language == null) return file;
 
-    if (language == file.getLanguage() || language == file.getLanguageDialect()) return file;
+    if (language == file.getLanguage()) return file;
 
     final SelectionModel selectionModel = editor.getSelectionModel();
     int caretOffset = editor.getCaretModel().getOffset();
@@ -429,8 +435,7 @@ public class PsiUtilBase {
       }
       curOffset = elt.getTextRange().getEndOffset();
     } while(curOffset < end);
-    if (file.getLanguageDialect() != null) return file.getLanguageDialect();
-    return lang;
+    return narrowLanguage(lang, file.getLanguage());
   }
 
   public static @Nullable PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {

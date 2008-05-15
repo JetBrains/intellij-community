@@ -6,7 +6,6 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.LanguagePerFileMappings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -44,12 +43,11 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   public List<Language> getAvailableValues() {
     return ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<Language>() {
       public boolean value(final Language language) {
-        return language instanceof LanguageDialect ? isAcceptable(language.getBaseLanguage()) : isAcceptable(language);
+        if (language.getBaseLanguage() != null) return value(language.getBaseLanguage());
+
+        return language != Language.ANY && !(language instanceof TemplateLanguage) && !(language instanceof DependentLanguage);
       }
     });
   }
 
-  private static boolean isAcceptable(final Language language) {
-    return language != Language.ANY && !(language instanceof TemplateLanguage) && !(language instanceof DependentLanguage);
-  }
 }

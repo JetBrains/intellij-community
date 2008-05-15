@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -89,6 +88,4 @@ public interface PsiFile extends PsiFileSystemItem {
 
   void subtreeChanged();
 
-  @Nullable
-  LanguageDialect getLanguageDialect();
 }

@@ -21,8 +21,4 @@ public abstract class LightPsiFileBase extends LightPsiFileImpl {
     visitor.visitFile(this);
   }
 
-  @Nullable
-  public LanguageDialect getLanguageDialect() {
-    return null;
-  }
 }

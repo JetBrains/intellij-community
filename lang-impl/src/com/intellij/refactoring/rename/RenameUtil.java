@@ -267,8 +267,7 @@ public class RenameUtil {
     }
 
     PsiFile f = psiElement.getContainingFile();
-    Language language = f == null ? null : f.getLanguageDialect();
-    if (language == null) language = psiElement.getLanguage();
+    Language language = f == null ? psiElement.getLanguage() : f.getLanguage();
 
     return LanguageNamesValidation.INSTANCE.forLanguage(language).isIdentifier(newName.trim(), project);
   }

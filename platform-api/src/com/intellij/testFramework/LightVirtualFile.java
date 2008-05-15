@@ -1,10 +1,9 @@
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
@@ -68,9 +67,8 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   public void setLanguage(final Language language) {
     myLanguage = language;
     myFileType = null;
-    final Language typeLanguage = language instanceof LanguageDialect ? language.getBaseLanguage() : language;
     for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
-      if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == typeLanguage) {
+      if (fileType instanceof LanguageFileType && language.isKindOf(((LanguageFileType)fileType).getLanguage())) {
         myFileType = fileType;
         break;
       }

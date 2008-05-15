@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -104,13 +103,7 @@ public class CollectHighlightsUtil {
   @Nullable
   private static PsiElement findElementAtInRoot(final PsiElement root, final int offset) {
     if (root instanceof PsiFile) {
-      final PsiFile file = (PsiFile)root;
-      final LanguageDialect dialect = file.getLanguageDialect();
-      if (dialect != null) {
-        final PsiElement element = file.getViewProvider().findElementAt(offset, dialect);
-        if (element != null) return element;
-      }
-      return file.getViewProvider().findElementAt(offset, root.getLanguage());
+      return ((PsiFile)root).getViewProvider().findElementAt(offset, root.getLanguage());
     }
     return root.findElementAt(offset);
   }

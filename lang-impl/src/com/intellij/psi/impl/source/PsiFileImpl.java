@@ -327,11 +327,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
   protected PsiFileImpl clone() {
     FileViewProvider provider = getViewProvider().clone();
-    final LanguageDialect dialect = getLanguageDialect();
     PsiFileImpl clone = (PsiFileImpl)provider.getPsi(getLanguage());
-    if (clone == null && dialect != null) {
-      clone = (PsiFileImpl)provider.getPsi(dialect);
-    }
+    assert clone != null;
 
     copyCopyableDataTo(clone);
     
@@ -347,10 +344,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     else if (myOriginalFile != null) {
       clone.myOriginalFile = myOriginalFile;
-    }
-
-    if (dialect != null) {
-      clone.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
     }
 
     return clone;
@@ -481,12 +474,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       if (aClass.isInstance(child)) return (T)child;
     }
     return null;
-  }
-
-  @NonNls
-  @Nullable
-  public LanguageDialect getLanguageDialect() {
-    return getUserData(PsiManagerImpl.LANGUAGE_DIALECT);
   }
 
   public boolean isTemplateDataFile() {

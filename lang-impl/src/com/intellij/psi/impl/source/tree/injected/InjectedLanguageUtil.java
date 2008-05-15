@@ -1,7 +1,10 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.*;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lexer.Lexer;
@@ -25,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -663,10 +665,9 @@ public class InjectedLanguageUtil {
           assert myHostPsiFile.getText().equals(myHostDocument.getText());
 
           DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
-          final Language baseLanguage = myLanguage instanceof LanguageDialect ? myLanguage.getBaseLanguage() : myLanguage;
-          VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(baseLanguage, myHostVirtualFile, documentWindow, outChars);
+          VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
           myLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject);
-          virtualFile.setLanguage(myLanguage instanceof LanguageDialect ? myLanguage.getBaseLanguage() : myLanguage);
+          virtualFile.setLanguage(myLanguage);
 
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
@@ -679,7 +680,6 @@ public class InjectedLanguageUtil {
 
           SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
           psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-          psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, myLanguage instanceof LanguageDialect ? (LanguageDialect)myLanguage : null);
 
           final ASTNode parsedNode = psiFile.getNode();
           assert parsedNode instanceof FileElement : parsedNode;

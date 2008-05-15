@@ -12,7 +12,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -235,8 +234,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
-    LanguageDialect languageDialect = injectedPsi.getLanguageDialect();
-    Language injectedLanguage = languageDialect == null ? injectedPsi.getLanguage() : languageDialect;
+    Language injectedLanguage = injectedPsi.getLanguage();
     final List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(injectedLanguage);
 
     final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {

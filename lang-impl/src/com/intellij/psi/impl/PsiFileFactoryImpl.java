@@ -4,7 +4,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,9 +82,6 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
         psiFile = viewProvider.getPsi(language);
       }
       if (psiFile != null) {
-        if (language instanceof LanguageDialect) {
-          psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, (LanguageDialect)language);
-        }
         if (markAsCopy) {
           final TreeElement node = (TreeElement)psiFile.getNode();
           assert node != null;
@@ -102,8 +98,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   @NotNull
   public PsiFile createFileFromText(@NotNull String name,
-                                    @NotNull FileType fileType, final Language language, @NotNull Language targetLanguage,
-                                    LanguageDialect dialect, @NotNull CharSequence text,
+                                    @NotNull FileType fileType, final Language language, @NotNull Language targetLanguage, @NotNull CharSequence text,
                                     long modificationStamp,
                                     final boolean physical,
                                     boolean markAsCopy) {
@@ -117,9 +112,6 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     if (parserDefinition != null){
       final PsiFile psiFile = viewProvider.getPsi(targetLanguage);
       if (psiFile != null) {
-        if (dialect != null) {
-          psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
-        }
         if(markAsCopy) {
           final TreeElement node = (TreeElement)psiFile.getNode();
           assert node != null;

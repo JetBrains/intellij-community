@@ -2,7 +2,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 
@@ -58,11 +58,7 @@ public class CodeInsightUtilBase {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
     if (document == null) return element;
-    Language language = element.getLanguage();
-    LanguageDialect languageDialect = psiFile.getLanguageDialect();
-    if (languageDialect != null) {
-      language = languageDialect;
-    }
+    final Language language = PsiUtilBase.getDialect(element);
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
     final RangeMarker rangeMarker = document.createRangeMarker(element.getTextRange());
     documentManager.doPostponedOperationsAndUnblockDocument(document);

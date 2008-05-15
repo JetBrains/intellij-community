@@ -6,7 +6,6 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -51,9 +50,6 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
   }
 
   protected String visualize(@NotNull final Language language) {
-    if (language instanceof LanguageDialect) {
-      return language.getBaseLanguage().getDisplayName() + "/" + language.getDisplayName();
-    }
     return language.getDisplayName();
   }
 

@@ -141,9 +141,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     Commenter blockSuitableCommenter = languageSuitableForCompleteFragment != languageAtStart ? LanguageCommenters.INSTANCE
       .forLanguage(languageSuitableForCompleteFragment) : null;
     if (blockSuitableCommenter == null && LanguageCommenters.INSTANCE.forLanguage(languageAtStart) == null) {
-      Language language = myFile.getLanguageDialect();
-      if (language == null) language = myFile.getLanguage();
-      blockSuitableCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
+      blockSuitableCommenter = LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage());
     }
 
     if (blockSuitableCommenter == null && myFile.getFileType() instanceof CustomFileType) {

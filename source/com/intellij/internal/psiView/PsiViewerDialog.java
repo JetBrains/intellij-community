@@ -7,7 +7,6 @@ package com.intellij.internal.psiView;
 
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -22,9 +21,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
@@ -33,8 +34,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -67,7 +66,6 @@ public class PsiViewerDialog extends DialogWrapper {
   private JPanel myPanel;
   private JPanel myChoicesPanel;
   private JCheckBox myShowTreeNodesCheckBox;
-  private JComboBox myDialectsComboBox;
 
   public PsiViewerDialog(Project project,boolean modal) {
     super(project, true);
@@ -150,29 +148,6 @@ public class PsiViewerDialog extends DialogWrapper {
       myFileTypeButtons[i] = button;
     }
 
-    final ChangeListener listener = new ChangeListener() {
-      public void stateChanged(final ChangeEvent e) {
-        updateDialectsCombo();
-      }
-    };
-    final Enumeration<AbstractButton> buttonEnum = bg.getElements();
-    while (buttonEnum.hasMoreElements()) {
-      buttonEnum.nextElement().addChangeListener(listener);
-    }
-    updateDialectsCombo();
-    myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value == null) setText("<no dialect>");
-        return result;
-      }
-    });
-
     myRbExpression.setSelected(true);
 
     myChoicesPanel.setLayout(new BorderLayout());
@@ -197,36 +172,6 @@ public class PsiViewerDialog extends DialogWrapper {
     super.init();
   }
 
-  private void updateDialectsCombo() {
-    final SortedComboBoxModel<LanguageDialect> model = new SortedComboBoxModel<LanguageDialect>(new Comparator<LanguageDialect>() {
-      public int compare(final LanguageDialect o1, final LanguageDialect o2) {
-        if (o1 == null) return o2 == null? 0 : -1;
-        if (o2 == null) return 1;
-        return o1.getID().compareTo(o2.getID());
-      }
-    });
-    for (int i = 0; i < myFileTypeButtons.length; i++) {
-      JRadioButton fileTypeButton = myFileTypeButtons[i];
-      if (fileTypeButton.isSelected()) {
-        final FileType type = myFileTypes[i];
-        if (type instanceof LanguageFileType) {
-          final Language lang = ((LanguageFileType)type).getLanguage();
-          final HashSet<LanguageDialect> result = new HashSet<LanguageDialect>();
-          result.add(null);
-          for (Language dialect : Language.getRegisteredLanguages()) {
-            if (dialect.getBaseLanguage() == lang) {
-              result.add((LanguageDialect)dialect);
-            }
-          }
-          model.setAll(result);
-        }
-        break;
-      }
-    }
-    myDialectsComboBox.setModel(model);
-    myDialectsComboBox.setVisible(model.getSize() > 1);
-  }
-
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -239,7 +184,6 @@ public class PsiViewerDialog extends DialogWrapper {
     myLastParsedText = text;
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiElement rootElement = null;
-    final LanguageDialect dialect = (LanguageDialect)myDialectsComboBox.getSelectedItem();
     try {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
       if (myRbMethod.isSelected()) {
@@ -258,7 +202,7 @@ public class PsiViewerDialog extends DialogWrapper {
           if (fileTypeButton.isSelected()) {
             final FileType type = myFileTypes[i];
             if (type instanceof LanguageFileType) {
-              final Language language = dialect != null ? dialect : ((LanguageFileType)type).getLanguage();
+              final Language language = ((LanguageFileType)type).getLanguage();
               rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), language, text);
             }
             else {

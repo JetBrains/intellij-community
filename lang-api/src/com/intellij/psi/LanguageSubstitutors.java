@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
+public final class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
   public static final LanguageSubstitutors INSTANCE = new LanguageSubstitutors();
 
   private LanguageSubstitutors() {

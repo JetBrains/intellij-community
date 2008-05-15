@@ -83,7 +83,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
-  public static final Key<LanguageDialect> LANGUAGE_DIALECT = Key.create("language.dialect");
   
   public static final int BEFORE_CHILD_ADDITION = 0;
   public static final int BEFORE_CHILD_REMOVAL = 1;

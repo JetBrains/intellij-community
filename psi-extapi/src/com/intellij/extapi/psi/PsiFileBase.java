@@ -33,6 +33,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
     }
     myParserDefinition = parserDefinition;
     final IFileElementType nodeType = parserDefinition.getFileNodeType();
+    assert nodeType.getLanguage() == myLanguage;
     init(nodeType, nodeType);
   }
 

@@ -172,11 +172,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return myInjectionHost;
   }
 
-  @Nullable
-  public LanguageDialect getLanguageDialect() {
-    return myLanguage instanceof LanguageDialect ? (LanguageDialect)myLanguage:null;
-  }
-
   private static abstract class Node implements LighterASTNode {
     public abstract int hc();
   }

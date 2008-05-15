@@ -2,7 +2,6 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -241,11 +240,6 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public void subtreeChanged() {
-  }
-
-  @Nullable
-  public LanguageDialect getLanguageDialect() {
-    return null;
   }
 
   @Override

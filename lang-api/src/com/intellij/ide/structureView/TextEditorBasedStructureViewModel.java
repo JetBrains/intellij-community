@@ -29,7 +29,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
-import com.intellij.lang.LanguageDialect;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,11 +121,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     FileViewProvider viewProvider = file.getViewProvider();
 
     PsiElement element = viewProvider.findElementAt(offset, file.getLanguage());
-    if (element == null) {
-      final LanguageDialect languageDialect = file.getLanguageDialect();
-      if (languageDialect != null) element = viewProvider.findElementAt(offset, languageDialect);
-    }
-    
+
     while (element != null && !(element instanceof PsiFile)) {
       if (isSuitable(element)) return element;
       element = element.getParent();
