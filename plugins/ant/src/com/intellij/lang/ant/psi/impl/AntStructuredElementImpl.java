@@ -494,55 +494,61 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
    * @return
    */
   private String computeAttributeValue(String value, final Set<Pair<PsiElement, String>> elementStack) {
-    elementStack.add(new Pair<PsiElement, String>(this, value));
-    int startProp = 0;
-    final AntFile self = getAntFile();
-    final AntFile antFile = AntConfigurationBase.getInstance(getProject()).getContextFile(self);
-    while ((startProp = value.indexOf("${", startProp)) >= 0) {
-      if (startProp > 0 && value.charAt(startProp - 1) == '$') {
-        // the '$' is escaped
-        startProp += 2;
-        continue;
-      }
-      final int endProp = value.indexOf('}', startProp + 2);
-      if (endProp <= startProp + 2) {
-        startProp += 2;
-        continue;
-      }
-      final String prop = value.substring(startProp + 2, endProp);
-      final AntProperty propElement = antFile.getProperty(prop);
-      String resolvedValue = null;
-      if (propElement != null) {
-        resolvedValue = propElement.getValue(prop);
-        if (resolvedValue != null) {
-          if (elementStack.contains(new Pair<PsiElement, String>(propElement, resolvedValue))) {
-            return value;  // prevent cycles
+    final Pair<PsiElement, String> resolveStackEntry = new Pair<PsiElement, String>(this, value);
+    elementStack.add(resolveStackEntry);
+    try {
+      int startProp = 0;
+      final AntFile self = getAntFile();
+      final AntFile antFile = AntConfigurationBase.getInstance(getProject()).getContextFile(self);
+      while ((startProp = value.indexOf("${", startProp)) >= 0) {
+        if (startProp > 0 && value.charAt(startProp - 1) == '$') {
+          // the '$' is escaped
+          startProp += 2;
+          continue;
+        }
+        final int endProp = value.indexOf('}', startProp + 2);
+        if (endProp <= startProp + 2) {
+          startProp += 2;
+          continue;
+        }
+        final String prop = value.substring(startProp + 2, endProp);
+        final AntProperty propElement = antFile.getProperty(prop);
+        String resolvedValue = null;
+        if (propElement != null) {
+          resolvedValue = propElement.getValue(prop);
+          if (resolvedValue != null) {
+            if (elementStack.contains(new Pair<PsiElement, String>(propElement, resolvedValue))) {
+              return value;  // prevent cycles
+            }
+            resolvedValue = ((AntStructuredElementImpl)propElement).computeAttributeValue(resolvedValue, elementStack);
           }
-          resolvedValue = ((AntStructuredElementImpl)propElement).computeAttributeValue(resolvedValue, elementStack);
         }
-      }
-      if (resolvedValue == null) {
-        startProp += 2;
-      }
-      else {
-        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          builder.append(value, 0, startProp);
-          builder.append(resolvedValue);
-          if (endProp < value.length() - 1) {
-            builder.append(value, endProp + 1, value.length());
+        if (resolvedValue == null) {
+          startProp += 2;
+        }
+        else {
+          final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+          try {
+            builder.append(value, 0, startProp);
+            builder.append(resolvedValue);
+            if (endProp < value.length() - 1) {
+              builder.append(value, endProp + 1, value.length());
+            }
+            value = builder.toString();
           }
-          value = builder.toString();
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
+          finally {
+            StringBuilderSpinAllocator.dispose(builder);
+          }
         }
       }
+      if (value.indexOf("$$") >= 0) {
+        return $$_PATTERN.matcher(value).replaceAll("\\$");
+      }
+      return value;
     }
-    if (value.indexOf("$$") >= 0) {
-      return $$_PATTERN.matcher(value).replaceAll("\\$");
+    finally {
+      elementStack.remove(resolveStackEntry);
     }
-    return value;
   }
 
   private String getNamespace() {

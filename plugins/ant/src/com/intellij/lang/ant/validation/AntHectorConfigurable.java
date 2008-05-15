@@ -8,6 +8,9 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.AntImportsIndex;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,10 +42,20 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   private String myOriginalContext = NONE;
   
   private JComboBox myCombo;
+  private final VirtualFileFilter myFileFilter;
 
   public AntHectorConfigurable(AntFile file) {
     myFile = file;
-    myLocalPath = PathUtil.getLocalPath(myFile.getVirtualFile());
+    final VirtualFile selfVFile = myFile.getVirtualFile();
+    myLocalPath = PathUtil.getLocalPath(selfVFile);
+    
+    final Project project = file.getProject();
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myFileFilter = new VirtualFileFilter() {
+      public boolean accept(final VirtualFile file) {
+        return !selfVFile.equals(file) && projectFileIndex.isInContent(file);
+      }
+    };
   }
 
   public boolean canClose() {
@@ -54,19 +67,23 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     panel.setBorder(BorderFactory.createTitledBorder("File Context"));
     myCombo = new ComboBox();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
-    panel.add(new JLabel("Included into:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
-    panel.add(myCombo, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
-    
-    final Collection<VirtualFile> antFiles = FileBasedIndex.getInstance().getContainingFiles(AntImportsIndex.INDEX_NAME, AntImportsIndex.ANT_FILES_WITH_IMPORTS_KEY, VirtualFileFilter.ALL);
+    panel.add(
+        new JLabel("Included into:"), 
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0)
+    );
+    panel.add(
+        myCombo, 
+        new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0)
+    );
+
+    final FileBasedIndex fbi = FileBasedIndex.getInstance();
+    final Collection<VirtualFile> antFiles = fbi.getContainingFiles(AntImportsIndex.INDEX_NAME, AntImportsIndex.ANT_FILES_WITH_IMPORTS_KEY, myFileFilter);
     for (VirtualFile file : antFiles) {
       final AntFile antFile = toAntFile(file);
       if (antFile != null) {
         final String path = PathUtil.getLocalPath(file);
-        if (!FileUtil.pathsEqual(path, myLocalPath)) {
-          final AntFile previous = myPathToFileMap.put(path, antFile);
-
-          assert previous == null;
-        }
+        final AntFile previous = myPathToFileMap.put(path, antFile);
+        assert previous == null;
       }
     }
     final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(myFile.getProject());

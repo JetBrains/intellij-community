@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
@@ -20,7 +19,6 @@ import java.util.Set;
  *         Date: Apr 28, 2008
  */
 public class AntImportsIndex extends ScalarIndexExtension<Integer>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntImportsIndex");
   public static final ID<Integer, Void> INDEX_NAME = new ID<Integer, Void>("ant-imports");
   private static final int VERSION = 4;
   public static final Integer ANT_FILES_WITH_IMPORTS_KEY = new Integer(0);
