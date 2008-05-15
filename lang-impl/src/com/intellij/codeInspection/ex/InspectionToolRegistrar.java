@@ -6,17 +6,13 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,17 +27,18 @@ import java.util.regex.Pattern;
 /**
  * @author max
  */
-public class InspectionToolRegistrar implements ApplicationComponent, JDOMExternalizable {
+public class InspectionToolRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
 
-  private ArrayList<Factory<InspectionTool>> myInspectionToolFactories;
+  private ArrayList<Factory<InspectionTool>> myInspectionToolFactories = new ArrayList<Factory<InspectionTool>>();
 
   private AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
+  private AtomicBoolean myInspectionComponentsLoaded = new AtomicBoolean(false);
 
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
   public void ensureInitialized() {
-    if (myInspectionToolFactories == null) {
+    if (!myInspectionComponentsLoaded.getAndSet(true)) {
       Set<InspectionToolProvider> providers = new THashSet<InspectionToolProvider>();
       providers.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(InspectionToolProvider.class)));
       providers.addAll(Arrays.asList(Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME)));
@@ -50,7 +47,6 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   public void registerTools(final InspectionToolProvider[] providers) {
-    myInspectionToolFactories = new ArrayList<Factory<InspectionTool>>();
     for (InspectionToolProvider provider : providers) {
       Class[] classes = provider.getInspectionClasses();
       for (Class aClass : classes) {
@@ -66,28 +62,10 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   public static InspectionToolRegistrar getInstance() {
-    return ApplicationManager.getApplication().getComponent(InspectionToolRegistrar.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "InspectionToolRegistrar";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
+    return ServiceManager.getService(InspectionToolRegistrar.class);
   }
 
   public void registerInspectionToolFactory(Factory<InspectionTool> factory) {
-    ensureInitialized();
     myInspectionToolFactories.add(factory);
   }
 
