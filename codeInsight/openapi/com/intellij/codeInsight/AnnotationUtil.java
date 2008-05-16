@@ -76,7 +76,12 @@ public class AnnotationUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String... annotationNames) {
-    return findAnnotation(listOwner, new HashSet<String>(Arrays.asList(annotationNames)));
+    return findAnnotation(listOwner, false, annotationNames);
+  }
+
+  @Nullable
+  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, final boolean skipExternal, String... annotationNames) {
+    return findAnnotation(listOwner, new HashSet<String>(Arrays.asList(annotationNames)), skipExternal);
   }
 
   @Nullable
@@ -86,6 +91,12 @@ public class AnnotationUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Collection<String> annotationNames) {
+    return findAnnotation(listOwner, annotationNames, false);
+  }
+
+  @Nullable
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Collection<String> annotationNames,
+                                             final boolean skipExternal) {
     final PsiAnnotation[] allAnnotations;
     if (listOwner instanceof PsiParameter) {
       allAnnotations = ((PsiParameter)listOwner).getAnnotations();
@@ -102,11 +113,13 @@ public class AnnotationUtil {
         return annotation;
       }
     }
-    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(listOwner.getProject());
-    for (String annotationName : annotationNames) {
-      final PsiAnnotation annotation = annotationsManager.findExternalAnnotation(listOwner, annotationName);
-      if (annotation != null) {
-        return annotation;
+    if (!skipExternal) {
+      final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(listOwner.getProject());
+      for (String annotationName : annotationNames) {
+        final PsiAnnotation annotation = annotationsManager.findExternalAnnotation(listOwner, annotationName);
+        if (annotation != null) {
+          return annotation;
+        }
       }
     }
     return null;
@@ -167,10 +180,17 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, new HashSet<PsiMethod>());
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, false, new HashSet<PsiMethod>());
   }
 
-  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy, Set<PsiMethod> processed) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy,
+                                    boolean skipExternal) {
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, new HashSet<PsiMethod>());
+  }
+
+  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                     @NonNls String annotationFQN,
+                                     boolean checkHierarchy, final boolean skipExternal, Set<PsiMethod> processed) {
     if (!listOwner.isValid()) return false;
     if (listOwner instanceof PsiParameter) {
       // this is more efficient than getting the modifier list
@@ -188,14 +208,16 @@ public class AnnotationUtil {
       PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
       if (annotation != null) return true;
     }
-    if (ExternalAnnotationsManager.getInstance(listOwner.getProject()).findExternalAnnotation(listOwner, annotationFQN) != null) return true;
+    if (!skipExternal && ExternalAnnotationsManager.getInstance(listOwner.getProject()).findExternalAnnotation(listOwner, annotationFQN) != null) {
+      return true;
+    }
     if (checkHierarchy && listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;
       if (processed.contains(method)) return false;
       processed.add(method);
       final PsiMethod[] superMethods = method.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
-        if (isAnnotated(superMethod, annotationFQN, checkHierarchy, processed)) return true;
+        if (isAnnotated(superMethod, annotationFQN, checkHierarchy, skipExternal, processed)) return true;
       }
     }
     return false;
