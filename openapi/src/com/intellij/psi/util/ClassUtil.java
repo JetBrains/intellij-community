@@ -65,7 +65,7 @@ public class ClassUtil {
       buf.append(qName);
     }
     else {
-      final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+      final PsiClass parentClass = getContainerClass(aClass);
       if (parentClass != null) {
         formatClassName(parentClass, buf);
         buf.append("$");
@@ -78,9 +78,18 @@ public class ClassUtil {
     }
   }
 
+  @Nullable
+  private static PsiClass getContainerClass(final PsiClass aClass) {
+    PsiElement parent = aClass.getContext();
+    while (parent != null && !(parent instanceof PsiClass)) {
+      parent = parent.getContext();
+    }
+    return (PsiClass)parent;
+  }
+
   public static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass) {
     final int[] result = new int[]{-1};
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+    final PsiClass containingClass = getContainerClass(psiClass);
     if (containingClass != null) {
       containingClass.accept(new JavaRecursiveElementVisitor() {
         private int myCurrentIdx = 0;
