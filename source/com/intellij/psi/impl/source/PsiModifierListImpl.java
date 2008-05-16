@@ -233,7 +233,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    return getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.EMPTY_ARRAY);
+    return getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
   }
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
