@@ -33,9 +33,8 @@ public class FieldConflictsResolver {
     final PsiVariable oldVariable = facade.getResolveHelper().resolveReferencedVariable(myName, myScope);
     if (!(oldVariable instanceof PsiField)) return;
     myField = (PsiField) oldVariable;
-    final PsiReference[] references = ReferencesSearch.search(myField, new LocalSearchScope(myScope), false).toArray(new PsiReference[0]);
     myReferenceExpressions = new ArrayList<PsiReferenceExpression>();
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(myField, new LocalSearchScope(myScope), false)) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;

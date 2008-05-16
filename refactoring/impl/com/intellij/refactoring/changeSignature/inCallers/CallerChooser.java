@@ -126,7 +126,7 @@ public abstract class CallerChooser extends DialogWrapper {
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       int start = getStartOffset(caller);
-      for (PsiReference ref : ReferencesSearch.search(callee, new LocalSearchScope(caller), false).findAll()) {
+      for (PsiReference ref : ReferencesSearch.search(callee, new LocalSearchScope(caller), false)) {
         final PsiElement element = ref.getElement();
         if (element != null) {
           highlighter.addRangeHighlight(myCallerEditor, element.getTextRange().getStartOffset() - start,

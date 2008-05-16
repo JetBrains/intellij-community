@@ -658,9 +658,7 @@ public class SystemBuilder {
           final PsiSearchHelper helper = myManager.getSearchHelper();
           SearchScope scope = getScope(helper, method);
 
-          final PsiReference[] refs = ReferencesSearch.search(method, scope, true).toArray(new PsiReference[0]);
-
-          for (PsiReference ref : refs) {
+          for (PsiReference ref : ReferencesSearch.search(method, scope, true)) {
             final PsiElement elt = ref.getElement();
 
             if (elt != null) {
@@ -973,9 +971,8 @@ public class SystemBuilder {
       addUsage(system, element);
 
       if (!(element instanceof PsiExpression)) {
-        final PsiReference[] refs = ReferencesSearch.search(element, getScope(helper, element), true).toArray(new PsiReference[0]);
 
-        for (PsiReference ref : refs) {
+        for (PsiReference ref : ReferencesSearch.search(element, getScope(helper, element), true)) {
           final PsiElement elt = ref.getElement();
 
           if (elt != null) {

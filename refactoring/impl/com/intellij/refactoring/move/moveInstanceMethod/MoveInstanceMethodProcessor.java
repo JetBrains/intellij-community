@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -117,10 +116,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   protected UsageInfo[] findUsages() {
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
-    final PsiSearchHelper searchHelper = manager.getSearchHelper();
-    final PsiReference[] refs = ReferencesSearch.search(myMethod, searchScope, false).toArray(new PsiReference[0]);
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    for (PsiReference ref : refs) {
+    for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false)) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
         boolean isInternal = PsiTreeUtil.isAncestor(myMethod, element, true);

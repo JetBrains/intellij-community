@@ -206,7 +206,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   protected abstract void findExternalUsages(ArrayList<UsageInfo> result);
 
   protected void findExternalReferences(final PsiMethod method, final ArrayList<UsageInfo> result) {
-    for (PsiReference ref : ReferencesSearch.search(method).findAll()) {
+    for (PsiReference ref : ReferencesSearch.search(method)) {
       PsiElement element = ref.getElement();
       PsiElement qualifier = null;
       if (element instanceof PsiReferenceExpression) {

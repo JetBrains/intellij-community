@@ -94,7 +94,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> usagesList = new ArrayList<UsageInfo>();
     for (PsiMember member : myMembersToMove) {
-      for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
+      for (PsiReference psiReference : ReferencesSearch.search(member)) {
         PsiElement ref = psiReference.getElement();
         if (ref instanceof PsiReferenceExpression) {
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
@@ -427,7 +427,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
       }
       JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
-      for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
+      for (PsiReference psiReference : ReferencesSearch.search(member)) {
         PsiElement ref = psiReference.getElement();
         if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
           //Check for target class accessibility

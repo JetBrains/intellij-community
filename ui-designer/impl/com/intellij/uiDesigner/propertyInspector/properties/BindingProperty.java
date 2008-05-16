@@ -243,8 +243,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   private static boolean isFieldUnreferenced(final PsiField field) {
-    final Query<PsiReference> query = ReferencesSearch.search(field);
-    return query.forEach(new Processor<PsiReference>() {
+    return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference t) {
         PsiFile f = t.getElement().getContainingFile();
         if (f != null && f.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {

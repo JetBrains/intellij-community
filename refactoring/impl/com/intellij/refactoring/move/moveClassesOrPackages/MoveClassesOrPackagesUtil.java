@@ -46,8 +46,7 @@ public class MoveClassesOrPackagesUtil {
     Set<PsiReference> foundReferences = new HashSet<PsiReference>();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiReference[] references = ReferencesSearch.search(element, projectScope, false).toArray(new PsiReference[0]);
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(element, projectScope, false)) {
       TextRange range = reference.getRangeInElement();
       if (foundReferences.contains(reference)) continue;
       results.add(

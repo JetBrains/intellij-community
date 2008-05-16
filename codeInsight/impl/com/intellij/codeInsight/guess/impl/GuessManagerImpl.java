@@ -17,7 +17,7 @@ import java.util.LinkedHashSet;
 
 public class GuessManagerImpl extends GuessManager {
 
-  private MethodPatternMap myMethodPatternMap = new MethodPatternMap();
+  private final MethodPatternMap myMethodPatternMap = new MethodPatternMap();
 
   {
     initMethodPatterns();
@@ -106,7 +106,6 @@ public class GuessManagerImpl extends GuessManager {
     if (refClass == null) return;
 
     PsiManager manager = PsiManager.getInstance(myProject);
-    PsiSearchHelper helper = manager.getSearchHelper();
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
     ClassInheritorsSearch.search(refClass, refClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
     if (processor.isOverflow()) return;
@@ -195,8 +194,7 @@ public class GuessManagerImpl extends GuessManager {
     SearchScope searchScope = new LocalSearchScope(scopeFile);
 
     if ((flags & (CHECK_USAGE | CHECK_DOWN)) != 0){
-      PsiReference[] varRefs = ReferencesSearch.search(var, searchScope, false).toArray(PsiReference.EMPTY_ARRAY);
-      for (PsiReference varRef : varRefs) {
+      for (PsiReference varRef : ReferencesSearch.search(var, searchScope, false)) {
         PsiElement ref = varRef.getElement();
 
         if ((flags & CHECK_USAGE) != 0) {
@@ -248,8 +246,7 @@ public class GuessManagerImpl extends GuessManager {
 
         PsiMethod method = (PsiMethod)var.getParent().getParent();
         //System.out.println("analyzing usages of " + method + " in file " + scopeFile);
-        PsiReference[] methodRefs = ReferencesSearch.search(method, searchScope, false).toArray(PsiReference.EMPTY_ARRAY);
-        for (PsiReference methodRef : methodRefs) {
+        for (PsiReference methodRef : ReferencesSearch.search(method, searchScope, false)) {
           PsiElement ref = methodRef.getElement();
           if (ref.getParent() instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();

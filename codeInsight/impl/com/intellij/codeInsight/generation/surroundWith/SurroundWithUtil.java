@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -76,7 +75,6 @@ public class SurroundWithUtil {
   }
 
   private static boolean needToDeclareOut(PsiElement block, PsiElement[] statements, PsiDeclarationStatement statement) {
-    PsiSearchHelper helper = block.getManager().getSearchHelper();
     PsiElement[] elements = statement.getDeclaredElements();
     PsiElement lastStatement = statements[statements.length - 1];
     int endOffset = lastStatement.getTextRange().getEndOffset();

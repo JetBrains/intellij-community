@@ -28,8 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 class InlineLocalHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineLocalHandler");
 
@@ -57,9 +55,7 @@ class InlineLocalHandler {
       return;
     }
 
-    final Collection<PsiReference> refs = ReferencesSearch.search(local, GlobalSearchScope.allScope(project), false).findAll();
-
-    if (refs.isEmpty()){
+    if (ReferencesSearch.search(local, GlobalSearchScope.allScope(project), false).findFirst() == null){
       LOG.assertTrue(refExpr == null);
       String message = RefactoringBundle.message("variable.is.never.used", localName);
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);

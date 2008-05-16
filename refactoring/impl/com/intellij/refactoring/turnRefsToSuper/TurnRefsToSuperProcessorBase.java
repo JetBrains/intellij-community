@@ -408,7 +408,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       addLink(type, initializer);
     }
 
-    for (PsiReference ref : ReferencesSearch.search(variable).findAll()) {
+    for (PsiReference ref : ReferencesSearch.search(variable)) {
       final PsiElement element = ref.getElement();
       addLink(element, type);
       addLink(type, element);
@@ -430,7 +430,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final int index = method.getParameterList().getParameterIndex((PsiParameter)variable);
 
         {
-          for (PsiReference call : ReferencesSearch.search(method).findAll()) {
+          for (PsiReference call : ReferencesSearch.search(method)) {
             PsiElement ref = call.getElement();
             PsiExpressionList argumentList;
             if (ref.getParent() instanceof PsiCall) {
@@ -505,7 +505,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private void processMethodReturnType(final PsiMethod method) {
     final PsiTypeElement returnType = method.getReturnTypeElement();
-    for (PsiReference call : ReferencesSearch.search(method).findAll()) {
+    for (PsiReference call : ReferencesSearch.search(method)) {
       final PsiElement ref = call.getElement();
       if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) continue;
       final PsiElement parent = ref.getParent();

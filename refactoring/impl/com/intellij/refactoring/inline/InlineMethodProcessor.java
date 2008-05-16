@@ -85,12 +85,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
-    final Collection<PsiReference> refCollection = ReferencesSearch.search(myMethod).findAll();
     Set<UsageInfo> usages = new HashSet<UsageInfo>();
     if (myReference != null) {
       usages.add(new UsageInfo(myReference));
     }
-    for (PsiReference reference : refCollection) {
+    for (PsiReference reference : ReferencesSearch.search(myMethod)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
@@ -408,7 +407,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiClass thisClass = myMethod.getContainingClass();
     PsiExpression thisAccessExpr;
     if (thisVar != null) {
-      if (!canInlineParmOrThisVariable(thisVar, false)) {
+      if (!canInlineParmOrThisVariable(thisVar)) {
         thisAccessExpr = myFactory.createExpressionFromText(thisVar.getName(), null);
       }
       else {
@@ -479,9 +478,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
-    final PsiReference[] references =
-      ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false)) {
       final PsiElement refElement = reference.getElement();
       final PsiElement anonymousClass = PsiTreeUtil.getParentOfType(refElement, PsiAnonymousClass.class);
       if (anonymousClass != null && PsiTreeUtil.isAncestor(myMethod, anonymousClass, true)) {
@@ -675,10 +672,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private boolean canInlineParmOrThisVariable(PsiLocalVariable variable, boolean strictlyFinal) {
+  private boolean canInlineParmOrThisVariable(PsiLocalVariable variable) {
     boolean isAccessedForWriting = false;
-    final Collection<PsiReference> refs = ReferencesSearch.search(variable).findAll();
-    for (PsiReference ref : refs) {
+    for (PsiReference ref : ReferencesSearch.search(variable)) {
       PsiElement refElement = ref.getElement();
       if (refElement instanceof PsiExpression) {
         if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
@@ -688,8 +684,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     PsiExpression initializer = variable.getInitializer();
-    boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && strictlyFinal;
-    return canInlineParmOrThisVariable(initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting);
+    boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && false;
+    return canInlineParmOrThisVariable(initializer, shouldBeFinal, false, ReferencesSearch.search(variable).findAll().size(), isAccessedForWriting);
   }
 
   private void inlineParmOrThisVariable(PsiLocalVariable variable, boolean strictlyFinal) throws IncorrectOperationException {
@@ -905,10 +901,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   */
 
   private void inlineResultVariable(PsiVariable resultVar) throws IncorrectOperationException {
-    PsiReference[] refs = ReferencesSearch.search(resultVar, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     PsiAssignmentExpression assignment = null;
     PsiReferenceExpression resultUsage = null;
-    for (PsiReference ref1 : refs) {
+    for (PsiReference ref1 : ReferencesSearch.search(resultVar, GlobalSearchScope.projectScope(myProject), false)) {
       PsiReferenceExpression ref = (PsiReferenceExpression)ref1;
       if (ref.getParent() instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)ref.getParent()).getLExpression().equals(ref)) {
         if (assignment != null) {

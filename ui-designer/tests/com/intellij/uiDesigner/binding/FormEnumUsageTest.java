@@ -20,13 +20,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 
 public class FormEnumUsageTest extends PsiTestCase {
   private VirtualFile myTestProjectRoot;
@@ -77,11 +75,9 @@ public class FormEnumUsageTest extends PsiTestCase {
     final PsiClass componentClass = myJavaFacade.findClass("CustomComponent", ProjectScope.getAllScope(myProject));
     assertNotNull(componentClass);
 
-    Query<PsiReference> query = ReferencesSearch.search(componentClass);
-    assertEquals(1, query.findAll().size());
+    assertEquals(1, ReferencesSearch.search(componentClass).findAll().size());
 
-    query = ReferencesSearch.search(valueBField);
-    assertEquals(1, query.findAll().size());
+    assertEquals(1, ReferencesSearch.search(valueBField).findAll().size());
   }
 
 }

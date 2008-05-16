@@ -90,11 +90,10 @@ public class PushDownConflicts {
 
       Members:
       for (PsiMember member : myMovedMembers) {
-        final PsiReference[] refs = ReferencesSearch.search(member, member.getResolveScope(), false).toArray(new PsiReference[0]);
-        for (PsiReference ref : refs) {
+        for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
           final PsiElement element = ref.getElement();
           if (element instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression = ((PsiReferenceExpression)element);
+            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
             final PsiExpression qualifier = referenceExpression.getQualifierExpression();
             if (qualifier != null) {
               final PsiType qualifierType = qualifier.getType();

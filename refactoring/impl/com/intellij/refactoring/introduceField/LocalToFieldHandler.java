@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -137,8 +136,6 @@ public class LocalToFieldHandler {
           final boolean rebindNeeded2 = !variableName.equals(fieldName) || rebindNeeded1;
           final PsiReference[] refs;
           if (rebindNeeded2) {
-            PsiManager manager = local.getManager();
-            PsiSearchHelper helper = manager.getSearchHelper();
             refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
           }
           else {

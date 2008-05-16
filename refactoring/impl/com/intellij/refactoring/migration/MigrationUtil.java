@@ -56,8 +56,7 @@ public class MigrationUtil {
   private static UsageInfo[] findRefs(final PsiManager manager, final PsiElement aClass) {
     final ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiReference[] usages = ReferencesSearch.search(aClass, projectScope, false).toArray(new PsiReference[0]);
-    for (PsiReference usage : usages) {
+    for (PsiReference usage : ReferencesSearch.search(aClass, projectScope, false)) {
       results.add(new UsageInfo(usage.getElement()));
     }
 

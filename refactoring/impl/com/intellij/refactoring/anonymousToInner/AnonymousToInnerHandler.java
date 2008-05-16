@@ -463,8 +463,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private void renameReferences(PsiElement scope) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     for (VariableInfo info : myVariableInfos) {
-      Collection<PsiReference> references = ReferencesSearch.search(info.variable, new LocalSearchScope(scope)).findAll();
-      for (PsiReference reference : references) {
+      for (PsiReference reference : ReferencesSearch.search(info.variable, new LocalSearchScope(scope))) {
         PsiElement ref = reference.getElement();
         PsiIdentifier identifier = (PsiIdentifier)((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
         assert identifier != null;

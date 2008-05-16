@@ -58,7 +58,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (int i = 0; i < myElementsToMove.length; i++) {
       PsiElement element = myElementsToMove[i];
-      for (PsiReference reference : ReferencesSearch.search(element).findAll()) {
+      for (PsiReference reference : ReferencesSearch.search(element)) {
         result.add(new MyUsageInfo(reference.getElement(), i, reference));
       }
     }

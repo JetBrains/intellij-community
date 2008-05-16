@@ -49,13 +49,12 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    PsiReference[] references = ReferencesSearch.search(myClass, projectScope, false).toArray(new PsiReference[0]);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
 
     boolean hadTypeParameters = myClass.getTypeParameters().length > 0;
-    for (final PsiReference reference : references) {
+    for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false)) {
       if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement referenceElement = ((PsiJavaCodeReferenceElement)reference.getElement());
+        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)reference.getElement();
         PsiElement parent = referenceElement.getParent();
         if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnonymousClass ||
             parent instanceof PsiReferenceList) {

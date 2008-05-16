@@ -12,7 +12,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -47,8 +46,7 @@ public class ExtractMethodUtil {
                                     final Map<PsiMethodCallExpression, PsiMethod> ret) {
     final PsiMethod[] overloads = aClass.findMethodsByName(overloadName, false);
     for (final PsiMethod overload : overloads) {
-      final Collection<PsiReference> refs = ReferencesSearch.search(overload).findAll();
-      for (final PsiReference ref : refs) {
+      for (final PsiReference ref : ReferencesSearch.search(overload)) {
         final PsiElement element = ref.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiMethodCallExpression) {

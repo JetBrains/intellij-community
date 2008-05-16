@@ -18,7 +18,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -50,10 +49,10 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       return;
     }
 
-    invokeOnVariable(file, project, ((PsiLocalVariable)element), editor);
+    invokeOnVariable(file, project, (PsiLocalVariable)element, editor);
   }
 
-  private void invokeOnVariable(final PsiFile file, final Project project, final PsiLocalVariable local, final Editor editor) {
+  private static void invokeOnVariable(final PsiFile file, final Project project, final PsiLocalVariable local, final Editor editor) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
     String localName = local.getName();
@@ -64,7 +63,6 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       return;
     }
 
-    PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
     final PsiReference[] refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
 
     if (refs.length == 0) {
@@ -82,7 +80,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
         array.add(ref);
       }
-      if (array.size() > 0) {
+      if (!array.isEmpty()) {
         PsiReference[] refsForWriting = array.toArray(new PsiReference[array.size()]);
         highlightManager.addOccurrenceHighlights(editor, refsForWriting, attributes, true, null);
         String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));

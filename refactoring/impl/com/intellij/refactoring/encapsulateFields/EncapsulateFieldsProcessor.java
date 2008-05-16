@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -136,9 +135,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     PsiField[] fields = myFields;
     for(int i = 0; i < fields.length; i++){
       PsiField field = fields[i];
-      PsiSearchHelper helper = field.getManager().getSearchHelper();
-      PsiReference[] refs = ReferencesSearch.search(field, GlobalSearchScope.projectScope(myProject), true).toArray(new PsiReference[0]);
-      for (final PsiReference reference : refs) {
+      for (final PsiReference reference : ReferencesSearch.search(field, GlobalSearchScope.projectScope(myProject), true)) {
         if (!(reference instanceof PsiReferenceExpression)) continue;
         PsiReferenceExpression ref = (PsiReferenceExpression)reference;
         // [Jeka] to avoid recursion in the field's accessors

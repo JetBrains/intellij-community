@@ -89,8 +89,7 @@ public class DuplicatesFinder {
     Variables:
     for (Iterator<? extends PsiVariable> iterator = myParameters.iterator(); iterator.hasNext();) {
       PsiVariable variable = iterator.next();
-      Collection<PsiReference> refs = ReferencesSearch.search(variable, scope).findAll();
-      for (PsiReference ref : refs) {
+      for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
         PsiElement element = ref.getElement();
         int elementOffset = controlFlow.getStartOffset(element);
         if (elementOffset >= startOffset && elementOffset <= endOffset) {

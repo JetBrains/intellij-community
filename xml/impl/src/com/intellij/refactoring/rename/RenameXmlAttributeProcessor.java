@@ -80,9 +80,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
       if (!oldElement.isValid() || oldElement == originalElement) continue;
       final PsiElement newElement = reference.handleElementRename(newName);
       if (!oldElement.isValid()) {
-        final PsiReference[] references =
-          ReferencesSearch.search(originalElement, new LocalSearchScope(newElement), false).toArray(new PsiReference[0]);
-        for (PsiReference psiReference : references) {
+        for (PsiReference psiReference : ReferencesSearch.search(originalElement, new LocalSearchScope(newElement), false)) {
           queue.addLast(psiReference);
         }
       }

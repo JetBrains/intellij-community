@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -512,10 +511,8 @@ public class PullUpHelper {
       final HashSet<PsiMethod> referencingSubConstructors = new HashSet<PsiMethod>();
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
-        final PsiReference[] references
-          = ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false).toArray(new PsiReference[0]);
         // find references
-        for (PsiReference reference : references) {
+        for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false)) {
           final PsiElement element = reference.getElement();
           if (element != null && "super".equals(element.getText())) {
             PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -690,9 +687,7 @@ public class PullUpHelper {
   }
 
   private static boolean willBeUsedInSubclass(PsiElement member, Set<PsiMember> movedMembers, PsiClass superclass, PsiClass subclass) {
-    PsiSearchHelper helper = member.getManager().getSearchHelper();
-    PsiReference[] refs = ReferencesSearch.search(member, new LocalSearchScope(subclass), false).toArray(new PsiReference[0]);
-    for (PsiReference ref : refs) {
+    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false)) {
       PsiElement element = ref.getElement();
       if (!RefactoringHierarchyUtil.willBeInTargetClass(element, movedMembers, superclass, false)) {
         return true;

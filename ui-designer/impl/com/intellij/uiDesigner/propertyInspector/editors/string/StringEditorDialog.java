@@ -38,7 +38,6 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,8 +196,7 @@ public final class StringEditorDialog extends DialogWrapper{
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
           new Runnable() {
         public void run() {
-          final Query<PsiReference> query = ReferencesSearch.search(pproperty);
-          query.forEach(new Processor<PsiReference>() {
+          ReferencesSearch.search(pproperty).forEach(new Processor<PsiReference>() {
             public boolean process(final PsiReference psiReference) {
               PsiMethod method = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethod.class);
               if (method == null || !AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {

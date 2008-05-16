@@ -165,8 +165,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       final String text = referenceElement.getText();
       if (Comparing.equal(myRenamedClassQualifiedName, removeSpaces(text))) return;
       if (myProcessedFiles.contains(containingFile)) return;
-      final Collection<PsiReference> references = ReferencesSearch.search(aClass, new LocalSearchScope(containingFile)).findAll();
-      for (PsiReference reference : references) {
+      for (PsiReference reference : ReferencesSearch.search(aClass, new LocalSearchScope(containingFile))) {
         final PsiElement collisionReferenceElement = reference.getElement();
         if (collisionReferenceElement instanceof PsiJavaCodeReferenceElement) {
           final PsiElement parent = collisionReferenceElement.getParent();

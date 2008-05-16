@@ -3,7 +3,6 @@ package com.intellij.refactoring.util.classRefs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -13,9 +12,8 @@ import com.intellij.refactoring.util.RefactoringUtil;
  */
 public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.classRefs.ClassInstanceScanner");
-  private PsiClass myClass;
-  private ClassInstanceReferenceVisitor myVisitor;
-  private PsiSearchHelper mySearchHelper;
+  private final PsiClass myClass;
+  private final ClassInstanceReferenceVisitor myVisitor;
 
   public interface ClassInstanceReferenceVisitor {
     void visitQualifier(PsiReferenceExpression qualified, PsiExpression instanceRef, PsiElement referencedInstance);
@@ -32,62 +30,60 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
                               ClassInstanceReferenceVisitor visitor) {
     super(delegate);
     myClass = aClass;
-    mySearchHelper = myClass.getManager().getSearchHelper();
     myVisitor = visitor;
   }
 
-  @Override public void visitLocalVariableDeclaration(PsiLocalVariable variable, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitLocalVariableDeclaration(PsiLocalVariable variable, TypeOccurence occurence) {
     visitVariable(variable, occurence);
   }
 
-  @Override public void visitFieldDeclaration(PsiField field, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitFieldDeclaration(PsiField field, TypeOccurence occurence) {
     visitVariable(field, occurence);
   }
 
-  @Override public void visitParameterDeclaration(PsiParameter parameter, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitParameterDeclaration(PsiParameter parameter, TypeOccurence occurence) {
     visitVariable(parameter, occurence);
   }
 
-  private void visitVariable(PsiVariable variable, ClassReferenceVisitor.TypeOccurence occurence) {
+  private void visitVariable(PsiVariable variable, TypeOccurence occurence) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-    PsiReference[] references = ReferencesSearch.search(variable, projectScope, false).toArray(new PsiReference[0]);
-    for (int i = 0; i < references.length; i++) {
-      PsiElement element = references[i].getElement();
+    for (PsiReference reference : ReferencesSearch.search(variable, projectScope, false)) {
+      PsiElement element = reference.getElement();
 
       // todo: handle arrays
       if (element instanceof PsiExpression) {
-        processExpression((PsiExpression) element, occurence, variable);
-      } else {
+        processExpression((PsiExpression)element, occurence, variable);
+      }
+      else {
         // todo: java doc processing?
 //        LOG.assertTrue(false);
       }
     }
   }
 
-  @Override public void visitMethodReturnType(PsiMethod method, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitMethodReturnType(PsiMethod method, TypeOccurence occurence) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-    PsiReference[] refs = ReferencesSearch.search(method, projectScope, false).toArray(new PsiReference[0]);
 
-    for (int i = 0; i < refs.length; i++) {
-      PsiElement element = refs[i].getElement();
-      if(element instanceof PsiReferenceExpression) {
+    for (PsiReference ref : ReferencesSearch.search(method, projectScope, false)) {
+      PsiElement element = ref.getElement();
+      if (element instanceof PsiReferenceExpression) {
         PsiElement parent = element.getParent();
-        if(parent instanceof PsiMethodCallExpression) {
-          processExpression((PsiMethodCallExpression) parent, occurence, method);
+        if (parent instanceof PsiMethodCallExpression) {
+          processExpression((PsiMethodCallExpression)parent, occurence, method);
         }
       }
     }
   }
 
-  @Override public void visitTypeCastExpression(PsiTypeCastExpression typeCastExpression, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitTypeCastExpression(PsiTypeCastExpression typeCastExpression, TypeOccurence occurence) {
     processExpression(typeCastExpression, occurence, null);
   }
 
-  @Override public void visitNewExpression(PsiNewExpression newExpression, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitNewExpression(PsiNewExpression newExpression, TypeOccurence occurence) {
     processExpression(newExpression, occurence, null);
   }
 
-  private void processExpression(PsiExpression expression, ClassReferenceVisitor.TypeOccurence occurence, PsiElement referencedElement) {
+  private void processExpression(PsiExpression expression, TypeOccurence occurence, PsiElement referencedElement) {
     if(occurence.outermostType == null || !(occurence.outermostType instanceof PsiArrayType)) {
       processNonArrayExpression(myVisitor, expression, referencedElement);
     }

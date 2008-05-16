@@ -336,12 +336,11 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
   }
 
   private void findDefaultConstructorReferences(final ArrayList<UsageInfo> result) {
-    for (PsiReference ref : ReferencesSearch.search(myMember).findAll()) {
+    for (PsiReference ref : ReferencesSearch.search(myMember)) {
       PsiElement element = ref.getElement();
-      PsiElement qualifier = null;
       if (element.getParent() instanceof PsiNewExpression) {
         PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
-        qualifier = newExpression.getQualifier();
+        PsiElement qualifier = newExpression.getQualifier();
         if (qualifier instanceof PsiThisExpression) qualifier = null;
         if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
           result.add(new UsageInfo(element));

@@ -65,9 +65,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     if (myInlineThisOnly) {
       return new UsageInfo[] { new UsageInfo(myCallToInline) };
     }
-    final Collection<PsiReference> refCollection = ReferencesSearch.search(myClass).findAll();
     Set<UsageInfo> usages = new HashSet<UsageInfo>();
-    for (PsiReference reference : refCollection) {
+    for (PsiReference reference : ReferencesSearch.search(myClass)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
