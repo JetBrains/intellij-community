@@ -130,10 +130,10 @@ public class TestNGUtil implements TestFramework
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled, boolean checkJavadoc) {
     //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
     //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
-    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false);
+    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false, true);
     if (hasAnnotation) {
       if (checkDisabled) {
-        PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, TEST_ANNOTATION_FQN);
+        PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, true, TEST_ANNOTATION_FQN);
         assert annotation != null;
         PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
         for (PsiNameValuePair attrib : attribs) {
@@ -151,13 +151,13 @@ public class TestNGUtil implements TestFramework
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass) element;
       for (PsiMethod method : psiClass.getAllMethods()) {
-        if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION_FQN, false)) return true;
+        if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION_FQN, false, true)) return true;
         if (hasTestJavaDoc(method, checkJavadoc)) return true;
       }
     } else if (element instanceof PsiMethod) {
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false)) {
+      if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false, true)) {
         //even if it has a global test, we ignore private methods
         boolean isPrivate = element.getModifierList().hasModifierProperty(PsiModifier.PRIVATE);
         return !isPrivate;
