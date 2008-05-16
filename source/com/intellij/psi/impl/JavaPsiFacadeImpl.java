@@ -6,7 +6,6 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -31,8 +30,6 @@ import com.intellij.psi.impl.source.tree.JavaChangeUtilSupport;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -365,30 +362,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     String package1 = ((PsiClassOwner) file1).getPackageName();
     String package2 = ((PsiClassOwner) file2).getPackageName();
     return Comparing.equal(package1, package2);
-  }
-
-  @NotNull
-  public PsiFile[] findFormsBoundToClass(String className) {
-    if (className == null) return PsiFile.EMPTY_ARRAY;
-    PsiManagerEx myManager = (PsiManagerEx)PsiManager.getInstance(myProject);
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myManager.getProject());
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(className, UsageSearchContext.IN_FOREIGN_LANGUAGES, projectScope, true);
-    if (files.length == 0) return PsiFile.EMPTY_ARRAY;
-    List<PsiFile> boundForms = new ArrayList<PsiFile>(files.length);
-    for (PsiFile psiFile : files) {
-      if (psiFile.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
-
-      String text = psiFile.getText();
-      try {
-        String boundClass = Utils.getBoundClassName(text);
-        if (className.equals(boundClass)) boundForms.add(psiFile);
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-
-    return boundForms.toArray(new PsiFile[boundForms.size()]);
   }
 
   public Project getProject() {

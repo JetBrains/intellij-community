@@ -12,11 +12,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.MoveAction;
+import com.intellij.uiDesigner.binding.FormClassIndex;
 
 import java.util.*;
 
@@ -51,7 +51,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
         PsiClass aClass = (PsiClass)element.getValue();
         final String qName = aClass.getQualifiedName();
         if (qName == null) continue;
-        PsiFile[] forms = JavaPsiFacade.getInstance(myProject).findFormsBoundToClass(qName);
+        List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
         Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
         if (!formNodes.isEmpty()) {
           Collection<PsiFile> formFiles = convertToFiles(formNodes);
@@ -107,10 +107,10 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     return psiFiles;
   }
 
-  private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode> children, PsiFile[] forms) {
-    if (children.isEmpty() || forms.length == 0) return Collections.emptyList();
+  private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode> children, List<PsiFile> forms) {
+    if (children.isEmpty() || forms.isEmpty()) return Collections.emptyList();
     ArrayList<BasePsiNode<? extends PsiElement>> result = new ArrayList<BasePsiNode<? extends PsiElement>>();
-    HashSet<PsiFile> psiFiles = new HashSet<PsiFile>(Arrays.asList(forms));
+    HashSet<PsiFile> psiFiles = new HashSet<PsiFile>(forms);
     for (final AbstractTreeNode child : children) {
       if (child instanceof BasePsiNode) {
         //noinspection unchecked

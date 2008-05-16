@@ -179,15 +179,5 @@ public abstract class JavaPsiFacade {
    */
   public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
-
-  /**
-   * Finds GUI Designer forms bound to the specified class.
-   *
-   * @param className the fully-qualified name of the class to find bound forms for.
-   * @return the array of found bound forms.
-   */
-  @NotNull
-  public abstract PsiFile[] findFormsBoundToClass(String className);
-
   public abstract Project getProject();
 }

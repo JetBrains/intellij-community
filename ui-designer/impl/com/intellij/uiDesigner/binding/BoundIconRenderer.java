@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -65,9 +67,9 @@ public class BoundIconRenderer extends GutterIconRenderer {
   public AnAction getClickAction() {
     return new AnAction() {
       public void actionPerformed(AnActionEvent e) {
-        PsiFile[] formFiles = getBoundFormFiles();
-        if (formFiles.length > 0) {
-          VirtualFile virtualFile = formFiles[0].getVirtualFile();
+        List<PsiFile> formFiles = getBoundFormFiles();
+        if (formFiles.size() > 0) {
+          VirtualFile virtualFile = formFiles.get(0).getVirtualFile();
           Project project = myElement.getProject();
           FileEditor[] editors = FileEditorManager.getInstance(project).openFile(virtualFile, true);
           if (myElement instanceof PsiField) {
@@ -84,16 +86,16 @@ public class BoundIconRenderer extends GutterIconRenderer {
 
   @Nullable
   public String getTooltipText() {
-    PsiFile[] formFiles = getBoundFormFiles();
+    List<PsiFile> formFiles = getBoundFormFiles();
 
-    if (formFiles.length > 0) {
+    if (formFiles.size() > 0) {
       return composeText(formFiles);
     }
     return super.getTooltipText();
   }
 
-  private PsiFile[] getBoundFormFiles() {
-    PsiFile[] formFiles = PsiFile.EMPTY_ARRAY;
+  private List<PsiFile> getBoundFormFiles() {
+    List<PsiFile> formFiles = Collections.emptyList();
     PsiClass aClass;
     if (myElement instanceof PsiField) {
       aClass = ((PsiField) myElement).getContainingClass();
@@ -102,12 +104,12 @@ public class BoundIconRenderer extends GutterIconRenderer {
       aClass = (PsiClass) myElement;
     }
     if (aClass != null && aClass.getQualifiedName() != null) {
-      formFiles = JavaPsiFacade.getInstance(myElement.getProject()).findFormsBoundToClass(aClass.getQualifiedName());
+      formFiles = FormClassIndex.findFormsBoundToClass(aClass);
     }
     return formFiles;
   }
 
-  private static String composeText(final PsiFile[] formFiles) {
+  private static String composeText(final List<PsiFile> formFiles) {
     @NonNls StringBuilder result = new StringBuilder("<html><body>");
     result.append(UIDesignerBundle.message("ui.is.bound.header"));
     @NonNls String sep = "";

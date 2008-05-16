@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * @author yole
@@ -34,13 +35,10 @@ public class FormClassAnnotator implements Annotator {
     }
     else if (psiElement instanceof PsiClass) {
       PsiClass aClass = (PsiClass) psiElement;
-      final String qName = aClass.getQualifiedName();
-      if (qName != null) {
-        final PsiFile[] formsBoundToClass = JavaPsiFacade.getInstance(aClass.getProject()).findFormsBoundToClass(qName);
-        if (formsBoundToClass.length > 0) {
-          Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
-          boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));
-        }
+      final List<PsiFile> formsBoundToClass = FormClassIndex.findFormsBoundToClass(aClass);
+      if (formsBoundToClass.size() > 0) {
+        Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
+        boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));
       }
     }
   }

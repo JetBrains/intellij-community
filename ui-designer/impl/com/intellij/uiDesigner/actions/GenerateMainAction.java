@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.IncorrectOperationException;
@@ -53,10 +54,10 @@ public class GenerateMainAction extends AnAction {
       return;
     }
 
-    final PsiFile[] boundForms = JavaPsiFacade.getInstance(project).findFormsBoundToClass(psiClass.getQualifiedName());
+    final List<PsiFile> boundForms = FormClassIndex.findFormsBoundToClass(project, psiClass.getQualifiedName());
     final LwRootContainer rootContainer;
     try {
-      rootContainer = Utils.getRootContainer(boundForms [0].getText(), null);
+      rootContainer = Utils.getRootContainer(boundForms.get(0).getText(), null);
     }
     catch (Exception ex) {
       LOG.error(ex);
@@ -126,7 +127,7 @@ public class GenerateMainAction extends AnAction {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null) return false;
     if (PsiMethodUtil.findMainMethod(psiClass) != null) return false;
-    if (JavaPsiFacade.getInstance(project).findFormsBoundToClass(psiClass.getQualifiedName()).length == 0) return false;
+    if (FormClassIndex.findFormsBoundToClass(psiClass).isEmpty()) return false;
     return true;
   }
 }

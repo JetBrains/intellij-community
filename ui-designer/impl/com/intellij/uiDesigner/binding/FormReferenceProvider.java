@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 /**
  * @author yole
@@ -72,7 +73,7 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
   public static PsiReference getFormReference(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && containingClass.getQualifiedName() != null) {
-      final PsiFile[] forms = JavaPsiFacade.getInstance(field.getProject()).findFormsBoundToClass(containingClass.getQualifiedName());
+      final List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(containingClass); 
       for (PsiFile formFile : forms) {
         final PsiReference[] refs = formFile.getReferences();
         for (final PsiReference ref : refs) {

@@ -19,6 +19,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.HSpacer;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.VSpacer;
+import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -30,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -364,9 +366,9 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     if (myClassName.length() == 0 || myClassName.startsWith("javax.swing")) {
       return null;
     }
-    PsiFile[] boundForms = JavaPsiFacade.getInstance(myProject).findFormsBoundToClass(myClassName.replace('$', '.'));
-    if (boundForms.length > 0) {
-      return boundForms [0];
+    List<PsiFile> boundForms = FormClassIndex.findFormsBoundToClass(myProject, myClassName.replace('$', '.'));
+    if (boundForms.size() > 0) {
+      return boundForms.get(0);
     }
     return null;
   }

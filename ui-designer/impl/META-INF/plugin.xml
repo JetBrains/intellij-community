@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin version="2">
   <name>UI Designer</name>
   <id>com.intellij.uiDesigner</id>
@@ -10,7 +9,7 @@
                     interface="com.intellij.uiDesigner.quickFixes.FormInspectionTool"/>
   </extensionPoints>
 
-  <extensions xmlns="com.intellij.uiDesigner">
+  <extensions defaultExtensionNs="com.intellij.uiDesigner">
     <formInspectionTool implementation="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
     <formInspectionTool implementation="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <formInspectionTool implementation="com.intellij.uiDesigner.inspections.Java15FormInspection"/>
@@ -95,6 +94,8 @@
     <automaticRenamerFactory implementation="com.intellij.uiDesigner.binding.FormsRenamerFactory"/>
 
     <treeStructureProvider implementation="com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider"/>
+
+    <fileBasedIndex implementation="com.intellij.uiDesigner.binding.FormClassIndex"/>
   </extensions>
 
   <project-components>
