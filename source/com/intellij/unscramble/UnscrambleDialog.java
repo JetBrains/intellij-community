@@ -64,6 +64,7 @@ public class UnscrambleDialog extends DialogWrapper{
   private static final Icon SOCKET_ICON = IconLoader.getIcon("/debugger/threadStates/socket.png");
   private static final Icon IDLE_ICON = IconLoader.getIcon("/debugger/threadStates/idle.png");
   private static final Icon EDT_BUSY_ICON = IconLoader.getIcon("/debugger/threadStates/edtBusy.png");
+  private static final Icon IO_ICON = IconLoader.getIcon("/debugger/threadStates/io.png");
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -508,8 +509,11 @@ public class UnscrambleDialog extends DialogWrapper{
       if (threadState.isLocked()) {
         return LOCKED_ICON;
       }
-      if (threadState.isSocketOperation()) {
+      if (threadState.getOperation() == ThreadOperation.Socket) {
         return SOCKET_ICON;
+      }
+      if (threadState.getOperation() == ThreadOperation.IO) {
+        return IO_ICON;
       }
       if (threadState.isEDT()) {
         if ("idle".equals(threadState.getThreadStateDetail())) {

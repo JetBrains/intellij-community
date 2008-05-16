@@ -96,7 +96,7 @@ public class ThreadDumpParser {
     if (state.isSleeping()) {
       return -2;
     }
-    if (state.isSocketOperation()) {
+    if (state.getOperation() == ThreadOperation.Socket) {
       return -1;
     }
     return state.getStackTrace().split("\n").length;
@@ -117,8 +117,12 @@ public class ThreadDumpParser {
     @NonNls String stackTrace = threadState.getStackTrace();
     if (stackTrace.contains("at java.net.PlainSocketImpl.socketAccept") ||
         stackTrace.contains("at java.net.PlainDatagramSocketImpl.receive") ||
-        stackTrace.contains("at java.net.SocketInputStream.socketRead")) {
-      threadState.setThreadStateDetail("socket operation");
+        stackTrace.contains("at java.net.SocketInputStream.socketRead") ||
+        stackTrace.contains("at java.net.PlainSocketImpl.socketConnect")) {
+      threadState.setOperation(ThreadOperation.Socket);
+    }
+    else if (stackTrace.contains("at java.io.FileInputStream.readBytes")) {
+      threadState.setOperation(ThreadOperation.IO);
     }
     else if (stackTrace.contains("at java.lang.Thread.sleep")) {
       threadState.setThreadStateDetail("sleeping");   // JDK 1.6 sets this explicitly, but JDK 1.5 does not

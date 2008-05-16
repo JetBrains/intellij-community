@@ -1,6 +1,7 @@
 package com.intellij.unscramble;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,6 +21,9 @@ public class ThreadState {
   private String myExtraState;
   private List<ThreadState> myThreadsWaitingForMyLock = new ArrayList<ThreadState>();
   private Set<ThreadState> myDeadlockedThreads = new HashSet<ThreadState>();
+
+  @Nullable
+  private ThreadOperation myOperation;
 
   public ThreadState(final String name, final String state) {
     myName = name;
@@ -60,6 +64,9 @@ public class ThreadState {
   }
 
   public String getThreadStateDetail() {
+    if (myOperation != null) {
+      return myOperation.toString();
+    }
     return myThreadStateDetail;
   }
 
@@ -101,13 +108,18 @@ public class ThreadState {
     myDeadlockedThreads.add(thread);
   }
 
+  @Nullable
+  public ThreadOperation getOperation() {
+    return myOperation;
+  }
+
+  public void setOperation(@Nullable final ThreadOperation operation) {
+    myOperation = operation;
+  }
+
   public boolean isLocked() {
     return "on object monitor".equals(myThreadStateDetail) || "waiting on condition".equals(myState) ||
         ("parking".equals(myThreadStateDetail) && !isSleeping());
-  }
-
-  public boolean isSocketOperation() {
-    return "socket operation".equals(myThreadStateDetail);
   }
 
   public boolean isEDT() {
