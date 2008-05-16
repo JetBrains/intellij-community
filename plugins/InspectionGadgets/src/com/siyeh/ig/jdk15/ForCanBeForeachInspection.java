@@ -108,9 +108,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         @Nullable
         private static String createListIterationText(
                 @NotNull PsiForStatement forStatement){
-            final String text = forStatement.getText();
-            final int length = text.length();
-            @NonNls final StringBuilder out = new StringBuilder(length);
+            @NonNls final StringBuilder out = new StringBuilder();
             final PsiBinaryExpression condition =
                     (PsiBinaryExpression)forStatement.getCondition();
             if(condition == null){
@@ -225,6 +223,10 @@ public class ForCanBeForeachInspection extends BaseInspection{
                         context.getResolveScope());
             }
             final PsiType parameterType = parameterTypes[0];
+            if (parameterType == null) {
+                return PsiType.getJavaLangObject(context.getManager(),
+                        context.getResolveScope());
+            }
             if (parameterType instanceof PsiWildcardType) {
                 final PsiWildcardType wildcardType =
                         (PsiWildcardType) parameterType;
@@ -299,9 +301,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         private static String createCollectionIterationText(
                 @NotNull PsiForStatement forStatement)
                 throws IncorrectOperationException{
-            final String text = forStatement.getText();
-            final int length = text.length();
-            @NonNls final StringBuilder out = new StringBuilder(length);
+            @NonNls final StringBuilder out = new StringBuilder();
             final PsiStatement body = forStatement.getBody();
             final PsiStatement firstStatement = getFirstStatement(body);
             final PsiStatement initialization =
@@ -388,8 +388,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 statementToSkip = null;
             }
             final String contentTypeString = contentType.getCanonicalText();
-            @NonNls final String iterableTypeString = "java.lang.Iterable<"
-                    + contentTypeString + '>';
+            @NonNls final String iterableTypeString =
+                    "java.lang.Iterable<" + contentTypeString + '>';
             final String castString;
             if(iteratedContentsType == null ||
                     iteratedContentsType.isAssignableFrom(
@@ -419,9 +419,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         @Nullable
         private static String createArrayIterationText(
                 @NotNull PsiForStatement forStatement){
-            final String text = forStatement.getText();
-            final int length = text.length();
-            @NonNls final StringBuilder out = new StringBuilder(length);
+            @NonNls final StringBuilder out = new StringBuilder();
             final PsiExpression condition = forStatement.getCondition();
             final PsiBinaryExpression strippedCondition =
                     (PsiBinaryExpression)ParenthesesUtils.stripParentheses(
@@ -453,7 +451,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 return null;
             }
             final PsiType componentType = arrayType.getComponentType();
-            final String type = componentType.getPresentableText();
+            final String typeText = componentType.getCanonicalText();
             final PsiElement target = arrayReference.resolve();
             if (!(target instanceof PsiVariable)) {
                 return null;
@@ -492,7 +490,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
             }
             out.append("for(");
             out.append(finalString);
-            out.append(type);
+            out.append(typeText);
             out.append(' ');
             out.append(contentVariableName);
             out.append(": ");
