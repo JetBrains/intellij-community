@@ -29,6 +29,7 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
   }
 
   public final boolean hasSomethingToCommit() {
+    if (myProject.isDisposed()) return false;
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
