@@ -16,7 +16,6 @@
 package com.siyeh.ipp.decls;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -40,7 +39,6 @@ class MoveDeclarationPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiManager manager = variable.getManager();
-        final PsiSearchHelper searchHelper = manager.getSearchHelper();
       final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope(), false).toArray(PsiReference.EMPTY_ARRAY);
         if(references.length == 0){
             return false;

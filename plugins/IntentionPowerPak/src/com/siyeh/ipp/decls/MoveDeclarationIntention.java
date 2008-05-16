@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -45,8 +44,6 @@ public class MoveDeclarationIntention extends Intention {
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiLocalVariable variable = (PsiLocalVariable)element;
-        final PsiManager manager = variable.getManager();
-        final PsiSearchHelper searchHelper = manager.getSearchHelper();
       final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope(), false).toArray(PsiReference.EMPTY_ARRAY);
         final PsiCodeBlock tightestBlock =
                 MoveDeclarationPredicate.getTightestBlock(references);

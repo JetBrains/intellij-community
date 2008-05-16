@@ -15,20 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltParameter;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 public class DeleteUnusedParameterFix extends DeleteUnusedElementBase<XsltParameter> {
 
@@ -44,8 +41,7 @@ public class DeleteUnusedParameterFix extends DeleteUnusedElementBase<XsltParame
         final XsltTemplate template = XsltCodeInsightUtil.getTemplate(obj.getTag(), false);
         if (template == null || template.getMatchExpression() == null) {
             final SearchScope searchScope = obj.getResolveScope();
-            final Collection<PsiReference> references = ReferencesSearch.search(obj, searchScope, false).findAll();
-            for (PsiReference reference : references) {
+          for (PsiReference reference : ReferencesSearch.search(obj, searchScope, false)) {
                 final XmlTag t = PsiTreeUtil.getContextOfType(reference.getElement(), XmlTag.class, true);
                 if (t != null && XsltSupport.XSLT_NS.equals(t.getNamespace())) {
                     assert "with-param".equals(t.getLocalName());
