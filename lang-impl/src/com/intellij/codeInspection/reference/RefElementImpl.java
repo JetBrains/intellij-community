@@ -64,9 +64,13 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected RefElementImpl(String name, PsiElement element, RefManager manager) {
     super(name, manager);
-    myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
+    myID = createPointer(element, manager);
     myFlags = 0;
     myModule = ModuleUtil.findModuleForPsiElement(element);
+  }
+
+  protected SmartPsiElementPointer<PsiElement> createPointer(final PsiElement element, final RefManager manager) {
+    return SmartPointerManager.getInstance(manager.getProject()).createLazyPointer(element);
   }
 
   public boolean isValid() {

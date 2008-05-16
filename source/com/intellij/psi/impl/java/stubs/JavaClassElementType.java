@@ -143,4 +143,11 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
       }
     }
   }
+
+  public String getId(final PsiClassStub stub) {
+    final String name = stub.getName();
+    if (name != null) return name;
+
+    return super.getId(stub);
+  }
 }

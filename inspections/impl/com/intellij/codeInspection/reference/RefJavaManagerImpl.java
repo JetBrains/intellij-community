@@ -20,8 +20,6 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class RefJavaManagerImpl extends RefJavaManager {
   private static final Logger LOG = Logger.getInstance("#" + RefJavaManagerImpl.class.getName());
   private PsiMethod myAppMainPattern;
@@ -118,7 +116,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
         refPackage.accept(visitor);
       }
     }
-    final Map<PsiElement, RefElement> refTable = myRefManager.getRefTable();
+    final THashMap<PsiAnchor, RefElement> refTable = myRefManager.getRefTable();
     for (RefElement refElement : refTable.values()) {
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;

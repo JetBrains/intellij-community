@@ -1,7 +1,11 @@
 package com.intellij.psi;
 
+import com.intellij.extapi.psi.StubPath;
+import com.intellij.extapi.psi.StubPathBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +33,13 @@ public abstract class PsiAnchor {
     PsiFile file = element.getContainingFile();
     if (file == null) {
       return new HardReference(element);
+    }
+
+    if (element instanceof StubBasedPsiElement && element.isPhysical() && ((PsiFileImpl)file).getContentElementType() instanceof IStubFileElementType) {
+      final StubBasedPsiElement elt = (StubBasedPsiElement)element;
+      if (elt.getStub() != null || elt.getElementType().shouldCreateStub(element.getNode())) {
+        return new StubPathReference(file, StubPathBuilder.build((StubBasedPsiElement)element));
+      }
     }
 
     TextRange textRange = element.getTextRange();
@@ -155,5 +166,52 @@ public abstract class PsiAnchor {
       return myElement.hashCode();
     }
   }
+
+  private static class StubPathReference extends PsiAnchor {
+    private final PsiFile myFile;
+    private final StubPath myPath;
+
+    public StubPathReference(final PsiFile file, final StubPath path) {
+      myFile = file;
+      myPath = path;
+    }
+
+    public PsiElement retrieve() {
+      return StubPathBuilder.resolve(myFile, myPath);
+    }
+
+    public PsiFile getFile() {
+      return myFile;
+    }
+
+    public int getStartOffset() {
+      final PsiElement resolved = retrieve();
+      if (resolved == null) throw new PsiInvalidElementAccessException(null);
+      return resolved.getTextRange().getStartOffset();
+    }
+
+    public int getEndOffset() {
+      final PsiElement resolved = retrieve();
+      if (resolved == null) throw new PsiInvalidElementAccessException(null);
+      return resolved.getTextRange().getEndOffset();
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+
+      if (o instanceof StubPathReference) {
+        final StubPathReference that = (StubPathReference)o;
+        return myFile.equals(that.myFile) && myPath.equals(that.myPath);
+      }
+
+      return false;
+    }
+
+    public int hashCode() {
+      return 31 * myFile.hashCode() + myPath.hashCode();
+    }
+  }
+
+  
 }
 

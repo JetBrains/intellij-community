@@ -6,7 +6,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,17 +30,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.PsiFileStubImpl;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -314,6 +310,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (tree != null) {
       myTreeElementPointer = tree;
       tree.clearCaches();
+      tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
     }
 
     synchronized (myStubLock) {
@@ -798,5 +795,60 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public boolean isEquivalentTo(final PsiElement another) {
     return this == another;
+  }
+
+  private static final Key<StubTree> STUB_TREE_IN_PARSED_TREE = new Key<StubTree>("STUB_TREE_IN_PARSED_TREE");
+
+  public StubTree calcStubTree() {
+    synchronized (myStubLock) {
+      final FileElement fileElement = getTreeElement();
+      StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
+      if (tree == null) {
+        final StubElement currentStubTree = ((IStubFileElementType)getContentElementType()).getBuilder().buildStubTree(this);
+        tree = new StubTree((PsiFileStub)currentStubTree);
+        bindFakeStubsToTree(tree);
+        fileElement.putUserData(STUB_TREE_IN_PARSED_TREE, tree);
+      }
+      return tree;
+    }
+  }
+
+  @Nullable
+  private StubElement bindFakeStubsToTree(StubTree stubTree) {
+    final PsiFileImpl file = this;
+
+    final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
+    stubs.next(); // skip file root stub
+    final FileElement fileRoot = file.getTreeElement();
+    assert fileRoot != null;
+
+    return bindStubs(fileRoot, stubs);
+  }
+
+  @Nullable
+  private static StubElement bindStubs(ASTNode tree, Iterator<StubElement<?>> stubs) {
+    if (tree instanceof ChameleonElement) {
+      tree = ChameleonTransforming.transform((ChameleonElement)tree);
+    }
+
+    final IElementType type = tree.getElementType();
+
+    if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
+      final StubElement stub = stubs.next();
+      if (stub.getStubType() != tree.getElementType()) {
+        assert false: "Stub and PSI element type mismatch:  stub " + stub + ", AST " + tree.getElementType();
+      }
+
+      ((StubBase)stub).setPsi(tree.getPsi());
+    }
+
+    for (ASTNode node : tree.getChildren(null)) {
+      final StubElement res = bindStubs(node, stubs);
+      if (res != null) {
+        return res;
+      }
+    }
+
+    return null;
   }
 }

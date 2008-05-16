@@ -45,9 +45,6 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
     if (element instanceof PsiCompiledElement) {
       myElement = element;
     }
-    else if (element instanceof StubBasedPsiElement) {
-      myPointer = setupPointer(element);
-    }
     else {
       myAnchor = PsiAnchor.create(element);
     }

@@ -92,7 +92,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
     finally {
       lock.unlock();
-      scheduleFlush();
     }
   }
 
@@ -105,7 +104,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
     finally {
       lock.unlock();
-      scheduleFlush();
     }
   }
 

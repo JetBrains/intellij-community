@@ -98,4 +98,12 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
       sink.occurrence(JavaMethodNameIndex.KEY, name);
     }
   }
+
+  /*
+  public String getId(final PsiMethodStub stub) {
+    final String name = stub.getName();
+    if (name != null) return name;
+    return super.getId(stub);
+  }
+  */
 }

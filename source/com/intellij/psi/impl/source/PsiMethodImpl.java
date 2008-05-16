@@ -284,4 +284,5 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
+
 }

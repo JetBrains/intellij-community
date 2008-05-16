@@ -96,4 +96,11 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
       sink.occurrence(JavaFieldNameIndex.KEY, name);
     }
   }
+
+  public String getId(final PsiFieldStub stub) {
+    final String name = stub.getName();
+    if (name != null) return name;
+
+    return super.getId(stub);
+  }
 }

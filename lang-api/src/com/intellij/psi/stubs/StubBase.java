@@ -50,6 +50,10 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     myPsi = psi;
   }
 
+  public T getCachedPsi() {
+    return myPsi;
+  }
+
   public T getPsi() {
     if (myPsi != null) return myPsi;
 

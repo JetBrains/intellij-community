@@ -387,4 +387,5 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
+
 }

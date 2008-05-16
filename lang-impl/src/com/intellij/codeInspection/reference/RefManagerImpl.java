@@ -44,7 +44,7 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private THashMap<PsiElement, RefElement> myRefTable;
+  private THashMap<PsiAnchor, RefElement> myRefTable;
 
   private THashMap<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
@@ -66,7 +66,7 @@ public class RefManagerImpl extends RefManager {
     myScope = scope;
     myContext = context;
     myRefProject = new RefProjectImpl(this);
-    myRefTable = new THashMap<PsiElement, RefElement>();
+    myRefTable = new THashMap<PsiAnchor, RefElement>();
     myProjectIterator = new ProjectIterator();
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final RefManagerExtension extension = factory.createRefManagerExtension(this);
@@ -78,7 +78,7 @@ public class RefManagerImpl extends RefManager {
   public void iterate(RefVisitor visitor) {
     myLock.readLock().lock();
     try {
-      final Map<PsiElement, RefElement> refTable = getRefTable();
+      final THashMap<PsiAnchor, RefElement> refTable = getRefTable();
       for (RefElement refElement : refTable.values()) {
         refElement.accept(visitor);
       }
@@ -271,24 +271,24 @@ public class RefManagerImpl extends RefManager {
     return myRefProject;
   }
 
-  public THashMap<PsiElement, RefElement> getRefTable() {
+  public THashMap<PsiAnchor, RefElement> getRefTable() {
     return myRefTable;
   }
 
   public void removeReference(RefElement refElem) {
     myLock.writeLock().lock();
     try {
-      final Map<PsiElement, RefElement> refTable = getRefTable();
+      final THashMap<PsiAnchor, RefElement> refTable = getRefTable();
       final PsiElement element = refElem.getElement();
       final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
       if (extension != null) {
         extension.removeReference(refElem);
       }
 
-      if (refTable.remove(element) != null) return;
+      if (refTable.remove(PsiAnchor.create(element)) != null) return;
 
       //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-      for (PsiElement psiElement : refTable.keySet()) {
+      for (PsiAnchor psiElement : refTable.keySet()) {
         if (refTable.get(psiElement) == refElem) {
           refTable.remove(psiElement);
           return;
@@ -421,7 +421,7 @@ public class RefManagerImpl extends RefManager {
   protected RefElement getFromRefTable(final PsiElement element) {
     myLock.readLock().lock();
     try {
-      return getRefTable().get(element);
+      return getRefTable().get(PsiAnchor.create(element));
     }
     finally {
       myLock.readLock().unlock();
@@ -431,7 +431,7 @@ public class RefManagerImpl extends RefManager {
   protected void putToRefTable(final PsiElement element, final RefElement ref) {
     myLock.writeLock().lock();
     try {
-      getRefTable().put(element, ref);
+      getRefTable().put(PsiAnchor.create(element), ref);
     }
     finally {
       myLock.writeLock().unlock();

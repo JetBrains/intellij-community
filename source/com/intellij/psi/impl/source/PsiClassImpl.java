@@ -677,4 +677,5 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
   public SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
   }
+
 }
