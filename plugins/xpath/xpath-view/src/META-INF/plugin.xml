@@ -49,7 +49,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="org.intellij.plugins.xpathView.SimpleErrorReportSubmitter" />
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
 
     <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
 
