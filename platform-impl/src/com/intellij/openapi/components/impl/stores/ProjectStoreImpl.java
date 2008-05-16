@@ -565,7 +565,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
 
     private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable() {
-      return ApplicationManager.getApplication().runWriteAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
+      return ApplicationManager.getApplication().runReadAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
         public ReadonlyStatusHandler.OperationStatus compute() {
           final List<IFile> filesToSave;
           try {
