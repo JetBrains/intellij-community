@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +26,12 @@ public interface PsiClassInitializer extends PsiMember {
    * The empty array of PSI class initializers which can be reused to avoid unnecessary allocations.
    */
   PsiClassInitializer[] EMPTY_ARRAY = new PsiClassInitializer[0];
+
+  ArrayFactory<PsiClassInitializer> ARRAY_FACTORY = new ArrayFactory<PsiClassInitializer>() {
+    public PsiClassInitializer[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiClassInitializer[count];
+    }
+  };
 
   /**
    * Returns the contents of the class initializer block.

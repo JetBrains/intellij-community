@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -87,6 +88,28 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
       }
     }
     return result.toArray(array);
+  }
+
+  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final ArrayFactory<E> f) {
+    List<E> result = new ArrayList<E>();
+    for(StubElement childStub: getChildrenStubs()) {
+      if (childStub.getStubType() == elementType) {
+        //noinspection unchecked
+        result.add((E)childStub.getPsi());
+      }
+    }
+    return result.toArray(f.create(result.size()));
+  }
+
+  public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final ArrayFactory<E> f) {
+    List<E> result = new ArrayList<E>();
+    for(StubElement childStub: getChildrenStubs()) {
+      if (filter.contains(childStub.getStubType())) {
+        //noinspection unchecked
+        result.add((E)childStub.getPsi());
+      }
+    }
+    return result.toArray(f.create(result.size()));
   }
 
   @Nullable

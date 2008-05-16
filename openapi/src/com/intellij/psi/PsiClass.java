@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,12 @@ public interface PsiClass
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
   @NotNull PsiClass[] EMPTY_ARRAY = new PsiClass[0];
+
+  ArrayFactory<PsiClass> ARRAY_FACTORY = new ArrayFactory<PsiClass>() {
+    public PsiClass[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiClass[count];
+    }
+  };
 
   /**
    * Returns the fully qualified name of the class.

@@ -26,7 +26,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
 
   @NotNull
   public PsiParameter[] getParameters() {
-    return getStubOrPsiChildren(JavaStubElementTypes.PARAMETER, PsiParameter.EMPTY_ARRAY);
+    return getStubOrPsiChildren(JavaStubElementTypes.PARAMETER, PsiParameter.ARRAY_FACTORY);
   }
 
   public int getParameterIndex(PsiParameter parameter) {

@@ -291,12 +291,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
 
   @NotNull
   public PsiField[] getFields() {
-    return getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.EMPTY_ARRAY);
+    return getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    return getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.EMPTY_ARRAY);
+    return getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
   }
 
   @NotNull
@@ -309,12 +309,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    return getStubOrPsiChildren(JavaStubElementTypes.CLASS, PsiClass.EMPTY_ARRAY);
+    return getStubOrPsiChildren(JavaStubElementTypes.CLASS, ARRAY_FACTORY);
   }
 
   @NotNull
   public PsiClassInitializer[] getInitializers() {
-    return getStubOrPsiChildren(JavaStubElementTypes.CLASS_INITIALIZER, PsiClassInitializer.EMPTY_ARRAY);
+    return getStubOrPsiChildren(JavaStubElementTypes.CLASS_INITIALIZER, PsiClassInitializer.ARRAY_FACTORY);
   }
 
   @NotNull
@@ -617,7 +617,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
 
     final StubElement parentStub = stub.getParentStub();
     final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)parentStub.getPsi();
-    PsiClass[] classesInScope = context.getStubOrPsiChildren(Constants.CLASS_BIT_SET, PsiClass.EMPTY_ARRAY);
+    PsiClass[] classesInScope = context.getStubOrPsiChildren(Constants.CLASS_BIT_SET, ARRAY_FACTORY);
 
     boolean needPreciseContext = false;
     if (classesInScope.length > 1) {

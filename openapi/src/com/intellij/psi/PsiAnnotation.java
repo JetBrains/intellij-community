@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,12 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    * The empty array of PSI annotations which can be reused to avoid unnecessary allocations.
    */
   PsiAnnotation[] EMPTY_ARRAY = new PsiAnnotation[0];
+
+  ArrayFactory<PsiAnnotation> ARRAY_FACTORY = new ArrayFactory<PsiAnnotation>() {
+    public PsiAnnotation[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiAnnotation[count];
+    }
+  };
 
   @NonNls String DEFAULT_REFERENCED_METHOD_NAME = "value";
 

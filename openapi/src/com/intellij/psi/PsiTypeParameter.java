@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,12 @@ public interface PsiTypeParameter extends PsiClass {
    * The empty array of PSI type parameters which can be reused to avoid unnecessary allocations.
    */
   PsiTypeParameter[] EMPTY_ARRAY = new PsiTypeParameter[0];
+
+  ArrayFactory<PsiTypeParameter> ARRAY_FACTORY = new ArrayFactory<PsiTypeParameter>() {
+    public PsiTypeParameter[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiTypeParameter[count];
+    }
+  };
 
   /**
    * Returns the extends list of the type parameter.

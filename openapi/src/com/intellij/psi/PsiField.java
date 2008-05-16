@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,12 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
    * The empty array of PSI fields which can be reused to avoid unnecessary allocations.
    */
   PsiField[] EMPTY_ARRAY = new PsiField[0];
+
+  ArrayFactory<PsiField> ARRAY_FACTORY = new ArrayFactory<PsiField>() {
+    public PsiField[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiField[count];
+    }
+  };
 
   /**
    * Adds initializer to the field declaration or, if <code>initializer</code> parameter is null,

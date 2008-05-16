@@ -18,6 +18,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,6 +183,21 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     }
   }
 
+  public <Stub extends StubElement, Psi extends PsiElement> Psi[] getStubOrPsiChildren(final IStubElementType<Stub, Psi> elementType, ArrayFactory<Psi> f) {
+    if (myStub != null) {
+      //noinspection unchecked
+      return (Psi[])myStub.getChildrenByType(elementType, f);
+    }
+    else {
+      final ASTNode[] nodes = getNode().getChildren(TokenSet.create(elementType));
+      Psi[] psiElements = f.create(nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        psiElements[i] = (Psi)nodes[i].getPsi();
+      }
+      return psiElements;
+    }
+  }
+
   public <Psi extends PsiElement> Psi[] getStubOrPsiChildren(TokenSet filter, Psi[] array) {
     if (myStub != null) {
       //noinspection unchecked
@@ -190,6 +206,21 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     else {
       final ASTNode[] nodes = getNode().getChildren(filter);
       Psi[] psiElements = (Psi[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        psiElements[i] = (Psi)nodes[i].getPsi();
+      }
+      return psiElements;
+    }
+  }
+
+  public <Psi extends PsiElement> Psi[] getStubOrPsiChildren(TokenSet filter, ArrayFactory<Psi> f) {
+    if (myStub != null) {
+      //noinspection unchecked
+      return (Psi[])myStub.getChildrenByType(filter, f);
+    }
+    else {
+      final ASTNode[] nodes = getNode().getChildren(filter);
+      Psi[] psiElements = f.create(nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         psiElements[i] = (Psi)nodes[i].getPsi();
       }

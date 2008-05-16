@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +26,12 @@ public interface PsiParameter extends PsiVariable {
    * The empty array of PSI parameters which can be reused to avoid unnecessary allocations.
    */
   PsiParameter[] EMPTY_ARRAY = new PsiParameter[0];
+
+  ArrayFactory<PsiParameter> ARRAY_FACTORY = new ArrayFactory<PsiParameter>() {
+    public PsiParameter[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiParameter[count];
+    }
+  };
 
   /**
    * Returns the element (method, foreach statement or catch block) in which the

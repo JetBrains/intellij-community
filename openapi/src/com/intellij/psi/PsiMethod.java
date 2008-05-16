@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,12 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * The empty array of PSI methods which can be reused to avoid unnecessary allocations.
    */
   PsiMethod[] EMPTY_ARRAY = new PsiMethod[0];
+
+  ArrayFactory<PsiMethod> ARRAY_FACTORY = new ArrayFactory<PsiMethod>() {
+    public PsiMethod[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiMethod[count];
+    }
+  };
 
   /**
    * Returns the return type of the method.
