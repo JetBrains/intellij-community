@@ -26,11 +26,13 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
@@ -109,6 +111,7 @@ public class GroovyCompiler implements TranslatingCompiler {
         }
       }
 
+      classPathBuilder.append(getModuleSpecificClassPath(module));
       commandLine.addParameter(classPathBuilder.toString());
       commandLine.addParameter(XMX_COMPILER_PROPERTY);
 
@@ -160,6 +163,25 @@ public class GroovyCompiler implements TranslatingCompiler {
     }
 
     return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
+  }
+
+  private static String getModuleSpecificClassPath(final Module module) {
+    final StringBuffer buffer = new StringBuffer();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        ModuleRootManager manager = ModuleRootManager.getInstance(module);
+        ModifiableRootModel model = manager.getModifiableModel();
+        for (Library library : model.getModuleLibraryTable().getLibraries()) {
+          for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+            String path = file.getPath();
+            if (path != null && path.endsWith(".jar!/")) {
+              buffer.append(StringUtil.trimEnd(path, "!/")).append(File.pathSeparator);
+            }
+          }
+        }
+      }
+    });
+    return buffer.toString();
   }
 
   private void addSuccessfullyCompiled(Set<OutputItem> successfullyCompiled, GroovycOSProcessHandler processHandler) {

@@ -30,11 +30,11 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -174,8 +174,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String jdkDir = getJdkLibDirParent(jdk);
-
+      String jdkDir = GroovyUtils.getJdkLibDirParent(jdk);
       for (String libPath : list) {
         if (!libPath.startsWith(jdkDir)) {
           buffer.append(libPath).append(File.pathSeparator);
@@ -187,13 +186,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     if (isDebugEnabled) {
       params.getProgramParametersList().add("--debug");
     }
-  }
-
-  private static String getJdkLibDirParent(ProjectJdk jdk) {
-    String rtLibraryPath = jdk.getRtLibraryPath();
-    File parent = new File(rtLibraryPath).getParentFile().getParentFile().getParentFile();
-    if (SystemInfo.isMac) parent = parent.getParentFile(); //hack over nonstandard jdk layout on Macs
-    return parent.getAbsolutePath();  //strip /jre/lib/rt.jar
   }
 
   private void configureScript(JavaParameters params) {
