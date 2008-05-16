@@ -20,7 +20,7 @@ public class XDebuggerSettingsTest extends LiteFixture {
     registerExtensionPoint(XDebuggerSettings.EXTENSION_POINT, XDebuggerSettings.class);
     registerExtension(XDebuggerSettings.EXTENSION_POINT, new MyDebuggerSettings());
     getApplication().registerService(XDebuggerUtil.class, XDebuggerUtilImpl.class);
-    registerComponentImplementation(getApplication().getPicoContainer(), XDebuggerSettingsManager.class, XDebuggerSettingsManager.class);
+    getApplication().registerService(XDebuggerSettingsManager.class, XDebuggerSettingsManager.class);
   }
 
   public void testSerialize() throws Exception {
