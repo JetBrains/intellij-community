@@ -81,7 +81,7 @@ public class ReplaceConcatenationWithFormatStringIntention
         final PsiReferenceExpression methodExpression =
                 methodCallExpression.getMethodExpression();
         final String name = methodExpression.getReferenceName();
-        boolean insertNewline = false;
+        final boolean insertNewline;
         if ("println".equals(name)) {
             insertNewline = true;
         } else if ("print".equals(name)) {
@@ -109,7 +109,7 @@ public class ReplaceConcatenationWithFormatStringIntention
         newExpression.append("printf(\"");
         newExpression.append(formatString);
         if (insertNewline) {
-            newExpression.append("\\n");
+            newExpression.append("%n");
         }
         newExpression.append('\"');
         for (PsiExpression formatParameter : formatParameters) {
