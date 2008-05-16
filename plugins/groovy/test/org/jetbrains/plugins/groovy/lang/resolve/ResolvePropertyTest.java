@@ -105,6 +105,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
+  public void testGrvy1483() throws Exception {
+    PsiReference ref = configureByFile("grvy1483/Test.groovy");
+    assertNotNull(ref.resolve());
+  }
+
   public void testField3() throws Exception {
     GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy").getElement();
     GroovyResolveResult resolveResult = ref.advancedResolve();
