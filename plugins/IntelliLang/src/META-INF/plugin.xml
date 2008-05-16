@@ -30,6 +30,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="org.intellij.plugins.intelliLang.util.SimpleErrorReportSubmitter" />
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.quickedit.QuickEditAction</className>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
+    </intentionAction>
   </extensions>
 
   <application-components>

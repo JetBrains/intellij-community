@@ -15,18 +15,15 @@
  */
 package org.intellij.plugins.intelliLang;
 
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
-import org.intellij.plugins.intelliLang.inject.quickedit.QuickEditAction;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -176,8 +173,6 @@ public final class Configuration implements ExportableApplicationComponent, Name
   }
 
   public void initComponent() {
-    IntentionManager.getInstance().addAction(new QuickEditAction());
-    IntentionManager.getInstance().addAction(new InjectLanguageAction());
   }
 
   public void disposeComponent() {
