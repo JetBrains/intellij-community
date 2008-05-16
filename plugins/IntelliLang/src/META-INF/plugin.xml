@@ -36,6 +36,7 @@
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
     </intentionAction>
+    <compiler implementation="org.intellij.plugins.intelliLang.pattern.compiler.impl.PatternValidationCompiler"/>
   </extensions>
 
   <application-components>
@@ -60,9 +61,6 @@
   <project-components>
     <component>
       <implementation-class>org.intellij.plugins.intelliLang.inject.CustomLanguageInjector</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.plugins.intelliLang.pattern.compiler.impl.CompilerProvider</implementation-class>
     </component>
   </project-components>
   
