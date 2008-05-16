@@ -9,18 +9,19 @@ import com.intellij.compiler.notNullVerification.NotNullVerifyingCompiler;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.Chunk;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,13 +39,14 @@ public class CompilerManagerImpl extends CompilerManager {
   private List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
   private List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
   private Set<FileType> myCompilableTypes = new HashSet<FileType>();
-  private EventDispatcher<CompilationStatusListener> myEventDispatcher = EventDispatcher.create(CompilationStatusListener.class);
+  private CompilationStatusListener myEventPublisher;
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
   private final Map<Compiler, Set<FileType>> myCompilerToInputTypes = new HashMap<Compiler, Set<FileType>>();
   private final Map<Compiler, Set<FileType>> myCompilerToOutputTypes = new HashMap<Compiler, Set<FileType>>();
 
-  public CompilerManagerImpl(final Project project, CompilerConfigurationImpl compilerConfiguration) {
+  public CompilerManagerImpl(final Project project, CompilerConfigurationImpl compilerConfiguration, MessageBus messageBus) {
     myProject = project;
+    myEventPublisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
 
     // predefined compilers
     addTranslatingCompiler(new JavaCompiler(myProject), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
@@ -220,6 +222,21 @@ public class CompilerManagerImpl extends CompilerManager {
     compileDriver.executeCompileTask(task, scope, contentName, onTaskFinished);
   }
 
+  private final Map<CompilationStatusListener, MessageBusConnection> myListenerAdapters = new HashMap<CompilationStatusListener, MessageBusConnection>();
+
+  public void addCompilationStatusListener(final CompilationStatusListener listener) {
+    final MessageBusConnection connection = myProject.getMessageBus().connect();
+    myListenerAdapters.put(listener, connection);
+    connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
+  }
+
+  public void removeCompilationStatusListener(final CompilationStatusListener listener) {
+    final MessageBusConnection connection = myListenerAdapters.remove(listener);
+    if (connection != null) {
+      connection.disconnect();
+    }
+  }
+
   // Compiler tests support
 
   private static List<String> ourDeletedPaths;
@@ -263,14 +280,6 @@ public class CompilerManagerImpl extends CompilerManager {
     if (ourCompiledPaths != null) {
       ourCompiledPaths.clear();
     }
-  }
-
-  public void addCompilationStatusListener(CompilationStatusListener listener) {
-    myEventDispatcher.addListener(listener);
-  }
-
-  public void removeCompilationStatusListener(CompilationStatusListener listener) {
-    myEventDispatcher.removeListener(listener);
   }
 
   public boolean isExcludedFromCompilation(VirtualFile file) {
@@ -338,7 +347,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-      myEventDispatcher.getMulticaster().compilationFinished(aborted, errors, warnings, compileContext);
+      myEventPublisher.compilationFinished(aborted, errors, warnings, compileContext);
       if (myDelegate != null) {
         myDelegate.finished(aborted, errors, warnings, compileContext);
       }

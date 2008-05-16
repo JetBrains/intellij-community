@@ -43,6 +43,8 @@ import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -528,10 +530,10 @@ public class CompilerTask extends Task.Backgroundable {
         }
         myUserAcceptedCancel = true;
 
-        final CompilerManager compilerManager = CompilerManager.getInstance(project);
-        compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
+        final MessageBusConnection connection = project.getComponent(MessageBus.class).connect();
+        connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-            compilerManager.removeCompilationStatusListener(this);
+            connection.disconnect();
             ProjectUtil.closeProject(project);
           }
         });

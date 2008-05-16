@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,9 +66,9 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     }
   };
 
-  public HotSwapUIImpl(final Project project, CompilerManager compilerManager) {
+  public HotSwapUIImpl(final Project project, MessageBus bus) {
     myProject = project;
-    compilerManager.addCompilationStatusListener(myListener);
+    bus.connect().subscribe(CompilerTopics.COMPILATION_STATUS, myListener);
   }
 
   public void projectOpened() {
