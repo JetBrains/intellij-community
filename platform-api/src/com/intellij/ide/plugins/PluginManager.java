@@ -240,6 +240,16 @@ public class PluginManager {
   }
 
   public static boolean shouldSkipPlugin(final IdeaPluginDescriptor descriptor) {
+    if (descriptor instanceof IdeaPluginDescriptorImpl) {
+      IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
+      Boolean skipped = descriptorImpl.getSkipped();
+      if (skipped != null) {
+        return skipped.booleanValue();
+      }
+      boolean result = shouldSkipPlugin(descriptor, ourPlugins);
+      descriptorImpl.setSkipped(result);
+      return result;
+    }
     return shouldSkipPlugin(descriptor, ourPlugins);
   }
 

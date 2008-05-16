@@ -67,6 +67,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String mySinceBuild;
   private String myUntilBuild;
 
+  private Boolean mySkipped;
+
   public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;
   }
@@ -565,5 +567,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     else {
       return -1;
     }
+  }
+
+  public Boolean getSkipped() {
+    return mySkipped;
+  }
+
+  public void setSkipped(final Boolean skipped) {
+    mySkipped = skipped;
   }
 }
