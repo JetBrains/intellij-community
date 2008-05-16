@@ -16,24 +16,9 @@
 package org.intellij.plugins.intelliLang.pattern;
 
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class InspectionProvider implements ApplicationComponent, InspectionToolProvider {
+public class InspectionProvider implements InspectionToolProvider {
   public static final String PATTERN_VALIDATION = "Pattern Validation";
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "IntelliLang.PatternInspectionProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 
   public Class[] getInspectionClasses() {
     return new Class[]{PatternValidator.class, PatternAnnotationNotApplicable.class, PatternOverriddenByNonAnnotatedMethod.class};

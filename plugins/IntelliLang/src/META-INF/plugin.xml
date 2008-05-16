@@ -36,16 +36,14 @@
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
     </intentionAction>
+
     <compiler implementation="org.intellij.plugins.intelliLang.pattern.compiler.impl.PatternValidationCompiler"/>
+
+    <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.inject.validation.InspectionProvider"/>
+    <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.pattern.InspectionProvider"/>
   </extensions>
 
   <application-components>
-    <component>
-      <implementation-class>org.intellij.plugins.intelliLang.inject.validation.InspectionProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.plugins.intelliLang.pattern.InspectionProvider</implementation-class>
-    </component>
     <component>
       <implementation-class>org.intellij.plugins.intelliLang.Configuration</implementation-class>
     </component>

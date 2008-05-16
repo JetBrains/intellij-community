@@ -17,24 +17,12 @@
 package org.intellij.plugins.intelliLang.inject.validation;
 
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NotNull;
 
-public class InspectionProvider implements ApplicationComponent, InspectionToolProvider {
+public class InspectionProvider implements InspectionToolProvider {
   public static final String LANGUAGE_INJECTION = "Language Injection";
 
   public Class[] getInspectionClasses() {
     return new Class[]{UnknownLanguageID.class, LanguageMismatch.class, InjectionNotApplicable.class};
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "IntelliLang.InjectionInspectionProvider";
-  }
 }
