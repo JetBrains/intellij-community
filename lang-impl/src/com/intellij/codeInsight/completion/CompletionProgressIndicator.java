@@ -14,14 +14,15 @@ import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.AsyncProcessIcon;
 
 import java.awt.*;
 
@@ -38,6 +39,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private boolean myDisposed;
   private boolean myInitialized;
   private int myCount;
+  private final Update myUpdate = new Update("update") {
+    public void run() {
+      updateLookup();
+    }
+  };
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext contextCopy, final CompletionContext contextOriginal) {
     myEditor = editor;
@@ -64,25 +70,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 400, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 200, false, myEditor.getContentComponent());
     Disposer.register(this, myQueue);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert ourCurrentCompletion == null;
     ourCurrentCompletion = this;
-  }
-
-  public void start() {
-    super.start();
-    myQueue.queue(new Update("initialShow") {
-      public void run() {
-        final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
-        processIcon.setVisible(true);
-        processIcon.resume();
-        updateLookup();
-        myQueue.setMergingTimeSpan(200);
-      }
-    });
   }
 
   public CodeCompletionHandlerBase getHandler() {
@@ -121,7 +114,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return ourCurrentCompletion;
   }
 
-  public void addItem(final LookupItem item) {
+  public synchronized void addItem(final LookupItem item) {
     if (!isRunning()) return;
     ProgressManager.getInstance().checkCanceled();
 
@@ -131,13 +124,31 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     myLookup.addItem(item);
     myCount++;
-    if (myCount > 42) {
-      myQueue.queue(new Update("update") {
+    if (myCount == 1) {
+      invokeAndWait(new Runnable() {
         public void run() {
-          updateLookup();
-          myQueue.setMergingTimeSpan(200);
+          myQueue.showNotify();
         }
       });
+      myQueue.queue(new Update("initialShow") {
+        public void run() {
+          final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
+          processIcon.setVisible(true);
+          processIcon.resume();
+          updateLookup();
+        }
+      });
+    } else {
+      myQueue.queue(myUpdate);
+    }
+  }
+
+  private void invokeAndWait(final Runnable runnable) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread() || application.isUnitTestMode()) {
+      runnable.run();
+    } else {
+      LaterInvocator.invokeAndWait(runnable, myQueue.getModalityState());
     }
   }
 
