@@ -60,7 +60,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
   }
 
   public PsiTypeParameter[] getTypeParameters() {
-    return getStub().getChildrenByType(JavaStubElementTypes.TYPE_PARAMETER, PsiTypeParameter.EMPTY_ARRAY);
+    return getStub().getChildrenByType(JavaStubElementTypes.TYPE_PARAMETER, PsiTypeParameter.ARRAY_FACTORY);
   }
 
   public int getTypeParameterIndex(PsiTypeParameter typeParameter) {

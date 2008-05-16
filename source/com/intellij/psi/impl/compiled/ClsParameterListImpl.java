@@ -22,7 +22,7 @@ public class ClsParameterListImpl extends ClsRepositoryPsiElement<PsiParameterLi
 
   @NotNull
   public PsiParameter[] getParameters() {
-    return getStub().getChildrenByType(JavaStubElementTypes.PARAMETER, PsiParameter.EMPTY_ARRAY);
+    return getStub().getChildrenByType(JavaStubElementTypes.PARAMETER, PsiParameter.ARRAY_FACTORY);
   }
 
   public int getParameterIndex(PsiParameter parameter) {
