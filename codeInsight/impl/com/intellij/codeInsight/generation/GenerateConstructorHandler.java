@@ -3,10 +3,12 @@ package com.intellij.codeInsight.generation;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -36,11 +38,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<ClassMember> array = new ArrayList<ClassMember>();
-    for (PsiField field : fields) {
+    ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+    fieldLoop: for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
 
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
-      if (JavaPsiFacade.getInstance(field.getProject()).isFieldBoundToForm(field)) continue;
+
+      for(ImplicitUsageProvider provider: implicitUsageProviders) {
+        if (provider.isImplicitWrite(field)) continue fieldLoop;
+      }
       array.add(new PsiFieldMember(field));
     }
     return array.toArray(new ClassMember[array.size()]);

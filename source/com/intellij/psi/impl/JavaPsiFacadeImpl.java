@@ -3,7 +3,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -390,21 +389,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     return boundForms.toArray(new PsiFile[boundForms.size()]);
-  }
-
-  public boolean isFieldBoundToForm(@NotNull PsiField field) {
-    PsiClass aClass = field.getContainingClass();
-    if (aClass != null && aClass.getQualifiedName() != null) {
-      PsiFile[] formFiles = findFormsBoundToClass(aClass.getQualifiedName());
-      for (PsiFile file : formFiles) {
-        final PsiReference[] references = file.getReferences();
-        for (final PsiReference reference : references) {
-          if (reference.isReferenceTo(field)) return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   public Project getProject() {

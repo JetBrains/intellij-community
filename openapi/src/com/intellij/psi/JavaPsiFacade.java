@@ -189,13 +189,5 @@ public abstract class JavaPsiFacade {
   @NotNull
   public abstract PsiFile[] findFormsBoundToClass(String className);
 
-  /**
-   * Checks if the specified field is bound to a GUI Designer form component.
-   *
-   * @param field the field to check the binding for.
-   * @return true if the field is bound, false otherwise.
-   */
-  public abstract boolean isFieldBoundToForm(@NotNull PsiField field);
-
   public abstract Project getProject();
 }
