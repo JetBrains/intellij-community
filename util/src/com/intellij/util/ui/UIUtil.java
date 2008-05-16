@@ -707,7 +707,8 @@ public class UIUtil {
   }
 
   public static Color toAlpha(final Color color, final int alpha) {
-    return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+    Color actual = color != null ? color : Color.black;
+    return new Color(actual.getRed(), actual.getGreen(), actual.getBlue(), alpha);
   }
 
   public static void requestFocus(@NotNull final JComponent c) {
