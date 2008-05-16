@@ -23,6 +23,8 @@ public interface Component extends DomElement {
   @ExtendClass(instantiatable = false)
   GenericDomValue<PsiClass> getInterfaceClass();
 
+  @NotNull
+  GenericDomValue<PsiClass> getHeadlessImplementationClass();
 
   @NotNull
   List<Option> getOptions();

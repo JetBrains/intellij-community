@@ -128,5 +128,6 @@ public interface Action extends DomElement {
 	 */
 	AddToGroup addAddToGroup();
 
-
+  @NotNull
+  GenericAttributeValue<String> getUseShortcutOf();
 }

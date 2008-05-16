@@ -20,7 +20,7 @@ public interface Reference extends DomElement {
 	 */
 	@NotNull
 	@Required
-	GenericAttributeValue<String> getId();
+	GenericAttributeValue<String> getRef();
 
 
 }
