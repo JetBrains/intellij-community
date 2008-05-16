@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
 public interface GrFlowInterruptingStatement extends GrStatement {
+  @Nullable String getLabel();
 }
