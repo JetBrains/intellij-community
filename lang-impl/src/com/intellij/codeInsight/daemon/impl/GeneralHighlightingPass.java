@@ -143,7 +143,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
       result.addAll(collectHighlights(elements, highlightVisitors, progress));
       result.addAll(highlightTodos());
-      addInjectedPsiHighlights(elements);
+
+      addInjectedPsiHighlights(elements, Extensions.getExtensions(DefaultHighlightVisitor.FILTER_EP_NAME, myProject));
 
       if (myUpdateAll) {
         fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
@@ -155,7 +156,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myHighlights = result;
   }
 
-  private void addInjectedPsiHighlights(final List<PsiElement> elements) {
+  private void addInjectedPsiHighlights(final List<PsiElement> elements, final Condition<PsiErrorElement>[] errorFilters) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements.size() + injected.size());
 
@@ -187,7 +188,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     JobUtil.invokeConcurrentlyForAll(injectedFiles, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         AnnotationHolderImpl annotationHolder = createAnnotationHolder();
-        highlightInjectedIn(injectedPsi, annotationHolder);
+        highlightInjectedIn(injectedPsi, annotationHolder, errorFilters);
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         for (Annotation annotation : annotationHolder) {
           final TextRange fixedTextRange;
@@ -230,7 +231,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return textRange;
   }
 
-  private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder) {
+  private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final Condition<PsiErrorElement>[] errorFilters) {
     final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
@@ -274,6 +275,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       @Override public void visitErrorElement(PsiErrorElement element) {
+        for (final Condition<PsiErrorElement> errorFilter : errorFilters) {
+          if (errorFilter.value(element)) return;
+        }
+
         HighlightInfo info = DefaultHighlightVisitor.createErrorElementInfo(element);
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
         if (editable==null) return; //do not highlight generated header/footer
