@@ -19,9 +19,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -132,7 +134,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
                 continue;
               }
 
-              final VirtualFile sourceFile = FormCompilerManager.findSourceFile(context, formFile, classToBind);
+              final VirtualFile sourceFile = findSourceFile(context, formFile, classToBind);
 
               final boolean inScope = (sourceFile == null) ?
                                       scope.belongs(formFile.getUrl()) :
@@ -346,6 +348,24 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
   public ValidityState createValidityState(final DataInput in) throws IOException {
     return TimestampValidityState.load(in);
+  }
+
+  public static VirtualFile findSourceFile(final CompileContext context, final VirtualFile formFile, final String className) {
+    final Module module = context.getModuleByFile(formFile);
+    if (module == null) {
+      return null;
+    }
+    final PsiClass aClass = FormEditingUtil.findClassToBind(module, className);
+    if (aClass == null) {
+      return null;
+    }
+
+    final PsiFile containingFile = aClass.getContainingFile();
+    if (containingFile == null){
+      return null;
+    }
+
+    return containingFile.getVirtualFile();
   }
 
   private static final class MyInstrumentationItem implements FileProcessingCompiler.ProcessingItem {

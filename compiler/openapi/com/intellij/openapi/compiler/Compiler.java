@@ -16,6 +16,7 @@
 package com.intellij.openapi.compiler;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * Base interface for a custom compiler which participates in the IDEA build process.
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @see CompilerManager#removeCompiler(Compiler)
  */
 public interface Compiler {
+  ExtensionPointName<Compiler> EP_NAME = ExtensionPointName.create("com.intellij.compiler");
   
   /**
    * Returns the description of the compiler. All registered compilers should have unique description.

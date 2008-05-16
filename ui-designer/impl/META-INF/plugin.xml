@@ -96,15 +96,14 @@
     <treeStructureProvider implementation="com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider"/>
 
     <fileBasedIndex implementation="com.intellij.uiDesigner.binding.FormClassIndex"/>
+
+    <compiler implementation="com.intellij.uiDesigner.make.Form2ByteCodeCompiler"/>
+    <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
   </extensions>
 
   <project-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.palette.Palette</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.make.FormCompilerManager</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>

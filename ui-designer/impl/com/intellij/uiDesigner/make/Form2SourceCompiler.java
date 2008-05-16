@@ -86,7 +86,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               continue;
             }
 
-            final VirtualFile sourceFile = FormCompilerManager.findSourceFile(context, formFile, classToBind);
+            final VirtualFile sourceFile = Form2ByteCodeCompiler.findSourceFile(context, formFile, classToBind);
             if (sourceFile == null) {
               if (scope.belongs(formFile.getUrl())) {
                 addError(context,

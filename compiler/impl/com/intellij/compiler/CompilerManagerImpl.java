@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.Chunk;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -51,6 +52,10 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler(myProject));
     addCompiler(new IncrementalPackagingCompiler(myProject));
+
+    for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
+      addCompiler(compiler);
+    }
 
     addCompilableFileType(StdFileTypes.JAVA);
     //
