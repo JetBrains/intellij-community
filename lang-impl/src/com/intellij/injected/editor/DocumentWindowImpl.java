@@ -399,7 +399,10 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public TextRange injectedToHost(TextRange injected) {
-    return new ProperTextRange(injectedToHost(injected.getStartOffset()), injectedToHost(injected.getEndOffset(), false));
+    final int start = injectedToHost(injected.getStartOffset());
+    final int endProbe = injectedToHost(injected.getEndOffset(), false);
+    final int end = start > endProbe? injectedToHost(injected.getEndOffset()) : endProbe;
+    return new ProperTextRange(start, end);
   }
 
   public int injectedToHostLine(int line) {
