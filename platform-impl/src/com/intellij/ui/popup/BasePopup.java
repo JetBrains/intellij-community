@@ -476,7 +476,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyChar(), event.getModifiers(), false);
     if (getInputMap().get(stroke) != null) {
       final Action action = getActionMap().get(getInputMap().get(stroke));
-      if (action.isEnabled()) {
+      if (action != null && action.isEnabled()) {
         action.actionPerformed(new ActionEvent(myContent, event.getID(), "", event.getWhen(), event.getModifiers()));
         return;
       }
