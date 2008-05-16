@@ -960,6 +960,8 @@ public abstract class DialogWrapper {
   }
 
   private void updateHeightForErrorText() {
+    if (getRootPane() == null) return;
+
     int minHeight = getContentPane().getMinimumSize().height;
     if (getContentPane().getHeight() < minHeight) {
       myPeer.setSize(myPeer.getSize().width, minHeight);
