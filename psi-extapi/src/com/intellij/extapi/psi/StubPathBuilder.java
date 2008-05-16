@@ -37,7 +37,8 @@ public class StubPathBuilder {
       return null;
     }
 
-    return new StubPath(build(stub.getParentStub()), buildPathElement(stub));
+    final IStubElementType type = stub.getStubType();
+    return new StubPath(build(stub.getParentStub()), type.getId(stub), type);
   }
 
   private static Pair<StubPath, StubElement> buildForPsi(PsiElement psi, StubTree tree) {
@@ -54,7 +55,8 @@ public class StubPathBuilder {
         final List<StubElement> childrenStubs = parentStub.getChildrenStubs();
         for (StubElement childStub : childrenStubs) {
           if (childStub.getPsi() == psi) {
-            return new Pair<StubPath, StubElement>(new StubPath(parentPair.getFirst(), buildPathElement(childStub)), childStub);
+            final IStubElementType type1 = childStub.getStubType();
+            return new Pair<StubPath, StubElement>(new StubPath(parentPair.getFirst(), type1.getId(childStub), type1), childStub);
           }
         }
 
@@ -63,11 +65,6 @@ public class StubPathBuilder {
     }
 
     return buildForPsi(psi.getParent(), tree);
-  }
-
-  private static StubPathElement buildPathElement(final StubElement stub) {
-    final IStubElementType type = stub.getStubType();
-    return new StubPathElement(type.getId(stub), type);
   }
 
   @Nullable
@@ -105,9 +102,8 @@ public class StubPathBuilder {
       return null;
     }
 
-    final StubPathElement elt = path.getLastElement();
-    final String id = elt.getId();
-    final IStubElementType type = (IStubElementType)elt.getType();
+    final String id = path.getId();
+    final IStubElementType type = (IStubElementType)path.getType();
     final List<StubElement> children = parentStub.getChildrenStubs();
 
     if (id.startsWith("#")) {

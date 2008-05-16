@@ -3,21 +3,31 @@
  */
 package com.intellij.extapi.psi;
 
+import com.intellij.psi.tree.IElementType;
+
 public class StubPath {
   private final StubPath myParentPath;
-  private final StubPathElement myElement;
+  private String myId;
+  private IElementType myType;
 
-  public StubPath(final StubPath parentPath, final StubPathElement element) {
+
+  public StubPath(final StubPath parentPath, final String id, final IElementType type) {
     myParentPath = parentPath;
-    myElement = element;
+    myId = id;
+    myType = type;
   }
 
   public StubPath getParentPath() {
     return myParentPath;
   }
 
-  public StubPathElement getLastElement() {
-    return myElement;
+
+  public String getId() {
+    return myId;
+  }
+
+  public IElementType getType() {
+    return myType;
   }
 
   public boolean equals(final Object o) {
@@ -26,20 +36,27 @@ public class StubPath {
 
     final StubPath stubPath = (StubPath)o;
 
-    if (!myElement.equals(stubPath.myElement)) return false;
+    if (!myId.equals(stubPath.myId)) return false;
     if (myParentPath != null ? !myParentPath.equals(stubPath.myParentPath) : stubPath.myParentPath != null) return false;
+    if (!myType.equals(stubPath.myType)) return false;
 
     return true;
   }
 
   public int hashCode() {
-    int result;
-    result = (myParentPath != null ? myParentPath.hashCode() : 0);
-    result = 31 * result + myElement.hashCode();
+    int result = (myParentPath != null ? myParentPath.hashCode() : 0);
+    result = 31 * result + myId.hashCode();
+    result = 31 * result + myType.hashCode();
     return result;
   }
 
   public String toString() {
-    return (myParentPath != null ? myParentPath.toString() : "") + "::" + myElement.toString();
+    return new StringBuilder().
+        append(myParentPath != null ? myParentPath.toString() : "").
+        append("::(").
+        append(myType.toString()).
+        append(":").
+        append(myId).
+        append(")").toString();
   }
 }
