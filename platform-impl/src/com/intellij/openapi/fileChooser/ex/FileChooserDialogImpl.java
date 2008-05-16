@@ -196,7 +196,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
   public JComponent getPreferredFocusedComponent() {
-    return ourTextFieldShown ? myPathTextField.getField() : myFileSystemTree.getTree();
+    if (ourTextFieldShown) {
+      return myPathTextField != null ? myPathTextField.getField() : null;
+    } else {
+      return myFileSystemTree != null ? myFileSystemTree.getTree() : null;
+    }
   }
 
   public final void dispose() {
