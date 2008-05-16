@@ -58,6 +58,12 @@ public class CompilerManagerImpl extends CompilerManager {
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
       addCompiler(compiler);
     }
+    for(CompilerFactory factory: Extensions.getExtensions(CompilerFactory.EP_NAME, myProject)) {
+      Compiler[] compilers = factory.createCompilers(this);
+      for (Compiler compiler : compilers) {
+        addCompiler(compiler);
+      }
+    }
 
     addCompilableFileType(StdFileTypes.JAVA);
     //

@@ -30,9 +30,5 @@
       <implementation-class>com.intellij.compiler.impl.CompilerCacheManager</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.compiler.util.InspectionValidatorExecutor</implementation-class>
-      <skipForDummyProject/>
-    </component>
   </project-components>
 </components>
