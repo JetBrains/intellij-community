@@ -60,7 +60,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
 
     if (infoToGo == null) {
-      gotoNextError(project, editor, file, myGoForward ? -1 : editor.getDocument().getTextLength());
+      if (highlights.length > 1) {
+        gotoNextError(project, editor, file, myGoForward ? -1 : editor.getDocument().getTextLength());
+      }
     }
     else {
       navigateToError(project, editor, infoToGo);
