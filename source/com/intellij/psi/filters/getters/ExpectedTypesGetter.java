@@ -3,12 +3,15 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,7 +22,12 @@ import java.util.ArrayList;
  */
 public class ExpectedTypesGetter implements ContextGetter{
 
+  @NotNull
   public PsiType[] get(PsiElement context, CompletionContext completionContext){
+    return getExpectedTypes(context);
+  }
+
+  public static PsiType[] getExpectedTypes(final PsiElement context) {
     ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
     if(expression == null) return PsiType.EMPTY_ARRAY;

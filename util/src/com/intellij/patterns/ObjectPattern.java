@@ -9,6 +9,7 @@ import com.intellij.util.ProcessingContext;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -103,7 +104,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     });
   }
 
-  public Self save(final String key) {
+  public Self save(@NonNls final String key) {
     return with(new PatternCondition<T>("save") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         context.put(key, t);

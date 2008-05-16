@@ -4,13 +4,12 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
-
-import com.intellij.util.ProcessingContext;
 
 /**
  * @author peter
@@ -107,6 +106,30 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
         ParentType element = strict ? getParent(t) : t;
         while (element != null) {
           if (pattern.getCondition().accepts(element, context)) return true;
+          element = getParent(element);
+        }
+        return false;
+      }
+    });
+  }
+
+  /**
+   * @param strict
+   * @return Ensures that first elements in hierarchy accepted by patterns appear in specified order
+   */
+  public Self insideSequence(final boolean strict, @NotNull final ElementPattern<? extends ParentType>... patterns) {
+    return with(new PatternCondition<T>("condInside") {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        int i = 0;
+        ParentType element = strict ? getParent(t) : t;
+        while (element != null && i >= patterns.length) {
+          for (int j = i; j < patterns.length; j++) {
+            if (patterns[j].getCondition().accepts(t, context)) {
+              if (i != j) return false;
+              i++;
+              break;
+            }
+          }
           element = getParent(element);
         }
         return false;

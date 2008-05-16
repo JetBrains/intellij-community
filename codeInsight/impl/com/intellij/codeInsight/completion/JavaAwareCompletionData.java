@@ -114,7 +114,9 @@ public class JavaAwareCompletionData extends CompletionData{
     final PsiElement element = multiReference.getElement();
     if (element instanceof PsiNameValuePair) {
       final PsiNameValuePair psiNameValuePair = (PsiNameValuePair)element;
-      if (psiNameValuePair.getName() == null) {
+      final PsiElement parent = element.getParent();
+      boolean isTheOnlyParameter = parent instanceof PsiAnnotationParameterList && ((PsiAnnotationParameterList) parent).getAttributes().length == 1;
+      if (psiNameValuePair.getName() == null && !isTheOnlyParameter) {
         return new PsiReference[]{psiNameValuePair.getReference()};
       }
     }
