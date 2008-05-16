@@ -45,6 +45,8 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   private final FileEditorManager myFileEditorManager;
   private final MyFileEditorManagerListener myListener;
   private ToolWindow myToolWindow;
+  private boolean myToolWindowReady = false;
+  private boolean myToolWindowDisposed = false;
 
   public UIDesignerToolWindowManager(final Project project, final FileEditorManager fileEditorManager) {
     myProject = project;
@@ -56,21 +58,31 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        myToolWindowPanel = new MyToolWindowPanel();
-        myComponentTree = new ComponentTree(myProject);
-        final JScrollPane scrollPane = new JScrollPane(myComponentTree);
-        scrollPane.setPreferredSize(new Dimension(250, -1));
-        myComponentTree.initQuickFixManager(scrollPane.getViewport());
-        myPropertyInspector= new PropertyInspector(myProject, myComponentTree);
-        myToolWindowPanel.setFirstComponent(scrollPane);
-        myToolWindowPanel.setSecondComponent(myPropertyInspector);
-        myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
-                                                                                   myToolWindowPanel,
-                                                                                   ToolWindowAnchor.LEFT);
-        myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"));
-        myToolWindow.setAvailable(false, null);
+        myToolWindowReady = true;
       }
     });
+  }
+
+  private void checkInitToolWindow() {
+    if (myToolWindowReady && !myToolWindowDisposed && myToolWindow == null) {
+      initToolWindow();
+    }
+  }
+
+  private void initToolWindow() {
+    myToolWindowPanel = new MyToolWindowPanel();
+    myComponentTree = new ComponentTree(myProject);
+    final JScrollPane scrollPane = new JScrollPane(myComponentTree);
+    scrollPane.setPreferredSize(new Dimension(250, -1));
+    myComponentTree.initQuickFixManager(scrollPane.getViewport());
+    myPropertyInspector= new PropertyInspector(myProject, myComponentTree);
+    myToolWindowPanel.setFirstComponent(scrollPane);
+    myToolWindowPanel.setSecondComponent(myPropertyInspector);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
+                                                                               myToolWindowPanel,
+                                                                               ToolWindowAnchor.LEFT);
+    myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"));
+    myToolWindow.setAvailable(false, null);
   }
 
   public void projectClosed() {
@@ -82,6 +94,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
       }
       myToolWindowPanel = null;
       myToolWindow = null;
+      myToolWindowDisposed = true;
     }
   }
 
@@ -97,8 +110,12 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   private void processFileEditorChange(UIFormEditor newEditor) {
-    if (myToolWindow == null) return;
+    if (!myToolWindowReady || myToolWindowDisposed) return;
     GuiEditor activeFormEditor = newEditor != null ? newEditor.getEditor() : null;
+    if (myToolWindow == null) {
+      if (activeFormEditor == null) return;
+      initToolWindow();
+    }
     if (myComponentTreeBuilder != null) {
       Disposer.dispose(myComponentTreeBuilder);
       myComponentTreeBuilder = null;
@@ -137,6 +154,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   public ComponentTree getComponentTree() {
+    checkInitToolWindow();
     return myComponentTree;
   }
 
