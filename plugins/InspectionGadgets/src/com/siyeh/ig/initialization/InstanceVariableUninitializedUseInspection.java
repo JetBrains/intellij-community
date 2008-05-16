@@ -16,6 +16,8 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.psi.*;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.openapi.extensions.Extensions;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -78,9 +80,8 @@ public class InstanceVariableUninitializedUseInspection
             if (aClass == null) {
                 return;
             }
-            final PsiManager manager = field.getManager();
-            if (JavaPsiFacade.getInstance(field.getProject()).isFieldBoundToForm(field)) {
-                return;
+            for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+                if (provider.isImplicitWrite(field)) return;
             }
             final UninitializedReadCollector uninitializedReadsCollector =
                     new UninitializedReadCollector();
