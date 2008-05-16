@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,5 +58,5 @@ public class TypeNameManager {
     return getFromClassMap(ourTypeNames, aClass);
   }
 
-  public static void registerTypeName(Class aClass, String typeName) { ourTypeNames.put(aClass, typeName); }
+  public static void registerTypeName(Class aClass, @NonNls String typeName) { ourTypeNames.put(aClass, typeName); }
 }
