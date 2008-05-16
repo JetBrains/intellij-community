@@ -790,9 +790,9 @@ public class ExpectedTypesProvider {
       LOG.assertTrue(index >= 0);
 
       final PsiExpression[] leftArgs;
-      if (index < args.length - 1) {
-        leftArgs = new PsiExpression[index + 1];
-        System.arraycopy(args, 0, leftArgs, 0, index + 1);
+      if (index <= args.length - 1) {
+        leftArgs = new PsiExpression[index];
+        System.arraycopy(args, 0, leftArgs, 0, index);
       } else {
         leftArgs = null;
       }

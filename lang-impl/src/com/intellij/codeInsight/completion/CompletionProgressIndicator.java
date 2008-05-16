@@ -14,15 +14,14 @@ import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.ui.AsyncProcessIcon;
 
 import java.awt.*;
 
@@ -70,7 +69,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 200, false, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
     Disposer.register(this, myQueue);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -125,11 +124,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.addItem(item);
     myCount++;
     if (myCount == 1) {
-      invokeAndWait(new Runnable() {
-        public void run() {
-          myQueue.showNotify();
-        }
-      });
       myQueue.queue(new Update("initialShow") {
         public void run() {
           final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
@@ -140,15 +134,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       });
     } else {
       myQueue.queue(myUpdate);
-    }
-  }
-
-  private void invokeAndWait(final Runnable runnable) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread() || application.isUnitTestMode()) {
-      runnable.run();
-    } else {
-      LaterInvocator.invokeAndWait(runnable, myQueue.getModalityState());
     }
   }
 

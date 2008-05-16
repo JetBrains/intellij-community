@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.ContextGetter;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,7 @@ public class ClassLiteralGetter implements ContextGetter {
   }
 
   public Object[] get(PsiElement context, CompletionContext completionContext) {
+    final List<LookupElement<PsiExpression>> result = new ArrayList<LookupElement<PsiExpression>>();
     for (final Object element : myBaseGetter.get(context, completionContext)) {
       if (element instanceof PsiClassType) {
         PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)element).resolveGenerics();
@@ -41,21 +42,22 @@ public class ClassLiteralGetter implements ContextGetter {
               addInheritors = wildcardType.isExtends();
             }
 
-            final List<LookupElement<PsiExpression>> result = new ArrayList<LookupElement<PsiExpression>>();
+            final PsiClass aClass = PsiUtil.resolveClassInType(substitution);
+            if (aClass == null) continue;
+
             createLookupElement(substitution, context, 2, result);
             if (addInheritors && substitution != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(substitution.getCanonicalText())) {
               for (final PsiType type : CodeInsightUtil.addSubtypes(substitution, context, true)) {
                 createLookupElement(type, context, 1, result);
               }
             }
-            return result.toArray(new Object[result.size()]);
 
           }
         }
       }
     }
 
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return result.toArray(new Object[result.size()]);
   }
 
   private static void createLookupElement(@Nullable final PsiType type, final PsiElement context, final int priority, final List<LookupElement<PsiExpression>> list) {
