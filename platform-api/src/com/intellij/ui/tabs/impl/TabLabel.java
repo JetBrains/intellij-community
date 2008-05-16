@@ -101,6 +101,8 @@ public class TabLabel extends JPanel {
   private void handlePopup(final MouseEvent e) {
     if (e.getClickCount() != 1 || !e.isPopupTrigger()) return;
 
+    if (e.getX() < 0 || e.getX() >= e.getComponent().getWidth() || e.getY() < 0 || e.getY() >= e.getComponent().getHeight()) return;
+
     String place = myTabs.getPopupPlace();
     place = place != null ? place : ActionPlaces.UNKNOWN;
     myTabs.myPopupInfo = myInfo;
