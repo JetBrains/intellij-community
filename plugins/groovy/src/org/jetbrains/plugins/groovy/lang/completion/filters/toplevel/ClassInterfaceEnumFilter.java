@@ -34,9 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
  */
 public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTypes {
 
-  private static TokenSet KEYWORDS = TokenSet.create(kCLASS, kINTERFACE, kENUM);
-
-
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null &&
         (context.getParent() instanceof GrReferenceExpression) &&

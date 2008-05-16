@@ -26,12 +26,15 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
@@ -56,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 
 import java.util.*;
 
@@ -63,6 +67,14 @@ import java.util.*;
  * @author ilyas
  */
 public abstract class GroovyRefactoringUtil {
+
+  public static final Collection<String> KEYWORDS = ContainerUtil.map(
+      GroovyTokenTypes.KEYWORDS.getTypes(),
+      new Function<IElementType, String>() {
+        public String fun(IElementType type) {
+          return type.toString();
+        }
+      });
 
   public static PsiElement getEnclosingContainer(PsiElement place) {
     PsiElement parent = place.getParent();
