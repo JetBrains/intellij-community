@@ -16,6 +16,11 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class ResolveImportUtil {
+  
+  /** Name of the __init__.py special file. */
+  public static final String INIT_PY = "__init__.py"; 
+  public static final String PY_SUFFIX = ".py"; 
+  
   private ResolveImportUtil() {
   }
 
@@ -94,10 +99,17 @@ public class ResolveImportUtil {
     return null;
   }
 
+  /**
+  Tries to find referencedName under a root. Only used for resolution of import statements.
+  @param root where to look for the referenced name.
+  @param referencedName which name to look for.
+  @param importRef import reference which resolution led to this call.
+  @return the element the referencedName resolves to, or null.
+  */
   @Nullable
   private static PsiElement resolveInRoot(final VirtualFile root, final String referencedName, final PyReferenceExpression importRef) {
     final PsiManager psi_mgr = PsiManager.getInstance(importRef.getProject());
-    final VirtualFile childFile = root.findChild(referencedName + ".py");
+    final VirtualFile childFile = root.findChild(referencedName + PY_SUFFIX);
     if (childFile != null) {
       return psi_mgr.findFile(childFile);
     }
@@ -108,29 +120,52 @@ public class ResolveImportUtil {
     }
 
     // NOTE: a preliminary attempt to resolve to a C lib
-    VirtualFile clib_file = root.findChild(referencedName + ".so"); // TODO: platform-dependent choice of .so | .pyd
+    VirtualFile clib_file = root.findChild(referencedName + ".so"); // XXX: platform-dependent choice of .so | .pyd
     if (clib_file != null) {
       return psi_mgr.findFile(clib_file);
     }
     return null;
   }
 
+  /**
+  Tries to find referencedName under the parent element. Used to reesolve any names that look imported.
+  Parent might happen to be a PyFile(__init__.py), then it is treated <i>both</i> as a file and as ist base dir.
+  For details of this ugly magic, see {@link com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#resolve()}.
+  @param parent element under which to look for referenced name.
+  @param referencedName which name to look for.
+  @param importRef import reference which resolution led to this call.
+  @return the element the referencedName resolves to, or null.
+  @todo: Honor module's __all__ value.
+  @todo: Honor package's __path__ value (hard).
+  */
   @Nullable
-  private static PsiElement resolveChild(final PsiElement parent, final String referencedName, final PyReferenceExpression importRef) {
+  public static PsiElement resolveChild(final PsiElement parent, final String referencedName, final PyReferenceExpression importRef) {
+    PsiDirectory dir = null;
+    PsiElement ret = null;
     if (parent instanceof PyFile) {
-      return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), parent, null, importRef);
+      PyFile pfparent = (PyFile)parent; 
+      if (INIT_PY.equals(pfparent.getName())) {
+        // try both file and dir, for we can't tell.
+        dir = pfparent.getContainingDirectory();
+      }
+      // to be used if dir resolution is not applicable:
+      ret = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), parent, null, importRef);
     }
     else if (parent instanceof PsiDirectory) {
-      final PsiDirectory dir = (PsiDirectory)parent;
-      final PsiFile file = dir.findFile(referencedName + ".py");
+      dir = (PsiDirectory)parent;
+    }
+    if (dir != null) {
+      final PsiFile file = dir.findFile(referencedName + PY_SUFFIX);
       if (file != null) return file;
       final PsiDirectory subdir = dir.findSubdirectory(referencedName);
       if (subdir != null) return subdir;
-      final PsiFile initPy = dir.findFile("__init__.py");
-      if (initPy != null) {
-        return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), initPy, null, importRef);
+      else { // not a subdir, not a file; could be a name in parent/__init__.py
+        final PsiFile initPy = dir.findFile(INIT_PY);
+        if (initPy != null) {
+          return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), initPy, null, importRef);
+        }
       }
     }
-    return null;
+    return ret;
   }
 }
