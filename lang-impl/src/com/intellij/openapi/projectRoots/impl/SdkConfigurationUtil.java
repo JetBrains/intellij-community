@@ -79,5 +79,19 @@ public class SdkConfigurationUtil {
     if (sdks.size() > 0) {
       setDirectoryProjectSdk(project, sdks.get(0));
     }
+    else {
+      final String suggestedHomePath = sdkType.suggestHomePath();
+      if (suggestedHomePath != null && sdkType.isValidSdkHome(suggestedHomePath)) {
+        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+          public VirtualFile compute() {
+            return LocalFileSystem.getInstance().refreshAndFindFileByPath(suggestedHomePath);
+          }
+        });
+        if (sdkHome != null) {
+          Sdk sdk = setupSdk(sdkHome, sdkType);
+          setDirectoryProjectSdk(project, sdk);
+        }
+      }
+    }
   }
 }
