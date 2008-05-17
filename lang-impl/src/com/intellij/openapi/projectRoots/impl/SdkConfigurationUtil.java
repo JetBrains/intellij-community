@@ -70,6 +70,10 @@ public class SdkConfigurationUtil {
   }
 
   public static void configureDirectoryProjectSdk(final Project project, final SdkType sdkType) {
+    Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    if (existingSdk != null && existingSdk.getSdkType() == sdkType) {
+      return;
+    }
     List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(sdkType);
 
     if (sdks.size() > 0) {
