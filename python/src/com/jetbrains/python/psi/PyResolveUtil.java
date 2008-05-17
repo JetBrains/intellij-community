@@ -21,10 +21,14 @@ import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
+import com.jetbrains.python.psi.impl.ResolveImportUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,6 +38,21 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PyResolveUtil {
+
+  protected static Logger LOG = Logger.getLogger("PyResolveUtil");
+
+  @NotNull
+  protected static String _fmt_node(PsiElement elt) {
+    ASTNode node = elt.getNode();
+    if (node == null) return "null";
+    else {
+      String s = node.getText(); 
+      int cut_pos = s.indexOf('\n');
+      if (cut_pos < 0)  cut_pos = s.length();
+      return s.substring(0, java.lang.Math.min(cut_pos, s.length()));
+    }
+  }
+
   private PyResolveUtil() {
   }
 
@@ -43,6 +62,7 @@ public class PyResolveUtil {
 
     PsiElement cur = elt;
     do {
+      LOG.info("At "+_fmt_node(cur));
       if (!cur.processDeclarations(processor, ResolveState.initial(), cur == elt ? lastParent : null, elt)) {
         if (processor instanceof ResolveProcessor) {
           return ((ResolveProcessor)processor).getResult();
@@ -50,11 +70,13 @@ public class PyResolveUtil {
       }
       if (cur instanceof PsiFile) break;
       cur = cur.getPrevSibling();
+      // cur = cur.getContext(); 
     }
     while (cur != null);
 
     if (elt == place) return null;
 
+    LOG.info("*** going up");
     return treeWalkUp(processor, elt.getContext(), elt, place);
   }
 
@@ -73,9 +95,18 @@ public class PyResolveUtil {
     public boolean execute(PsiElement element, ResolveState substitutor) {
       if (element instanceof PyFile) {
         final VirtualFile file = ((PyFile)element).getVirtualFile();
-        if (file != null && myName.equals(file.getNameWithoutExtension())) {
-          myResult = element;
-          return false;
+        if (file != null) {
+          if (myName.equals(file.getNameWithoutExtension())) {
+            myResult = element;
+            return false;
+          }
+          else if (ResolveImportUtil.INIT_PY.equals(file.getName())) {
+            VirtualFile dir = file.getParent();
+            if ((dir != null) && myName.equals(dir.getName())) {
+              myResult = element;
+              return false;
+            }
+          }
         }
       }
       else if (element instanceof PsiNamedElement) {
