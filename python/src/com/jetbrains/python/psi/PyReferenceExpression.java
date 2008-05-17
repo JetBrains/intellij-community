@@ -16,6 +16,7 @@
 
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
  * Time: 10:15:14
  * To change this template use File | Settings | File Templates.
  */
-public interface PyReferenceExpression extends PsiReferenceEx, PyExpression {
+public interface PyReferenceExpression 
+extends PsiReferenceEx, PyExpression, PsiPolyVariantReference 
+{
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
 
   @Nullable
