@@ -98,18 +98,21 @@ public class PythonSdkType extends SdkType {
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
-    /*
-    File f = getPythonBinaryPath(path);
-    return f != null && f.exists();
-    */
-    File f_re = new File(path, "re.py");
-    File f_future = new File(path, "__future__.py");
-    File f_site = new File(path, "site-packages");
-    return (
-      f_re.exists() &&
-      f_future.exists() &&
-      f_site.exists() &&  f_site.isDirectory()
-    );
+    if (SystemInfo.isLinux) {
+      // on Linux, Python SDK home points to the /lib directory of a particular Python version
+      File f_re = new File(path, "re.py");
+      File f_future = new File(path, "__future__.py");
+      File f_site = new File(path, "site-packages");
+      return (
+        f_re.exists() &&
+        f_future.exists() &&
+        f_site.exists() &&  f_site.isDirectory()
+      );
+    }
+    else {
+      File f = getPythonBinaryPath(path);
+      return f != null && f.exists();
+    }
   }
 
   private static boolean isJythonSdkHome(final String path) {
