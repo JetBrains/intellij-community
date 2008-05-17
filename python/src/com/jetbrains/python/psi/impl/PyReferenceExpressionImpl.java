@@ -97,6 +97,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
+  /**
+   * Resolves reference to the most obvious point.
+   * Imported module names: to module file (or directory for a qualifier). 
+   * Other identifiers: to most recent definition before this reference.
+  **/
   public
   @Nullable
   PsiElement resolve() {
@@ -104,7 +109,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (referencedName == null) return null;
 
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
-      return ResolveImportUtil.resolveImportReference(this);
+      PsiElement target = ResolveImportUtil.resolveImportReference(this);
+      if (target instanceof PsiDirectory) {
+        final PsiDirectory dir = (PsiDirectory)target;
+        final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
+        if (file != null) {
+          target = file; // ResolveImportUtil will extract directory part as needed.
+          /* NOTE: can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
+          This is because isPsiUpToDate() relies on identity of objects returned by FileViewProvider.getPsi().
+          If we ever need to exactly tell a dir from __init__.py, that logic has to change. 
+          */ 
+        }
+      }
+      return target;
     }
 
     final PyExpression qualifier = getQualifier();
@@ -119,11 +136,38 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), this, this, null);
   }
 
+  /**
+   * Resolves reference to possible referred elements.
+   * First element is always what resolve() would return.
+   * Imported module names: to module file, or {directory, '___init__.py}' for a qualifier.
+   * @todo Local identifiers: a list of definitions in the most recent compound statement 
+   * (e.g. <code>if X: a = 1; else: a = 2</code> has two definitions of <code>a</code>.).
+   * @todo Identifiers not found locally: similar definitions in imported files and builtins.
+   * @see com.intellij.psi.PsiPolyVariantReference#multiResolve(boolean)
+  **/
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final String referencedName = getReferencedName();
     if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
-
+    
+    // crude logic right here to see it work
+    
+    PsiElement target = resolve();
+    if (target == null) return ResolveResult.EMPTY_ARRAY;
+    
+    List<ResolveResult> ret = new ArrayList<ResolveResult>();
+    ret.add(new PsiElementResolveResult(target));
+    
+    if (target instanceof PsiDirectory) {
+      final PsiDirectory dir = (PsiDirectory)target;
+      final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
+      if (file != null) {
+        ret.add(0, new PsiElementResolveResult(file));
+      }
+    }
+    
+    return ret.toArray(new ResolveResult[ret.size()]);
+    /*
     if (getQualifier() != null) {
       return ResolveResult.EMPTY_ARRAY; // TODO?
     }
@@ -131,6 +175,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     PyResolveUtil.MultiResolveProcessor processor = new PyResolveUtil.MultiResolveProcessor(referencedName);
     PyResolveUtil.treeWalkUp(processor, this, this, this);
     return processor.getResults();
+    */
   }
 
   public String getCanonicalText() {
@@ -256,6 +301,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (target instanceof PyClass) {
       return new PyClassType((PyClass) target);
+    }
+    if (target instanceof PsiDirectory) {
+      PsiFile file = ((PsiDirectory)target).findFile(ResolveImportUtil.INIT_PY);
+      if (file != null) return getTypeFromTarget(file);
     }
     return getReferenceTypeFromProviders(target);
   }
