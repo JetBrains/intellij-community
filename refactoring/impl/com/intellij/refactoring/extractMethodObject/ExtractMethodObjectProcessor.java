@@ -345,8 +345,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
       return new ExtractMethodObjectDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                                     myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor,
-                                                     myInitialMethodName, REFACTORING_NAME, HelpID.EXTRACT_METHOD_OBJECT, myElements);
+                                           myThrownExceptions, myStatic, myCanBeStatic,  myElements);
     }
 
 
