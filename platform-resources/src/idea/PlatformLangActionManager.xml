@@ -21,6 +21,7 @@
 
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.intellij.platform.NewDirectoryProjectAction" icon="/general/createNewProject.png"/>
       <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction" icon="/general/openProject.png"/>
 
       <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction"
