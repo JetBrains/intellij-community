@@ -16,9 +16,9 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyImportStatement;
@@ -58,7 +58,7 @@ public class AddImportAction implements HintAction, QuestionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (myReference.getElement().getParent() instanceof PyImportStatement) return false;
+    if (PsiTreeUtil.getParentOfType(myReference.getElement(), PyImportStatement.class) != null) return false;
     final String referenceName = getRefName();
     final PsiFile[] files = getRefFiles(referenceName);
     return files != null && files.length > 0;
