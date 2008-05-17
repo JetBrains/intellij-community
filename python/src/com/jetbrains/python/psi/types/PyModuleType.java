@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.jetbrains.python.psi.PyResolveUtil;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.impl.ResolveImportUtil; // .impl looks impure
 
 /**
  * @author yole
@@ -21,7 +22,8 @@ public class PyModuleType implements PyType {
   }
 
   public PsiElement resolveMember(final String name) {
-    return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
+    //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
+    return ResolveImportUtil.resolveChild(myModule, name, null);
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
