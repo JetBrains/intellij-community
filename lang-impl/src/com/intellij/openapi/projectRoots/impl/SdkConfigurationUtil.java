@@ -60,9 +60,11 @@ public class SdkConfigurationUtil {
       public void run() {
         ProjectRootManager.getInstance(project).setProjectJdk(pythonSdk);
         final Module[] modules = ModuleManager.getInstance(project).getModules();
-        final ModifiableRootModel model = ModuleRootManager.getInstance(modules[0]).getModifiableModel();
-        model.inheritSdk();
-        model.commit();
+        if (modules.length > 0) {
+          final ModifiableRootModel model = ModuleRootManager.getInstance(modules[0]).getModifiableModel();
+          model.inheritSdk();
+          model.commit();
+        }
       }
     });
   }
