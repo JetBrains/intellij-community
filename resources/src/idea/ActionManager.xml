@@ -99,13 +99,6 @@
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
     </group>
 
-    <group id="ExportImportGroup">
-      <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
-      <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
-
-      <add-to-group group-id="FileSaveGroup" anchor="last"/>
-    </group>
-
     <!-- Edit -->
     <group id="EditSmartGroupEx">
       <reference ref="EditorCompleteStatement"/>

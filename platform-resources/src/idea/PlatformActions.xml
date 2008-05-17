@@ -108,6 +108,10 @@
         <separator/>
         <group id="FileSaveGroup">
           <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
+          <group id="ExportImportGroup">
+            <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
+            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
+          </group>
         </group>
         <separator/>
         <group id="SynchronizeGroup">
