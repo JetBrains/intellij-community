@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -15,6 +16,8 @@ import java.util.List;
 public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker {
   protected final List<CommittedChangeList> myChangeListsList;
   private boolean isValid;
+  private SVNURL mySameBranch;
+  private VirtualFile myVcsRoot;
 
   public SelectedChangeListsChecker() {
     myChangeListsList = new ArrayList<CommittedChangeList>();
@@ -34,26 +37,34 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
     return isValid;
   }
 
-  public List<CommittedChangeList> getChangeListsList() {
-    return myChangeListsList;
-  }
-
   public MergerFactory createFactory() {
     return new ChangeListsMergerFactory(myChangeListsList);
   }
 
   private void checkSame() {
     final CheckSamePattern<SVNURL> sameBranch = new CheckSamePattern<SVNURL>();
+    final CheckSamePattern<VirtualFile> sameVcsRoot = new CheckSamePattern<VirtualFile>();
 
     for (ChangeList changeList : myChangeListsList) {
       final SvnChangeList svnChangeList = (SvnChangeList) changeList;
       sameBranch.iterate(svnChangeList.getBranchUrl());
+      sameVcsRoot.iterate(svnChangeList.getVcsRoot());
 
-      if (! sameBranch.isSame()) {
+      if ((! sameBranch.isSame()) || (! sameVcsRoot.isSame())) {
         break;
       }
     }
-    isValid = sameBranch.isSame();
+    isValid = sameBranch.isSame() && sameVcsRoot.isSame();
+    mySameBranch = sameBranch.getSameValue();
+    myVcsRoot = sameVcsRoot.getSameValue();
+  }
+
+  public SVNURL getSameBranch() {
+    return mySameBranch;
+  }
+
+  public VirtualFile getVcsRoot() {
+    return myVcsRoot;
   }
 
   public static class CheckSamePattern <T> {

@@ -56,8 +56,8 @@ public abstract class AbstractIntegrateChangesAction extends AnAction {
       return;
     }
 
-    final SvnIntegrateChangesActionPerformer performer = new SvnIntegrateChangesActionPerformer(project, myChecker.getChangeListsList(),
-                                                                                                myChecker.createFactory());
-    performer.firstStep();
+    SelectBranchPopup.showForVCSRoot(project, myChecker.getVcsRoot(),
+                                     new SvnIntegrateChangesActionPerformer(project, myChecker.getSameBranch(), myChecker.createFactory()),
+                                     SvnBundle.message("action.Subversion.integrate.changes.select.branch.text"));
   }
 }

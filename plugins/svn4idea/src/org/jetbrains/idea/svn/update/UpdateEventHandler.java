@@ -1,7 +1,6 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.WindowManager;
@@ -19,7 +18,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 */
 public class UpdateEventHandler implements ISVNEventHandler {
   private final ProgressIndicator myProgressIndicator;
-  private final Ref<UpdatedFiles> myUpdatedFilesRef;
+  private UpdatedFiles myUpdatedFiles;
   private int myExternalsCount;
   private final SvnVcs myVCS;
 
@@ -28,21 +27,18 @@ public class UpdateEventHandler implements ISVNEventHandler {
 
   public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator) {
     myProgressIndicator = progressIndicator;
-    myUpdatedFilesRef = new Ref<UpdatedFiles>();
     myVCS = vcs;
     myExternalsCount = 1;
   }
 
   public void setUpdatedFiles(final UpdatedFiles updatedFiles) {
-    myUpdatedFilesRef.set(updatedFiles);
+    myUpdatedFiles = updatedFiles;
   }
 
   public void handleEvent(SVNEvent event, double progress) {
     if (event == null || event.getFile() == null) {
       return;
     }
-
-    final UpdatedFiles updatedFiles = myUpdatedFilesRef.get();
 
     String path = event.getFile().getAbsolutePath();
     String displayPath = event.getFile().getName();
@@ -57,10 +53,10 @@ public class UpdateEventHandler implements ISVNEventHandler {
     if (event.getAction() == SVNEventAction.UPDATE_ADD ||
         event.getAction() == SVNEventAction.ADD) {
       myText2 = SvnBundle.message("progress.text2.added", displayPath);
-      if (updatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
-        updatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().remove(path);
-        if (updatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.REPLACED_ID) == null) {
-          updatedFiles.registerGroup(createFileGroup(SvnBundle.message("status.group.name.replaced"),
+      if (myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
+        myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().remove(path);
+        if (myUpdatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.REPLACED_ID) == null) {
+          myUpdatedFiles.registerGroup(createFileGroup(SvnBundle.message("status.group.name.replaced"),
               AbstractSvnUpdateIntegrateEnvironment.REPLACED_ID));
         }
         addFileToGroup(AbstractSvnUpdateIntegrateEnvironment.REPLACED_ID, event);
@@ -100,8 +96,8 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
     else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
       myExternalsCount++;
-      if (updatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID) == null) {
-        updatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),
+      if (myUpdatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID) == null) {
+        myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),
                                                    SvnBundle.message("status.group.name.externals"),
                                                    false, AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID, true));
       }
@@ -145,7 +141,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
   }
 
   protected void addFileToGroup(final String id, final SVNEvent event) {
-    myUpdatedFilesRef.get().getGroupById(id).add(event.getFile().getAbsolutePath());
+    myUpdatedFiles.getGroupById(id).add(event.getFile().getAbsolutePath());
   }
 
   public void checkCancelled() throws SVNCancelException {

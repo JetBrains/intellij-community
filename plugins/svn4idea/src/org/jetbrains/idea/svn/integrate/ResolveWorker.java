@@ -26,26 +26,29 @@ public class ResolveWorker {
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
   }
 
+  private void refreshChangeListsFindConflicts(final UpdatedFiles updatedFiles, final List<VirtualFile> conflictedVirtualFiles) {
+    UpdateFilesHelper.iterateFileGroupFiles(updatedFiles,
+                                            new UpdateFilesHelper.Callback() {
+                                              public void onFile(final String filePath, final String groupId) {
+                                                final VirtualFile vf = SvnUtil.getVirtualFile(filePath);
+                                                if (vf != null) {
+                                                  // refresh base directory so that conflict files should be detected
+                                                  // file itself is already refreshed
+                                                  vf.getParent().refresh(false, false);
+                                                  myDirtyScopeManager.fileDirty(vf);
+                                                }
+                                                if (FileGroup.MERGED_WITH_CONFLICT_ID.equals(groupId)) {
+                                                  conflictedVirtualFiles.add(vf);
+                                                }
+                                              }
+                                            });
+  }
+
   public void execute(final UpdatedFiles updatedFiles) {
     final List<VirtualFile> conflictedVirtualFiles = new ArrayList<VirtualFile>();
 
     if (myChangesUnderProjectRoot) {
-      UpdateFilesHelper.iterateFileGroupFiles(updatedFiles,
-                                              new UpdateFilesHelper.Callback() {
-                                                public void onFile(final String filePath, final String groupId) {
-                                                  final VirtualFile vf = SvnUtil.getVirtualFile(filePath);
-                                                  if (vf != null) {
-                                                    // refresh base directory so that conflict files should be detected
-                                                    // file itself is already refreshed
-                                                    vf.getParent().refresh(false, false);
-                                                    myDirtyScopeManager.fileDirty(vf);
-                                                  }
-                                                  if (FileGroup.MERGED_WITH_CONFLICT_ID.equals(groupId)) {
-                                                    conflictedVirtualFiles.add(vf);
-                                                  }
-                                                }
-                                              });
-
+      refreshChangeListsFindConflicts(updatedFiles, conflictedVirtualFiles);
     } else {
       final FileGroup conflictedGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
       for (String filename : conflictedGroup.getFiles()) {
@@ -55,25 +58,29 @@ public class ResolveWorker {
     }
 
     if ((! conflictedVirtualFiles.isEmpty()) && (! SvnConfiguration.getInstance(myProject).MERGE_DRY_RUN)) {
-      final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(myProject);
+      doMerge(updatedFiles, conflictedVirtualFiles);
+    }
+  }
 
-      List<VirtualFile> mergedFiles = vcsHelper.showMergeDialog(conflictedVirtualFiles, new SvnMergeProvider(myProject));
+  private void doMerge(final UpdatedFiles updatedFiles, final List<VirtualFile> conflictedVirtualFiles) {
+    final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(myProject);
 
-      final FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
-      final FileGroup conflictedGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
+    List<VirtualFile> mergedFiles = vcsHelper.showMergeDialog(conflictedVirtualFiles, new SvnMergeProvider(myProject));
 
-      for (final VirtualFile mergedFile : mergedFiles) {
-        String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
-        conflictedGroup.remove(path);
-        mergedGroup.add(path);
+    final FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
+    final FileGroup conflictedGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
 
-        mergedFile.refresh(false, false);
-        mergedFile.getParent().refresh(false, false);
+    for (final VirtualFile mergedFile : mergedFiles) {
+      String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
+      conflictedGroup.remove(path);
+      mergedGroup.add(path);
 
-        if (myChangesUnderProjectRoot) {
-          mergedFile.getParent().refresh(true, false);
-          myDirtyScopeManager.fileDirty(mergedFile);
-        }
+      mergedFile.refresh(false, false);
+      // for additionally created files removal to be detected
+      mergedFile.getParent().refresh(false, false);
+
+      if (myChangesUnderProjectRoot) {
+        myDirtyScopeManager.fileDirty(mergedFile);
       }
     }
   }

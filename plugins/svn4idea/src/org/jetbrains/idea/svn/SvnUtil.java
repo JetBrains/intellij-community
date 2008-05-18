@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -353,7 +354,7 @@ public class SvnUtil {
   }
 
   public static VirtualFile getVirtualFile(final String filePath) {
-    @NonNls final String path = "file://" + filePath.replace(File.separatorChar, '/');
+    @NonNls final String path = VfsUtil.pathToUrl(filePath.replace(File.separatorChar, '/'));
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Nullable
       public VirtualFile compute() {
