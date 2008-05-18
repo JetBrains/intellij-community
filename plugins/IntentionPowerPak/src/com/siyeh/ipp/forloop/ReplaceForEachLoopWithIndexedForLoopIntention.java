@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,14 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
 
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
+        final PsiForeachStatement statement =
+                (PsiForeachStatement)element.getParent();
         if (statement == null) {
             return;
         }
         final Project project = statement.getProject();
-        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;
@@ -47,7 +49,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         final PsiParameter iterationParameter = statement.getIterationParameter();
         final PsiType type = iterationParameter.getType();
         final boolean isArray = iteratedValue.getType() instanceof PsiArrayType;
-        final String index = codeStyleManager.suggestUniqueVariableName("i", statement, true);
+        final String index =
+                codeStyleManager.suggestUniqueVariableName("i", statement, true);
         newStatement.append("for(int ");
         newStatement.append(index);
         newStatement.append(" = 0;");
@@ -62,7 +65,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append(index);
         newStatement.append("++)");
         newStatement.append("{ ");
-        newStatement.append(type.getPresentableText());
+        newStatement.append(type.getCanonicalText());
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
         newStatement.append(" = ");

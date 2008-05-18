@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,12 @@ public class DetailExceptionsIntention extends Intention {
         }
         final String tryBlockText = tryBlock.getText();
         newTryStatement.append(tryBlockText);
-        final Set<PsiType> exceptionsThrown = new HashSet<PsiType>(10);
+        final Set<PsiType> exceptionsThrown = new HashSet<PsiType>();
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
                 exceptionsThrown);
-        final HeirarchicalTypeComparator comparator =
-                new HeirarchicalTypeComparator();
+        final Comparator comparator = new HeirarchicalTypeComparator();
         final List<PsiType> exceptionsAlreadyEmitted =
-                new ArrayList<PsiType>(10);
+                new ArrayList<PsiType>();
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
         for (PsiCatchSection catchSection : catchSections) {
             final PsiParameter param = catchSection.getParameter();
@@ -75,7 +74,7 @@ public class DetailExceptionsIntention extends Intention {
                 for (PsiType thrownType : exceptionsToExpand) {
                     newTryStatement.append("catch(");
                     final String exceptionType =
-                            thrownType.getPresentableText();
+                            thrownType.getCanonicalText();
                     newTryStatement.append(exceptionType);
                     newTryStatement.append(' ');
                     final String parameterName = param.getName();
@@ -94,6 +93,6 @@ public class DetailExceptionsIntention extends Intention {
             newTryStatement.append(finallyBlockText);
         }
         final String newStatement = newTryStatement.toString();
-        replaceStatement(newStatement, tryStatement);
+        replaceStatementAndShorten(newStatement, tryStatement);
     }
 }
