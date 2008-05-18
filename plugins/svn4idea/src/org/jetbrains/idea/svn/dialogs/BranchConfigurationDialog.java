@@ -123,7 +123,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
       myTrunkLocationTextField.getButton().setEnabled(valueOk);
       setOKActionEnabled(prefixOk);
       if (prefixOk) {
-        myConfiguration.setTrunkUrl(currentValue);
+        myConfiguration.setTrunkUrl(currentValue.endsWith("/") ? currentValue.substring(0, currentValue.length() - 1) : currentValue);
       }
       setErrorText(prefixOk ? null : SvnBundle.message("configure.branches.error.wrong.url"));
     }

@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -143,12 +144,26 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     private void finishActions() {
       if (! myStoppedOnError) {
-        showCommit();
+        if (myAccomulatedFiles.isEmpty()) {
+          return;
+        }
+
+        if (myInfo.isUnderProjectRoot()) {
+          showLocalCommit();
+        } else {
+          showAlienCommit();
+        }
       }
 
+      if (! myInfo.isUnderProjectRoot()) {
+        finishAfterCommit();
+      }
+    }
+
+    private void finishAfterCommit() {
       if (SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS) {
         final UpdatedFiles statusFiles = doStatus();
-        myAccomulatedFiles.accomulateFiles(statusFiles, UpdatedFilesReverseSide.DuplicateLevel.DUPLICATE_ERRORS);
+        myAccomulatedFiles.accomulateFiles(statusFiles, UpdatedFilesReverseSide.DuplicateLevel.DUPLICATE_ERRORS_LOCALS);
       }
 
       if (myStoppedOnError) {
@@ -188,18 +203,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       });
     }
 
-    private void showCommit() {
-      if (myAccomulatedFiles.isEmpty()) {
-        return;
-      }
-
-      if (myInfo.isUnderProjectRoot()) {
-        showLocalCommit();
-      } else {
-        showAlienCommit();
-      }
-    }
-
     private void showLocalCommit() {
       final Collection<FilePath> files = new ArrayList<FilePath>();
       UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
@@ -208,7 +211,13 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
           files.add(file);
         }
       });
-      CommitChangeListDialog.commitPaths(myProject, files, null, null);
+
+      ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
+        public void run() {
+          CommitChangeListDialog.commitPaths(myProject, files, null, null);
+          finishAfterCommit();
+        }
+      });
     }
 
     private void showAlienCommit() {

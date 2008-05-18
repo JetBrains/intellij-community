@@ -22,7 +22,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -143,6 +145,9 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
     myConfigurationBean.myConfigurationMap.put(key, configuration);
     SvnBranchMapperManager.getInstance().notifyMappingChanged(myProject, vcsRoot, configuration);
+
+    final MessageBus messageBus = myProject.getMessageBus();
+    messageBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(myProject, vcsRoot);
   }
 
   public ConfigurationBean getState() {

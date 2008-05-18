@@ -104,8 +104,10 @@ public class SvnVcs extends AbstractVcs {
   private final VcsShowConfirmationOption myAddConfirmation;
   private final VcsShowConfirmationOption myDeleteConfirmation;
   private EditFileProvider myEditFilesProvider;
-  private CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> myCommittedChangesProvider;
+  private SvnCommittedChangesProvider myCommittedChangesProvider;
   private final VcsShowSettingOption myCheckoutOptions;
+
+  private final SvnFileUrlMappingRefresher myRootsInfo;
 
   private ChangeProvider myChangeProvider;
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
@@ -155,6 +157,8 @@ public class SvnVcs extends AbstractVcs {
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
     myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
+
+    myRootsInfo = new SvnFileUrlMappingRefresher(new SvnFileUrlMappingImpl(myProject, this));
   }
 
   @Override
@@ -169,6 +173,9 @@ public class SvnVcs extends AbstractVcs {
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     SvnApplicationSettings.getInstance().svnDeactivated();
     new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
+    if (myCommittedChangesProvider != null) {
+      myCommittedChangesProvider.deactivate();
+    }
     super.deactivate();
   }
 
@@ -611,5 +618,9 @@ public class SvnVcs extends AbstractVcs {
   public boolean isVersionedDirectory(final VirtualFile dir) {
     final VirtualFile child = dir.findChild(".svn");
     return child != null && child.isDirectory();
+  }
+
+  public SvnFileUrlMappingRefresher getRootsInfoGetter() {
+    return myRootsInfo;
   }
 }

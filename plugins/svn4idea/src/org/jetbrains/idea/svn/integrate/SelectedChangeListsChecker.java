@@ -9,7 +9,6 @@ import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,19 +43,17 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
   }
 
   private void checkSame() {
-    final CheckSamePattern<File> sameWcRoot = new CheckSamePattern<File>();
     final CheckSamePattern<SVNURL> sameBranch = new CheckSamePattern<SVNURL>();
 
     for (ChangeList changeList : myChangeListsList) {
       final SvnChangeList svnChangeList = (SvnChangeList) changeList;
-      sameWcRoot.iterate(svnChangeList.getWCRootRoot());
       sameBranch.iterate(svnChangeList.getBranchUrl());
 
-      if ((! sameBranch.isSame()) || (! sameWcRoot.isSame())) {
+      if (! sameBranch.isSame()) {
         break;
       }
     }
-    isValid = sameBranch.isSame() && sameWcRoot.isSame();
+    isValid = sameBranch.isSame();
   }
 
   public static class CheckSamePattern <T> {

@@ -23,10 +23,8 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.DirectoryDetector;
 import com.intellij.openapi.vcs.changes.Change;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -46,7 +43,6 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -65,8 +61,9 @@ public class SvnChangeList implements CommittedChangeList {
   private Set<String> myDeletedPaths = new HashSet<String>();
   private List<Change> myChanges;
 
-  private File myWcRoot;
   private SVNURL myBranchUrl;
+  private VirtualFile myVcsRoot;
+
   private boolean myBranchInfoLoaded;
 
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
@@ -79,7 +76,7 @@ public class SvnChangeList implements CommittedChangeList {
     final String message = logEntry.getMessage();
     myMessage = message == null ? "" : message;
 
-    myRepositoryRoot = repositoryRoot;
+    myRepositoryRoot = repositoryRoot.endsWith("/") ? repositoryRoot.substring(0, repositoryRoot.length() - 1) : repositoryRoot;
 
     for(Object o: logEntry.getChangedPaths().values()) {
       final SVNLogEntryPath entry = (SVNLogEntryPath) o;
@@ -233,50 +230,55 @@ public class SvnChangeList implements CommittedChangeList {
     return myBranchUrl;
   }
 
-  public File getWCRootRoot() {
+  public VirtualFile getVcsRoot() {
     if (! myBranchInfoLoaded) {
       updateBranchInfo();
     }
-    return myWcRoot;
-  }
-
-  private void updateBranchInfo() {
-    final Collection<Change> changes = getChanges();
-    myBranchInfoLoaded = true;
-
-    FilePath anyFile = null;
-    SVNURL anyUrl = null;
-    if (! changes.isEmpty()) {
-      try {
-        final Change firstChange = changes.iterator().next();
-        SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision) firstChange.getBeforeRevision();
-        revision = (revision == null) ? (SvnRepositoryContentRevision) firstChange.getAfterRevision() : revision;
-        anyFile = revision.getFile();
-        anyUrl = SVNURL.parseURIDecoded(revision.getFullPath());
-      } catch (SVNException e) {
-        return;
-      }
-    }
-
-    if ((anyFile == null) || (anyUrl == null)) {
-      return;
-    }
-
-    myWcRoot = SvnUtil.getWorkingCopyRoot(anyFile.getIOFile());
-    myBranchUrl = getBranchForUrl(anyFile, anyUrl);
+    return myVcsRoot;
   }
 
   @Nullable
-  private SVNURL getBranchForUrl(final FilePath file, final SVNURL url) {
-    final Project project = myVcs.getProject();
-    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
-    if (vcsRoot == null) {
-      return null;
+  private String getAnyPath() {
+    if (! myAddedPaths.isEmpty()) {
+      return myAddedPaths.iterator().next();
     }
+    if (! myDeletedPaths.isEmpty()) {
+      return myDeletedPaths.iterator().next();
+    }
+    if (! myChangedPaths.isEmpty()) {
+      return myChangedPaths.iterator().next();
+    }
+    return null;
+  }
+
+  private void updateBranchInfo() {
+    myBranchInfoLoaded = true;
+
+    String anyRelativePath = getAnyPath();
+    if (anyRelativePath == null) {
+      return;
+    }
+    final String absolutePath = myRepositoryRoot + (anyRelativePath.startsWith("/") ? anyRelativePath : ("/" + anyRelativePath));
+
+    myVcsRoot = myVcs.getRootsInfoGetter().getVcRootByUrl(absolutePath);
+    if (myVcsRoot == null) {
+      return;
+    }
+
+    myBranchUrl = getBranchForUrl(myVcsRoot, absolutePath);
+  }
+
+  public void forceReloadBranchInfo() {
+    updateBranchInfo();
+  }
+
+  @Nullable
+  private SVNURL getBranchForUrl(final VirtualFile vcsRoot, final String urlPath) {
     final SvnBranchConfiguration configuration;
     try {
-      configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
-      return configuration.getWorkingBranch(project, url);
+      final SVNURL url = SVNURL.parseURIEncoded(urlPath);
+      configuration = SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(vcsRoot);
+      return configuration.getWorkingBranch(myVcs.getProject(), url);
     }
     catch (SVNException e) {
       return null;

@@ -16,14 +16,19 @@
 
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -50,10 +55,27 @@ import java.util.List;
 public class SvnCommittedChangesProvider implements CachingCommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
   private final Project myProject;
   private final SvnVcs myVcs;
+  private final MessageBusConnection myConnection;
 
   public SvnCommittedChangesProvider(final Project project) {
     myProject = project;
     myVcs = SvnVcs.getInstance(myProject);
+
+    myConnection = myProject.getMessageBus().connect();
+
+    myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE, new VcsConfigurationChangeListener.DetailedNotification() {
+      public void execute(final Project project, final VirtualFile vcsRoot, final List<CommittedChangeList> cachedList) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            for (CommittedChangeList committedChangeList : cachedList) {
+              if ((committedChangeList instanceof SvnChangeList) && (((SvnChangeList) committedChangeList).getVcsRoot().equals(vcsRoot))) {
+                ((SvnChangeList) committedChangeList).forceReloadBranchInfo();
+              }
+            }
+          }
+        });
+      }
+    });
   }
 
   public ChangeBrowserSettings createDefaultSettings() {
@@ -192,4 +214,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return false;
   }
 
+  public void deactivate() {
+    myConnection.disconnect();
+  }
 }
