@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -61,7 +62,7 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> i
   public PsiJavaFileStub deserialize(final DataInputStream dataStream,
                                      final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
     boolean compiled = dataStream.readBoolean();
-    String packName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef packName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     return new PsiJavaFileStubImpl(packName, compiled);
   }
 

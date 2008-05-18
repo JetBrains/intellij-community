@@ -8,25 +8,30 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.io.StringRef;
 
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
-  private String myPackageName;
+  private StringRef myPackageName;
   private final boolean myCompiled;
 
   public PsiJavaFileStubImpl(final PsiJavaFile file, boolean compiled) {
     super(file);
-    myPackageName = file.getPackageName();
+    myPackageName = StringRef.fromString(file.getPackageName());
     myCompiled = compiled;
   }
 
   public PsiJavaFileStubImpl(final String packageName, boolean compiled) {
+    this(StringRef.fromString(packageName), compiled);
+  }
+
+  public PsiJavaFileStubImpl(final StringRef packageName, boolean compiled) {
     super(null);
     myPackageName = packageName;
     myCompiled = compiled;
   }
 
   public String getPackageName() {
-    return myPackageName;
+    return StringRef.toString(myPackageName);
   }
 
   public boolean isCompiled() {
@@ -34,7 +39,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   }
 
   public void setPackageName(final String packageName) {
-    myPackageName = packageName;
+    myPackageName = StringRef.fromString(packageName);
   }
 
   public IStubFileElementType getType() {

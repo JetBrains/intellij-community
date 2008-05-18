@@ -18,6 +18,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -408,7 +409,7 @@ public class RecordUtil {
     view.arrayCount = (flags & 1) != 0 ? record.readByte() : 0;
     view.isEllipsis = (flags & 2) != 0;
     if (tag == 0x00) {
-      view.text = DataInputOutputUtil.readNAME(record, nameStore);
+      view.text = StringRef.toString(DataInputOutputUtil.readNAME(record, nameStore));
       //view.text = readSTR(record);
     }
     else {

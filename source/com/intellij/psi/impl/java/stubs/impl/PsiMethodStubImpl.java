@@ -12,14 +12,15 @@ import com.intellij.psi.impl.java.stubs.PsiParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 
 import java.util.List;
 
 public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodStub {
   private TypeInfo myReturnType;
   private final byte myFlags;
-  private final String myName;
-  private String myDefaultValueText;
+  private final StringRef myName;
+  private StringRef myDefaultValueText;
 
   private final static int CONSTRUCTOR = 0x01;
   private final static int VARARGS = 0x02;
@@ -33,6 +34,14 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
                            final TypeInfo returnType,
                            final byte flags,
                            final String defaultValueText) {
+    this(parent, StringRef.fromString(name), returnType, flags, StringRef.fromString(defaultValueText));
+  }
+
+  public PsiMethodStubImpl(final StubElement parent,
+                           final StringRef name,
+                           final TypeInfo returnType,
+                           final byte flags,
+                           final StringRef defaultValueText) {
     super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
 
     myReturnType = returnType;
@@ -58,7 +67,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   }
 
   public String getDefaultValueText() {
-    return myDefaultValueText;
+    return StringRef.toString(myDefaultValueText);
   }
 
   public TypeInfo getReturnTypeText() {
@@ -91,7 +100,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   }
 
   public String getName() {
-    return myName;
+    return StringRef.toString(myName);
   }
 
   public byte getFlags() {
@@ -99,7 +108,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   }
 
   public void setDefaultValueText(final String defaultValueText) {
-    myDefaultValueText = defaultValueText;
+    myDefaultValueText = StringRef.fromString(defaultValueText);
   }
 
   public void setReturnType(final TypeInfo returnType) {

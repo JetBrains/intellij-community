@@ -19,6 +19,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInputStream;
@@ -81,12 +82,12 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
 
   public PsiMethodStub deserialize(final DataInputStream dataStream,
                                    final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
-    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     final TypeInfo type = new TypeInfo();
     RecordUtil.readTYPE(dataStream, type, nameStorage);
     byte flags = dataStream.readByte();
     if (PsiMethodStubImpl.isAnnotationMethod(flags)) {
-      final String defaultMethodValue = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      final StringRef defaultMethodValue = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
     }
     return new PsiMethodStubImpl(parentStub, name, type, flags, null);

@@ -11,15 +11,16 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
-  public static final @NonNls String INITIALIZER_TOO_LONG = ";INITIALIZER_TOO_LONG;";
+  public static final @NonNls StringRef INITIALIZER_TOO_LONG = StringRef.fromString(";INITIALIZER_TOO_LONG;");
 
-  private final String myName;
+  private final StringRef myName;
   private final TypeInfo myType;
-  private final String myInitializer;
+  private final StringRef myInitializer;
   private final byte myFlags;
 
   private final static int ENUM_CONST = 0x01;
@@ -27,6 +28,10 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private final static int DEPRECATED_ANNOTATION = 0x04;
 
   public PsiFieldStubImpl(final StubElement parent, final String name, final TypeInfo type, final String initializer, final byte flags) {
+    this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
+  }
+
+  public PsiFieldStubImpl(final StubElement parent, final StringRef name, final TypeInfo type, final StringRef initializer, final byte flags) {
     super(parent, isEnumConst(flags) ? JavaStubElementTypes.ENUM_CONSTANT : JavaStubElementTypes.FIELD);
 
     if (initializer != null && initializer.length() > INITIALIZER_LENGTH_LIMIT) {
@@ -47,7 +52,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
 
   public String getInitializerText() throws InitializerTooLongException {
     if (INITIALIZER_TOO_LONG.equals(myInitializer)) throw new InitializerTooLongException();
-    return myInitializer;
+    return StringRef.toString(myInitializer);
   }
 
   public byte getFlags() {
@@ -71,7 +76,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   }
 
   public String getName() {
-    return myName;
+    return StringRef.toString(myName);
   }
 
   public static byte packFlags(boolean isEnumConst, boolean isDeprecated, boolean hasDeprecatedAnnotation) {

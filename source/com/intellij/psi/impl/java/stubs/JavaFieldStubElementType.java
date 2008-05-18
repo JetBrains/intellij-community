@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,18 +75,18 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
       return stub.getInitializerText();
     }
     catch (InitializerTooLongException e) {
-      return PsiFieldStubImpl.INITIALIZER_TOO_LONG;
+      return StringRef.toString(PsiFieldStubImpl.INITIALIZER_TOO_LONG);
     }
   }
 
   public PsiFieldStub deserialize(final DataInputStream dataStream,
                                   final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
-    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
 
     final TypeInfo type = new TypeInfo();
     RecordUtil.readTYPE(dataStream, type, nameStorage);
 
-    String initializerText = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef initializerText = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     byte flags = dataStream.readByte();
     return new PsiFieldStubImpl(parentStub, name, type, initializerText, flags);
   }

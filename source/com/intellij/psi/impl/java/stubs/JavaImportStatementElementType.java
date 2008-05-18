@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +63,7 @@ public class JavaImportStatementElementType extends JavaStubElementType<PsiImpor
                                             final StubElement parentStub,
                                             final PersistentStringEnumerator nameStorage) throws IOException {
     byte flags = dataStream.readByte();
-    String reftext = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef reftext = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     return new PsiImportStatementStubImpl(parentStub, reftext, flags);
   }
 

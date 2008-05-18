@@ -11,13 +11,18 @@ import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 
 public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiParameterStub {
-  private final String myName;
+  private final StringRef myName;
   private final TypeInfo myType;
   private final boolean myIsEllipsis;
 
   public PsiParameterStubImpl(final StubElement parent, final String name, final TypeInfo type, final boolean isEllipsis) {
+    this(parent, StringRef.fromString(name), type, isEllipsis);
+  }
+
+  public PsiParameterStubImpl(final StubElement parent, final StringRef name, final TypeInfo type, final boolean isEllipsis) {
     super(parent, JavaStubElementTypes.PARAMETER);
     myName = name;
     myType = type;
@@ -42,7 +47,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
   }
 
   public String getName() {
-    return myName;
+    return StringRef.toString(myName);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

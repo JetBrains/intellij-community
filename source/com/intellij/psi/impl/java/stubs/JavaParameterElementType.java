@@ -16,6 +16,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -53,7 +54,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
 
   public PsiParameterStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
       throws IOException {
-    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     TypeInfo type = new TypeInfo();
     RecordUtil.readTYPE(dataStream, type, nameStorage);
     boolean isEll = dataStream.readBoolean();

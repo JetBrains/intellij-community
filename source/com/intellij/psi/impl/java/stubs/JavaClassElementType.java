@@ -23,6 +23,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,15 +111,15 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
 
     if (!isAnonymous) {
-      String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      String qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      final String sourceFileName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      StringRef qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      final StringRef sourceFileName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       final PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
       classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
     else {
-      String baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      StringRef baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       return new PsiClassStubImpl(type, parentStub, null, null, baseref, flags);
     }
   }

@@ -8,7 +8,6 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
@@ -18,6 +17,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,7 +94,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
       throws IOException {
     byte role = dataStream.readByte();
     int len = DataInputOutputUtil.readINT(dataStream);
-    String[] names = RecordUtil.createStringArray(len);
+    StringRef[] names = StringRef.createArray(len);
     for (int i = 0; i < names.length; i++) {
       names[i] = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     }

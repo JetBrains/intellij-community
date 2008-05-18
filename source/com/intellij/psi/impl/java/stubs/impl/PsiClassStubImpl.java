@@ -9,11 +9,12 @@ import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 
 public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub {
-  private final String myQualifiedName;
-  private final String myName;
-  private final String myBaseRefText;
+  private final StringRef myQualifiedName;
+  private final StringRef myName;
+  private final StringRef myBaseRefText;
   private final byte myFlags;
 
   private final static int DEPRECATED = 0x01;
@@ -26,13 +27,22 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   private final static int DEPRECATED_ANNOTATION = 0x80;
 
   private LanguageLevel myLanguageLevel = null;
-  private String mySourceFileName = null;
+  private StringRef mySourceFileName = null;
 
   public PsiClassStubImpl(final JavaClassElementType type,
                           final StubElement parent,
                           final String qualifiedName,
                           final String name,
                           final String baseRefText,
+                          final byte flags) {
+    this(type, parent, StringRef.fromString(qualifiedName), StringRef.fromString(name), StringRef.fromString(baseRefText), flags);
+  }
+
+  public PsiClassStubImpl(final JavaClassElementType type,
+                          final StubElement parent,
+                          final StringRef qualifiedName,
+                          final StringRef name,
+                          final StringRef baseRefText,
                           final byte flags) {
     super(parent, type);
     myQualifiedName = qualifiedName;
@@ -42,15 +52,15 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   }
 
   public String getName() {
-    return myName;
+    return StringRef.toString(myName);
   }
 
   public String getQualifiedName() {
-    return myQualifiedName;
+    return StringRef.toString(myQualifiedName);
   }
 
   public String getBaseClassReferenceText() {
-    return myBaseRefText;
+    return StringRef.toString(myBaseRefText);
   }
 
   public boolean isDeprecated() {
@@ -94,15 +104,19 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   }
 
   public String getSourceFileName() {
-    return mySourceFileName;
+    return StringRef.toString(mySourceFileName);
   }
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
   }
 
-  public void setSourceFileName(final String sourceFileName) {
+  public void setSourceFileName(final StringRef sourceFileName) {
     mySourceFileName = sourceFileName;
+  }
+
+  public void setSourceFileName(final String sourceFileName) {
+    mySourceFileName = StringRef.fromString(sourceFileName);
   }
 
   public boolean isAnonymousInQualifiedNew() {

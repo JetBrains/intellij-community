@@ -16,10 +16,8 @@ public class DataInputOutputUtil {
     record.skipBytes(record.readUnsignedShort());
   }
 
-  public static String readNAME(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
-    final int low = record.readUnsignedByte();
-    final int nameId = (readINT(record) << 8) | low;
-    return nameId == 0 ? null : nameStore.valueOf(nameId);
+  public static StringRef readNAME(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
+    return StringRef.fromStream(record, nameStore);
   }
 
   public static void writeNAME(DataOutput record, final String name, PersistentStringEnumerator nameStore) throws IOException {

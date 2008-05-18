@@ -1,7 +1,7 @@
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,9 +14,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.Date;
 
 /**
  * @author yole
@@ -37,7 +37,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (shallNotWatch()) return;
     myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date()));
     myLogDir.mkdirs();
     myThreadMXBean = ManagementFactory.getThreadMXBean();
@@ -64,7 +64,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   public void disposeComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (shallNotWatch()) return;
     myShutdownSemaphore.release();
     try {
       myThread.join();
@@ -72,6 +72,10 @@ public class PerformanceWatcher implements ApplicationComponent {
     catch (InterruptedException e) {
       // ignore
     }
+  }
+
+  private static boolean shallNotWatch() {
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   private void checkEDTResponsiveness() {

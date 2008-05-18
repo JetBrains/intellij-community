@@ -17,13 +17,23 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
   private final PsiReferenceList.Role myRole;
-  private final String[] myNames;
+  private final StringRef[] myNames;
   private PsiClassType[] myTypes;
 
   public PsiClassReferenceListStubImpl(final JavaClassReferenceListElementType type, final StubElement parent, final String[] names, final PsiReferenceList.Role role) {
+    super(parent, type);
+    myNames = StringRef.createArray(names.length);
+    for (int i = 0; i < names.length; i++) {
+      myNames[i] = StringRef.fromString(names[i]);
+    }
+    myRole = role;
+  }
+
+  public PsiClassReferenceListStubImpl(final JavaClassReferenceListElementType type, final StubElement parent, final StringRef[] names, final PsiReferenceList.Role role) {
     super(parent, type);
     myNames = names;
     myRole = role;
@@ -37,7 +47,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
     if (compiled) {
       for (int i = 0; i < types.length; i++) {
-        types[i] = new PsiClassReferenceType(new ClsJavaCodeReferenceElementImpl(getPsi(), myNames[i]));
+        types[i] = new PsiClassReferenceType(new ClsJavaCodeReferenceElementImpl(getPsi(), StringRef.toString(myNames[i])));
       }
     }
     else {
@@ -49,12 +59,12 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       for (int i = 0; i < types.length; i++) {
         PsiElement context = psi;
         if (getParentStub() instanceof PsiClassStub) {
-          context = ((PsiClassImpl)getParentStub().getPsi()).calcBasesResolveContext(PsiNameHelper.getShortClassName(myNames[i]), psi);
+          context = ((PsiClassImpl)getParentStub().getPsi()).calcBasesResolveContext(PsiNameHelper.getShortClassName(StringRef.toString(myNames[i])), psi);
         }
 
         final FileElement holderElement = DummyHolderFactory.createHolder(manager, context).getTreeElement();
         final PsiJavaCodeReferenceElementImpl ref =
-            (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(manager, myNames[i], holderElement.getCharTable());
+            (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(manager, StringRef.toString(myNames[i]), holderElement.getCharTable());
         if (ref != null) {
           TreeUtil.addChildren(holderElement, ref);
           ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
@@ -81,7 +91,11 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   }
 
   public String[] getReferencedNames() {
-    return myNames;
+    String[] names = new String[myNames.length];
+    for (int i = 0; i < names.length; i++) {
+      names[i] = StringRef.toString(myNames[i]);
+    }
+    return names;
   }
 
   public PsiReferenceList.Role getRole() {
