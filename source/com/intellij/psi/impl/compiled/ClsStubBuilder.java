@@ -19,6 +19,7 @@ import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
@@ -303,7 +304,7 @@ public class ClsStubBuilder {
       }
       final TypeInfo info = new TypeInfo();
       info.arrayCount = (byte)dim;
-      info.text = getTypeText(type);
+      info.text = StringRef.fromString(getTypeText(type));
       info.isEllipsis = false;
       return info;
     }

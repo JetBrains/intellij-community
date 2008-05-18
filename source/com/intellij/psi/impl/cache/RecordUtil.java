@@ -373,10 +373,10 @@ public class RecordUtil {
 
   public static String createTypeText(TypeInfo typeInfo) {
     if (typeInfo == null) return null;
-    if (typeInfo.arrayCount == 0) return typeInfo.text;
+    if (typeInfo.arrayCount == 0) return typeInfo.text.getString();
     if (typeInfo.text == null) return null;
 
-    StringBuffer buf = new StringBuffer(typeInfo.text);
+    StringBuffer buf = new StringBuffer(typeInfo.text.getString());
     final int arrayCount = !typeInfo.isEllipsis ? typeInfo.arrayCount : typeInfo.arrayCount - 1;
     for (int i = 0; i < arrayCount; i++) buf.append("[]");
     if (typeInfo.isEllipsis) {
@@ -409,11 +409,11 @@ public class RecordUtil {
     view.arrayCount = (flags & 1) != 0 ? record.readByte() : 0;
     view.isEllipsis = (flags & 2) != 0;
     if (tag == 0x00) {
-      view.text = StringRef.toString(DataInputOutputUtil.readNAME(record, nameStore));
+      view.text = DataInputOutputUtil.readNAME(record, nameStore);
       //view.text = readSTR(record);
     }
     else {
-      view.text = ourIndexFrequentType.get(index);
+      view.text = StringRef.fromString(ourIndexFrequentType.get(index));
     }
   }
 
@@ -466,7 +466,7 @@ public class RecordUtil {
     }
 
     boolean isEllipsis = typeInfo.isEllipsis;
-    String text = typeInfo.text;
+    String text = typeInfo.text.getString();
     byte arrayCount = typeInfo.arrayCount;
 
     int frequentIndex = ourFrequentTypeIndex.get(text);

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,8 @@ public interface RefElement extends RefEntity {
    * @return the PSI element.
    */
   PsiElement getElement();
+
+  SmartPsiElementPointer getPointer();
 
   /**
    * Checks if a chain of references exists from one of the entry points to this element.

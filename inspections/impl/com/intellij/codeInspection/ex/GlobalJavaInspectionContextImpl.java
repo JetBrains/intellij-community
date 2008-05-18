@@ -42,36 +42,36 @@ import java.util.*;
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
   private static final Logger LOG = Logger.getInstance("#" + GlobalJavaInspectionContextImpl.class.getName());
 
-  private THashMap<PsiElement, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
-  private THashMap<PsiElement, List<DerivedClassesProcessor>> myDerivedClassesRequests;
-  private THashMap<PsiElement, List<UsagesProcessor>> myMethodUsagesRequests;
-  private THashMap<PsiElement, List<UsagesProcessor>> myFieldUsagesRequests;
-  private THashMap<PsiElement, List<UsagesProcessor>> myClassUsagesRequests;
+  private THashMap<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
+  private THashMap<SmartPsiElementPointer, List<DerivedClassesProcessor>> myDerivedClassesRequests;
+  private THashMap<SmartPsiElementPointer, List<UsagesProcessor>> myMethodUsagesRequests;
+  private THashMap<SmartPsiElementPointer, List<UsagesProcessor>> myFieldUsagesRequests;
+  private THashMap<SmartPsiElementPointer, List<UsagesProcessor>> myClassUsagesRequests;
 
 
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
-    if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
+    if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<SmartPsiElementPointer, List<UsagesProcessor>>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
   }
 
   public void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p) {
-    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new THashMap<PsiElement, List<DerivedClassesProcessor>>();
+    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new THashMap<SmartPsiElementPointer, List<DerivedClassesProcessor>>();
     enqueueRequestImpl(refClass, myDerivedClassesRequests, p);
   }
 
   public void enqueueDerivedMethodsProcessor(RefMethod refMethod, DerivedMethodsProcessor p) {
     if (refMethod.isConstructor() || refMethod.isStatic()) return;
-    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new THashMap<PsiElement, List<DerivedMethodsProcessor>>();
+    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new THashMap<SmartPsiElementPointer, List<DerivedMethodsProcessor>>();
     enqueueRequestImpl(refMethod, myDerivedMethodsRequests, p);
   }
 
   public void enqueueFieldUsagesProcessor(RefField refField, UsagesProcessor p) {
-    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
+    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new THashMap<SmartPsiElementPointer, List<UsagesProcessor>>();
     enqueueRequestImpl(refField, myFieldUsagesRequests, p);
   }
 
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
-    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
+    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<SmartPsiElementPointer, List<UsagesProcessor>>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
   }
 
@@ -133,11 +133,11 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return true;
   }
 
-  private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<PsiElement, List<T>> requestMap, T processor) {
-    List<T> requests = requestMap.get(refElement.getElement());
+  private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {
+    List<T> requests = requestMap.get(refElement.getPointer());
     if (requests == null) {
       requests = new ArrayList<T>();
-      requestMap.put(refElement.getElement(), requests);
+      requestMap.put(refElement.getPointer(), requests);
     }
     requests.add(processor);
   }
@@ -174,12 +174,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     };
 
     if (myDerivedClassesRequests != null) {
-      List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
-      for (PsiElement sortedID : sortedIDs) {
-        final PsiClass psiClass = (PsiClass)sortedID;
+      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedClassesRequests);
+      for (SmartPsiElementPointer sortedID : sortedIDs) {
+        final PsiClass psiClass = (PsiClass)sortedID.getElement();
         ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
-        final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
+        final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
         ClassInheritorsSearch.search(psiClass, searchScope, false)
           .forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
             public boolean execute(PsiClass inheritor) {
@@ -199,15 +199,15 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
 
     if (myDerivedMethodsRequests != null) {
-      List<PsiElement> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
-      for (PsiElement sortedID : sortedIDs) {
-        final PsiMethod psiMethod = (PsiMethod)sortedID;
+      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
+      for (SmartPsiElementPointer sortedID : sortedIDs) {
+        final PsiMethod psiMethod = (PsiMethod)sortedID.getElement();
         final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
         ((GlobalInspectionContextImpl)context)
           .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
 
-        final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
+        final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(sortedID);
         OverridingMethodsSearch.search(psiMethod, searchScope, true)
           .forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
             public boolean execute(PsiMethod derivedMethod) {
@@ -228,10 +228,10 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
 
     if (myFieldUsagesRequests != null) {
-      List<PsiElement> sortedIDs = getSortedIDs(myFieldUsagesRequests);
-      for (PsiElement sortedID : sortedIDs) {
-        final PsiField psiField = (PsiField)sortedID;
-        final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
+      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myFieldUsagesRequests);
+      for (SmartPsiElementPointer sortedID : sortedIDs) {
+        final PsiField psiField = (PsiField)sortedID.getElement();
+        final List<UsagesProcessor> processors = myFieldUsagesRequests.get(sortedID);
 
         ((GlobalInspectionContextImpl)context)
           .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiField)));
@@ -244,10 +244,10 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
 
     if (myClassUsagesRequests != null) {
-      List<PsiElement> sortedIDs = getSortedIDs(myClassUsagesRequests);
-      for (PsiElement sortedID : sortedIDs) {
-        final PsiClass psiClass = (PsiClass)sortedID;
-        final List<UsagesProcessor> processors = myClassUsagesRequests.get(psiClass);
+      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myClassUsagesRequests);
+      for (SmartPsiElementPointer sortedID : sortedIDs) {
+        final PsiClass psiClass = (PsiClass)sortedID.getElement();
+        final List<UsagesProcessor> processors = myClassUsagesRequests.get(sortedID);
 
         ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
@@ -259,10 +259,10 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
 
     if (myMethodUsagesRequests != null) {
-      List<PsiElement> sortedIDs = getSortedIDs(myMethodUsagesRequests);
-      for (PsiElement sortedID : sortedIDs) {
-        final PsiMethod psiMethod = (PsiMethod)sortedID;
-        final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
+      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myMethodUsagesRequests);
+      for (SmartPsiElementPointer sortedID : sortedIDs) {
+        final PsiMethod psiMethod = (PsiMethod)sortedID.getElement();
+        final List<UsagesProcessor> processors = myMethodUsagesRequests.get(sortedID);
 
         ((GlobalInspectionContextImpl)context)
           .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiMethod)));
@@ -293,21 +293,26 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return list.size();
   }
 
-  private static List<PsiElement> getSortedIDs(final Map<PsiElement, ?> requests) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+  private static List<SmartPsiElementPointer> getSortedIDs(final Map<SmartPsiElementPointer, ?> requests) {
+    final List<SmartPsiElementPointer> result = new ArrayList<SmartPsiElementPointer>();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        for (PsiElement id : requests.keySet()) {
-          if (id != null && id.isValid()) {
-            result.add(id);
+        for (SmartPsiElementPointer id : requests.keySet()) {
+          if (id != null) {
+            final PsiElement psi = id.getElement();
+            if (psi != null) {
+              result.add(id);
+            }
           }
         }
-        Collections.sort(result, new Comparator<PsiElement>() {
-          public int compare(PsiElement o1, PsiElement o2) {
-            final PsiFile psiFile1 = o1.getContainingFile();
+        Collections.sort(result, new Comparator<SmartPsiElementPointer>() {
+          public int compare(final SmartPsiElementPointer o1, final SmartPsiElementPointer o2) {
+            PsiElement p1 = o1.getElement();
+            PsiElement p2 = o2.getElement();
+            final PsiFile psiFile1 = p1 != null ? p1.getContainingFile() : null;
             LOG.assertTrue(psiFile1 != null);
-            final PsiFile psiFile2 = o2.getContainingFile();
+            final PsiFile psiFile2 = p2 != null ? p2.getContainingFile() : null;
             LOG.assertTrue(psiFile2 != null);
             return psiFile1.getName().compareTo(psiFile2.getName());
           }

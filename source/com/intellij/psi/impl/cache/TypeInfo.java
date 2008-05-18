@@ -5,12 +5,13 @@ import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
+import com.intellij.util.io.StringRef;
 
 /**
  * @author max
  */
 public class TypeInfo {
-  public String text;
+  public StringRef text;
   public byte arrayCount;
   public boolean isEllipsis;
 
@@ -37,7 +38,7 @@ public class TypeInfo {
     }
 
     TypeInfo result = new TypeInfo();
-    result.text = text;
+    result.text = StringRef.fromString(text);
     result.arrayCount = (byte)arrayCount;
     result.isEllipsis = isEllipsis;
 
@@ -56,7 +57,7 @@ public class TypeInfo {
       typeText = typeText.substring(0, typeText.length() - 2);
     }
 
-    info.text = typeText;
+    info.text = StringRef.fromString(typeText);
 
     return info;
   }
