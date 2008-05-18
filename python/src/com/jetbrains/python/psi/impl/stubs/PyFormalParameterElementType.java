@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyParameterImpl;
@@ -43,7 +44,7 @@ public class PyFormalParameterElementType extends PyStubElementType<PyParameterS
 
   public PyParameterStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
                                     final PersistentStringEnumerator nameStorage) throws IOException {
-    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    String name = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
     boolean keyword = dataStream.readBoolean();
     boolean positional = dataStream.readBoolean();
     return new PyParameterStubImpl(name, positional, keyword, parentStub);

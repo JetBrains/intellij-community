@@ -9,10 +9,11 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -62,11 +63,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
   public PyClassStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
                                  final PersistentStringEnumerator nameStorage) throws IOException {
-    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    String name = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
     int superClassCount = dataStream.readByte();
     String[] superClasses = new String[superClassCount];
     for(int i=0; i<superClassCount; i++) {
-      superClasses [i] = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      superClasses[i] = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
     }
     return new PyClassStubImpl(name, parentStub, superClasses);
   }

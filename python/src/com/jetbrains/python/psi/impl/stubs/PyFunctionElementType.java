@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
@@ -43,7 +44,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
 
   public PyFunctionStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
                                     final PersistentStringEnumerator nameStorage) throws IOException {
-    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    String name = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
     return new PyFunctionStubImpl(name, parentStub);
   }
 

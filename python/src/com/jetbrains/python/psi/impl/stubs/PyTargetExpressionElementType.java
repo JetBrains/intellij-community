@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -45,7 +46,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
   public PyTargetExpressionStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
       throws IOException {
-    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    String name = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
     return new PyTargetExpressionStubImpl(name, parentStub);
   }
 
