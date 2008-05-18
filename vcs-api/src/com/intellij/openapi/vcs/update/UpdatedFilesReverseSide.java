@@ -50,13 +50,14 @@ public class UpdatedFilesReverseSide {
     if (duplicateLevel.searchPreviousContainment(group.getId())) {
       final FileGroup oldGroup = myFileIdx.get(file);
       if (oldGroup != null) {
+        if (duplicateLevel.doesExistingWin(group.getId(), oldGroup.getId())) {
+          return;
+        }
         oldGroup.remove(file);
       }
     }
 
-    if (group != null) {
-      group.add(file);
-    }
+    group.add(file);
     myFileIdx.put(file, group);
   }
 
@@ -84,16 +85,6 @@ public class UpdatedFilesReverseSide {
       addGroupToIndexes(fromChild);
     }
   }
-
-  /*private void copyGroup(final FileGroup from, final FileGroup to) {
-    for (String file : from.getFiles()) {
-      addFileToGroup(to, file);
-    }
-    for (FileGroup fromChild : from.getChildren()) {
-      final FileGroup ownChild = createOrGet(new GroupParent(to), fromChild);
-      copyGroup(fromChild, ownChild);
-    }
-  }*/
 
   private void copyGroup(final Parent parent, final FileGroup from, final DuplicateLevel duplicateLevel) {
     final FileGroup to = createOrGet(parent, from);
@@ -143,7 +134,7 @@ public class UpdatedFilesReverseSide {
     final Parent topLevel = new TopLevelParent();
     for (FileGroup fromGroup : from.getTopLevelGroups()) {
       copyGroup(topLevel, fromGroup, duplicateLevel);
-  }
+    }
   }
 
   public boolean containErrors() {
@@ -158,8 +149,10 @@ public class UpdatedFilesReverseSide {
 
   public abstract static class DuplicateLevel {
     private final static List<String> ourErrorGroups = Arrays.asList(FileGroup.UNKNOWN_ID, FileGroup.SKIPPED_ID);
+    private final static List<String> ourLocals = Arrays.asList(FileGroup.LOCALLY_ADDED_ID, FileGroup.LOCALLY_REMOVED_ID);
 
     abstract boolean searchPreviousContainment(final String groupId);
+    abstract boolean doesExistingWin(final String groupId, final String existingGroupId);
 
     private DuplicateLevel() {
     }
@@ -168,45 +161,38 @@ public class UpdatedFilesReverseSide {
       boolean searchPreviousContainment(final String groupId) {
         return true;
       }
+
+      boolean doesExistingWin(final String groupId, final String existingGroupId) {
+        return false;
+      }
     };
+    public static final DuplicateLevel DUPLICATE_ERRORS_LOCALS = new DuplicateLevel() {
+      boolean searchPreviousContainment(final String groupId) {
+        return (! ourLocals.contains(groupId)) && (! ourErrorGroups.contains(groupId));
+      }
+
+      boolean doesExistingWin(final String groupId, final String existingGroupId) {
+        return ourLocals.contains(groupId);
+      }
+    };
+
     public static final DuplicateLevel DUPLICATE_ERRORS = new DuplicateLevel() {
       boolean searchPreviousContainment(final String groupId) {
         return ! ourErrorGroups.contains(groupId);
+      }
+
+      boolean doesExistingWin(final String groupId, final String existingGroupId) {
+        return false;
       }
     };
     public static final DuplicateLevel ALLOW_DUPLICATES = new DuplicateLevel() {
       boolean searchPreviousContainment(final String groupId) {
         return false;
       }
+
+      boolean doesExistingWin(final String groupId, final String existingGroupId) {
+        return false;
+      }
     };
   }
-
-  /*private static void accomulateFiles(final UpdatedFiles from, final UpdatedFiles to) {
-    for (FileGroup fromGroup : from.getTopLevelGroups()) {
-      final FileGroup group = to.registerGroup(fromGroup);
-      // compare referencies intentionally
-      if (group != fromGroup) {
-        for (String file : fromGroup.getFiles()) {
-          group.add(file);
-        }
-
-        for (FileGroup fromChild : fromGroup.getChildren()) {
-          boolean found = false;
-          for (FileGroup existingGroup : group.getChildren()) {
-            if (existingGroup.getId().equals(fromChild.getId())) {
-              found = true;
-              for (String path : fromChild.getFiles()) {
-                existingGroup.add(path);
-              }
-              break;
-            }
-          }
-
-          if (! found) {
-            group.addChild(fromChild);
-          }
-        }
-      }
-    }
-  }*/
 }

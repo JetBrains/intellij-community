@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,16 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
     if (myComponent == null) {
       myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings(), null, null);
+      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
+        public void execute(final Project project, final VirtualFile vcsRoot) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              myComponent.passCachedListsToListener(myBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE),
+                                                    project, vcsRoot);
+            }
+          });
+        }
+      });
     }
     else {
       myComponent.setProvider(provider);

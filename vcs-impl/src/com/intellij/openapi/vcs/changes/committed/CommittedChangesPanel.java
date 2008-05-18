@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -205,6 +206,13 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
     public void filter() {
       updateFilteredModel(true);
+    }
+  }
+
+  public void passCachedListsToListener(final VcsConfigurationChangeListener.DetailedNotification notification,
+                                        final Project project, final VirtualFile root) {
+    if ((myChangesFromProvider != null) && (! myChangesFromProvider.isEmpty())) {
+      notification.execute(project, root, myChangesFromProvider);
     }
   }
 }
