@@ -66,6 +66,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   private volatile String myCachedNamespace;
   private volatile long myModCount;
 
+  private volatile XmlElementDescriptor myCachedDescriptor;
+  private volatile long myDescriptorModCount = -1;
+
   private volatile boolean myHaveNamespaceDeclarations = false;
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
   @NonNls private static final String XML_NS_PREFIX = "xml";
@@ -82,6 +85,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     myName = null;
     myNamespaceMap = null;
     myCachedNamespace = null;
+    myCachedDescriptor = null;
+    myDescriptorModCount = -1;
     myAttributes = null;
     myAttributeValueMap = null;
     myHaveNamespaceDeclarations = false;
@@ -333,6 +338,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   @Nullable
   private XmlElementDescriptor getDomDescriptor() {
+
     final DomElement domElement = DomManager.getDomManager(getProject()).getDomElement(this);
     if (domElement != null) {
       final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
@@ -352,10 +358,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   public XmlElementDescriptor getDescriptor() {
-    final String namespace = getNamespace();
-    XmlElementDescriptor elementDescriptor = null;
+    final long curModCount = getManager().getModificationTracker().getModificationCount();
+    if (myDescriptorModCount != curModCount) {
+      myCachedDescriptor = computeElementDescriptor();
+      myDescriptorModCount = curModCount;
+    }
+    return myCachedDescriptor;
+  }
 
-    elementDescriptor = getDomDescriptor();
+  protected XmlElementDescriptor computeElementDescriptor() {
+    final String namespace = getNamespace();
+    XmlElementDescriptor elementDescriptor = getDomDescriptor();
     if (elementDescriptor != null) return elementDescriptor;
 
     if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
