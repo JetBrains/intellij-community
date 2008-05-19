@@ -72,7 +72,7 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
         if (processor instanceof PyScopeProcessor) {
           PyTargetExpression asName = getAsName();
           if (asName != null) {
-            return ((PyScopeProcessor) processor).execute(asName, asName.getText()); // execute 'element' to go directly to imported source
+            return ((PyScopeProcessor) processor).execute(element, asName.getText()); // might resolve to asName to show the source of name
           }
           // maybe the incoming name is qualified
           PyReferenceExpression place_ref = PsiTreeUtil.getChildOfType(place, PyReferenceExpression.class);
