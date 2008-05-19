@@ -23,6 +23,7 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.stubs.PsiFileStubImpl;
@@ -50,6 +51,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
     myManager = manager;
+    JavaElementType.CLASS.getIndex(); // Initialize java stubs...
+
     myIsForDecompiling = forDecompiling;
     myViewProvider = viewProvider;
   }
