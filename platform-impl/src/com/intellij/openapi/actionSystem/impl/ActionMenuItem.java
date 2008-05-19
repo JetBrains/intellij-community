@@ -19,6 +19,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Set;
+import java.util.HashSet;
 
 public class ActionMenuItem extends JMenuItem {
   private static final Icon ourCheckedIcon = IconLoader.getIcon("/actions/check.png");
@@ -182,35 +184,46 @@ public class ActionMenuItem extends JMenuItem {
   private final class MenuItemSynchronizer implements PropertyChangeListener {
     @NonNls private static final String SELECTED = "selected";
 
+    private Set<String> mySynchronized = new HashSet<String>();
+
     public void propertyChange(PropertyChangeEvent e) {
       String name = e.getPropertyName();
-      if (Presentation.PROP_VISIBLE.equals(name)) {
-        final boolean visible = myPresentation.isVisible();
-        if (!visible && SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
-          ActionMenuItem.this.setEnabled(false);
+      if (mySynchronized.contains(name)) return;
+
+      mySynchronized.add(name);
+
+      try {
+        if (Presentation.PROP_VISIBLE.equals(name)) {
+          final boolean visible = myPresentation.isVisible();
+          if (!visible && SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
+            ActionMenuItem.this.setEnabled(false);
+          }
+          else {
+            ActionMenuItem.this.setVisible(visible);
+          }
         }
-        else {
-          ActionMenuItem.this.setVisible(visible);
+        else if (Presentation.PROP_ENABLED.equals(name)) {
+          ActionMenuItem.this.setEnabled(myPresentation.isEnabled());
+          updateIcon();
+        }
+        else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
+          ActionMenuItem.this.setMnemonic(myPresentation.getMnemonic());
+        }
+        else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
+          ActionMenuItem.this.setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
+        }
+        else if (Presentation.PROP_TEXT.equals(name)) {
+          ActionMenuItem.this.setText(myPresentation.getText());
+        }
+        else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
+          updateIcon();
+        }
+        else if (SELECTED.equals(name)) {
+          updateIcon();
         }
       }
-      else if (Presentation.PROP_ENABLED.equals(name)) {
-        ActionMenuItem.this.setEnabled(myPresentation.isEnabled());
-        updateIcon();
-      }
-      else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
-        ActionMenuItem.this.setMnemonic(myPresentation.getMnemonic());
-      }
-      else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
-        ActionMenuItem.this.setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
-      }
-      else if (Presentation.PROP_TEXT.equals(name)) {
-        ActionMenuItem.this.setText(myPresentation.getText());
-      }
-      else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
-        updateIcon();
-      }
-      else if (SELECTED.equals(name)) {
-        updateIcon();
+      finally {
+        mySynchronized.remove(name);
       }
     }
   }
