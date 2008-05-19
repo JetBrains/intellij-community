@@ -18,6 +18,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -141,6 +142,11 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
             super.visitBinaryExpression(expression);
             final PsiType type = expression.getType();
             if (type == null || type.equalsToText("java.lang.String")) {
+                return;
+            }
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.EQEQ.equals(tokenType) ||
+                    JavaTokenType.NE.equals(tokenType)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();

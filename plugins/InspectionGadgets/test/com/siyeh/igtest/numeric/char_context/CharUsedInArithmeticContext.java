@@ -22,4 +22,7 @@ public class CharUsedInArithmeticContext {
         System.out.println (i2 + '-' + i1 + " = " + (i2 - i1));
     }
 
+    boolean compare(char c1, char c2) {
+        return c1 != c2;
+    }
 }
