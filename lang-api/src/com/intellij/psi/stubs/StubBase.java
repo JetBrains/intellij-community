@@ -13,6 +13,7 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase implements StubElement<T> {
@@ -69,47 +70,65 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
   }
 
   public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final E[] array) {
-    List<E> result = new ArrayList<E>();
-    for(StubElement childStub: getChildrenStubs()) {
-      if (childStub.getStubType() == elementType) {
-        //noinspection unchecked
-        result.add((E)childStub.getPsi());
-      }
+    List<E> result = filterChildren(elementType);
+
+    if (result == null) {
+      if (array.length == 0) return array;
+      result = new ArrayList<E>(0);
     }
+
     return result.toArray(array);
   }
 
   public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final E[] array) {
-    List<E> result = new ArrayList<E>();
-    for(StubElement childStub: getChildrenStubs()) {
-      if (filter.contains(childStub.getStubType())) {
-        //noinspection unchecked
-        result.add((E)childStub.getPsi());
-      }
+    List<E> result = filterChildren(filter);
+
+    if (result == null) {
+      if (array.length == 0) return array;
+      result = Collections.emptyList();
     }
+
     return result.toArray(array);
   }
 
-  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final ArrayFactory<E> f) {
-    List<E> result = new ArrayList<E>();
+  @Nullable
+  private <E extends PsiElement> List<E> filterChildren(final TokenSet filter) {
+    List<E> result = null;
     for(StubElement childStub: getChildrenStubs()) {
-      if (childStub.getStubType() == elementType) {
+      if (filter.contains(childStub.getStubType())) {
+        if (result == null) {
+          result = new ArrayList<E>();
+        }
         //noinspection unchecked
         result.add((E)childStub.getPsi());
       }
     }
-    return result.toArray(f.create(result.size()));
+    return result;
+  }
+
+  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final ArrayFactory<E> f) {
+    List<E> result = filterChildren(elementType);
+    return result != null ? result.toArray(f.create(result.size())) : f.create(0);
+  }
+
+  @Nullable
+  private <E extends PsiElement> List<E> filterChildren(final IElementType elementType) {
+    List<E> result = null;
+    for(StubElement childStub: getChildrenStubs()) {
+      if (childStub.getStubType() == elementType) {
+        if (result == null) {
+          result = new ArrayList<E>();
+        }
+        //noinspection unchecked
+        result.add((E)childStub.getPsi());
+      }
+    }
+    return result;
   }
 
   public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final ArrayFactory<E> f) {
-    List<E> result = new ArrayList<E>();
-    for(StubElement childStub: getChildrenStubs()) {
-      if (filter.contains(childStub.getStubType())) {
-        //noinspection unchecked
-        result.add((E)childStub.getPsi());
-      }
-    }
-    return result.toArray(f.create(result.size()));
+    List<E> result = filterChildren(filter);
+    return result != null ? result.toArray(f.create(result.size())) : f.create(0);
   }
 
   @Nullable
