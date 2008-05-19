@@ -132,7 +132,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
    */
   void deselectNotify(){
     StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-    LOG.assertTrue(statusBar != null);
+    if (statusBar == null) return;
     statusBar.clear();
   }
 
