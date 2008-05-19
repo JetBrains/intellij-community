@@ -26,7 +26,7 @@ public class MavenProjectModel {
                            List<String> activeProfiles,
                            MavenProjectReader projectReader,
                            Map<ProjectId, VirtualFile> mapping,
-                           Progress p) throws MavenException, CanceledException {
+                           MavenProgress p) throws MavenException, CanceledException {
     for (VirtualFile f : filesToImport) {
       p.checkCanceled();
       MavenProjectModel.Node node = createMavenTree(projectReader, f, existingModules, activeProfiles, true, mapping, p);
@@ -45,7 +45,7 @@ public class MavenProjectModel {
                                List<String> profiles,
                                boolean isExistingModuleTree,
                                Map<ProjectId, VirtualFile> mapping,
-                               Progress p) throws MavenException, CanceledException {
+                               MavenProgress p) throws MavenException, CanceledException {
     p.checkCanceled();
     p.setText(ProjectBundle.message("maven.reading", FileUtil.toSystemDependentName(pomFile.getPath())));
 
@@ -69,7 +69,7 @@ public class MavenProjectModel {
                                 Node parentNode,
                                 boolean isExistingModuleTree,
                                 Map<ProjectId, VirtualFile> mapping,
-                                Progress p) throws MavenException, CanceledException {
+                                MavenProgress p) throws MavenException, CanceledException {
     for (String modulePath : mavenProject.getModulePaths(profiles)) {
       p.checkCanceled();
 
@@ -105,7 +105,7 @@ public class MavenProjectModel {
     });
   }
 
-  public void resolve(final MavenProjectReader projectReader, final List<String> profiles, final Progress p)
+  public void resolve(final MavenProjectReader projectReader, final List<String> profiles, final MavenProgress p)
       throws MavenException, CanceledException {
     try {
       visit(new MavenProjectVisitorPlain() {

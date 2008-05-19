@@ -7,7 +7,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,29 +63,6 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   @Override
   public boolean validate(Project current, Project dest) {
-
-
-
-    if (true) return true;
-
-
-    try {
-      myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
-      myImportProcessor.resolve(dest, getAllProfiles(), myResolutionProblems);
-
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()
-          && !myResolutionProblems.isEmpty()) {
-        logResolutionProblems();
-        return false;
-      }
-    }
-    catch (MavenException e) {
-      Messages.showErrorDialog(dest, e.getMessage(), getTitle());
-      return false;
-    }
-    catch (CanceledException e) {
-      return false;
-    }
     return true;
   }
 
@@ -164,8 +140,8 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     importRoot = FileFinder.refreshRecursively(root);
     if (getImportRoot() == null) return false;
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new Progress.Process() {
-      public void run(Progress p) throws MavenException, CanceledException {
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProgress.MavenTask() {
+      public void run(MavenProgress p) throws MavenException, CanceledException {
         p.setText(ProjectBundle.message("maven.locating.files"));
         myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(), getImporterPreferences().isLookForNested(), p.getIndicator(),
                                                new ArrayList<VirtualFile>());
@@ -217,17 +193,17 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       each.getValue().retainAll(profiles);
     }
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new Progress.Process() {
-      public void run(Progress p) throws MavenException, CanceledException {
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProgress.MavenTask() {
+      public void run(MavenProgress p) throws MavenException, CanceledException {
         createImportProcessor(p);
         p.setText2("");
       }
     });
   }
 
-  private boolean runConfigurationProcess(String message, Progress.Process p) throws ConfigurationException {
+  private boolean runConfigurationProcess(String message, MavenProgress.MavenTask p) throws ConfigurationException {
     try {
-      Progress.run(null, message, p);
+      MavenProgress.run(null, message, p);
     }
     catch (MavenException e) {
       throw new ConfigurationException(e.getMessage());
@@ -239,7 +215,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return true;
   }
 
-  private void createImportProcessor(Progress p) throws MavenException, CanceledException {
+  private void createImportProcessor(MavenProgress p) throws MavenException, CanceledException {
     myImportProcessor = new MavenImportProcessor(getProject(),
                                                  getCoreState(),
                                                  getImporterPreferences(),

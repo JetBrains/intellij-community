@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import hidden.org.codehaus.plexus.util.FileUtils;
@@ -314,7 +315,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myProfilesList = Arrays.asList(profiles);
 
       myImportProcessor = new MavenImportProcessor(myProject);
-      myImportProcessor.createMavenProjectModel(myProject, files, new HashMap<VirtualFile, Module>(), myProfilesList, new Progress());
+      myImportProcessor.createMavenProjectModel(myProject,
+                                                files,
+                                                new HashMap<VirtualFile, Module>(),
+                                                myProfilesList,
+                                                new MavenProgress(new EmptyProgressIndicator()));
       myImportProcessor.createMavenToIdeaMapping(myProject);
       myImportProcessor.commit(myProject, myProfilesList);
 

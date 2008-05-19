@@ -36,9 +36,9 @@ public class MavenArtifactDownloader {
 
   private final MavenArtifactSettings mySettings;
   private final MavenEmbedder myEmbedder;
-  private final Progress myProgress;
+  private final MavenProgress myProgress;
 
-  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedder embedder, Progress p) {
+  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedder embedder, MavenProgress p) {
     mySettings = settings;
     myEmbedder = embedder;
     myProgress = p;
@@ -73,8 +73,8 @@ public class MavenArtifactDownloader {
         }
       }
 
-      Progress.run(project, ProjectBundle.message("maven.downloading"), new Progress.Process() {
-        public void run(Progress p) throws MavenException, CanceledException {
+      MavenProgress.run(project, ProjectBundle.message("maven.downloading"), new MavenProgress.MavenTask() {
+        public void run(MavenProgress p) throws MavenException, CanceledException {
           Collection<ProjectId> projectIds = new ArrayList<ProjectId>();
           for (MavenProject mavenProject : projectsToModules.keySet()) {
             projectIds.add(new ProjectId(mavenProject.getArtifact()));
