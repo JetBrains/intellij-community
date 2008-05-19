@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author ven
@@ -75,6 +76,11 @@ public class PropertyRenameHandler implements RenameHandler {
       }
 
       rename.run();
+    }
+
+    protected boolean areButtonsValid() {
+      final String newName = getNewName();
+      return super.areButtonsValid() && !GroovyRefactoringUtil.KEYWORDS.contains(newName);
     }
 
   }
