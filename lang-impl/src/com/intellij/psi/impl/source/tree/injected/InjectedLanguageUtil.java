@@ -198,25 +198,10 @@ public class InjectedLanguageUtil {
     }
 
     public FileViewProvider clone() {
-      final DocumentWindow oldDocumentRange = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
-      Document delegate = oldDocumentRange.getDelegate();
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
-      PsiFile hostFile = documentManager.getPsiFile(delegate);
-      PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
-
-      RangeMarker firstTextRange = oldDocumentRange.getHostRanges()[0];
-      PsiElement elementCopy = hostPsiFileCopy.findElementAt(firstTextRange.getStartOffset());
-      assert elementCopy != null;
-      final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
-      enumerate(elementCopy, hostPsiFileCopy, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          Document document = documentManager.getCachedDocument(injectedPsi);
-          if (document instanceof DocumentWindowImpl && oldDocumentRange.areRangesEqual((DocumentWindowImpl)document)) {
-            provider.set(injectedPsi.getViewProvider());
-          }
-        }
-      }, true);
-      return provider.get();
+      final FileViewProvider copy = super.clone();
+      final PsiFile psi = copy.getPsi(getBaseLanguage());
+      psi.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, getPsi(getBaseLanguage()).getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
+      return copy;
     }
 
     @Nullable
