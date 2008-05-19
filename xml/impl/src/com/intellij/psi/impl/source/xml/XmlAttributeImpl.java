@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -285,11 +286,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public PsiReference[] getReferences() {
     final PsiElement parentElement = getParent();
     if (!(parentElement instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
-    final XmlElementDescriptor descr = ((XmlTag)parentElement).getDescriptor();
-    if (descr != null){
-      return new PsiReference[]{new MyPsiReference(descr)};
-    }
-    return PsiReference.EMPTY_ARRAY;
+    return new PsiReference[]{new MyPsiReference()};
   }
 
   @Nullable
@@ -304,18 +301,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   private class MyPsiReference implements PsiReference, QuickFixProvider {
-    private final XmlElementDescriptor myTagDescr;
-    private final XmlAttributeDescriptor myDescr;
 
-    public MyPsiReference(XmlElementDescriptor descr) {
-      myTagDescr = descr;
-      myDescr = getAttributeDescriptor();
-    }
-
-    private XmlAttributeDescriptor getAttributeDescriptor() {
-      return myTagDescr.getAttributeDescriptor(XmlAttributeImpl.this);
-    }
-
+    private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
+      protected XmlAttributeDescriptor compute() {
+        final PsiElement parentElement = getParent();
+        final XmlElementDescriptor descr = ((XmlTag)parentElement).getDescriptor();
+        if (descr != null){
+          return descr.getAttributeDescriptor(XmlAttributeImpl.this);
+        }
+        return null;
+      }
+    };
 
     public PsiElement getElement() {
       return XmlAttributeImpl.this;
@@ -327,7 +323,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     public PsiElement resolve() {
-      return myDescr != null ? myDescr.getDeclaration() : null;
+      final XmlAttributeDescriptor descriptor = getDescriptor();
+      return descriptor != null ? descriptor.getDeclaration() : null;
     }
 
     public String getCanonicalText() {
@@ -336,8 +333,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       String newName = newElementName;
-      if (myDescr instanceof XmlAttributeDescriptorEx) {
-        final XmlAttributeDescriptorEx xmlAttributeDescriptorEx = (XmlAttributeDescriptorEx)myDescr;
+      if (getDescriptor() instanceof XmlAttributeDescriptorEx) {
+        final XmlAttributeDescriptorEx xmlAttributeDescriptorEx = (XmlAttributeDescriptorEx)getDescriptor();
         final String s = xmlAttributeDescriptorEx.handleTargetRename(newElementName);
         if (s != null) {
           final String prefix = getNamespacePrefix();
@@ -401,13 +398,18 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     public boolean isSoft() {
-      return false;
+      return getDescriptor() == null;
     }
 
     public void registerQuickfix(final HighlightInfo info, final PsiReference reference) {
-      if (myDescr instanceof QuickFixProvider) {
-        ((QuickFixProvider)myDescr).registerQuickfix(info, reference);
+      if (getDescriptor() instanceof QuickFixProvider) {
+        ((QuickFixProvider)getDescriptor()).registerQuickfix(info, reference);
       }
+    }
+
+    @Nullable
+    private XmlAttributeDescriptor getDescriptor() {
+      return myDescriptor.getValue();
     }
   }
 
