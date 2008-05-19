@@ -76,6 +76,10 @@ public class UnSelectWordHandler extends EditorActionHandler {
       caretOffset = element.getTextRange().getStartOffset();
     }
 
+    if (element != null) {
+      file = element.getContainingFile();
+    }
+
     TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
     TextRange newRange = null;
@@ -118,7 +122,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
             continue;
           }
 
-          if (selectionRange.contains(range) && !range.equals(selectionRange)) {
+          if (selectionRange.contains(range) && !range.equals(selectionRange) && (range.contains(cursorOffset) || cursorOffset == range.getEndOffset())) {
             if (maximum == null || range.contains(maximum)) {
               maximum = range;
             }
