@@ -31,10 +31,16 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertEquals("func", ((PyFunction) element).getName());
   }
 
+  protected void _checkInitPyDir(PsiElement elt, String dirname) throws Exception {
+    assertTrue(elt instanceof PyFile);
+    PyFile f = (PyFile)elt;
+    assertEquals(f.getName(), "__init__.py");
+    assertEquals(f.getContainingDirectory().getName(), dirname);
+  }
+
   public void testFromPackageImport() throws Exception {
     PsiElement element = doResolve();
-    assertTrue(element instanceof PsiDirectory);
-    assertEquals("mypackage", ((PsiDirectory) element).getName());
+    _checkInitPyDir(element, "mypackage");
   }
 
   public void testFromPackageImportFile() throws Exception {
@@ -45,8 +51,7 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
 
   public void testFromQualifiedPackageImport() throws Exception {
     PsiElement element = doResolve();
-    assertTrue(element instanceof PsiDirectory);
-    assertEquals("mypackage", ((PsiDirectory) element).getName());
+    _checkInitPyDir(element, "mypackage");
   }
 
   public void testFromQualifiedFileImportClass() throws Exception {
