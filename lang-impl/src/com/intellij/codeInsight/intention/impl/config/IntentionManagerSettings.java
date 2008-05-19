@@ -57,6 +57,11 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), intentionAction.getClass().getClassLoader(), category, descriptionDirectoryName));
   }
 
+  public void registerIntentionMetaData(final IntentionAction intentionAction, final String[] category, final String descriptionDirectoryName,
+                                        final ClassLoader classLoader) {
+    registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), classLoader, category, descriptionDirectoryName));
+  }
+
   public void disposeComponent() {
   }
 

@@ -97,6 +97,14 @@ public class IntentionManagerImpl extends IntentionManager {
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
+  public void registerIntentionAndMetaData(final IntentionAction action,
+                                           final String[] category,
+                                           final String descriptionDirectoryName,
+                                           final ClassLoader classLoader) {
+    addAction(action);
+    mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName, classLoader);
+  }
+
   public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {
     List<IntentionAction> options = new ArrayList<IntentionAction>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
