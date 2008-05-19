@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.codeInsight.completion.LegacyCompletionContributor;
 import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -28,6 +29,8 @@ import java.util.Map;
  */
 public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
+  private final static Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericValueReferenceProvider");
+
   private final Map<Class, PsiReferenceFactory> myProviders = new HashMap<Class, PsiReferenceFactory>();
 
   public void addReferenceProviderForClass(Class clazz, PsiReferenceFactory provider) {
@@ -41,7 +44,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
         result.set(true);
       }
     });
-    return result.get();
+    return result.get().booleanValue();
   }
 
   @NotNull
@@ -83,7 +86,9 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (PsiReference reference : references) {
-        assert reference.isSoft() : "dom reference should be soft: " + reference + " (created by " + converter + ")";
+        if (!reference.isSoft()) {
+          LOG.error("dom reference should be soft: " + reference + " (created by " + converter + ")");
+        }
       }
     }
     // creating "declaration" reference
