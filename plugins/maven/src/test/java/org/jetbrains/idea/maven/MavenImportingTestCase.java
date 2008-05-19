@@ -34,7 +34,9 @@ import java.util.*;
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
   protected MavenProjectModel myProjectModel;
-  protected ArrayList<Pair<File, List<String>>> myResolutionProblems;
+  protected ArrayList<Pair<File, List<String>>> myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
+  private MavenImportProcessor myImportProcessor;
+  private List<String> myProfilesList;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -309,21 +311,29 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   private void doImportProjects(List<VirtualFile> files, String... profiles) throws MavenException {
     try {
-      List<String> profilesList = Arrays.asList(profiles);
+      myProfilesList = Arrays.asList(profiles);
 
-      MavenImportProcessor p = new MavenImportProcessor(myProject);
-      p.createMavenProjectModel(files, new HashMap<VirtualFile, Module>(), profilesList, new Progress());
-      p.createMavenToIdeaMapping();
+      myImportProcessor = new MavenImportProcessor(myProject);
+      myImportProcessor.createMavenProjectModel(myProject, files, new HashMap<VirtualFile, Module>(), myProfilesList, new Progress());
+      myImportProcessor.createMavenToIdeaMapping(myProject);
+      myImportProcessor.commit(myProject, myProfilesList);
 
-      myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
-      p.resolve(myProject, profilesList, myResolutionProblems);
+      if (shouldResolve()) resolveProject();
 
-      p.commit(myProject, profilesList);
-      myProjectModel = p.getMavenProjectModel();
+      myProjectModel = myImportProcessor.getMavenProjectModel();
     }
     catch (CanceledException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected void resolveProject() throws MavenException, CanceledException {
+    myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
+    myImportProcessor.resolve(myProject, myProfilesList, myResolutionProblems);
+  }
+
+  protected boolean shouldResolve() {
+    return false;
   }
 
   protected void executeGoal(String relativePath, String goal) {

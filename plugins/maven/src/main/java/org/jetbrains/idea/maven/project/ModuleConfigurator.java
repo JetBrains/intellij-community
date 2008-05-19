@@ -1,22 +1,24 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
-import org.jetbrains.idea.maven.core.util.ProjectId;
 
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ModuleConfigurator {
@@ -44,7 +46,7 @@ public class ModuleConfigurator {
     myMavenProject = mavenProject;
   }
 
-  public void config() {
+  public void config(List<ModifiableRootModel> rootModels) {
     myModel = new RootModelAdapter(myModule);
     myModel.init(myMavenProject);
 
@@ -52,9 +54,15 @@ public class ModuleConfigurator {
     configDependencies();
     configLanguageLevel();
 
-    myModel.commit();
+    rootModels.add(myModel.getRootModel());
+  }
 
-    configFacets();
+  public void configFacets() {
+    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
+      if (importer.isApplicable(myMavenProject, myProfiles)) {
+        importer.process(myModule, myMavenProject, myProfiles, myMapping, myModuleModel);
+      }
+    }
   }
 
   private void configFolders() {
@@ -123,13 +131,5 @@ public class ModuleConfigurator {
     if ("1.6".equals(level)) return LanguageLevel.JDK_1_5;
 
     return null;
-  }
-
-  private void configFacets() {
-    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
-      if (importer.isApplicable(myMavenProject, myProfiles)) {
-        importer.process(myModule, myMavenProject, myProfiles, myMapping, myModuleModel);
-      }
-    }
   }
 }

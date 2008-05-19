@@ -18,7 +18,7 @@ import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -153,7 +153,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
       final Model mavenProject = myProjectsManager.getModel(pomNode.getFile());
-      if (mavenProject != null) {
+      if (mavenProject != null && mavenProject.getBuild() != null) {
         final String goal = mavenProject.getBuild().getDefaultGoal();
         if (!StringUtil.isEmptyOrSpaces(goal)) {
           return Collections.singletonList(goal);
@@ -233,7 +233,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     if (standardGoalOrder == null) {
       standardGoalOrder = new HashMap<String, Integer>();
       int i = 0;
-      for (String aGoal : MavenFactory.getStandardGoalsList()) {
+      for (String aGoal : EmbedderFactory.getStandardGoalsList()) {
         standardGoalOrder.put(aGoal, i++);
       }
     }

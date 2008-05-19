@@ -2,7 +2,7 @@
 <idea-plugin>
   <name>Maven Integration</name>
   <id>org.jetbrains.idea.maven</id>
-  <description>Provides possibility to import and synchronize Maven pom.xml files and to run Maven goals</description>
+  <description>Provides means to import Maven pom.xml files and to run Maven goals</description>
   <version>2.0</version>
   <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
   <change-notes>
@@ -182,8 +182,8 @@
     </group>
 
     <group id="Maven.Project">
-      <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeAction"
-              text="Synchronize with Maven projects" description="Synchronize project structure with Maven projects"
+      <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.action.ReimportAction"
+              text="Re-import Maven projects" description="Re-import Maven projects into Idea project structure"
               icon="/actions/sync.png">
       </action>
       <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.action.DownloadArtifactsAction"
@@ -226,7 +226,7 @@
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
       <separator/>
-      <reference id="Maven.Synchronize"/>
+      <reference id="Maven.Reimport"/>
       <reference id="Maven.DownloadArtifacts"/>
       <separator/>
       <reference id="Maven.Help"/>

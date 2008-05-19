@@ -19,7 +19,7 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
@@ -50,14 +50,14 @@ public class MavenArtifactDownloader {
     final Map<MavenProject, Collection<String>> mavenProjects = new HashMap<MavenProject, Collection<String>>();
 
     final Map<VirtualFile, MavenProject> fileToProject = new HashMap<VirtualFile, MavenProject>();
-    final MavenEmbedder e = MavenFactory.createEmbedderForRead(MavenCore.getInstance(project).getState());
+    final MavenEmbedder e = EmbedderFactory.createEmbedderForResolve(MavenCore.getInstance(project).getState(), null);
     try {
       for (VirtualFile file : manager.getFiles()) {
         if (!manager.isIgnored(file)) {
-          MavenProject p = manager.getResolvedProject(file);
+          MavenProjectHolder p = manager.getResolvedProject(file);
           if (p == null) continue;
-          mavenProjects.put(p, manager.getActiveProfiles(file));
-          fileToProject.put(file, p);
+          mavenProjects.put(p.getMavenProject(), manager.getActiveProfiles(file));
+          fileToProject.put(file, p.getMavenProject());
         }
       }
 
@@ -84,7 +84,7 @@ public class MavenArtifactDownloader {
         }
       });
     } finally {
-      MavenFactory.releaseEmbedder(e);
+      EmbedderFactory.releaseEmbedder(e);
     }
 
     VirtualFileManager.getInstance().refresh(false);

@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
@@ -117,7 +117,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   private static Collection<String> getGoals(MavenProjectsManager projectsManager, MavenPluginsRepository repository, VirtualFile file) {
     Collection<String> result = new HashSet<String>();
-    result.addAll(MavenFactory.getStandardGoalsList());
+    result.addAll(EmbedderFactory.getStandardGoalsList());
 
     Model model = projectsManager.getModel(file);
     Collection<String> activeProfiles = projectsManager.getActiveProfiles(file);

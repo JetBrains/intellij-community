@@ -5,13 +5,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.model.Model;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.util.*;
+import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.ProjectId;
+import org.jetbrains.idea.maven.core.util.Tree;
 
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class MavenProjectModel {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenProjectModel");
@@ -21,12 +23,13 @@ public class MavenProjectModel {
 
   public MavenProjectModel(Collection<VirtualFile> filesToImport,
                            Map<VirtualFile, Module> existingModules,
-                           Collection<String> activeProfiles,
+                           List<String> activeProfiles,
                            MavenProjectReader projectReader,
+                           Map<ProjectId, VirtualFile> mapping,
                            Progress p) throws MavenException, CanceledException {
     for (VirtualFile f : filesToImport) {
       p.checkCanceled();
-      MavenProjectModel.Node node = createMavenTree(projectReader, f, existingModules, activeProfiles, true, p);
+      MavenProjectModel.Node node = createMavenTree(projectReader, f, existingModules, activeProfiles, true, mapping, p);
       rootProjects.add(node);
     }
   }
@@ -39,33 +42,35 @@ public class MavenProjectModel {
   private Node createMavenTree(MavenProjectReader reader,
                                VirtualFile pomFile,
                                Map<VirtualFile, Module> existingModules,
-                               Collection<String> profiles,
+                               List<String> profiles,
                                boolean isExistingModuleTree,
+                               Map<ProjectId, VirtualFile> mapping,
                                Progress p) throws MavenException, CanceledException {
     p.checkCanceled();
     p.setText(ProjectBundle.message("maven.reading", FileUtil.toSystemDependentName(pomFile.getPath())));
 
-    Model mavenModel = reader.readModel(pomFile.getPath());
+    MavenProjectHolder mavenProject = reader.readProject(pomFile.getPath(), profiles);
+    mapping.put(mavenProject.getProjectId(), pomFile);
 
     Module existingModule = existingModules.get(pomFile);
     if (existingModule == null) isExistingModuleTree = false;
     if (!isExistingModuleTree) existingModule = null;
 
-    Node node = new Node(pomFile, mavenModel, existingModule);
+    Node node = new Node(pomFile, mavenProject, existingModule);
 
-    createChildNodes(reader, pomFile, existingModules, profiles, mavenModel, node, isExistingModuleTree, p);
+    createChildNodes(reader, existingModules, profiles, mavenProject, node, isExistingModuleTree, mapping, p);
     return node;
   }
 
   private void createChildNodes(MavenProjectReader reader,
-                                VirtualFile pomFile,
                                 Map<VirtualFile, Module> existingModules,
-                                Collection<String> profiles,
-                                Model mavenModel,
+                                List<String> profiles,
+                                MavenProjectHolder mavenProject,
                                 Node parentNode,
                                 boolean isExistingModuleTree,
+                                Map<ProjectId, VirtualFile> mapping,
                                 Progress p) throws MavenException, CanceledException {
-    for (String modulePath : ProjectUtil.collectAbsoluteModulePaths(mavenModel, new File(pomFile.getPath()), profiles, new LinkedHashSet<String>())) {
+    for (String modulePath : mavenProject.getModulePaths(profiles)) {
       p.checkCanceled();
 
       VirtualFile childFile = LocalFileSystem.getInstance().findFileByPath(modulePath);
@@ -80,7 +85,7 @@ public class MavenProjectModel {
         parentNode.mySubProjects.add(existingRoot);
       }
       else {
-        Node module = createMavenTree(reader, childFile, existingModules, profiles, isExistingModuleTree, p);
+        Node module = createMavenTree(reader, childFile, existingModules, profiles, isExistingModuleTree, mapping, p);
         parentNode.mySubProjects.add(module);
       }
     }
@@ -107,7 +112,7 @@ public class MavenProjectModel {
         public void visit(Node node) {
           try {
             p.checkCanceled();
-            p.setText(ProjectBundle.message("maven.resolving", FileUtil.toSystemDependentName(node.getPath())));
+            p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(node.getPath())));
             node.resolve(projectReader, profiles);
           }
           catch (Exception e) {
@@ -148,18 +153,16 @@ public class MavenProjectModel {
 
   public static class Node {
     private VirtualFile myPomFile;
-    private Model myMavenModel;
     private Module myLinkedModule;
 
     private boolean myIncluded = true;
 
-    private MavenProject myMavenProject;
+    private MavenProjectHolder myMavenProject;
     final List<Node> mySubProjects = new ArrayList<Node>();
-    final List<Node> mySubProjectsTopoSorted = new ArrayList<Node>(); // recursive
 
-    private Node(@NotNull VirtualFile pomFile, @NotNull Model mavenModel, Module module) {
+    private Node(@NotNull VirtualFile pomFile, @NotNull MavenProjectHolder mavenProject, Module module) {
       myPomFile = pomFile;
-      myMavenModel = mavenModel;
+      myMavenProject = mavenProject;
       myLinkedModule = module;
     }
 
@@ -179,18 +182,16 @@ public class MavenProjectModel {
     }
 
     @NotNull
-    public MavenProject getMavenProject() {
+    public MavenProjectHolder getMavenProject() {
       return myMavenProject;
     }
 
     public MavenId getMavenId() {
-      return new MavenId(myMavenModel.getGroupId(),
-                         myMavenModel.getArtifactId(),
-                         myMavenModel.getVersion());
+      return myMavenProject.getMavenId();
     }
 
     public ProjectId getProjectId() {
-      return new ProjectId(myMavenModel);
+      return myMavenProject.getProjectId();
     }
 
     public boolean isIncluded() {
@@ -209,32 +210,12 @@ public class MavenProjectModel {
       myLinkedModule = null;
     }
 
+    public void linkModule(Module m) {
+      myLinkedModule = m;
+    }
+
     public void resolve(MavenProjectReader projectReader, List<String> profiles) throws MavenException, CanceledException {
-      List<MavenProject> resolvedModules = new ArrayList<MavenProject>();
-      myMavenProject = projectReader.readResolved(getPath(), profiles, resolvedModules);
-
-      Map<String, Node> pathToNode = createPathToNodeMap(mySubProjects, new HashMap<String, Node>());
-
-      mySubProjectsTopoSorted.clear();
-      for (MavenProject resolvedModule : resolvedModules) {
-        Node node = pathToNode.get(getNormalizedPath(resolvedModule));
-        if (node != null) {
-          node.myMavenProject = resolvedModule;
-          mySubProjectsTopoSorted.add(node);
-        }
-      }
+      myMavenProject = projectReader.resolve(getPath(), profiles);
     }
-  }
-
-  private static String getNormalizedPath(MavenProject mavenProject) {
-    return new Path(mavenProject.getFile().getPath()).getPath();
-  }
-
-  private static Map<String, Node> createPathToNodeMap(List<Node> mavenModules, Map<String, Node> pathToNode) {
-    for (Node mavenModule : mavenModules) {
-      pathToNode.put(mavenModule.getPath(), mavenModule);
-      createPathToNodeMap(mavenModule.mySubProjects, pathToNode);
-    }
-    return pathToNode;
   }
 }

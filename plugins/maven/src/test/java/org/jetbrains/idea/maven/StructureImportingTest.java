@@ -171,42 +171,42 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
-  //public void testModulesWithProperties() throws Exception {
-  //  createProjectPom("<groupId>test</groupId>" +
-  //                   "<artifactId>project</artifactId>" +
-  //                   "<packaging>pom</packaging>" +
-  //                   "<version>1</version>" +
-  //
-  //                   "<properties>" +
-  //                   "  <module1>m1</module1>" +
-  //                   "  <module2>m2</module2>" +
-  //                   "</properties>" +
-  //
-  //                   "<modules>" +
-  //                   "  <module>${module1}</module>" +
-  //                   "  <module>${module2}</module>" +
-  //                   "</modules>");
-  //
-  //  createModulePom("m1", "<groupId>test</groupId>" +
-  //                        "<artifactId>m1</artifactId>" +
-  //                        "<version>1</version>");
-  //
-  //  createModulePom("m2", "<groupId>test</groupId>" +
-  //                        "<artifactId>m2</artifactId>" +
-  //                        "<version>1</version>");
-  //
-  //  importProject();
-  //  assertModules("project", "m1", "m2");
-  //
-  //  PomTreeStructure.RootNode r = createMavenTree();
-  //
-  //  assertEquals(1, r.pomNodes.size());
-  //  assertEquals("project", r.pomNodes.get(0).getId());
-  //
-  //  assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-  //  assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
-  //  assertEquals("m2", r.pomNodes.get(0).modulePomsNode.pomNodes.get(1).getId());
-  //}
+  public void testModulePathsAsProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <module1>m1</module1>" +
+                     "  <module2>m2</module2>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>${module1}</module>" +
+                     "  <module>${module2}</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    PomTreeStructure.RootNode r = createMavenTree();
+
+    assertEquals(1, r.pomNodes.size());
+    assertEquals("project", r.pomNodes.get(0).getId());
+
+    assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
+    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
+    assertEquals("m2", r.pomNodes.get(0).modulePomsNode.pomNodes.get(1).getId());
+  }
 
   public void testParentWithoutARelativePath() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
@@ -214,20 +214,16 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
 
+                     "<properties>" +
+                     "  <moduleName>m1</moduleName>" +
+                     "</properties>" +
+
                      "<modules>" +
                      "  <module>modules/m</module>" +
-                     "</modules>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                     "</modules>");
 
     createModulePom("modules/m", "<groupId>test</groupId>" +
-                                 "<artifactId>m</artifactId>" +
+                                 "<artifactId>${moduleName}</artifactId>" +
                                  "<version>1</version>" +
 
                                  "<parent>" +
@@ -237,9 +233,51 @@ public class StructureImportingTest extends MavenImportingTestCase {
                                  "</parent>");
 
     importProject();
-    assertModules("project", "m");
+    assertModules("project", "m1");
 
-    assertModuleLibDeps("m", "junit:junit:4.0");
+    PomTreeStructure.RootNode r = createMavenTree();
+
+    assertEquals(1, r.pomNodes.size());
+    assertEquals("project", r.pomNodes.get(0).getId());
+
+    assertEquals(1, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
+    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
+  }
+
+  public void testModuleWithPropertiesWithParentWithoutARelativePath() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <moduleName>m1</moduleName>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>modules/m</module>" +
+                     "</modules>");
+
+    createModulePom("modules/m", "<groupId>test</groupId>" +
+                                 "<artifactId>${moduleName}</artifactId>" +
+                                 "<version>1</version>" +
+
+                                 "<parent>" +
+                                 "  <groupId>test</groupId>" +
+                                 "  <artifactId>project</artifactId>" +
+                                 "  <version>1</version>" +
+                                 "</parent>");
+
+    importProject();
+    assertModules("project", "m1");
+
+    PomTreeStructure.RootNode r = createMavenTree();
+
+    assertEquals(1, r.pomNodes.size());
+    assertEquals("project", r.pomNodes.get(0).getId());
+
+    assertEquals(1, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
+    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
   }
 
   public void testParentInRepository() throws Exception {

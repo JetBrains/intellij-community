@@ -11,7 +11,7 @@ import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -43,7 +43,7 @@ public class FoldersConfigurator {
   }
 
   private static void doUpdateProjectsExcludeFolders(Project p) throws MavenException {
-    MavenEmbedder embedder = MavenFactory.createEmbedderForRead(MavenCore.getInstance(p).getState());
+    MavenEmbedder embedder = EmbedderFactory.createEmbedderForRead(MavenCore.getInstance(p).getState());
     try {
       MavenProjectReader r = new MavenProjectReader(embedder);
       for (Module m : ModuleManager.getInstance(p).getModules()) {
@@ -51,7 +51,7 @@ public class FoldersConfigurator {
       }
     }
     finally {
-      MavenFactory.releaseEmbedder(embedder);
+      EmbedderFactory.releaseEmbedder(embedder);
     }
   }
 

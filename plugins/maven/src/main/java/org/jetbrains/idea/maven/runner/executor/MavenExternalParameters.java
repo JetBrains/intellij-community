@@ -29,7 +29,7 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 
@@ -106,7 +106,7 @@ public class MavenExternalParameters {
 
     addParameters(list, StringUtil.notNullize(System.getenv(MAVEN_OPTS)));
 
-    addProperty(list, "classworlds.conf", MavenFactory.getMavenConfFile(new File(mavenHome)).getPath());
+    addProperty(list, "classworlds.conf", EmbedderFactory.getMavenConfFile(new File(mavenHome)).getPath());
 
     addProperty(list, "maven.home", mavenHome);
 
@@ -160,7 +160,7 @@ public class MavenExternalParameters {
   }
 
   private static String resolveMavenHome(@NotNull MavenCoreSettings coreSettings) throws ExecutionException {
-    final File file = MavenFactory.resolveMavenHomeDirectory(coreSettings.getMavenHome());
+    final File file = EmbedderFactory.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {
       throw new ExecutionException(RunnerBundle.message("external.maven.home.no.default"));
@@ -170,7 +170,7 @@ public class MavenExternalParameters {
       throw new ExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file.getPath()));
     }
 
-    if (!MavenFactory.isValidMavenHome(file)) {
+    if (!EmbedderFactory.isValidMavenHome(file)) {
       throw new ExecutionException(RunnerBundle.message("external.maven.home.invalid", file.getPath()));
     }
 

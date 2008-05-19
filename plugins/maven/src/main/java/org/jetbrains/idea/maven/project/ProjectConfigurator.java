@@ -6,6 +6,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -15,11 +17,8 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
 import java.io.IOException;
+import java.util.*;
 
 
 public class ProjectConfigurator {
@@ -94,34 +93,48 @@ public class ProjectConfigurator {
   }
 
   private void configModules() {
-    final List<Module> modules = new ArrayList<Module>();
+    final Map<MavenProject, Module> modules = new HashMap<MavenProject, Module>();
 
-    myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorRoot() {
+    myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        modules.add(configModule(node));
-        for (MavenProjectModel.Node child : node.mySubProjectsTopoSorted) {
-          modules.add(configModule(child));
-        }
+        MavenProjectHolder p = node.getMavenProject();
+        Module m = createModule(node);
+        if (!p.isValid()) return;
+        modules.put(p.getMavenProject(), m);
       }
     });
 
-    MavenProjectsManager.getInstance(myProject).setImportedModules(modules);
+
+    List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
+    for (Map.Entry<MavenProject,Module> each : modules.entrySet()) {
+      createModuleConfigurator(each.getValue(), each.getKey()).config(rootModels);
+    }
+
+    ProjectRootManager.getInstance(myProject).multiCommit(rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
+
+    for (Map.Entry<MavenProject,Module> each : modules.entrySet()) {
+      createModuleConfigurator(each.getValue(), each.getKey()).configFacets();
+    }
+
+
+    MavenProjectsManager.getInstance(myProject).setImportedModules(new ArrayList<Module>(modules.values()));
   }
 
-  private Module configModule(MavenProjectModel.Node node) {
-    MavenProject mavenProject = node.getMavenProject();
-
+  private Module createModule(MavenProjectModel.Node node) {
     Module module = myMapping.getModule(node);
     if (module == null) {
       String path = myMapping.getModuleFilePath(node);
       // for some reason newModule opens the existing iml file, so we
-      // have to remove it beforehand. 
+      // have to remove it beforehand.
       removeExistingIml(path);
       module = myModuleModel.newModule(path, StdModuleTypes.JAVA);
+      //node.linkModule(module);
     }
-
-    new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject).config();
     return module;
+  }
+
+  private ModuleConfigurator createModuleConfigurator(Module module, MavenProject mavenProject) {
+    return new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject);
   }
 
   private void removeExistingIml(String path)  {

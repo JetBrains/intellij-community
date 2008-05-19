@@ -67,6 +67,10 @@ public class RootModelAdapter {
     }
   }
 
+  public ModifiableRootModel getRootModel() {
+    return myRootModel;
+  }
+
   private LibraryTable.ModifiableModel getLibraryModel() {
     if (myLibraryTable == null) {
       myLibraryTable = myRootModel.getModuleLibraryTable().getModifiableModel();
@@ -89,7 +93,7 @@ public class RootModelAdapter {
     Set<Path> result = new HashSet<Path>();
     for (ContentEntry entry : myRootModel.getContentEntries()) {
       for (SourceFolder f : entry.getSourceFolders()) {
-        result.add(new Path(VirtualFileManager.extractPath(f.getUrl())));
+        result.add(fromUrl(f.getUrl()));
       }
     }
     return result;
@@ -104,10 +108,18 @@ public class RootModelAdapter {
     Set<Path> result = new HashSet<Path>();
     for (ContentEntry entry : myRootModel.getContentEntries()) {
       for (ExcludeFolder f : entry.getExcludeFolders()) {
-        result.add(new Path(VirtualFileManager.extractPath(f.getUrl())));
+        result.add(fromUrl(f.getUrl()));
       }
     }
+    String output = getCompilerExtension().getCompilerOutputUrl();
+    String testOutput = getCompilerExtension().getCompilerOutputUrlForTests();
+    if (output != null) result.add(fromUrl(output));
+    if (testOutput != null) result.add(fromUrl(testOutput));
     return result;
+  }
+
+  private Path fromUrl(String output) {
+    return new Path(VirtualFileManager.extractPath(output));
   }
 
   public void useProjectOutput() {

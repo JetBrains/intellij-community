@@ -1,17 +1,22 @@
-package org.jetbrains.idea.maven.core;
+package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
 import org.apache.maven.extension.ExtensionManager;
+import org.apache.maven.project.build.model.ModelLineageBuilder;
 import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
 import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.project.MavenException;
@@ -21,8 +26,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
-public class MavenFactory {
-  private static final Logger LOG = Logger.getInstance("#" + MavenFactory.class.getName());
+public class EmbedderFactory {
+  private static final Logger LOG = Logger.getInstance("#" + EmbedderFactory.class.getName());
 
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
   @NonNls private static final String PROP_USER_HOME = "user.home";
@@ -113,7 +118,7 @@ public class MavenFactory {
 
     final File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {
-      final String fromUserSettings = MavenFactory.getRepositoryFromSettings(userSettingsFile);
+      final String fromUserSettings = EmbedderFactory.getRepositoryFromSettings(userSettingsFile);
       if (!StringUtil.isEmpty(fromUserSettings)) {
         return new File(fromUserSettings);
       }
@@ -121,7 +126,7 @@ public class MavenFactory {
 
     final File globalSettingsFile = resolveGlobalSettingsFile(mavenHome);
     if (globalSettingsFile != null) {
-      final String fromGlobalSettings = MavenFactory.getRepositoryFromSettings(globalSettingsFile);
+      final String fromGlobalSettings = EmbedderFactory.getRepositoryFromSettings(globalSettingsFile);
       if (!StringUtil.isEmpty(fromGlobalSettings)) {
         return new File(fromGlobalSettings);
       }
@@ -159,19 +164,24 @@ public class MavenFactory {
     return Arrays.asList(standardGoals);
   }
 
+  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) throws MavenException {
+    return createEmbedderForRead(settings, null);
+  }
+
+  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) throws MavenException {
+    return createEmbedder(settings, new ReadingCustomizer(projectMapping));
+  }
+
+  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping)
+      throws MavenException {
+    return createEmbedder(settings, new ResolvingCustomizer(projectMapping));
+  }
+
   public static MavenEmbedder createEmbedderForExecute(MavenCoreSettings settings) throws MavenException {
     return createEmbedder(settings, null);
   }
 
-  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) throws MavenException {
-    return createEmbedder(settings, new ResolvingCustomizer(null));
-  }
-
-  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) throws MavenException {
-    return createEmbedder(settings, new ResolvingCustomizer(projectMapping));
-  }
-
-  public static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) throws MavenException {
+  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) throws MavenException {
     return createEmbedder(settings.getMavenHome(), settings.getEffectiveLocalRepository(), settings.getMavenSettingsFile(),
                           settings.getClass().getClassLoader(), customizer);
   }
@@ -223,7 +233,7 @@ public class MavenFactory {
     try {
       Properties envVars = CommandLineUtils.getSystemEnvVars();
       for (Map.Entry<Object, Object> each : envVars.entrySet()) {
-        result.setProperty( "env." + each.getKey().toString(), each.getValue().toString());
+        result.setProperty("env." + each.getKey().toString(), each.getValue().toString());
       }
     }
     catch (IOException e) {
@@ -267,6 +277,31 @@ public class MavenFactory {
     }
   }
 
+  public static class ReadingCustomizer implements ContainerCustomizer {
+    private Map<ProjectId, VirtualFile> myProjectMapping;
+
+    public ReadingCustomizer(Map<ProjectId, VirtualFile> projectMapping) {
+
+      myProjectMapping = projectMapping;
+    }
+
+    public void customize(PlexusContainer c) {
+      c.getContext().put("MavenProjectsMapping", myProjectMapping);
+
+      ComponentDescriptor d = c.getComponentDescriptor(WagonManager.ROLE);
+      d.setImplementation(CustomWagonManager.class.getName());
+
+      d = c.getComponentDescriptor(ArtifactFactory.ROLE);
+      d.setImplementation(CustomArtifactFactory.class.getName());
+
+      d = c.getComponentDescriptor(ArtifactResolver.ROLE);
+      d.setImplementation(CustomArtifactResolver.class.getName());
+
+      d = c.getComponentDescriptor(ModelLineageBuilder.ROLE);
+      d.setImplementation(CustomLineageBuilder.class.getName());
+    }
+  }
+
   public static class ResolvingCustomizer implements ContainerCustomizer {
     private Map<ProjectId, VirtualFile> myMapping;
 
@@ -277,11 +312,11 @@ public class MavenFactory {
     public void customize(PlexusContainer c) {
       c.getContext().put("MavenProjectsMapping", myMapping);
 
-      ComponentDescriptor d = c.getComponentDescriptor(ArtifactResolver.ROLE);
-      d.setImplementation(CustomArtifactResolver.class.getName());
+      ComponentDescriptor d = c.getComponentDescriptor(ArtifactFactory.ROLE);
+      d.setImplementation(CustomArtifactFactory.class.getName());
 
-      d = c.getComponentDescriptor(ExtensionManager.class.getName());
-      d.setImplementation(CustomExtensionManager.class.getName());
+      d = c.getComponentDescriptor(ArtifactResolver.ROLE);
+      d.setImplementation(CustomArtifactResolver.class.getName());
     }
   }
 }

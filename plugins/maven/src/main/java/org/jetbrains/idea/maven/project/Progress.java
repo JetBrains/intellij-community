@@ -36,24 +36,44 @@ public class Progress {
     if (myIndicator != null && myIndicator.isCanceled()) throw new CanceledException();
   }
 
-  public static void run(Project project, String title, final Process t) throws MavenException, CanceledException {
+  public static void run(Project project, String title, Process p) throws MavenException, CanceledException {
+    run(project, title, false, p);
+  }
+
+  public static void run(Project project, String title, boolean inBackground, final Process p) throws MavenException, CanceledException {
     final MavenException[] mavenEx = new MavenException[1];
     final CanceledException[] canceledEx = new CanceledException[1];
 
-    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
-      public void run(ProgressIndicator i) {
-        Progress progress = new Progress();
-        try {
-          t.run(progress);
+    if (inBackground) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true) {
+        public void run(ProgressIndicator i) {
+          try {
+            p.run(new Progress());
+          }
+          catch (MavenException e) {
+            mavenEx[0] = e;
+          }
+          catch (CanceledException e) {
+            canceledEx[0] = e;
+          }
         }
-        catch (MavenException e) {
-          mavenEx[0] = e;
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+        public void run(ProgressIndicator i) {
+          try {
+            p.run(new Progress());
+          }
+          catch (MavenException e) {
+            mavenEx[0] = e;
+          }
+          catch (CanceledException e) {
+            canceledEx[0] = e;
+          }
         }
-        catch (CanceledException e) {
-          canceledEx[0] = e;
-        }
-      }
-    });
+      });
+    }
 
     if (mavenEx[0] != null) throw mavenEx[0];
     if (canceledEx[0] != null) throw canceledEx[0];

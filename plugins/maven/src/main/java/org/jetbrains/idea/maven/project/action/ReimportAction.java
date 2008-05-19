@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
-public class SynchronizeAction extends AnAction {
+public class ReimportAction extends AnAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
@@ -14,6 +14,6 @@ public class SynchronizeAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    MavenProjectsManager.getInstance(project).synchronize();
+    MavenProjectsManager.getInstance(project).reimport();
   }
 }

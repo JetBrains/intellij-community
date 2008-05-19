@@ -5,6 +5,11 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import java.io.File;
 
 public class FoldersConfiguratorTest extends MavenImportingTestCase {
+  @Override
+  protected boolean shouldResolve() {
+    return true;
+  }
+
   public void testUpdatingExternallyCreatedFolders() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

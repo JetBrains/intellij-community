@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.core;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 
 import java.io.File;
 
@@ -79,7 +79,7 @@ public class MavenCoreSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveLocalRepository() {
-    return MavenFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
+    return EmbedderFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
   }
 
   public void setLocalRepository(final @Nullable String localRepository) {

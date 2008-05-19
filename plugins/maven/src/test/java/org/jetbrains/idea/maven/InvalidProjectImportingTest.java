@@ -6,96 +6,124 @@ import java.io.File;
 
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
   public void testUnknownProblem() throws Exception {
-    try {
-      importProject("");
-      fail();
-    }
-    catch (MavenException e) {
-      assertExceptionHasPomFileAndContains(e, "java.lang.NullPointerException");
-    }
+    importProject("");
+    assertModules("Invalid");
   }
 
   public void testUnresolvedParent() throws Exception {
-    try {
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>parent</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>");
-      fail();
-    }
-    catch (MavenException e) {
-      assertExceptionHasPomFileAndContains(e, "Cannot find artifact for parent POM: test:parent::1");
-    }
+                  "<parent>" +
+                  "  <groupId>test</groupId>" +
+                  "  <artifactId>parent</artifactId>" +
+                  "  <version>1</version>" +
+                  "</parent>");
+
+    assertModules("project");
   }
 
-  public void testInvalidProjectModelException() throws Exception {
-    try {
-      createModulePom("foo", "<groupId>test</groupId>" +
-                             "<artifactId>foo</artifactId>" +
-                             "<version>1</version>");
+  public void testUndefinedPropertyInHeader() throws Exception {
+    if (ignore()) return;
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>jar</packaging>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>%{undefined}</artifactId>" +
+                  "<version>1</version>");
 
-                    "<modules>" +
-                    "  <module>foo</module>" +
-                    "</modules>");
-      fail();
-    }
-    catch (MavenException e) {
-      assertExceptionHasPomFileAndContains(e, "Packaging 'jar' is invalid");
-    }
+    assertModules("Invalid");
   }
 
-  public void testExceptionFromReadResolved() throws Exception {
-    try {
-      createModulePom("foo", "<groupId>test</groupId>" +
-                             "<artifactId>foo</artifactId>" +
-                             "<version>1"); //  invalid tag
+  public void testNonExistentModules() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>project</version>" +
-                    "<packaging>pom</packaging>" +
+                  "<modules>" +
+                  "  <module>foo</module>" +
+                  "</modules>");
 
-                    "<modules>" +
-                    "  <module>foo</module>" +
-                    "</modules>");
-      fail();
-    }
-    catch (MavenException e) {
-      assertExceptionHasPomFileAndContains(e, "end tag name </project> must be the same as start tag <version>");
-    }
+    assertModules("project");
+  }
+
+  public void testInvalidProjectModel() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>jar</packaging>" + // invalid packaging
+
+                  "<modules>" +
+                  "  <module>foo</module>" +
+                  "</modules>");
+
+    assertModules("project");
+  }
+
+  public void testInvalidModuleModel() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>foo</module>" +
+                     "</modules>");
+
+    createModulePom("foo", "<groupId>test</groupId>" +
+                           "<artifactId>foo</artifactId>" +
+                           "<version>1"); //  invalid tag
+
+    importProject();
+
+    assertModules("project", "Invalid");
+  }
+
+  public void testTwoInvalidModules() throws Exception {
+    if (ignore()) return;
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>foo</module>" +
+                     "  <module>bar</module>" +
+                     "</modules>");
+
+    createModulePom("foo", "<groupId>test</groupId>" +
+                           "<artifactId>foo</artifactId>" +
+                           "<version>1"); //  invalid tag
+
+    createModulePom("bar", "<groupId>test</groupId>" +
+                           "<artifactId>foo</artifactId>" +
+                           "<version>1"); //  invalid tag
+
+    importProject();
+
+    assertModules("project", "Invalid (1)", "Invalid (2)");
   }
 
   public void testInvalidRepositoryLayout() throws Exception {
-    try {
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                    "<distributionManagement>" +
-                    "  <repository>" +
-                    "    <id>test</id>" +
-                    "    <url>http://www.google.com</url>" +
-                    "    <layout>nothing</layout>" +
-                    "  </repository>" +
-                    "</distributionManagement>");
-      fail();
-    }
-    catch (MavenException e) {
-      assertExceptionHasPomFileAndContains(e, "Cannot find ArtifactRepositoryLayout instance for: nothing");
-    }
+                  "<distributionManagement>" +
+                  "  <repository>" +
+                  "    <id>test</id>" +
+                  "    <url>http://www.google.com</url>" +
+                  "    <layout>nothing</layout>" + // invalid layout
+                  "  </repository>" +
+                  "</distributionManagement>");
+
+    assertModules("project");
   }
-  
+
   public void testReportingDependenciesProblems() throws Exception {
+    if (ignore()) return;
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -164,7 +192,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertOrderedElementsAreEqual(myResolutionProblems.get(1).second,
                                   "Unresolved dependency: zzz:zzz:jar:3:compile");
   }
-  
+
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -197,6 +225,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testReportingInvalidExtensions() throws Exception {
+    if (ignore()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -217,8 +247,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertEquals(new File(myProjectPom.getPath()), f);
     assertOrderedElementsAreEqual(myResolutionProblems.get(0).second, "Unresolved build extension: xxx:yyy:jar:1");
   }
-  
+
   public void testMultipleUnresolvedBuildExtensions() throws Exception {
+    if (ignore()) return;
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -266,23 +298,17 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertEquals(myResolutionProblems.toString(), 3, myResolutionProblems.size());
+    assertEquals(myResolutionProblems.toString(), 2, myResolutionProblems.size());
 
     File f1 = myResolutionProblems.get(0).first;
     File f2 = myResolutionProblems.get(1).first;
-    File f3 = myResolutionProblems.get(2).first;
 
-    assertEquals(new File(myProjectPom.getPath()), f1);
-    assertTrue(f2.toString(), f2.getPath().endsWith("m1\\pom.xml"));
-    assertTrue(f3.toString(), f3.getPath().endsWith("m2\\pom.xml"));
+    assertTrue(f1.toString(), f1.getPath().endsWith("m1\\pom.xml"));
+    assertTrue(f2.toString(), f2.getPath().endsWith("m2\\pom.xml"));
 
     assertOrderedElementsAreEqual(myResolutionProblems.get(0).second,
-                                  "Unresolved build extension: xxx:xxx:jar:1",
-                                  "Unresolved build extension: yyy:yyy:jar:1",
-                                  "Unresolved build extension: zzz:zzz:jar:1");
-    assertOrderedElementsAreEqual(myResolutionProblems.get(1).second,
                                   "Unresolved build extension: xxx:xxx:jar:1");
-    assertOrderedElementsAreEqual(myResolutionProblems.get(2).second,
+    assertOrderedElementsAreEqual(myResolutionProblems.get(1).second,
                                   "Unresolved build extension: yyy:yyy:jar:1",
                                   "Unresolved build extension: zzz:zzz:jar:1");
   }

@@ -3,6 +3,11 @@ package org.jetbrains.idea.maven;
 import java.io.File;
 
 public class ContentRootsImportingTest extends MavenImportingTestCase {
+  @Override
+  protected boolean shouldResolve() {
+    return true;
+  }
+
   public void testSimpleProjectStructure() throws Exception {
     createStdProjectFolders();
 

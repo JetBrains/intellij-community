@@ -223,4 +223,9 @@ public abstract class MavenTestCase extends TestCase {
       assertEquals(s, expectedElement, actualElement);
     }
   }
+
+  protected boolean ignore() {
+    System.out.println("ignored");
+    return true;
+  }
 }

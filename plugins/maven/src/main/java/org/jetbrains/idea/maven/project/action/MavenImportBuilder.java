@@ -16,10 +16,10 @@ import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -64,6 +64,12 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   @Override
   public boolean validate(Project current, Project dest) {
+
+
+
+    if (true) return true;
+
+
     try {
       myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
       myImportProcessor.resolve(dest, getAllProfiles(), myResolutionProblems);
@@ -99,13 +105,13 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public void commit(final Project project) {
     myImportProcessor.commit(project, getAllProfiles());
 
-    MavenProjectsManager.getInstance(project).setDoesNotRequireSynchronization();
     MavenProjectsManager.getInstance(project).setMavenProject();
+    MavenProjectsManager.getInstance(project).setDoesNotRequireReimport();
 
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
-        MavenImportToolWindow toolWindow = new MavenImportToolWindow(project, ProjectBundle.message("maven.import"));
-        toolWindow.displayResolutionProblems(myResolutionProblems);
+        MavenProjectsManager.getInstance(project).setImportProcessor(myImportProcessor);
+        MavenProjectsManager.getInstance(project).resolve();
       }
     });
 
@@ -179,7 +185,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     Map<VirtualFile, Set<String>> result = new HashMap<VirtualFile, Set<String>>();
 
     try {
-      MavenEmbedder e = MavenFactory.createEmbedderForRead(getCoreState());
+      MavenEmbedder e = EmbedderFactory.createEmbedderForRead(getCoreState());
       MavenProjectReader r = new MavenProjectReader(e);
 
       for (VirtualFile f : files) {
@@ -188,7 +194,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         if (!profiles.isEmpty()) result.put(f, profiles);
       }
 
-      MavenFactory.releaseEmbedder(e);
+      EmbedderFactory.releaseEmbedder(e);
     }
     catch (MavenException ignore) {
     }
@@ -239,7 +245,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
                                                  getImporterPreferences(),
                                                  getArtifactPreferences());
 
-    myImportProcessor.createMavenProjectModel(myFiles, new HashMap<VirtualFile, Module>(), getAllProfiles(), p);
+    myImportProcessor.createMavenProjectModel(getProject(), myFiles, new HashMap<VirtualFile, Module>(), getAllProfiles(), p);
   }
 
   public List<MavenProjectModel.Node> getList() {
@@ -254,7 +260,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     for (MavenProjectModel.Node node : myImportProcessor.getMavenProjectModel().getRootProjects()) {
       node.setIncluded(nodes.contains(node));
     }
-    myImportProcessor.createMavenToIdeaMapping();
+    myImportProcessor.createMavenToIdeaMapping(getProject());
   }
 
   public boolean isOpenProjectSettingsAfter() {

@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
@@ -11,9 +10,7 @@ import org.jetbrains.idea.maven.project.MavenImportProcessor;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
   @Override
@@ -47,7 +44,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
     PsiTestUtil.addContentRoot(getModule("project"), root);  // should not throw an exception
   }
   
-  public void testSavingAllDocumentBeforeSynchronization() throws Exception {
+  public void testSavingAllDocumentBeforeReimport() throws Exception {
     Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
     d.setText(createValidPom("<groupId>test</groupId>" +
                              "<artifactId>project</artifactId>" +
@@ -62,7 +59,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                              "</dependencies>"));
     
     MavenProjectsManager.getInstance(myProject).setOriginalFiles(Collections.singleton(myProjectPom));
-    new MavenImportProcessor(myProject).synchronize(new ArrayList<Pair<File, List<String>>>());
+    new MavenImportProcessor(myProject).reimport();
 
     assertModuleLibDep("project", "junit:junit:4.0");
   }

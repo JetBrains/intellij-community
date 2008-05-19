@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.project.Constants;
@@ -85,7 +85,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   private void initIndices() throws MavenException {
-    myEmbedder = MavenFactory.createEmbedderForExecute(getSettings());
+    myEmbedder = EmbedderFactory.createEmbedderForExecute(getSettings());
     myIndices = new MavenIndices(myEmbedder, getIndicesDir());
 
     try {

@@ -11,7 +11,7 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.codehaus.plexus.PlexusContainer;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;
 import org.sonatype.nexus.index.context.IndexingContext;
@@ -37,7 +37,7 @@ public class NexusIndexerTest extends MavenTestCase {
     myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
     myDataTestFixture.setUp();
 
-    embedder = MavenFactory.createEmbedderForExecute(getMavenCoreSettings());
+    embedder = EmbedderFactory.createEmbedderForExecute(getMavenCoreSettings());
 
     PlexusContainer p = embedder.getPlexusContainer();
     indexer = (NexusIndexer)p.lookup(NexusIndexer.class);
