@@ -1,7 +1,6 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
@@ -18,10 +19,9 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.Map;
 
-public class FrameWrapper {
+public class FrameWrapper implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.FrameWrapper");
   private String myDimensionKey = null;
   private JComponent myComponent = null;
@@ -31,7 +31,6 @@ public class FrameWrapper {
   private boolean myCloseOnEsc = false;
   private JFrame myFrame;
   private final Map myDatas = new HashMap();
-  private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
   private Project myProject;
   private ProjectManagerListener myProjectListener = new MyProjectManagerListener();
   private FocusTrackback myFocusTrackback;
@@ -160,8 +159,7 @@ public class FrameWrapper {
   public void setTitle(String title) { myTitle = title; }
 
   public void addDisposable(Disposable disposable) {
-    LOG.assertTrue(!myDisposables.contains(disposable));
-    myDisposables.add(disposable);
+    Disposer.register(this, disposable);
   }
 
   private class MyJFrame extends JFrame implements DataProvider {
@@ -173,10 +171,7 @@ public class FrameWrapper {
       if (myDisposing) return;
       myDisposing = true;
       saveFrameState(myDimensionKey, this);
-      for (Disposable disposable : myDisposables) {
-        disposable.dispose();
-      }
-      myDisposables.clear();
+      Disposer.dispose(FrameWrapper.this);
       myDatas.clear();
       if (myProject != null) {
         ProjectManager.getInstance().removeProjectManagerListener(myProject, myProjectListener);
@@ -222,5 +217,8 @@ public class FrameWrapper {
         myFrame.dispose();
       }
     }
+  }
+
+  public void dispose() {
   }
 }
