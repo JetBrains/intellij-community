@@ -14,9 +14,11 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
 
   private ClsNameValuePairImpl[] myAttributes;
   private final PsiAnnotation myParent;
+  private static final ClsNameValuePairImpl[] EMPTY_PARAMS = new ClsNameValuePairImpl[0];
 
   public ClsAnnotationParameterListImpl(PsiAnnotation parent) {
     myParent = parent;
+    myAttributes = EMPTY_PARAMS;
   }
 
   void setAttributes(ClsNameValuePairImpl[] attributes) {
