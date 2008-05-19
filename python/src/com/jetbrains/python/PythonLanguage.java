@@ -52,7 +52,7 @@ public class PythonLanguage extends Language {
   }
 
   public PsiFile createDummyFile(Project project, String contents) {
-    return PsiFileFactory.getInstance(project).createFileFromText("dummy." + getAssociatedFileType().getDefaultExtension(), contents);
+    return PsiFileFactory.getInstance(project).createFileFromText("dummy." + PythonFileType.INSTANCE.getDefaultExtension(), contents);
   }
 
   public Set<Class<? extends PyAnnotator>> getAnnotators() {
