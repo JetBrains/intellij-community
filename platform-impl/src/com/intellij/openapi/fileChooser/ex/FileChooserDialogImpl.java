@@ -342,7 +342,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         }
         FileElement descriptor = ((FileNodeDescriptor)userObject).getElement();
         VirtualFile file = descriptor.getFile();
-        enabled = myChooserDescriptor.isFileSelectable(file);
+        enabled = file != null && myChooserDescriptor.isFileSelectable(file);
       }
       setOKActionEnabled(enabled);
     }
