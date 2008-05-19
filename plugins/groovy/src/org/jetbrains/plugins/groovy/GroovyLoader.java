@@ -35,12 +35,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Function;
+import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
@@ -64,6 +67,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -163,6 +167,24 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
         registry.registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
       }
     });
+
+
+    registerNamevalidators();
+  }
+
+  private static void registerNamevalidators() {
+    RenameInputValidatorRegistry.getInstance().registerInputValidator(new ElementFilter() {
+      public boolean isAcceptable(Object element, PsiElement context) {
+        return element instanceof PsiNamedElement;
+      }
+      public boolean isClassAcceptable(Class hintClass) {
+        return true;
+      }
+    }, new Condition<String>() {
+      public boolean value(String name) {
+        return !GroovyRefactoringUtil.KEYWORDS.contains(name);
+      }
+    });
   }
 
   private static void registerSelectioners() {
@@ -176,7 +198,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
   private static void setupCompletion() {
     InsertHandlerRegistry handlerRegistry = InsertHandlerRegistry.getInstance();
     handlerRegistry.registerSpecificInsertHandler(new GroovyDocMethodHandler());
-    
+
     CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
   }

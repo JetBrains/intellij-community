@@ -32,7 +32,6 @@
     <fileEditorProvider
         implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
-    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.GroovyBasicRenameHandler"/>
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
 
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
