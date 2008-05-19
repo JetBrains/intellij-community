@@ -18,17 +18,16 @@ package com.jetbrains.python.psi;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,7 +38,6 @@ import java.util.logging.Logger;
  */
 public class PyResolveUtil {
 
-  protected static Logger LOG = Logger.getLogger("PyResolveUtil");
 
   @NotNull
   protected static String _fmt_node(PsiElement elt) {
@@ -62,7 +60,6 @@ public class PyResolveUtil {
 
     PsiElement cur = elt;
     do {
-      LOG.info("At "+_fmt_node(cur));
       if (!cur.processDeclarations(processor, ResolveState.initial(), cur == elt ? lastParent : null, elt)) {
         if (processor instanceof ResolveProcessor) {
           return ((ResolveProcessor)processor).getResult();
@@ -70,13 +67,11 @@ public class PyResolveUtil {
       }
       if (cur instanceof PsiFile) break;
       cur = cur.getPrevSibling();
-      // cur = cur.getContext(); 
     }
     while (cur != null);
 
     if (elt == place) return null;
 
-    LOG.info("*** going up");
     return treeWalkUp(processor, elt.getContext(), elt, place);
   }
 
