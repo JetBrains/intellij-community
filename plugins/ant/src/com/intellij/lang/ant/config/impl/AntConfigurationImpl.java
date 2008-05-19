@@ -8,7 +8,6 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
-import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -767,23 +766,17 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   
   @Nullable
   public AntFile getContextFile(final AntFile file) {
-    final Set<PsiElement> processed = PsiElementSetSpinAllocator.alloc();
-    try {
-      return new Object() {
-        @Nullable
-        AntFile findContext(final AntFile file, Set<PsiElement> processed) {
-          if (file != null) {
-            processed.add(file);
-            final AntFile contextFile = toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()));
-            return (contextFile == null || processed.contains(contextFile))? file : findContext(contextFile, processed);
-          }
-          return null;
+    return new Object() {
+      @Nullable
+      AntFile findContext(final AntFile file, Set<PsiElement> processed) {
+        if (file != null) {
+          processed.add(file);
+          final AntFile contextFile = toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()));
+          return (contextFile == null || processed.contains(contextFile))? file : findContext(contextFile, processed);
         }
-      }.findContext(file, processed);
-    }
-    finally {
-      PsiElementSetSpinAllocator.dispose(processed);
-    }
+        return null;
+      }
+    }.findContext(file, new HashSet<PsiElement>());
   }
 
   @Nullable

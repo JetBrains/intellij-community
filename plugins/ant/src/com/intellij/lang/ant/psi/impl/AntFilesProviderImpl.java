@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import java.util.List;
 public class AntFilesProviderImpl extends AntStructuredElementImpl implements AntFilesProvider {
   
   private AntPattern myPattern;
+  private volatile SoftReference<List<File>> myCachedFiles;
   
   public AntFilesProviderImpl(final AntElement parent, final XmlTag sourceElement) {
     super(parent, sourceElement);
@@ -45,6 +47,7 @@ public class AntFilesProviderImpl extends AntStructuredElementImpl implements An
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
       myPattern = null;
+      myCachedFiles = null;
       final AntElement parent = getAntParent();
       if (parent != null) {
         parent.clearCaches();
@@ -54,6 +57,15 @@ public class AntFilesProviderImpl extends AntStructuredElementImpl implements An
 
   @NotNull
   public final List<File> getFiles() {
+    List<File> result = myCachedFiles == null? null : myCachedFiles.get();
+    if (result == null) {
+      result = getFilesImpl();
+      myCachedFiles = new SoftReference<List<File>>(result);
+    }
+    return result;
+  }
+
+  private List<File> getFilesImpl() {
     final AntFilesProvider referenced = getReferencedProvider();
     if (referenced != null) {
       return referenced.getFiles();

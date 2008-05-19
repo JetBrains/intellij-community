@@ -13,11 +13,9 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,11 +77,29 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public AntProject getAntProject() {
-    return (AntProject)(this instanceof AntProject ? this : PsiTreeUtil.getParentOfType(this, AntProject.class, true, true));
+    PsiElement element = this;
+
+    while (!(element instanceof AntProject)) {
+      if (element == null || element instanceof PsiFile ) {
+        return null;
+      }
+      element = element.getParent();
+    }
+
+    return (AntProject)element;
   }
 
   public AntFile getAntFile() {
-    return PsiTreeUtil.getParentOfType(this, AntFile.class, true, true);
+    PsiElement element = getParent();
+
+    while (!(element instanceof AntFile)) {
+      if (element == null || element instanceof PsiFile ) {
+        return null;
+      }
+      element = element.getParent();
+    }
+
+    return (AntFile)element;
   }
 
   public PsiElement getParent() {

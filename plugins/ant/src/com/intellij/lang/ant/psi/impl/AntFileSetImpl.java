@@ -57,22 +57,29 @@ public class AntFileSetImpl extends AntFilesProviderImpl{
   private static class FilesCollector {
     private static final int MAX_DIRS_TO_PROCESS = 100;
     private int myDirsProcessed = 0;
+    private boolean myDirCheckEnabled = false;
     
     public void collectFiles(List<File> container, File from, String relativePath, final AntPattern pattern) {
       if (myDirsProcessed > MAX_DIRS_TO_PROCESS) {
         return;
       }
-      myDirsProcessed++;
       final File[] children = from.listFiles();
-      if (children != null) {
+      if (children != null && children.length > 0) {
+        if (myDirCheckEnabled) {
+          if (!pattern.couldBeIncluded(relativePath)) {
+            return;
+          }
+        }
+        else {
+          myDirCheckEnabled = true;
+        }                                        
+        myDirsProcessed++;
         for (File child : children) {
           final String childPath = makePath(relativePath, child.getName());
           if (pattern.acceptPath(childPath)) {
             container.add(child);
           }
-          if (child.isDirectory() && pattern.couldBeIncluded(childPath)) {
-            collectFiles(container, child, childPath, pattern);
-          }
+          collectFiles(container, child, childPath, pattern);
         }
       }
     }

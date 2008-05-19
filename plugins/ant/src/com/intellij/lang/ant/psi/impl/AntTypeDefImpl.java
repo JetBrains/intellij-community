@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlDocument;
@@ -518,7 +519,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     
     for (File file : files) {
       try {
-        urls.add(file.toURL());
+        //urls.add(file.toURL());
+        // toURL() implementation invokes File.isDirectory() which, if called too often, may cause performance problems
+        urls.add(new URL("file", "", FileUtil.toSystemIndependentName(file.getPath())));
       }
       catch (MalformedURLException e) {
       }

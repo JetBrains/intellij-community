@@ -280,18 +280,19 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
                 myShouldDisposeSet = false;
               }
             }
+            final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(getProject());
             myComputingAttrValue.add(value);
             try {
               final Set<Pair<PsiElement,String>> set = PsiElementWithValueSetSpinAllocator.alloc();
               try {
-                return computeAttributeValue(value, set);
+                return computeAttributeValue(value, set, antConfig);
               }
               finally {
                 PsiElementWithValueSetSpinAllocator.dispose(set);
               }
             }
             catch (SpinAllocator.AllocatorExhaustedException e) {
-              return computeAttributeValue(value, new HashSet<Pair<PsiElement, String>>());
+              return computeAttributeValue(value, new HashSet<Pair<PsiElement, String>>(), antConfig);
             }
           }
           finally {
@@ -491,15 +492,16 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
    *
    * @param value
    * @param elementStack
+   * @param antConfig
    * @return
    */
-  private String computeAttributeValue(String value, final Set<Pair<PsiElement, String>> elementStack) {
+  private String computeAttributeValue(String value, final Set<Pair<PsiElement, String>> elementStack, final AntConfigurationBase antConfig) {
     final Pair<PsiElement, String> resolveStackEntry = new Pair<PsiElement, String>(this, value);
     elementStack.add(resolveStackEntry);
     try {
       int startProp = 0;
       final AntFile self = getAntFile();
-      final AntFile antFile = AntConfigurationBase.getInstance(getProject()).getContextFile(self);
+      final AntFile antFile = antConfig.getContextFile(self);
       while ((startProp = value.indexOf("${", startProp)) >= 0) {
         if (startProp > 0 && value.charAt(startProp - 1) == '$') {
           // the '$' is escaped
@@ -520,7 +522,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             if (elementStack.contains(new Pair<PsiElement, String>(propElement, resolvedValue))) {
               return value;  // prevent cycles
             }
-            resolvedValue = ((AntStructuredElementImpl)propElement).computeAttributeValue(resolvedValue, elementStack);
+            resolvedValue = ((AntStructuredElementImpl)propElement).computeAttributeValue(resolvedValue, elementStack, antConfig);
           }
         }
         if (resolvedValue == null) {
