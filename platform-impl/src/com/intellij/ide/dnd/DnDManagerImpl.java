@@ -506,44 +506,49 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
   private class MyDragGestureListnener implements DragGestureListener {
     public void dragGestureRecognized(DragGestureEvent dge) {
-      final DnDSource source = getSource(dge.getComponent());
-      if (source == null) return;
+      try {
+        final DnDSource source = getSource(dge.getComponent());
+        if (source == null) return;
 
-      DnDAction action = getDnDActionForPlatformAction(dge.getDragAction());
-      if (source.canStartDragging(action, dge.getDragOrigin())) {
+        DnDAction action = getDnDActionForPlatformAction(dge.getDragAction());
+        if (source.canStartDragging(action, dge.getDragOrigin())) {
 
-        if (myCurrentEvent == null) {
-          // Actually, under Linux it is possible to get 2 or more dragGestureRecognized calls for single drag
-          // operation. To reproduce:
-          // 1. Do D-n-D in Styles tree
-          // 2. Make an attempt to do D-n-D in Services tree
-          // 3. Do D-n-D in Styles tree again.
+          if (myCurrentEvent == null) {
+            // Actually, under Linux it is possible to get 2 or more dragGestureRecognized calls for single drag
+            // operation. To reproduce:
+            // 1. Do D-n-D in Styles tree
+            // 2. Make an attempt to do D-n-D in Services tree
+            // 3. Do D-n-D in Styles tree again.
 
-          LOG.debug("Starting dragging for " + action);
-          hideCurrentHighlighter();
-          final DnDDragStartBean dnDDragStartBean = source.startDragging(action, dge.getDragOrigin());
-          myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
-          myCurrentEvent.setOrgPoint(dge.getDragOrigin());
+            LOG.debug("Starting dragging for " + action);
+            hideCurrentHighlighter();
+            final DnDDragStartBean dnDDragStartBean = source.startDragging(action, dge.getDragOrigin());
+            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
+            myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
-          Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
-          if (pair == null) {
-            pair = new Pair<Image, Point>(EMPTY_IMAGE, new Point(0, 0));
+            Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
+            if (pair == null) {
+              pair = new Pair<Image, Point>(EMPTY_IMAGE, new Point(0, 0));
+            }
+
+            if (!DragSource.isDragImageSupported()) {
+              // not all of the platforms supports image dragging (mswin doesn't, for example).
+              myCurrentEvent.putUserData(DRAGGED_IMAGE_KEY, pair);
+            }
+
+            // mac osx fix: it will draw a border with size of the dragged component if there is no image provided.
+            dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, new MyDragSourceListener(source));
+
+            // check if source is also a target
+            //        DnDTarget target = getTarget(dge.getComponent());
+            //        if( target != null ) {
+            //          target.update(myCurrentEvent);
+            //        }
           }
-
-          if (!DragSource.isDragImageSupported()) {
-            // not all of the platforms supports image dragging (mswin doesn't, for example).
-            myCurrentEvent.putUserData(DRAGGED_IMAGE_KEY, pair);
-          }
-
-          // mac osx fix: it will draw a border with size of the dragged component if there is no image provided.
-          dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, new MyDragSourceListener(source));
-
-          // check if source is also a target
-          //        DnDTarget target = getTarget(dge.getComponent());
-          //        if( target != null ) {
-          //          target.update(myCurrentEvent);
-          //        }
         }
+      }
+      catch (InvalidDnDOperationException e) {
+        LOG.info(e);
       }
     }
   }
