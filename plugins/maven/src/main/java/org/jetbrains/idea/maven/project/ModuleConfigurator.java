@@ -1,12 +1,13 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
@@ -18,7 +19,6 @@ import org.jetbrains.idea.maven.core.util.Strings;
 
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class ModuleConfigurator {
@@ -46,7 +46,7 @@ public class ModuleConfigurator {
     myMavenProject = mavenProject;
   }
 
-  public void config(List<ModifiableRootModel> rootModels) {
+  public ModifiableRootModel config() {
     myModel = new RootModelAdapter(myModule);
     myModel.init(myMavenProject);
 
@@ -54,13 +54,13 @@ public class ModuleConfigurator {
     configDependencies();
     configLanguageLevel();
 
-    rootModels.add(myModel.getRootModel());
+    return myModel.getRootModel();
   }
 
-  public void configFacets() {
+  public void configFacets(ModuleRootModel rootModel) {
     for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
       if (importer.isApplicable(myMavenProject, myProfiles)) {
-        importer.process(myModule, myMavenProject, myProfiles, myMapping, myModuleModel);
+        importer.process(myModule, rootModel, myMavenProject, myProfiles, myMapping, myModuleModel);
       }
     }
   }

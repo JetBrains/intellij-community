@@ -28,6 +28,7 @@ public class ProjectConfigurator {
   private MavenToIdeaMapping myMapping;
   private Collection<String> myProfiles;
   private MavenImporterSettings mySettings;
+  private Collection<ModifiableRootModel> myRootModelsToCommit;
 
   public static void config(Project p,
                             MavenProjectModel projectModel,
@@ -105,17 +106,18 @@ public class ProjectConfigurator {
     });
 
 
-    List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
+    Map<Module, ModifiableRootModel> rootModels = new HashMap<Module, ModifiableRootModel>();
     for (Map.Entry<MavenProject,Module> each : modules.entrySet()) {
-      createModuleConfigurator(each.getValue(), each.getKey()).config(rootModels);
+      ModifiableRootModel model = createModuleConfigurator(each.getValue(), each.getKey()).config();
+      rootModels.put(each.getValue(), model);
     }
 
-    ProjectRootManager.getInstance(myProject).multiCommit(rootModels.toArray(new ModifiableRootModel[rootModels.size()]));
 
     for (Map.Entry<MavenProject,Module> each : modules.entrySet()) {
-      createModuleConfigurator(each.getValue(), each.getKey()).configFacets();
+      createModuleConfigurator(each.getValue(), each.getKey()).configFacets(rootModels.get(each.getValue()));
     }
 
+    myRootModelsToCommit = rootModels.values();
 
     MavenProjectsManager.getInstance(myProject).setImportedModules(new ArrayList<Module>(modules.values()));
   }
@@ -188,6 +190,8 @@ public class ProjectConfigurator {
       RootModelAdapter a = new RootModelAdapter(module);
       a.resolveModuleDependencies(myMapping.getLibraryNameToModuleName());
     }
-    myModuleModel.commit();
+
+    ModifiableRootModel[] rootModels = myRootModelsToCommit.toArray(new ModifiableRootModel[myRootModelsToCommit.size()]);
+    ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel, rootModels);
   }
 }

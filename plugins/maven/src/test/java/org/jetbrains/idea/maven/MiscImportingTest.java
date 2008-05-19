@@ -21,7 +21,6 @@ public class MiscImportingTest extends MavenImportingTestCase {
   }
 
   public void testImportingFiresRootChangesOnlyOnce() throws Exception {
-    if (ignore()) return;
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -30,7 +29,6 @@ public class MiscImportingTest extends MavenImportingTestCase {
   }
 
   public void testResolvingFiresRootChangesOnlyOnce() throws Exception {
-    if (ignore()) return;
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -42,7 +40,14 @@ public class MiscImportingTest extends MavenImportingTestCase {
   }
 
   public void testFacetsDoNotFireRootsChanges() throws Exception {
-    if (ignore()) return;
-    fail();
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>war</packaging>");
+
+    assertEquals(1, count);
+
+    resolveProject();
+    assertEquals(2, count);
   }
 }
