@@ -243,6 +243,9 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
 
     protected void commandCancelled() {
+      if (!DebuggerManagerThreadImpl.isManagerThread()) {
+        return;
+      }
       // context thread is not suspended
       final DebuggerContextImpl context = getDebuggerContext();
 
