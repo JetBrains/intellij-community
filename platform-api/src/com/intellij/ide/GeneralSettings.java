@@ -80,7 +80,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @Deprecated
   private boolean myUseUTFGuessing;
   @Deprecated
-  private boolean readCharsetSettings;
+  private boolean oldCharsetSettingsHaveBeenRead;
 
   public static GeneralSettings getInstance(){
     return ApplicationManager.getApplication().getComponent(GeneralSettings.class);
@@ -281,11 +281,11 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
       if (OPTION_CHARSET.equals(name)) {
         //for migration
         myCharset = CharsetToolkit.forName(value);
-        readCharsetSettings = true;
+        oldCharsetSettingsHaveBeenRead = true;
       }
       if (OPTION_UTFGUESSING.equals(name)) {
         myUseUTFGuessing = Boolean.valueOf(value).booleanValue();
-        readCharsetSettings = true;
+        oldCharsetSettingsHaveBeenRead = true;
       }
 
       if (OPTION_USE_DEFAULT_BROWSER.equals(name)) {
@@ -488,10 +488,12 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     mySearchInBackground = searchInBackground;
   }
 
-  public void migrateCharsetSettingsTo(EncodingManager encodingProjectManager) {
-    if (readCharsetSettings) {
+  // returns true if something has been migrated
+  public boolean migrateCharsetSettingsTo(EncodingManager encodingProjectManager) {
+    if (oldCharsetSettingsHaveBeenRead) {
       encodingProjectManager.setEncoding(null, myCharset);
       encodingProjectManager.setUseUTFGuessing(null, myUseUTFGuessing);
     }
+    return oldCharsetSettingsHaveBeenRead;
   }
 }

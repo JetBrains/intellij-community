@@ -327,13 +327,16 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.RENAME_VARIABLES_INPLACE = val;
   }
 
-  public void migrateCharsetSettingsTo(EncodingManager encodingManager) {
+  // returns true if something has been migrated
+  public boolean migrateCharsetSettingsTo(EncodingManager encodingManager) {
     if (myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME != null) {
       Charset charset = CharsetToolkit.forName(myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME);
       if (charset != null) {
         encodingManager.setDefaultCharsetForPropertiesFiles(null, charset);
         encodingManager.setNative2AsciiForPropertiesFiles(null, myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES);
       }
+      return true;
     }
+    return false;
   }
 }
