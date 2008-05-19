@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
 import org.jetbrains.idea.svn.integrate.SvnChangeListHelper;
 
@@ -31,13 +32,15 @@ public class ConfigureBranchesAction extends AnAction {
     presentation.setVisible(true);
     
     final ChangeList[] cls = e.getData(VcsDataKeys.CHANGE_LISTS);
-    presentation.setEnabled((cls != null) && (cls.length > 0));
+    presentation.setEnabled((cls != null) && (cls.length > 0) &&
+                            (SvnVcs.getInstance(project).getName().equals(((CommittedChangeList) cls[0]).getVcs().getName())));
   }
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final ChangeList[] cls = e.getData(VcsDataKeys.CHANGE_LISTS);
-    if ((cls == null) || (cls.length == 0)) {
+    if ((cls == null) || (cls.length == 0) ||
+        (! SvnVcs.getInstance(project).getName().equals(((CommittedChangeList) cls[0]).getVcs().getName()))) {
       return;
     }
     final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(
