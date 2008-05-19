@@ -170,12 +170,15 @@ public class GroovyCompiler implements TranslatingCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        ModifiableRootModel model = manager.getModifiableModel();
-        for (Library library : model.getModuleLibraryTable().getLibraries()) {
-          for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-            String path = file.getPath();
-            if (path != null && path.endsWith(".jar!/")) {
-              buffer.append(StringUtil.trimEnd(path, "!/")).append(File.pathSeparator);
+        for (OrderEntry entry: manager.getOrderEntries()) {
+          if (entry instanceof LibraryOrderEntry) {
+            Library library = ((LibraryOrderEntry) entry).getLibrary();
+            if (library == null) continue;
+            for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+              String path = file.getPath();
+              if (path != null && path.endsWith(".jar!/")) {
+                buffer.append(StringUtil.trimEnd(path, "!/")).append(File.pathSeparator);
+              }
             }
           }
         }
