@@ -31,7 +31,7 @@ public abstract class XmlExtension {
 
   private static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<XmlExtension>("com.intellij.xml.xmlExtension");
 
-  protected static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
+  public static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
 
   public static XmlExtension getExtension(XmlFile file) {
     for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {

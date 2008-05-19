@@ -450,7 +450,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     final XmlAttribute[] attributes = tag.getAttributes();
     ProgressManager progressManager = ProgressManager.getInstance();
-    final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
+    final PsiFile containingFile = tag.getContainingFile();
+    final XmlExtension extension = containingFile instanceof XmlFile ?
+                                   XmlExtension.getExtension((XmlFile)containingFile) :
+                                   XmlExtension.DEFAULT_EXTENSION;
     for (XmlAttribute tagAttribute : attributes) {
       progressManager.checkCanceled();
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
