@@ -45,7 +45,7 @@ import java.util.Set;
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers;
-  public static final Map<String, Set<String>> ourMethodIncompatibleModifiers;
+  private static final Map<String, Set<String>> ourMethodIncompatibleModifiers;
   private static final Map<String, Set<String>> ourFieldIncompatibleModifiers;
   private static final Map<String, Set<String>> ourClassIncompatibleModifiers;
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers;
@@ -208,7 +208,7 @@ public class HighlightUtil {
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
-    for (final String incompatible : incompatibles) {
+    for (String incompatible : incompatibles) {
       if (modifierList.hasModifierProperty(incompatible)) {
         return incompatible;
       }
@@ -1056,16 +1056,13 @@ public class HighlightUtil {
 
     final PsiExpression[] initializers = arrayInitializer.getInitializers();
     for (PsiExpression expression : initializers) {
-
       final HighlightInfo info = checkArrayInitalizerCompatibleTypes(expression, componentType);
       if (info != null) {
         holder.add(info);
 
-        if (! arrayTypeFixChecked) {
-          final TypeGetter<PsiExpression> typeGetter = (expression.getType() == null) ?
-                                                       ByInnerInitializerTypeGetter.ourInstance : PsiExpressionTypeGetter.ourInstance;
-          final Pair<PsiType, Boolean> checkResult = sameType(initializers, typeGetter);
-          fix = Boolean.TRUE.equals(checkResult.second) ? new VariableArrayTypeFix(arrayInitializer, checkResult.first) : null;
+        if (!arrayTypeFixChecked) {
+          final PsiType checkResult = sameType(initializers);
+          fix = checkResult != null ? new VariableArrayTypeFix(arrayInitializer, checkResult) : null;
           arrayTypeFixChecked = true;
         }
         if (fix != null) {
@@ -1075,54 +1072,33 @@ public class HighlightUtil {
     }
   }
 
-  private interface TypeGetter<T> {
-    @Nullable
-    PsiType getType(T element);
+  @Nullable
+  private static PsiType getArrayInitializerType(final PsiArrayInitializerExpression element) {
+    final PsiType typeCheckResult = sameType(element.getInitializers());
+    if (typeCheckResult != null) {
+      return typeCheckResult.createArrayType();
+    }
+    return null;
   }
 
-  private static class PsiExpressionTypeGetter implements TypeGetter<PsiExpression> {
-    private static final PsiExpressionTypeGetter ourInstance = new PsiExpressionTypeGetter();
-
-    @Nullable
-    public PsiType getType(final PsiExpression element) {
-      return element.getType();
-    }
-  }
-
-  private static class ByInnerInitializerTypeGetter implements TypeGetter<PsiExpression> {
-    private static final ByInnerInitializerTypeGetter ourInstance = new ByInnerInitializerTypeGetter();
-    @Nullable
-    public PsiType getType(final PsiExpression element) {
-      if (element instanceof PsiArrayInitializerExpression) {
-        return getArrayInitializerType((PsiArrayInitializerExpression) element);
-      } else {
-        return element.getType();
-      }
-    }
-
-    @Nullable
-    private PsiType getArrayInitializerType(final PsiArrayInitializerExpression element) {
-      final Pair<PsiType, Boolean> typeCheckResult = sameType(element.getInitializers(), this);
-      if (Boolean.TRUE.equals(typeCheckResult.second)) {
-        return typeCheckResult.first.createArrayType();
-      }
-      return null;
-    }
-  }
-
-  private static<T> Pair<PsiType, Boolean> sameType(final T[] expressions, final TypeGetter<T> typeGetter) {
+  private static PsiType sameType(PsiExpression[] expressions) {
     PsiType type = null;
-    for (T expression : expressions) {
-      final PsiType currentType = typeGetter.getType(expression);
+    for (PsiExpression expression : expressions) {
+      final PsiType currentType;
+      if (expression instanceof PsiArrayInitializerExpression) {
+        currentType = getArrayInitializerType((PsiArrayInitializerExpression)expression);
+      }
+      else {
+        currentType = expression.getType();
+      }
       if (type == null) {
         type = currentType;
-        continue;
       }
-      if (! Comparing.equal(type, currentType)) {
-        return new Pair<PsiType, Boolean>(null, Boolean.FALSE);
+      else if (!type.equals(currentType)) {
+        return null;
       }
     }
-    return new Pair<PsiType, Boolean>(type, Boolean.TRUE);
+    return type;
   }
 
   @Nullable

@@ -619,8 +619,7 @@ public class HighlightMethodUtil {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       start, end,
                                                       JavaErrorMessages.message("missing.method.body"));
-      if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList(),
-                                                HighlightUtil.ourMethodIncompatibleModifiers) == null) {
+      if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null) {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, true, false);
         QuickFixAction.registerQuickFixAction(errorResult, fix);
       }
@@ -1083,7 +1082,7 @@ public class HighlightMethodUtil {
 
       PsiMethod constructor = result == null ? null : result.getElement();
 
-      if ((constructor == null) || (! result.isApplicable())) {
+      if (constructor == null || !result.isApplicable()) {
         final List<HighlightInfo> resultHighlighting = new ArrayList<HighlightInfo>();
         ChangeStringLiteralToCharInMethodCallFix.createHighLighting(constructors, constructorCall, resultHighlighting);
         holder.addAll(resultHighlighting);
