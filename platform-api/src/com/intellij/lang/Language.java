@@ -17,6 +17,8 @@ package com.intellij.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +41,6 @@ public abstract class Language {
   private final String myID;
   private final String[] myMimeTypes;
   public static final Language ANY = new Language("", "") { };
-
-  private FileType myFileType;
 
   protected Language(@NonNls String id) {
     this(id, "");
@@ -107,11 +107,18 @@ public abstract class Language {
 
   @Nullable
   public FileType getAssociatedFileType() {
-    return myFileType;
-  }
-
-  public void associateFileType(FileType type) {
-    myFileType = type;
+    final FileType[] types = FileTypeManager.getInstance().getRegisteredFileTypes();
+    for (final FileType fileType : types) {
+      if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == this) {
+        return fileType;
+      }
+    }
+    for (final FileType fileType : types) {
+      if (fileType instanceof LanguageFileType && isKindOf(((LanguageFileType)fileType).getLanguage())) {
+        return fileType;
+      }
+    }
+    return null;
   }
 
   @Nullable

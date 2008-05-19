@@ -16,7 +16,6 @@
 
 package com.intellij.lang.properties.psi;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +39,7 @@ public class PropertiesElementFactory {
   public static PropertiesFile createPropertiesFile(@NotNull Project project, @NonNls @NotNull String text) {
     @NonNls String filename = "dummy." + StdFileTypes.PROPERTIES.getDefaultExtension();
     return (PropertiesFile)PsiFileFactory.getInstance(PsiManager.getInstance(project).getProject())
-      .createFileFromText(filename, StdLanguages.PROPERTIES.getAssociatedFileType(), text);
+      .createFileFromText(filename, StdFileTypes.PROPERTIES, text);
   }
 
   @NotNull

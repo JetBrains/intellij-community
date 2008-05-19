@@ -38,7 +38,6 @@ public abstract class LanguageFileType implements FileType{
    */
   protected LanguageFileType(@NotNull final Language language) {
     myLanguage = language;
-    myLanguage.associateFileType(this);
   }
 
   /**
