@@ -528,7 +528,18 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if (root == null) {
         try {
           final int rootId = myRecords.findRootRecord(rootUrl);
-          root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+          if (basePath.length() > 0) {
+            root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+          }
+          else {
+            // fake root for windows
+            root = new VirtualDirectoryImpl(basePath, null, fs, rootId) {
+              @NotNull
+              public VirtualFile[] getChildren() {
+                return getRoots(fs);
+              }
+            };
+          }
           if (!fs.exists(root)) return null;
 
           copyRecordFromDelegateFS(rootId, 0, root, fs);
