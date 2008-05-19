@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class ClsAnnotationParameterListImpl extends ClsElementImpl implements PsiAnnotationParameterList {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationParameterListImpl");
 
-  private ClsNameValuePairImpl[] myAttributes;
+  private volatile ClsNameValuePairImpl[] myAttributes;
   private final PsiAnnotation myParent;
   private static final ClsNameValuePairImpl[] EMPTY_PARAMS = new ClsNameValuePairImpl[0];
 
