@@ -83,7 +83,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (PsiReference reference : references) {
-        assert reference.isSoft() : "dom reference should be soft: " + reference;
+        assert reference.isSoft() : "dom reference should be soft: " + reference + " (created by " + converter + ")";
       }
     }
     // creating "declaration" reference
