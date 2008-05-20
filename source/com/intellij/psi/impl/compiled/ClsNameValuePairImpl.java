@@ -28,8 +28,10 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    myNameIdentifier.appendMirrorText(0, buffer);
-    buffer.append(" = ");
+    if (myNameIdentifier.getText() != null) {
+      myNameIdentifier.appendMirrorText(0, buffer);
+      buffer.append(" = ");
+    }
     ((ClsElementImpl)myMemberValue).appendMirrorText(0, buffer);
   }
 
@@ -39,8 +41,11 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     myMirror = element;
 
     PsiNameValuePair mirror = (PsiNameValuePair)SourceTreeToPsiMap.treeElementToPsi(element);
-      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
-      ((ClsElementImpl)getValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getValue()));
+    final PsiIdentifier mirrorIdentifier = mirror.getNameIdentifier();
+    if (mirrorIdentifier != null) {
+      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorIdentifier));
+    }
+    ((ClsElementImpl)getValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getValue()));
   }
 
   @NotNull

@@ -3,6 +3,8 @@ package com.intellij.psi;
 import com.intellij.extapi.psi.StubPath;
 import com.intellij.extapi.psi.StubPathBuilder;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -177,7 +179,11 @@ public abstract class PsiAnchor {
     }
 
     public PsiElement retrieve() {
-      return StubPathBuilder.resolve(myFile, myPath);
+      return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+        public PsiElement compute() {
+          return StubPathBuilder.resolve(myFile, myPath);
+        }
+      });
     }
 
     public PsiFile getFile() {

@@ -5,23 +5,25 @@ package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaPsiFacade {
-  private static UserDataCache<JavaPsiFacade, Project, Void> IN_PROJECT_CACHE = new UserDataCache<JavaPsiFacade, Project, Void>("IN_PROJ_CACHE") {
-    protected JavaPsiFacade compute(final Project project, final Void p) {
-      return ServiceManager.getService(project, JavaPsiFacade.class);
-    }
-  };
+  private static final ConcurrentWeakHashMap<Project, JavaPsiFacade> INSTANCE_CACHE = new ConcurrentWeakHashMap<Project, JavaPsiFacade>();
 
   public static JavaPsiFacade getInstance(Project project) {
-    return IN_PROJECT_CACHE.get(project, null);
+    JavaPsiFacade facade = INSTANCE_CACHE.get(project);
+    if (facade == null) {
+      facade = ServiceManager.getService(project, JavaPsiFacade.class);
+      INSTANCE_CACHE.put(project, facade);
+    }
+
+    return facade;
   }
 
   static {
