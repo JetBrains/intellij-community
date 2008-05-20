@@ -40,6 +40,7 @@ import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -221,7 +222,20 @@ public class SvnChangeList implements CommittedChangeList {
       myChanges.add(deletedChange);
     }
     for(String path: myChangedPaths) {
-      myChanges.add(new ExternallyRenamedChange(createRevisionLazily(path, true), createRevisionLazily(path, false)));
+      boolean moveAndChange = false;
+      for (String addedPath : myAddedPaths) {
+        if (SVNPathUtil.isAncestor(addedPath, path)) {
+          moveAndChange = true;
+          final Change renamedChange =
+              new Change(createRevisionLazily(myCopiedAddedPaths.get(addedPath), true), createRevisionLazily(path, false));
+          renamedChange.getMoveRelativePath(myVcs.getProject());
+          myChanges.add(renamedChange);
+          break;
+        }
+      }
+      if (! moveAndChange) {
+        myChanges.add(new ExternallyRenamedChange(createRevisionLazily(path, true), createRevisionLazily(path, false)));
+      }
     }
   }
 
