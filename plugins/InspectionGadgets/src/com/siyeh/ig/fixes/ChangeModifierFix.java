@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -43,11 +44,13 @@ public class ChangeModifierFix extends InspectionGadgetsFix{
 
     public void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException{
-        final PsiElement nameToken = descriptor.getPsiElement();
-        final PsiModifierListOwner method =
-                (PsiModifierListOwner) nameToken.getParent();
-        assert method != null;
-        final PsiModifierList modifiers = method.getModifierList();
+        final PsiElement element = descriptor.getPsiElement();
+        final PsiModifierListOwner modifierListOwner =
+                PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
+        if (modifierListOwner == null) {
+            return;
+        }
+        final PsiModifierList modifiers = modifierListOwner.getModifierList();
         if (modifiers == null) {
             return;
         }

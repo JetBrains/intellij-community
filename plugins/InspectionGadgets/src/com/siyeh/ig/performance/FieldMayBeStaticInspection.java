@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MakeStaticFix;
+import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
     }
 
     public InspectionGadgetsFix buildFix(Object... infos) {
-        return new MakeStaticFix();
+        return new ChangeModifierFix(PsiModifier.STATIC);
     }
 
     private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {

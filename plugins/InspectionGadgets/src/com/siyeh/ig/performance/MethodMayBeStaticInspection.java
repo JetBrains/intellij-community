@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,19 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TestUtils;
@@ -62,25 +60,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
     }
 
     protected InspectionGadgetsFix buildFix(Object... infos){
-        return new MethodMayBeStaticFix();
-    }
-
-    private static class MethodMayBeStaticFix extends InspectionGadgetsFix{
-
-        @NotNull
-        public String getName(){
-            return InspectionGadgetsBundle.message("make.static.quickfix");
-        }
-
-        public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
-            final PsiJavaToken classNameToken = (PsiJavaToken)
-                    descriptor.getPsiElement();
-            final PsiMethod innerClass = (PsiMethod) classNameToken.getParent();
-            assert innerClass != null;
-            final PsiModifierList modifiers = innerClass.getModifierList();
-            modifiers.setModifierProperty(PsiModifier.STATIC, true);
-        }
+        return new ChangeModifierFix(PsiModifier.STATIC);
     }
 
     public JComponent createOptionsPanel(){
