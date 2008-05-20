@@ -130,11 +130,11 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                 final String newExpression;
                 if (ParenthesesUtils.getPrecedence(expression) <=
                         ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-                    newExpression = '(' + expectedType.getPresentableText() +
+                    newExpression = '(' + expectedType.getCanonicalText() +
                             ')' + expression.getText();
                 }
                 else {
-                    newExpression = '(' + expectedType.getPresentableText() +
+                    newExpression = '(' + expectedType.getCanonicalText() +
                             ")(" + expression.getText() + ')';
                 }
                 replaceExpression(expression, newExpression);

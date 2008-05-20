@@ -58,19 +58,18 @@ public class ForeachStatementInspection extends BaseInspection{
             final PsiElement element = descriptor.getPsiElement();
             final PsiForeachStatement statement =
                     (PsiForeachStatement) element.getParent();
-
             final JavaCodeStyleManager codeStyleManager =
                     JavaCodeStyleManager.getInstance(project);
             assert statement != null;
             final PsiExpression iteratedValue = statement.getIteratedValue();
-            final PsiParameter iterationParameter =
-                    statement.getIterationParameter();
-            final PsiType type = iterationParameter.getType();
             if (iteratedValue == null) {
                 return;
             }
             @NonNls final StringBuffer newStatement = new StringBuffer();
+            final PsiParameter iterationParameter =
+                    statement.getIterationParameter();
             if(iteratedValue.getType() instanceof PsiArrayType){
+                final PsiType type = iterationParameter.getType();
                 final String index =
                         codeStyleManager.suggestUniqueVariableName("i",
                                 statement, true);
@@ -84,7 +83,7 @@ public class ForeachStatementInspection extends BaseInspection{
                 newStatement.append(index);
                 newStatement.append("++)");
                 newStatement.append("{ ");
-                newStatement.append(type .getPresentableText());
+                newStatement.append(type.getCanonicalText());
                 newStatement.append(' ');
                 newStatement.append(iterationParameter .getName());
                 newStatement.append(" = ");
@@ -93,11 +92,19 @@ public class ForeachStatementInspection extends BaseInspection{
                 newStatement.append(index);
                 newStatement.append("];");
             } else{
+                final PsiType iteratedType = iteratedValue.getType();
+                final PsiType type;
+                if (iteratedType instanceof PsiClassType) {
+                    final PsiClassType classType = (PsiClassType) iteratedType;
+                    final PsiType[] types = classType.getParameters();
+                    type = types[0];
+                } else {
+                    type = iterationParameter.getType();
+                }
                 final String iterator =
                         codeStyleManager.suggestUniqueVariableName("it",
                                 statement, true);
-                final String typeText = type
-                        .getPresentableText();
+                final String typeText = type.getCanonicalText();
                 newStatement.append("for(java.util.Iterator<");
                 newStatement.append(typeText);
                 newStatement.append("> ");
