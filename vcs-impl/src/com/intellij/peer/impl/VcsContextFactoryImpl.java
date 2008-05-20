@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.actions.DirectoryDetector;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
@@ -14,6 +13,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -46,7 +46,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
     });
   }
 
-  public FilePath createFilePathOn(final File file, final DirectoryDetector detector) {
+  public FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector) {
     return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
       public FilePath compute() {
         VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -55,7 +55,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
           return FilePathImpl.create(file);
         }
 
-        return FilePathImpl.create(file, detector.isDirectory());
+        return FilePathImpl.create(file, detector.fun(file).booleanValue());
       }
     });
   }

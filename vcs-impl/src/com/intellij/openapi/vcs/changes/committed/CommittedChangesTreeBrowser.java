@@ -210,11 +210,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     if (!selection.equals(mySelectedChangeLists)) {
       mySelectedChangeLists = selection;
-      myChangesView.setChangesToDisplay(collectChanges(mySelectedChangeLists));
+      myChangesView.setChangesToDisplay(collectChanges(mySelectedChangeLists, false));
     }
   }
 
-  private static List<Change> collectChanges(final List<CommittedChangeList> selectedChangeLists) {
+  private static List<Change> collectChanges(final List<CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
     List<Change> result = new ArrayList<Change>();
     Collections.sort(selectedChangeLists, new Comparator<CommittedChangeList>() {
       public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
@@ -222,7 +222,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     });
     for(CommittedChangeList cl: selectedChangeLists) {
-      for(Change c: cl.getChanges()) {
+      final Collection<Change> changes = withMovedTrees ? cl.getChangesWithMovedTrees() : cl.getChanges();
+      for(Change c: changes) {
         addOrReplaceChange(result, c);
       }
     }
@@ -299,8 +300,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   public void calcData(DataKey key, DataSink sink) {
     if (key.equals(VcsDataKeys.CHANGES)) {
-      final Collection<Change> changes = collectChanges(getSelectedChangeLists());
+      final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+    }
+    else if (key.equals(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN)) {
+      final Collection<Change> changes = collectChanges(getSelectedChangeLists(), true);
+      sink.put(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN, changes.toArray(new Change[changes.size()]));
     }
     else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
       final List<CommittedChangeList> lists = getSelectedChangeLists();
@@ -309,7 +314,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     }
     else if (key.equals(PlatformDataKeys.NAVIGATABLE_ARRAY)) {
-      final Collection<Change> changes = collectChanges(getSelectedChangeLists());
+      final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
       sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
     }

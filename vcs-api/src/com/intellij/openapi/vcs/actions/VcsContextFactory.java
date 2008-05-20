@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -68,13 +69,13 @@ public interface VcsContextFactory {
 
   /**
    * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses
-   * {@link DirectoryDetector#isDirectory()} to determine if the file is a directory.
+   * detector to determine if the file is a directory.
    *
    * @param file the file for which the FilePath should be created.
    * @param detector - called to get to know whether the file is directory, if local file is not found
    * @return the FilePath instance.
    */
-  FilePath createFilePathOn(final File file, final DirectoryDetector detector);
+  FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector);
 
   /**
    * Creates a FilePath corresponding to the specified path in a VCS repository. Does not try to locate

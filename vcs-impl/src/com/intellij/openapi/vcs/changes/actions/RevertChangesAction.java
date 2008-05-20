@@ -30,7 +30,7 @@ public class RevertChangesAction extends AnAction {
     final Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
     final VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
-    final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
+    final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
     final List<Change> changesList = new ArrayList<Change>();
     Collections.addAll(changesList, changes);
 

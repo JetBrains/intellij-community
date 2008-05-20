@@ -45,18 +45,24 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
       myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings(), null, null);
       myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
         public void execute(final Project project, final VirtualFile vcsRoot) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              myComponent.passCachedListsToListener(myBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE),
-                                                    project, vcsRoot);
-            }
-          });
+          sendUpdateCachedListsMessage(vcsRoot);
         }
       });
     }
     else {
       myComponent.setProvider(provider);
+      // called from listener to notification of vcs root changes
+      sendUpdateCachedListsMessage(null);
     }
+  }
+
+  private void sendUpdateCachedListsMessage(final VirtualFile vcsRoot) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        myComponent.passCachedListsToListener(myBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE),
+                                              myProject, vcsRoot);
+      }
+    });
   }
 
   public JComponent initContent() {

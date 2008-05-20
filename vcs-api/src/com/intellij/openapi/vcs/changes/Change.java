@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +42,9 @@ public class Change {
   private final ContentRevision myAfterRevision;
   private final FileStatus myFileStatus;
   private String myMoveRelativePath;
-  private boolean myRenamed;
-  private boolean myMoved;
-  private boolean myRenameOrMoveCached = false;
+  protected boolean myRenamed;
+  protected boolean myMoved;
+  protected boolean myRenameOrMoveCached = false;
 
 
   public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
@@ -163,5 +164,13 @@ public class Change {
   @NonNls
   public String toString() {
     return "Change:" + myBeforeRevision + " -> " + myAfterRevision; 
+  }
+
+  public String getRenamedText() {
+    return VcsBundle.message("change.file.renamed.from.text", myBeforeRevision.getFile().getName());
+  }
+
+  public String getMovedText(final Project project) {
+    return VcsBundle.message("change.file.moved.from.text", getMoveRelativePath(project));
   }
 }

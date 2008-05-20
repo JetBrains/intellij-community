@@ -64,6 +64,14 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     return null;
   }
 
+  public Collection<Change> getChangesWithMovedTrees() {
+    return getChangesWithMovedTreesImpl(this);
+  }
+
+  public static Collection<Change> getChangesWithMovedTreesImpl(final CommittedChangeList list) {
+    return list.getChanges();
+  }
+
   public Collection<Change> getChanges() {
     return myChanges;
   }

@@ -16,9 +16,11 @@
 
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -36,4 +38,6 @@ public interface CommittedChangeList extends ChangeList {
    * @return the VCS instance.
    */
   AbstractVcs getVcs();
+
+  Collection<Change> getChangesWithMovedTrees();
 }

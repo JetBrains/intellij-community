@@ -4,13 +4,13 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
@@ -45,14 +45,11 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
     final Color changeColor = change.getFileStatus().getColor();
     renderer.appendFileName(vFile, fileName, changeColor);
 
-    if (change.isRenamed() || change.isMoved()) {
-      FilePath beforePath = change.getBeforeRevision().getFile();
-      if (change.isRenamed()) {
-        renderer.append(" - renamed from "+ beforePath.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      }
-      else {
-        renderer.append(" - moved from " + change.getMoveRelativePath(myProject), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      }
+    if (change.isRenamed()) {
+      renderer.append(" " + change.getRenamedText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+    else if (change.isMoved()) {
+      renderer.append(" " + change.getMovedText(myProject), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     if (renderer.isShowFlatten()) {
