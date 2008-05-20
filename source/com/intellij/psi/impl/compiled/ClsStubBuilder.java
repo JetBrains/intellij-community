@@ -346,9 +346,13 @@ public class ClsStubBuilder {
       }
       stub.setReturnType(TypeInfo.fromString(returnType));
 
+      boolean nonStaticInnerClassConstructor = isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
       for (int i = 0; i < paramCount; i++) {
+        if (nonStaticInnerClassConstructor && i == 0) continue;
+
         String arg = args.get(i);
         boolean isEllipsisParam = isVarargs && i == (paramCount - 1);
         final TypeInfo typeInfo = TypeInfo.fromString(arg);
