@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,7 +49,7 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
   private StringMatcher myTagName = StringMatcher.ANY;
 
   @NotNull @NonNls
-  private String myTagNamespace = "";
+  private Set<String> myTagNamespace = Collections.emptySet();
 
   @NotNull @NonNls
   private String myValuePattern = "";
@@ -69,11 +70,11 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
 
   @NotNull
   public String getTagNamespace() {
-    return myTagNamespace;
+    return StringUtil.join(myTagNamespace.toArray(new String[myTagNamespace.size()]), "|");
   }
 
   public void setTagNamespace(@NotNull @NonNls String tagNamespace) {
-    myTagNamespace = tagNamespace;
+    myTagNamespace = new TreeSet<String>(Arrays.asList(tagNamespace.split("\\|")));
   }
 
   @NotNull
@@ -146,7 +147,7 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     if (!myTagName.matches(tag.getLocalName())) {
       return false;
     }
-    if (!myTagNamespace.equals(tag.getNamespace())) {
+    if (!myTagNamespace.contains(tag.getNamespace())) {
       return false;
     }
     return true;
@@ -180,8 +181,8 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
   }
 
   protected void writeExternalImpl(Element e) {
-    JDOMExternalizer.write(e, "TAGNAME", myTagName.getPattern());
-    JDOMExternalizer.write(e, "TAGNAMESPACE", myTagNamespace);
+    JDOMExternalizer.write(e, "TAGNAME", getTagName());
+    JDOMExternalizer.write(e, "TAGNAMESPACE", getTagNamespace());
     JDOMExternalizer.write(e, "VALUE_PATTERN", myValuePattern);
     JDOMExternalizer.write(e, "XPATH_CONDITION", myXPathCondition);
   }

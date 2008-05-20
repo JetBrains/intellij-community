@@ -41,6 +41,7 @@
 
     <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.inject.validation.InspectionProvider"/>
     <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.pattern.InspectionProvider"/>
+    <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
   </extensions>
 
   <application-components>

@@ -25,6 +25,7 @@ import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,36 +43,53 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     return Collections.singletonList(TextRange.from(1, element.getTextLength() - 2));
   }
 
-  public boolean isApplicable(@NotNull PsiLiteralExpression element) {
-    PsiElement e = element;
-    while (!(e.getParent() instanceof PsiExpressionList)) {
-      e = e.getParent();
-      if (!(e instanceof PsiExpression)) {
-        return false;
-      }
-    }
+  public boolean isApplicable(@NotNull final PsiLiteralExpression element) {
+    final PsiExpression expression = findParameterExpression(element);
+    return expression != null && isApplicable(expression);
+  }
 
-    final PsiParameter parameter = PsiUtilEx.getParameterForArgument((PsiExpression)e);
-    if (parameter == null) {
-      return false;
+  public boolean isApplicable(@NotNull final PsiExpression element) {
+    final PsiMethod method;
+    final int parameterIndex;
+    final int curParameterCount;
+    final PsiElement tmp = element.getParent();
+    final PsiElement elementParent = tmp instanceof PsiArrayInitializerMemberValue? tmp.getParent() : tmp;
+    if (elementParent instanceof PsiReturnStatement) {
+      parameterIndex = -1;
+      curParameterCount = 0;
+      method = PsiTreeUtil.getParentOfType(elementParent, PsiMethod.class, true, true);
     }
-    final PsiElement _parent = parameter.getParent();
-    final PsiParameterList list;
-    if (_parent instanceof PsiParameterList) {
-      list = (PsiParameterList)_parent;
+    else if (elementParent instanceof PsiNameValuePair) {
+      parameterIndex = -1;
+      curParameterCount = 0;
+      final PsiReference psiReference = elementParent.getReference();
+      final PsiElement resolved = psiReference == null? null : psiReference.resolve();
+      method = resolved instanceof PsiMethod? (PsiMethod)resolved : null;
     }
     else {
-      return false;
+      final PsiParameter parameter = PsiUtilEx.getParameterForArgument(element);
+      if (parameter == null) {
+        return false;
+      }
+      final PsiElement _parent = parameter.getParent();
+      final PsiParameterList list;
+      if (_parent instanceof PsiParameterList) {
+        list = (PsiParameterList)_parent;
+      }
+      else {
+        return false;
+      }
+      parameterIndex = list.getParameterIndex(parameter);
+      curParameterCount = list.getParametersCount();
+      method = PsiTreeUtil.getParentOfType(list, PsiMethod.class, true, true);
     }
-    final PsiMethod method = PsiTreeUtil.getParentOfType(list, PsiMethod.class, true, true);
     if (method == null) return false;
     final String methodName = method.getName();
-    final int parameterIndex = list.getParameterIndex(parameter);
     boolean found = false;
     for (MethodInfo info : myParameterMap.values()) {
-      if (info.methodName.equals(methodName)
-          && info.paramFlags.length == list.getParametersCount()
-          && info.paramFlags[parameterIndex]) {
+      if (!info.methodName.equals(methodName)) continue;
+      if (parameterIndex == -1 && info.returnFlag
+          || info.paramFlags.length == curParameterCount && info.paramFlags[parameterIndex]) {
         found = true;
         break;
       }
@@ -149,7 +167,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
       selection[i] = Boolean.parseBoolean(list.get(i));
     }
     final String methodSignature = fixSignature(JDOMExternalizer.readString(e, "METHOD"), false);
-    myParameterMap.put(methodSignature, new MethodInfo(methodSignature, selection));
+    myParameterMap.put(methodSignature, new MethodInfo(methodSignature, selection, false));
   }
 
   protected void writeExternalImpl(Element e) throws WriteExternalException {
@@ -197,24 +215,21 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     final String className = getClassName();
     if (StringUtil.isEmpty(className)) return "<unnamed>";
     MethodInfo singleInfo = null;
-    main : for (MethodInfo info : myParameterMap.values()) {
-      for (boolean b : info.paramFlags) {
-        if (b) {
-          if (singleInfo == null) {
-            singleInfo = info;
-            break;
-          }
-          else {
-            singleInfo = null;
-            break main;
-          }
+    for (MethodInfo info : myParameterMap.values()) {
+      if (info.isEnabled()) {
+        if (singleInfo == null) {
+          singleInfo = info;
+        }
+        else {
+          singleInfo = null;
+          break;
         }
       }
     }
     final String name = singleInfo != null
                         ? StringUtil.getShortName(className) + "." + singleInfo.methodName
                         : StringUtil.getShortName(className);
-    return name + " ("+StringUtil.getPackageName(className)+")";
+    return "["+getInjectedLanguageId()+"] " + name + " ("+StringUtil.getPackageName(className)+")";
   }
 
   public static String fixSignature(final String signature, final boolean parameterNames) {
@@ -247,6 +262,21 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     return sb.toString();
   }
 
+  @Nullable
+  public static PsiExpression findParameterExpression(@NotNull final PsiExpression element) {
+    PsiElement e = element;
+    PsiElement parent = e.getParent();
+    while (!(parent instanceof PsiExpressionList ||
+             parent instanceof PsiNameValuePair ||
+             parent instanceof PsiReturnStatement ||
+             parent instanceof PsiArrayInitializerMemberValue)) {
+      e = parent;
+      if (!(e instanceof PsiExpression)) return null;
+      parent = parent.getParent();
+    }
+    return (PsiExpression)e;
+  }
+
   public static class MethodInfo {
     @NotNull
     final String methodSignature;
@@ -255,15 +285,20 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     @NotNull
     final boolean[] paramFlags;
 
-    public MethodInfo(@NotNull final String methodSignature, @NotNull final boolean[] paramFlags) {
+    boolean returnFlag;
+
+    public MethodInfo(@NotNull final String methodSignature, @NotNull final boolean[] paramFlags, final boolean returnFlag) {
       this.methodSignature = methodSignature;
       this.paramFlags = paramFlags;
+      this.returnFlag = returnFlag;
       methodName = calcMethodName(methodSignature);
     }
 
     public MethodInfo(@NotNull final String methodSignature, @NotNull final String paramFlags) {
       this.methodSignature = methodSignature;
-      this.paramFlags = calcParamFlags(paramFlags);
+      final Pair<boolean[], Boolean> flags = parseFlags(paramFlags);
+      returnFlag = flags.second.booleanValue();
+      this.paramFlags = flags.first;
       methodName = calcMethodName(methodSignature);
     }
 
@@ -277,20 +312,31 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
       return paramFlags;
     }
 
+    public boolean isReturnFlag() {
+      return returnFlag;
+    }
+
+    public void setReturnFlag(final boolean returnFlag) {
+      this.returnFlag = returnFlag;
+    }
+
     public boolean isEnabled() {
+      if (returnFlag) return true;
       for (boolean b : paramFlags) {
         if (b) return true;
       }
       return false;
     }
 
-    private static boolean[] calcParamFlags(final String string) {
-      final StringTokenizer st = new StringTokenizer(string, ",");
+    private static Pair<boolean[], Boolean> parseFlags(final String string) {
+      final int returnIdx = string.indexOf(':');
+      boolean returnFlag = returnIdx != -1 && Boolean.parseBoolean(string.substring(0, returnIdx));
+      final StringTokenizer st = new StringTokenizer(string.substring(returnIdx+1), ",");
       final boolean[] result = new boolean[st.countTokens()];
       for (int i = 0; i < result.length; i++) {
         result[i] = Boolean.parseBoolean(st.nextToken());
       }
-      return result;
+      return Pair.create(result, returnFlag);
     }
 
     private static String calcMethodName(final String methodSignature) {
@@ -300,6 +346,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
 
     public String getFlagsString() {
       final StringBuilder result = new StringBuilder();
+      result.append(returnFlag).append(':');
       boolean first = true;
       for (boolean b : paramFlags) {
         if (first) first = false;
@@ -310,7 +357,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     }
 
     public MethodInfo copy() {
-      return new MethodInfo(methodSignature, paramFlags.clone());
+      return new MethodInfo(methodSignature, paramFlags.clone(), returnFlag);
     }
 
     public boolean equals(final Object o) {
@@ -319,6 +366,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
 
       final MethodInfo that = (MethodInfo)o;
 
+      if (returnFlag != that.returnFlag) return false;
       if (!methodName.equals(that.methodName)) return false;
       if (!methodSignature.equals(that.methodSignature)) return false;
       if (!Arrays.equals(paramFlags, that.paramFlags)) return false;
@@ -331,6 +379,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
       result = methodSignature.hashCode();
       result = 31 * result + methodName.hashCode();
       result = 31 * result + Arrays.hashCode(paramFlags);
+      result = 31 * result + (returnFlag ? 1 : 0);
       return result;
     }
   }

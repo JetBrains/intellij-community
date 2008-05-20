@@ -49,6 +49,42 @@
         <setting name="APPLY_TO_SUBTAGS" value="true"/>
       </XmlTagInjection>
     </entry>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="HQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="query"/>
+        <setting name="TAGNAMESPACE" value="http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="APPLY_TO_SUBTAGS" value="false"/>
+      </XmlTagInjection>
+    </entry>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="JPAQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="query"/>
+        <setting name="TAGNAMESPACE" value="http://java.sun.com/xml/ns/persistence/orm"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="APPLY_TO_SUBTAGS" value="false"/>
+      </XmlTagInjection>
+    </entry>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="EJBQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="ejb-ql"/>
+        <setting name="TAGNAMESPACE" value="http://java.sun.com/xml/ns/javaee|http://java.sun.com/xml/ns/j2ee|http://java.sun.com/j2ee/dtds/ejb-jar_1_0.dtd|http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd|http://java.sun.com/dtd/ejb-jar_2_0.dtd"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="APPLY_TO_SUBTAGS" value="false"/>
+      </XmlTagInjection>
+    </entry>
   </TAGS>
   <ATTRIBUTES>
     <entry>
@@ -414,6 +450,170 @@
         <setting name="CLASS" value="org.springframework.jdbc.object.UpdatableSqlQuery"/>
         <setting name="APPLY_IN_HIERARCHY" value="true"/>
         <SIGNATURES name="UpdatableSqlQuery(javax.sql.DataSource, java.lang.String)" value="false,true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.jdbc.core.JdbcOperations"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="batchUpdate(java.lang.String, org.springframework.jdbc.core.BatchPreparedStatementSetter)" value="true,false"/>
+        <SIGNATURES name="batchUpdate(java.lang.String[])" value="true"/>
+        <SIGNATURES name="execute(java.lang.String)" value="true"/>
+        <SIGNATURES name="execute(java.lang.String, org.springframework.jdbc.core.PreparedStatementCallback)" value="true,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.ResultSetExtractor)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowCallbackHandler)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.ResultSetExtractor)"
+                    value="true,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowCallbackHandler)"
+                    value="true,false,false"/>
+        <SIGNATURES name="query(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)" value="true,false,false"/>
+        <SIGNATURES
+            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.ResultSetExtractor)"
+            value="true,false,false"/>
+        <SIGNATURES
+            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowCallbackHandler)"
+            value="true,false,false"/>
+        <SIGNATURES
+            name="query(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter, org.springframework.jdbc.core.RowMapper)"
+            value="true,false,false"/>
+        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.ResultSetExtractor)" value="true,false"/>
+        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowCallbackHandler)" value="true,false"/>
+        <SIGNATURES name="query(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
+        <SIGNATURES name="queryForInt(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForInt(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForList(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Class)" value="true,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
+        <SIGNATURES name="queryForList(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
+        <SIGNATURES name="queryForLong(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForLong(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForMap(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForMap(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Class)" value="true,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], java.lang.Class)" value="true,false,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], int[], org.springframework.jdbc.core.RowMapper)"
+                    value="true,false,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], java.lang.Class)" value="true,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, java.lang.Object[], org.springframework.jdbc.core.RowMapper)"
+                    value="true,false,false"/>
+        <SIGNATURES name="queryForObject(java.lang.String, org.springframework.jdbc.core.RowMapper)" value="true,false"/>
+        <SIGNATURES name="queryForRowSet(java.lang.String)" value="true"/>
+        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="queryForRowSet(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="update(java.lang.String)" value="true"/>
+        <SIGNATURES name="update(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="update(java.lang.String, java.lang.Object[], int[])" value="true,false,false"/>
+        <SIGNATURES name="update(java.lang.String, org.springframework.jdbc.core.PreparedStatementSetter)" value="true,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="JPAQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="javax.persistence.EntityManager"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="createQuery(java.lang.String)" value="true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="JPAQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="javax.persistence.NamedQuery"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="query()" value="true:"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="javax.persistence.NamedNativeQuery"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="query()" value="true:"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="JPAQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.hibernate.Session"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="createQuery(java.lang.String)" value="true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.hibernate.Session"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="createSQLQuery(java.lang.String)" value="true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="HQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.orm.hibernate3.HibernateOperations"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="bulkUpdate(java.lang.String)" value="true"/>
+        <SIGNATURES name="bulkUpdate(java.lang.String, java.lang.Object)" value="true,false"/>
+        <SIGNATURES name="bulkUpdate(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="find(java.lang.String)" value="true"/>
+        <SIGNATURES name="find(java.lang.String, java.lang.Object)" value="true,false"/>
+        <SIGNATURES name="find(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="findByNamedParam(java.lang.String, java.lang.String, java.lang.Object)" value="true,false,false"/>
+        <SIGNATURES name="findByNamedParam(java.lang.String, java.lang.String[], java.lang.Object[])" value="true,false,false"/>
+        <SIGNATURES name="findByValueBean(java.lang.String, java.lang.Object)" value="true,false"/>
+        <SIGNATURES name="iterate(java.lang.String)" value="true"/>
+        <SIGNATURES name="iterate(java.lang.String, java.lang.Object)" value="true,false"/>
+        <SIGNATURES name="iterate(java.lang.String, java.lang.Object[])" value="true,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="JPAQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.orm.jpa.JpaOperations"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="find(java.lang.String)" value="true"/>
+        <SIGNATURES name="find(java.lang.String, java.lang.Object...)" value="true,false"/>
+        <SIGNATURES name="findByNamedParams(java.lang.String, java.util.Map)"
+                    value="true,false"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="HQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="org.springframework.orm.hibernate.HibernateOperations"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="find(java.lang.String)" value="true"/>
+        <SIGNATURES name="find(java.lang.String, java.lang.Object)" value="true,false"/>
+        <SIGNATURES name="find(java.lang.String, java.lang.Object, net.sf.hibernate.type.Type)" value="true,false,false"/>
+        <SIGNATURES name="find(java.lang.String, java.lang.Object[])" value="true,false"/>
+        <SIGNATURES name="find(java.lang.String, java.lang.Object[], net.sf.hibernate.type.Type[])" value="true,false,false"/>
       </MethodParameterInjection>
     </entry>
   </PARAMETERS>

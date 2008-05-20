@@ -68,6 +68,8 @@ public final class Configuration implements ExportableApplicationComponent, Name
   private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
   @NonNls
   private static final String ENTRY_NAME = "entry";
+  @NonNls
+  private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
 
   // injection configuration
 
@@ -87,6 +89,8 @@ public final class Configuration implements ExportableApplicationComponent, Name
   private String myPatternAnnotation;
   @NotNull
   private String mySubstAnnotation;
+
+  private boolean myResolveReferences;
 
   // cached annotation name pairs
 
@@ -121,6 +125,8 @@ public final class Configuration implements ExportableApplicationComponent, Name
     setLanguageAnnotation(JDOMExternalizerUtil.readField(element, LANGUAGE_ANNOTATION_NAME));
     setPatternAnnotation(JDOMExternalizerUtil.readField(element, PATTERN_ANNOTATION_NAME));
     setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
+    final String resolveReferences = JDOMExternalizerUtil.readField(element, RESOLVE_REFERENCES);
+    setResolveReferences(resolveReferences == null || Boolean.parseBoolean(resolveReferences));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -132,6 +138,7 @@ public final class Configuration implements ExportableApplicationComponent, Name
     JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
     JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
     JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
+    JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, String.valueOf(myResolveReferences));
   }
 
   @SuppressWarnings({"unchecked"})
@@ -291,6 +298,14 @@ public final class Configuration implements ExportableApplicationComponent, Name
       }
     }
     return n;
+  }
+
+  public boolean isResolveReferences() {
+    return myResolveReferences;
+  }
+
+  public void setResolveReferences(final boolean resolveReferences) {
+    myResolveReferences = resolveReferences;
   }
 
   public enum InstrumentationType {

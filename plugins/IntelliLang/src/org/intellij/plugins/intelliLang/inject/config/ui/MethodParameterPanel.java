@@ -108,13 +108,11 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         setIcon(o instanceof PsiMethod ? Icons.METHOD_ICON : o instanceof PsiParameter ? Icons.PARAMETER_ICON : null);
         final String name;
         if (o instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)o;
-          name = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+          name = PsiFormatUtil.formatMethod((PsiMethod)o, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
                                             PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
         }
         else if (o instanceof PsiParameter) {
-          final PsiParameter parameter = (PsiParameter)o;
-          name = PsiFormatUtil.formatVariable(parameter, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
+          name = PsiFormatUtil.formatVariable((PsiParameter)o, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
         }
         else name = null;
         final boolean missing = o instanceof PsiElement && !((PsiElement)o).isPhysical();
@@ -180,6 +178,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           return false;
         }
+        if (isInjectable(method.getReturnType())) return true;
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         return null != ContainerUtil.find(parameters, new Condition<PsiParameter>() {
           public boolean value(PsiParameter p) {
@@ -190,7 +189,8 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     });
     for (PsiMethod method : methods) {
       final String signature = buildSignature(method);
-      myData.put(method, new MethodParameterInjection.MethodInfo(signature, new boolean[method.getParameterList().getParametersCount()]));
+      myData.put(method, new MethodParameterInjection.MethodInfo(
+          signature, new boolean[method.getParameterList().getParametersCount()], false));
     }
   }
 
@@ -253,6 +253,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       if (method != null) {
         final MethodParameterInjection.MethodInfo curInfo = myData.get(method);
         System.arraycopy(info.getParamFlags(), 0, curInfo.getParamFlags(), 0, Math.min(info.getParamFlags().length, curInfo.getParamFlags().length));
+        curInfo.setReturnFlag(info.isReturnFlag());
       }
       else {
         final PsiMethod missingMethod = makeMethod(info.getMethodSignature());
@@ -303,12 +304,23 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
           public Boolean valueOf(DefaultMutableTreeNode o) {
             final Object userObject = o.getUserObject();
-            if (userObject instanceof PsiParameter) {
+            final boolean result;
+            final PsiType type;
+            if (userObject instanceof PsiMethod) {
+              result = myData.get((PsiMethod)userObject).isReturnFlag();
+              type = ((PsiMethod)userObject).getReturnType();
+            }
+            else if (userObject instanceof PsiParameter) {
               final PsiMethod method = getMethod(o);
               final int index = method.getParameterList().getParameterIndex((PsiParameter)userObject);
-              return myData.get(method).getParamFlags()[index];
+              result = myData.get(method).getParamFlags()[index];
+              type = ((PsiParameter)userObject).getType();
             }
-            return null;
+            else {
+              type = null;
+              result = false;
+            }
+            return !isInjectable(type)? null : result;
           }
 
           public int getWidth(JTable table) {
@@ -326,7 +338,10 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
           public void setValue(DefaultMutableTreeNode o, Boolean value) {
             final Object userObject = o.getUserObject();
-            if (userObject instanceof PsiParameter) {
+            if (userObject instanceof PsiMethod) {
+              myData.get((PsiMethod)userObject).setReturnFlag(Boolean.TRUE.equals(value));
+            }
+            else if (userObject instanceof PsiParameter) {
               final PsiMethod method = getMethod(o);
               final int index = method.getParameterList().getParameterIndex((PsiParameter)userObject);
               myData.get(method).getParamFlags()[index] = Boolean.TRUE.equals(value);
@@ -338,7 +353,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
           }
 
           public boolean isCellEditable(DefaultMutableTreeNode o) {
-            return o.getUserObject() instanceof PsiParameter && isInjectable(((PsiParameter)o.getUserObject()).getType());
+            return valueOf(o) != null;
           }
 
           private PsiMethod getMethod(final DefaultMutableTreeNode o) {
@@ -350,8 +365,8 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     };
   }
 
-  public static boolean isInjectable(PsiType type) {
-    return type.equalsToText("java.lang.String") || type.equalsToText("java.lang.String...") || type.equalsToText("java.lang.String[]");
+  public static boolean isInjectable(@Nullable final PsiType type) {
+    return type != null && (type.equalsToText("java.lang.String") || type.equalsToText("java.lang.String...") || type.equalsToText("java.lang.String[]"));
   }
 
   private class BrowseClassListener implements ActionListener {
