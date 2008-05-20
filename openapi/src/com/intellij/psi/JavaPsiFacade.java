@@ -17,6 +17,7 @@ public abstract class JavaPsiFacade {
   private static final ConcurrentWeakHashMap<Project, JavaPsiFacade> INSTANCE_CACHE = new ConcurrentWeakHashMap<Project, JavaPsiFacade>();
 
   public static JavaPsiFacade getInstance(Project project) {
+    /*
     JavaPsiFacade facade = INSTANCE_CACHE.get(project);
     if (facade == null) {
       facade = ServiceManager.getService(project, JavaPsiFacade.class);
@@ -24,6 +25,9 @@ public abstract class JavaPsiFacade {
     }
 
     return facade;
+    */
+    
+    return ServiceManager.getService(project, JavaPsiFacade.class);
   }
 
   static {
