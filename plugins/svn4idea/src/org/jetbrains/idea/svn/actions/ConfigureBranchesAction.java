@@ -5,15 +5,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
-import org.jetbrains.idea.svn.integrate.SvnChangeListHelper;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 
 public class ConfigureBranchesAction extends AnAction {
   public void update(final AnActionEvent e) {
@@ -43,8 +41,7 @@ public class ConfigureBranchesAction extends AnAction {
         (! SvnVcs.getInstance(project).getName().equals(((CommittedChangeList) cls[0]).getVcs().getName()))) {
       return;
     }
-    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(
-        SvnChangeListHelper.getAnyFileUnderChangeList((CommittedChangeList) cls[0]));
-    BranchConfigurationDialog.configureBranches(project, vcsRoot);
+    final SvnChangeList svnList = (SvnChangeList) cls[0];
+    BranchConfigurationDialog.configureBranches(project, svnList.getVcsRoot());
   }
 }

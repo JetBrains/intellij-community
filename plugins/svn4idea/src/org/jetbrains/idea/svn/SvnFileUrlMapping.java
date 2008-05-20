@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
-interface SvnFileUrlMapping {
+public interface SvnFileUrlMapping {
   @Nullable
   SVNURL getUrlForFile(final String path);
 

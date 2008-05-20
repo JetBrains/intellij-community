@@ -2,8 +2,10 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.actions.DirectoryDetector;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * @author yole
@@ -38,12 +40,12 @@ public class SvnRepositoryLocation implements RepositoryLocation {
   }
 
   @Nullable
-  protected FilePath detectWhenNoRoot(final String fullPath, final DirectoryDetector detector) {
+  protected FilePath detectWhenNoRoot(final String fullPath, final NotNullFunction<File, Boolean> detector) {
     return null;
   }
 
   @Nullable
-  public FilePath getLocalPath(final String fullPath, final DirectoryDetector detector) {
+  public FilePath getLocalPath(final String fullPath, final NotNullFunction<File, Boolean> detector) {
     if (myRootFile == null) {
       return detectWhenNoRoot(fullPath, detector);
     }

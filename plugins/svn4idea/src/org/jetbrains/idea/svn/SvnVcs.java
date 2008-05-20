@@ -620,7 +620,7 @@ public class SvnVcs extends AbstractVcs {
     return child != null && child.isDirectory();
   }
 
-  public SvnFileUrlMappingRefresher getRootsInfoGetter() {
+  public SvnFileUrlMapping getSvnFileUrlMapping() {
     return myRootsInfo;
   }
 }

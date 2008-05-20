@@ -57,6 +57,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private final SvnVcs myVcs;
   private final MessageBusConnection myConnection;
 
+  public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
+
   public SvnCommittedChangesProvider(final Project project) {
     myProject = project;
     myVcs = SvnVcs.getInstance(myProject);
@@ -68,8 +70,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             for (CommittedChangeList committedChangeList : cachedList) {
-              if ((committedChangeList instanceof SvnChangeList) && (((SvnChangeList) committedChangeList).getVcsRoot().equals(vcsRoot))) {
-                ((SvnChangeList) committedChangeList).forceReloadBranchInfo();
+              if ((committedChangeList instanceof SvnChangeList) &&
+                  ((vcsRoot == null) || (vcsRoot.equals(((SvnChangeList)committedChangeList).getVcsRoot())))) {
+                ((SvnChangeList) committedChangeList).forceReloadCachedInfo(vcsRoot == null);
               }
             }
           }
@@ -178,7 +181,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public int getFormatVersion() {
-    return 1;
+    return VERSION_WITH_COPY_PATHS_ADDED;
   }
 
   public void writeChangeList(final DataOutput dataStream, final SvnChangeList list) throws IOException {
@@ -186,7 +189,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public SvnChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
-    return new SvnChangeList(myVcs, (SvnRepositoryLocation) location, stream);
+    return new SvnChangeList(myVcs, (SvnRepositoryLocation) location, stream,
+                             VERSION_WITH_COPY_PATHS_ADDED >= getFormatVersion());
   }
 
   public boolean isMaxCountSupported() {
