@@ -25,6 +25,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Tree;
@@ -32,6 +33,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -66,6 +69,7 @@ public class PsiViewerDialog extends DialogWrapper {
   private JPanel myPanel;
   private JPanel myChoicesPanel;
   private JCheckBox myShowTreeNodesCheckBox;
+  private JComboBox myDialectsComboBox;
 
   public PsiViewerDialog(Project project,boolean modal) {
     super(project, true);
@@ -148,6 +152,29 @@ public class PsiViewerDialog extends DialogWrapper {
       myFileTypeButtons[i] = button;
     }
 
+    final ChangeListener listener = new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
+        updateDialectsCombo();
+      }
+    };
+    final Enumeration<AbstractButton> buttonEnum = bg.getElements();
+    while (buttonEnum.hasMoreElements()) {
+      buttonEnum.nextElement().addChangeListener(listener);
+    }
+    updateDialectsCombo();
+    myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(final JList list,
+                                                    final Object value,
+                                                    final int index,
+                                                    final boolean isSelected,
+                                                    final boolean cellHasFocus) {
+        final Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value == null) setText("<no dialect>");
+        return result;
+      }
+    });
+
     myRbExpression.setSelected(true);
 
     myChoicesPanel.setLayout(new BorderLayout());
@@ -170,6 +197,36 @@ public class PsiViewerDialog extends DialogWrapper {
     myTextPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
     super.init();
+  }
+
+  private void updateDialectsCombo() {
+    final SortedComboBoxModel<Language> model = new SortedComboBoxModel<Language>(new Comparator<Language>() {
+      public int compare(final Language o1, final Language o2) {
+        if (o1 == null) return o2 == null? 0 : -1;
+        if (o2 == null) return 1;
+        return o1.getID().compareTo(o2.getID());
+      }
+    });
+    for (int i = 0; i < myFileTypeButtons.length; i++) {
+      JRadioButton fileTypeButton = myFileTypeButtons[i];
+      if (fileTypeButton.isSelected()) {
+        final FileType type = myFileTypes[i];
+        if (type instanceof LanguageFileType) {
+          final Language baseLang = ((LanguageFileType)type).getLanguage();
+          final HashSet<Language> result = new HashSet<Language>();
+          result.add(null);
+          for (Language language : Language.getRegisteredLanguages()) {
+            if (language.getBaseLanguage() == baseLang) {
+              result.add(language);
+            }
+          }
+          model.setAll(result);
+        }
+        break;
+      }
+    }
+    myDialectsComboBox.setModel(model);
+    myDialectsComboBox.setVisible(model.getSize() > 1);
   }
 
   protected JComponent createCenterPanel() {
