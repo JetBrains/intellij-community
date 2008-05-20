@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
@@ -109,7 +110,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
       executor = createTask(myRunnerParameters, mavenCore.getState(), mySettings);
       openToolWindow(executor.createConsole(project));
       ProgressManager.getInstance().run(new Task.Backgroundable(project, executor.getCaption(), true) {
-        public void run(ProgressIndicator indicator) {
+        public void run(@NotNull ProgressIndicator indicator) {
           executor.execute();
         }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.direct.IdeaXml;
@@ -103,7 +104,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
 
   public boolean setRootDirectory(final String path) {
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
-      public void run(ProgressIndicator indicator) {
+      public void run(@NotNull ProgressIndicator indicator) {
         getParameters().workspace = EclipseWorkspace.load(path, new EclipseProjectReader.Options());
         if (indicator != null && indicator.isCanceled()) {
           return;
