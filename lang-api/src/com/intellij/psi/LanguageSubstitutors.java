@@ -22,7 +22,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
 
   @NotNull
   public Language substituteLanguage(@NotNull Language lang, @NotNull VirtualFile file, @NotNull Project project) {
-    for (final LanguageSubstitutor substitutor : allForLanguage(lang)) {
+    for (final LanguageSubstitutor substitutor : forKey(lang)) {
       final Language language = substitutor.getLanguage(file, project);
       if (language != null) return language;
     }

@@ -180,10 +180,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (file == null) return null;
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
-    if (document instanceof DocumentWindow) {
+    final PsiFile file = element.getContainingFile();
+    final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
+    if (virtualFile instanceof VirtualFileWindow) {
       PsiElement host = file.getContext();
       if (host != null) {
         return (PsiLanguageInjectionHost)host;

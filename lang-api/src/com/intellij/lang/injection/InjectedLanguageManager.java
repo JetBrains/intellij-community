@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class InjectedLanguageManager implements ProjectComponent {
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.multiHostInjector");
@@ -37,6 +38,7 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
     return project.getComponent(InjectedLanguageManager.class);
   }
 
+  @Nullable
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element);
 
   public abstract TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange);

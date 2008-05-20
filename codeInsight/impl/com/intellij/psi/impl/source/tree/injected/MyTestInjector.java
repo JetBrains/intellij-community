@@ -36,7 +36,7 @@ public class MyTestInjector {
     myInjector = injectVariousStuffEverywhere(myPsiManager);
 
     Project project = myPsiManager.getProject();
-    Language ql = findLanguageByID("FQL");
+    Language ql = findLanguageByID("JPAQL");
     Language js = findLanguageByID("JavaScript");
     myQLInPlaceInjector = registerForStringVarInitializer(project, ql, "ql", null, null);
     myJSInPlaceInjector = registerForStringVarInitializer(project, js, "js", null, null);
@@ -87,7 +87,7 @@ public class MyTestInjector {
   private static LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
     LanguageInjector myInjector = new LanguageInjector() {
       public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject) {
-        Language ql = findLanguageByID("FQL");
+        Language ql = findLanguageByID("JPAQL");
         Language js = findLanguageByID("JavaScript");
         if (host instanceof XmlAttributeValue) {
           XmlAttributeValue value = (XmlAttributeValue)host;
