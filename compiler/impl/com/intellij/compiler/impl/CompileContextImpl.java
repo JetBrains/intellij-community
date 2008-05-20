@@ -276,6 +276,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myOutputDirectories;
   }
 
+  @NotNull
   public Set<VirtualFile> getTestOutputDirectories() {
     return myTestOutputDirectories;
   }

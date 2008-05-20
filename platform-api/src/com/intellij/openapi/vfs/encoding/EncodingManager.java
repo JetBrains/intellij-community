@@ -7,9 +7,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeListener;
 import java.nio.charset.Charset;
 import java.util.Collection;
-import java.beans.PropertyChangeListener;
 
 /**
  * @author cdr
@@ -40,8 +40,11 @@ public abstract class EncodingManager implements ApplicationComponent {
   // returns name of default charset configured in File|Template project settings|File encoding|Project
   public abstract Charset getDefaultCharset();
 
+  /**
+   * @return null for system-default
+   */
   public abstract Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
-  public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, Charset charset);
+  public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
   public abstract void addPropertyChangeListener(PropertyChangeListener listener);
 

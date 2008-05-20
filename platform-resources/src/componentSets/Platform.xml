@@ -156,7 +156,8 @@
     </component>
     
     <component>
-      <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</implementation-class>
+      <interface-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</interface-class>
+      <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

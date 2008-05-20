@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +63,8 @@ public class JavaParameters {
    * If the instance of the JavaParameters is used to configure app server startup script, 
    * then null is returned.
    */
-  public @Nullable Sdk getJdk() {
+  @Nullable
+  public Sdk getJdk() {
     return myJdk;
   }
 
@@ -113,6 +115,10 @@ public class JavaParameters {
       return;
     }
 
+    Charset encoding = EncodingProjectManager.getInstance(module.getProject()).getEncoding(null, true);
+    if (encoding != null) {
+      myCharset = encoding;
+    }
     ProjectRootsTraversing.collectRoots(module, (classPathType & TESTS_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS, myClassPath);
   }
 

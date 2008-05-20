@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +58,8 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     myProject = project;
   }
 
-  public @NotNull ProcessingItem[] getProcessingItems(final CompileContext context) {
+  @NotNull
+  public ProcessingItem[] getProcessingItems(final CompileContext context) {
     if (!RmicSettings.getInstance(myProject).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
@@ -164,7 +166,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
                 .remove(); // the object was remote and currently is not, so remove it from the list and do not generate stubs for it
             }
           }
-          if (dirItems.size() > 0) {
+          if (!dirItems.isEmpty()) {
             final RmicProcessingItem[] successfullyProcessed = invokeRmic(context, parserPool, pair.getFirst(), dirItems, pair.getSecond());
             processed.addAll(Arrays.asList(successfullyProcessed));
           }
@@ -213,7 +215,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     });
 
     if (LOG.isDebugEnabled()) {
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       for (int idx = 0; idx < cmdLine.length; idx++) {
         if (idx > 0) {
           buf.append(" ");
@@ -263,7 +265,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     @NonNls final List<String> commandLine = new ArrayList<String>();
     commandLine.add(compilerPath);
 
-    CompilerUtil.addLocaleOptions(commandLine, true);
+    CompilerUtil.addLocaleOptions(commandLine, true, EncodingProjectManager.getInstance(myProject).getDefaultCharset().name());
 
     commandLine.add("-verbose");
 
@@ -283,7 +285,8 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     return commandLine.toArray(new String[commandLine.size()]);
   }
 
-  public @NotNull String getDescription() {
+  @NotNull
+  public String getDescription() {
     return CompilerBundle.message("rmi.compiler.description");
   }
 

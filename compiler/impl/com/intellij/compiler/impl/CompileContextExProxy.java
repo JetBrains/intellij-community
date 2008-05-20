@@ -38,6 +38,7 @@ public class CompileContextExProxy implements CompileContextEx {
     myDelegate.addMessage(message);
   }
 
+  @NotNull
   public Set<VirtualFile> getTestOutputDirectories() {
     return myDelegate.getTestOutputDirectories();
   }

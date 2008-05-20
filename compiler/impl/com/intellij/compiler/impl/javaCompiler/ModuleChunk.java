@@ -38,7 +38,7 @@ public class ModuleChunk extends Chunk<Module> {
     myContext = context;
     for (final Module module : chunk.getNodes()) {
       final Set<VirtualFile> set = moduleToFilesMap.get(module);
-      if (set != null && set.size() > 0) {
+      if (set != null && !set.isEmpty()) {
         myModuleToFilesMap.put(module, set.toArray(new VirtualFile[set.size()]));
       }
       else {

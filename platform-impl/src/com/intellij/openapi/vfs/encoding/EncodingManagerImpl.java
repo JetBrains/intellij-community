@@ -26,7 +26,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class EncodingManagerImpl extends EncodingManager {
-  protected final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   @NonNls
   @NotNull
@@ -55,7 +55,7 @@ public class EncodingManagerImpl extends EncodingManager {
   public void setMapping(final Map<VirtualFile, Charset> map) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      EncodingProjectManager.getInstance(project).setMapping(map);
+      ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project)).setMapping(map);
     }
   }
 
@@ -138,5 +138,8 @@ public class EncodingManagerImpl extends EncodingManager {
 
   public void removePropertyChangeListener(PropertyChangeListener listener){
     myPropertyChangeSupport.removePropertyChangeListener(listener);
+  }
+  void firePropertyChange(final String propertyName, final Object oldValue, final Object newValue) {
+    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 }

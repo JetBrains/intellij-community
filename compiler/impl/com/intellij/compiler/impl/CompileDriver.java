@@ -34,7 +34,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -57,6 +57,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -75,10 +76,10 @@ public class CompileDriver {
   private Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
 
   private ProjectRootManager myProjectRootManager;
-  private static final @NonNls String VERSION_FILE_NAME = "version.dat";
-  private static final @NonNls String LOCK_FILE_NAME = "in_progress.dat";
+  @NonNls private static final String VERSION_FILE_NAME = "version.dat";
+  @NonNls private static final String LOCK_FILE_NAME = "in_progress.dat";
 
-  private static final @NonNls boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
+  @NonNls private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
 
   private final FileProcessingCompilerAdapterFactory myProcessingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myPackagingCompilerAdapterFactory;
@@ -89,7 +90,7 @@ public class CompileDriver {
     myCachesDirectoryPath = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
     myShouldClearOutputDirectory = CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
 
-    myGenerationCompilerModuleToOutputDirMap = new com.intellij.util.containers.HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
+    myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
 
     final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class);
     if (generatingCompilers.length > 0) {
@@ -965,7 +966,8 @@ public class CompileDriver {
     return forTestSources? outputs.getSecond() : outputs.getFirst();
   }
 
-  private static @NonNls String getGenerationOutputPath(IntermediateOutputCompiler compiler, Module module, final boolean forTestSources) {
+  @NonNls
+  private static String getGenerationOutputPath(IntermediateOutputCompiler compiler, Module module, final boolean forTestSources) {
     final String generatedCompilerDirectoryPath = CompilerPaths.getGeneratedDataDirectory(module.getProject(), compiler).getPath();
     final String moduleDir = module.getName().replace(' ', '_') + "." + Integer.toHexString(module.getModuleFilePath().hashCode());
     return generatedCompilerDirectoryPath.replace(File.separatorChar, '/') + "/" + moduleDir + "/" + (forTestSources? "test" : "production");
@@ -1021,7 +1023,7 @@ public class CompileDriver {
       }
 
       if (onlyCheckStatus) {
-        if ((toGenerate.isEmpty() && pathsToRemove.isEmpty())) {
+        if (toGenerate.isEmpty() && pathsToRemove.isEmpty()) {
           return false;
         }
         if (LOG.isDebugEnabled()) {
@@ -1238,7 +1240,7 @@ public class CompileDriver {
     return !toCompile.isEmpty() || wereFilesDeleted[0];
   }
 
-  private Set<String> getSourcesWithOutputRemoved(TranslatingCompilerStateCache cache) throws IOException {
+  private static Set<String> getSourcesWithOutputRemoved(TranslatingCompilerStateCache cache) throws IOException {
     final Set<String> set = new HashSet<String>();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
@@ -1289,7 +1291,7 @@ public class CompileDriver {
               if (className == null || isUnderOutputDir(currentOutputDir, outputPath, className)) {
                 if (!compiler.isCompilableFile(sourceFile, context)) {
                   // the file was compilable but at the moment it is not, so the result of previous compilation should be deleted
-                  shouldDelete = true;  
+                  shouldDelete = true;
                 }
                 else {
                   shouldDelete = false;
@@ -1566,7 +1568,7 @@ public class CompileDriver {
     
     final Collection<String> urls = cache.getUrls();
     final List<String> urlsToRemove = new ArrayList<String>();
-    if (urls.size() > 0) {
+    if (!urls.isEmpty()) {
       context.getProgressIndicator().pushState();
       context.getProgressIndicator().setText(CompilerBundle.message("progress.processing.outdated.files"));
       ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -1777,7 +1779,7 @@ public class CompileDriver {
     }
 
     if (!modulesWithoutOutputPathSpecified.isEmpty()) {
-      showNotSpecifiedError("error.output.not.specified", modulesWithoutOutputPathSpecified, ContentEntriesEditor.NAME);
+      showNotSpecifiedError("error.output.not.specified", modulesWithoutOutputPathSpecified, CommonContentEntriesEditor.NAME);
       return false;
     }
 
@@ -1912,12 +1914,12 @@ public class CompileDriver {
     return false;
   }
 
-  private void showNotSpecifiedError(final @NonNls String resourceId, List<String> modules, String tabNameToSelect) {
+  private void showNotSpecifiedError(@NonNls final String resourceId, List<String> modules, String tabNameToSelect) {
     String nameToSelect = null;
-    final int maxModulesToShow = 10;
     final StringBuilder names = StringBuilderSpinAllocator.alloc();
     final String message;
     try {
+      final int maxModulesToShow = 10;
       for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
         if (nameToSelect == null) {
           nameToSelect = name;
@@ -1987,7 +1989,7 @@ public class CompileDriver {
     ModulesConfigurator.showDialog(myProject, moduleNameToSelect, tabNameToSelect, false);
   }
   
-  private VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
+  private static VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
     final String path = getGenerationOutputPath(compiler, module, forTestSources);
     final File file = new File(path);
     final VirtualFile vFile;

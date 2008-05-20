@@ -39,18 +39,18 @@ public class JavaCompiler implements TranslatingCompiler {
   public ExitStatus compile(CompileContext context, VirtualFile[] files) {
     final BackendCompiler backEndCompiler = getBackEndCompiler();
     final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(myProject, files, (CompileContextEx)context, backEndCompiler);
-    TranslatingCompiler.OutputItem[] outputItems;
+    OutputItem[] outputItems;
     try {
       outputItems = wrapper.compile();
     }
     catch (CompilerException e) {
-      outputItems = TranslatingCompiler.EMPTY_OUTPUT_ITEM_ARRAY;
+      outputItems = EMPTY_OUTPUT_ITEM_ARRAY;
       context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
     }
     catch (CacheCorruptedException e) {
       LOG.info(e);
       context.requestRebuildNextTime(e.getMessage());
-      outputItems = TranslatingCompiler.EMPTY_OUTPUT_ITEM_ARRAY;
+      outputItems = EMPTY_OUTPUT_ITEM_ARRAY;
     }
 
     return new ExitStatusImpl(outputItems, wrapper.getFilesToRecompile());
@@ -70,12 +70,12 @@ public class JavaCompiler implements TranslatingCompiler {
     private OutputItem[] myOuitputItems;
     private VirtualFile[] myMyFilesToRecompile;
 
-    public ExitStatusImpl(TranslatingCompiler.OutputItem[] ouitputItems, VirtualFile[] myFilesToRecompile) {
+    public ExitStatusImpl(OutputItem[] ouitputItems, VirtualFile[] myFilesToRecompile) {
       myOuitputItems = ouitputItems;
       myMyFilesToRecompile = myFilesToRecompile;
     }
 
-    public TranslatingCompiler.OutputItem[] getSuccessfullyCompiled() {
+    public OutputItem[] getSuccessfullyCompiled() {
       return myOuitputItems;
     }
 

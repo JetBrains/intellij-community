@@ -74,7 +74,7 @@ public class CommandLineBuilder {
     }
     catch (RuntimeException e) {
       if(e.getCause() instanceof CantRunException)
-        throw ((CantRunException)e.getCause());
+        throw (CantRunException)e.getCause();
       else
         throw e;
     }

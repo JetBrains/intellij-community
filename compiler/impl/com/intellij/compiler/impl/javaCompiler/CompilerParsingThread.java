@@ -3,7 +3,6 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -16,7 +15,7 @@ import java.io.*;
  */
 public abstract class CompilerParsingThread implements Runnable, OutputParser.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompilerParsingThread");
-  public static final @NonNls String TERMINATION_STRING = "__terminate_read__";
+  @NonNls public static final String TERMINATION_STRING = "__terminate_read__";
   private Reader myCompilerOutStreamReader;
   private Process myProcess;
   private OutputParser myOutputParser;
@@ -112,12 +111,6 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
       }
     }
   }
-
-  public abstract void setProgressText(String text);
-
-  public abstract void fileProcessed(String path);
-
-  public abstract void message(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum);
 
   protected abstract boolean isCanceled();
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +35,7 @@ import java.util.*;
 
 public class JavacCompiler extends ExternalCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler");
-  private Project myProject;
+  private final Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
   @NonNls private static final String JAVAC_MAIN_CLASS_OLD = "sun.tools.javac.Main";
   @NonNls public static final String JAVAC_MAIN_CLASS = "com.sun.tools.javac.Main";
@@ -131,7 +132,7 @@ public class JavacCompiler extends ExternalCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
-          _createStartupCommand(chunk, commandLine, outputPath);
+          createStartupCommand(chunk, commandLine, outputPath);
         }
         catch (IllegalArgumentException e) {
           ex[0] = e;
@@ -155,7 +156,7 @@ public class JavacCompiler extends ExternalCompiler {
     return commandLine.toArray(new String[commandLine.size()]);
   }
 
-  private void _createStartupCommand(final ModuleChunk chunk, @NonNls final ArrayList<String> commandLine, final String outputPath) throws IOException {
+  private void createStartupCommand(final ModuleChunk chunk, @NonNls final List<String> commandLine, final String outputPath) throws IOException {
     final Sdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString)) {
@@ -210,7 +211,7 @@ public class JavacCompiler extends ExternalCompiler {
       }
     }
 
-    CompilerUtil.addLocaleOptions(commandLine, false);
+    CompilerUtil.addLocaleOptions(commandLine, false, EncodingProjectManager.getInstance(myProject).getDefaultCharset().name());
 
     commandLine.add("-classpath");
 
@@ -301,7 +302,7 @@ public class JavacCompiler extends ExternalCompiler {
 
   private void addClassPathValue(final Sdk jdk,
                                  final boolean isVersion1_0,
-                                 final ArrayList<String> commandLine,
+                                 final List<String> commandLine,
                                  final String cpString,
                                  @NonNls final String tempFileName) throws IOException {
     // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
