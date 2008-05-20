@@ -61,6 +61,14 @@ public class StringRef {
     return getString().length();
   }
 
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  public boolean equals(final Object that) {
+    return that == this || that instanceof StringRef && toString().equals(that.toString());
+  }
+
   public static String toString(StringRef ref) {
     return ref != null ? ref.getString(): null;
   }
