@@ -35,6 +35,7 @@ import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
@@ -45,6 +46,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   @NonNls private static final String CLASSNAME_ATTR = "classname";
   @NonNls private static final String ADAPTER_ATTR = "adapter";
   @NonNls private static final String ADAPTTO_ATTR = "adaptto";
+  @NonNls private static final String BASEDIR_ANT_REFERENCE = "${" + AntFileImpl.BASEDIR_ATTR + "}";
 
   private static final ClassLoaderCache LOADERS_CACHE = new ClassLoaderCache();
 
@@ -490,7 +492,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   private List<URL> getClassPathLocalUrls() {
     final List<URL> urls = new ArrayList<URL>();
-    final String baseDir = computeAttributeValue("${" + AntFileImpl.BASEDIR_ATTR + "}");
+    final String baseDir = computeAttributeValue(BASEDIR_ANT_REFERENCE);
     // check classpath attribute
     final String classpath = getClassPath();
     if (classpath != null) {
@@ -521,7 +523,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       try {
         //urls.add(file.toURL());
         // toURL() implementation invokes File.isDirectory() which, if called too often, may cause performance problems
-        urls.add(new URL("file", "", FileUtil.toSystemIndependentName(file.getPath())));
+        urls.add(toLocalURL(file));
       }
       catch (MalformedURLException e) {
       }
@@ -530,16 +532,20 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     return urls;
   }
 
+  private static URL toLocalURL(final File file) throws MalformedURLException {
+    return new URL("file", "", FileUtil.toSystemIndependentName(file.getPath()));
+  }
+
   private static void addUrl(final String baseDir, final List<URL> urls, final String path) {
     if (path != null) {
       try {
         File file = new File(path);
         if (file.isAbsolute()) {
-          urls.add(file.toURL());
+          urls.add(toLocalURL(file));
         }
         else {
           if (baseDir != null) {
-            urls.add(new File(baseDir, path).toURL());
+            urls.add(toLocalURL(new File(baseDir, path)));
           }
         }
       }
@@ -582,13 +588,19 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
     public static final URL[] EMPTY_URL_ARRAY = new URL[0];
     private final List<URL> myUrls;
+    private final int myHashCode;
 
     public CacheKey(@NotNull final List<URL> urls) {
       myUrls = urls;
+      int hashCode = 1;
+      for (URL url : urls) {
+        hashCode = 31 * hashCode + url.getPath().hashCode();
+      }
+      myHashCode = hashCode;
     }
 
     public final int hashCode() {
-      return myUrls.hashCode();
+      return myHashCode;
     }
 
     public final boolean equals(Object obj) {
@@ -596,8 +608,17 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         return false;
       }
       final CacheKey entry = (CacheKey)obj;
-      if (!myUrls.equals(entry.myUrls)) {
+      final List<URL> urls = myUrls;
+      final List<URL> thatUrls = entry.myUrls;
+      if (urls.size() != thatUrls.size()) {
         return false;
+      }
+      final Iterator<URL> urlsIt = urls.iterator();
+      final Iterator<URL> thatUrlsIt = thatUrls.iterator();
+      while (urlsIt.hasNext()) {
+        if (!FileUtil.pathsEqual(urlsIt.next().getPath(), thatUrlsIt.next().getPath())) {
+          return false;
+        }
       }
       return true;
     }
