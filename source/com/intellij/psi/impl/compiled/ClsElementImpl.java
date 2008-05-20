@@ -181,8 +181,8 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
   }
 
   public String getText() {
-    getMirror();
-    return myMirror != null ? myMirror.getText() : null;
+    PsiElement mirror = getMirror();
+    return mirror != null ? mirror.getText() : null;
   }
 
   @NotNull

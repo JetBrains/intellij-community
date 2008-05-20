@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -78,7 +79,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   @Nullable
   private PsiElement getPsiElementAt(@NotNull final Point point) {
     final LogicalPosition position = getLogicalPosition_(point);
-    if (myFile != null) {
+    if (myFile != null && !(myFile instanceof PsiCompiledElement)) {
       return myFile.getViewProvider().findElementAt(myEditor.logicalPositionToOffset(position));
     }
 
