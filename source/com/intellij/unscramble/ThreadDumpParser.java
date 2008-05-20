@@ -19,6 +19,7 @@ public class ThreadDumpParser {
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
+  private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for  <(.+)>");
   @NonNls private static final String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at java.util.TimerThread.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at javax.swing.TimerQueue.run");
@@ -66,11 +67,11 @@ public class ThreadDumpParser {
     for(ThreadState threadState: result) {
       inferThreadStateDetail(threadState);
 
-      Matcher m = ourWaitingForLockPattern.matcher(threadState.getStackTrace());
-      if (m.find()) {
+      String s = findWaitingForLock(threadState.getStackTrace());
+      if (s != null) {
         for(ThreadState threadHoldingLock: result) {
           if (threadHoldingLock == threadState) continue;
-          String marker = "- locked <" + m.group(2) + ">";
+          String marker = "- locked <" + s + ">";
           if (threadHoldingLock.getStackTrace().contains(marker)) {
             if (threadState.isHoldingLock(threadHoldingLock)) {
               threadState.addDeadlockedThread(threadHoldingLock);
@@ -88,6 +89,19 @@ public class ThreadDumpParser {
       }
     });
     return result;
+  }
+
+  @Nullable
+  private static String findWaitingForLock(final String stackTrace) {
+    Matcher m = ourWaitingForLockPattern.matcher(stackTrace);
+    if (m.find()) {
+      return m.group(2);
+    }
+    m = ourParkingToWaitForLockPattern.matcher(stackTrace);
+    if (m.find()) {
+      return m.group(1);
+    }
+    return null;
   }
 
   private static int getInterestLevel(final ThreadState state) {
