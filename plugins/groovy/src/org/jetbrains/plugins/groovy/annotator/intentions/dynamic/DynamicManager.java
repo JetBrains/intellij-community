@@ -32,7 +32,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 23.11.2007
  */
-public abstract class DynamicManager implements ProjectComponent, PersistentStateComponent<Element> {
+public abstract class DynamicManager implements ProjectComponent, PersistentStateComponent<DRootElement> {
   public static final String DYNAMIC_PROPERTIES_DIR = "dynamicProperties";
   public static final String DYNAMIC_PROPERTIES_MODULE = "module";
   public static final String DYNAMIC_PROPERTIES_PROJECT = "project";

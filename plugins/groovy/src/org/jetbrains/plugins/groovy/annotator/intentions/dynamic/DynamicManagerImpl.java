@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -45,13 +46,11 @@ import java.util.*;
  * Date: 23.11.2007
  */
 @State(
-    name = "DynamicManagerImpl",
+    name = "DynamicElementsStorage",
     storages = {
-    @Storage(
-        id = "myDir",
-        file = "$WORKSPACE_FILE$"
-    )}
-)
+        @Storage(id = "default", file = "$PROJECT_FILE$"),
+        @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/dynamic.xml", scheme = StorageScheme.DIRECTORY_BASED)
+})
 
 public class DynamicManagerImpl extends DynamicManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl");
@@ -454,15 +453,17 @@ public class DynamicManagerImpl extends DynamicManager {
   /**
    * On exit
    */
-  public Element getState() {
-    return XmlSerializer.serialize(myRootElement);
+  public DRootElement getState() {
+//    return XmlSerializer.serialize(myRootElement);
+    return myRootElement;
   }
 
   /*
    * On loading
    */
-  public void loadState(Element element) {
-    myRootElement = XmlSerializer.deserialize(element, myRootElement.getClass());
+  public void loadState(DRootElement element) {
+//    myRootElement = XmlSerializer.deserialize(element, myRootElement.getClass());
+    myRootElement = element;
   }
 
   public DItemElement createDynamicElement(DynamicElementSettings settings) {

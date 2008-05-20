@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
@@ -75,6 +76,8 @@ public abstract class DynamicDialog extends DialogWrapper {
   private EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
   private final DynamicElementSettings mySettings;
+
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialog");
 
   public DynamicDialog(GrReferenceExpression referenceExpression) {
     super(referenceExpression.getProject(), true);
@@ -137,19 +140,25 @@ public abstract class DynamicDialog extends DialogWrapper {
 
 
   private void setUpContainingClassComboBox() {
-    final String typeDefinition;
+    PsiClass targetClass = QuickfixUtil.findTargetClass(myReferenceExpression);
 
-    final PsiClass targetClass = QuickfixUtil.findTargetClass(myReferenceExpression);
+    if (targetClass == null || targetClass instanceof GrGspClass) {
+      try {
+        final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement("java.lang.Object");
+        if (typeElement == null) return;
 
-    if (targetClass == null || targetClass instanceof GrGspClass) typeDefinition = "java.lang.Object";
-    else typeDefinition = targetClass.getQualifiedName();
+        final PsiType type = typeElement.getType();
 
-    final PsiClassType type = TypesUtil.createType(typeDefinition, myReferenceExpression);
-    final PsiClass psiClass = type.resolve();
+        if (!(type instanceof PsiClassType)) LOG.error("Type java.lang.Object doesn't resolve");
+        targetClass = ((PsiClassType) type).resolve();
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
 
-    if (psiClass == null) return;
+    if (targetClass == null) return;
 
-    for (PsiClass aClass : PsiUtil.iterateSupers(psiClass, true)) {
+    for (PsiClass aClass : PsiUtil.iterateSupers(targetClass, true)) {
       myClassComboBox.addItem(new ContainingClassItem(aClass));
     }
 

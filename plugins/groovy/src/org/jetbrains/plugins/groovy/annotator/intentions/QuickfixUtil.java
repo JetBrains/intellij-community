@@ -161,7 +161,10 @@ public class QuickfixUtil {
     final PsiClass containingClass = findTargetClass(referenceExpression);
 
     assert containingClass != null;
-    settings.setContainingClassName(containingClass.getQualifiedName());
+    String className = containingClass.getQualifiedName();
+    className = className == null ? containingClass.getContainingFile().getName() : className;
+
+    settings.setContainingClassName(className);
     settings.setName(referenceExpression.getName());
 
     if (isCall(referenceExpression)) {
