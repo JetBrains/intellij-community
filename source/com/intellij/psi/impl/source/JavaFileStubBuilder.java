@@ -11,6 +11,10 @@ import com.intellij.psi.stubs.StubElement;
 
 public class JavaFileStubBuilder extends DefaultStubBuilder {
   protected StubElement createStubForFile(final PsiFile file) {
-    return new PsiJavaFileStubImpl((PsiJavaFile)file, false);
+    if (file instanceof PsiJavaFile) {
+      return new PsiJavaFileStubImpl((PsiJavaFile)file, false);
+    }
+
+    return super.createStubForFile(file);
   }
 }
