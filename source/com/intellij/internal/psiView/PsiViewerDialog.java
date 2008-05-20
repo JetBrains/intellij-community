@@ -260,7 +260,8 @@ public class PsiViewerDialog extends DialogWrapper {
             final FileType type = myFileTypes[i];
             if (type instanceof LanguageFileType) {
               final Language language = ((LanguageFileType)type).getLanguage();
-              rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), language, text);
+              final Language dialect = (Language)myDialectsComboBox.getSelectedItem();
+              rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), dialect == null? language : dialect, text);
             }
             else {
               rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + type.getDefaultExtension(), text);
