@@ -106,7 +106,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         Task.Backgroundable task = new Task.Backgroundable(project, getTemplatePresentation().getText(), true,
                                                            VcsConfiguration.getInstance(project).getUpdateOption()) {
-          public void run(final ProgressIndicator indicator) {
+          public void run(@NotNull final ProgressIndicator indicator) {
             ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
             projectLevelVcsManager.startBackgroundVcsOperation();
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();

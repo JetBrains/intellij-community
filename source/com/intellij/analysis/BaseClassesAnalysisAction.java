@@ -27,7 +27,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(AnalysisScopeBundle.message("checking.class.files"));
 
@@ -65,7 +65,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
         return new NotificationInfo("Analysis",  "\"" + getTitle() + "\" Analysis Finished", "");
       }
 
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         analyzeClasses(project, scope, indicator);
       }
     });

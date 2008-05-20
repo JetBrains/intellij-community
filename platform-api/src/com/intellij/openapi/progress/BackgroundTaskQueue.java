@@ -23,6 +23,8 @@ import com.intellij.openapi.application.ModalityState;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author yole
  */
@@ -35,7 +37,7 @@ public class BackgroundTaskQueue {
   public BackgroundTaskQueue(final Project project, String title) {
     myProject = project;
     myRunnerTask = new Task.Backgroundable(project, title) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         myHasActiveTask = true;
         while(true) {
           final Task task;

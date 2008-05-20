@@ -185,7 +185,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         return new NotificationInfo("Ant", "Ant Task Finished", "");
       }
 
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.pushState();
         try {
@@ -660,7 +660,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     
     final String title = AntBundle.message("loading.ant.config.progress");
     queueLater(new Task.Backgroundable(getProject(), title, false) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.pushState();
         try {

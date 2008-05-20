@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AddTestProcessActionIndefinite extends AnAction {
@@ -17,7 +18,7 @@ public class AddTestProcessActionIndefinite extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     new Task.Backgroundable(project, "Test", true) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         try {
           Thread.currentThread().sleep(6000);
 

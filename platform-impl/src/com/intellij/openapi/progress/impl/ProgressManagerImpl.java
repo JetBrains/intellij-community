@@ -211,7 +211,7 @@ public class ProgressManagerImpl extends ProgressManager {
                                                    @NotNull final PerformInBackgroundOption option) {
 
     runProcessWithProgressAsynchronously(new Task.Backgroundable(project, progressTitle, true, option) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         process.run();
       }
 
