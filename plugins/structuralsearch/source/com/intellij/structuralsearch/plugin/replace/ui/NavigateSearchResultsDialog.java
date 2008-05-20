@@ -137,6 +137,10 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
     };
 //todo
     statusBar.add(myMatchingProcess, new TaskInfo() {
+      public String getProcessId() {
+        return "<unknown>";
+      }
+
       public String getTitle() {
         return null;
       }
