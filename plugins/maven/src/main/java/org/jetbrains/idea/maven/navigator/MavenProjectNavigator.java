@@ -60,13 +60,13 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
     super(project, projectsManager, repository, eventsHandler);
 
     tree = new SimpleTree() {
-      private JLabel myLabel = new JLabel(ProjectBundle.message("maven.please.reimport.xml"));
+      private JLabel myLabel = new JLabel(ProjectBundle.message("maven.please.reimport"));
 
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
-        if (MavenProjectsManager.getInstance(project).isValidVersion()) return;
+
+        if (MavenProjectsManager.getInstance(project).isMavenProject()) return;
 
         myLabel.setFont(getFont());
         myLabel.setBackground(getBackground());

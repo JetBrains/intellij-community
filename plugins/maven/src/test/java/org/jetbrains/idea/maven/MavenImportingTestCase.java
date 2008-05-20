@@ -36,7 +36,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
   protected MavenProjectModel myProjectModel;
   protected ArrayList<Pair<File, List<String>>> myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
-  private MavenImportProcessor myImportProcessor;
+  protected MavenImportProcessor myImportProcessor;
   private List<String> myProfilesList;
 
   @Override

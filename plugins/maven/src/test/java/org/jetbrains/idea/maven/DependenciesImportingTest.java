@@ -81,7 +81,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
 
-  public void testIntermoduleDependenciesWithoutModuleVersions() throws Exception {
+  public void testInterModuleDependenciesWithoutModuleVersions() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -119,7 +119,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testIntermoduleDependenciesWithoutModuleGroup() throws Exception {
+  public void testInterModuleDependenciesWithoutModuleGroup() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -144,6 +144,49 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     createModulePom("m2", "<artifactId>m2</artifactId>" +
                           "<version>1</version>" +
+
+                          "<parent>" +
+                          "  <groupId>test</groupId>" +
+                          "  <artifactId>project</artifactId>" +
+                          "  <version>1</version>" +
+                          "</parent>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+  }
+
+  public void testInterModuleDependenciesIfThereArePropertiesInArtifactHeader() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <module2Name>m2</module2Name>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>${module2Name}</artifactId>" +
+                          "<version>${project.parent.version}</version>" +
 
                           "<parent>" +
                           "  <groupId>test</groupId>" +
@@ -329,6 +372,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "     <version>1.0.2</version>" +
                   "  </dependency>" +
                   "</dependencies>");
+    resolveProject();
 
     assertModules("project");
     assertModuleLibDep("project", "xml-apis:xml-apis:1.0.b2");

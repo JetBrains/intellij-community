@@ -94,9 +94,10 @@ public class ProjectConfigurator {
   }
 
   private void configModules() {
-    final Map<MavenProject, Module> modules = new HashMap<MavenProject, Module>();
+    // we must preserve the natural order.
+    final LinkedHashMap<MavenProject, Module> modules = new LinkedHashMap<MavenProject, Module>();
 
-    myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+    myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
       public void visit(MavenProjectModel.Node node) {
         MavenProjectHolder p = node.getMavenProject();
         Module m = createModule(node);
@@ -106,7 +107,7 @@ public class ProjectConfigurator {
     });
 
 
-    Map<Module, ModifiableRootModel> rootModels = new HashMap<Module, ModifiableRootModel>();
+    LinkedHashMap<Module, ModifiableRootModel> rootModels = new LinkedHashMap<Module, ModifiableRootModel>();
     for (Map.Entry<MavenProject,Module> each : modules.entrySet()) {
       ModifiableRootModel model = createModuleConfigurator(each.getValue(), each.getKey()).config();
       rootModels.put(each.getValue(), model);
@@ -130,7 +131,6 @@ public class ProjectConfigurator {
       // have to remove it beforehand.
       removeExistingIml(path);
       module = myModuleModel.newModule(path, StdModuleTypes.JAVA);
-      //node.linkModule(module);
     }
     return module;
   }
@@ -156,7 +156,7 @@ public class ProjectConfigurator {
 
     final boolean createTopLevelGroup = myProjectModel.getRootProjects().size() > 1;
 
-    myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+    myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
       int depth = 0;
 
       public void visit(MavenProjectModel.Node node) {

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.module.Module;
 
 public class MiscImportingTest extends MavenImportingTestCase {
   private int count;
@@ -49,5 +50,16 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     resolveProject();
     assertEquals(2, count);
+  }
+
+  public void testDoNotRecreateModulesBeforeResolution() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Module m = getModule("project");
+    resolveProject();
+
+    assertSame(m, getModule("project"));
   }
 }

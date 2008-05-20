@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import java.util.*;
 
 public class MavenProjectsManagerState {
-  public String version;
+  public boolean isMavenProject = false;
 
   public List<String> originalFiles = new ArrayList<String>();
   public List<String> ignoredPathMasks = new ArrayList<String>();

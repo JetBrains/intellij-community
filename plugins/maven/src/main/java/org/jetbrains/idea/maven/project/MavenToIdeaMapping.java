@@ -40,7 +40,7 @@ public class MavenToIdeaMapping {
   private void resolveModuleNames(final MavenProjectModel mavenProjectModel) {
     final List<String> duplicateNames = collectDuplicateModuleNames(mavenProjectModel);
 
-    mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+    mavenProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
       public void visit(MavenProjectModel.Node node) {
         MavenId id = node.getMavenId();
         String name = node.getLinkedModule() != null
@@ -65,7 +65,7 @@ public class MavenToIdeaMapping {
     final List<String> allNames = new ArrayList<String>();
     final List<String> result = new ArrayList<String>();
 
-    m.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+    m.visit(new MavenProjectModel.PlainNodeVisitor() {
       public void visit(MavenProjectModel.Node node) {
         String name = node.getMavenId().artifactId;
         if (allNames.contains(name)) result.add(name);
@@ -77,7 +77,7 @@ public class MavenToIdeaMapping {
   }
 
   private void resolveModulePaths(final MavenProjectModel mavenProjectModel, final String dedicatedModuleDir) {
-    mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+    mavenProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
       public void visit(final MavenProjectModel.Node node) {
         final Module module = node.getLinkedModule();
         projectToModulePath.put(node, module != null ? module.getModuleFilePath() : generateModulePath(node, dedicatedModuleDir));
@@ -90,7 +90,7 @@ public class MavenToIdeaMapping {
       nameToModule.put(module.getName(), module);
     }
 
-    mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+    mavenProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
       public void visit(MavenProjectModel.Node node) {
         Module module = node.getLinkedModule() != null
                         ? node.getLinkedModule()
