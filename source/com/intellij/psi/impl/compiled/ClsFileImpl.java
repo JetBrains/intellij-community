@@ -210,7 +210,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
       if (packageStatementMirror != null && packageStatement != null) {
         ((ClsElementImpl)packageStatement).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatementMirror));
       }
+
       PsiClass[] classes = getClasses();
+      if (classes.length == 1) {
+        if (!JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(classes[0].getName())) {
+          return; // Can happen for package-info.class, or classes compiled from languages, that support different class naming scheme, like Scala.
+        }
+      }
+
       PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
       LOG.assertTrue(classes.length == mirrorClasses.length);
       if (classes.length == mirrorClasses.length) {
