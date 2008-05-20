@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -46,16 +48,25 @@ public class AssignmentToForLoopParameterInspection
                 "assignment.to.for.loop.parameter.problem.descriptor");
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new AssignmentToForLoopParameterVisitor();
-    }
-
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
                         "assignment.to.for.loop.parameter.check.foreach.option"),
                 this, "m_checkForeachParameters");
+    }
+
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final Boolean foreachLoop = (Boolean) infos[0];
+        if (!foreachLoop.booleanValue()) {
+            return null;
+        }
+        return new ExtractParameterAsLocalVariableFix();
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new AssignmentToForLoopParameterVisitor();
     }
 
     private class AssignmentToForLoopParameterVisitor
@@ -135,7 +146,7 @@ public class AssignmentToForLoopParameterInspection
             if (!isInForStatementBody(expression, forStatement)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, Boolean.FALSE);
         }
 
         private void checkForForeachLoopParam(PsiExpression expression) {
@@ -155,7 +166,7 @@ public class AssignmentToForLoopParameterInspection
             if (!(parameter.getParent() instanceof PsiForeachStatement)) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, Boolean.TRUE);
         }
 
         private boolean isInForStatementBody(PsiExpression expression,
