@@ -87,7 +87,7 @@ public abstract class IntentionManager  {
   public abstract void registerIntentionAndMetaData(IntentionAction action, String[] category, String descriptionDirectoryName);
 
   public abstract void registerIntentionAndMetaData(IntentionAction action, String[] category, String descriptionDirectoryName,
-                                                    ClassLoader classLoader);
+                                                    Class metaDataResourcesClass);
 
   /**
    * @return actions used as additional options for the given problem.

@@ -100,9 +100,9 @@ public class IntentionManagerImpl extends IntentionManager {
   public void registerIntentionAndMetaData(final IntentionAction action,
                                            final String[] category,
                                            final String descriptionDirectoryName,
-                                           final ClassLoader classLoader) {
+                                           final Class metaDataResourcesClass) {
     addAction(action);
-    mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName, classLoader);
+    mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName, metaDataResourcesClass.getClassLoader());
   }
 
   public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {
