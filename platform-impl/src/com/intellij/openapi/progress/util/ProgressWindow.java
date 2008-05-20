@@ -50,6 +50,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   private boolean myStarted = false;
   private boolean myBackgrounded = false;
   private boolean myWasShown;
+  private String myProcessId = "<unknown>";
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
     this(shouldShowCancel, false, project);
@@ -159,12 +160,20 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     exitModality();
   }
 
+  public String getProcessId() {
+    return myProcessId;
+  }
+
+  public void setProcessId(final String processId) {
+    myProcessId = processId;
+  }
+
   protected void showDialog() {
     if (!isRunning() || isCanceled()) {
       return;
     }
 
-    final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, "<unknown>");
+    final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, getProcessId());
     if (cmp != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       Runnable installer = new Runnable() {
         public void run() {

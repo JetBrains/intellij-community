@@ -64,6 +64,10 @@ public abstract class Task implements TaskInfo {
     ProgressManager.getInstance().run(this);
   }
 
+  public String getProcessId() {
+    return "<unknown>";
+  }
+
   public final String getTitle() {
     return myTitle;
   }
