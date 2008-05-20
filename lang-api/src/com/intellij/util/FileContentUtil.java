@@ -15,18 +15,28 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author peter
@@ -52,5 +62,39 @@ public class FileContentUtil {
     }
     VfsUtil.saveText(virtualFile, text != null ? text : "");
     virtualFile.refresh(false, false);
+  }
+
+  public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> files, boolean includeOpenFiles) {
+    final Set<VFilePropertyChangeEvent> list = new THashSet<VFilePropertyChangeEvent>();
+    for (VirtualFile file : files) {
+      saveOrReload(file, list);
+    }
+    if (includeOpenFiles) {
+      for (VirtualFile open : FileEditorManager.getInstance(project).getOpenFiles()) {
+        if (!files.contains(open)) {
+          saveOrReload(open, list);
+        }
+      }
+    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
+            .after(new ArrayList<VFileEvent>(list));
+      }
+    });
+  }
+
+  private static void saveOrReload(final VirtualFile virtualFile, Collection<VFilePropertyChangeEvent> events) {
+    if (virtualFile == null || virtualFile.isDirectory()) {
+      return;
+    }
+    final FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    if (documentManager.isFileModified(virtualFile)) {
+      Document document = documentManager.getDocument(virtualFile);
+      if (document != null) {
+        documentManager.saveDocument(document);
+      }
+    }
+    events.add(new VFilePropertyChangeEvent(null, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(), virtualFile.getName(), false));
   }
 }

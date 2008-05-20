@@ -4,19 +4,12 @@
  */
 package com.intellij.lang;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.SmartList;
+import com.intellij.util.FileContentUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,21 +43,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
 
   public void setMappings(final Map<VirtualFile, T> mappings) {
     myMappings = new HashMap<VirtualFile, T>(mappings);
-    final Set<VFilePropertyChangeEvent> list = new THashSet<VFilePropertyChangeEvent>();
-    for (VirtualFile file : mappings.keySet()) {
-      saveOrReload(file, list);
-    }
-    for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-      if (!mappings.containsKey(open)) {
-        saveOrReload(open, list);
-      }
-    }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
-            .after(new ArrayList<VFileEvent>(list));
-      }
-    });
+    FileContentUtil.reparseFiles(myProject, mappings.keySet(), true);
   }
 
   @TestOnly
@@ -75,26 +54,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     else {
       myMappings.put(file, dialect);
     }
-    final SmartList<VFilePropertyChangeEvent> list = new SmartList<VFilePropertyChangeEvent>();
-    saveOrReload(file, list);
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(list);
-  }
-
-  private static void saveOrReload(final VirtualFile virtualFile, Collection<VFilePropertyChangeEvent> events) {
-    if (virtualFile == null || virtualFile.isDirectory()) {
-      return;
-    }
-    final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    if (documentManager.isFileModified(virtualFile)) {
-      Document document = documentManager.getDocument(virtualFile);
-      if (document != null) {
-        documentManager.saveDocument(document);
-      }
-    }
-    events.add(new VFilePropertyChangeEvent(null, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(),
-                                                                     virtualFile.getName(), false));
-
-
+    FileContentUtil.reparseFiles(myProject, Collections.singletonList(file), false);
   }
 
   protected abstract String serialize(T t);
