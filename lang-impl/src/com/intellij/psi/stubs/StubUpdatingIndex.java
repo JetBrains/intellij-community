@@ -5,6 +5,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +64,8 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         }
 
         Language l = ((LanguageFileType)fileType).getLanguage();
-        return LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType() instanceof IStubFileElementType;
+        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+        return parserDefinition != null && parserDefinition.getFileNodeType() instanceof IStubFileElementType;
       }
       else if (fileType.isBinary()) {
         final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
