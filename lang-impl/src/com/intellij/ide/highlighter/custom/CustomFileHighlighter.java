@@ -32,15 +32,17 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LayeredLexer;
+import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 public class CustomFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> ourKeys;
@@ -59,6 +61,10 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
     ourKeys.put(CustomHighlighterTokenType.KEYWORD_4, CustomHighlighterColors.CUSTOM_KEYWORD4_ATTRIBUTES);
     ourKeys.put(CustomHighlighterTokenType.NUMBER, CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES);
     ourKeys.put(CustomHighlighterTokenType.STRING, CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES);
+    ourKeys.put(CustomHighlighterTokenType.SINGLE_QUOTED_STRING, CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES);
+    ourKeys.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, CustomHighlighterColors.CUSTOM_VALID_STRING_ESCAPE);
+    ourKeys.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE);
+    ourKeys.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE);
     ourKeys.put(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES);
     ourKeys.put(CustomHighlighterTokenType.MULTI_LINE_COMMENT,
                 CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES);
@@ -66,7 +72,15 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new CustomFileTypeLexer(myTable);
+    Lexer customFileTypeLexer = new CustomFileTypeLexer(myTable, true);
+    if (myTable.isHasStringEscapes()) {
+      customFileTypeLexer = new LayeredLexer(customFileTypeLexer);
+      ((LayeredLexer)customFileTypeLexer).registerSelfStoppingLayer(new StringLiteralLexer('\"', CustomHighlighterTokenType.STRING,true,"x"),
+                                new IElementType[]{CustomHighlighterTokenType.STRING}, IElementType.EMPTY_ARRAY);
+      ((LayeredLexer)customFileTypeLexer).registerSelfStoppingLayer(new StringLiteralLexer('\'', CustomHighlighterTokenType.STRING,true,"x"),
+                                new IElementType[]{CustomHighlighterTokenType.SINGLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
+    }
+    return customFileTypeLexer;
   }
 
   @NotNull

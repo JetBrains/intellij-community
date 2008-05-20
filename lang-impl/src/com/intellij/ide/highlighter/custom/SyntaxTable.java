@@ -24,6 +24,7 @@ public class SyntaxTable implements Cloneable {
   private boolean myHasBraces;
   private boolean myHasBrackets;
   private boolean myHasParens;
+  private boolean myHasStringEscapes;
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -158,6 +159,7 @@ public class SyntaxTable implements Cloneable {
     if (myHasBraces != syntaxTable.myHasBraces) return false;
     if (myHasBrackets != syntaxTable.myHasBrackets) return false;
     if (myHasParens != syntaxTable.myHasParens) return false;
+    if (myHasStringEscapes != syntaxTable.myHasStringEscapes) return false;
 
     return true;
   }
@@ -180,5 +182,13 @@ public class SyntaxTable implements Cloneable {
 
   public void setHasParens(boolean hasParens) {
     myHasParens = hasParens;
+  }
+
+  public boolean isHasStringEscapes() {
+    return myHasStringEscapes;
+  }
+
+  public void setHasStringEscapes(final boolean hasEscapes) {
+    myHasStringEscapes = hasEscapes;
   }
 }

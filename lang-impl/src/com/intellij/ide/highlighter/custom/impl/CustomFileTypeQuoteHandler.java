@@ -19,6 +19,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
     final IElementType tokenType = iterator.getTokenType();
 
     if (tokenType == CustomHighlighterTokenType.STRING ||
+        tokenType == CustomHighlighterTokenType.SINGLE_QUOTED_STRING ||
         tokenType == CustomHighlighterTokenType.CHARACTER){
       int start = iterator.getStart();
       int end = iterator.getEnd();
@@ -31,6 +32,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
     final IElementType tokenType = iterator.getTokenType();
 
     if (tokenType == CustomHighlighterTokenType.STRING ||
+        tokenType == CustomHighlighterTokenType.SINGLE_QUOTED_STRING ||
         tokenType == CustomHighlighterTokenType.CHARACTER){
       int start = iterator.getStart();
       return offset == start;
@@ -48,6 +50,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
         IElementType tokenType = iterator.getTokenType();
 
         if (tokenType == CustomHighlighterTokenType.STRING ||
+            tokenType == CustomHighlighterTokenType.SINGLE_QUOTED_STRING ||
             tokenType == CustomHighlighterTokenType.CHARACTER) {
 
           if (iterator.getStart() >= iterator.getEnd() - 1 ||
@@ -68,6 +71,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
     final IElementType tokenType = iterator.getTokenType();
 
     return tokenType == CustomHighlighterTokenType.STRING ||
+        tokenType == CustomHighlighterTokenType.SINGLE_QUOTED_STRING ||
         tokenType == CustomHighlighterTokenType.CHARACTER;
   }
 }

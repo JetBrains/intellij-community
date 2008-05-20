@@ -58,6 +58,8 @@ public class CustomColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.string"), CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.line.comment"), CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.block.comment"), CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.valid.string.escape"), CustomHighlighterColors.CUSTOM_VALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.invalid.string.escape"), CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE),
   };
 
   @NonNls private final static SyntaxTable SYNTAX_TABLE = new SyntaxTable();
@@ -68,6 +70,7 @@ public class CustomColorsPage implements ColorSettingsPage {
     SYNTAX_TABLE.setHexPrefix("0x");
     SYNTAX_TABLE.setNumPostfixChars("dDlL");
     SYNTAX_TABLE.setNumPostfixChars("dDlL");
+    SYNTAX_TABLE.setHasStringEscapes(true);
     SYNTAX_TABLE.addKeyword1("aKeyword1");
     SYNTAX_TABLE.addKeyword1("anotherKeyword1");
     SYNTAX_TABLE.addKeyword2("aKeyword2");
@@ -112,7 +115,7 @@ public class CustomColorsPage implements ColorSettingsPage {
            + "aKeyword3 variable = 123;\n"
            + "anotherKeyword3 someString = \"SomeString\";\n"
            + "aKeyword4 variable = 123;\n"
-           + "anotherKeyword4 someString = \"SomeString\";\n"
+           + "anotherKeyword4 someString = \"SomeString\\n\\x\";\n"
            + "/* \n"
            + " * Block comment\n"
            + " */\n"

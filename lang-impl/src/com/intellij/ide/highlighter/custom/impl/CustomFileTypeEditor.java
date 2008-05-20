@@ -28,6 +28,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
   private JCheckBox mySupportBraces = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.braces"));
   private JCheckBox mySupportBrackets = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.brackets"));
   private JCheckBox mySupportParens = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.parens"));
+  private JCheckBox mySupportEscapes = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.string.escapes"));
 
   private JTextField myLineComment = new JTextField(20);
   private JTextField myBlockCommentStart = new JTextField(20);
@@ -60,6 +61,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
       mySupportBraces.setSelected(table.isHasBraces());
       mySupportBrackets.setSelected(table.isHasBrackets());
       mySupportParens.setSelected(table.isHasParens());
+      mySupportEscapes.setSelected(table.isHasStringEscapes());
 
       for (Iterator i = table.getKeywords1().iterator(); i.hasNext();) {
         myKeywordModels[0].addElement(i.next());
@@ -178,6 +180,10 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     gc.gridy++;
     commentsAndNumbersPanel.add(mySupportParens, gc);
 
+    gc.gridx = 0;
+    gc.gridy++;
+    commentsAndNumbersPanel.add(mySupportEscapes, gc);
+
     _panel1.add(commentsAndNumbersPanel, BorderLayout.WEST);
 
 
@@ -269,6 +275,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     syntaxTable.setHasBraces(mySupportBraces.isSelected());
     syntaxTable.setHasBrackets(mySupportBrackets.isSelected());
     syntaxTable.setHasParens(mySupportParens.isSelected());
+    syntaxTable.setHasStringEscapes(mySupportEscapes.isSelected());
 
     for (int i = 0; i < myKeywordModels[0].size(); i++) {
       if (ignoreCase) {

@@ -78,6 +78,7 @@
           <option name="HAS_BRACES" value="true" />
           <option name="HAS_BRACKETS" value="true" />
           <option name="HAS_PARENS" value="true" />
+          <option name="HAS_STRING_ESCAPES" value="true" />
         </options>
         <keywords ignore_case="false">
           <keyword name="#include"/>
@@ -170,6 +171,7 @@
           <option name="HAS_BRACES" value="true" />
           <option name="HAS_BRACKETS" value="true" />
           <option name="HAS_PARENS" value="true" />
+          <option name="HAS_STRING_ESCAPES" value="true" />
         </options>
         <keywords ignore_case="false">
           <keyword name="abstract"/>

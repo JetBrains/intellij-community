@@ -11,4 +11,6 @@ public interface CustomHighlighterColors {
   TextAttributesKey CUSTOM_STRING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CUSTOM_STRING_ATTRIBUTES");
   TextAttributesKey CUSTOM_LINE_COMMENT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CUSTOM_LINE_COMMENT_ATTRIBUTES");
   TextAttributesKey CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES");
+  TextAttributesKey CUSTOM_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("CUSTOM_VALID_STRING_ESCAPE_ATTRIBUTES");
+  TextAttributesKey CUSTOM_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("CUSTOM_INVALID_STRING_ESCAPE_ATTRIBUTES");
 }

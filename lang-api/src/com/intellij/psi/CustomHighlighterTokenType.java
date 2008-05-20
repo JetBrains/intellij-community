@@ -38,6 +38,7 @@ public interface CustomHighlighterTokenType {
   int KEYWORD_TYPE_COUNT = 4;
 
   IElementType STRING = new CustomElementType("STRING");
+  IElementType SINGLE_QUOTED_STRING = new CustomElementType("SINGLE_QUOTED_STRING");
   IElementType NUMBER = new CustomElementType("NUMBER");
   IElementType IDENTIFIER = new CustomElementType("IDENTIFIER");
   IElementType LINE_COMMENT = new CustomElementType("LINE_COMMENT");

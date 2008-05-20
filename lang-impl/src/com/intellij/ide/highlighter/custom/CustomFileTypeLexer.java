@@ -12,13 +12,16 @@ import java.util.Set;
 public final class CustomFileTypeLexer extends AbstractCustomLexer {
   private final SyntaxTable myTable;
 
-  public CustomFileTypeLexer(SyntaxTable table) {
-    super(buildTokenParsers(table));
+  public CustomFileTypeLexer(SyntaxTable table, boolean forHighlighting) {
+    super(buildTokenParsers(table, forHighlighting));
     myTable = table;
   }
 
+  public CustomFileTypeLexer(SyntaxTable table) {
+    this(table, false);
+  }
 
-  private static TokenParser[] buildTokenParsers(SyntaxTable table) {
+  private static TokenParser[] buildTokenParsers(SyntaxTable table, boolean forHighlighting) {
     final WhitespaceParser whitespaceParser = new WhitespaceParser();
     final LineCommentParser lineCommentParser = LineCommentParser.create(table.getLineComment());
     final MultilineCommentParser multilineCommentParser =
@@ -30,9 +33,13 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
                     table.isIgnoreCase());
     final IdentifierParser identifierParser = new IdentifierParser();
 
-    final QuotedStringParser quotedStringParser = new QuotedStringParser("\"");
+    final QuotedStringParser quotedStringParser = new QuotedStringParser("\"", CustomHighlighterTokenType.STRING, table.isHasStringEscapes());
 
-    final QuotedStringParser quotedStringParser2 = new QuotedStringParser("\'");
+    final QuotedStringParser quotedStringParser2 = new QuotedStringParser(
+        "\'",
+        forHighlighting ? CustomHighlighterTokenType.SINGLE_QUOTED_STRING:CustomHighlighterTokenType.STRING,
+        table.isHasStringEscapes()
+    );
 
     ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
     tokenParsers.add(whitespaceParser);

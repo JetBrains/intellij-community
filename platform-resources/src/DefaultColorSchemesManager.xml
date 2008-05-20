@@ -724,6 +724,24 @@
         </value>
       </option>
 
+      <option name="CUSTOM_VALID_STRING_ESCAPE_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="80"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+
+      <option name="CUSTOM_INVALID_STRING_ESCAPE_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="8000"/>
+          <option name="BACKGROUND" value="ffcccc"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="0"/>
+        </value>
+      </option>
+
       <option name="CUSTOM_LINE_COMMENT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="808080"/>
