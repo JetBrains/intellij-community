@@ -61,10 +61,11 @@ class ExternalResourceReference implements PsiReference, QuickFixProvider<Extern
 
     @Nullable
     public PsiElement resolve() {
-        final String resourceLocation = myResourceManager.getResourceLocation(myAttribute.getValue());
+        final String value = myAttribute.getValue();
+        final String resourceLocation = myResourceManager.getResourceLocation(value);
 
         //noinspection StringEquality
-        if (resourceLocation != myAttribute.getValue()) {
+        if (resourceLocation != value) {
             VirtualFile file;
             try {
                 file = VfsUtil.findFileByURL(new URL(resourceLocation));
