@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 
 public class PopupActionChooser {
   private final String myTitle;
+  private boolean hasEnabledSurrounders;
 
   public PopupActionChooser(String title) {
     myTitle = title;
@@ -23,7 +24,7 @@ public class PopupActionChooser {
 
   public void invoke(final Project project, final Editor editor, final Surrounder[] surrounders, final PsiElement[] elements){
     final DefaultActionGroup applicable = new DefaultActionGroup();
-    boolean hasEnabledSurrounders = false;
+    hasEnabledSurrounders = false;
 
     for (Surrounder surrounder : surrounders) {
       if (surrounder.isApplicable(elements)) {
@@ -74,5 +75,9 @@ public class PopupActionChooser {
         null
       );
     }
+  }
+
+  public boolean isHasEnabledSurrounders() {
+    return hasEnabledSurrounders;
   }
 }

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.LanguageSurrounders;
+import com.intellij.lang.Language;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,13 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     endOffset = textRange.getEndOffset();
     element1 = file.findElementAt(startOffset);
 
-    final List<SurroundDescriptor> surroundDescriptors = LanguageSurrounders.INSTANCE.allForLanguage(element1.getLanguage());
+    final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    final Language l = element1.getLanguage();
+    List<SurroundDescriptor> surroundDescriptors;
+
+    surroundDescriptors = LanguageSurrounders.INSTANCE.allForLanguage(l);
+    surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
+
     if (surroundDescriptors.isEmpty()) return;
 
     for (SurroundDescriptor descriptor : surroundDescriptors) {
@@ -66,7 +73,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
         if (surrounder == null) {
           PopupActionChooser popupActionChooser = new PopupActionChooser(CHOOSER_TITLE);
           popupActionChooser.invoke(project, editor, descriptor.getSurrounders(), elements);
-          return;
+          if (popupActionChooser.isHasEnabledSurrounders()) return;
         }
         else {
           if (surroundDescriptors.size() == 1) {
