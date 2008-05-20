@@ -78,7 +78,7 @@ public class XPathExpressionGenerator {
                         }
                     }
 
-                    int i = 0;
+                    int i = 1;
                     for (Object o1 : list) {
                         if (o1 == what) {
                             return uniquePath + "[" + i + "]";
