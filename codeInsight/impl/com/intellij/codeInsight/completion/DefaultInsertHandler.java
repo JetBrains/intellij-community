@@ -730,7 +730,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
               final String oldText1 = parent.getText();
               PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
               newRef = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newRef);
-              LOG.assertTrue(newRef != null, oldText + "$$$" + oldText1);
+              LOG.assertTrue(newRef != null, oldText + "$$$" + oldText1 + "###" + (parent.isValid() ? "valid: " + parent.getParent().getText() : "not valid"));
               final TextRange textRange = newRef.getTextRange();
               endOffset = textRange.getEndOffset();
               newStartOffset = textRange.getStartOffset();
