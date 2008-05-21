@@ -22,7 +22,6 @@ import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
@@ -32,16 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import javax.swing.*;
 
 public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider, FileTemplateGroupDescriptorFactory, IconProvider {
   private static final Icon ICON = IconLoader.getIcon("/plugin.png");
-
-  public DevKitPlugin(ModuleTypeManager moduleTypeManager) {
-    moduleTypeManager.registerModuleType(PluginModuleType.getInstance(), true);
-  }
 
   @NotNull
   public String getComponentName() {

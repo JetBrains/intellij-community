@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin version="2">
   <name>Plugin DevKit</name>
   <id>DevKit</id>
@@ -17,17 +16,13 @@
     <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginXmlDomFileDescription"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions" extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
+    <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
+    <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
   </extensions>
 
   <application-components>
     <component>
       <implementation-class>org.jetbrains.idea.devkit.DevKitPlugin</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.projectRoots.IdeaJdk</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.run.PluginConfigurationType</implementation-class>
     </component>
   </application-components>
 

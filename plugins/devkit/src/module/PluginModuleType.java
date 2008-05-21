@@ -18,10 +18,10 @@ package org.jetbrains.idea.devkit.module;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -34,6 +34,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -51,18 +52,18 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   private static final Icon PLUGIN_MODULE_ICON = IconLoader.getIcon("/modules/pluginModule.png");
   private static final Icon PLUGIN_MODULE_NODE_ICON = IconLoader.getIcon("/nodes/plugin.png");
   private static final Icon ADD_PLUGIN_MODULE_ICON = IconLoader.getIcon("/add_plugin_modulewizard.png");
-  private static PluginModuleType ourInstance = new PluginModuleType();
+  @NonNls private static final String ID = "PLUGIN_MODULE";
 
-  private PluginModuleType() {
-    super("PLUGIN_MODULE");
+  public PluginModuleType() {
+    super(ID);
   }
 
   public static PluginModuleType getInstance() {
-    return ourInstance;
+    return (PluginModuleType) ModuleTypeManager.getInstance().findByID(ID);
   }
 
   public static boolean isOfType(Module module) {
-    return module.getModuleType() == ourInstance;
+    return module.getModuleType() instanceof PluginModuleType;
   }
 
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
@@ -71,7 +72,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     steps.add(stepFactory.createSourcePathsStep(wizardContext, moduleBuilder, ADD_PLUGIN_MODULE_ICON, "reference.dialogs.new.project.fromScratch.source"));
-    steps.add(stepFactory.createProjectJdkStep(wizardContext, ApplicationManager.getApplication().getComponent(IdeaJdk.class), moduleBuilder, new Computable<Boolean>() {
+    steps.add(stepFactory.createProjectJdkStep(wizardContext, IdeaJdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
         final Sdk projectJdk = wizardContext.getProjectJdk();
         return IdeaJdk.findIdeaJdk(projectJdk) == null ? Boolean.TRUE : Boolean.FALSE;
@@ -109,7 +110,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   @Nullable
   public static XmlFile getPluginXml(Module module, boolean initialize) {
     if (module == null) return null;
-    if (module.getModuleType() != ourInstance) return null;
+    if (!(module.getModuleType() instanceof PluginModuleType)) return null;
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;

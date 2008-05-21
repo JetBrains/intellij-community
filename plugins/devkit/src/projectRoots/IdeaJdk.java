@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -37,7 +36,6 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -52,7 +50,7 @@ import java.util.List;
  * User: anna
  * Date: Nov 22, 2004
  */
-public class IdeaJdk extends SdkType implements JavaSdkType, ApplicationComponent {
+public class IdeaJdk extends SdkType implements JavaSdkType {
   private static final Icon ADD_SDK = IconLoader.getIcon("/add_sdk.png");
   private static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
   private static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
@@ -467,19 +465,14 @@ public class IdeaJdk extends SdkType implements JavaSdkType, ApplicationComponen
     return DevKitBundle.message("sdk.title");
   }
 
-  @NotNull
-  public String getComponentName() {
-    return getName();
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
-
   @Nullable
   public static Sdk findIdeaJdk(@Nullable Sdk jdk) {
     if (jdk == null) return null;
     if (jdk.getSdkType() instanceof IdeaJdk) return jdk;
     return null;
+  }
+
+  public static SdkType getInstance() {
+    return SdkType.findInstance(IdeaJdk.class);
   }
 }
