@@ -317,11 +317,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myImportProcessor = new MavenImportProcessor(myProject);
       myImportProcessor.createMavenProjectModel(myProject,
                                                 files,
-                                                new HashMap<VirtualFile, Module>(),
                                                 myProfilesList,
                                                 new MavenProgress(new EmptyProgressIndicator()));
-      myImportProcessor.createMavenToIdeaMapping(myProject);
-      myImportProcessor.commit(myProject, myProfilesList);
+      myImportProcessor.commit(myProject);
 
       if (shouldResolve()) resolveProject();
 
@@ -334,7 +332,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void resolveProject() throws MavenException, CanceledException {
     myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
-    myImportProcessor.resolve(myProject, myProfilesList, myResolutionProblems);
+    myImportProcessor.resolve(myProject, myResolutionProblems);
   }
 
   protected boolean shouldResolve() {

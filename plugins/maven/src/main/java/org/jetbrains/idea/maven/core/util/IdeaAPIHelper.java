@@ -6,10 +6,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.UIUtil;
 
@@ -37,21 +33,6 @@ public class IdeaAPIHelper {
         action.actionPerformed(event);
       }
     }
-  }
-
-  public static void deleteModules(final Collection<Module> modules) {
-    if (modules.isEmpty()) {
-      return;
-    }
-    final ModifiableModuleModel model = ModuleManager.getInstance(modules.iterator().next().getProject()).getModifiableModel();
-    for (Module module : modules) {
-      model.disposeModule(module);
-    }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        model.commit();
-      }
-    });
   }
 
   public static <E> void addElements(final ElementsChooser<E> chooser, final Collection<E> all, final Collection<E> selected) {

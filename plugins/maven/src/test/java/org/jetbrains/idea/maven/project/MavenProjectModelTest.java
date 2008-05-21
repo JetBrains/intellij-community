@@ -65,8 +65,8 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     assertEquals(1, nodes.size());
     assertEquals(myProjectPom, nodes.get(0).getFile());
 
-    assertEquals(1, nodes.get(0).mySubProjects.size());
-    assertEquals(m, nodes.get(0).mySubProjects.get(0).getFile());
+    assertEquals(1, nodes.get(0).getSubProjects().size());
+    assertEquals(m, nodes.get(0).getSubProjects().get(0).getFile());
   }
 
   public void testRemovingChildProjectFromRootProjects() throws Exception {
@@ -93,7 +93,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     assertEquals(1, nodes.size());
     assertEquals(myProjectPom, nodes.get(0).getFile());
 
-    assertEquals(1, nodes.get(0).mySubProjects.size());
-    assertEquals(m, nodes.get(0).mySubProjects.get(0).getFile());
+    assertEquals(1, nodes.get(0).getSubProjects().size());
+    assertEquals(m, nodes.get(0).getSubProjects().get(0).getFile());
   }
 }

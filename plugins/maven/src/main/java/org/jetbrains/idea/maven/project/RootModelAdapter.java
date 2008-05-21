@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.HashSet;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.core.util.Url;
@@ -28,18 +27,18 @@ public class RootModelAdapter {
     myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
-  public void init(MavenProject p) {
+  public void init(MavenProjectModel.Node p) {
     initContentRoots(p);
     initOrderEntries();
     configure();
   }
 
-  public void initContentRoots(MavenProject p) {
+  public void initContentRoots(MavenProjectModel.Node p) {
     for (ContentEntry e : myRootModel.getContentEntries()) {
       myRootModel.removeContentEntry(e);
     }
 
-    findOrCreateContentRoot(toUrl(p.getFile().getParent()));
+    findOrCreateContentRoot(toUrl(p.getFile().getParent().getPath()));
   }
 
   private void initOrderEntries() {
@@ -227,27 +226,6 @@ public class RootModelAdapter {
     }
     if (newUrl != null) {
       libraryModel.addRoot(newUrl, type);
-    }
-  }
-
-  public void resolveModuleDependencies(Map<String, String> libraryNameToModule) {
-    OrderEntry[] entries = myRootModel.getOrderEntries();
-    boolean dirty = false;
-    for (int i = 0; i != entries.length; i++) {
-      if (entries[i] instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entries[i];
-        if (libraryOrderEntry.isModuleLevel()) {
-          final String moduleName = libraryNameToModule.get(libraryOrderEntry.getLibraryName());
-          if (moduleName != null) {
-            dirty = true;
-            myRootModel.removeOrderEntry(libraryOrderEntry);
-            entries[i] = myRootModel.addInvalidModuleEntry(moduleName);
-          }
-        }
-      }
-    }
-    if (dirty) {
-      myRootModel.rearrangeOrderEntries(entries);
     }
   }
 

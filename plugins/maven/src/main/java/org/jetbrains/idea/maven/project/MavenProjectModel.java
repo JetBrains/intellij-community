@@ -4,10 +4,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
+import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Tree;
 
 import java.util.*;
@@ -46,29 +49,27 @@ public class MavenProjectModel {
     p.checkCanceled();
     p.setText(ProjectBundle.message("maven.reading", FileUtil.toSystemDependentName(pomFile.getPath())));
 
-    MavenProjectHolder mavenProject = reader.readProject(pomFile.getPath(), profiles);
-    mapping.put(mavenProject.getProjectId(), pomFile);
-    myImportedFiles.add(pomFile);
-
     Module existingModule = existingModules.get(pomFile);
     if (existingModule == null) isExistingModuleTree = false;
     if (!isExistingModuleTree) existingModule = null;
 
-    Node node = new Node(pomFile, mavenProject, existingModule);
+    Node node = new Node(pomFile, existingModule, profiles);
+    node.read(reader);
 
-    createChildNodes(reader, existingModules, profiles, mavenProject, node, isExistingModuleTree, mapping, p);
+    mapping.put(node.getProjectId(), pomFile);
+    myImportedFiles.add(pomFile);
+
+    createChildNodes(reader, node, existingModules, isExistingModuleTree, mapping, p);
     return node;
   }
 
   private void createChildNodes(MavenProjectReader reader,
-                                Map<VirtualFile, Module> existingModules,
-                                List<String> profiles,
-                                MavenProjectHolder mavenProject,
                                 Node parentNode,
+                                Map<VirtualFile, Module> existingModules,
                                 boolean isExistingModuleTree,
                                 Map<ProjectId, VirtualFile> mapping,
                                 MavenProgress p) throws MavenException, CanceledException {
-    for (String modulePath : mavenProject.getModulePaths(profiles)) {
+    for (String modulePath : parentNode.getModulePaths()) {
       p.checkCanceled();
 
       VirtualFile childFile = LocalFileSystem.getInstance().findFileByPath(modulePath);
@@ -83,20 +84,35 @@ public class MavenProjectModel {
         parentNode.mySubProjects.add(existingRoot);
       }
       else {
-        Node module = createMavenTree(reader, childFile, existingModules, profiles, isExistingModuleTree, mapping, p);
+        Node module = createMavenTree(reader, childFile, existingModules, parentNode.getProfiles(), isExistingModuleTree, mapping, p);
         parentNode.mySubProjects.add(module);
       }
     }
   }
 
   private Node findExistingRoot(final VirtualFile childFile) {
-    for (Node each : myRootProjects) {
-      if (each.getFile() == childFile) return each;
-    }
-    return null;
+    return visit(new NodeVisitor<Node>() {
+      public void visit(final Node node) {
+        if (node.getFile() == childFile) {
+          setResult(node);
+        }
+      }
+
+      public Iterable<Node> getChildren(final Node node) {
+        return null;
+      }
+    });
   }
 
-  public void resolve(final MavenProjectReader projectReader, final List<String> profiles, final MavenProgress p)
+  public Node findProject(final ProjectId id) {
+    return visit(new NodeVisitor<Node>() {
+      public void visit(Node node) {
+        if (node.getProjectId().equals(id)) setResult(node);
+      }
+    });
+  }
+
+  public void resolve(final MavenProjectReader projectReader, final MavenProgress p)
       throws MavenException, CanceledException {
     try {
       visit(new PlainNodeVisitor() {
@@ -104,7 +120,7 @@ public class MavenProjectModel {
           try {
             p.checkCanceled();
             p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(node.getPath())));
-            node.resolve(projectReader, profiles);
+            node.resolve(projectReader);
           }
           catch (Exception e) {
             throw new RuntimeException(e);
@@ -129,7 +145,7 @@ public class MavenProjectModel {
     }
   }
 
-  public abstract static class PlainNodeVisitor extends NodeVisitor<Object> {
+  abstract static class PlainNodeVisitor extends NodeVisitor<Object> {
   }
 
   public <Result> Result visit(NodeVisitor<Result> visitor) {
@@ -138,17 +154,26 @@ public class MavenProjectModel {
 
   public static class Node {
     private VirtualFile myPomFile;
-    private Module myLinkedModule;
+    private Module myModule;
 
     private boolean myIncluded = true;
 
-    private MavenProjectHolder myMavenProject;
-    final List<Node> mySubProjects = new ArrayList<Node>();
+    private MavenProjectHolder myMavenProjectHolder;
+    private List<Node> mySubProjects = new ArrayList<Node>();
 
-    private Node(@NotNull VirtualFile pomFile, @NotNull MavenProjectHolder mavenProject, Module module) {
+    private List<String> myProfiles;
+
+    private String myModuleName;
+    private String myModulePath;
+
+    private Node(@NotNull VirtualFile pomFile, Module module, List<String> profiles) {
       myPomFile = pomFile;
-      myMavenProject = mavenProject;
-      myLinkedModule = module;
+      myModule = module;
+      myProfiles = profiles;
+    }
+
+    public boolean isValid() {
+      return myMavenProjectHolder.isValid();
     }
 
     public VirtualFile getFile() {
@@ -166,17 +191,34 @@ public class MavenProjectModel {
       return myPomFile.getParent().getPath();
     }
 
+
+    public String getModuleName() {
+      return myModuleName;
+    }
+
+    public void setModuleName(String moduleName) {
+      myModuleName = moduleName;
+    }
+
+    public void setModuleFilePath(String modulePath) {
+      myModulePath = modulePath;
+    }
+
+    public String getModuleFilePath() {
+      return myModulePath;
+    }
+
     @NotNull
-    public MavenProjectHolder getMavenProject() {
-      return myMavenProject;
+    public MavenProject getMavenProject() {
+      return myMavenProjectHolder.getMavenProject();
     }
 
     public MavenId getMavenId() {
-      return myMavenProject.getMavenId();
+      return myMavenProjectHolder.getMavenId();
     }
 
     public ProjectId getProjectId() {
-      return myMavenProject.getProjectId();
+      return myMavenProjectHolder.getProjectId();
     }
 
     public boolean isIncluded() {
@@ -187,16 +229,44 @@ public class MavenProjectModel {
       myIncluded = included;
     }
 
-    public Module getLinkedModule() {
-      return myLinkedModule;
+    public Module getModule() {
+      return myModule;
     }
 
-    public void unlinkModule() {
-      myLinkedModule = null;
+    public void setModule(Module m) {
+      myModule = m;
     }
 
-    public void resolve(MavenProjectReader projectReader, List<String> profiles) throws MavenException, CanceledException {
-      myMavenProject = projectReader.resolve(getPath(), profiles);
+    public void read(MavenProjectReader r) throws CanceledException {
+      myMavenProjectHolder = r.readProject(myPomFile.getPath(), myProfiles);
+    }
+
+    public void resolve(MavenProjectReader projectReader) throws MavenException, CanceledException {
+      myMavenProjectHolder = projectReader.resolve(getPath(), myProfiles);
+    }
+
+    public List<Node> getSubProjects() {
+      return mySubProjects;
+    }
+
+    public List<Artifact> extractDependencies() {
+      return ProjectUtil.extractDependencies(this);
+    }
+
+    public List<Artifact> extractExportableDependencies() {
+      return ProjectUtil.extractExportableDependencies(this);
+    }
+
+    public List<String> getModulePaths() {
+      return myMavenProjectHolder.getModulePaths(myProfiles);
+    }
+
+    public List<String> getModulePaths(Collection<String> profiles) {
+      return myMavenProjectHolder.getModulePaths(profiles);
+    }
+
+    public List<String> getProfiles() {
+      return myProfiles;
     }
   }
 }

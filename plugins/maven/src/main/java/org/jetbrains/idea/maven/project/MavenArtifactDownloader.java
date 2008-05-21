@@ -1,10 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
@@ -15,20 +12,18 @@ import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderAdapter;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
-import java.io.File;
 import java.util.*;
 
 public class MavenArtifactDownloader {
@@ -44,46 +39,20 @@ public class MavenArtifactDownloader {
     myProgress = p;
   }
 
+
   public static void download(final Project project) throws CanceledException, MavenException {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
-    final Map<MavenProject, Collection<String>> mavenProjects = new HashMap<MavenProject, Collection<String>>();
-
-    final Map<VirtualFile, MavenProject> fileToProject = new HashMap<VirtualFile, MavenProject>();
-    final MavenEmbedder e = EmbedderFactory.createEmbedderForResolve(MavenCore.getInstance(project).getState(), null);
+    final MavenEmbedder e = EmbedderFactory.createEmbedderForExecute(MavenCore.getInstance(project).getState());
     try {
-      for (VirtualFile file : manager.getFiles()) {
-        if (!manager.isIgnored(file)) {
-          MavenProjectHolder p = manager.getResolvedProject(file);
-          if (p == null) continue;
-          mavenProjects.put(p.getMavenProject(), manager.getActiveProfiles(file));
-          fileToProject.put(file, p.getMavenProject());
-        }
-      }
-
-      final Map<MavenProject, Module> projectsToModules = new HashMap<MavenProject, Module>();
-
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        VirtualFile pomFile = manager.findPomForModule(module);
-        if (pomFile != null && !manager.isIgnored(pomFile)) {
-          MavenProject mavenProject = fileToProject.get(pomFile);
-          if (mavenProject != null) {
-            projectsToModules.put(mavenProject, module);
-          }
-        }
-      }
-
       MavenProgress.run(project, ProjectBundle.message("maven.downloading"), new MavenProgress.MavenTask() {
         public void run(MavenProgress p) throws MavenException, CanceledException {
-          Collection<ProjectId> projectIds = new ArrayList<ProjectId>();
-          for (MavenProject mavenProject : projectsToModules.keySet()) {
-            projectIds.add(new ProjectId(mavenProject.getArtifact()));
-          }
           new MavenArtifactDownloader(manager.getArtifactSettings(), e, p)
-            .download(project, mavenProjects, fileToProject, projectIds, true);
+              .download(project, manager.getExistingProjects(), true);
         }
       });
-    } finally {
+    }
+    finally {
       EmbedderFactory.releaseEmbedder(e);
     }
 
@@ -91,11 +60,9 @@ public class MavenArtifactDownloader {
   }
 
   public void download(Project project,
-                       Map<MavenProject, Collection<String>> projectsWithProfiles,
-                       Map<VirtualFile, MavenProject> projectToFile,
-                       Collection<ProjectId> projectIds,
+                       List<MavenProjectModel.Node> mavenProjects,
                        boolean demand) throws CanceledException, MavenException {
-    Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsWithProfiles.keySet(), projectIds);
+    Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(mavenProjects);
 
     myProgress.checkCanceled();
 
@@ -114,8 +81,7 @@ public class MavenArtifactDownloader {
     if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
-      Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(projectsWithProfiles);
-      collectAttachedPlugins(projectsManager, projectToFile, plugins);
+      Map<Plugin, MavenProjectModel.Node> plugins = ProjectUtil.collectPlugins(mavenProjects);
       downloadPlugins(plugins);
       projectsManager.updateAllFiles();
     }
@@ -123,19 +89,7 @@ public class MavenArtifactDownloader {
     myProgress.checkCanceled();
 
     if (isEnabled(mySettings.getGenerateSources(), demand)) {
-      generateSources(project, createGenerateCommand(projectsWithProfiles));
-    }
-  }
-
-  private void collectAttachedPlugins(MavenProjectsManager projectsManager,  Map<VirtualFile, MavenProject> projectToFile, Map<Plugin, MavenProject> plugins) throws MavenException {
-    for(VirtualFile file : projectsManager.getFiles()){
-      for(MavenId mavenId : projectsManager.getAttachedPlugins(file)){
-        final Plugin plugin = new Plugin();
-        plugin.setGroupId(mavenId.groupId);
-        plugin.setArtifactId(mavenId.artifactId);
-        plugin.setVersion(mavenId.version);
-        plugins.put(plugin, projectToFile.get(file));
-      }
+      generateSources(project, createGenerateCommand(mavenProjects));
     }
   }
 
@@ -143,32 +97,37 @@ public class MavenArtifactDownloader {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
-  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(Collection<MavenProject> mavenProjects, Collection<ProjectId> projectIds) {
+  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(List<MavenProjectModel.Node> mavenProjects) {
     Map<MavenId, Set<ArtifactRepository>> result = new TreeMap<MavenId, Set<ArtifactRepository>>();
 
-    for (MavenProject mavenProject : mavenProjects) {
-      Collection<Artifact> artifacts = mavenProject.getArtifacts();
-      if (artifacts != null) {
-        List remoteRepositories = mavenProject.getRemoteArtifactRepositories();
+    for (MavenProjectModel.Node each : mavenProjects) {
+      Collection<Artifact> artifacts = each.extractDependencies();
+      List remoteRepositories = each.getMavenProject().getRemoteArtifactRepositories();
 
-        for (Artifact artifact : artifacts) {
-          if (artifact.getType().equalsIgnoreCase(Constants.JAR_TYPE) &&
-              !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
-            MavenId id = new MavenId(artifact);
-            if (!projectIds.contains(id)) {
-              Set<ArtifactRepository> repos = result.get(id);
-              if (repos == null) {
-                repos = new HashSet<ArtifactRepository>();
-                result.put(id, repos);
-              }
-              //noinspection unchecked
-              repos.addAll(remoteRepositories);
+      for (Artifact artifact : artifacts) {
+        if (artifact.getType().equalsIgnoreCase(Constants.JAR_TYPE) &&
+            !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
+          MavenId id = new MavenId(artifact);
+          if (!isExistingProject(artifact, mavenProjects)) {
+            Set<ArtifactRepository> repos = result.get(id);
+            if (repos == null) {
+              repos = new HashSet<ArtifactRepository>();
+              result.put(id, repos);
             }
+            //noinspection unchecked
+            repos.addAll(remoteRepositories);
           }
         }
       }
     }
     return result;
+  }
+
+  private static boolean isExistingProject(Artifact artifact, List<MavenProjectModel.Node> mavenProjects) {
+    for (MavenProjectModel.Node each : mavenProjects) {
+      if (new ProjectId(artifact).equals(each.getProjectId())) return true;
+    }
+    return false;
   }
 
   private void download(Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, String classifier) throws CanceledException {
@@ -201,19 +160,19 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private void downloadPlugins(Map<Plugin, MavenProject> plugins) throws CanceledException {
+  private void downloadPlugins(Map<Plugin, MavenProjectModel.Node> plugins) throws CanceledException {
     myProgress.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
 
     int step = 0;
 
-    for (Map.Entry<Plugin, MavenProject> entry : plugins.entrySet()) {
-      final Plugin plugin = entry.getKey();
+    for (Map.Entry<Plugin, MavenProjectModel.Node> each : plugins.entrySet()) {
+      final Plugin plugin = each.getKey();
 
       myProgress.checkCanceled();
       myProgress.setFraction(((double)step++) / plugins.size());
       myProgress.setText2(plugin.getKey());
 
-      MavenEmbedderAdapter.verifyPlugin(plugin, entry.getValue(), myEmbedder);
+      MavenEmbedderAdapter.verifyPlugin(plugin, each.getValue().getMavenProject(), myEmbedder);
     }
   }
 
@@ -232,22 +191,23 @@ public class MavenArtifactDownloader {
   }
 
   @NonNls private final static String[] generateGoals =
-    {"clean", "generate-sources", "generate-resources", "generate-test-sources", "generate-test-resources"};
+      {"clean", "generate-sources", "generate-resources", "generate-test-sources", "generate-test-resources"};
 
-  private static List<MavenRunnerParameters> createGenerateCommand(Map<MavenProject, Collection<String>> projects) {
+  private static List<MavenRunnerParameters> createGenerateCommand(List<MavenProjectModel.Node> projects) {
     final List<MavenRunnerParameters> commands = new ArrayList<MavenRunnerParameters>();
     final List<String> goals = Arrays.asList(generateGoals);
 
     final LinkedHashSet<String> modulePaths = new LinkedHashSet<String>();
-    for (Map.Entry<MavenProject, Collection<String>> entry : projects.entrySet()) {
-      ProjectUtil.collectAbsoluteModulePaths(entry.getKey(), entry.getValue(), modulePaths);
+    for (MavenProjectModel.Node each : projects) {
+      modulePaths.addAll(each.getModulePaths());
     }
 
-    for (Map.Entry<MavenProject, Collection<String>> entry : projects.entrySet()) {
-      final File file = entry.getKey().getFile();
-      if (!modulePaths.contains(FileUtil.toSystemIndependentName(file.getPath()))) { // only for top-level projects
-        commands.add(new MavenRunnerParameters(file.getPath(), goals, entry.getValue()));
-      }
+    for (MavenProjectModel.Node each : projects) {
+      VirtualFile file = each.getFile();
+      // skip modules
+      if (modulePaths.contains(file.getPath())) continue;
+
+      commands.add(new MavenRunnerParameters(file.getPath(), goals, each.getProfiles()));
     }
     return commands;
   }

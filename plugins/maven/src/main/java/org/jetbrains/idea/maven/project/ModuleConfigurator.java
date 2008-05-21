@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
@@ -18,28 +17,24 @@ import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
 
 import java.text.MessageFormat;
-import java.util.Collection;
 import java.util.regex.Pattern;
 
 public class ModuleConfigurator {
   private ModifiableModuleModel myModuleModel;
-  private MavenToIdeaMapping myMapping;
-  private Collection<String> myProfiles;
+  private MavenProjectModel myMavenModel;
   private MavenImporterSettings mySettings;
   private Pattern myIgnorePatternCache;
   private Module myModule;
-  private MavenProject myMavenProject;
+  private MavenProjectModel.Node myMavenProject;
   private RootModelAdapter myModel;
 
   public ModuleConfigurator(ModifiableModuleModel moduleModel,
-                            MavenToIdeaMapping mapping,
-                            Collection<String> profiles,
+                            MavenProjectModel mavenModel,
                             MavenImporterSettings settings,
                             Module module,
-                            MavenProject mavenProject) {
+                            MavenProjectModel.Node mavenProject) {
     myModuleModel = moduleModel;
-    myMapping = mapping;
-    myProfiles = profiles;
+    myMavenModel = mavenModel;
     mySettings = settings;
     myIgnorePatternCache = Pattern.compile(Strings.translateMasks(settings.getIgnoredDependencies()));
     myModule = module;
@@ -59,31 +54,31 @@ public class ModuleConfigurator {
 
   public void configFacets(ModuleRootModel rootModel) {
     for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
-      if (importer.isApplicable(myMavenProject, myProfiles)) {
-        importer.process(myModule, rootModel, myMavenProject, myProfiles, myMapping, myModuleModel);
+      if (importer.isApplicable(myMavenProject)) {
+        importer.process(myModule, rootModel, myMavenProject, myMavenModel, myModuleModel);
       }
     }
   }
 
   private void configFolders() {
-    new FoldersConfigurator(myMavenProject, mySettings, myModel).config();
+    new FoldersConfigurator(myMavenProject.getMavenProject(), mySettings, myModel).config();
   }
 
   private void configDependencies() {
-    for (Artifact artifact : ProjectUtil.extractDependencies(myMavenProject)) {
+    for (Artifact artifact : myMavenProject.extractDependencies()) {
       MavenId id = new MavenId(artifact);
 
       if (isIgnored(id)) continue;
 
       boolean isExportable = ProjectUtil.isExportableDependency(artifact);
 
-      String moduleName = myMapping.getModuleName(new ProjectId(artifact));
-      if (moduleName != null) {
-        myModel.createModuleDependency(moduleName, isExportable);
+      MavenProjectModel.Node p = myMavenModel.findProject(new ProjectId(artifact));
+      if (p != null) {
+        myModel.createModuleDependency(p.getModuleName(), isExportable);
       }
       else {
         String artifactPath = artifact.getFile().getPath();
-        myModel.createModuleLibrary(myMapping.getLibraryName(id),
+        myModel.createModuleLibrary(ProjectUtil.getLibraryName(id),
                                     getUrl(artifactPath, null),
                                     getUrl(artifactPath, Constants.SOURCES_CLASSIFIER),
                                     getUrl(artifactPath, Constants.JAVADOC_CLASSIFIER),
@@ -117,10 +112,9 @@ public class ModuleConfigurator {
   @Nullable
   private String extractLanguageLevel() {
     return ProjectUtil.findPluginConfigurationValue(myMavenProject,
-                                               myProfiles,
-                                               "org.apache.maven.plugins",
-                                               "maven-compiler-plugin",
-                                               "source");
+                                                    "org.apache.maven.plugins",
+                                                    "maven-compiler-plugin",
+                                                    "source");
   }
 
   @Nullable

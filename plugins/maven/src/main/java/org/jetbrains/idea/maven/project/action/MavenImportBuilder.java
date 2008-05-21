@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -79,7 +78,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   public void commit(final Project project) {
-    myImportProcessor.commit(project, getAllProfiles());
+    myImportProcessor.commit(project);
 
     MavenProjectsManager.getInstance(project).setMavenProject();
     MavenProjectsManager.getInstance(project).setDoesNotRequireReimport();
@@ -223,7 +222,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
                                                  getImporterPreferences(),
                                                  getArtifactPreferences());
 
-    myImportProcessor.createMavenProjectModel(getProject(), myFiles, new HashMap<VirtualFile, Module>(), getAllProfiles(), p);
+    myImportProcessor.createMavenProjectModel(getProject(), myFiles, getAllProfiles(), p);
   }
 
   public List<MavenProjectModel.Node> getList() {
@@ -238,7 +237,6 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     for (MavenProjectModel.Node node : myImportProcessor.getMavenProjectModel().getRootProjects()) {
       node.setIncluded(nodes.contains(node));
     }
-    myImportProcessor.createMavenToIdeaMapping(getProject());
   }
 
   public boolean isOpenProjectSettingsAfter() {

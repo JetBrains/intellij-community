@@ -13,63 +13,49 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import org.apache.maven.project.MavenProject;
-import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.IOException;
 import java.util.*;
 
-
 public class ProjectConfigurator {
   private Project myProject;
   private ModifiableModuleModel myModuleModel;
   private MavenProjectModel myProjectModel;
-  private MavenToIdeaMapping myMapping;
-  private Collection<String> myProfiles;
   private MavenImporterSettings mySettings;
-  private Collection<ModifiableRootModel> myRootModelsToCommit;
+  private List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
 
   public static void config(Project p,
                             MavenProjectModel projectModel,
-                            Collection<String> profiles,
-                            MavenToIdeaMapping mapping,
                             MavenImporterSettings settings) {
-    ProjectConfigurator c = new ProjectConfigurator(p, projectModel, mapping, profiles, settings);
+    ProjectConfigurator c = new ProjectConfigurator(p, projectModel, settings);
     c.config();
   }
 
   private ProjectConfigurator(Project p,
                               MavenProjectModel projectModel,
-                              MavenToIdeaMapping mapping,
-                              Collection<String> profiles,
                               MavenImporterSettings settings) {
     myProject = p;
     myProjectModel = projectModel;
-    myMapping = mapping;
-    myProfiles = profiles;
     mySettings = settings;
   }
 
   private void config() {
-    deleteObsoleteModules();
-
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
     configSettings();
+    deleteObsoleteModules();
     configModules();
     configModuleGroups();
-    resolveDependenciesAndCommit();
+    commit();
   }
 
+  private void configSettings() {
+    ((ProjectEx)myProject).setSavePathsRelative(true);
+  }
+
+
   private void deleteObsoleteModules() {
-    List<Module> obsolete = new ArrayList<Module>();
-
-    for (Module m : myMapping.getObsoleteModules()) {
-      if (MavenProjectsManager.getInstance(myProject).isImportedModule(m)) {
-        obsolete.add(m);
-      }
-    }
-
+    List<Module> obsolete = collectObsoleteModules();
     if (obsolete.isEmpty()) return;
 
     MavenProjectsManager.getInstance(myProject).setUserModules(obsolete);
@@ -86,60 +72,79 @@ public class ProjectConfigurator {
                                           Messages.getQuestionIcon());
     if (result == 1) return;// NO
 
-    IdeaAPIHelper.deleteModules(myMapping.getObsoleteModules());
+    for (Module each : obsolete) {
+      myModuleModel.disposeModule(each);
+    }
   }
 
-  private void configSettings() {
-    ((ProjectEx)myProject).setSavePathsRelative(true);
+  private List<Module> collectObsoleteModules() {
+    final List<Module> linkedModules = new ArrayList<Module>();
+    myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
+      public void visit(MavenProjectModel.Node node) {
+        Module m = node.getModule();
+        if (m != null) linkedModules.add(m);
+      }
+    });
+
+    List<Module> remainingModules = new ArrayList<Module>();
+    Collections.addAll(remainingModules, ModuleManager.getInstance(myProject).getModules());
+    remainingModules.removeAll(linkedModules);
+
+    List<Module> obsolete = new ArrayList<Module>();
+    for (Module each : remainingModules) {
+      if (MavenProjectsManager.getInstance(myProject).isImportedModule(each)) {
+        obsolete.add(each);
+      }
+    }
+    return obsolete;
   }
 
   private void configModules() {
     // we must preserve the natural order.
-    final LinkedHashMap<MavenProject, Module> modules = new LinkedHashMap<MavenProject, Module>();
+    final LinkedHashMap<MavenProjectModel.Node, Module> modules = new LinkedHashMap<MavenProjectModel.Node, Module>();
 
     myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
       public void visit(MavenProjectModel.Node node) {
-        MavenProjectHolder p = node.getMavenProject();
         Module m = createModule(node);
-        if (!p.isValid()) return;
-        modules.put(p.getMavenProject(), m);
+        if (!node.isValid()) return;
+        modules.put(node, m);
       }
     });
 
-
     LinkedHashMap<Module, ModifiableRootModel> rootModels = new LinkedHashMap<Module, ModifiableRootModel>();
-    for (Map.Entry<MavenProject,Module> each : modules.entrySet()) {
+    for (Map.Entry<MavenProjectModel.Node, Module> each : modules.entrySet()) {
       ModifiableRootModel model = createModuleConfigurator(each.getValue(), each.getKey()).config();
       rootModels.put(each.getValue(), model);
     }
 
 
-    for (Map.Entry<MavenProject,Module> each : modules.entrySet()) {
+    for (Map.Entry<MavenProjectModel.Node, Module> each : modules.entrySet()) {
       createModuleConfigurator(each.getValue(), each.getKey()).configFacets(rootModels.get(each.getValue()));
     }
 
-    myRootModelsToCommit = rootModels.values();
+    myRootModelsToCommit.addAll(rootModels.values());
 
     MavenProjectsManager.getInstance(myProject).setImportedModules(new ArrayList<Module>(modules.values()));
   }
 
   private Module createModule(MavenProjectModel.Node node) {
-    Module module = myMapping.getModule(node);
+    Module module = node.getModule();
     if (module == null) {
-      String path = myMapping.getModuleFilePath(node);
+      String path = node.getModuleFilePath();
       // for some reason newModule opens the existing iml file, so we
       // have to remove it beforehand.
       removeExistingIml(path);
       module = myModuleModel.newModule(path, StdModuleTypes.JAVA);
+      node.setModule(module);
     }
     return module;
   }
 
-  private ModuleConfigurator createModuleConfigurator(Module module, MavenProject mavenProject) {
-    return new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject);
+  private ModuleConfigurator createModuleConfigurator(Module module, MavenProjectModel.Node mavenProject) {
+    return new ModuleConfigurator(myModuleModel, myProjectModel, mySettings, module, mavenProject);
   }
 
-  private void removeExistingIml(String path)  {
+  private void removeExistingIml(String path) {
     VirtualFile existingFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (existingFile == null) return;
     try {
@@ -162,7 +167,7 @@ public class ProjectConfigurator {
       public void visit(MavenProjectModel.Node node) {
         depth++;
 
-        String name = myMapping.getModuleName(node.getProjectId());
+        String name = node.getModuleName();
 
         if (shouldCreateGroup(node)) {
           groups.push(ProjectBundle.message("module.group.name", name));
@@ -180,17 +185,12 @@ public class ProjectConfigurator {
       }
 
       private boolean shouldCreateGroup(MavenProjectModel.Node node) {
-        return !node.mySubProjects.isEmpty() && (createTopLevelGroup || depth > 1);
+        return !node.getSubProjects().isEmpty() && (createTopLevelGroup || depth > 1);
       }
     });
   }
 
-  private void resolveDependenciesAndCommit() {
-    for (Module module : myMapping.getExistingModules()) {
-      RootModelAdapter a = new RootModelAdapter(module);
-      a.resolveModuleDependencies(myMapping.getLibraryNameToModuleName());
-    }
-
+  private void commit() {
     ModifiableRootModel[] rootModels = myRootModelsToCommit.toArray(new ModifiableRootModel[myRootModelsToCommit.size()]);
     ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel, rootModels);
   }
