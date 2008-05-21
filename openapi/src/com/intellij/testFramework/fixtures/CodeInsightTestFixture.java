@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -56,6 +57,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   @NonNls String END_LINE_WARNING_MARKER = "EOLWarning";
 
   Project getProject();
+
+  Module getModule();
 
   Editor getEditor();
   

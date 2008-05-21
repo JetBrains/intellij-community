@@ -31,8 +31,8 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
@@ -53,6 +53,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
@@ -96,6 +97,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -639,11 +641,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void tearDown() throws Exception {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        LookupManager.getInstance(getProject()).hideActiveLookup();
-      }
-    }, ModalityState.NON_MODAL);
+    if (SwingUtilities.isEventDispatchThread()) {
+      LookupManager.getInstance(getProject()).hideActiveLookup();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        public void run() {
+          LookupManager.getInstance(getProject()).hideActiveLookup();
+        }
+      }, ModalityState.NON_MODAL);
+    }
 
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();
@@ -851,6 +858,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public Project getProject() {
     return myProjectFixture.getProject();
+  }
+
+  public Module getModule() {
+    return myProjectFixture.getModule();
   }
 
   public Editor getEditor() {
