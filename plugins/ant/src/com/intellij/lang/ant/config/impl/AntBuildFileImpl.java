@@ -95,6 +95,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   public static final BooleanProperty RUN_IN_BACKGROUND = new BooleanProperty("runInBackground", true);
   public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 128);
+  public static final IntProperty MAX_STACK_SIZE = new IntProperty("maximumStackSize", 32);
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);
   public static final BooleanProperty CLOSE_ON_NO_ERRORS = new BooleanProperty("viewClosedWhenNoErrors", false);
@@ -155,6 +156,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
     myProjectOptions = new ExternalizablePropertyContainer();
     myProjectOptions.registerProperty(MAX_HEAP_SIZE);
+    myProjectOptions.registerProperty(MAX_STACK_SIZE);
     myProjectOptions.registerProperty((StringProperty)CUSTOM_JDK_NAME);
     myProjectOptions.registerProperty(ANT_PROPERTIES, "property", NewInstanceFactory.fromClass(BuildFileProperty.class));
     myProjectOptions.registerProperty(ADDITIONAL_CLASSPATH, "entry", SinglePathEntry.EXTERNALIZER);

@@ -74,6 +74,7 @@ public class AntCommandLineBuilder {
 
     ParametersList vmParametersList = myCommandLine.getVMParametersList();
     vmParametersList.add("-Xmx" + AntBuildFileImpl.MAX_HEAP_SIZE.get(container) + "m");
+    vmParametersList.add("-Xss" + AntBuildFileImpl.MAX_STACK_SIZE.get(container) + "m");
 
     final AntInstallation antInstallation = AntBuildFileImpl.ANT_INSTALLATION.get(container);
     if (antInstallation == null) {

@@ -106,6 +106,7 @@ public class BuildFilePropertiesPanel {
   private static class Form {
     private JLabel myBuildFileName;
     private JTextField myXmx;
+    private JTextField myXss;
     private JCheckBox myRunInBackground;
     private JCheckBox myCloseOnNoError;
     private JPanel myTabsPlace;
@@ -129,6 +130,7 @@ public class BuildFilePropertiesPanel {
       myBinding.bindBoolean(myRunInBackground, AntBuildFileImpl.RUN_IN_BACKGROUND);
       myBinding.bindBoolean(myCloseOnNoError, AntBuildFileImpl.CLOSE_ON_NO_ERRORS);
       myBinding.bindInt(myXmx, AntBuildFileImpl.MAX_HEAP_SIZE);
+      myBinding.bindInt(myXss, AntBuildFileImpl.MAX_STACK_SIZE);
 
       for (Tab tab : myTabs) {
         myWrapper.addTab(tab.getDisplayName(), tab.getComponent());
