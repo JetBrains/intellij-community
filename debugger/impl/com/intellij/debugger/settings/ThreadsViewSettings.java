@@ -1,15 +1,20 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
-public class ThreadsViewSettings implements NamedJDOMExternalizable, ApplicationComponent {
+@State(
+  name="ThreadsViewSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/debugger.threadsview.xml"
+    )}
+)
+public class ThreadsViewSettings implements PersistentStateComponent<ThreadsViewSettings> {
   public boolean SHOW_THREAD_GROUPS = false;
   public boolean SHOW_LINE_NUMBER = true;
   public boolean SHOW_CLASS_NAME = true;
@@ -17,29 +22,15 @@ public class ThreadsViewSettings implements NamedJDOMExternalizable, Application
   public boolean SHOW_SYNTHETIC_FRAMES = true;
   public boolean SHOW_CURRENT_THREAD = true;
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public String getExternalFileName() {
-    return "debugger.threadsview";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public String getComponentName() {
-    return "ThreadsViewSettings";
-  }
-
   public static ThreadsViewSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(ThreadsViewSettings.class);
+    return ServiceManager.getService(ThreadsViewSettings.class);
  }
 
+  public ThreadsViewSettings getState() {
+    return this;
+  }
+
+  public void loadState(final ThreadsViewSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
+  }
 }

@@ -2,8 +2,8 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -124,7 +124,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   }
 
   public static DebuggerSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(DebuggerSettings.class);
+    return ServiceManager.getService(DebuggerSettings.class);
   }
 
   public boolean equals(Object obj) {

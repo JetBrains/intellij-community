@@ -1,13 +1,4 @@
 <components>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.debugger.settings.ThreadsViewSettings</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.settings.DebuggerSettings</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <interface-class>com.intellij.debugger.ui.DebuggerPanelsManager</interface-class>
