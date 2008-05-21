@@ -10,6 +10,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.List;
 
 public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase implements StubElement<T> {
   private final StubElement myParent;
-  private final List<StubElement> myChildren = new ArrayList<StubElement>();
+  private final List<StubElement> myChildren = new SmartList<StubElement>();
   private final IStubElementType myElementType;
   private volatile T myPsi;
 
