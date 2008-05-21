@@ -5,29 +5,25 @@ package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaPsiFacade {
-  private static final ConcurrentWeakHashMap<Project, JavaPsiFacade> INSTANCE_CACHE = new ConcurrentWeakHashMap<Project, JavaPsiFacade>();
-
-  public static JavaPsiFacade getInstance(Project project) {
-    /*
-    JavaPsiFacade facade = INSTANCE_CACHE.get(project);
-    if (facade == null) {
-      facade = ServiceManager.getService(project, JavaPsiFacade.class);
-      INSTANCE_CACHE.put(project, facade);
+  private final static NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = NotNullLazyKey.create("JavaPsiFacade.Instance.Cache", new NotNullFunction<Project, JavaPsiFacade>() {
+    @NotNull
+    public JavaPsiFacade fun(final Project project) {
+      return ServiceManager.getService(project, JavaPsiFacade.class);
     }
-
-    return facade;
-    */
-    
-    return ServiceManager.getService(project, JavaPsiFacade.class);
+  });
+  
+  public static JavaPsiFacade getInstance(Project project) {
+    return INSTANCE_KEY.getValue(project);
   }
 
   static {
