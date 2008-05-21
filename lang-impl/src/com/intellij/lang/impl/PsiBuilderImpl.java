@@ -52,7 +52,6 @@ import java.util.ArrayList;
 public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
-  private Language myLanguage;
   private int[] myLexStarts;
   private int[] myLexEnds;
   private IElementType[] myLexTypes;
@@ -107,7 +106,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
-    myLanguage = lang;
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assert parserDefinition != null;
     myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
@@ -121,6 +119,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myInjectionHost = chameleon.getTreeParent().getPsi().getContext();
 
     myFileLevelParsing = myCharTable == null || myOriginalTree != null;
+    cacheLexems();
   }
 
   /**
@@ -134,6 +133,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
 
     myFileLevelParsing = true;
+    cacheLexems();
   }
 
   private void cacheLexems() {
@@ -248,7 +248,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public Marker precede() {
-      return myBuilder.preceed(this);
+      return myBuilder.precede(this);
     }
 
     public void drop() {
@@ -284,7 +284,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private Marker preceed(final StartMarker marker) {
+  private Marker precede(final StartMarker marker) {
     int idx = myProduction.lastIndexOf(marker);
     if (idx < 0) {
       LOG.error("Cannot precede dropped or rolled-back marker");
@@ -428,14 +428,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public IElementType getTokenType() {
-    if (!locateToken()) return null;
+    if (eof()) return null;
+
     if (myRemapper != null) {
       IElementType type = myLexTypes[myCurrentLexem];
       type = myRemapper.filter(type, myLexStarts[myCurrentLexem], myLexEnds[myCurrentLexem], myLexer.getBufferSequence());
       myLexTypes[myCurrentLexem] = type; // filter may have changed the type 
       return type;
     }
-    else return myLexTypes[myCurrentLexem];
+    return myLexTypes[myCurrentLexem];
   }
 
   public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
@@ -450,24 +451,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myCurrentLexem++;
   }
 
-  private boolean locateToken() {
-    myTokenTypeChecked = true;
-    if (myLexStarts == null) {
-      cacheLexems();
-    }
-
+  private void skipWhitespace() {
     while (myCurrentLexem < myLexemCount && whitespaceOrComment(myLexTypes[myCurrentLexem])) myCurrentLexem++;
-    return myCurrentLexem < myLexemCount;
   }
 
   public int getCurrentOffset() {
-    if (!locateToken()) return getOriginalText().length();
+    if (eof()) return getOriginalText().length();
     return myLexStarts[myCurrentLexem];
   }
 
   @Nullable
   public String getTokenText() {
-    if (!locateToken()) return null;
+    if (eof()) return null;
     return myText.subSequence(myLexStarts[myCurrentLexem], myLexEnds[myCurrentLexem]).toString();
   }
 
@@ -510,13 +505,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public final boolean eof() {
-    return !locateToken();
+    markTokenTypeChecked();
+    skipWhitespace();
+    return myCurrentLexem >= myLexemCount;
+  }
+
+  private void markTokenTypeChecked() {
+    myTokenTypeChecked = true;
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   private void rollbackTo(Marker marker) {
     myCurrentLexem = ((StartMarker)marker).myLexemIndex;
-    myTokenTypeChecked = true;
+    markTokenTypeChecked();
     int idx = myProduction.lastIndexOf(marker);
     if (idx < 0) {
       LOG.error("The marker must be added before rolled back to.");
@@ -707,7 +708,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private StartMarker prepareLightTree() {
-    locateToken();
+    markTokenTypeChecked();
 
     final MyList fProduction = myProduction;
     StartMarker rootMarker = (StartMarker)fProduction.get(0);
