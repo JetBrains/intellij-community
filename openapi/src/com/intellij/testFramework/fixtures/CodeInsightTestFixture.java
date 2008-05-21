@@ -171,6 +171,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   @NotNull
   List<IntentionAction> getAvailableIntentions() throws Throwable;
 
+  IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable;
+
   /**
    * Launches the given action. Use {@link #checkResultByFile(String)} to check the result.
    *

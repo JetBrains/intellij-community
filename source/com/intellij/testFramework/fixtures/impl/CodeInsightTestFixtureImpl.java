@@ -83,6 +83,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.ArrayUtil;
@@ -298,6 +299,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public List<IntentionAction> getAvailableIntentions() {
     int offset = myEditor.getCaretModel().getOffset();
     return getAvailableIntentions(myProjectFixture.getProject(), doHighlighting(), offset, myEditor, myFile);
+  }
+
+  public IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable {
+    List<IntentionAction> intentions = getAvailableIntentions(filePaths);
+    return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
   }
 
   public void launchAction(@NotNull final IntentionAction action) throws Throwable {
