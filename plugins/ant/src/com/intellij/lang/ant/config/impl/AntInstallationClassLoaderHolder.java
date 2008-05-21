@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.lang.UrlClassLoader;
 
@@ -37,6 +38,12 @@ public class AntInstallationClassLoaderHolder extends ClassLoaderHolder {
         LOG.debug(e);
       }
     }
-    return new UrlClassLoader(urls, null, true, false);
+    final ProgressManager pm = ProgressManager.getInstance();
+    return new UrlClassLoader(urls, null, true, false) {
+      protected Class findClass(final String name) throws ClassNotFoundException {
+        pm.checkCanceled();
+        return super.findClass(name);
+      }
+    };
   }
 }

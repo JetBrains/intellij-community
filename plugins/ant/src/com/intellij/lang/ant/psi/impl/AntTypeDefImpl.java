@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -347,6 +348,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     if (classname == null || name == null || name.length() == 0) {
       return null;
     }
+    ProgressManager.getInstance().checkCanceled();
     final List<URL> urls = getClassPathUrls();
     Class clazz = null;
     final ClassLoader loader = getClassLoader(urls);

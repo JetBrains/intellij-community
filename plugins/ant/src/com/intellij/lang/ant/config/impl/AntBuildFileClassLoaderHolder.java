@@ -1,13 +1,13 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.lang.UrlClassLoader;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +40,12 @@ public class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
         LOG.debug(e);
       }
     }
-    return new UrlClassLoader(urls, parentLoader, false, false);
+    final ProgressManager pm = ProgressManager.getInstance();
+    return new UrlClassLoader(urls, parentLoader, false, false) {
+      protected Class findClass(final String name) throws ClassNotFoundException {
+        pm.checkCanceled();
+        return super.findClass(name);
+      }
+    };
   }
 }
