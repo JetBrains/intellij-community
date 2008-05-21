@@ -138,8 +138,13 @@ public class ReplaceConcatenationWithFormatStringIntention
         if (lhs instanceof PsiLiteralExpression) {
             final String text = lhs.getText();
             final int length = text.length();
-            if (length > 2) {
-                formatString.append(text.substring(1, length -1));
+            final PsiType type = lhs.getType();
+            if (type != null && type.equalsToText("java.lang.String")) {
+                if (length > 2) {
+                    formatString.append(text.substring(1, length - 1));
+                }
+            } else {
+                formatString.append(text);
             }
         } else if (lhs instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
