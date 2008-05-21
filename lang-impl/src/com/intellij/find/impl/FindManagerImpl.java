@@ -11,7 +11,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +24,10 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -43,7 +48,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class FindManagerImpl extends FindManager implements ProjectComponent, JDOMExternalizable {
+@State(
+  name = "FindManager",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class FindManagerImpl extends FindManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
 
   private final FindUsagesManager myFindUsagesManager;
@@ -72,28 +85,29 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     myFindInProjectModel.setMultipleFiles(true);
   }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    final Element findUsages = element.getChild(FIND_USAGES_MANAGER_ELEMENT);
-    if (findUsages != null) {
-      myFindUsagesManager.readExternal(findUsages);
-    }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("FindManager");
     final Element findUsages = new Element(FIND_USAGES_MANAGER_ELEMENT);
     element.addContent(findUsages);
-    myFindUsagesManager.writeExternal(findUsages);
+    try {
+      myFindUsagesManager.writeExternal(findUsages);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return element;
+  }
+
+  public void loadState(final Element state) {
+    final Element findUsages = state.getChild(FIND_USAGES_MANAGER_ELEMENT);
+    if (findUsages != null) {
+      try {
+        myFindUsagesManager.readExternal(findUsages);
+      }
+      catch (InvalidDataException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public int showPromptDialog(final FindModel model, String title) {
@@ -508,11 +522,6 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     }
 
     return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "FindManager";
   }
 
   public FindUsagesManager getFindUsagesManager() {

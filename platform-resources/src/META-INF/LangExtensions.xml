@@ -105,6 +105,9 @@
   <projectService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
                   serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"/>
 
+  <projectService serviceInterface="com.intellij.find.FindManager"
+                  serviceImplementation="com.intellij.find.impl.FindManagerImpl"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 

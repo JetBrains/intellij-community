@@ -130,13 +130,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.find.FindManager</interface-class>
-      <implementation-class>com.intellij.find.impl.FindManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.usageView.UsageViewManager</interface-class>
       <implementation-class>com.intellij.usageView.impl.UsageViewManagerImpl</implementation-class>
       <skipForDummyProject/>

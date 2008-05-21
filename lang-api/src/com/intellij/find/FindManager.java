@@ -15,6 +15,7 @@
  */
 package com.intellij.find;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ public abstract class FindManager {
    * @return the manager instance.
    */
   public static FindManager getInstance(Project project) {
-    return project.getComponent(FindManager.class);
+    return ServiceManager.getService(project, FindManager.class);
   }
 
   /**
