@@ -432,7 +432,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, LocalInspectionTool[] tools) {
     InspectionManager inspectionManager = InspectionManager.getInstance(injectedPsi.getProject());
     final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager);
+    final PsiElement host = injectedPsi.getContext();
     for (LocalInspectionTool tool : tools) {
+      if (host != null && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {
+          continue;
+      }
       final PsiElementVisitor visitor = tool.buildVisitor(problemsHolder, true);
       assert !(visitor instanceof PsiRecursiveElementVisitor) : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
       injectedPsi.accept(new PsiRecursiveElementVisitor() {
