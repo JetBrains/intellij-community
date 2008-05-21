@@ -102,7 +102,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return (AntFile)element;
   }
 
-  public PsiElement getParent() {
+  public AntElement getParent() {
     return myParent;
   }
 

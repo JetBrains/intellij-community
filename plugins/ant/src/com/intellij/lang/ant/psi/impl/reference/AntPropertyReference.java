@@ -112,7 +112,7 @@ public class AntPropertyReference extends AntGenericReference {
         final String[] names = property.getNames();
         if (names != null) {
           for (final String name : names) {
-            variants.add(new AntElementCompletionWrapper(name, project, AntElementRole.PROPERTY_ROLE));
+            variants.add(new AntElementCompletionWrapper((AntElement)property.getParent(), name, project, AntElementRole.PROPERTY_ROLE));
           }
         }
       }

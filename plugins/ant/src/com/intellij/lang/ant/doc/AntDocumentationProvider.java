@@ -1,7 +1,12 @@
 package com.intellij.lang.ant.doc;
 
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.config.impl.AntInstallation;
-import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntFilesProvider;
+import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.impl.reference.AntElementCompletionWrapper;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
@@ -25,8 +30,8 @@ import java.util.List;
 public class AntDocumentationProvider implements DocumentationProvider {
   
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    final String mainDoc = getMainDocumentation(originalElement);
-    final String additionalDoc = getAdditionalDocumentation(originalElement);
+    final String mainDoc = getMainDocumentation(element);
+    final String additionalDoc = getAdditionalDocumentation(element);
     if (mainDoc == null && additionalDoc == null) {
       return null;
     }
@@ -46,12 +51,12 @@ public class AntDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  private static String getMainDocumentation(PsiElement originalElement) {
-    if (!(originalElement instanceof AntElement)) {
+  private static String getMainDocumentation(PsiElement elem) {
+    if (!(elem instanceof AntElement)) {
       return null;
     }
     
-    final File helpFile = getHelpFile(originalElement);
+    final File helpFile = getHelpFile(elem);
     if (helpFile == null) {
       return null;
     }
@@ -73,11 +78,11 @@ public class AntDocumentationProvider implements DocumentationProvider {
   }
   
   @Nullable
-  private static String getAdditionalDocumentation(PsiElement originalElement) {
-    if (!(originalElement instanceof AntElement)) {
+  private static String getAdditionalDocumentation(PsiElement elem) {
+    if (!(elem instanceof AntElement)) {
       return null;
     }
-    final AntElement antElement = (AntElement)originalElement;
+    final AntElement antElement = (AntElement)elem;
     if (antElement instanceof AntFilesProvider) {
       final List<File> list = ((AntFilesProvider)antElement).getFiles();
       if (list.size() > 0) {
@@ -115,7 +120,8 @@ public class AntDocumentationProvider implements DocumentationProvider {
     if (antFile == null) {
       return null;
     }
-    final AntInstallation installation = antFile.getAntInstallation();
+    final AntFile originalFile = (AntFile)antFile.getOriginalFile();
+    final AntInstallation installation = originalFile != null? originalFile.getAntInstallation() : antFile.getAntInstallation();
     if (installation == null) {
       return null; // not configured properly and bundled installation missing
     }
@@ -137,28 +143,44 @@ public class AntDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   private static File getHelpFile(AntElement antElement, final String path) {
+    @NonNls final String helpFileShortName;
+    if (antElement instanceof AntElementCompletionWrapper) {
+      final String name = ((AntElementCompletionWrapper)antElement).getName();
+      if (name == null) {
+        return null; // should not happen for valid element
+      }
+      helpFileShortName = name.trim()+ ".html";
+    }
+    else {
+      final XmlTag xmlTag = (XmlTag) antElement.getSourceElement();
+      helpFileShortName = xmlTag.getName()+ ".html";
+    }
 
-    final XmlTag xmlTag = (XmlTag) antElement.getSourceElement();
-    @NonNls final String helpFileShortName = xmlTag.getName()+ ".html";
-    @NonNls File candidateHelpFile = null;
-    
-    if (antElement instanceof AntTask) {
-      candidateHelpFile = new File(path + CORE_TASKS_FOLDER_NAME + helpFileShortName);
-      if (candidateHelpFile.exists()) return candidateHelpFile;
+    @NonNls File candidateHelpFile = new File(path + CORE_TASKS_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile.exists()) {
+      return candidateHelpFile;
+    }
 
-      candidateHelpFile = new File(path + OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
-      if (candidateHelpFile.exists()) return candidateHelpFile;
+    candidateHelpFile = new File(path + OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile.exists()) {
+      return candidateHelpFile;
     }
 
     candidateHelpFile = new File(path + CORE_TYPES_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile.exists()) return candidateHelpFile;
+    if (candidateHelpFile.exists()) {
+      return candidateHelpFile;
+    }
 
     candidateHelpFile = new File(path + OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile.exists()) return candidateHelpFile;
-    
-    if(antElement instanceof AntTarget || antElement instanceof AntProject) {
+    if (candidateHelpFile.exists()) {
+      return candidateHelpFile;
+    }
+
+    if(AntElementRole.TARGET_ROLE.equals(antElement.getRole()) || AntElementRole.PROJECT_ROLE.equals(antElement.getRole())) {
       candidateHelpFile = new File(path + "/using.html");
-      if (candidateHelpFile.exists()) return candidateHelpFile;
+      if (candidateHelpFile.exists()) {
+        return candidateHelpFile;
+      }
     }
 
     return null;

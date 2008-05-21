@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.AntElementRole;
+import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -15,8 +16,8 @@ public class AntElementCompletionWrapper extends AntElementImpl implements PsiNa
   private final Project myProject;
   private final AntElementRole myRole;
 
-  public AntElementCompletionWrapper(final String name, @NotNull final Project project, final AntElementRole role) {
-    super(null, null);
+  public AntElementCompletionWrapper(final AntElement parent, final String name, @NotNull final Project project, final AntElementRole role) {
+    super(parent, null);
     myName = name;
     myProject = project;
     myRole = role;

@@ -117,12 +117,12 @@ public class AntElementNameReference extends AntGenericReference {
     final Set<PsiElement> ids = PsiElementSetSpinAllocator.alloc();
     try {
       for (final AntTypeId id : def.getNestedElements()) {
-        ids.add(new AntElementCompletionWrapper(id.getName() + " ", project, AntElementRole.TASK_ROLE));
+        ids.add(new AntElementCompletionWrapper(parent, id.getName() + " ", project, AntElementRole.TASK_ROLE));
       }
       if (def.isAllTaskContainer()) {
         for (final AntTypeDefinition _def : antFile.getBaseTypeDefinitions()) {
           if (_def.isTask()) {
-            ids.add(new AntElementCompletionWrapper(_def.getTypeId().getName() + " ", project, AntElementRole.TASK_ROLE));
+            ids.add(new AntElementCompletionWrapper(parent, _def.getTypeId().getName() + " ", project, AntElementRole.TASK_ROLE));
           }
         }
       }
