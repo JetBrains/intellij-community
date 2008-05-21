@@ -16,6 +16,7 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -52,6 +53,9 @@ public class UnusedImportInspection extends BaseInspection {
     private static class UnusedImportVisitor extends BaseInspectionVisitor {
 
         @Override public void visitJavaFile(PsiJavaFile file) {
+            if (PsiUtil.isInJspFile(file)) {
+                return;
+            }
             final PsiImportList importList = file.getImportList();
             if (importList == null) {
                 return;
@@ -91,7 +95,7 @@ public class UnusedImportInspection extends BaseInspection {
                 registerError(importStaticStatement);
             }
         }
-
+        
         private void checkImports(PsiImportStatement[] importStatements,
                                   PsiClass[] classes,
                                   @Nullable PsiModifierList annotationList) {
