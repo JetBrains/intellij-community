@@ -24,10 +24,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -212,6 +212,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       copy.myProjectElements = myProjectElements == null ? null : new HashMap<AntTypeId, String>(myProjectElements);
       copy.myClassLoader = myClassLoader;
       copy.myExternalProperties = myExternalProperties != null? new HashMap<String, String>(myExternalProperties) : null;
+      copy.myProperties = myProperties != null? new HashMap<String, AntProperty>(myProperties) : null;
 
       return copy;
     }
@@ -374,7 +375,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           }
           final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
           myProject = project;
-          buildPropertiesMap();
+          if (getOriginalFile() == null || myProperties == null) {
+            buildPropertiesMap();
+          }
           for (final AntFile imported : project.getImportedFiles()) {
             if (imported.isPhysical()) {
               AntSupport.registerDependency(this, imported);
