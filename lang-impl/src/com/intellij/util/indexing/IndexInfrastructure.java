@@ -20,7 +20,7 @@ import java.util.Locale;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
   private static final int VERSION = 4;
-  private final static TObjectLongHashMap<ID<?, ?>> myIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
+  private final static TObjectLongHashMap<ID<?, ?>> ourIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   private IndexInfrastructure() {
@@ -57,14 +57,9 @@ public class IndexInfrastructure {
   }
 
   public static void rewriteVersion(final File file, final int version) throws IOException {
+    final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
       FileUtil.delete(file);
-      try {
-        // need this to ensure the timestamp of the newly created file will be different
-        Thread.sleep(501);
-      }
-      catch (InterruptedException ignored) {
-      }
     }
     file.getParentFile().mkdirs();
     file.createNewFile();
@@ -74,16 +69,17 @@ public class IndexInfrastructure {
       os.writeInt(VERSION);
     }
     finally {
-      myIndexIdToCreationStamp.clear();
+      ourIndexIdToCreationStamp.clear();
       os.close();
+      file.setLastModified(Math.max(System.currentTimeMillis(), prevLastModifiedValue + 1000));
     }
   }
 
   public static long getIndexCreationStamp(ID<?, ?> indexName) {
-    long stamp = myIndexIdToCreationStamp.get(indexName);
+    long stamp = ourIndexIdToCreationStamp.get(indexName);
     if (stamp <= 0) {
       stamp = getVersionFile(indexName).lastModified();
-      myIndexIdToCreationStamp.put(indexName, stamp);
+      ourIndexIdToCreationStamp.put(indexName, stamp);
     }
     return stamp;
   }
