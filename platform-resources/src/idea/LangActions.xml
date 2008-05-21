@@ -133,6 +133,11 @@
       <add-to-group group-id="ViewMenu" relative-to-action="ToggleFullScreenMode" anchor="after"/>
     </action>
 
+    <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
+      <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
+      <add-to-group group-id="ViewRecentActions" anchor="last"/>
+    </action>
+
     <!-- Go To -->
     <group id="GoToTargetEx">
       <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
@@ -560,6 +565,15 @@
         <reference ref="Runner.AttachCell"/>
         <reference ref="Runner.CloseView"/>
       </group>
+    </group>
+
+    <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
+      <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction"/>
+      <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction"/>
+      <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
+
+      <add-to-group group-id="VersionControlsGroup" anchor="first"/>
+      <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
   </actions>
 </component>

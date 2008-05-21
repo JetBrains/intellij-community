@@ -74,15 +74,6 @@
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFile"/>
     </group>
 
-    <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
-      <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction"/>
-      <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction"/>
-      <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
-
-      <add-to-group group-id="VersionControlsGroup" anchor="first"/>
-      <add-to-group group-id="VcsGroups" anchor="first"/>
-    </group>
-
     <!-- File -->
     <group id="OpenProjectGroup">
       <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
@@ -113,11 +104,6 @@
 
       <add-to-group group-id="CodeEditorViewGroup" anchor="before" relative-to-action="ShowErrorDescription"/>
     </group>
-
-    <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
-      <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
-      <add-to-group group-id="ViewRecentActions" anchor="last"/>
-    </action>
 
     <group id="HierarchyGroup">
       <separator/>

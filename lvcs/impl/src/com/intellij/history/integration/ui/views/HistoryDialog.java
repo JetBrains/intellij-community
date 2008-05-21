@@ -11,6 +11,7 @@ import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.table.RevisionsTable;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
@@ -27,10 +28,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UIHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -196,8 +195,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private SplitterProportionsData createSplitterData() {
-    UIHelper h = PeerFactory.getInstance().getUIHelper();
-    return h.createSplitterProportionsData();
+    return new SplitterProportionsDataImpl();
   }
 
   @Override
