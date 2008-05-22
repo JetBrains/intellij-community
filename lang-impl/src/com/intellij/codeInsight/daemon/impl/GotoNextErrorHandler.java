@@ -48,25 +48,31 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
 
     int offsetToGo = myGoForward ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+    int offsetToGoIfNoLuck = offsetToGo;
     HighlightInfo infoToGo = null;
+    HighlightInfo infoToGoIfNoLuck = null;
+    int caretOffsetIfNoLuck = myGoForward ? -1 : editor.getDocument().getTextLength();
     for (HighlightInfo info : highlights) {
       int startOffset = getNavigationPositionFor(info);
-      boolean isItBetter = myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
-                           : startOffset < caretOffset && startOffset > offsetToGo;
-      if (isItBetter) {
+      if (isBetter(caretOffset, offsetToGo, startOffset)) {
         offsetToGo = startOffset;
         infoToGo = info;
       }
-    }
-
-    if (infoToGo == null) {
-      if (highlights.length > 1) {
-        gotoNextError(project, editor, file, myGoForward ? -1 : editor.getDocument().getTextLength());
+      if (isBetter(caretOffsetIfNoLuck, offsetToGoIfNoLuck, startOffset)) {
+        offsetToGoIfNoLuck = startOffset;
+        infoToGoIfNoLuck = info;
       }
     }
-    else {
+    if (infoToGo == null) infoToGo = infoToGoIfNoLuck;
+
+    if (infoToGo != null) {
       navigateToError(project, editor, infoToGo);
     }
+  }
+
+  private boolean isBetter(int caretOffset, int offsetToGo, int startOffset) {
+    return myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
+                         : startOffset < caretOffset && startOffset > offsetToGo;
   }
 
   static void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor) {
