@@ -33,6 +33,9 @@ public abstract class DebuggerSupport {
   public abstract DebuggerActionHandler getStepIntoHandler();
 
   @NotNull
+  public abstract DebuggerActionHandler getSmartStepIntoHandler();
+
+  @NotNull
   public abstract DebuggerActionHandler getStepOutHandler();
 
   @NotNull
@@ -69,6 +72,6 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract QuickEvaluateHandler getQuickEvaluateHandler();
 
-
+  @NotNull
   public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
 }

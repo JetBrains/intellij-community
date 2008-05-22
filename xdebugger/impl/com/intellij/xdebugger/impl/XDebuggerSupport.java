@@ -34,6 +34,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private XQuickEvaluateHandler myQuickEvaluateHandler;
   private final XDebuggerSettingsPanelProviderImpl mySettingsPanelProvider;
   private DebuggerToggleActionHandler myMuteBreakpointsHandler;
+  private DebuggerActionHandler mySmartStepIntoHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -61,6 +62,15 @@ public class XDebuggerSupport extends DebuggerSupport {
     myForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.forceStepInto();
+      }
+    };
+    mySmartStepIntoHandler = new XDebuggerSuspendedActionHandler() {
+      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+        //todo[nik] implement
+      }
+
+      protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
+        return false;
       }
     };
     myRunToCursorHandler = new XDebuggerRunToCursorActionHandler(false);
@@ -99,6 +109,11 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getStepIntoHandler() {
     return myStepIntoHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getSmartStepIntoHandler() {
+    return mySmartStepIntoHandler;
   }
 
   @NotNull
@@ -156,6 +171,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myQuickEvaluateHandler;
   }
 
+  @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
   }

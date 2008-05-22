@@ -1,0 +1,43 @@
+<root>
+  <project-components>
+    <component>
+      <interface-class>com.intellij.xdebugger.XDebuggerManager</interface-class>
+      <implementation-class>com.intellij.xdebugger.impl.XDebuggerManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager</interface-class>
+      <implementation-class>com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
+
+  <extensionPoints>
+    <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings"/>
+    <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType"/>
+    <extensionPoint name="xdebugger.debuggerSupport" interface="com.intellij.xdebugger.impl.DebuggerSupport"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <colorSettingsPage implementation="com.intellij.xdebugger.impl.ui.DebuggerColorsPage"/>
+
+    <applicationService serviceInterface="com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager"
+                        serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager"/>
+
+    <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
+                        serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
+
+    <projectService serviceInterface="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"
+                    serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"/>
+
+    <projectService serviceInterface="com.intellij.xdebugger.impl.XDebuggerHistoryManager"
+                    serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
+
+    <applicationConfigurable implementation="com.intellij.xdebugger.impl.settings.DebuggerConfigurable"/>
+
+    <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first"/>
+
+    <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run"/>
+  </extensions>
+</root>

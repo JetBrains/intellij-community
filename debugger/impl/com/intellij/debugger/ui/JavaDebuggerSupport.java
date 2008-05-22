@@ -46,6 +46,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private QuickEvaluateActionHandler myQuickEvaluateHandler;
   private JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider;
   private MuteBreakpointsActionHandler myMuteBreakpointsHandler;
+  private DebuggerActionHandler mySmartStepIntoHandler;
 
   public JavaDebuggerSupport() {
     myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
@@ -64,6 +65,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     myQuickEvaluateHandler = new QuickEvaluateActionHandler();
     myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
     myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
+    mySmartStepIntoHandler = new SmartStepIntoActionHandler();
   }
 
   @NotNull
@@ -79,6 +81,11 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getStepIntoHandler() {
     return myStepIntoActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getSmartStepIntoHandler() {
+    return mySmartStepIntoHandler;
   }
 
   @NotNull
@@ -136,6 +143,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return myQuickEvaluateHandler;
   }
 
+  @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
   }

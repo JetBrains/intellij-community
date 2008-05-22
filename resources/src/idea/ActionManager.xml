@@ -238,35 +238,28 @@
     </group>
 
 
-    <group id="RunMenu2">
+    <group id="HotswapGroup">
       <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
       <separator/>
-      <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="/actions/traceOver.png"/>
-      <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="/actions/traceInto.png"/>
-      <action id="SmartStepInto" class="com.intellij.debugger.actions.SmartStepIntoAction" icon="/actions/traceInto.png"/>
-      <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="/actions/stepOut.png"/>
-      <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
-      <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>
-      <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="/actions/runToCursor.png"/>
-      <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction"/>
-      <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="/actions/popFrame.png"/>
-      <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="/actions/pause.png"/>
-      <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="/actions/resume.png"/>
-      <separator/>
-      <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="/debugger/evaluateExpression.png"/>
-      <action id="QuickEvaluateExpression" class="com.intellij.xdebugger.impl.actions.QuickEvaluateAction"/>
-      <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
-              icon="/debugger/showCurrentFrame.png"/>
-      <separator/>
-      <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
+      <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
+    </group>
+
+    <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="/actions/popFrame.png">
+      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
+    </action>
+
+    <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
       <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>
-      <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
+      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
+    </group>
+
+    <group id="ExportThreadsGroup">
       <separator/>
       <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png"/>
 
-      <add-to-group group-id="RunMenu" anchor="last"/>
+      <add-to-group group-id="DebugMainMenu" anchor="last"/>
     </group>
 
     <!-- Tools -->

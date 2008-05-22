@@ -62,4 +62,7 @@
       <skipForDummyProject/>
     </component>
   </project-components>
+
+  <xi:include href="xdebugger.xml" xpointer="xpointer(/root/*)"/>
+
 </idea-plugin>

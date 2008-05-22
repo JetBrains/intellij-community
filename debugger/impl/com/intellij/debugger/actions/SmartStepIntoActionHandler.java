@@ -11,10 +11,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -31,20 +28,19 @@ import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class SmartStepIntoAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project != null) {
-      final DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
-      doStep(project, debuggerContext.getSourcePosition(), debuggerContext.getDebuggerSession());
-    }
+public class SmartStepIntoActionHandler extends DebuggerActionHandler {
+  public void perform(@NotNull final Project project, final AnActionEvent event) {
+    final DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
+    doStep(project, debuggerContext.getSourcePosition(), debuggerContext.getDebuggerSession());
   }
 
   
@@ -144,18 +140,12 @@ public class SmartStepIntoAction extends AnAction {
     return Collections.emptyList();
   }
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    Project project = event.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      presentation.setEnabled(false);
-      return;
-    }
+  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     DebuggerSession debuggerSession = context.getDebuggerSession();
     final boolean isPaused = debuggerSession != null && debuggerSession.isPaused();
     final SuspendContextImpl suspendContext = context.getSuspendContext();
     final boolean hasCurrentThread = suspendContext != null && suspendContext.getThread() != null;
-    presentation.setEnabled(isPaused && hasCurrentThread);
+    return isPaused && hasCurrentThread;
   }
 }
