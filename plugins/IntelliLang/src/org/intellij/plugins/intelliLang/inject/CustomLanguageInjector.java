@@ -232,7 +232,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
       final List<MethodParameterInjection> injections = myInjectionConfiguration.getParameterInjections();
       for (MethodParameterInjection injection : injections) {
         if (injection.isApplicable(parameterExpression)) {
-          processInjection(parameterExpression, injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), processor);
+          processInjection(place, injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), processor);
           return;
         }
       }
@@ -263,7 +263,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
                                 final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     final Ref<Boolean> concatFlag = Ref.create(Boolean.FALSE);
     for (PsiLiteralExpression literalExpression : findLiteralExpressions(psiExpression, myInjectionConfiguration.isResolveReferences(), concatFlag)) {
-      processInjectionWithContext(literalExpression, id, prefix, suffix, concatFlag.get().booleanValue(), processor);
+      processInjectionWithContext(literalExpression, id, prefix, suffix, concatFlag, processor);
     }
   }
 
@@ -271,12 +271,11 @@ public final class CustomLanguageInjector implements ProjectComponent {
                                                   final String langId,
                                                   final String prefix,
                                                   final String suffix,
-                                                  final boolean hasUnparsablePartsExt,
+                                                  final Ref<Boolean> unparsable,
                                                   final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    final List<Object> objects = ContextComputationProcessor.collectOperands(place, prefix, suffix);
+    final List<Object> objects = ContextComputationProcessor.collectOperands(place, prefix, suffix, unparsable);
     if (objects.isEmpty()) return;
     final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
-    boolean hasUnparsableParts = hasUnparsablePartsExt;
     final boolean dynamic = !objects.isEmpty();
     final int len = objects.size();
     for (int i = 0; i < len; i++) {
@@ -299,11 +298,11 @@ public final class CustomLanguageInjector implements ProjectComponent {
           }
         }
       }
-      if (curHost == null) hasUnparsableParts = true;
+      if (curHost == null) unparsable.set(Boolean.TRUE);
       else list.add(Trinity.create(curHost, InjectedLanguage.create(langId, curPrefix, curSuffix, dynamic), ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
     }
     for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-      trinity.first.putUserData(HAS_UPARSABLE_FRAGMENTS, hasUnparsableParts? Boolean.TRUE : Boolean.FALSE);
+      trinity.first.putUserData(HAS_UPARSABLE_FRAGMENTS, unparsable.get());
     }
     processor.process(InjectedLanguage.findLanguageById(langId), list);
   }

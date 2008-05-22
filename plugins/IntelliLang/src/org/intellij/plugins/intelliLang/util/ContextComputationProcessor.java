@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,21 +41,24 @@ public class ContextComputationProcessor {
 
   private static PsiElement getContext(PsiElement place) {
     PsiElement parent = place;
-    while (isAcceptableContext(parent.getParent())) {
+    while (isAcceptableContext(parent.getParent(), parent)) {
       parent = parent.getParent();
     }
     return parent;
   }
 
-  private static boolean isAcceptableContext(PsiElement parent) {
-    return parent instanceof PsiBinaryExpression || parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression;
+  private static boolean isAcceptableContext(PsiElement parent, final PsiElement element) {
+    return parent instanceof PsiBinaryExpression ||
+           parent instanceof PsiParenthesizedExpression ||
+           parent instanceof PsiTypeCastExpression ||
+           parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != element;
   }
 
-  public static List<Object> collectOperands(final PsiExpression place, final String prefix, final String suffix) {
+  public static List<Object> collectOperands(final PsiExpression place, final String prefix, final String suffix, final Ref<Boolean> unparsable) {
     final PsiElement parent = getContext(place);
     final ArrayList<Object> result = new ArrayList<Object>();
     addStringFragment(prefix, result);
-    new ContextComputationProcessor(place.getProject()).collectOperands(parent, result);
+    new ContextComputationProcessor(place.getProject()).collectOperands(parent, result, unparsable);
     addStringFragment(suffix, result);
     return result;
   }
@@ -72,20 +76,24 @@ public class ContextComputationProcessor {
   }
 
   @NotNull
-  public List<Object> collectOperands(final PsiElement expression, final List<Object> result) {
-    //final PsiType type = expression instanceof PsiExpression ? ((PsiExpression)expression).getType() : null;
+  public List<Object> collectOperands(final PsiElement expression, final List<Object> result, final Ref<Boolean> unparsable) {
     final PsiElement firstChild;
     if (expression instanceof PsiParenthesizedExpression) {
-      collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result);
+      collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result, unparsable);
     }
     else if (expression instanceof PsiTypeCastExpression) {
-      collectOperands(((PsiTypeCastExpression)expression).getOperand(), result);
+      collectOperands(((PsiTypeCastExpression)expression).getOperand(), result, unparsable);
+    }
+    else if (expression instanceof PsiConditionalExpression) {
+      unparsable.set(Boolean.TRUE);
+      collectOperands(((PsiConditionalExpression)expression).getThenExpression(), result, unparsable);
+      collectOperands(((PsiConditionalExpression)expression).getElseExpression(), result, unparsable);
     }
     else if (expression instanceof PsiBinaryExpression &&
              ((PsiBinaryExpression)expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
       PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      collectOperands(binaryExpression.getLOperand(), result);
-      collectOperands(binaryExpression.getROperand(), result);
+      collectOperands(binaryExpression.getLOperand(), result, unparsable);
+      collectOperands(binaryExpression.getROperand(), result, unparsable);
     }
     else if (expression instanceof PsiLanguageInjectionHost &&
              (firstChild = expression.getFirstChild()) instanceof PsiJavaToken &&
