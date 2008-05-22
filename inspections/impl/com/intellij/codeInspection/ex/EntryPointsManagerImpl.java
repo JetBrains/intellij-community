@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +30,11 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   @NonNls private static final String ENTRY_POINT_ATTR = "entry_point";
   private boolean myAddNonJavaEntries = true;
   private boolean myResolved = false;
+  private final Project myProject;
+  private long myLastModificationCount = -1;
 
-  public EntryPointsManagerImpl() {
+  public EntryPointsManagerImpl(Project project) {
+    myProject = project;
     myFQNameToSmartEntryPointRef =
         new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
   }
@@ -201,12 +205,16 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   }
 
   private void validateEntryPoints() {
-    Collection<SmartRefElementPointer> collection = myFQNameToSmartEntryPointRef.values();
-    SmartRefElementPointer[] entries = collection.toArray(new SmartRefElementPointer[collection.size()]);
-    for (SmartRefElementPointer entry : entries) {
-      RefElement refElement = (RefElement)entry.getRefElement();
-      if (refElement != null && !refElement.isValid()) {
-        myFQNameToSmartEntryPointRef.remove(entry.getFQName());
+    long count = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+    if (count != myLastModificationCount) {
+      myLastModificationCount = count;
+      Collection<SmartRefElementPointer> collection = myFQNameToSmartEntryPointRef.values();
+      SmartRefElementPointer[] entries = collection.toArray(new SmartRefElementPointer[collection.size()]);
+      for (SmartRefElementPointer entry : entries) {
+        RefElement refElement = (RefElement)entry.getRefElement();
+        if (refElement != null && !refElement.isValid()) {
+          myFQNameToSmartEntryPointRef.remove(entry.getFQName());
+        }
       }
     }
   }
