@@ -1,11 +1,13 @@
 package com.intellij.lang.dtd;
 
-import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lexer.OldXmlLexer;
-import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
+import com.intellij.psi.xml.XmlElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,4 +21,9 @@ public class DTDParserDefinition extends XMLParserDefinition {
     final OldXmlLexer xmlLexer = new OldXmlLexer();
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, xmlLexer, 0);
   }
+
+  public PsiFile createFile(FileViewProvider viewProvider) {
+    return new XmlFileImpl(viewProvider, XmlElementType.DTD_FILE);
+  }
+
 }

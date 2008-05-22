@@ -73,7 +73,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         myExternalAnotations.clear();
       }
     });
-    NULL = new XmlFileImpl(new DummyHolderViewProvider(psiManager), TokenType.BAD_CHARACTER, TokenType.BAD_CHARACTER);
+    NULL = new XmlFileImpl(new DummyHolderViewProvider(psiManager), TokenType.BAD_CHARACTER);
   }
 
   @Nullable

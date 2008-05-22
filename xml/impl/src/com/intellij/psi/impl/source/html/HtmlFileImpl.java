@@ -17,7 +17,7 @@ import com.intellij.psi.xml.XmlElementType;
  */
 public class HtmlFileImpl extends XmlFileImpl {
   public HtmlFileImpl(FileViewProvider provider) {
-    super(provider, XmlElementType.HTML_FILE, XmlElementType.HTML_FILE);
+    super(provider, XmlElementType.HTML_FILE);
   }
 
   public String toString() {

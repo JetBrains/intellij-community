@@ -6,6 +6,10 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XHtmlLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,4 +30,9 @@ public class XHTMLParserDefinition extends XMLParserDefinition {
     final Lexer lexer = createLexer(left.getPsi().getProject());
     return XmlUtil.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
   }
+
+  public PsiFile createFile(FileViewProvider viewProvider) {
+    return new XmlFileImpl(viewProvider, XmlElementType.XHTML_FILE);
+  }
+
 }

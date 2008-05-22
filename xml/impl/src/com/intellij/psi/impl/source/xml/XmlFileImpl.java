@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,22 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType {
-  public XmlFileImpl(FileViewProvider viewProvider) {
-    super(getElementType(viewProvider), getElementType(viewProvider), viewProvider);
-  }
 
-  public XmlFileImpl(FileViewProvider viewProvider, IElementType elementType, IElementType contentElementType) {
-    super(elementType, contentElementType, viewProvider);
-  }
-
-  private static IElementType getElementType(final FileViewProvider fileViewProvider) {
-    final Language dataLanguage = fileViewProvider.getBaseLanguage();
-
-    if (dataLanguage == XMLLanguage.INSTANCE) return XML_FILE;
-    if (dataLanguage == XHTMLLanguage.INSTANCE) return XHTML_FILE;
-    if (dataLanguage == HTMLLanguage.INSTANCE) return HTML_FILE;
-    if (dataLanguage == DTDLanguage.INSTANCE) return DTD_FILE;
-    return XML_FILE;
+  public XmlFileImpl(FileViewProvider viewProvider, IElementType elementType) {
+    super(elementType, elementType, viewProvider);
   }
 
   public XmlDocument getDocument() {

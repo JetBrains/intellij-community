@@ -62,7 +62,7 @@ public class XMLParserDefinition implements ParserDefinition {
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
-    return new XmlFileImpl(viewProvider);
+    return new XmlFileImpl(viewProvider, XmlElementType.XML_FILE);
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
