@@ -44,6 +44,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -147,7 +148,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
         VirtualFile[] files = FileChooser.chooseFiles(myComponent, myBrowserDescriptor, root);
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
-        if (files == null || files.length != 1 || files[0] == null) {
+        if (files.length != 1 || files[0] == null) {
           return;
         }
         myConfigurationDirectoryText.setText(files[0].getPath().replace('/', File.separatorChar));
@@ -249,6 +250,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     configuration.setUpgradeMode(upgradeMode);
   }
 
+  @Nullable
   private String getUpgradeMode() {
     if (myUpgradeNoneButton.isSelected()) {
       return SvnConfiguration.UPGRADE_NONE;
@@ -301,8 +303,10 @@ public class SvnConfigurable implements Configurable, ActionListener {
         int result = Messages.showYesNoDialog(myComponent, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
                                               SvnBundle.message("confirmation.title.clear.authentication.cache"),
                                                            Messages.getWarningIcon());
-        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-        SvnApplicationSettings.getInstance().clearAuthenticationInfo();
+        if (result == 0) {
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          SvnApplicationSettings.getInstance().clearAuthenticationInfo();
+        }
       }
     }
   }
