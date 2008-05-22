@@ -459,7 +459,7 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
   }
 
   public void testExcludingOutputDirectoriesIfProjectOutputIsUsed() throws Exception {
-    myPrefs.setUseMavenOutput(false);
+    getMavenImporterSettings().setUseMavenOutput(false);
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

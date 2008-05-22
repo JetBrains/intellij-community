@@ -22,9 +22,6 @@ public class DownloadArtifactsAction extends AnAction {
     try {
       MavenArtifactDownloader.download(project);
     }
-    catch (MavenException ex) {
-      w.displayErrors(ex);
-    }
     catch (CanceledException ex) {
     }
   }

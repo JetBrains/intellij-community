@@ -6,11 +6,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.idea.maven.project.MavenImportProcessor;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.Collections;
 
 public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
   @Override
@@ -58,8 +55,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    MavenProjectsManager.getInstance(myProject).setOriginalFiles(Collections.singleton(myProjectPom));
-    new MavenImportProcessor(myProject).reimport();
+    myMavenProjectsManager.reimport();
 
     assertModuleLibDep("project", "junit:junit:4.0");
   }

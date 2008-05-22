@@ -31,22 +31,22 @@ public class MavenArtifactDownloader {
 
   private final MavenArtifactSettings mySettings;
   private final MavenEmbedder myEmbedder;
-  private final MavenProgress myProgress;
+  private final MavenProcess myProgress;
 
-  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedder embedder, MavenProgress p) {
+  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedder embedder, MavenProcess p) {
     mySettings = settings;
     myEmbedder = embedder;
     myProgress = p;
   }
 
 
-  public static void download(final Project project) throws CanceledException, MavenException {
+  public static void download(final Project project) throws CanceledException {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
     final MavenEmbedder e = EmbedderFactory.createEmbedderForExecute(MavenCore.getInstance(project).getState());
     try {
-      MavenProgress.run(project, ProjectBundle.message("maven.downloading"), new MavenProgress.MavenTask() {
-        public void run(MavenProgress p) throws MavenException, CanceledException {
+      MavenProcess.run(project, ProjectBundle.message("maven.downloading"), new MavenProcess.MavenTask() {
+        public void run(MavenProcess p) throws CanceledException {
           new MavenArtifactDownloader(manager.getArtifactSettings(), e, p)
               .download(project, manager.getExistingProjects(), true);
         }
@@ -61,7 +61,7 @@ public class MavenArtifactDownloader {
 
   public void download(Project project,
                        List<MavenProjectModel.Node> mavenProjects,
-                       boolean demand) throws CanceledException, MavenException {
+                       boolean demand) throws CanceledException {
     Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(mavenProjects);
 
     myProgress.checkCanceled();

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -42,7 +43,7 @@ import java.util.List;
 public class MavenEventsComponent extends DummyProjectComponent implements PersistentStateComponent<MavenEventsState>, MavenEventsHandler {
 
   public static MavenEventsComponent getInstance(Project project) {
-    return (MavenEventsComponent) project.getComponent(MavenEventsHandler.class);
+    return (MavenEventsComponent)project.getComponent(MavenEventsHandler.class);
   }
 
   @NonNls private static final String ACTION_ID_PREFIX = "Maven_";
@@ -289,7 +290,8 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     }
   }
 
-  private class MyProjectStateListener implements MavenProjectsManager.Listener {
+  private class MyProjectStateListener implements MavenProjectsManager.Listener,
+                                                  MavenProjectModel.Listener {
 
     boolean updateScheduled;
     private final Project myProject;

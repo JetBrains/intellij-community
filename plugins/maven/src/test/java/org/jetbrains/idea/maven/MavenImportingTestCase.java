@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import hidden.org.codehaus.plexus.util.FileUtils;
@@ -21,7 +20,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.CanceledException;
+import org.jetbrains.idea.maven.project.MavenException;
+import org.jetbrains.idea.maven.project.MavenImporterSettings;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
@@ -30,20 +32,21 @@ import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenImporterSettings myPrefs;
   protected MavenProjectModel myProjectModel;
   protected ArrayList<Pair<File, List<String>>> myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
-  protected MavenImportProcessor myImportProcessor;
+  protected MavenProjectsManager myMavenProjectsManager;
   private List<String> myProfilesList;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    MavenWorkspaceSettingsComponent c = myProject.getComponent(MavenWorkspaceSettingsComponent.class);
-    myPrefs = c.getState().myImporterSettings;
+    myMavenProjectsManager = MavenProjectsManager.getInstance(myProject);
     removeFromLocalRepository("test");
   }
 
@@ -53,14 +56,18 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     super.tearDown();
   }
 
+  protected MavenImporterSettings getMavenImporterSettings() {
+    return myMavenProjectsManager.getImporterSettings();
+  }
+
   protected void createModule(String name) throws IOException {
-    VirtualFile f = createProjectSubFile(name + "/" +name + ".iml");
+    VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
     ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
     PomTreeStructure s = new PomTreeStructure(myProject,
-                                              MavenProjectsManager.getInstance(myProject),
+                                              myMavenProjectsManager,
                                               MavenPluginsRepository.getInstance(myProject),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
@@ -252,7 +259,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void assertModuleGroupPath(String moduleName, String... expected) {
     String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(getModule(moduleName));
 
-    if (expected.length == 0) assertNull(path);
+    if (expected.length == 0) {
+      assertNull(path);
+    }
     else {
       assertNotNull(path);
       assertOrderedElementsAreEqual(Arrays.asList(path), expected);
@@ -274,7 +283,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     String message = "Several content roots found: [" + StringUtil.join(roots, ", ") + "]";
     assertEquals(message, 1, ee.length);
-    
+
     return ee[0];
   }
 
@@ -314,16 +323,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       myProfilesList = Arrays.asList(profiles);
 
-      myImportProcessor = new MavenImportProcessor(myProject);
-      myImportProcessor.createMavenProjectModel(myProject,
-                                                files,
-                                                myProfilesList,
-                                                new MavenProgress(new EmptyProgressIndicator()));
-      myImportProcessor.commit(myProject);
+      myMavenProjectsManager.setOriginalFiles(files);
+      myMavenProjectsManager.setActiveProfiles(files.get(0), myProfilesList);
+      myMavenProjectsManager.reimport();
+      myProjectModel = myMavenProjectsManager.getMavenProjectModel();
 
       if (shouldResolve()) resolveProject();
-
-      myProjectModel = myImportProcessor.getMavenProjectModel();
     }
     catch (CanceledException e) {
       throw new RuntimeException(e);
@@ -332,7 +337,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void resolveProject() throws MavenException, CanceledException {
     myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
-    myImportProcessor.resolve(myProject, myResolutionProblems);
+    myMavenProjectsManager.resolve();
   }
 
   protected boolean shouldResolve() {

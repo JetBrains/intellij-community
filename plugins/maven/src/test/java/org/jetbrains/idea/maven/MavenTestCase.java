@@ -99,10 +99,6 @@ public abstract class MavenTestCase extends TestCase {
     return getMavenCore().getState();
   }
 
-  protected MavenImporterSettings getMavenImporterSettings() {
-    return MavenProjectsManager.getInstance(myProject).getImporterSettings();
-  }
-
   protected String getRepositoryPath() {
     String path = getMavenCoreSettings().getEffectiveLocalRepository().getPath();
     return FileUtil.toSystemIndependentName(path);

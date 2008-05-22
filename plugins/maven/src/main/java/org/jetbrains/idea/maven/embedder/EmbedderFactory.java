@@ -19,12 +19,14 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
 import org.jetbrains.idea.maven.core.util.ProjectId;
-import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class EmbedderFactory {
   private static final Logger LOG = Logger.getInstance("#" + EmbedderFactory.class.getName());
@@ -164,24 +166,23 @@ public class EmbedderFactory {
     return Arrays.asList(standardGoals);
   }
 
-  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) throws MavenException {
+  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) {
     return createEmbedderForRead(settings, null);
   }
 
-  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) throws MavenException {
+  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) {
     return createEmbedder(settings, new ReadingCustomizer(projectMapping));
   }
 
-  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping)
-      throws MavenException {
+  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) {
     return createEmbedder(settings, new ResolvingCustomizer(projectMapping));
   }
 
-  public static MavenEmbedder createEmbedderForExecute(MavenCoreSettings settings) throws MavenException {
+  public static MavenEmbedder createEmbedderForExecute(MavenCoreSettings settings) {
     return createEmbedder(settings, null);
   }
 
-  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) throws MavenException {
+  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) {
     return createEmbedder(settings.getMavenHome(), settings.getEffectiveLocalRepository(), settings.getMavenSettingsFile(),
                           settings.getClass().getClassLoader(), customizer);
   }
@@ -190,7 +191,7 @@ public class EmbedderFactory {
                                               File localRepo,
                                               String userSettings,
                                               ClassLoader classLoader,
-                                              ContainerCustomizer customizer) throws MavenException {
+                                              ContainerCustomizer customizer) {
     Configuration configuration = new DefaultConfiguration();
 
     configuration.setConfigurationCustomizer(customizer);
@@ -222,7 +223,7 @@ public class EmbedderFactory {
     }
     catch (MavenEmbedderException e) {
       LOG.info(e);
-      throw new MavenException(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -243,18 +244,16 @@ public class EmbedderFactory {
     return result;
   }
 
-  private static void validate(Configuration configuration) throws MavenException {
+  private static void validate(Configuration configuration) {
     ConfigurationValidationResult result = MavenEmbedder.validateConfiguration(configuration);
 
     if (!result.isValid()) {
-      List<Exception> ee = new ArrayList<Exception>();
-
-      Exception ex1 = result.getGlobalSettingsException();
-      Exception ex2 = result.getUserSettingsException();
-      if (ex1 != null) ee.add(ex1);
-      if (ex2 != null) ee.add(ex2);
-
-      throw new MavenException(ee);
+      if (result.getGlobalSettingsException() != null) {
+        configuration.setGlobalSettingsFile(null);
+      }
+      if (result.getUserSettingsException() != null) {
+        configuration.setUserSettingsFile(null);
+      }
     }
   }
 

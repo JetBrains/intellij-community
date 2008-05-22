@@ -14,6 +14,6 @@ public class ReimportAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    MavenProjectsManager.getInstance(project).reimport();
+    MavenProjectsManager.getInstance(project).reimportAndResolve();
   }
 }

@@ -2,19 +2,17 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.embedder.EmbedderFactory;
@@ -40,10 +38,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private VirtualFile importRoot;
   private Collection<VirtualFile> myFiles;
   private Map<VirtualFile, Set<String>> myFilesWithProfiles = new HashMap<VirtualFile, Set<String>>();
-  private MavenImportProcessor myImportProcessor;
+  private MavenProjectModel myMavenProjectModel;
 
   private boolean openModulesConfigurator;
-  private ArrayList<Pair<File, List<String>>> myResolutionProblems;
 
   public String getName() {
     return ProjectBundle.message("maven.name");
@@ -55,7 +52,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   public void cleanup() {
     super.cleanup();
-    myImportProcessor = null;
+    myMavenProjectModel = null;
     importRoot = null;
     projectToUpdate = null;
   }
@@ -65,42 +62,21 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return true;
   }
 
-  private void logResolutionProblems() {
-    String formatted = "There were resolution problems:";
-    for (Pair<File, List<String>> problems : myResolutionProblems) {
-      formatted += "\n" + problems.first;
-      for (String message : problems.second) {
-        formatted += "\n\t" + message;
-      }
-      formatted += "\n";
-    }
-    MavenLog.LOG.error(formatted);
-  }
-
   public void commit(final Project project) {
-    myImportProcessor.commit(project);
-
-    MavenProjectsManager.getInstance(project).setMavenProject();
-    MavenProjectsManager.getInstance(project).setDoesNotRequireReimport();
-
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        MavenProjectsManager.getInstance(project).setImportProcessor(myImportProcessor);
-        MavenProjectsManager.getInstance(project).resolve();
-      }
-    });
-
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    manager.setOriginalFiles(myFiles);
-    if (!myFilesWithProfiles.isEmpty()) {
-      for (Map.Entry<VirtualFile,Set<String>> each : myFilesWithProfiles.entrySet()) {
-        manager.setActiveProfiles(each.getKey(), each.getValue());
-      }
-    }
-
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myImporterSettings = getImporterPreferences();
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myArtifactSettings = getArtifactPreferences();
     project.getComponent(MavenCore.class).loadState(myCoreSettings);
+
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+
+    manager.setOriginalFiles(myFiles);
+    if (!myFilesWithProfiles.isEmpty()) {
+      for (Map.Entry<VirtualFile, Set<String>> each : myFilesWithProfiles.entrySet()) {
+        manager.setActiveProfiles(each.getKey(), each.getValue());
+      }
+    }
+    manager.setImportedMavenProject(myMavenProjectModel);
+    manager.commit();
 
     enusreRepositoryPathMacro();
   }
@@ -134,13 +110,13 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public boolean setRootDirectory(final String root) throws ConfigurationException {
     myFiles = null;
     myFilesWithProfiles.clear();
-    myImportProcessor = null;
+    myMavenProjectModel = null;
 
     importRoot = FileFinder.refreshRecursively(root);
     if (getImportRoot() == null) return false;
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProgress.MavenTask() {
-      public void run(MavenProgress p) throws MavenException, CanceledException {
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
+      public void run(MavenProcess p) throws CanceledException {
         p.setText(ProjectBundle.message("maven.locating.files"));
         myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(),
                                           getImporterPreferences().isLookForNested(),
@@ -150,7 +126,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         myFilesWithProfiles = collectProfiles(myFiles);
 
         if (myFilesWithProfiles.isEmpty()) {
-          createImportProcessor(p);
+          createMavenProjectModel(p);
         }
 
         p.setText2("");
@@ -158,7 +134,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     });
   }
 
-  private Map<VirtualFile, Set<String>> collectProfiles(Collection<VirtualFile> files) throws MavenException {
+  private Map<VirtualFile, Set<String>> collectProfiles(Collection<VirtualFile> files) {
     Map<VirtualFile, Set<String>> result = new HashMap<VirtualFile, Set<String>>();
 
     try {
@@ -166,14 +142,18 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       MavenProjectReader r = new MavenProjectReader(e);
 
       for (VirtualFile f : files) {
+        MavenProjectHolder holder = r.readProject(f.getPath(), new ArrayList<String>());
+        if (!holder.isValid()) continue;
+
         Set<String> profiles = new LinkedHashSet<String>();
-        ProjectUtil.collectProfileIds(r.readModel(f.getPath()), profiles);
+        ProjectUtil.collectProfileIds(holder.getMavenProject().getModel(), profiles);
         if (!profiles.isEmpty()) result.put(f, profiles);
       }
 
       EmbedderFactory.releaseEmbedder(e);
     }
-    catch (MavenException ignore) {
+    catch (CanceledException e) {
+      throw new RuntimeException(e);
     }
 
     return result;
@@ -188,26 +168,23 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   public boolean setSelectedProfiles(List<String> profiles) throws ConfigurationException {
-    myImportProcessor = null;
+    myMavenProjectModel = null;
 
-    for (Map.Entry<VirtualFile,Set<String>> each : myFilesWithProfiles.entrySet()) {
+    for (Map.Entry<VirtualFile, Set<String>> each : myFilesWithProfiles.entrySet()) {
       each.getValue().retainAll(profiles);
     }
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProgress.MavenTask() {
-      public void run(MavenProgress p) throws MavenException, CanceledException {
-        createImportProcessor(p);
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
+      public void run(MavenProcess p) throws CanceledException {
+        createMavenProjectModel(p);
         p.setText2("");
       }
     });
   }
 
-  private boolean runConfigurationProcess(String message, MavenProgress.MavenTask p) throws ConfigurationException {
+  private boolean runConfigurationProcess(String message, MavenProcess.MavenTask p) throws ConfigurationException {
     try {
-      MavenProgress.run(null, message, p);
-    }
-    catch (MavenException e) {
-      throw new ConfigurationException(e.getMessage());
+      MavenProcess.run(null, message, p);
     }
     catch (CanceledException e) {
       return false;
@@ -216,17 +193,18 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return true;
   }
 
-  private void createImportProcessor(MavenProgress p) throws MavenException, CanceledException {
-    myImportProcessor = new MavenImportProcessor(getProject(),
-                                                 getCoreState(),
-                                                 getImporterPreferences(),
-                                                 getArtifactPreferences());
-
-    myImportProcessor.createMavenProjectModel(getProject(), myFiles, getAllProfiles(), p);
+  private void createMavenProjectModel(MavenProcess p) throws CanceledException {
+    myMavenProjectModel = new MavenProjectModel();
+    myMavenProjectModel.read(myFiles,
+                             Collections.<VirtualFile, Module>emptyMap(),
+                             getAllProfiles(),
+                             getCoreState(),
+                             getImporterPreferences(),
+                             p);
   }
 
   public List<MavenProjectModel.Node> getList() {
-    return myImportProcessor.getMavenProjectModel().getRootProjects();
+    return myMavenProjectModel.getRootProjects();
   }
 
   public boolean isMarked(final MavenProjectModel.Node element) {
@@ -234,7 +212,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   public void setList(List<MavenProjectModel.Node> nodes) throws ConfigurationException {
-    for (MavenProjectModel.Node node : myImportProcessor.getMavenProjectModel().getRootProjects()) {
+    for (MavenProjectModel.Node node : myMavenProjectModel.getRootProjects()) {
       node.setIncluded(nodes.contains(node));
     }
   }
@@ -257,7 +235,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public MavenImporterSettings getImporterPreferences() {
     if (myImporterSettings == null) {
       myImporterSettings = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState()
-        .myImporterSettings.clone();
+          .myImporterSettings.clone();
     }
     return myImporterSettings;
   }
@@ -265,7 +243,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private MavenArtifactSettings getArtifactPreferences() {
     if (myArtifactSettings == null) {
       myArtifactSettings = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState()
-        .myArtifactSettings.clone();
+          .myArtifactSettings.clone();
     }
     return myArtifactSettings;
   }
@@ -297,8 +275,8 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   public String getSuggestedProjectName() {
-    final List<MavenProjectModel.Node> list = myImportProcessor.getMavenProjectModel().getRootProjects();
-    if(list.size()==1){
+    final List<MavenProjectModel.Node> list = myMavenProjectModel.getRootProjects();
+    if (list.size() == 1) {
       return list.get(0).getMavenId().artifactId;
     }
     return null;
