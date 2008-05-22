@@ -105,6 +105,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return myID.getElement();
   }
 
+  @Nullable
+  public PsiFile getContainingFile() {
+    return myID.getContainingFile();
+  }
+
   public SmartPsiElementPointer getPointer() {
     return myID;
   }

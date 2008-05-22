@@ -117,6 +117,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return Comparing.equal(getElement(), ((SmartPsiElementPointer)obj).getElement());
     }
 
+    public PsiFile getContainingFile() {
+      final T elt = getElement();
+      return elt != null ? elt.getContainingFile() : null;
+    }
+
     public void documentAndPsiInSync() {}
 
     public void fastenBelt() {}

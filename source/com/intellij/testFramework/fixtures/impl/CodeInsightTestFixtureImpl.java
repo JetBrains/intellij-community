@@ -771,6 +771,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         public PsiElement getElement() {
           return context;
         }
+
+        public PsiFile getContainingFile() {
+          return file;
+        }
       });
     }
   }

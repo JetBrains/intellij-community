@@ -33,4 +33,7 @@ public interface SmartPsiElementPointer<E extends PsiElement> {
    */
   @Nullable
   E getElement();
+
+  @Nullable
+  PsiFile getContainingFile();
 }

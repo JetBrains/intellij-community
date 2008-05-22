@@ -78,6 +78,19 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElement;
   }
 
+  public PsiFile getContainingFile() {
+    if (myElement != null) {
+      return myElement.getContainingFile();
+    }
+
+    final Document doc = myElementInfo.getDocumentToSynchronize();
+    if (doc == null) {
+      final E resolved = getElement();
+      return resolved != null ? resolved.getContainingFile() : null;
+    }
+    return PsiDocumentManager.getInstance(myProject).getPsiFile(doc);
+  }
+
   @Nullable
   private SmartPointerElementInfo createElementInfo() {
     if (myElement instanceof PsiCompiledElement) return null;

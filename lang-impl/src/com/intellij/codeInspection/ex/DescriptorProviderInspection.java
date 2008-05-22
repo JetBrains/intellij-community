@@ -208,12 +208,15 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   @Nullable
   public CommonProblemDescriptor[] getDescriptions(RefEntity refEntity) {
+    final CommonProblemDescriptor[] problems = getProblemElements().get(refEntity);
+    if (problems == null) return null;
+
     if (!refEntity.isValid()) {
       ignoreElement(refEntity);
       return null;
     }
 
-    return getProblemElements().get(refEntity);
+    return problems;
   }
 
   public HTMLComposerImpl getComposer() {

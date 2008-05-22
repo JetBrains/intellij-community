@@ -11,7 +11,9 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.Nullable;
 
 public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
 
@@ -54,6 +56,11 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   public PsiModifierListOwner getElement() {
     return getOwnerClass().getElement();
   }
+
+  @Nullable
+  public PsiFile getContainingFile() {
+    return ((RefClassImpl)getOwnerClass()).getContainingFile();
+  }  
 
   public RefClass getOwnerClass() {
     return myOwnerClass == null ? super.getOwnerClass() : myOwnerClass;

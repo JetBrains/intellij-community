@@ -104,4 +104,13 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
 
     return null;
   }
+
+  public PsiFile getContainingFile() {
+    if (myElement != null) {
+      return myElement.getContainingFile();
+    }
+
+    return myAnchor.getFile();
+  }
+
 }

@@ -715,6 +715,10 @@ public class InjectedLanguageUtil {
              public T getElement() {
                return host;
              }
+
+             public PsiFile getContainingFile() {
+               return host.getContainingFile();
+             }
            };
   }
 

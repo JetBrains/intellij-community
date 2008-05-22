@@ -145,13 +145,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       final RefElementImpl refElement = (RefElementImpl)entity;
       if (refElement.isSuppressed(tool.getShortName())) return false;
 
-      final PsiElement element = refElement.getElement();
+      final PsiFile file = refElement.getContainingFile();
 
-      if (element == null) return false;
+      if (file == null) return false;
 
       if (RUN_WITH_EDITOR_PROFILE) {
         final InspectionProfile inspectionProfile =
-          InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
+          InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile(file);
         final Set<Pair<InspectionTool, InspectionProfile>> tools = myTools.get(tool.getShortName());
         for (Pair<InspectionTool, InspectionProfile> inspectionProfilePair : tools) {
           if (Comparing.strEqual(inspectionProfilePair.second.getName(), inspectionProfile.getName())) {
