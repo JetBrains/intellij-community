@@ -35,7 +35,10 @@ public class LookupElementFactoryImpl extends LookupElementFactory{
         final PsiPresentableMetaData presentableMetaData = (PsiPresentableMetaData)metaData;
         lookupItem.setIcon(presentableMetaData.getIcon());
         lookupItem.setTypeText(presentableMetaData.getTypeName());
-        lookupItem.setPresentableText(presentableMetaData.getName());
+        final String name = presentableMetaData.getName();
+        if (StringUtil.isNotEmpty(name)) {
+          lookupItem.setPresentableText(name);
+        }
       }
     }
     return lookupItem;
