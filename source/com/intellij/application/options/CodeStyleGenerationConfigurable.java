@@ -41,6 +41,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JCheckBox myCbGenerateFinalParameters;
   private JCheckBox myCbGenerateFinalLocals;
   private JCheckBox myCbUseExternalAnnotations;
+  private JCheckBox myInsertOverrideAnnotationCheckBox;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
@@ -203,15 +204,15 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   public void reset() {
     myCbPreferLongerNames.setSelected(mySettings.PREFER_LONGER_NAMES);
 
-    myFieldPrefixField.setText("" + mySettings.FIELD_NAME_PREFIX);
-    myStaticFieldPrefixField.setText("" + mySettings.STATIC_FIELD_NAME_PREFIX);
-    myParameterPrefixField.setText("" + mySettings.PARAMETER_NAME_PREFIX);
-    myLocalVariablePrefixField.setText("" + mySettings.LOCAL_VARIABLE_NAME_PREFIX);
+    myFieldPrefixField.setText(mySettings.FIELD_NAME_PREFIX);
+    myStaticFieldPrefixField.setText(mySettings.STATIC_FIELD_NAME_PREFIX);
+    myParameterPrefixField.setText(mySettings.PARAMETER_NAME_PREFIX);
+    myLocalVariablePrefixField.setText(mySettings.LOCAL_VARIABLE_NAME_PREFIX);
 
-    myFieldSuffixField.setText("" + mySettings.FIELD_NAME_SUFFIX);
-    myStaticFieldSuffixField.setText("" + mySettings.STATIC_FIELD_NAME_SUFFIX);
-    myParameterSuffixField.setText("" + mySettings.PARAMETER_NAME_SUFFIX);
-    myLocalVariableSuffixField.setText("" + mySettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    myFieldSuffixField.setText(mySettings.FIELD_NAME_SUFFIX);
+    myStaticFieldSuffixField.setText(mySettings.STATIC_FIELD_NAME_SUFFIX);
+    myParameterSuffixField.setText(mySettings.PARAMETER_NAME_SUFFIX);
+    myLocalVariableSuffixField.setText(mySettings.LOCAL_VARIABLE_NAME_SUFFIX);
 
     myCbLineCommentAtFirstColumn.setSelected(mySettings.LINE_COMMENT_AT_FIRST_COLUMN);
     myCbBlockCommentAtFirstColumn.setSelected(mySettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
@@ -221,6 +222,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myMembersOrderList.reset(mySettings);
 
     myCbUseExternalAnnotations.setSelected(mySettings.USE_EXTERNAL_ANNOTATIONS);
+    myInsertOverrideAnnotationCheckBox.setSelected(mySettings.INSERT_OVERRIDE_ANNOTATION);
   }
 
   public void apply() {
@@ -243,18 +245,17 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     mySettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
 
     mySettings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
+    mySettings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
 
     myMembersOrderList.apply(mySettings);
 
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < projects.length; i++) {
-      DaemonCodeAnalyzer.getInstance(projects[i]).settingsChanged();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
   }
 
   public boolean isModified() {
-    boolean isModified = false;
-    isModified |= isModified(myCbPreferLongerNames, mySettings.PREFER_LONGER_NAMES);
+    boolean isModified = isModified(myCbPreferLongerNames, mySettings.PREFER_LONGER_NAMES);
 
     isModified |= isModified(myFieldPrefixField, mySettings.FIELD_NAME_PREFIX);
     isModified |= isModified(myStaticFieldPrefixField, mySettings.STATIC_FIELD_NAME_PREFIX);
@@ -274,6 +275,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     isModified |= isModified(myCbGenerateFinalParameters, mySettings.GENERATE_FINAL_PARAMETERS);
 
     isModified |= isModified(myCbUseExternalAnnotations, mySettings.USE_EXTERNAL_ANNOTATIONS);
+    isModified |= isModified(myInsertOverrideAnnotationCheckBox, mySettings.INSERT_OVERRIDE_ANNOTATION);
 
     isModified |= myMembersOrderList.isModified(mySettings);
 
@@ -297,8 +299,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     private DefaultListModel myModel;
 
     public MembersOrderList() {
-      DefaultListModel model = new DefaultListModel();
-      myModel = model;
+      myModel = new DefaultListModel();
       setModel(myModel);
       setVisibleRowCount(4);
     }
@@ -306,24 +307,24 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     public void reset(final CodeStyleSettings settings) {
       myModel.removeAllElements();
       String[] strings = getStrings(settings);
-      for (int i = 0; i < strings.length; i++) {
-        myModel.addElement(strings[i]);
+      for (String string : strings) {
+        myModel.addElement(string);
       }
 
       setSelectedIndex(0);
     }
 
-    private String[] getStrings(final CodeStyleSettings settings) {
+    private static String[] getStrings(final CodeStyleSettings settings) {
       String[] strings = new String[]{FIELDS, METHODS, CONSTRUCTORS, INNER_CLASSES};
 
-      Arrays.sort(strings, new Comparator() {
-        public int compare(Object o1, Object o2) {
+      Arrays.sort(strings, new Comparator<String>() {
+        public int compare(String o1, String o2) {
           int weight1 = getWeight(o1);
           int weight2 = getWeight(o2);
           return weight1 - weight2;
         }
 
-        private int getWeight(Object o) {
+        private int getWeight(String o) {
           if (FIELDS.equals(o)) {
             return settings.FIELDS_ORDER_WEIGHT;
           }

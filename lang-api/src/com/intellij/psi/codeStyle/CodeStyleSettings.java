@@ -97,7 +97,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     return (T)myCustomSettings.get(aClass);
   }
 
-  public Object clone() {
+  public CodeStyleSettings clone() {
     try {
       CodeStyleSettings clon = (CodeStyleSettings)super.clone();
 
@@ -660,6 +660,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 //----------------- annotations ----------------
   public boolean USE_EXTERNAL_ANNOTATIONS = false;
+  public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- IMPORTS --------------------
 

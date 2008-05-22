@@ -11,6 +11,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
@@ -22,6 +24,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,6 +51,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private boolean myShowClasses = true;
   private boolean myAllowEmptySelection = false;
   private boolean myAllowMultiSelection;
+  private final Project myProject;
   private final boolean myIsInsertOverrideVisible;
 
   protected T[] myElements;
@@ -56,27 +60,27 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private ArrayList<ContainerNode> myContainerNodes = new ArrayList<ContainerNode>();
   private LinkedHashSet<T> mySelectedElements;
 
-  @NonNls private final static String PROP_SORTED = "MemberChooser.sorted";
-  @NonNls private final static String PROP_SHOWCLASSES = "MemberChooser.showClasses";
-  @NonNls private final static String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
-  @NonNls private final static String PROP_INSERT_OVERRIDE = "MemberChooser.insertOverride";
+  @NonNls private static final String PROP_SORTED = "MemberChooser.sorted";
+  @NonNls private static final String PROP_SHOWCLASSES = "MemberChooser.showClasses";
+  @NonNls private static final String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
 
   public MemberChooser(T[] elements,
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
-                       Project project) {
+                       @NotNull Project project) {
     this(elements, allowEmptySelection, allowMultiSelection, project, false);
   }
 
   public MemberChooser(T[] elements,
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
-                       Project project,
+                       @NotNull Project project,
                        boolean isInsertOverrideVisible) {
     super(project, true);
     myElements = elements;
     myAllowEmptySelection = allowEmptySelection;
     myAllowMultiSelection = allowMultiSelection;
+    myProject = project;
     myIsInsertOverrideVisible = isInsertOverrideVisible;
     myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     resetData();
@@ -169,7 +173,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
           };
 
     if (myIsInsertOverrideVisible) {
-      myInsertOverrideAnnotationCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(PROP_INSERT_OVERRIDE));
+      CodeStyleSettings styleSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
+      myInsertOverrideAnnotationCheckbox.setSelected(styleSettings.INSERT_OVERRIDE_ANNOTATION);
       myInsertOverrideAnnotationCheckbox.addActionListener(actionListener);
       optionsPanel.add(myInsertOverrideAnnotationCheckbox);
     }
@@ -206,27 +211,27 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     SortEmAction sortAction = new SortEmAction();
     sortAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.ALT_MASK)), myTree);
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK)), myTree);
     setSorted(PropertiesComponent.getInstance().isTrueValue(PROP_SORTED));
     group.add(sortAction);
 
     ShowContainersAction showContainersAction = getShowContainersAction();
     showContainersAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_MASK)), myTree);
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK)), myTree);
     setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
     group.add(showContainersAction);
 
     ExpandAllAction expandAllAction = new ExpandAllAction();
     expandAllAction.registerCustomShortcutSet(
       new CustomShortcutSet(
-        KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
+        KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
       myTree);
     group.add(expandAllAction);
 
     CollapseAllAction collapseAllAction = new CollapseAllAction();
     collapseAllAction.registerCustomShortcutSet(
       new CustomShortcutSet(
-        KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
+        KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
       myTree);
     group.add(collapseAllAction);
 
@@ -254,7 +259,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     }
 
-    if ((getRootNode()).getChildCount() > 0) {
+    if (getRootNode().getChildCount() > 0) {
       myTree.expandRow(0);
       myTree.setSelectionRow(1);
     }
@@ -296,7 +301,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   @Nullable
   private LinkedHashSet<T> getSelectedElementsList() {
-    return getExitCode() != OK_EXIT_CODE ? null : mySelectedElements;
+    return getExitCode() == OK_EXIT_CODE ? mySelectedElements : null;
   }
 
   @Nullable
@@ -313,7 +318,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected final boolean areElementsSelected() {
-    return mySelectedElements != null && mySelectedElements.size() > 0;
+    return mySelectedElements != null && !mySelectedElements.isEmpty();
   }
 
   public void setCopyJavadocVisible(boolean state) {
@@ -373,7 +378,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     Pair<ElementNode,List<ElementNode>> selection = storeSelection();
 
     DefaultMutableTreeNode root = getRootNode();
-    if (!myShowClasses || myContainerNodes.size() == 0) {
+    if (!myShowClasses || myContainerNodes.isEmpty()) {
       List<ParentNode> otherObjects = new ArrayList<ParentNode>();
       Enumeration<ParentNode<T>> children = getRootNodeChildren();
       ParentNode<T> newRoot = new ParentNode<T>(null, new MemberChooserObjectBase(getAllContainersNodeName()), new Ref<Integer>(0));
@@ -456,7 +461,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       }
     }
 
-    if (toSelect.size() > 0) {
+    if (!toSelect.isEmpty()) {
       myTree.setSelectionPaths(toSelect.toArray(new TreePath[toSelect.size()]));
     }
 
@@ -471,9 +476,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     instance.setValue(PROP_SORTED, Boolean.toString(isSorted()));
     instance.setValue(PROP_SHOWCLASSES, Boolean.toString(myShowClasses));
     instance.setValue(PROP_COPYJAVADOC, Boolean.toString(myCopyJavadocCheckbox.isSelected()));
-    if (myIsInsertOverrideVisible) {
-      instance.setValue(PROP_INSERT_OVERRIDE, Boolean.toString(myInsertOverrideAnnotationCheckbox.isSelected()));
-    }
 
     getContentPane().removeAll();
     mySelectedNodes.clear();

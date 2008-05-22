@@ -336,6 +336,7 @@ public final class PsiUtil extends PsiUtilBase {
     }
   }
 
+  //@Modifier
   @Nullable
   public static String getAccessModifier(int accessLevel) {
     return accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
@@ -820,9 +821,12 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL");
 
+  public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_5) >= 0;
+  }
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
-    if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel(((PsiDirectory)element));
+    if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);
     final PsiFile file = element.getContainingFile();
     if (file == null) {
       return LanguageLevelProjectExtension.getInstance(element.getProject()).getLanguageLevel();

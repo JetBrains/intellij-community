@@ -103,7 +103,7 @@ public abstract class DialogWrapper {
       DialogWrapper.this.dispose();
     }
   };
-  private DialogWrapper.ErrorText myErrorText;
+  private ErrorText myErrorText;
 
 
   /**
@@ -669,7 +669,7 @@ public abstract class DialogWrapper {
    *          if <code>alignment</code> isn't acceptable
    */
   protected final void setButtonsAlignment(int alignment) {
-    if (SwingConstants.CENTER != alignment && SwingUtilities.RIGHT != alignment) {
+    if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
       throw new IllegalArgumentException("unknown alignment: " + alignment);
     }
     myButtonAlignment = alignment;
@@ -908,7 +908,7 @@ public abstract class DialogWrapper {
 
   private class OkAction extends AbstractAction {
     public OkAction() {
-      putValue(Action.NAME, CommonBundle.getOkButtonText());
+      putValue(NAME, CommonBundle.getOkButtonText());
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -927,7 +927,7 @@ public abstract class DialogWrapper {
 
   private class CancelAction extends AbstractAction {
     public CancelAction() {
-      putValue(Action.NAME, CommonBundle.getCancelButtonText());
+      putValue(NAME, CommonBundle.getCancelButtonText());
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -945,7 +945,7 @@ public abstract class DialogWrapper {
 
   private class HelpAction extends AbstractAction {
     public HelpAction() {
-      putValue(Action.NAME, CommonBundle.getHelpButtonText());
+      putValue(NAME, CommonBundle.getHelpButtonText());
     }
 
     public void actionPerformed(ActionEvent e) {
