@@ -16,17 +16,19 @@
 
 package org.intellij.lang.annotations;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-import java.lang.annotation.RetentionPolicy;
+import org.jetbrains.annotations.NonNls;
+
 import static java.lang.annotation.ElementType.*;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
 @Target({ METHOD, FIELD, PARAMETER, LOCAL_VARIABLE, ANNOTATION_TYPE })
 
 public @interface Language {
-    String value();
+    @NonNls String value();
 
-    String prefix() default "";
-    String suffix() default "";
+    @NonNls String prefix() default "";
+    @NonNls String suffix() default "";
 }

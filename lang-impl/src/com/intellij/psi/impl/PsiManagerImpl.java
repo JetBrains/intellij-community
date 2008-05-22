@@ -6,7 +6,6 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -362,14 +361,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       return false;
     }
 
-    if (element1.equals(element2) ||
-        element1.isEquivalentTo(element2) ||
-        element2.isEquivalentTo(element1)
-       ) {
-      return true;
-    }
-
-    return false;
+    return element1.equals(element2) || element1.isEquivalentTo(element2) || element2.isEquivalentTo(element1);
   }
 
   public PsiFile findFile(@NotNull VirtualFile file) {

@@ -1212,7 +1212,7 @@ public class StringUtil {
     return r.toString();
   }
 
-  public static String getPropertyName(final String methodName) {
+  public static String getPropertyName(@NonNls final String methodName) {
     if (methodName.startsWith("get")) {
       return Introspector.decapitalize(methodName.substring(3));
     }

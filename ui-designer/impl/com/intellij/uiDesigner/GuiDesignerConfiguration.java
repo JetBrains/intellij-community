@@ -2,8 +2,8 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.psi.PsiModifier;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
  * @author Anton Katilin

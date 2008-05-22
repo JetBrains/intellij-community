@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,16 +97,10 @@ public class AnnotationUtil {
   @Nullable
   public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Collection<String> annotationNames,
                                              final boolean skipExternal) {
-    final PsiAnnotation[] allAnnotations;
-    if (listOwner instanceof PsiParameter) {
-      allAnnotations = ((PsiParameter)listOwner).getAnnotations();
-    }
-    else {
-      if (listOwner == null) return null;
-      final PsiModifierList list = listOwner.getModifierList();
-      if (list == null) return null;
-      allAnnotations = list.getAnnotations();
-    }
+    if (listOwner == null) return null;
+    final PsiModifierList list = listOwner.getModifierList();
+    if (list == null) return null;
+    final PsiAnnotation[] allAnnotations = list.getAnnotations();
     for (PsiAnnotation annotation : allAnnotations) {
       String qualifiedName = annotation.getQualifiedName();
       if (annotationNames.contains(qualifiedName)) {
@@ -180,7 +174,7 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, false, new HashSet<PsiMethod>());
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, false, new THashSet<PsiMethod>());
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy,
@@ -224,7 +218,7 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotatingApplicable(PsiElement elt) {
-    return PsiUtil.getLanguageLevel(elt).compareTo(LanguageLevel.JDK_1_5) >= 0 &&
+    return PsiUtil.isLanguageLevel5OrHigher(elt) &&
            JavaPsiFacade.getInstance(elt.getProject()).findClass(NULLABLE, elt.getResolveScope()) != null;
   }
 

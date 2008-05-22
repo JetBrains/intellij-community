@@ -283,8 +283,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
   private static String internedParseStringCharacters(String chars) {
     StringBuilder outChars = new StringBuilder(chars.length());
     boolean success = parseStringCharacters(chars, outChars, null);
-    if (!success) return null;
-    return outChars.toString();
+    return success ? outChars.toString() : null;
   }
 
   public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {

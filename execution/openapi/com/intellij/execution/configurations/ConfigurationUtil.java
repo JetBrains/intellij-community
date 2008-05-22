@@ -27,10 +27,9 @@ import com.intellij.psi.util.PsiMethodUtil;
 public class ConfigurationUtil {
   public static final Condition<PsiClass> PUBLIC_INSTANTIATABLE_CLASS = new Condition<PsiClass>() {
     public boolean value(final PsiClass psiClass) {
-      if (!MAIN_CLASS.value(psiClass)) return false;
-      if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-      if (!psiClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-      return true;
+      return MAIN_CLASS.value(psiClass) &&
+             psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+             !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
     }
   };
   public static final Condition<PsiClass> MAIN_CLASS = PsiMethodUtil.MAIN_CLASS;

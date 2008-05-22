@@ -19,44 +19,44 @@ import org.jetbrains.annotations.NonNls;
 
 
 public class ClsUtil {
-  public final static int MAGIC = 0xCAFEBABE;
+  public static final int MAGIC = 0xCAFEBABE;
 
-  public final static int CONSTANT_Class = 7;
-  public final static int CONSTANT_Fieldref = 9;
-  public final static int CONSTANT_Methodref = 10;
-  public final static int CONSTANT_InterfaceMethodref = 11;
-  public final static int CONSTANT_String = 8;
-  public final static int CONSTANT_Integer = 3;
-  public final static int CONSTANT_Float = 4;
-  public final static int CONSTANT_Long = 5;
-  public final static int CONSTANT_Double = 6;
-  public final static int CONSTANT_NameAndType = 12;
-  public final static int CONSTANT_Utf8 = 1;
+  public static final int CONSTANT_Class = 7;
+  public static final int CONSTANT_Fieldref = 9;
+  public static final int CONSTANT_Methodref = 10;
+  public static final int CONSTANT_InterfaceMethodref = 11;
+  public static final int CONSTANT_String = 8;
+  public static final int CONSTANT_Integer = 3;
+  public static final int CONSTANT_Float = 4;
+  public static final int CONSTANT_Long = 5;
+  public static final int CONSTANT_Double = 6;
+  public static final int CONSTANT_NameAndType = 12;
+  public static final int CONSTANT_Utf8 = 1;
 
-  public final static int ACC_PUBLIC = 0x0001;
-  public final static int ACC_PRIVATE = 0x0002;
-  public final static int ACC_PROTECTED = 0x0004;
-  public final static int ACC_STATIC = 0x0008;
-  public final static int ACC_FINAL = 0x0010;
-  public final static int ACC_SYNCHRONIZED = 0x0020;
-  public final static int ACC_BRIDGE = 0x0040;
-  public final static int ACC_VARARGS = 0x0080;
-  public final static int ACC_VOLATILE = 0x0040;
-  public final static int ACC_TRANSIENT = 0x0080;
-  public final static int ACC_NATIVE = 0x0100;
-  public final static int ACC_INTERFACE = 0x0200;
-  public final static int ACC_ABSTRACT = 0x0400;
-  public final static int ACC_SYNTHETIC = 0x1000;
-  public final static int ACC_ANNOTATION = 0x2000;
+  public static final int ACC_PUBLIC = 0x0001;
+  public static final int ACC_PRIVATE = 0x0002;
+  public static final int ACC_PROTECTED = 0x0004;
+  public static final int ACC_STATIC = 0x0008;
+  public static final int ACC_FINAL = 0x0010;
+  public static final int ACC_SYNCHRONIZED = 0x0020;
+  public static final int ACC_BRIDGE = 0x0040;
+  public static final int ACC_VARARGS = 0x0080;
+  public static final int ACC_VOLATILE = 0x0040;
+  public static final int ACC_TRANSIENT = 0x0080;
+  public static final int ACC_NATIVE = 0x0100;
+  public static final int ACC_INTERFACE = 0x0200;
+  public static final int ACC_ABSTRACT = 0x0400;
+  public static final int ACC_SYNTHETIC = 0x1000;
+  public static final int ACC_ANNOTATION = 0x2000;
   public static final int ACC_ENUM = 0x4000;
 
   /**
    * Mask of access_flags that are meaningful in .class file format (VM Spec 4.1)
    */
-  public final static int ACC_CLASS_MASK = ACC_PUBLIC | ACC_FINAL | ACC_INTERFACE | ACC_ABSTRACT | ACC_STATIC | ACC_ANNOTATION;
+  public static final int ACC_CLASS_MASK = ACC_PUBLIC | ACC_FINAL | ACC_INTERFACE | ACC_ABSTRACT | ACC_STATIC | ACC_ANNOTATION;
 
-  public final static int ACC_FIELD_MASK = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC | ACC_FINAL | ACC_VOLATILE | ACC_TRANSIENT;
-  public final static int ACC_METHOD_MASK = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC | ACC_FINAL | ACC_SYNCHRONIZED | ACC_BRIDGE | ACC_VARARGS | ACC_NATIVE | ACC_ABSTRACT;
+  public static final int ACC_FIELD_MASK = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC | ACC_FINAL | ACC_VOLATILE | ACC_TRANSIENT;
+  public static final int ACC_METHOD_MASK = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC | ACC_FINAL | ACC_SYNCHRONIZED | ACC_BRIDGE | ACC_VARARGS | ACC_NATIVE | ACC_ABSTRACT;
   private static final int POSITIVE_INFINITY_AS_INT = 0x7f800000;
   private static final long POSITIVE_INFINITY_AS_LONG = 0x7f80000000000000L;
   private static final int NEGATIVE_INFINITY_AS_INT = 0xff800000;
@@ -168,15 +168,19 @@ public class ClsUtil {
     double doubleValue;
     if (longValue == POSITIVE_INFINITY_AS_LONG) {
       doubleValue = Double.POSITIVE_INFINITY;
-    } else if (longValue == NEGATIVE_INFINITY_AS_LONG) {
+    }
+    else if (longValue == NEGATIVE_INFINITY_AS_LONG) {
       doubleValue = Double.NEGATIVE_INFINITY;
-    } else if (0x7ff0000000000001L <= longValue && longValue <= 0x7fffffffffffffffL) {
+    }
+    else if (0x7ff0000000000001L <= longValue && longValue <= 0x7fffffffffffffffL) {
       doubleValue = Double.NaN;
-    } else if (0xfff0000000000001L <= longValue && longValue <= 0xffffffffffffffffL) {
+    }
+    else if (0xfff0000000000001L <= longValue && longValue <= 0xffffffffffffffffL) {
       doubleValue = Double.NaN;
-    } else {
+    }
+    else {
       int s = ((longValue >> 63) == 0) ? 1 : -1;
-      int e = (int) ((longValue >> 52) & 0x7ffL);
+      int e = (int)((longValue >> 52) & 0x7ffL);
       long m = (e == 0) ? ((longValue & 0xfffffffffffffL) << 1) : ((longValue & 0xfffffffffffffL) | 0x10000000000000L);
       doubleValue = s * m * Math.pow(2, e - 1075);
     }
@@ -313,7 +317,7 @@ public class ClsUtil {
     int index = className.indexOf('$');
     if (index < 0) return className;
 
-    StringBuffer buffer = new StringBuffer(className);
+    StringBuilder buffer = new StringBuilder(className);
     while(true){
       if (className.length() == index + 1) break;
       char c = className.charAt(index + 1);
@@ -368,14 +372,14 @@ public class ClsUtil {
 
   public static String literalToString(CharSequence value, char quote) {
     int length = value.length();
-    @NonNls StringBuffer buffer = new StringBuffer(length + 3);
+    @NonNls StringBuilder buffer = new StringBuilder(length + 3);
     buffer.append(quote);
 
     for (int i = 0; i < length; i++) {
       char c = value.charAt(i);
-      if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+      if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9') {
         buffer.append(c);
-      continue;
+        continue;
       }
 
       switch (c) {
@@ -399,7 +403,7 @@ public class ClsUtil {
              break;
       default:
              if (c == quote) {
-               buffer.append("\\" + quote);
+               buffer.append("\\").append(quote);
              }
              else if (Character.isISOControl(c)) {
                String hexCode = Integer.toHexString(c).toUpperCase();

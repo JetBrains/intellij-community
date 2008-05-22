@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return descriptive name to be used in "suppress" comments and annotations,
    *         must consist of [a-zA-Z_0-9]+
    */
+  @Pattern("[a-zA-Z_0-9.]+")
   @NonNls
   @NotNull public String getID() {
     return getShortName();

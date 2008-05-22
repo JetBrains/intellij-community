@@ -29,6 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -43,33 +44,28 @@ public class IdeEventQueue extends EventQueue {
 
   private static final boolean DEBUG = LOG.isDebugEnabled();
 
-  private static IdeEventQueue ourInstance;
-
-
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
    */
+  private final Object myLock = new Object();
 
-  private final Object myLock;
+  private final ArrayList<Runnable> myIdleListeners = new ArrayList<Runnable>(2);
 
+  private final ArrayList<Runnable> myActivityListeners = new ArrayList<Runnable>(2);
 
-  private final ArrayList<Runnable> myIdleListeners;
+  private final Alarm myIdleRequestsAlarm = new Alarm();
 
-  private final ArrayList<Runnable> myActivityListeners;
-
-  private final Alarm myIdleRequestsAlarm;
-
-  private final Alarm myIdleTimeCounterAlarm;
+  private final Alarm myIdleTimeCounterAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private long myIdleTime;
 
-  private final HashMap<Runnable, MyFireIdleRequest> myListener2Request; // IdleListener -> MyFireIdleRequest
+  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<Runnable, MyFireIdleRequest>(); // IdleListener -> MyFireIdleRequest
 
-  private final IdeKeyEventDispatcher myKeyEventDispatcher;
+  private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher();
 
-  private final IdeMouseEventDispatcher myMouseEventDispatcher;
+  private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
 
-  private final IdePopupManager myPopupManager;
+  private final IdePopupManager myPopupManager = new IdePopupManager();
 
 
   private boolean mySuspendMode;
@@ -82,15 +78,14 @@ public class IdeEventQueue extends EventQueue {
 
   private Component myFocusOwner;
 
-  private final Runnable myExitSuspendModeRunnable;
+  private final Runnable myExitSuspendModeRunnable = new ExitSuspendModeRunnable();
 
   /**
    * We exit from suspend mode when this alarm is triggered and no mode WindowEvent.WINDOW_OPENED
    * <p/>
    * events in the queue. If WINDOW_OPENED event does exist then we restart the alarm.
    */
-
-  private final Alarm mySuspendModeAlarm;
+  private final Alarm mySuspendModeAlarm = new Alarm();
 
   /**
    * Counter of processed events. It is used to assert that data context lives only inside single
@@ -112,27 +107,15 @@ public class IdeEventQueue extends EventQueue {
 
   private Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
 
+  private static class IdeEventQueueHolder {
+    private static final IdeEventQueue INSTANCE = new IdeEventQueue();
+  }
   public static IdeEventQueue getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new IdeEventQueue();
-    }
-    return ourInstance;
+    return IdeEventQueueHolder.INSTANCE;
   }
 
-
   private IdeEventQueue() {
-    myLock = new Object();
-    myIdleListeners = new ArrayList<Runnable>(2);
-    myActivityListeners = new ArrayList<Runnable>(2);
-    myIdleRequestsAlarm = new Alarm();
-    myIdleTimeCounterAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     addIdleTimeCounterRequest();
-    myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
-    myKeyEventDispatcher = new IdeKeyEventDispatcher();
-    myMouseEventDispatcher = new IdeMouseEventDispatcher();
-    myPopupManager = new IdePopupManager();
-    myExitSuspendModeRunnable = new ExitSuspendModeRunnable();
-    mySuspendModeAlarm = new Alarm();
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
     //noinspection HardCodedStringLiteral
@@ -167,9 +150,8 @@ public class IdeEventQueue extends EventQueue {
     myIdleTimeCounterAlarm.cancelAllRequests();
     myLastActiveTime = System.currentTimeMillis();
     myIdleTimeCounterAlarm.addRequest(new Runnable() {
-
       public void run() {
-        myIdleTime += (System.currentTimeMillis() - myLastActiveTime);
+        myIdleTime += System.currentTimeMillis() - myLastActiveTime;
         addIdleTimeCounterRequest();
       }
     }, 20000, ModalityState.NON_MODAL);
@@ -349,8 +331,7 @@ public class IdeEventQueue extends EventQueue {
     }
 
     boolean wasInputEvent = myIsInInputEvent;
-    myIsInInputEvent =
-      (e instanceof InputEvent) || (e instanceof InputMethodEvent) || (e instanceof WindowEvent) || (e instanceof ActionEvent);
+    myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
@@ -415,17 +396,16 @@ public class IdeEventQueue extends EventQueue {
     }
 
     // Process "idle" and "activity" listeners
-    if ((e instanceof KeyEvent) || (e instanceof MouseEvent)) {
+    if (e instanceof KeyEvent || e instanceof MouseEvent) {
       synchronized (myLock) {
         myIdleRequestsAlarm.cancelAllRequests();
         for (Runnable idleListener : myIdleListeners) {
           final MyFireIdleRequest request = myListener2Request.get(idleListener);
           if (request == null) {
-            LOG.assertTrue(false, "There is no request for " + idleListener);
+            LOG.error("There is no request for " + idleListener);
           }
-          final Integer timeout = request.getTimeout();
-          LOG.assertTrue(timeout != null);
-          myIdleRequestsAlarm.addRequest(request, timeout.intValue(), ModalityState.NON_MODAL);
+          int timeout = request.getTimeout();
+          myIdleRequestsAlarm.addRequest(request, timeout, ModalityState.NON_MODAL);
         }
         if (KeyEvent.KEY_PRESSED == e.getID() || KeyEvent.KEY_TYPED == e.getID() || MouseEvent.MOUSE_PRESSED == e.getID() ||
             MouseEvent.MOUSE_RELEASED == e.getID() || MouseEvent.MOUSE_CLICKED == e.getID()) {
@@ -451,7 +431,7 @@ public class IdeEventQueue extends EventQueue {
         return;
       }
     }
-    if ((e instanceof InputEvent) && Patches.SPECIAL_WINPUT_METHOD_PROCESSING) {
+    if (e instanceof InputEvent && Patches.SPECIAL_WINPUT_METHOD_PROCESSING) {
       final InputEvent inputEvent = (InputEvent)e;
       if (!inputEvent.getComponent().isShowing()) {
         return;
