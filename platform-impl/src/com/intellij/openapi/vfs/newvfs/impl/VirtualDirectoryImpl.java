@@ -272,9 +272,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   public synchronized void cleanupCachedChildren() {
     // For tests only!!!
-    if (myChildren instanceof Map) {
-      myChildren = null;
-    }
+    myChildren = null;
   }
 
   public InputStream getInputStream() throws IOException {
