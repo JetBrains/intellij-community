@@ -42,6 +42,7 @@ import java.util.Map;
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenProjectNavigator extends PomTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.navigator.MavenProjectNavigator");
+  private boolean isInitialized = false;
 
   public static MavenProjectNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectNavigator.class);
@@ -58,10 +59,13 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
 
   private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
 
+
+
   public MavenProjectNavigator(final Project project, MavenProjectsManager projectsManager, MavenPluginsRepository repository, MavenEventsHandler eventsHandler) {
     super(project, projectsManager, repository, eventsHandler);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    isInitialized= true;
 
     tree = new SimpleTree() {
       private JLabel myLabel = new JLabel(ProjectBundle.message("maven.please.reimport"));
@@ -100,8 +104,8 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
       public void activate() {
         MavenProjectNavigator.LOG.assertTrue(fileToNode.isEmpty());
 
-        for (VirtualFile file : myProjectsManager.getFiles()) {
-          fileToNode.put(file, new PomNode(file));
+        for (MavenProjectModel.Node each : myProjectsManager.getExistingProjects()) {
+          fileToNode.put(each.getFile(), new PomNode(each));
         }
 
         updateFromRoot(true, true);
@@ -122,43 +126,35 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
       }
 
       public void attachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
-        final PomNode pomNode = fileToNode.get(file);
-        if (pomNode != null) {
-          pomNode.attachPlugins(plugins);
-        }
       }
 
       public void detachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
-        final PomNode pomNode = fileToNode.get(file);
-        if (pomNode != null) {
-          pomNode.detachPlugins(plugins);
-        }
       }
     });
 
     myProjectsManager.getMavenProjectModel().addListener(new MavenProjectModel.Listener() {
-      public void projectAdded(VirtualFile f) {
-        final PomNode newNode = new PomNode(f);
-        fileToNode.put(f, newNode);
+      public void projectAdded(MavenProjectModel.Node n) {
+        final PomNode newNode = new PomNode(n);
+        fileToNode.put(n.getFile(), newNode);
         root.addToStructure(newNode);
 
         updateFromRoot(true, true);
       }
 
-      public void projectUpdated(VirtualFile f) {
-        final PomNode pomNode = fileToNode.get(f);
+      public void projectUpdated(MavenProjectModel.Node n) {
+        final PomNode pomNode = fileToNode.get(n.getFile());
         if (pomNode != null) {
           pomNode.onFileUpdate();
         }
         else {
-          projectAdded(f);
+          projectAdded(n);
         }
       }
 
-      public void projectRemoved(VirtualFile f) {
-        final PomNode pomNode = fileToNode.get(f);
+      public void projectRemoved(MavenProjectModel.Node n) {
+        final PomNode pomNode = fileToNode.get(n.getFile());
         if (pomNode != null) {
-          fileToNode.remove(f);
+          fileToNode.remove(n.getFile());
           pomNode.removeFromParent();
         }
       }
@@ -243,6 +239,8 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
   }
 
   public void projectOpened() {
+    if (!isInitialized) return;
+
     final JPanel navigatorPanel = new MavenNavigatorPanel(project, myProjectsManager, tree);
 
     ToolWindow pomToolWindow = ToolWindowManager.getInstance(project)

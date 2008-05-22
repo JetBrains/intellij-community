@@ -18,10 +18,11 @@ import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,11 +105,20 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     if (dataId.equals(Location.LOCATION)) return extractLocation();
     if (dataId.equals(PlatformDataKeys.NAVIGATABLE_ARRAY.getName())) return extractNavigatables();
 
+    if (dataId.equals(MavenDataKeys.MAVEN_PROJECT_NODES.getName())) return extractPomNodes();
     if (dataId.equals(MavenDataKeys.MAVEN_GOALS_KEY.getName())) return extractGoals();
     if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) return extractProfiles();
     if (dataId.equals(MavenDataKeys.MAVEN_IDS.getName())) return extractMavenIds();
 
     return null;
+  }
+
+  private List<MavenProjectModel.Node> extractPomNodes() {
+    List<MavenProjectModel.Node> result = new ArrayList<MavenProjectModel.Node>();
+    for (PomTreeStructure.PomNode each : getSelectedPomNodes()) {
+      result.add(each.getProjectNode());
+    }
+    return result.isEmpty() ? null : result;
   }
 
   private VirtualFile extractVirtualFile() {

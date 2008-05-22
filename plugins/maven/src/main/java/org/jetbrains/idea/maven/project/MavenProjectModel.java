@@ -123,10 +123,10 @@ public class MavenProjectModel {
     n.read(reader, myProfiles);
     myProjectIdToFileMapping.put(n.getProjectId(), n.getFile());
     if (isNew) {
-      fireAdded(n.getFile());
+      fireAdded(n);
     }
     else {
-      fireUpdated(n.getFile());
+      fireUpdated(n);
     }
 
     for (VirtualFile each : n.getExistingModuleFiles()) {
@@ -176,7 +176,7 @@ public class MavenProjectModel {
       doRemove(each);
     }
     myProjectIdToFileMapping.remove(n.getProjectId());
-    fireRemoved(n.getFile());
+    fireRemoved(n);
   }
 
   public List<Node> getRootProjects() {
@@ -355,21 +355,21 @@ public class MavenProjectModel {
     myListeners.add(l);
   }
 
-  private void fireAdded(VirtualFile f) {
+  private void fireAdded(Node n) {
     for (Listener each : myListeners) {
-      each.projectAdded(f);
+      each.projectAdded(n);
     }
   }
 
-  private void fireUpdated(VirtualFile f) {
+  private void fireUpdated(Node n) {
     for (Listener each : myListeners) {
-      each.projectUpdated(f);
+      each.projectUpdated(n);
     }
   }
 
-  private void fireRemoved(VirtualFile f) {
+  private void fireRemoved(Node n) {
     for (Listener each : myListeners) {
-      each.projectRemoved(f);
+      each.projectRemoved(n);
     }
   }
 
@@ -405,12 +405,13 @@ public class MavenProjectModel {
       return myPomFile.getPath();
     }
 
-    @SuppressWarnings({"ConstantConditions"})
-    @NotNull
     public String getDirectory() {
       return myPomFile.getParent().getPath();
     }
 
+    public VirtualFile getDirectoryFile() {
+      return myPomFile.getParent();
+    }
 
     public String getModuleName() {
       return myModuleName;
@@ -504,10 +505,10 @@ public class MavenProjectModel {
   }
 
   public static interface Listener {
-    void projectAdded(VirtualFile f);
+    void projectAdded(Node n);
 
-    void projectUpdated(VirtualFile f);
+    void projectUpdated(Node n);
 
-    void projectRemoved(VirtualFile f);
+    void projectRemoved(Node n);
   }
 }

@@ -10,13 +10,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.repository.MavenPluginInfo;
+import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -74,12 +74,12 @@ public class MavenKeymapExtension implements KeymapExtension {
 
     final List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
 
-    for (VirtualFile file : projectsManager.getFiles()) {
-      if (!projectsManager.isIgnored(file)) {
-        final String mavenProjectName = getMavenProjectName(projectsManager, file);
-        final String pomPath = file.getPath();
+    for (MavenProjectModel.Node each : projectsManager.getExistingProjects()) {
+      if (!projectsManager.isIgnored(each)) {
+        final String mavenProjectName = each.getMavenProject().getName();
+        final String pomPath = each.getPath();
         final String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
-        for (String goal : getGoals(projectsManager, repository, file)) {
+        for (String goal : getGoals(each, repository)) {
           actionList.add(new MavenGoalAction(mavenProjectName, actionIdPrefix, pomPath, goal));
         }
       }
@@ -106,27 +106,19 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static String getMavenProjectName(MavenProjectsManager projectsManager, VirtualFile file) {
-    if (file != null) {
-      final Model model = projectsManager.getModel(file);
-      if (model != null) {
-        return model.getName();
-      }
+    MavenProjectModel.Node n = projectsManager.getExistingProject(file);
+    if (n != null) {
+      return n.getMavenProject().getName();
     }
     return EventsBundle.message("maven.event.unknown.project");
   }
 
-  private static Collection<String> getGoals(MavenProjectsManager projectsManager, MavenPluginsRepository repository, VirtualFile file) {
+  private static Collection<String> getGoals(MavenProjectModel.Node node, MavenPluginsRepository repository) {
     Collection<String> result = new HashSet<String>();
     result.addAll(EmbedderFactory.getStandardGoalsList());
 
-    Model model = projectsManager.getModel(file);
-    Collection<String> activeProfiles = projectsManager.getActiveProfiles(file);
-    for (MavenId plugin : ProjectUtil.collectPluginIds(model, activeProfiles)) {
+    for (MavenId plugin : ProjectUtil.collectPluginIds(node)) {
       collectGoals(repository, plugin, result);
-    }
-
-    for (MavenId mavenId : projectsManager.getAttachedPlugins(file)) {
-      collectGoals(repository, mavenId, result);
     }
 
     return result;

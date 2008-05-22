@@ -71,8 +71,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                                               MavenPluginsRepository.getInstance(myProject),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
-        for (VirtualFile pom : myAllPoms) {
-          this.root.addUnder(new PomTreeStructure.PomNode(pom));
+        for (MavenProjectModel.Node each : myMavenProjectsManager.getExistingProjects()) {
+          this.root.addUnder(new PomTreeStructure.PomNode(each));
         }
       }
 

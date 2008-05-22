@@ -3,12 +3,12 @@ package org.jetbrains.idea.maven.navigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -70,7 +70,7 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     SimpleNode node = tree.getNodeFor(tree.getSelectionPath());
     if (node instanceof PomTreeStructure.GoalNode) {
       final PomTreeStructure.GoalNode goalNode = (PomTreeStructure.GoalNode)node;
-      pomPath = goalNode.getParent(PomTreeStructure.PomNode.class).getFile().getPath();
+      pomPath = goalNode.getParent(PomTreeStructure.PomNode.class).getProjectNode().getPath();
       goal = goalNode.getGoal();
     }
   }
@@ -109,11 +109,11 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     @Nullable
     GoalNode init(final String pomPath, final String goalName) {
       GoalNode goalNode = null;
-      for (VirtualFile file : myProjectsManager.getFiles()) {
-        final PomNode pomNode = new PomNode(file);
+      for (MavenProjectModel.Node each : myProjectsManager.getExistingProjects()) {
+        final PomNode pomNode = new PomNode(each);
         root.addToStructure(pomNode);
 
-        if (pomPath != null && pomPath.equals(file.getPath())) {
+        if (pomPath != null && pomPath.equals(each.getPath())) {
           goalNode = pomNode.findGoalNode(goalName);
         }
       }

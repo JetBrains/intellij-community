@@ -15,17 +15,17 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
-import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
+import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.repository.MavenPluginInfo;
+import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
@@ -65,7 +65,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   private static final Icon iconProfilesOpen = IconLoader.getIcon("/images/profilesOpen.png");
   private static final Icon iconProfilesClosed = IconLoader.getIcon("/images/profilesClosed.png");
 
-  public PomTreeStructure(Project project, MavenProjectsManager cache, MavenPluginsRepository repository, final MavenEventsHandler eventsHandler) {
+  public PomTreeStructure(Project project,
+                          MavenProjectsManager cache,
+                          MavenPluginsRepository repository,
+                          final MavenEventsHandler eventsHandler) {
     this.project = project;
     myProjectsManager = cache;
     myRepository = repository;
@@ -95,7 +98,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     private String getRepr(SimpleNode node) {
-      return ((node instanceof ModuleNode) && ((ModuleNode)node).getModule() == null )? "" : node.getName();
+      return ((node instanceof ModuleNode) && ((ModuleNode)node).getModule() == null) ? "" : node.getName();
     }
   };
 
@@ -285,11 +288,11 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     void addToStructure(PomNode pomNode) {
-      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.virtualFile)) {
+      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.project)) {
         return;
       }
       if (getTreeViewSettings().groupByModule) {
-        findModuleNode(myFileIndex.getModuleForFile(pomNode.getFile())).addUnder(pomNode);
+        findModuleNode(myFileIndex.getModuleForFile(pomNode.getProjectNode().getFile())).addUnder(pomNode);
       }
       else {
         addUnder(pomNode);
@@ -464,27 +467,23 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   }
 
   public class PomNode extends ListNode {
-
-    final private VirtualFile virtualFile;
+    final private MavenProjectModel.Node project;
     private String savedPath = "";
     private String actionIdPrefix = "";
 
-    private Model mavenModel;
-
-    final LifecycleNode lifecycleNode;
-    final ProfilesNode profilesNode;
+    private final LifecycleNode lifecycleNode;
+    private final ProfilesNode profilesNode;
+    private final PluginsNode pluginsNode;
     public final NestedPomsNode modulePomsNode;
     public final NestedPomsNode nonModulePomsNode;
 
-    final List<PluginNode> pomPluginNodes = new ArrayList<PluginNode>();
-    final List<PluginNode> extraPluginNodes = new ArrayList<PluginNode>();
-
-    public PomNode(VirtualFile virtualFile) {
+    public PomNode(MavenProjectModel.Node project) {
       super(null);
-      this.virtualFile = virtualFile;
+      this.project = project;
 
       lifecycleNode = new LifecycleNode(this);
       profilesNode = new ProfilesNode(this);
+      pluginsNode = new PluginsNode(this);
       modulePomsNode = new ModulePomsNode(this);
       nonModulePomsNode = new NonModulePomsNode(this);
 
@@ -494,6 +493,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       setUniformIcon(iconPom);
 
       updateNode();
+    }
+
+    public VirtualFile getFile() {
+      return project.getFile();
     }
 
     protected void display(DisplayList displayList) {
@@ -509,8 +512,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     protected void displayChildren(DisplayList displayList) {
       displayList.add(profilesNode);
       displayList.add(lifecycleNode);
-      displayList.add(pomPluginNodes);
-      displayList.add(extraPluginNodes);
+      displayList.add(pluginsNode);
       displayList.add(modulePomsNode);
       displayList.add(nonModulePomsNode);
     }
@@ -528,16 +530,16 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public String getId() {
-      if (mavenModel == null) {
+      if (!project.isValid()) {
         return NavigatorBundle.message("node.pom.invalid");
       }
 
-      final String name = mavenModel.getName();
+      final String name = project.getMavenProject().getName();
       if (!StringUtil.isEmptyOrSpaces(name)) {
         return name;
       }
 
-      final String artifactId = mavenModel.getArtifactId();
+      final String artifactId = project.getMavenProject().getArtifactId();
       if (!StringUtil.isEmptyOrSpaces(artifactId)) {
         return artifactId;
       }
@@ -545,13 +547,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       return NavigatorBundle.message("node.pom.unnamed");
     }
 
-    public VirtualFile getFile() {
-      return virtualFile;
+    public MavenProjectModel.Node getProjectNode() {
+      return project;
     }
 
     private VirtualFile getDirectory() {
       //noinspection ConstantConditions
-      return getFile().getParent();
+      return project.getDirectoryFile();
     }
 
     public boolean isAncestor(PomNode that) {
@@ -560,18 +562,15 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     @Nullable
     public Navigatable getNavigatable() {
-      return PsiManager.getInstance(project).findFile(virtualFile);
+      return PsiManager.getInstance(PomTreeStructure.this.project).findFile(project.getFile());
     }
 
     private void updateNode() {
-      mavenModel = myProjectsManager.getModel(virtualFile);
-
       updateText();
 
       lifecycleNode.updateGoals();
-      createPomPluginNodes();
-      createExtraPluginNodes();
       createProfileNodes();
+      createPluginNodes();
       regroupNested();
     }
 
@@ -596,59 +595,25 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       }
     }
 
-    private void createPomPluginNodes() {
-      pomPluginNodes.clear();
-      for (MavenId mavenId : ProjectUtil.collectPluginIds(mavenModel, myProjectsManager.getActiveProfiles(virtualFile))) {
-        addPlugin(pomPluginNodes, mavenId, false);
+    private void createPluginNodes() {
+      pluginsNode.clear();
+      for (MavenId mavenId : ProjectUtil.collectPluginIds(project)) {
+        addPlugin(mavenId, false);
       }
     }
 
-    private void addPlugin(final List<PluginNode> pluginNodes, final MavenId mavenId, final boolean detachable) {
+    private void addPlugin(final MavenId mavenId, final boolean detachable) {
       if (!hasPlugin(mavenId)) {
         MavenPluginInfo plugin = getRepository().loadPluginInfo(mavenId);
-        insertSorted(pluginNodes, plugin == null
-                                  ? new InvalidPluginNode(this, mavenId, detachable)
-                                  : new ValidPluginNode(this, plugin, detachable));
+        pluginsNode.add(plugin == null
+                        ? new InvalidPluginNode(this, mavenId, detachable)
+                        : new ValidPluginNode(this, plugin, detachable));
       }
-    }
-
-    private void createExtraPluginNodes() {
-      extraPluginNodes.clear();
-      attachPlugins(myProjectsManager.getAttachedPlugins(getFile()));
-    }
-
-    public void attachPlugins(final Collection<MavenId> plugins) {
-      final Collection<MavenId> commonPlugins = myProjectsManager.getCommonPlugins();
-      for (MavenId pluginId : plugins) {
-        addPlugin(extraPluginNodes, pluginId, !commonPlugins.contains(pluginId));
-      }
-      updateSubTree();
-    }
-
-    public void detachPlugins(final Collection<MavenId> plugins) {
-      final Collection<PluginNode> toRemove = new ArrayList<PluginNode>();
-      for (PluginNode pluginNode : extraPluginNodes) {
-        for (MavenId plugin : plugins) {
-          if (plugin.matches(pluginNode.getId())) {
-            toRemove.add(pluginNode);
-            break;
-          }
-        }
-      }
-      for (PluginNode pluginNode : toRemove) {
-        extraPluginNodes.remove(pluginNode);
-      }
-      updateSubTree();
     }
 
     @SuppressWarnings({"BooleanMethodIsAlwaysInverted"})
     public boolean hasPlugin(final MavenId id) {
-      for (PluginNode node : pomPluginNodes) {
-        if (node.getId().matches(id)) {
-          return true;
-        }
-      }
-      for (PluginNode node : extraPluginNodes) {
+      for (PluginNode node : pluginsNode.pluginNodes) {
         if (node.getId().matches(id)) {
           return true;
         }
@@ -658,13 +623,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void updateText() {
       clearColoredText();
-      if (myProjectsManager.isIgnored(virtualFile)) {
+      if (myProjectsManager.isIgnored(project)) {
         addColoredFragment(getId(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, Color.GRAY));
       }
       else {
         addPlainText(getId());
       }
-      savedPath = getFile().getPath();
+      savedPath = project.getFile().getPath();
       actionIdPrefix = myEventsHandler.getActionId(savedPath, null);
       addColoredFragment(" (" + getDirectory().getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
@@ -714,8 +679,8 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public boolean containsAsModule(PomNode node) {
-      if (mavenModel == null) return false;
-      return MavenProjectsManager.getInstance(project).isModuleOf(virtualFile, node.getFile());
+      MavenProjectsManager m = MavenProjectsManager.getInstance(PomTreeStructure.this.project);
+      return m.isModuleOf(project, node.project);
     }
 
     public void setIgnored(boolean on) {
@@ -735,16 +700,16 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void createProfileNodes() {
       profilesNode.clear();
-      for (String id : ProjectUtil.collectProfileIds(mavenModel, new TreeSet<String>())) {
+      for (String id : ProjectUtil.collectProfileIds(project)) {
         profilesNode.add(id);
       }
-      profilesNode.updateActive(myProjectsManager.getActiveProfiles(virtualFile), true);
+      profilesNode.updateActive(myProjectsManager.getActiveProfiles(project.getFile()), true);
     }
 
     public void setProfiles(final Collection<String> profiles) {
       profilesNode.updateActive(profiles, false);
       regroupNested();
-      createPomPluginNodes();
+      createPluginNodes();
       updateSubTree();
     }
 
@@ -776,11 +741,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
       goalNodes.addAll(lifecycleNode.goalNodes);
 
-      for (PluginNode pluginNode : pomPluginNodes) {
-        goalNodes.addAll(pluginNode.goalNodes);
-      }
-
-      for (PluginNode pluginNode : extraPluginNodes) {
+      for (PluginNode pluginNode : pluginsNode.pluginNodes) {
         goalNodes.addAll(pluginNode.goalNodes);
       }
 
@@ -808,7 +769,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     protected Collection<PomNode> removeChildren(final PomNode node, final Collection<PomNode> children) {
       super.removeChildren(node, children);
-      if(sibling!=null){
+      if (sibling != null) {
         sibling.removeOwnChildren(node, children);
       }
       return children;
@@ -951,7 +912,6 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   }
 
   private class ProfilesNode extends ListNode {
-
     final List<ProfileNode> profileNodes = new ArrayList<ProfileNode>();
 
     public ProfilesNode(final PomNode parent) {
@@ -1018,6 +978,32 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void setActive(final boolean active) {
       this.active = active;
+    }
+  }
+
+  private class PluginsNode extends ListNode {
+    final List<PluginNode> pluginNodes = new ArrayList<PluginNode>();
+
+    public PluginsNode(final PomNode parent) {
+      super(parent);
+      addPlainText(NavigatorBundle.message("node.profiles"));
+      setIcons(iconProfilesClosed, iconProfilesOpen);
+    }
+
+    boolean isVisible() {
+      return !pluginNodes.isEmpty() && !isMinimalView();
+    }
+
+    protected void displayChildren(DisplayList displayList) {
+      displayList.add(pluginNodes);
+    }
+
+    public void clear() {
+      pluginNodes.clear();
+    }
+
+    public void add(PluginNode node) {
+      insertSorted(pluginNodes, node);
     }
   }
 

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -34,9 +35,9 @@ public class MavenIgnoreConfigurable implements Configurable {
     myManager = manager;
 
     myOriginalFiles = new HashSet<VirtualFile>();
-    for (VirtualFile file : myManager.getFiles()) {
-      if (myManager.getIgnoredFlag(file)) {
-        myOriginalFiles.add(file);
+    for (MavenProjectModel.Node each : myManager.getExistingProjects()) {
+      if (myManager.getIgnoredFlag(each)) {
+        myOriginalFiles.add(each.getFile());
       }
     }
 
@@ -78,15 +79,15 @@ public class MavenIgnoreConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     final List<VirtualFile> marked = myFileChooser.getMarkedElements();
-    for (VirtualFile file : myManager.getFiles()) {
-      myManager.setIgnoredFlag(file, marked.contains(file));
+    for (MavenProjectModel.Node each : myManager.getExistingProjects()) {
+      myManager.setIgnoredFlag(each, marked.contains(each.getFile()));
     }
 
     myManager.setIgnoredPathMasks(Strings.tokenize(myMaskEditor.getText(), Strings.WHITESPACE + SEPARATOR));
   }
 
   public void reset() {
-    IdeaAPIHelper.addElements( myFileChooser, myManager.getFiles(), myOriginalFiles, ProjectUtil.ourProjectDirComparator);
+    IdeaAPIHelper.addElements(myFileChooser, myManager.getFiles(), myOriginalFiles, ProjectUtil.ourProjectDirComparator);
 
     myMaskEditor.setText(myOriginalMasks);
   }
