@@ -56,7 +56,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     final PsiField[] fields = aClass.getFields();
     final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
     for (PsiField field : fields) {
-      if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (field.hasModifierProperty(PsiModifier.PRIVATE) && !(field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL))) {
         candidates.add(field);
       }
     }
@@ -72,7 +72,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiExpression qualifier = expression.getQualifierExpression();
-        if (qualifier == null || (qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
+        if (qualifier == null || qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null) {
           final PsiElement resolved = expression.resolve();
           if (resolved instanceof PsiField) {
             final PsiField field = (PsiField)resolved;
@@ -89,11 +89,13 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     final Set<PsiField> usedFields = new HashSet<PsiField>();
     topLevelClass.accept(new JavaRecursiveElementVisitor() {
 
-      @Override public void visitElement(PsiElement element) {
+      @Override
+      public void visitElement(PsiElement element) {
         if (!candidates.isEmpty()) super.visitElement(element);
       }
 
-      @Override public void visitMethod(PsiMethod method) {
+      @Override
+      public void visitMethod(PsiMethod method) {
         super.visitMethod(method);
 
         final PsiCodeBlock body = method.getBody();
@@ -102,15 +104,16 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         }
       }
 
-      @Override public void visitClassInitializer(PsiClassInitializer initializer) {
+      @Override
+      public void visitClassInitializer(PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
-
         checkCodeBlock(initializer.getBody(), candidates);
       }
 
       private void checkCodeBlock(final PsiCodeBlock body, final Set<PsiField> candidates) {
         try {
-          final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
+          final ControlFlow controlFlow =
+              ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
           final PsiVariable[] usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
           for (PsiVariable usedVariable : usedVars) {
             if (usedVariable instanceof PsiField) {
@@ -130,7 +133,9 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
               final PsiField field = (PsiField)resolved;
               PsiElement parent = body.getParent();
               if (parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor()) {
-                if (field.getInitializer() == null || ((PsiMethod)parent).getContainingClass().getInitializers().length > 0) candidates.remove(field);
+                if (field.getInitializer() == null || ((PsiMethod)parent).getContainingClass().getInitializers().length > 0) {
+                  candidates.remove(field);
+                }
               }
               else {
                 candidates.remove(field);
@@ -145,14 +150,13 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     });
 
     if (candidates.isEmpty()) return null;
-    final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>(candidates.size());
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
 
     for (PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
-        result.add(manager.createProblemDescriptor(field.getNameIdentifier(), message, new MyQuickFix(field),
-                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        result.add(manager.createProblemDescriptor(field.getNameIdentifier(), message, new MyQuickFix(field), ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
     return result.toArray(new ProblemDescriptor[result.size()]);

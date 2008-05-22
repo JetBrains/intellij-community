@@ -15,15 +15,10 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
     doTest("fieldCanBeLocal/" + getTestName(true), new FieldCanBeLocalInspection());
   }
 
-  public void testSimple () throws Exception {
-    doTest();
-  }
+  public void testSimple () throws Exception { doTest(); }
 
-  public void testTwoMethods () throws Exception {
-    doTest();
-  }
+  public void testTwoMethods () throws Exception { doTest(); }
 
-  public void testConstructor () throws Exception {
-    doTest();
-  }
+  public void testConstructor () throws Exception { doTest(); }
+  public void testStaticFinal() throws Exception { doTest(); }
 }
