@@ -28,7 +28,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null || LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(element)) > 0) return false;
+    if (element == null || !PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     PsiFile file = element.getContainingFile();
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)element.getParent()).getQualifierExpression() != null) {

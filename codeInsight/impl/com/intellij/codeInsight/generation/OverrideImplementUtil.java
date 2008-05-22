@@ -414,7 +414,7 @@ public class OverrideImplementUtil {
 
     if (candidates.isEmpty()) return;
 
-    boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0;
+    boolean isJdk15Enabled = PsiUtil.isLanguageLevel5OrHigher(aClass);
     final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
       public PsiMethodMember fun(final CandidateInfo s) {
         return new PsiMethodMember(s);

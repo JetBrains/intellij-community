@@ -322,9 +322,9 @@ public class RedundantCastUtil {
       else {
         PsiElement parent = typeCast.getParent();
         if (parent instanceof PsiConditionalExpression) {
-          if (PsiUtil.getLanguageLevel(typeCast).compareTo(LanguageLevel.JDK_1_5) < 0) {
+          if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
             //branches need to be of the same type
-            if (!Comparing.equal(operand.getType(),((PsiConditionalExpression)parent).getType())) return;
+            if (!Comparing.equal(operand.getType(), ((PsiConditionalExpression)parent).getType())) return;
           }
         }
         processAlreadyHasTypeCast(typeCast);

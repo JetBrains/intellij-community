@@ -30,7 +30,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
     }
 
     protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
-      if (PsiUtil.getLanguageLevel(expression).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
 
       if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;

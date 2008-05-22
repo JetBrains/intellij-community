@@ -33,7 +33,7 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
-    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(element)) > 0) return false;
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     if (!element.isWritable()) return false;
     return findVariable(element) != null;
   }

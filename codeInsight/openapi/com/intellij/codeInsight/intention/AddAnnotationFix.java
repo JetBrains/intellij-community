@@ -106,7 +106,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) > 0) return false;
+    if (!PsiUtil.isLanguageLevel5OrHigher(file)) return false;
     final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
       if (!myModifierListOwner.isValid()) return false;

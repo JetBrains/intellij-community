@@ -18,7 +18,6 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -166,8 +165,7 @@ public class ExpectedTypesProvider {
       PsiManager manager = PsiManager.getInstance(project);
       GlobalSearchScope resolveScope = type.getResolveScope();
       if (resolveScope == null) resolveScope = GlobalSearchScope.allScope(project);
-      PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
-      PsiClassType objectType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(objectClass);
+      PsiClassType objectType = PsiType.getJavaLangObject(manager, resolveScope);
       processType(objectType, visitor, set);
 
       if (type instanceof PsiClassType) {
@@ -344,8 +342,9 @@ public class ExpectedTypesProvider {
     @Override public void visitSwitchStatement(PsiSwitchStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT,
                                                  TailType.NONE);
-      if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
         myResult = new ExpectedTypeInfo[]{info};
+        return;
       }
 
       PsiManager manager = statement.getManager();
@@ -657,11 +656,9 @@ public class ExpectedTypesProvider {
 
       if (arrayType instanceof PsiArrayType) {
         PsiType componentType = ((PsiArrayType)arrayType).getComponentType();
-        if (componentType != null) {
-          ExpectedTypeInfoImpl info = createInfoImpl(componentType, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                     componentType, TailType.NONE);
-          myResult = new ExpectedTypeInfo[]{info};
-        }
+        ExpectedTypeInfoImpl info = createInfoImpl(componentType, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
+                                                   componentType, TailType.NONE);
+        myResult = new ExpectedTypeInfo[]{info};
       }
     }
 

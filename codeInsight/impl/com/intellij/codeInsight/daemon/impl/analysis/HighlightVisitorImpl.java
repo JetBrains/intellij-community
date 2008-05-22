@@ -187,7 +187,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitAnnotation(PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
-    if (PsiUtil.getLanguageLevel(annotation).compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (PsiUtil.isLanguageLevel5OrHigher(annotation)) {
       myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
       if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
       if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
@@ -262,8 +262,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitClass(aClass);
     if (aClass instanceof JspClass) return;
     if (aClass.isAnnotationType()) {
-      if (PsiUtil.getLanguageLevel(aClass).compareTo(LanguageLevel.JDK_1_5) < 0) {
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(), JavaErrorMessages.message("annotations.prior.15"));
+      if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+        HighlightInfo info = HighlightInfo
+            .createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(), JavaErrorMessages.message("annotations.prior.15"));
         QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
         myHolder.add(info);
       }
@@ -384,16 +385,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitForeachStatement(PsiForeachStatement statement) {
-    if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("foreach.prior.15"));
+    if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
+      HighlightInfo info = HighlightInfo
+          .createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("foreach.prior.15"));
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
       myHolder.add(info);
     }
   }
 
   @Override public void visitImportStaticStatement(PsiImportStaticStatement statement) {
-    if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("static.imports.prior.15"));
+    if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
+      HighlightInfo info = HighlightInfo
+          .createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("static.imports.prior.15"));
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
       myHolder.add(info);
     }

@@ -3,11 +3,11 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 
 public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
   private boolean myToDeleteGt;
@@ -16,7 +16,7 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
     int offset = editor.getCaretModel().getOffset() - 1;
     myToDeleteGt = c =='<' &&
                         file instanceof PsiJavaFile &&
-                        ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0
+                        PsiUtil.isLanguageLevel5OrHigher(file)
                         && JavaTypedHandler.isAfterClassLikeIdentifierOrDot(offset, editor);
   }
 

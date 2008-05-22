@@ -48,12 +48,14 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     String format = prepareString(formatString.toString());
     PsiExpression formatArgument = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText("\"" + format + "\"", null);
     argumentList.add(formatArgument);
-    if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (PsiUtil.isLanguageLevel5OrHigher(file)) {
       for (PsiExpression arg : args) {
         argumentList.add(arg);
       }
-    } else {
-      final PsiNewExpression arrayArg = (PsiNewExpression)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText("new java.lang.Object[]{}", null);
+    }
+    else {
+      final PsiNewExpression arrayArg = (PsiNewExpression)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+          .createExpressionFromText("new java.lang.Object[]{}", null);
       final PsiArrayInitializerExpression arrayInitializer = arrayArg.getArrayInitializer();
       assert arrayInitializer != null;
       for (PsiExpression arg : args) {
@@ -151,7 +153,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     assert arg != null;
     final PsiManager manager = arg.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    if (PsiUtil.getLanguageLevel(arg).compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(arg)) {
       final PsiType type = arg.getType();
       if (type instanceof PsiPrimitiveType && !type.equals(PsiType.NULL)) {
         final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;

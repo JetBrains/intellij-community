@@ -53,12 +53,12 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       }
 
       @Override public void visitMethod(PsiMethod method) {
-        if (PsiUtil.getLanguageLevel(method).compareTo(LanguageLevel.JDK_1_5) < 0) return;
+        if (!PsiUtil.isLanguageLevel5OrHigher(method)) return;
         checkNullableStuffForMethod(method, holder);
       }
 
       @Override public void visitField(PsiField field) {
-        if (PsiUtil.getLanguageLevel(field).compareTo(LanguageLevel.JDK_1_5) < 0) return;
+        if (!PsiUtil.isLanguageLevel5OrHigher(field)) return;
         Annotated annotated = check(field, holder, field.getType());
         if (annotated.isDeclaredNotNull || annotated.isDeclaredNullable) {
           final String anno = annotated.isDeclaredNotNull ? AnnotationUtil.NOT_NULL : AnnotationUtil.NULLABLE;
@@ -97,7 +97,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       }
 
       @Override public void visitParameter(PsiParameter parameter) {
-        if (PsiUtil.getLanguageLevel(parameter).compareTo(LanguageLevel.JDK_1_5) < 0) return;
+        if (!PsiUtil.isLanguageLevel5OrHigher(parameter)) return;
         check(parameter, holder, parameter.getType());
       }
     };

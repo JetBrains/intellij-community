@@ -241,7 +241,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   private static boolean isAnnotation(final PsiElement psiElement) {
-    return psiElement.getParent() instanceof PsiAnnotation && PsiUtil.getLanguageLevel(psiElement).compareTo(LanguageLevel.JDK_1_5) >= 0;
+    return psiElement.getParent() instanceof PsiAnnotation && PsiUtil.isLanguageLevel5OrHigher(psiElement);
   }
 
   private static boolean isJunitAnnotationName(@NonNls final String referenceName) {

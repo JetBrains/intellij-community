@@ -88,7 +88,7 @@ public class GenericsHighlightUtil {
                                                              final PsiReferenceParameterList referenceParameterList,
                                                              final PsiSubstitutor substitutor,
                                                              boolean registerIntentions) {
-    if (referenceParameterList != null && PsiUtil.getLanguageLevel(referenceParameterList).compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (referenceParameterList != null && !PsiUtil.isLanguageLevel5OrHigher(referenceParameterList)) {
       if (referenceParameterList.getTypeParameterElements().length > 0) {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, GENERICS_ARE_NOT_SUPPORTED);
         QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(referenceParameterList));
@@ -410,7 +410,7 @@ public class GenericsHighlightUtil {
 
   //precondition: TypeConversionUtil.isAssignable(lType, rType) || expressionAssignable
   public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, @NotNull final PsiElement elementToHighlight) {
-    if (PsiUtil.getLanguageLevel(elementToHighlight).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (!PsiUtil.isLanguageLevel5OrHigher(elementToHighlight)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile(elementToHighlight).isToolEnabled(key)) return null;
     if (!isRawToGeneric(lType, rType)) return null;
@@ -499,7 +499,7 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
-    if (PsiUtil.getLanguageLevel(typeCast).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getInspectionProfile(typeCast).isToolEnabled(key)) return null;
     final PsiTypeElement typeElement = typeCast.getCastType();
@@ -583,7 +583,7 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
-    if (PsiUtil.getLanguageLevel(call).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (!PsiUtil.isLanguageLevel5OrHigher(call)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(call.getProject()).getInspectionProfile(call).isToolEnabled(key)) return null;
 
@@ -799,7 +799,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkTypeParametersList(PsiTypeParameterList parameterList) {
     PsiTypeParameter[] typeParameters = parameterList.getTypeParameters();
     if (typeParameters.length == 0) return null;
-    if (PsiUtil.getLanguageLevel(parameterList).compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(parameterList)) {
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameterList, GENERICS_ARE_NOT_SUPPORTED);
       QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(parameterList));
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
@@ -1058,7 +1058,7 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<HierarchicalMethodSignature> superMethodSignatures) {
-    if (PsiUtil.getLanguageLevel(overrider).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
+    if (!PsiUtil.isLanguageLevel5OrHigher(overrider)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider);

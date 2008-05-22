@@ -15,7 +15,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -124,7 +123,7 @@ public class HighlightMethodUtil {
                                                          PsiMethod methodToHighlight) {
     if (superReturnType == null) return null;
     PsiType substitutedSuperReturnType;
-    final boolean isJdk15 = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(method)) <= 0;
+    final boolean isJdk15 = PsiUtil.isLanguageLevel5OrHigher(method);
     if (isJdk15 &&
         !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
@@ -878,7 +877,7 @@ public class HighlightMethodUtil {
 
       if (otherSuperReturnType == null || currentType == null || otherSuperReturnType.equals(currentType)) continue;
 
-      if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(currentMethod)) <= 0) {
+      if (PsiUtil.isLanguageLevel5OrHigher(currentMethod)) {
         if (otherSuperReturnType.isAssignableFrom(currentType)) continue;
         if (currentType.isAssignableFrom(otherSuperReturnType)) {
           returnTypeSubstitutable = otherSuperSignature;

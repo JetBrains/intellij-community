@@ -14,13 +14,13 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -52,13 +52,13 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
                     file instanceof PsiJavaFile &&
                     !(file instanceof JspFile) &&
                     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-                    ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
+                    PsiUtil.isLanguageLevel5OrHigher(file) &&
                     isAfterClassLikeIdentifierOrDot(offsetBefore, editor);
 
     if ('>' == c) {
       if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-               ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+               PsiUtil.isLanguageLevel5OrHigher(file)) {
         if (handleJavaGT(editor)) return Result.STOP;
       }
     }

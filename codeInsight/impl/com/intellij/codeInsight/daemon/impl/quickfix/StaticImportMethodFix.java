@@ -56,8 +56,7 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) <= 0
-           && myMethodCall != null 
+    return PsiUtil.isLanguageLevel5OrHigher(file) && myMethodCall != null
            && myMethodCall.isValid()
            && myMethodCall.getMethodExpression().getQualifierExpression() == null
            && file.getManager().isInProject(file)

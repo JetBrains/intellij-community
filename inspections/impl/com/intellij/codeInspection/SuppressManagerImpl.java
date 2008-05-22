@@ -107,7 +107,7 @@ public class SuppressManagerImpl extends SuppressManager {
 
   @NotNull
   public Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierListOwner owner) {
-    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(owner)) > 0) return Collections.emptyList();
+    if (!PsiUtil.isLanguageLevel5OrHigher(owner)) return Collections.emptyList();
     PsiModifierList modifierList = owner.getModifierList();
     return getInspectionIdsSuppressedInAnnotation(modifierList);
   }
@@ -245,7 +245,7 @@ public class SuppressManagerImpl extends SuppressManager {
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) return false;
     final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0;
-    return  DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) <= 0;
+    return DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
   public boolean alreadyHas14Suppressions(final PsiDocCommentOwner commentOwner) {

@@ -14,11 +14,10 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -103,7 +102,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
       return JavaCompletionUtil.ourJavaDocCompletionData.getValue();
     }
-    return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5)
+    return element != null && PsiUtil.isLanguageLevel5OrHigher(element)
            ? JavaCompletionUtil.ourJava15CompletionData.getValue()
            : JavaCompletionUtil.ourJavaCompletionData.getValue();
   }

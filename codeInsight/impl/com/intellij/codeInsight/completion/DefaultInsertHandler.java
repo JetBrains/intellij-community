@@ -599,7 +599,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
 
-    boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0;
+    boolean isJdk15Enabled = PsiUtil.isLanguageLevel5OrHigher(aClass);
     final PsiMethodMember[] array = methods.toArray(new PsiMethodMember[methods.size()]);
     final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(array, false, true, project, isJdk15Enabled);
     chooser.setTitle(CompletionBundle.message("completion.smarttype.select.methods.to.override"));

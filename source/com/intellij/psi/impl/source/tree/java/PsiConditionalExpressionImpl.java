@@ -62,7 +62,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
 
     if (TypeConversionUtil.isAssignable(type1, type2, false)) return type1;
     if (TypeConversionUtil.isAssignable(type2, type1, false)) return type2;
-    if (PsiUtil.getLanguageLevel(this).compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(this)) {
       return null;
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) type1 = ((PsiPrimitiveType)type1).getBoxedType(this);

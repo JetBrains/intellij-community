@@ -23,8 +23,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
 
   public boolean isValidInContext(PsiElement element) {
     return element instanceof PsiMethod ||
-           (element instanceof PsiClass &&
-            PsiUtil.getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_5) >= 0);
+           (element instanceof PsiClass && PsiUtil.isLanguageLevel5OrHigher(element));
   }
 
   public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {

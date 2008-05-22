@@ -28,7 +28,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null || LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(element)) > 0) return false;
+    if (element == null || !PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
       if (refExpr.getParent() instanceof PsiReferenceExpression &&
