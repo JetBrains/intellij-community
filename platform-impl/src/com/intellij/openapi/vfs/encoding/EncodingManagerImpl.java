@@ -107,7 +107,6 @@ public class EncodingManagerImpl extends EncodingManager {
 
   public Charset getDefaultCharset() {
     Charset result = CharsetToolkit.getDefaultSystemCharset();
-    // see SCR #5288
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       ProjectManager projectManager = ProjectManager.getInstance();

@@ -58,10 +58,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * KEY_TYPED event because they are not valid.
    */
   private boolean myPressedWasProcessed;
-  private int myState;
+  private int myState = STATE_INIT;
 
-  private final ArrayList<AnAction> myActions;
-  private final PresentationFactory myPresentationFactory;
+  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
+  private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private JComponent myFoundComponent;
   private boolean myDisposed = false;
   private boolean myLeftCtrlPressed = false;
@@ -69,9 +69,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
 
   public IdeKeyEventDispatcher(){
-    myState=STATE_INIT;
-    myActions=new ArrayList<AnAction>();
-    myPresentationFactory=new PresentationFactory();
     Disposer.register(ApplicationManager.getApplication(), this);
   }
 
@@ -93,7 +90,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myLeftCtrlPressed = (e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT);
+        myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
       }
       else if (e.getID() == KeyEvent.KEY_RELEASED) {
         myLeftCtrlPressed = false;
@@ -101,7 +98,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
     else if (e.getKeyCode() == KeyEvent.VK_ALT) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myRightAltPressed = (e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT);
+        myRightAltPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT;
       }
       else if (e.getID() == KeyEvent.KEY_RELEASED) {
         myRightAltPressed = false;
@@ -248,7 +245,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     fillActionsList(myFoundComponent, myFirstKeyStroke, keyStroke, isModalContext);
 
     // consume the wrong second stroke and keep on waiting
-    if (myActions.size() == 0) {
+    if (myActions.isEmpty()) {
       return true;
     }
 
@@ -277,9 +274,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState(focusOwner, e, isModalContext, dataContext);
   }
 
-  private boolean inInitState(Component focusOwner, KeyEvent e, boolean isModalContext, DataContext dataContext) {
+  private boolean inInitState(final Component focusOwner, KeyEvent e, boolean isModalContext, DataContext dataContext) {
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (KeyEvent.CTRL_MASK | KeyEvent.ALT_MASK)) {
+    if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
       final InputContext inputContext = focusOwner.getInputContext();
       if (inputContext != null) {
         @NonNls final String language = inputContext.getLocale().getLanguage();
@@ -305,9 +302,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     boolean hasSecondStroke = fillActionsList(focusOwner, keyStroke, null, isModalContext);
 
-    if(myActions.size() == 0) {
+    if(myActions.isEmpty()) {
       if (SystemInfo.isMac) {
-        if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiersEx() == KeyEvent.ALT_DOWN_MASK && hasMnemonicInWindow(focusOwner, e.getKeyCode())) {
+        if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && hasMnemonicInWindow(focusOwner, e.getKeyCode())) {
           myPressedWasProcessed = true;
           myState = STATE_PROCESSED;
           return false;
@@ -334,7 +331,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
 
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      StringBuffer message = new StringBuffer();
+      StringBuilder message = new StringBuilder();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');
       for (int i = 0; i < secondKeyStorkes.size(); i++) {
@@ -350,11 +347,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       myState=STATE_WAIT_FOR_SECOND_KEYSTROKE;
       return true;
     }else{
-      if (processAction(e, dataContext)) {
-        return true;
-      } else {
-        return false;
-      }
+      return processAction(e, dataContext);
     }
   }
 
@@ -459,7 +452,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         hasSecondStroke |= addAction(action, firstKeyStroke, secondKeyStroke);
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
-      if (myActions.size() > 0) {
+      if (!myActions.isEmpty()) {
         myFoundComponent = (JComponent)component;
         break;
       }

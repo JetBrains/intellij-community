@@ -183,18 +183,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   private AnAction getActionImpl(String id, boolean canReturnStub) {
     synchronized (myLock) {
-    AnAction action = (AnAction)myId2Action.get(id);
-    if (!canReturnStub && action instanceof ActionStub) {
-      action = convert((ActionStub)action);
-    }
-    return action;
+      AnAction action = (AnAction)myId2Action.get(id);
+      if (!canReturnStub && action instanceof ActionStub) {
+        action = convert((ActionStub)action);
+      }
+      return action;
     }
   }
 
   /**
    * Converts action's stub to normal action.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private AnAction convert(ActionStub stub) {
     LOG.assertTrue(myAction2Id.contains(stub));
     myAction2Id.remove(stub);

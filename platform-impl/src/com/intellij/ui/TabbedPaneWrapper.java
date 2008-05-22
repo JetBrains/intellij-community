@@ -30,9 +30,7 @@ import java.lang.reflect.Method;
  */
 public class TabbedPaneWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneWrapper");
-
-  private final static PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB,
-                                                                                                   IdeActions.ACTION_NEXT_TAB);
+  private static final PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_PREVIOUS_TAB);
   protected final TabbedPane myTabbedPane;
   protected final JComponent myTabbedPaneHolder;
 
@@ -200,7 +198,7 @@ public class TabbedPaneWrapper {
    * @see javax.swing.JTabbedPane#setComponentAt(int, java.awt.Component)
    */
   public final synchronized JComponent getComponentAt(final int i) {
-    return (getWrapperAt(i)).getComponent();
+    return getWrapperAt(i).getComponent();
   }
 
   private TabWrapper getWrapperAt(final int i) {
@@ -300,6 +298,10 @@ public class TabbedPaneWrapper {
   @Nullable
   public String getSelectedTitle() {
     return getSelectedIndex() < 0 ? null : getTitleAt(getSelectedIndex());
+  }
+
+  public void removeAll() {
+    myTabbedPane.removeAll();
   }
 
   private static final class TabWrapper extends JPanel implements DataProvider{
@@ -462,13 +464,13 @@ public class TabbedPaneWrapper {
      * @param index index of tab to be scrolled.
      */
     public final void scrollTabToVisible(final int index){
-      if(myScrollableTabSupport==null||JTabbedPane.WRAP_TAB_LAYOUT==getTabLayoutPolicy()){ // tab scrolling isn't supported by UI
+      if(myScrollableTabSupport==null|| WRAP_TAB_LAYOUT==getTabLayoutPolicy()){ // tab scrolling isn't supported by UI
         return;
       }
       final TabbedPaneUI tabbedPaneUI=getUI();
       Rectangle tabBounds=tabbedPaneUI.getTabBounds(this,index);
       final int tabPlacement=getTabPlacement();
-      if(SwingConstants.TOP==tabPlacement || SwingConstants.BOTTOM==tabPlacement){ //tabs are on the top or bottom
+      if(TOP==tabPlacement || BOTTOM==tabPlacement){ //tabs are on the top or bottom
         if(tabBounds.x<50){  //if tab is to the left of visible area
           int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
           while(leadingTabIndex != index && leadingTabIndex>0 && tabBounds.x<50){
@@ -521,33 +523,32 @@ public class TabbedPaneWrapper {
 
    //http://www.jetbrains.net/jira/browse/IDEADEV-22331
    //to let repaint happen since AIOBE is thrown from Mac OSX's UI
-    protected void fireStateChanged() {
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==ChangeListener.class) {
-                // Lazily create the event:
-                if (changeEvent == null)
-                    changeEvent = new ChangeEvent(this);
-              final ChangeListener each = (ChangeListener)listeners[i + 1];
-              if (each != null && each.getClass().getName().indexOf("apple.laf.CUIAquaTabbedPane") >= 0) {
+   protected void fireStateChanged() {
+     // Guaranteed to return a non-null array
+     Object[] listeners = listenerList.getListenerList();
+     // Process the listeners last to first, notifying
+     // those that are interested in this event
+     for (int i = listeners.length - 2; i >= 0; i -= 2) {
+       if (listeners[i] == ChangeListener.class) {
+         // Lazily create the event:
+         if (changeEvent == null) changeEvent = new ChangeEvent(this);
+         final ChangeListener each = (ChangeListener)listeners[i + 1];
+         if (each != null && each.getClass().getName().indexOf("apple.laf.CUIAquaTabbedPane") >= 0) {
 
-                SwingUtilities.invokeLater(new Runnable() {
-                  public void run() {
-                    revalidate();
-                    repaint();
-                  }
-                });
+           SwingUtilities.invokeLater(new Runnable() {
+             public void run() {
+               revalidate();
+               repaint();
+             }
+           });
 
-                continue;
-              }
+           continue;
+         }
 
-              each.stateChanged(changeEvent);
-            }
-        }
-    }
+         each.stateChanged(changeEvent);
+       }
+     }
+   }
 
 
     public final void removeTabAt (final int index) {
@@ -631,8 +632,7 @@ public class TabbedPaneWrapper {
           }
           setLeadingIndexMethod.setAccessible(true);
           setLeadingIndexMethod.invoke(
-            tabScrollerValue,
-            new Integer(getTabPlacement()), new Integer(leadingIndex));
+            tabScrollerValue, Integer.valueOf(getTabPlacement()), Integer.valueOf(leadingIndex));
         }catch(Exception exc){
           final StringWriter writer=new StringWriter();
           exc.printStackTrace(new PrintWriter(writer));
@@ -681,20 +681,6 @@ public class TabbedPaneWrapper {
     public void updateUI() {
       super.updateUI();
       myTabbedPane.updateUI();
-    }
-  }
-
-  private static class UnregisterCommand {
-    private final AnAction myAction;
-    private final JComponent myComponent;
-
-    public UnregisterCommand(AnAction action, JComponent component) {
-      myAction = action;
-      myComponent = component;
-    }
-
-    public void unregister() {
-      myAction.unregisterCustomShortcutSet(myComponent);
     }
   }
 
