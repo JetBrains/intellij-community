@@ -26,7 +26,7 @@ enum InitializerRequirement {
 
   public static InitializerRequirement calcInitializerRequirement(@Nullable PsiClass psiClass) {
     if (psiClass == null || !psiClass.isAnnotationType()) {
-      return InitializerRequirement.NONE_REQUIRED;
+      return NONE_REQUIRED;
     }
 
     InitializerRequirement r = NONE_REQUIRED;

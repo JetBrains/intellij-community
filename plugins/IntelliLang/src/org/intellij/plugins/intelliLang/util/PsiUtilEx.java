@@ -72,7 +72,7 @@ public class PsiUtilEx {
 
   public static boolean isStringLiteral(PsiElement value) {
     if (value instanceof PsiLiteralExpression) {
-      final PsiLiteralExpression expression = ((PsiLiteralExpression)value);
+      final PsiLiteralExpression expression = (PsiLiteralExpression)value;
       final PsiType type = expression.getType();
       if (type != null && isString(type)) {
         return true;
