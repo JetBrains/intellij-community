@@ -16,18 +16,20 @@
 
 package org.intellij.plugins.intelliLang;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +46,11 @@ import java.awt.*;
  * recreated and maintained for each project, and still being able to use class-choosers
  * that will allow to browse the current project's classes.
  */
-public class Settings implements ApplicationComponent, Configurable, JDOMExternalizable {
+//@State(
+//    name = "IntelliLangSettings.UI",
+//    storages = {
+//      @Storage(id = "other", file = "$WORKSPACE_FILE$")})
+public class Settings implements Configurable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(Settings.class.getName());
 
   @NonNls
@@ -58,17 +64,6 @@ public class Settings implements ApplicationComponent, Configurable, JDOMExterna
   }
 
   private SettingsUI mySettingsUI;
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "IntelliLangSettings";
-  }
 
   public String getDisplayName() {
     return "IntelliLang";
@@ -138,16 +133,26 @@ public class Settings implements ApplicationComponent, Configurable, JDOMExterna
     mySettingsUI = null;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    final Element child = element.getChild(SETTINGS_UI_NAME);
-    if (child != null) {
-      DefaultJDOMExternalizer.readExternal(mySettingsUIState, child);
+  public Element getState() {
+    final Element e = new Element(SETTINGS_UI_NAME);
+    try {
+      DefaultJDOMExternalizer.writeExternal(mySettingsUIState, e);
     }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+    }
+    return e;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    final Element e = new Element(SETTINGS_UI_NAME);
-    element.addContent(e);
-    DefaultJDOMExternalizer.writeExternal(mySettingsUIState, e);
+  public void loadState(final Element state) {
+    final Element child = state.getChild(SETTINGS_UI_NAME);
+    if (child != null) {
+      try {
+        DefaultJDOMExternalizer.readExternal(mySettingsUIState, child);
+      }
+      catch (InvalidDataException e) {
+        LOG.error(e);
+      }
+    }
   }
 }

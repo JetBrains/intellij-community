@@ -15,9 +15,7 @@
  */
 package org.intellij.plugins.intelliLang;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -32,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -45,10 +42,15 @@ import java.util.Set;
  * injection settings as well as the annotations to use for injection, pattern
  * validation and for substituting non-compile time constant expression.
  */
-public final class Configuration implements ExportableApplicationComponent, NamedJDOMExternalizable {
+@State(
+    name = Configuration.COMPONENT_NAME,
+    storages = {
+      @Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)
+        })
+public final class Configuration implements PersistentStateComponent<Element> {
 
   @NonNls
-  private static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
+  static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
 
   // element names
 
@@ -104,7 +106,7 @@ public final class Configuration implements ExportableApplicationComponent, Name
     setSubstAnnotation("org.intellij.lang.annotations.Subst");
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(final Element element) {
     readExternal(myTagInjections, element.getChild(TAG_INJECTION_NAME), new Factory<XmlTagInjection>() {
       public XmlTagInjection create() {
         return new XmlTagInjection();
@@ -129,7 +131,8 @@ public final class Configuration implements ExportableApplicationComponent, Name
     setResolveReferences(resolveReferences == null || Boolean.parseBoolean(resolveReferences));
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    final Element element = new Element(COMPONENT_NAME);
     writeExternal(element, TAG_INJECTION_NAME, myTagInjections);
     writeExternal(element, ATTRIBUTE_INJECTION_NAME, myAttributeInjections);
     writeExternal(element, PARAMETER_INJECTION_NAME, myParameterInjections);
@@ -139,44 +142,33 @@ public final class Configuration implements ExportableApplicationComponent, Name
     JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
     JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
     JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, String.valueOf(myResolveReferences));
+    return element;
   }
 
   @SuppressWarnings({"unchecked"})
   private static <T extends BaseInjection> void readExternal(List<T> injections, Element element, Factory<T> factory)
-      throws InvalidDataException {
+      {
     injections.clear();
 
     if (element != null) {
       final List<Element> list = element.getChildren(ENTRY_NAME);
       for (Element entry : list) {
         final T o = factory.create();
-        o.readExternal(entry);
+        o.loadState(entry);
         injections.add(o);
       }
     }
   }
 
-  private static <T extends BaseInjection> void writeExternal(Element parent, String name, List<T> injections)
-      throws WriteExternalException {
+  private static <T extends BaseInjection> void writeExternal(Element parent, String name, List<T> injections) {
     final Element element = new Element(name);
     parent.addContent(element);
 
     for (T injection : injections) {
       final Element entry = new Element(ENTRY_NAME);
       element.addContent(entry);
-      injection.writeExternal(entry);
+      entry.addContent(injection.getState());
     }
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return COMPONENT_NAME;
-  }
-
-  @NonNls
-  public String getExternalFileName() {
-    return "IntelliLang";
   }
 
   public void initComponent() {
@@ -201,7 +193,7 @@ public final class Configuration implements ExportableApplicationComponent, Name
   }
 
   public static Configuration getInstance() {
-    return ApplicationManager.getApplication().getComponent(Configuration.class);
+    return ServiceManager.getService(Configuration.class);
   }
 
   public String getLanguageAnnotationClass() {
@@ -268,7 +260,7 @@ public final class Configuration implements ExportableApplicationComponent, Name
 
     if (list.size() == 1) {
       final Configuration cfg = new Configuration();
-      cfg.readExternal(list.get(0));
+      cfg.loadState(list.get(0));
       return cfg;
     }
     return null;
@@ -314,15 +306,5 @@ public final class Configuration implements ExportableApplicationComponent, Name
 
   public InstrumentationType getInstrumentation() {
     return myInstrumentationType;
-  }
-
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return "IntelliLang Settings";
   }
 }

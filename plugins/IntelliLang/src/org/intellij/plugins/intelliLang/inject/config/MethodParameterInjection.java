@@ -146,7 +146,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     myApplyInHierarchy = other.isApplyInHierarchy();
   }
 
-  protected void readExternalImpl(Element e) throws InvalidDataException {
+  protected void readExternalImpl(Element e) {
     setClassName(JDOMExternalizer.readString(e, "CLASS"));
     setApplyInHierarchy(JDOMExternalizer.readBoolean(e, "APPLY_IN_HIERARCHY"));
     readOldFormat(e);
@@ -158,9 +158,14 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     }
   }
 
-  private void readOldFormat(final Element e) throws InvalidDataException {
+  private void readOldFormat(final Element e) {
     final JDOMExternalizableStringList list = new JDOMExternalizableStringList();
-    list.readExternal(e);
+    try {
+      list.readExternal(e);
+    }
+    catch (InvalidDataException e1) {
+      // nothing
+    }
     if (list.isEmpty()) return;
     final boolean[] selection = new boolean[list.size()];
     for (int i = 0; i < list.size(); i++) {
@@ -170,7 +175,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     myParameterMap.put(methodSignature, new MethodInfo(methodSignature, selection, false));
   }
 
-  protected void writeExternalImpl(Element e) throws WriteExternalException {
+  protected void writeExternalImpl(Element e) {
     JDOMExternalizer.write(e, "CLASS", myClassName);
     JDOMExternalizer.write(e, "APPLY_IN_HIERARCHY", myApplyInHierarchy);
     final THashMap<String, String> map = new THashMap<String, String>();

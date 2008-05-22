@@ -42,15 +42,13 @@
     <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.inject.validation.InspectionProvider"/>
     <inspectionToolProvider implementation="org.intellij.plugins.intelliLang.pattern.InspectionProvider"/>
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
+
+    <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
+                        serviceImplementation="org.intellij.plugins.intelliLang.Configuration"/>
+    <applicationConfigurable implementation="org.intellij.plugins.intelliLang.Settings"/>
   </extensions>
 
   <application-components>
-    <component>
-      <implementation-class>org.intellij.plugins.intelliLang.Configuration</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.plugins.intelliLang.Settings</implementation-class>
-    </component>
     <component>
       <implementation-class>org.intellij.plugins.intelliLang.inject.formatting.Loader</implementation-class>
     </component>

@@ -15,10 +15,8 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Injection base class: Contains properties for language-id, prefix and suffix.
  */
-public abstract class BaseInjection<T extends BaseInjection, I extends PsiElement> implements Injection<I>, Cloneable, JDOMExternalizable {
+public abstract class BaseInjection<T extends BaseInjection, I extends PsiElement> implements Injection<I>, Cloneable,
+                                                                                              PersistentStateComponent<Element> {
 
   @NotNull
   private String myInjectedLanguageId = "";
@@ -89,8 +88,8 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
   public int hashCode() {
     int result;
     result = myInjectedLanguageId.hashCode();
-    result = 31 * result + (myPrefix != null ? myPrefix.hashCode() : 0);
-    result = 31 * result + (mySuffix != null ? mySuffix.hashCode() : 0);
+    result = 31 * result + myPrefix.hashCode();
+    result = 31 * result + mySuffix.hashCode();
     return result;
   }
 
@@ -102,7 +101,7 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
     mySuffix = other.getSuffix();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element element) {
     final Element e = element.getChild(getClass().getSimpleName());
     if (e != null) {
       myInjectedLanguageId = JDOMExternalizer.readString(e, "LANGUAGE");
@@ -113,18 +112,18 @@ public abstract class BaseInjection<T extends BaseInjection, I extends PsiElemen
     }
   }
 
-  protected abstract void readExternalImpl(Element e) throws InvalidDataException;
+  protected abstract void readExternalImpl(Element e);
 
-  public final void writeExternal(Element element) throws WriteExternalException {
+  public final Element getState() {
     final Element e = new Element(getClass().getSimpleName());
-    element.addContent(e);
 
     JDOMExternalizer.write(e, "LANGUAGE", myInjectedLanguageId);
     JDOMExternalizer.write(e, "PREFIX", myPrefix);
     JDOMExternalizer.write(e, "SUFFIX", mySuffix);
 
     writeExternalImpl(e);
+    return e;
   }
 
-  protected abstract void writeExternalImpl(Element e) throws WriteExternalException;
+  protected abstract void writeExternalImpl(Element e);
 }
