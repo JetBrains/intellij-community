@@ -286,6 +286,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
       Object o = objects.get(i);
       if (o instanceof String) {
         curPrefix = (String)o;
+        if (i == len - 1) return; // IDEADEV-26751
         o = objects.get(++i);
       }
       if (o instanceof PsiLanguageInjectionHost) {
