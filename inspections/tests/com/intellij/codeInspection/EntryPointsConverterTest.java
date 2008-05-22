@@ -1,9 +1,9 @@
 package com.intellij.codeInspection;
 
-import junit.framework.TestCase;
-import org.jdom.Element;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
+import junit.framework.TestCase;
+import org.jdom.Element;
 
 public class EntryPointsConverterTest extends TestCase {
 
@@ -26,7 +26,7 @@ public class EntryPointsConverterTest extends TestCase {
   private void doTest(String type, String fqName, String expectedFQName) throws Exception {
     final Element entryPoints = setUpEntryPoint(type, fqName);
 
-    final EntryPointsManagerImpl manager = new EntryPointsManagerImpl();
+    final EntryPointsManagerImpl manager = new EntryPointsManagerImpl(null);
     manager.convert(entryPoints);
 
     final Element testElement = new Element("comp");
