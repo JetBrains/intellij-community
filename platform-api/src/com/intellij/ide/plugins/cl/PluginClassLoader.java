@@ -35,29 +35,29 @@ public class PluginClassLoader extends UrlClassLoader {
     myLibDirectory = file.exists()? file : null;
   }
 
-
   // changed sequence in which classes are searched, this is essential if plugin uses library, a different version of which
   // is used in IDEA.
-  public Class _loadClass(final String name, final boolean resolve) {
+  public Class loadClass(final String name, final boolean resolve) throws ClassNotFoundException{
     Class c = loadClassInsideSelf(name);
 
     if (c == null) {
       c = loadClassFromParents(name);
     }
 
-    if (c != null && resolve) {
-      resolveClass(c);
+    if (c != null) {
+      if (resolve) {
+        resolveClass(c);
+      }
+      return c;
     }
-
-    return c;
+    throw new ClassNotFoundException(name);
   }
 
   @Nullable
   private Class loadClassFromParents(final String name) {
     for (ClassLoader parent : myParents) {
       try {
-        Class c = parent instanceof UrlClassLoader ? ((UrlClassLoader)parent)._loadClass(name, false) : parent.loadClass(name);
-        if (c != null) return c;
+        return parent.loadClass(name);
       }
       catch (ClassNotFoundException ignoreAndContinue) {
         // Ignore and continue
@@ -70,7 +70,9 @@ public class PluginClassLoader extends UrlClassLoader {
   @Nullable
   private synchronized Class loadClassInsideSelf(final String name) {
     Class c = findLoadedClass(name);
-    if (c != null) return c;
+    if (c != null) {
+      return c;
+    }
 
     c = _findClass(name);
     if (c != null) {

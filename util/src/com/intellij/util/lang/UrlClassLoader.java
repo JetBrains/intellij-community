@@ -76,21 +76,8 @@ public class UrlClassLoader extends ClassLoader {
   }
 
 
-  protected final synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-    Class c = _loadClass(name, resolve);
-
-    if (c == null) throw new ClassNotFoundException(name);
-    return c;
-  }
-
-  @Nullable
-  public Class _loadClass(final String name, final boolean resolve) {
-    try {
-      return super.loadClass(name, resolve);
-    }
-    catch (ClassNotFoundException e) {
-      return null;
-    }
+  protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+    return super.loadClass(name, resolve);
   }
 
   @Nullable
@@ -176,6 +163,4 @@ public class UrlClassLoader extends ClassLoader {
   protected Enumeration<URL> findResources(String name) throws IOException {
     return myClassPath.getResources(name, true);
   }
-
-  
 }
