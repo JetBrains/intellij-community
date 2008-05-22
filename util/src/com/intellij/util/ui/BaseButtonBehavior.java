@@ -78,14 +78,20 @@ public abstract class BaseButtonBehavior {
     }
 
     public void mousePressed(MouseEvent e) {
-      if (e.getButton() != MouseEvent.BUTTON1) return;
+      if (!UIUtil.isActionClick(e)) {
+        pass(e);
+        return;
+      }
 
       setPressedByMouse(true);
       myComponent.repaint();
     }
 
     public void mouseReleased(MouseEvent e) {
-      if (e.getButton() != MouseEvent.BUTTON1) return;
+      if (!UIUtil.isActionClick(e)) {
+        pass(e);
+        return;
+      }
 
       setPressedByMouse(false);
 
@@ -98,5 +104,9 @@ public abstract class BaseButtonBehavior {
   }
 
   protected abstract void execute(final MouseEvent e);
+
+  protected void pass(MouseEvent e) {
+
+  }
 
 }

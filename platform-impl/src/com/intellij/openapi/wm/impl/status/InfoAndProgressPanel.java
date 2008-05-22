@@ -14,6 +14,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
@@ -57,6 +58,12 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     new BaseButtonBehavior(myProgressIcon) {
       protected void execute(final MouseEvent e) {
         triggerPopupShowing();
+      }
+
+      protected void pass(final MouseEvent e) {
+        if (myOriginals.size() == 1 && UIUtil.isCloseClick(e)) {
+          myOriginals.get(0).cancel();
+        }
       }
     };
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -276,7 +283,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
       }
     }
 
-    InlineProgressIndicator inline = new MyInlineProgressIndicator(compact, info, original);
+    final InlineProgressIndicator inline = new MyInlineProgressIndicator(compact, info, original);
 
     myInline2Original.put(inline, original);
     myOriginal2Inlines.put(original, inline);
@@ -285,6 +292,12 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
       new BaseButtonBehavior(inline.getComponent()) {
         protected void execute(final MouseEvent e) {
           triggerPopupShowing();
+        }
+
+        protected void pass(final MouseEvent e) {
+          if (UIUtil.isCloseClick(e)) {
+            inline.cancelRequest();
+          }
         }
       };
     }

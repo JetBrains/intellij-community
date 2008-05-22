@@ -186,6 +186,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean ourIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private JPanel myHeaderPanel;
 
+  private MouseEvent myInitialMouseEvent;
+  private boolean myIgnoreMouseEventsConsequitiveToInitial;
+
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
     ourCaretBlinkingCommand.start();
@@ -365,6 +368,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.repaint();
 
     updateCaretCursor();
+
+    if (myInitialMouseEvent != null) {
+      myIgnoreMouseEventsConsequitiveToInitial = true;
+    }
   }
 
   public void release() {
@@ -2314,6 +2321,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void processMousePressed(MouseEvent e) {
+    myInitialMouseEvent = e;
+
     if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
       setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
     }
@@ -2345,7 +2354,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (e.getSource() == myGutterComponent) {
-      if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA || eventArea == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA || eventArea == EditorMouseEventArea.ANNOTATIONS_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
         myGutterComponent.mousePressed(e);
         if (e.isConsumed()) return;
       }
@@ -2425,7 +2434,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private boolean checkIgnore(MouseEvent e, boolean isFinalCheck) {
+    if (!myIgnoreMouseEventsConsequitiveToInitial) {
+      myInitialMouseEvent = null;
+      return false;
+    }
+
+    if (e.getComponent() != myInitialMouseEvent.getComponent() || !e.getPoint().equals(myInitialMouseEvent.getPoint())) {
+      myIgnoreMouseEventsConsequitiveToInitial = false;
+      myInitialMouseEvent = null;
+      return false;
+    }
+
+    if (isFinalCheck) {
+      myIgnoreMouseEventsConsequitiveToInitial = false;
+      myInitialMouseEvent = null;
+    }
+
+    e.consume();
+
+    return true;
+  }
+
   private void processMouseReleased(MouseEvent e) {
+    if (checkIgnore(e, true)) return;
+
     if (e.getSource() == myGutterComponent) {
       myGutterComponent.mouseReleased(e);
     }

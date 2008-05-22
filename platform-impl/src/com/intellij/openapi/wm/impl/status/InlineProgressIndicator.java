@@ -18,6 +18,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
 
@@ -301,13 +303,20 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
   }
 
-  private static class MyComponent extends JPanel {
+  private class MyComponent extends JPanel {
     private boolean myCompact;
     private FixedHeightLabel myProcessName;
 
     private MyComponent(final boolean compact, final FixedHeightLabel processName) {
       myCompact = compact;
       myProcessName = processName;
+      addMouseListener(new MouseAdapter() {
+        public void mousePressed(final MouseEvent e) {
+          if (UIUtil.isCloseClick(e) && myProcessName.getBounds().contains(e.getX(), e.getY())) {
+            cancelRequest();
+          }
+        }
+      });
     }
 
     protected void paintComponent(final Graphics g) {

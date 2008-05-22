@@ -662,6 +662,11 @@ public class UIUtil {
     return e.getButton() == MouseEvent.BUTTON2 || (e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown());
   }
 
+  public static boolean isActionClick(MouseEvent e) {
+    if (isCloseClick(e)) return false;
+    return e.getButton() == MouseEvent.BUTTON1;
+  }
+
   public static
   @NotNull
   Color getBgFillColor(@NotNull JComponent c) {

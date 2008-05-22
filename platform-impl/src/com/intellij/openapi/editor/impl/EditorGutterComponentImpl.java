@@ -146,6 +146,30 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
     }
   }
+  private void processClose(final MouseEvent e) {
+    if (isLineNumbersShown()) {
+      if (e.getX() >= getLineNumberAreaOffset() && getLineNumberAreaOffset() + getLineNumberAreaWidth() >= e.getX()) {
+        myEditor.getSettings().setLineNumbersShown(false);
+        e.consume();
+        return;
+      }
+    }
+
+    if (getGutterRenderer(e) != null) return;
+
+    int x = getAnnotationsAreaOffset();
+    for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
+      final int size = myTextAnnotationGutterSizes.get(i);
+      if (x <= e.getX() && e.getX() <= x + size + GAP_BETWEEN_ANNOTATIONS) {
+        closeAllAnnotations();
+        e.consume();
+        break;
+      }
+
+      x += size + GAP_BETWEEN_ANNOTATIONS;
+    }
+  }
+
 
   private void paintAnnotations(Graphics g, Rectangle clip) {
     paintBackground(g, clip, getAnnotationsAreaOffset(), getAnnotationsAreaWidth());
@@ -965,7 +989,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (myProviderToListener.containsKey(provider)) {
         int line = getLineNumAtPoint(clickPoint);
 
-        if (line > 0) {
+        if (line > 0 && UIUtil.isActionClick(e)) {
           myProviderToListener.get(provider).doAction(line);
         }
 
@@ -992,6 +1016,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (e.isPopupTrigger()) {
       invokePopup(e);
       myPopupInvokedOnPressed = true;
+    } else if (UIUtil.isCloseClick(e)) {
+      processClose(e);
     }
   }
 
@@ -1072,6 +1098,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       provider.gutterClosed();
     }
 
+    revalidateSizes();
+  }
+
+  private void revalidateSizes() {
     myTextAnnotationGutters = new ArrayList<TextAnnotationGutterProvider>();
     myTextAnnotationGutterSizes = new TIntArrayList();
     updateSize();
