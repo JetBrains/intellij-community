@@ -114,8 +114,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
                 return;
             }
             final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(variable);
-            if (!LanguageLevel.JDK_1_4.equals(languageLevel) &&
-                    LanguageLevel.JDK_1_5.equals(languageLevel)) {
+            if (PsiUtil.isLanguageLevel5OrHigher(variable)) {
                 final PsiPrimitiveType unboxedType =
                         PsiPrimitiveType.getUnboxedType(type);
                 if (unboxedType == null) {

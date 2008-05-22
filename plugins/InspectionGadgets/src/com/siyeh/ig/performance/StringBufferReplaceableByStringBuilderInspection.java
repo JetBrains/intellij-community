@@ -17,7 +17,6 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -89,8 +88,7 @@ public class StringBufferReplaceableByStringBuilderInspection
 
         @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(variable);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(variable)) {
                 return;
             }
             final PsiCodeBlock codeBlock =

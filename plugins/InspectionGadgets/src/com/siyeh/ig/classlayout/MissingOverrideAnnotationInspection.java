@@ -17,7 +17,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -114,9 +113,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
                method.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(method);
-            if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
+            if(!PsiUtil.isLanguageLevel5OrHigher(method)){
                 return;
             }
             if(useJdk6Rules){

@@ -15,16 +15,15 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceConcatenationWithStringBufferIntention extends Intention {
 
@@ -60,9 +59,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention {
             turnExpressionIntoChainedAppends(expression, newExpression);
             replaceExpression(newExpression.toString(), methodCallExpression);
         } else {
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(expression);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
                 newExpression.append("new StringBuffer()");
             } else {
                 newExpression.append("new StringBuilder()");

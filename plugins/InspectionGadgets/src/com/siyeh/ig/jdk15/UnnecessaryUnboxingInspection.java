@@ -17,7 +17,6 @@ package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -128,8 +127,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
                 return;
             }
             if (!isUnboxingExpression(expression)) {

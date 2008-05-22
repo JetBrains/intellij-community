@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -59,9 +58,7 @@ public class ExtendsAnnotationInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(aClass);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
                 return;
             }
             if (aClass.isAnnotationType()) {

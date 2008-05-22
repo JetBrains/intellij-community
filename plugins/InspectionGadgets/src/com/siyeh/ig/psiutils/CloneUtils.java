@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -45,9 +44,8 @@ public class CloneUtils{
     }
 
     public static boolean isClone(@NotNull PsiMethod method){
-        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
         final PsiClassType javaLangObject;
-        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+        if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
         javaLangObject = PsiType.getJavaLangObject(
                 method.getManager(), method.getResolveScope());
         } else {

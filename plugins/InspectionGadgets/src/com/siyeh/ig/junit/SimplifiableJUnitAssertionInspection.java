@@ -18,7 +18,6 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -666,9 +665,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         if (rhs == null) {
             return false;
         }
-        final LanguageLevel languageLevel =
-                PsiUtil.getLanguageLevel(expression);
-        if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
+        if(!PsiUtil.isLanguageLevel5OrHigher(expression)){
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiType lhsType = lhs.getType();
             if (lhsType instanceof PsiPrimitiveType) {

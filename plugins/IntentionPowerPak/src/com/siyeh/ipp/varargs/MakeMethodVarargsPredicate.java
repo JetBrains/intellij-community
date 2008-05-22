@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -27,8 +26,7 @@ class MakeMethodVarargsPredicate implements PsiElementPredicate {
         if (!(element instanceof PsiParameterList)) {
             return false;
         }
-        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
-        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+        if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
             return false;
         }
         final PsiParameterList parameterList = (PsiParameterList) element;

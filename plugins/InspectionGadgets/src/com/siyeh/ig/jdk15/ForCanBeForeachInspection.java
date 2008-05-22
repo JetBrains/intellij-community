@@ -850,9 +850,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
 
         @Override public void visitForStatement(@NotNull PsiForStatement forStatement){
             super.visitForStatement(forStatement);
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(forStatement);
-            if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
+            if(!PsiUtil.isLanguageLevel5OrHigher(forStatement)){
                 return;
             }
             if(isArrayLoopStatement(forStatement)

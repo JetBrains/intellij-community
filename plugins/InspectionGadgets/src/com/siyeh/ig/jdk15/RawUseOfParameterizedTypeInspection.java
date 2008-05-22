@@ -16,7 +16,6 @@
 package com.siyeh.ig.jdk15;
 
 import com.intellij.lang.StdLanguages;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -165,9 +164,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
             if (element.getLanguage() != StdLanguages.JAVA) {
                 return false;
             }
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(element);
-            return languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
+            return PsiUtil.isLanguageLevel5OrHigher(element);
         }
     }
 }

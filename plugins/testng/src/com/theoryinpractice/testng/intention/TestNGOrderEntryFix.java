@@ -50,7 +50,7 @@ public class TestNGOrderEntryFix implements IntentionAction {
     if (virtualFile == null) return false;
     if (fileIndex.getModuleForFile(virtualFile) == null) return false;
     if (!(((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnnotation &&
-          PsiUtil.getLanguageLevel(((PsiJavaCodeReferenceElement)reference)).compareTo(LanguageLevel.JDK_1_5) >= 0)) return false;
+          PsiUtil.isLanguageLevel5OrHigher(((PsiJavaCodeReferenceElement)reference)))) return false;
     if (!isTestNGAnnotationName(referenceName)) return false;
     return true;
   }

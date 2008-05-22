@@ -17,7 +17,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -85,8 +84,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
             super.visitClass(aClass);
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(aClass);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
                 return;
             }
             if (!hasDeprecatedComment(aClass)) {
@@ -102,8 +100,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
             if (method.getNameIdentifier() == null) {
                 return;
             }
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
                 return;
             }
             if (!hasDeprecatedComment(method)) {
@@ -116,8 +113,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
         }
 
         @Override public void visitField(@NotNull PsiField field) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(field);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(field)) {
                 return;
             }
             if (!hasDeprecatedComment(field)) {

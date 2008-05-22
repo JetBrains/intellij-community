@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -53,8 +52,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
                 return;
             }
             final PsiExpressionList argumentList = call.getArgumentList();

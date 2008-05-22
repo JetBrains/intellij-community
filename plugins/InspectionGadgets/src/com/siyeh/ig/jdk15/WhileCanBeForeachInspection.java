@@ -401,9 +401,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         @Override public void visitWhileStatement(
                 @NotNull PsiWhileStatement whileStatement) {
             super.visitWhileStatement(whileStatement);
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(whileStatement);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(whileStatement)) {
                 return;
             }
             if (!isCollectionLoopStatement(whileStatement)) {

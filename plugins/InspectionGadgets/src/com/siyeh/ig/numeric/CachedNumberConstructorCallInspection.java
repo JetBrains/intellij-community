@@ -17,7 +17,6 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -100,9 +99,7 @@ public class CachedNumberConstructorCallInspection
 
         @Override public void visitNewExpression(
                 @NotNull PsiNewExpression expression) {
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(expression);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
                 return;
             }
             super.visitNewExpression(expression);
