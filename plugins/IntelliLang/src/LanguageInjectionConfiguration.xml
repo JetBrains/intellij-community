@@ -550,7 +550,7 @@
     </entry>
     <entry>
       <MethodParameterInjection>
-        <setting name="LANGUAGE" value="JPAQL"/>
+        <setting name="LANGUAGE" value="HQL"/>
         <setting name="PREFIX" value=""/>
         <setting name="SUFFIX" value=""/>
         <setting name="CLASS" value="org.hibernate.Session"/>
