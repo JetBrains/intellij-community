@@ -97,6 +97,24 @@ public class FSRecords implements Disposable, Forceable {
       return new DbConnection();
     }
 
+    private static void createBrokenMarkerFile() {
+      File brokenMarker = getCorruptionMarkerFile();
+      try {
+        final FileWriter writer = new FileWriter(brokenMarker);
+        writer.write("These files are corrupted and must be rebuilt from the scratch on next startup");
+        writer.close();
+      }
+      catch (IOException e) {
+        // No luck.
+      }
+    }
+
+    private static File getCorruptionMarkerFile() {
+      File basePath = new File(PathManager.getSystemPath() + "/caches/");
+      File brokenMarker = new File(basePath, "corruption.marker");
+      return brokenMarker;
+    }
+
     private static void init() {
       File basePath = new File(PathManager.getSystemPath() + "/caches/");
       basePath.mkdirs();
@@ -106,6 +124,9 @@ public class FSRecords implements Disposable, Forceable {
       final File recordsFile = new File(basePath, "records.dat");
 
       try {
+        if (getCorruptionMarkerFile().exists()) {
+          throw new IOException("Corruption marker file found");
+        }
         myNames = new PersistentStringEnumerator(namesFile);
         myAttributes = Storage.create(attributesFile.getCanonicalPath());
         myRecords = new MappedFile(recordsFile, 20 * 1024);
@@ -130,8 +151,10 @@ public class FSRecords implements Disposable, Forceable {
         try {
           closeFiles();
 
-          boolean deleted =
-            FileUtil.delete(namesFile) && Storage.deleteFiles(attributesFile.getCanonicalPath()) && FileUtil.delete(recordsFile);
+          boolean deleted = FileUtil.delete(getCorruptionMarkerFile()) &&
+                            FileUtil.delete(namesFile) &&
+                            Storage.deleteFiles(attributesFile.getCanonicalPath()) &&
+                            FileUtil.delete(recordsFile);
 
           if (!deleted) {
             throw new IOException("Cannot delete filesystem storage files");
@@ -264,6 +287,7 @@ public class FSRecords implements Disposable, Forceable {
 
     private static RuntimeException handleError(final IOException e) {
       if (!myCorrupted) {
+        createBrokenMarkerFile();
         myCorrupted = true;
         force();
       }
