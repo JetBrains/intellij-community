@@ -63,20 +63,35 @@ public class ResolveImportUtil {
     }
 
     final Module module = ModuleUtil.findModuleForPsiElement(importRef);
-    if (module == null) return null;
+    if (module != null) {
+      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
+        public PsiElement visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleOrderEntry, final PsiElement value) {
+          if (value != null) return value;
+          return resolveInRoots(moduleOrderEntry.getRootModel().getContentRoots(), referencedName, importRef);
+        }
 
-    RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
-      public PsiElement visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleOrderEntry, final PsiElement value) {
-        if (value != null) return value;
-        return resolveInRoots(moduleOrderEntry.getRootModel().getContentRoots(), referencedName, importRef);
+        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
+          if (value != null) return value;
+          return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), referencedName, importRef);
+        }
+      };
+      return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+    }
+    else {
+      try {
+        for (OrderEntry entry: ProjectRootManager.getInstance(importRef.getProject()).getFileIndex().getOrderEntriesForFile(
+              importRef.getContainingFile().getVirtualFile()
+          )
+        ) {
+          PsiElement elt = resolveInRoots(entry.getFiles(OrderRootType.CLASSES), referencedName, importRef);
+          if (elt != null) return elt;
+        }
       }
-
-      public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-        if (value != null) return value;
-        return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), referencedName, importRef);
+      catch (NullPointerException ex) {
+        return null;
       }
-    };
-    return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+    }
+    return null; // normally unreachable
   }
 
   @Nullable
