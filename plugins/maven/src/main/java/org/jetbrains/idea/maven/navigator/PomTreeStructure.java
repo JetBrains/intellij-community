@@ -592,7 +592,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     private void createDependenciesNode() {
       dependenciesNode.clear();
       for (Artifact each : project.getDependencies()) {
-        dependenciesNode.add(new DependencyNode(this, new MavenId(each)));
+        dependenciesNode.add(new DependencyNode(this, each, project.isResolved(each)));
       }
     }
 
@@ -617,7 +617,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     private void createExtensionsNode() {
       extensionsNode.clear();
       for (Artifact each : project.getExtensions()) {
-        extensionsNode.add(new ExtensionNode(this, new MavenId(each)));
+        extensionsNode.add(new ExtensionNode(this, each, project.isResolved(each)));
       }
     }
 
@@ -1029,9 +1029,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   }
 
   private class DependencyNode extends CustomNode {
-    public DependencyNode(CustomNode parent, MavenId id) {
+    public DependencyNode(CustomNode parent, Artifact artifact, boolean isResolved) {
       super(parent);
-      addPlainText(id.toString());
+      String name = new MavenId(artifact).toString();
+      addColoredFragment(name, isResolved ? getPlainAttributes() : getErrorAttributes());
       setUniformIcon(iconDependency);
     }
   }
@@ -1072,7 +1073,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
       MavenPluginInfo plugin = getRepository().loadPluginInfo(id);
       if (plugin == null) {
-        addColoredFragment(id.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.red));
+        addColoredFragment(id.toString(), getErrorAttributes());
       }
       else {
         addPlainText(plugin.getGoalPrefix());
@@ -1122,9 +1123,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   }
 
   private class ExtensionNode extends CustomNode {
-    public ExtensionNode(CustomNode parent, MavenId id) {
+    public ExtensionNode(CustomNode parent, Artifact artifact, boolean isResolved) {
       super(parent);
-      addPlainText(id.toString());
+      String name = new MavenId(artifact).toString();
+      addColoredFragment(name, isResolved ? getPlainAttributes() : getErrorAttributes());
       setUniformIcon(iconExtension);
     }
   }

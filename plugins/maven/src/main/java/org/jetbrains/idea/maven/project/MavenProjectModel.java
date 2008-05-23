@@ -537,10 +537,14 @@ public class MavenProjectModel {
 
     private void validate(List<Artifact> artifacts, String type, List<String> result) {
       for (Artifact each : artifacts) {
-        if (!each.isResolved() || !each.getFile().exists()) {
+        if (!isResolved(each)) {
           result.add("Unresolved " + type + ": " + each);
         }
       }
+    }
+
+    public boolean isResolved(Artifact each) {
+      return each.isResolved() && each.getFile().exists();
     }
 
     public List<Node> getSubProjects() {
