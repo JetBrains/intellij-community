@@ -1,17 +1,11 @@
 package org.jetbrains.idea.maven.repository;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
@@ -29,7 +23,6 @@ public class MavenPluginsRepository extends DummyProjectComponent {
 
   @NonNls public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
 
-  private final Project myProject;
   private final MavenCore myMavenCore;
 
   private final Map<MavenId, MavenPluginInfo> pluginCache = new HashMap<MavenId, MavenPluginInfo>();
@@ -38,8 +31,7 @@ public class MavenPluginsRepository extends DummyProjectComponent {
     return p.getComponent(MavenPluginsRepository.class);
   }
 
-  public MavenPluginsRepository(Project project, MavenCore mavenCore) {
-    myProject = project;
+  public MavenPluginsRepository(MavenCore mavenCore) {
     myMavenCore = mavenCore;
   }
 
@@ -120,7 +112,7 @@ public class MavenPluginsRepository extends DummyProjectComponent {
       ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
       if (entry == null) {
-        deliverMessage(RepositoryBundle.message("repository.plugin.corrupt", path), loud);
+        LOG.info(RepositoryBundle.message("repository.plugin.corrupt", path));
         return null;
       }
 
@@ -134,44 +126,8 @@ public class MavenPluginsRepository extends DummyProjectComponent {
       }
     }
     catch (IOException e) {
-      deliverMessage(e.getMessage(), loud);
+      LOG.info(e);
       return null;
     }
-  }
-
-  private void deliverMessage(String message, boolean loud) {
-    if (loud) {
-      Messages.showErrorDialog(myProject, message, RepositoryBundle.message("repository.plugin.title"));
-    }
-    else {
-      LOG.info(message);
-    }
-  }
-
-  @NotNull
-  public Collection<MavenPluginInfo> choosePlugins() {
-    final File localRepository = getLocalRepository();
-    if (localRepository == null) {
-      return new ArrayList<MavenPluginInfo>();
-    }
-
-    final VirtualFile repoDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        //noinspection ConstantConditions
-        return LocalFileSystem.getInstance().refreshAndFindFileByPath(localRepository.getPath());
-      }
-    });
-
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, true);
-    VirtualFile[] pluginFiles = FileChooser.chooseFiles(myProject, descriptor, repoDir);
-
-    Collection<MavenPluginInfo> pluginDocuments = new ArrayList<MavenPluginInfo>();
-    for (VirtualFile pluginFile : pluginFiles) {
-      MavenPluginInfo mavenPluginDocument = createPluginDocument(pluginFile.getPath(), true);
-      if (mavenPluginDocument != null) {
-        pluginDocuments.add(mavenPluginDocument);
-      }
-    }
-    return pluginDocuments;
   }
 }

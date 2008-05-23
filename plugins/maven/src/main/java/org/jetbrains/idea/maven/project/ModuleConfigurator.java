@@ -65,7 +65,7 @@ public class ModuleConfigurator {
   }
 
   private void configDependencies() {
-    for (Artifact artifact : myMavenProject.extractDependencies()) {
+    for (Artifact artifact : myMavenProject.getDependencies()) {
       MavenId id = new MavenId(artifact);
 
       if (isIgnored(id)) continue;
@@ -111,10 +111,9 @@ public class ModuleConfigurator {
 
   @Nullable
   private String extractLanguageLevel() {
-    return ProjectUtil.findPluginConfigurationValue(myMavenProject,
-                                                    "org.apache.maven.plugins",
-                                                    "maven-compiler-plugin",
-                                                    "source");
+    return myMavenProject.findPluginConfigurationValue("org.apache.maven.plugins",
+                                                       "maven-compiler-plugin",
+                                                       "source");
   }
 
   @Nullable

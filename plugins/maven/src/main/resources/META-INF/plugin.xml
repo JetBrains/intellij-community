@@ -161,16 +161,6 @@
               description="Add Dependency"
               icon="/modules/library.png">
       </action>
-      <action id="Maven.AttachPlugin"
-              class="org.jetbrains.idea.maven.state.action.AttachPluginAction" text="Attach plugin"
-              description="Attach plugin"
-              icon="/images/attachPlugin.png">
-      </action>
-      <action id="Maven.DetachPlugin"
-              class="org.jetbrains.idea.maven.state.action.DetachPluginAction" text="Detach plugin"
-              description="Detach plugin"
-              icon="/images/detachPlugin.png">
-      </action>
       <action id="Maven.Ignore"
               class="org.jetbrains.idea.maven.state.action.IgnoreProjectAction" text="_Ignore"
               description="Toggle ignore flag for Maven project">
@@ -217,14 +207,12 @@
       <separator/>
       <reference id="Maven.Run"/>
       <separator/>
-      <reference id="Maven.AddDependency"/>
-      <reference id="Maven.AttachPlugin"/>
-      <reference id="Maven.DetachPlugin"/>
-      <separator/>
       <reference id="Maven.ShowSettings"/>
       <reference id="Maven.ShowDefaultSettings"/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
+      <separator/>
+      <reference id="Maven.AddDependency"/>
       <separator/>
       <reference id="Maven.Reimport"/>
       <reference id="Maven.DownloadArtifacts"/>
@@ -237,12 +225,7 @@
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference id="EditSource"/>
-      <reference id="Maven.AttachPlugin"/>
       <reference id="Maven.Ignore"/>
-    </group>
-
-    <group id="Maven.PluginMenu" popup="true">
-      <reference id="Maven.DetachPlugin"/>
     </group>
 
     <group id="Maven.GoalMenu" popup="true">

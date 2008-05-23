@@ -11,13 +11,14 @@ import org.apache.maven.artifact.versioning.OverConstrainedVersionException;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.jetbrains.idea.maven.core.MavenLog;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
 public class CustomArtifact implements Artifact {
   private static Map<String, File> ourCache = new HashMap<String, File>();
@@ -61,13 +62,14 @@ public class CustomArtifact implements Artifact {
   }
 
   public File getFile() {
+    update();
+    return myWrapee.getFile();
+  }
+
+  private void update() {
     if ("pom".equals(getType()) && isResolved()) {
       ensurePosFileExists();
     }
-    //if (Artifact.SCOPE_SYSTEM.equals(getScope())) {
-    //  ensureSystemJarExists();
-    //}
-    return myWrapee.getFile();
   }
 
   private void ensurePosFileExists() {
@@ -100,27 +102,6 @@ public class CustomArtifact implements Artifact {
 
       myWrapee.setFile(f);
       ourCache.put(getId(), f);
-    }
-    catch (IOException e) {
-      MavenLog.LOG.warn(e);
-    }
-  }
-
-  private void ensureSystemJarExists() {
-    File f = myWrapee.getFile();
-    if (f == null || f.exists()) return;
-
-    try {
-      f = createTempFile(".jar");
-      FileOutputStream s = new FileOutputStream(f);
-      try {
-        new JarOutputStream(s, new Manifest()).close();
-      }
-      finally {
-        s.close();
-      }
-
-      myWrapee.setFile(f);
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);

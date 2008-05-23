@@ -17,7 +17,6 @@ import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
-import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
@@ -81,7 +80,7 @@ public class MavenArtifactDownloader {
     if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
-      Map<Plugin, MavenProjectModel.Node> plugins = ProjectUtil.collectPlugins(mavenProjects);
+      Map<Plugin, MavenProjectModel.Node> plugins = collectPlugins(mavenProjects);
       downloadPlugins(plugins);
       projectsManager.updateAllFiles();
     }
@@ -93,6 +92,18 @@ public class MavenArtifactDownloader {
     }
   }
 
+
+  public static Map<Plugin, MavenProjectModel.Node> collectPlugins(List<MavenProjectModel.Node> mavenProjects) {
+    final Map<Plugin, MavenProjectModel.Node> result = new HashMap<Plugin, MavenProjectModel.Node>();
+    for (MavenProjectModel.Node each : mavenProjects) {
+      for (Plugin eachPlugin : each.getPlugins()) {
+        result.put(eachPlugin, each);
+      }
+    }
+    return result;
+  }
+
+
   private boolean isEnabled(MavenArtifactSettings.UPDATE_MODE level, boolean demand) {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
@@ -101,7 +112,7 @@ public class MavenArtifactDownloader {
     Map<MavenId, Set<ArtifactRepository>> result = new TreeMap<MavenId, Set<ArtifactRepository>>();
 
     for (MavenProjectModel.Node each : mavenProjects) {
-      Collection<Artifact> artifacts = each.extractDependencies();
+      Collection<Artifact> artifacts = each.getDependencies();
       List remoteRepositories = each.getMavenProject().getRemoteArtifactRepositories();
 
       for (Artifact artifact : artifacts) {
@@ -207,7 +218,7 @@ public class MavenArtifactDownloader {
       // skip modules
       if (modulePaths.contains(file.getPath())) continue;
 
-      commands.add(new MavenRunnerParameters(file.getPath(), goals, each.getProfiles()));
+      commands.add(new MavenRunnerParameters(file.getPath(), goals, each.getActiveProfiles()));
     }
     return commands;
   }

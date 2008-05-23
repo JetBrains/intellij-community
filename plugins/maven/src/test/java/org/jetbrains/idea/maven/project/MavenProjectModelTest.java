@@ -54,6 +54,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -78,6 +79,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -105,6 +107,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -125,6 +128,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project1</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -156,6 +160,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -183,6 +188,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<properties>" +
                      "  <moduleName>name</moduleName>" +
@@ -208,6 +214,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<properties>" +
                      "  <moduleName>name2</moduleName>" +
@@ -227,6 +234,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m1</module>" +
@@ -236,6 +244,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
                                      "<version>1</version>" +
+                                     "<packaging>pom</packaging>" +
 
                                      "<modules>" +
                                      "  <module>m2</module>" +
@@ -264,7 +273,8 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
   public void testUpdatingWithSubprojectAdding() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
 
     VirtualFile m = createModulePom("m",
                                     "<groupId>test</groupId>" +
@@ -283,6 +293,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -306,7 +317,8 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
   public void testUpdatingWithAddingNewModule() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
 
     VirtualFile m = createModulePom("m",
                                     "<groupId>test</groupId>" +
@@ -323,6 +335,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -341,6 +354,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +
@@ -367,7 +381,8 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
   public void testAddingProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
 
     readModel(myProjectPom);
 
@@ -379,7 +394,8 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
                                      "<version>1</version>" +
-
+                                     "<packaging>pom</packaging>" +
+                                     
                                      "<modules>" +
                                      "  <module>m2</module>" +
                                      "</modules>");
@@ -404,6 +420,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m</module>" +

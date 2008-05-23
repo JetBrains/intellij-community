@@ -18,11 +18,10 @@ import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,7 +107,6 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     if (dataId.equals(MavenDataKeys.MAVEN_PROJECT_NODES.getName())) return extractPomNodes();
     if (dataId.equals(MavenDataKeys.MAVEN_GOALS_KEY.getName())) return extractGoals();
     if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) return extractProfiles();
-    if (dataId.equals(MavenDataKeys.MAVEN_IDS.getName())) return extractMavenIds();
 
     return null;
   }
@@ -195,23 +193,6 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
       profiles.add(node.getProfile());
     }
     return profiles;
-  }
-
-  private Object extractMavenIds() {
-    final List<PomTreeStructure.PluginNode> nodes = getSelectedNodes(PomTreeStructure.PluginNode.class);
-    if (PomTreeStructure.getCommonParent(nodes) == null) {
-      return null;
-    }
-    final List<MavenId> ids = new ArrayList<MavenId>();
-    for (PomTreeStructure.PluginNode node : nodes) {
-      if (node.isDetachable()) {
-        ids.add(node.getId());
-      }
-      else {
-        return null;
-      }
-    }
-    return ids;
   }
 
   private <T extends SimpleNode> List<T> getSelectedNodes(final Class<T> aClass) {

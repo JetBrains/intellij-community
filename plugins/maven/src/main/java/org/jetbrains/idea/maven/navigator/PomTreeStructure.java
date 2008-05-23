@@ -15,12 +15,12 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
@@ -36,9 +36,33 @@ import java.util.*;
 import java.util.List;
 
 public abstract class PomTreeStructure extends SimpleTreeStructure {
+  private static final Icon iconProjectRoot = IconLoader.getIcon("/general/ijLogo.png");
+  private static final Icon iconPom = IconLoader.getIcon("/images/mavenProject.png");
+
+  private static final Icon iconProfilesOpen = IconLoader.getIcon("/images/profilesOpen.png");
+  private static final Icon iconProfilesClosed = IconLoader.getIcon("/images/profilesClosed.png");
+
+  private static final Icon iconPhase = IconLoader.getIcon("/images/phase.png");
+  private static final Icon iconPhasesOpen = IconLoader.getIcon("/images/phasesOpen.png");
+  private static final Icon iconPhasesClosed = IconLoader.getIcon("/images/phasesClosed.png");
+
+  private static final Icon iconDependency = IconLoader.getIcon("/images/phase.png");
+  private static final Icon iconDependenciesOpen = IconLoader.getIcon("/images/phasesOpen.png");
+  private static final Icon iconDependenciesClosed = IconLoader.getIcon("/images/phasesClosed.png");
+
+  private static final Icon iconPluginsOpen = IconLoader.getIcon("/images/phasesOpen.png");
+  private static final Icon iconPluginsClosed = IconLoader.getIcon("/images/phasesClosed.png");
+  private static final Icon iconPlugin = IconLoader.getIcon("/images/mavenPlugin.png");
+  private static final Icon iconPluginGoal = IconLoader.getIcon("/images/pluginGoal.png");
+
+  private static final Icon iconExtensionsOpen = IconLoader.getIcon("/images/phasesOpen.png");
+  private static final Icon iconExtensionsClosed = IconLoader.getIcon("/images/phasesClosed.png");
+  private static final Icon iconExtension = IconLoader.getIcon("/images/mavenPlugin.png");
+
+  private static final Icon iconModulesOpen = IconLoader.getIcon("/images/nestedPomsOpen.png");
+  private static final Icon iconModulesClosed = IconLoader.getIcon("/images/nestedPomsClosed.png");
 
   final ProjectFileIndex myFileIndex;
-
   final Project project;
 
   protected MavenProjectsManager myProjectsManager;
@@ -48,23 +72,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   protected final RootNode root = new RootNode();
 
-  // TODO : update tree after local repository location change
-
   private final Collection<String> standardPhases = EmbedderFactory.getStandardPhasesList();
   final Collection<String> standardGoals = EmbedderFactory.getStandardGoalsList();
 
-  private static final Icon iconProjectRoot = IconLoader.getIcon("/general/ijLogo.png");
-  private static final Icon iconPom = IconLoader.getIcon("/images/mavenProject.png");
-  private static final Icon iconPhase = IconLoader.getIcon("/images/phase.png");
-  private static final Icon iconPhasesOpen = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon iconPhasesClosed = IconLoader.getIcon("/images/phasesClosed.png");
-  private static final Icon iconPlugin = IconLoader.getIcon("/images/mavenPlugin.png");
-  private static final Icon iconPluginGoal = IconLoader.getIcon("/images/pluginGoal.png");
-  private static final Icon iconFolderOpen = IconLoader.getIcon("/images/nestedPomsOpen.png");
-  private static final Icon iconFolderClosed = IconLoader.getIcon("/images/nestedPomsClosed.png");
-  private static final Icon iconProfilesOpen = IconLoader.getIcon("/images/profilesOpen.png");
-  private static final Icon iconProfilesClosed = IconLoader.getIcon("/images/profilesClosed.png");
-
+  // TODO : update tree after local repository location change
   public PomTreeStructure(Project project,
                           MavenProjectsManager cache,
                           MavenPluginsRepository repository,
@@ -471,11 +482,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     private String savedPath = "";
     private String actionIdPrefix = "";
 
-    private final LifecycleNode lifecycleNode;
-    private final ProfilesNode profilesNode;
-    private final PluginsNode pluginsNode;
-    public final NestedPomsNode modulePomsNode;
-    public final NestedPomsNode nonModulePomsNode;
+    private LifecycleNode lifecycleNode;
+    private ProfilesNode profilesNode;
+    private DependenciesNode dependenciesNode;
+    private PluginsNode  pluginsNode;
+    private ExtensionsNode extensionsNode;
+    public NestedPomsNode modulePomsNode;
+    public NestedPomsNode nonModulePomsNode;
 
     public PomNode(MavenProjectModel.Node project) {
       super(null);
@@ -483,7 +496,9 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
       lifecycleNode = new LifecycleNode(this);
       profilesNode = new ProfilesNode(this);
+      dependenciesNode = new DependenciesNode(this);
       pluginsNode = new PluginsNode(this);
+      extensionsNode = new ExtensionsNode(this);
       modulePomsNode = new ModulePomsNode(this);
       nonModulePomsNode = new NonModulePomsNode(this);
 
@@ -512,7 +527,9 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     protected void displayChildren(DisplayList displayList) {
       displayList.add(profilesNode);
       displayList.add(lifecycleNode);
+      displayList.add(dependenciesNode);
       displayList.add(pluginsNode);
+      displayList.add(extensionsNode);
       displayList.add(modulePomsNode);
       displayList.add(nonModulePomsNode);
     }
@@ -534,7 +551,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
         return NavigatorBundle.message("node.pom.invalid");
       }
 
-      final String name = project.getMavenProject().getName();
+      final String name = project.getProjectName();
       if (!StringUtil.isEmptyOrSpaces(name)) {
         return name;
       }
@@ -570,48 +587,28 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
       lifecycleNode.updateGoals();
       createProfileNodes();
-      createPluginNodes();
+      createDependenciesNode();
+      createPluginsNode();
+      createExtensionsNode();
       regroupNested();
     }
 
-    public void regroupNested() {
-      regroupMisplaced(modulePomsNode, false);
-      regroupMisplaced(nonModulePomsNode, true);
+    private void createDependenciesNode() {
+      dependenciesNode.clear();
+      for (Artifact each : project.getDependencies()) {
+        dependenciesNode.add(new DependencyNode(this, new MavenId(each)));
+      }
     }
 
-    private void regroupMisplaced(final NestedPomsNode src, final boolean misplacedFlag) {
-      Collection<PomNode> misplaced = new ArrayList<PomNode>();
-      for (PomNode node : src.pomNodes) {
-        if (containsAsModule(node) == misplacedFlag) {
-          misplaced.add(node);
+    private void createPluginsNode() {
+      pluginsNode.clear();
+      for (MavenId mavenId : project.getPluginsIds()) {
+        if (!hasPlugin(mavenId)) {
+          pluginsNode.add(new PluginNode(this, mavenId));
         }
       }
-      for (PomNode node : misplaced) {
-        src.pomNodes.remove(node);
-        addNestedPom(node);
-      }
-      if (!misplaced.isEmpty()) {
-        updateSubTree();
-      }
     }
 
-    private void createPluginNodes() {
-      pluginsNode.clear();
-      for (MavenId mavenId : ProjectUtil.collectPluginIds(project)) {
-        addPlugin(mavenId, false);
-      }
-    }
-
-    private void addPlugin(final MavenId mavenId, final boolean detachable) {
-      if (!hasPlugin(mavenId)) {
-        MavenPluginInfo plugin = getRepository().loadPluginInfo(mavenId);
-        pluginsNode.add(plugin == null
-                        ? new InvalidPluginNode(this, mavenId, detachable)
-                        : new ValidPluginNode(this, plugin, detachable));
-      }
-    }
-
-    @SuppressWarnings({"BooleanMethodIsAlwaysInverted"})
     public boolean hasPlugin(final MavenId id) {
       for (PluginNode node : pluginsNode.pluginNodes) {
         if (node.getId().matches(id)) {
@@ -619,6 +616,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
         }
       }
       return false;
+    }
+
+    private void createExtensionsNode() {
+      extensionsNode.clear();
+      for (Artifact each : project.getExtensions()) {
+        extensionsNode.add(new ExtensionNode(this, new MavenId(each)));
+      }
     }
 
     private void updateText() {
@@ -700,7 +704,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void createProfileNodes() {
       profilesNode.clear();
-      for (String id : ProjectUtil.collectProfileIds(project)) {
+      for (String id : project.getAllProfiles()) {
         profilesNode.add(id);
       }
       profilesNode.updateActive(myProjectsManager.getActiveProfiles(project.getFile()), true);
@@ -709,7 +713,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public void setProfiles(final Collection<String> profiles) {
       profilesNode.updateActive(profiles, false);
       regroupNested();
-      createPluginNodes();
+      createPluginsNode();
       updateSubTree();
     }
 
@@ -747,6 +751,27 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
       return goalNodes;
     }
+
+    public void regroupNested() {
+      regroupMisplaced(modulePomsNode, false);
+      regroupMisplaced(nonModulePomsNode, true);
+    }
+
+    private void regroupMisplaced(final NestedPomsNode src, final boolean misplacedFlag) {
+      Collection<PomNode> misplaced = new ArrayList<PomNode>();
+      for (PomNode node : src.pomNodes) {
+        if (containsAsModule(node) == misplacedFlag) {
+          misplaced.add(node);
+        }
+      }
+      for (PomNode node : misplaced) {
+        src.pomNodes.remove(node);
+        addNestedPom(node);
+      }
+      if (!misplaced.isEmpty()) {
+        updateSubTree();
+      }
+    }
   }
 
   public class NestedPomsNode extends PomGroupNode {
@@ -755,7 +780,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     public NestedPomsNode(PomNode parent) {
       super(parent);
-      setIcons(iconFolderClosed, iconFolderOpen);
+      setIcons(iconModulesClosed, iconModulesOpen);
     }
 
     boolean isVisible() {
@@ -981,13 +1006,47 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
   }
 
+  public class DependenciesNode extends ListNode {
+    final List<DependencyNode> children = new ArrayList<DependencyNode>();
+
+    public DependenciesNode(final PomNode parent) {
+      super(parent);
+      addPlainText(NavigatorBundle.message("node.dependencies"));
+      setIcons(iconDependenciesClosed, iconDependenciesOpen);
+    }
+
+    boolean isVisible() {
+      return !children.isEmpty() && !isMinimalView();
+    }
+
+    protected void displayChildren(DisplayList displayList) {
+      displayList.add(children);
+    }
+
+    public void clear() {
+      children.clear();
+    }
+
+    public void add(DependencyNode node) {
+      insertSorted(children, node);
+    }
+  }
+
+  private class DependencyNode extends CustomNode {
+    public DependencyNode(CustomNode parent, MavenId id) {
+      super(parent);
+      addPlainText(id.toString());
+      setUniformIcon(iconDependency);
+    }
+  }
+
   private class PluginsNode extends ListNode {
     final List<PluginNode> pluginNodes = new ArrayList<PluginNode>();
 
     public PluginsNode(final PomNode parent) {
       super(parent);
-      addPlainText(NavigatorBundle.message("node.profiles"));
-      setIcons(iconProfilesClosed, iconProfilesOpen);
+      addPlainText(NavigatorBundle.message("node.plugins"));
+      setIcons(iconPluginsClosed, iconPluginsOpen);
     }
 
     boolean isVisible() {
@@ -1009,45 +1068,27 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   public class PluginNode extends GoalGroupNode {
     private final MavenId myId;
-    private final boolean myDetachable;
 
-    public PluginNode(PomNode parent, final MavenId id, boolean detachable) {
+    public PluginNode(PomNode parent, final MavenId id) {
       super(parent);
       myId = id;
-      myDetachable = detachable;
       setUniformIcon(iconPlugin);
+
+      MavenPluginInfo plugin = getRepository().loadPluginInfo(id);
+      if (plugin == null) {
+        addColoredFragment(id.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.red));
+      }
+      else {
+        addPlainText(plugin.getGoalPrefix());
+        addColoredFragment(" (" + getId().toString() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        for (MavenPluginInfo.Mojo mojo : plugin.getMojos()) {
+          goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
+        }
+      }
     }
 
     public MavenId getId() {
       return myId;
-    }
-
-    public boolean isDetachable() {
-      return myDetachable;
-    }
-
-    @Nullable
-    @NonNls
-    protected String getMenuId() {
-      return myDetachable ? "Maven.PluginMenu" : null;
-    }
-  }
-
-  public class InvalidPluginNode extends PluginNode {
-    public InvalidPluginNode(PomNode parent, MavenId id, boolean detachable) {
-      super(parent, id, detachable);
-      addColoredFragment(id.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.red));
-    }
-  }
-
-  public class ValidPluginNode extends PluginNode {
-    public ValidPluginNode(PomNode parent, final MavenPluginInfo plugin, boolean detachable) {
-      super(parent, new MavenId(plugin.getGroupId(), plugin.getArtifactId(), plugin.getVersion()), detachable);
-      addPlainText(plugin.getGoalPrefix());
-      addColoredFragment(" (" + getId().toString() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-      for (MavenPluginInfo.Mojo mojo : plugin.getMojos()) {
-        goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
-      }
     }
   }
 
@@ -1055,6 +1096,40 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public PluginGoalNode(PluginNode parent, String goal) {
       super(parent, goal);
       setUniformIcon(iconPluginGoal);
+    }
+  }
+
+  public class ExtensionsNode extends ListNode {
+    final List<ExtensionNode> children = new ArrayList<ExtensionNode>();
+
+    public ExtensionsNode(final PomNode parent) {
+      super(parent);
+      addPlainText(NavigatorBundle.message("node.extensions"));
+      setIcons(iconExtensionsClosed, iconExtensionsOpen);
+    }
+
+    boolean isVisible() {
+      return !children.isEmpty() && !isMinimalView();
+    }
+
+    protected void displayChildren(DisplayList displayList) {
+      displayList.add(children);
+    }
+
+    public void clear() {
+      children.clear();
+    }
+
+    public void add(ExtensionNode node) {
+      insertSorted(children, node);
+    }
+  }
+
+  private class ExtensionNode extends CustomNode {
+    public ExtensionNode(CustomNode parent, MavenId id) {
+      super(parent);
+      addPlainText(id.toString());
+      setUniformIcon(iconExtension);
     }
   }
 }

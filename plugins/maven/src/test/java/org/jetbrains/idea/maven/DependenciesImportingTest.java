@@ -1,8 +1,7 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.util.io.FileUtil;
-
-import java.util.List;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
   public void testLibraryDependency() throws Exception {
@@ -421,7 +420,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertModuleLibDeps("m2", "group:id:1");
-    
+
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1");
   }
@@ -713,12 +712,15 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertModules("project", "m");
+    assertModuleLibDeps("m");
 
     if (ignore()) return;
 
-    assertEquals(1, myResolutionProblems.size());
-    assertEquals(1, myResolutionProblems.get(0).second.size());
-    assertEquals("Unresolved dependency: xxx:yyy:pom:1:compile", myResolutionProblems.get(0).second.get(0));
+    MavenProjectModel.Node root = myMavenProjectsManager.getMavenProjectModel().getRootProjects().get(0);
+    assertOrderedElementsAreEqual(root.getProblems());
+
+    assertOrderedElementsAreEqual(root.getSubProjects().get(0).getProblems(),
+                                  "Unresolved dependency: xxx:yyy:pom:1:compile");
   }
 
   public void testPomTypeDependency() throws Exception {
@@ -736,31 +738,5 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     importProject(); // shouldn't throw any exception
-  }
-
-  public void testUnresolvedPomTypeDependency() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>yyy</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "    <type>pom</type>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    importProject();
-
-    if (ignore()) return;
-
-    assertModuleLibDeps("project");
-    assertEquals(1, myResolutionProblems.size());
-
-    List<String> problems = myResolutionProblems.get(0).second;
-    assertEquals(1, problems.size());
-    assertTrue(problems.toString(), problems.get(0).contains("xxx:yyy:pom:4.0"));
   }
 }

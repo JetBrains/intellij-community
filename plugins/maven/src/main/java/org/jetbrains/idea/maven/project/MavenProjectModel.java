@@ -8,8 +8,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.model.BuildBase;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.Profile;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
@@ -56,7 +61,7 @@ public class MavenProjectModel {
     visit(new PlainNodeVisitor() {
       public void visit(Node node) {
         if (!node.isValid()) return;
-        for (Artifact each : node.extractDependencies()) {
+        for (Artifact each : node.getDependencies()) {
           VirtualFile pomFile = myProjectIdToFileMapping.get(new ProjectId(each));
           if (pomFile != null) {
             each.setFile(new File(pomFile.getPath()));
@@ -392,6 +397,10 @@ public class MavenProjectModel {
       myModule = module;
     }
 
+    public List<String> getActiveProfiles() {
+      return myProfiles;
+    }
+
     public boolean isValid() {
       return myMavenProjectHolder.isValid();
     }
@@ -434,6 +443,10 @@ public class MavenProjectModel {
       return myMavenProjectHolder.getMavenProject();
     }
 
+    public String getProjectName() {
+      return getMavenProject().getModel().getName();
+    }
+
     public MavenId getMavenId() {
       return myMavenProjectHolder.getMavenId();
     }
@@ -467,20 +480,28 @@ public class MavenProjectModel {
       myMavenProjectHolder = projectReader.resolve(getPath(), myProfiles);
     }
 
+
+    public List<String> getProblems() {
+      if (!isValid()) return Collections.singletonList("pom.xml is invalid");
+
+      List<String> result = new ArrayList<String>();
+
+      validate(getDependencies(), "dependency", result);
+      validate(getExtensions(), "build extension", result);
+
+      return result;
+    }
+
+    private void validate(List<Artifact> artifacts, String type, List<String> result) {
+      for (Artifact each : artifacts) {
+        if (!each.isResolved() || !each.getFile().exists()) {
+          result.add("Unresolved " + type + ": " + each);
+        }
+      }
+    }
+
     public List<Node> getSubProjects() {
       return mySubProjects;
-    }
-
-    public List<Artifact> extractDependencies() {
-      return ProjectUtil.extractDependencies(this);
-    }
-
-    public List<Artifact> extractExportableDependencies() {
-      return ProjectUtil.extractExportableDependencies(this);
-    }
-
-    public List<String> getModulePaths() {
-      return myMavenProjectHolder.getModulePaths(myProfiles);
     }
 
     public List<VirtualFile> getExistingModuleFiles() {
@@ -495,12 +516,109 @@ public class MavenProjectModel {
       return result;
     }
 
+    public List<String> getModulePaths() {
+      if (!isValid()) return Collections.emptyList();
+      return myMavenProjectHolder.getModulePaths(myProfiles);
+    }
+
     public List<String> getModulePaths(Collection<String> profiles) {
+      if (!isValid()) return Collections.emptyList();
       return myMavenProjectHolder.getModulePaths(profiles);
     }
 
-    public List<String> getProfiles() {
-      return myProfiles;
+    public List<String> getAllProfiles() {
+      if (!isValid()) return Collections.emptyList();
+      
+      Set<String> result = new HashSet<String>();
+      for (Profile profile : (List<Profile>)getMavenProject().getModel().getProfiles()) {
+        result.add(profile.getId());
+      }
+      return new ArrayList<String>(result);
+    }
+
+    public List<Artifact> getDependencies() {
+      if (!isValid()) return Collections.emptyList();
+      return ProjectUtil.extractDependencies(this);
+    }
+
+    public List<Artifact> getExportableDependencies() {
+      if (!isValid()) return Collections.emptyList();
+      return ProjectUtil.extractExportableDependencies(this);
+    }
+
+    public List<MavenId> getPluginsIds() {
+      List<MavenId> result = new ArrayList<MavenId>();
+      for (Plugin plugin : getPlugins()) {
+        result.add(new MavenId(plugin.getGroupId(), plugin.getArtifactId(), plugin.getVersion()));
+      }
+      return result;
+    }
+    public List<Plugin> getPlugins() {
+      if (!isValid()) return Collections.emptyList();
+
+      List<Plugin> result = new ArrayList<Plugin>();
+
+      collectPlugins(getMavenProject().getBuild(), result);
+      //noinspection unchecked
+      List<Profile> profiles = (List<Profile>)getMavenProject().getModel().getProfiles();
+      if (profiles == null) return result;
+
+      for (Profile profile : profiles) {
+        if (profiles.contains(profile.getId())) {
+          collectPlugins(profile.getBuild(), result);
+        }
+      }
+      return result;
+    }
+
+    private void collectPlugins(BuildBase build, List<Plugin> result) {
+      if (build == null) return;
+      List<Plugin> plugins = (List<Plugin>)build.getPlugins();
+      if (plugins == null) return;
+      result.addAll(plugins);
+    }
+
+
+    public List<Artifact> getExtensions() {
+      if (!isValid()) return Collections.emptyList();
+      return new ArrayList<Artifact>(getMavenProject().getExtensionArtifacts());
+    }
+
+
+    @Nullable
+    public String findPluginConfigurationValue(String groupId,
+                                                      String artifactId,
+                                                      String... nodeNames) {
+      Xpp3Dom node = findPluginConfigurationNode(groupId, artifactId, nodeNames);
+      if (node == null) return null;
+      return node.getValue();
+    }
+
+    @Nullable
+    public Xpp3Dom findPluginConfigurationNode(
+                                                      String groupId,
+                                                      String artifactId,
+                                                      String... nodeNames) {
+      Plugin plugin = findPlugin(groupId, artifactId);
+      if (plugin == null) return null;
+
+      Xpp3Dom node = (Xpp3Dom)plugin.getConfiguration();
+      if (node == null) return null;
+
+      for (String name : nodeNames) {
+        node = node.getChild(name);
+        if (node == null) return null;
+      }
+
+      return node;
+    }
+
+    @Nullable
+    public Plugin findPlugin( String groupId, String artifactId) {
+      for (Plugin each : getPlugins()) {
+        if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) return each;
+      }
+      return null;
     }
   }
 
