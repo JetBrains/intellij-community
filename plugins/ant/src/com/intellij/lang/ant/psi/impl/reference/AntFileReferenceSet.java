@@ -26,7 +26,7 @@ public class AntFileReferenceSet extends FileReferenceSet {
 
   public AntFileReferenceSet(final AntStructuredElement element, final XmlAttributeValue value, final PsiReferenceProvider provider) {
     super(cutTrailingSlash(FileUtil.toSystemIndependentName(StringUtil.stripQuotesAroundValue(value.getText()))), element,
-          value.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1, provider, true);
+          value.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1, provider, SystemInfo.isFileSystemCaseSensitive);
     myValue = value;
   }
 
