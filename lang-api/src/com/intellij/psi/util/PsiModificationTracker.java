@@ -26,4 +26,8 @@ public interface PsiModificationTracker {
   long getOutOfCodeBlockModificationCount();
 
   long getJavaStructureModificationCount();
+
+  interface Listener {
+    void modificationCountChanged();
+  }
 }

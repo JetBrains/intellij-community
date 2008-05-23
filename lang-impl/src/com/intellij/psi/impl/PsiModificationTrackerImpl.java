@@ -8,21 +8,27 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.ProjectTopics;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiModificationTracker;
 
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiModificationTrackerImpl");
-
   private long myModificationCount = 0;
   private long myOutOfCodeBlockModificationCount = 0;
   private long myJavaStructureModificationCount = 0;
+  private final Listener myPublisher;
+
+  public PsiModificationTrackerImpl(Project project) {
+    myPublisher = project.getMessageBus().syncPublisher(ProjectTopics.MODIFICATION_TRACKER);
+  }
 
   public void incCounter(){
     myModificationCount++;
     myOutOfCodeBlockModificationCount++;
     myJavaStructureModificationCount++;
+
+    myPublisher.modificationCountChanged();
   }
 
   public void incOutOfCodeBlockModificationCounter() {
@@ -34,6 +40,8 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     if (event.getParent() instanceof PsiDirectory) {
       myOutOfCodeBlockModificationCount++;
     }
+
+    myPublisher.modificationCountChanged();
   }
 
   public long getModificationCount() {

@@ -54,7 +54,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
   public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
     DomElement domElement = myManager.getDomElement(context);
-    assert domElement != null;
+    if (domElement == null) return EMPTY_ARRAY;
 
     List<XmlElementDescriptor> xmlElementDescriptors = new ArrayList<XmlElementDescriptor>();
 
@@ -96,7 +96,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
   public XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context) {
     assert context != null;
     DomElement domElement = myManager.getDomElement(context);
-    assert domElement != null;
+    if (domElement == null) return XmlAttributeDescriptor.EMPTY;
 
     final List<? extends DomAttributeChildDescription> descriptions = domElement.getGenericInfo().getAttributeChildrenDescriptions();
     List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
@@ -111,7 +111,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
   @Nullable
   public XmlAttributeDescriptor getAttributeDescriptor(final String attributeName, final @Nullable XmlTag context) {
     DomElement domElement = myManager.getDomElement(context);
-    assert domElement != null;
+    if (domElement == null) return null;
 
     final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
     if (childDescription != null) return new DomAttributeXmlDescriptor(childDescription);

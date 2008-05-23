@@ -3,10 +3,10 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandAdapter;
-import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,7 +27,6 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -64,6 +63,7 @@ import java.util.*;
  * @author peter
  */
 public final class DomManagerImpl extends DomManager implements ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomManagerImpl");
   private static final Key<Object> MOCK = Key.create("MockElement");
   public static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
@@ -110,9 +110,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private boolean myBulkChange;
 
   public DomManagerImpl(final PomModel pomModel,
-                        final Project project,
-                        final ReferenceProvidersRegistry registry,
-                        final PsiManager psiManager,
+                        final Project project, final PsiManager psiManager,
                         final XmlAspect xmlAspect,
                         final WolfTheProblemSolver solver,
                         final DomElementAnnotationsManager annotationsManager,
@@ -139,20 +137,15 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }, project);
 
-    commandProcessor.addCommandListener(new CommandAdapter() {
-      public void commandFinished(final CommandEvent event) {
+    project.getMessageBus().connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
+      public void modificationCountChanged() {
+        ApplicationManager.getApplication().assertWriteAccessAllowed();
         if (!myBulkChange) {
           myHandlerCache.clear();
         }
       }
+    });
 
-      public void undoTransparentActionFinished() {
-        if (!myBulkChange) {
-          myHandlerCache.clear();
-        }
-      }
-    }, project);
-    
     myFileFactory = PsiFileFactory.getInstance(project);
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
@@ -237,10 +230,12 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   public DomInvocationHandler getCachedHandler(XmlElement element) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     return (DomInvocationHandler)myHandlerCache.get(element);
   }
 
   public void cacheHandler(XmlElement element, DomInvocationHandler handler) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (handler != null) {
       myHandlerCache.put(element, handler);
     } else {
@@ -385,6 +380,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @SuppressWarnings({"unchecked"})
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(final XmlFile xmlFile) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     CachedValue<FileDescriptionCachedValueProvider> provider = (CachedValue<FileDescriptionCachedValueProvider>)myHandlerCache.get(xmlFile);
     if (provider == null) {
       myHandlerCache.put(xmlFile, provider = xmlFile.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<FileDescriptionCachedValueProvider>() {

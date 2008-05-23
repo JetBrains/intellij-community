@@ -110,7 +110,7 @@ public class MockPsiManager extends PsiManagerEx {
   @NotNull
   public PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
-      myPsiModificationTracker = new PsiModificationTrackerImpl();
+      myPsiModificationTracker = new PsiModificationTrackerImpl(myProject);
     }
     return myPsiModificationTracker;
   }
