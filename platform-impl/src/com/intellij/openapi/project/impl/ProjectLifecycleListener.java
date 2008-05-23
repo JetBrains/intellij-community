@@ -11,7 +11,13 @@ public interface ProjectLifecycleListener {
 
   void projectComponentsInitialized(Project project);
 
+  void beforeProjectLoaded(Project project);
+
   abstract class Adapter implements ProjectLifecycleListener {
     public void projectComponentsInitialized(final Project project) {}
+
+    public void beforeProjectLoaded(final Project project) {
+
+    }
   }
 }

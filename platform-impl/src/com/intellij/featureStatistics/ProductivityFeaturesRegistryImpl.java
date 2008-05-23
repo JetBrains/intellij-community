@@ -2,16 +2,13 @@ package com.intellij.featureStatistics;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry implements NamedJDOMExternalizable {
+public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry implements NamedJDOMExternalizable, RoamingTypeDisabled {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.ProductivityFeaturesRegistry");
   private Map<String, FeatureDescriptor> myFeatures = new HashMap<String, FeatureDescriptor>();
   private Map<String, GroupDescriptor> myGroups = new HashMap<String, GroupDescriptor>();

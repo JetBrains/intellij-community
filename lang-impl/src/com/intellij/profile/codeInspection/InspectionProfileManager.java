@@ -22,7 +22,11 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
@@ -36,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
@@ -47,21 +50,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: anna
  * Date: 29-Nov-2005
  */
-public class InspectionProfileManager extends DefaultApplicationProfileManager implements SeverityProvider, ExportableApplicationComponent, JDOMExternalizable {
+public class InspectionProfileManager extends DefaultApplicationProfileManager implements SeverityProvider,
+                                                                                          ExportableApplicationComponent, JDOMExternalizable,
+                                                                                          SettingsSavingComponent {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private InspectionToolRegistrar myRegistrar;
+  private final SchemesManager mySchemesManager;
   private AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private SeverityRegistrar mySeverityRegistrar;
+  private static final String FILE_SPEC = "$ROOT_CONFIG$/inspection";
+  private final SchemeReaderWriter<Profile> myReaderWriter;
 
   public static InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
   }
 
-  @NonNls private static final String CONFIG_FILE_EXTENSION = ".xml";
-
   @SuppressWarnings({"UnusedDeclaration"})
-  public InspectionProfileManager(InspectionToolRegistrar registrar, EditorColorsManager manager) {
+  public InspectionProfileManager(InspectionToolRegistrar registrar, EditorColorsManager manager, SchemesManager schemesManager) {
     super(Profile.INSPECTION,
           new Computable<Profile>() {
             public Profile compute() {
@@ -70,27 +76,48 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
           },
           "inspection");
     myRegistrar = registrar;
+    mySchemesManager = schemesManager;
     mySeverityRegistrar = new SeverityRegistrar();
+    myReaderWriter = new SchemeReaderWriter<Profile>(){
+      public Profile readScheme(final Document document, final File file) throws InvalidDataException, IOException, JDOMException {
+        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar, InspectionProfileManager.this);
+        profile.load();
+        return profile;
+      }
+
+      public boolean shouldBeSaved(final Profile scheme) {
+        return ((InspectionProfileImpl)scheme).wasInitialized();
+      }
+
+      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        LOG.error(e);
+      }
+
+      public Document writeScheme(final Profile scheme) throws WriteExternalException {
+        return ((InspectionProfileImpl)scheme).saveToDocument();
+      }
+
+      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        LOG.error(e);
+      }
+    };
   }
 
   public void initComponent() {
   }
 
   public void disposeComponent() {
-    final Collection<Profile> profiles = getProfiles().values();
-    for (Profile profile : profiles) {
-      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
-      if (inspectionProfile.wasInitialized()) {
-        try {
-          inspectionProfile.save();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-    }
+    save();
   }
 
+  public void save() {
+    try {
+      mySchemesManager.saveSchemes(getProfiles().values(), FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+    }
+    catch (WriteExternalException e) {
+      //ignore
+    }    
+  }
 
   @NotNull
   public File[] getExportFiles() {
@@ -110,30 +137,19 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   public void initProfiles() {
     if (!myProfilesAreInitialized.getAndSet(true)) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      
-      File dir = getProfileDirectory();
-      File[] files = dir.listFiles(new FileFilter() {
-        public boolean accept(File pathname) {
-          @NonNls final String name = pathname.getName();
-          int lastExtentionIdx = name.lastIndexOf(".xml");
-          return lastExtentionIdx != -1;
-        }
-      });
 
-      if (files == null || files.length == 0) {
+      final Collection<Profile> profiles =
+          mySchemesManager.loadSchemes(FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+
+
+      if (profiles.isEmpty()) {
         createDefaultProfile();
-        return;
       }
-
-      for (File file : files) {
-        try {
-          InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar, this);
-          profile.load();
+      else {
+        for (Profile profile : profiles) {
           addProfile(profile);
         }
-        catch (Exception e) {
-          file.delete();
-        }
+
       }
     }
   }

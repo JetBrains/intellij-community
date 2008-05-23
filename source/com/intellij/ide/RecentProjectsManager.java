@@ -1,6 +1,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,7 @@ import java.io.File;
 
 @State(
   name = "RecentProjectsManager",
+  roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(
       id ="other",

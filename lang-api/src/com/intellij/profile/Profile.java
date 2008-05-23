@@ -17,6 +17,7 @@ package com.intellij.profile;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ import java.io.File;
  * User: anna
  * Date: 20-Nov-2005
  */
-public interface Profile extends JDOMExternalizable, Comparable {
+public interface Profile extends JDOMExternalizable, Comparable, Scheme {
   Icon LOCAL_PROFILE = IconLoader.getIcon("/general/applicationSettings.png");
   Icon PROJECT_PROFILE = IconLoader.getIcon("/general/projectSettings.png");
   @NonNls String INSPECTION = "INSPECTION";

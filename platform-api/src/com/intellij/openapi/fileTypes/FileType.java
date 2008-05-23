@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ import javax.swing.*;
  * @see com.intellij.openapi.fileTypes.StdFileTypes
  * @see com.intellij.openapi.fileTypes.FileTypes
  */
-public interface FileType {
+public interface FileType extends Scheme {
   FileType[] EMPTY_ARRAY = new FileType[0];
 
   /**

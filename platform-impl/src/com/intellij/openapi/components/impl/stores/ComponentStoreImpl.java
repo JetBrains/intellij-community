@@ -4,10 +4,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
@@ -28,9 +25,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
   @Nullable private SaveSessionImpl mySession;
 
-
-  protected abstract StateStorageManager getStateStorageManager();
-
   @Deprecated
   @Nullable
   private StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorage.StateStorageException {
@@ -39,7 +33,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   @Deprecated
   @Nullable
-  private StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException {
+  private StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation)
+      throws StateStorage.StateStorageException {
     return getStateStorageManager().getOldStorage(component, componentName, operation);
   }
 
@@ -48,7 +43,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   public void initComponent(@NotNull final Object component) {
-    boolean isSerializable = component instanceof JDOMExternalizable || component instanceof PersistentStateComponent || component instanceof SettingsSavingComponent;
+    boolean isSerializable = component instanceof JDOMExternalizable ||
+                             component instanceof PersistentStateComponent ||
+                             component instanceof SettingsSavingComponent;
 
     if (!isSerializable) return;
 
@@ -69,7 +66,12 @@ abstract class ComponentStoreImpl implements IComponentStore {
     };
 
     final ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-    if (applicationEx.isUnitTestMode()) r.run(); else applicationEx.runReadAction(r);
+    if (applicationEx.isUnitTestMode()) {
+      r.run();
+    }
+    else {
+      applicationEx.runReadAction(r);
+    }
   }
 
 
@@ -97,13 +99,16 @@ abstract class ComponentStoreImpl implements IComponentStore {
     mySession = null;
   }
 
-  private <T> void commitPersistentComponent(@NotNull final PersistentStateComponent<T> persistentStateComponent, @NotNull StateStorageManager.ExternalizationSession session) {
+  private <T> void commitPersistentComponent(@NotNull final PersistentStateComponent<T> persistentStateComponent,
+                                             @NotNull StateStorageManager.ExternalizationSession session) {
     Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
 
-    session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), persistentStateComponent.getState());
+    session
+        .setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), persistentStateComponent.getState());
   }
 
-  private static void commitJdomExternalizable(@NotNull final JDOMExternalizable component, @NotNull StateStorageManager.ExternalizationSession session) {
+  private static void commitJdomExternalizable(@NotNull final JDOMExternalizable component,
+                                               @NotNull StateStorageManager.ExternalizationSession session) {
     final String componentName = getComponentName(component);
 
     session.setStateInOldStorage(component, componentName, component);
@@ -162,12 +167,24 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @Nullable
-  private static Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage) throws StateStorage.StateStorageException {
+  private Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage)
+      throws StateStorage.StateStorageException {
+    if (component instanceof RoamingTypeDisabled) {
+       ComponentRoamingManager.getInstance().setRoamingType(componentName, RoamingType.DISABLED);
+    }
+    else if (component instanceof RoamingTypePerPlatform) {
+      ComponentRoamingManager.getInstance().setRoamingType(componentName, RoamingType.PER_PLATFORM);
+    }
+    else {
+      ComponentRoamingManager.getInstance().setRoamingType(componentName, RoamingType.PER_USER);
+    }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
   private <T> void initPersistentComponent(@NotNull final PersistentStateComponent<T> component) {
     final String name = getComponentName(component);
+
+    ComponentRoamingManager.getInstance().setRoamingType(name, getRoamingType(component));
 
     myComponents.put(name, component);
     if (optimizeTestLoading()) return;
@@ -176,26 +193,32 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     T state = null;
     //todo: defaults merging
+
     final StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
-
-        state = defaultsStorage.getState(component, name, stateClass, null);
+      state = defaultsStorage.getState(component, name, stateClass, null);
     }
 
-      Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
+    Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
 
-      for (Storage storageSpec : storageSpecs) {
-        StateStorage stateStorage = getStateStorage(storageSpec);
-        if (stateStorage == null || !stateStorage.hasState(component, name, stateClass)) continue;
-
-        state = stateStorage.getState(component, name, stateClass, state);
-      }
+    for (Storage storageSpec : storageSpecs) {
+      StateStorage stateStorage = getStateStorage(storageSpec);
+      if (stateStorage == null || !stateStorage.hasState(component, name, stateClass)) continue;
+      state = stateStorage.getState(component, name, stateClass, state);
+    }
 
     if (state != null) {
       component.loadState(state);
     }
   }
 
+  private RoamingType getRoamingType(final PersistentStateComponent component) {
+    final State stateSpec = getStateSpec(component);
+    assert stateSpec != null;
+
+    return stateSpec.roamingType();
+
+  }
 
   @NotNull
   private static <T> Class<T> getComponentStateClass(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
@@ -237,7 +260,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   @NotNull
   protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
-                                                 final StateStorageOperation operation) throws StateStorage.StateStorageException {
+                                                   final StateStorageOperation operation) throws StateStorage.StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
 
     final Storage[] storages = stateSpec.storages();
@@ -248,12 +271,12 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
 
     final Class<StorageAnnotationsDefaultValues.NullStateStorageChooser> defaultClass =
-      StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
+        StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
 
     final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
     final StateStorageChooser defaultStateStorageChooser = getDefaultStateStorageChooser();
-    assert storageChooserClass != defaultClass || defaultStateStorageChooser != null :
-      "State chooser not specified for: " + persistentStateComponent.getClass();
+    assert storageChooserClass != defaultClass || defaultStateStorageChooser != null : "State chooser not specified for: " +
+                                                                                       persistentStateComponent.getClass();
 
     if (storageChooserClass == defaultClass) {
       return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
@@ -305,7 +328,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     public SaveSession save() throws IOException {
       try {
         final SettingsSavingComponent[] settingsComponents =
-          mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
+            mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
 
         for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
           settingsSavingComponent.save();
@@ -358,7 +381,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  public boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws IOException, StateStorage.StateStorageException {
+  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException, StateStorage.StateStorageException {
     final SaveSession saveSession = startSave();
     final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
     try {
@@ -404,7 +427,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames) throws StateStorage.StateStorageException {
+  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames)
+      throws StateStorage.StateStorageException {
     getStateStorageManager().reload(changedFiles, componentNames);
   }
 }

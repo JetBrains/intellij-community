@@ -1,30 +1,38 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.util.containers.HashMap;
+import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 /**
  * @author MYakovlev
  *         Date: Jul 16, 2002
  */
-public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableApplicationComponent,JDOMExternalizable {
+public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableApplicationComponent,JDOMExternalizable,
+                                                                      SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl");
   private HashMap<String, CodeStyleScheme> mySchemes = new HashMap<String, CodeStyleScheme>();   // name -> scheme
   private CodeStyleScheme myCurrentScheme;
@@ -33,10 +41,36 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
   private boolean myIsInitialized = false;
-  @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
 
-  private CodeStyleSchemesImpl() {
+  private final SchemesManager mySchemesManager;
+  private final SchemeReaderWriter<CodeStyleScheme> myReaderWriter;
+  private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
+
+  public CodeStyleSchemesImpl(SchemesManager schemesManager) {
+    mySchemesManager = schemesManager;
+    myReaderWriter = new SchemeReaderWriter<CodeStyleScheme>() {
+      public CodeStyleScheme readScheme(final Document schemeContent, final File file) throws IOException, JDOMException, InvalidDataException {
+        return CodeStyleSchemeImpl.readScheme(schemeContent);
+      }
+
+      public Document writeScheme(final CodeStyleScheme scheme) throws WriteExternalException {
+        return ((CodeStyleSchemeImpl)scheme).saveToDocument();
+      }
+
+      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.read.scheme.file.message", filePath),
+                                 PsiBundle.message("codestyle.cannot.read.scheme.file.title"));
+      }
+
+      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.scheme.file", filePath, e.getLocalizedMessage()), CommonBundle.getErrorTitle());
+      }
+
+      public boolean shouldBeSaved(final CodeStyleScheme scheme) {
+        return !scheme.isDefault();
+      }
+    };
   }
 
   public String getComponentName() {
@@ -137,17 +171,10 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     myIsInitialized = true;
     mySchemes.clear();
 
-    File[] files = getSchemeFiles();
-    for (File file : files) {
-      if (StringUtil.endsWithIgnoreCase(file.getName(), XML_EXTENSION)) {
-        try {
-          addScheme(CodeStyleSchemeImpl.readScheme(file));
-        }
-        catch (Exception e) {
-          Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.read.scheme.file.message", file.getName()),
-                                   PsiBundle.message("codestyle.cannot.read.scheme.file.title"));
-        }
-      }
+    final Collection<CodeStyleScheme> readSchemes = mySchemesManager.loadSchemes(FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+
+    for (CodeStyleScheme scheme : readSchemes) {
+      addScheme(scheme);
     }
 
     final CodeStyleScheme[] schemes = getSchemes();
@@ -157,33 +184,17 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    File[] files = getSchemeFiles();
-    for (File file : files) {
-      String fileName = file.getName().toLowerCase();
-      String xmlExtension = XML_EXTENSION;
-      if (fileName.endsWith(xmlExtension)) {
-        try {
-          String fileNameWithoutExtension = fileName.substring(0, fileName.length() - xmlExtension.length());
-          if (!mySchemes.containsKey(fileNameWithoutExtension)) {
-            file.delete();
-          }
-        }
-        catch (Exception e) {
-          LOG.assertTrue(false, "Unable to save Code Style Settings");
-        }
-      }
-    }
-
-    final CodeStyleScheme[] schemes = getSchemes();
-    for (CodeStyleScheme scheme : schemes) {
-      if (!scheme.isDefault()) {
-        File dir = getDir(true);
-        if (dir == null) break;
-        ((CodeStyleSchemeImpl)scheme).save(dir);
-      }
-    }
-
     DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public void save() {
+    try {
+      mySchemesManager.saveSchemes(mySchemes.values(), FILE_SPEC, myReaderWriter,
+                                   RoamingType.PER_USER);
+    }
+    catch (WriteExternalException e) {
+      //ignore
+    }
   }
 
   @NotNull
@@ -194,20 +205,6 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   @NotNull
   public String getPresentableName() {
     return PsiBundle.message("codestyle.export.display.name");
-  }
-
-  private File[] getSchemeFiles() {
-    File schemesDir = getDir(true);
-    if (schemesDir == null) {
-      return new File[0];
-    }
-
-    File[] files = schemesDir.listFiles();
-    if (files == null) {
-      LOG.error("Cannot read directory: " + schemesDir.getAbsolutePath());
-      return new File[0];
-    }
-    return files;
   }
 
   private static File getDir(boolean create) {

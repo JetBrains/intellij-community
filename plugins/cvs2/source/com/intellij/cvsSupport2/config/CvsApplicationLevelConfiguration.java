@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class CvsApplicationLevelConfiguration implements ApplicationComponent, JDOMExternalizable {
+public class CvsApplicationLevelConfiguration implements ApplicationComponent, JDOMExternalizable, RoamingTypeDisabled {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration");
 

@@ -4,10 +4,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -37,6 +34,7 @@ import java.util.concurrent.locks.Lock;
 
 @State(
   name = "FileBasedIndex",
+  roamingType = RoamingType.DISABLED,
   storages = {
   @Storage(
     id = "stubIndex",

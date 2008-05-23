@@ -1,6 +1,8 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -36,14 +38,25 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   private Object mySession;
   private StorageData myLoadedData;
   private static StringInterner ourInterner = new StringInterner();
+  protected final StreamProvider myStreamProvider;
+  protected final String myFileSpec;
+  private final ComponentRoamingManager myComponentRoamingManager;
+  private final boolean myIsProjectSettings;
+
 
   protected XmlElementStorage(
     @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
     @NotNull Disposable parentDisposable,
-    @NotNull String rootElementName) {
+    @NotNull String rootElementName,
+    StreamProvider streamProvider,
+    String fileSpec, ComponentRoamingManager componentRoamingManager) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myRootElementName = rootElementName;
+    myStreamProvider = streamProvider;
+    myFileSpec = fileSpec;
+    myComponentRoamingManager = componentRoamingManager;
     Disposer.register(parentDisposable, this);
+    myIsProjectSettings = "$PROJECT_FILE$".equals(myFileSpec) || myFileSpec.startsWith("$PROJECT_CONFIG_DIR$");
   }
 
   @Nullable
@@ -85,11 +98,32 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   private StorageData loadData() throws StateStorageException {
     StorageData result = createStorageData();
 
-    final Document document = loadDocument();
+    Document document = loadDocument();
 
     if (document != null) {
       loadState(result, document.getRootElement());
     }
+
+    if (!myIsProjectSettings) {
+      for (RoamingType roamingType : RoamingType.values()) {
+        if (roamingType != RoamingType.DISABLED) {
+          try {
+            final Document sharedDocument = myStreamProvider.loadDocument(myFileSpec, roamingType);
+
+            if (sharedDocument != null) {
+              filterComponentsDisabledForRoaming(sharedDocument.getRootElement(), roamingType);
+
+              loadState(result, sharedDocument.getRootElement());
+            }
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
+        }
+
+      }
+    }
+
 
     return result;
   }
@@ -165,7 +199,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       assert mySession == this;
 
       try {
-        setState(componentName,  DefaultStateSerializer.serializeState(state, storageSpec));
+        setState(componentName, DefaultStateSerializer.serializeState(state, storageSpec));
       }
       catch (WriteExternalException e) {
         LOG.debug(e);
@@ -186,6 +220,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public MySaveSession(MyExternalizationSession externalizationSession) {
       myStorageData = externalizationSession.myStorageData;
+
     }
 
     public final boolean needsSave() throws StateStorageException {
@@ -199,8 +234,46 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     public final void save() throws StateStorageException {
       assert mySession == this;
 
-      if (!_needsSave()) return;
-      doSave();
+      try {
+        if (!myIsProjectSettings) {
+          for (RoamingType roamingType : RoamingType.values()) {
+            if (roamingType != RoamingType.DISABLED) {
+              try {
+                final Document filteredDocument = getDocumentAllowedForRoaming(roamingType);
+                if (filteredDocument.getRootElement().getChildren().size() > 0) {
+                  myStreamProvider.saveContent(myFileSpec, filteredDocument, roamingType);
+                }
+              }
+              catch (IOException e) {
+                LOG.warn(e);
+              }
+            }
+
+          }
+        }
+
+      }
+      finally {
+        if (!_needsSave()) return;
+        doSave();
+      }
+
+    }
+
+    private Document getDocumentAllowedForRoaming(final RoamingType roamingType) {
+      final Element element = myStorageData.save();
+
+      filterComponentsDisabledForRoaming(element, roamingType);
+
+
+      Document result = new Document(element);
+
+      if (myPathMacroSubstitutor != null) {
+        myPathMacroSubstitutor.collapsePaths(element);
+      }
+
+      return result;
+
     }
 
     public Set<String> getUsedMacros() {
@@ -404,6 +477,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     public boolean hasState(final String componentName) {
         return myComponentStates.containsKey(componentName);
     }
+
   }
 
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
@@ -419,4 +493,25 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     
     myLoadedData = storageData;
   }
+
+  private void filterComponentsDisabledForRoaming(final Element element, final RoamingType roamingType) {
+    final List components = element.getChildren(COMPONENT);
+
+    List<Element> toDelete = new ArrayList<Element>();
+
+    for (Object componentObj : components) {
+      final Element componentElement = (Element)componentObj;
+      final String nameAttr = componentElement.getAttributeValue(NAME);
+
+      if (myComponentRoamingManager.getRoamingType(nameAttr) != roamingType) {
+        toDelete.add(componentElement);
+      }
+    }
+
+    for (Element toDeleteElement : toDelete) {
+      element.removeContent(toDeleteElement);
+    }
+  }
+
+
 }

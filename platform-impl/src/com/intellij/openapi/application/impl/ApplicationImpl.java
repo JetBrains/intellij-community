@@ -2,6 +2,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
+import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.ide.HackyRepaintManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
@@ -12,12 +13,11 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.IApplicationStore;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.StoresFactory;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -334,12 +334,41 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void load(String path) throws IOException, InvalidDataException {
-    getStateStore().setConfigPath(path);
+    getStateStore().setOptionsPath(path);
+    getStateStore().setConfigPath(PathManager.getConfigPath());
+    fireBeforeApplicationLoaded();
+
+    loadComponentRoamingTypes();
+
     try {
       getStateStore().load();
     }
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
+    }
+  }
+
+  private void loadComponentRoamingTypes() {
+    final Object[] componentRoamingTypes = Extensions.getRootArea().getExtensionPoint("com.intellij.ComponentRoamingType").getExtensions();
+
+    for (Object object : componentRoamingTypes) {
+      final RoamingTypeExtensionPointBean bean = (RoamingTypeExtensionPointBean)object;
+
+      assert bean.componentName != null;
+      assert bean.roamingType != null;
+
+      final RoamingType type = RoamingType.valueOf(bean.roamingType);
+
+      assert type != null;
+
+      ComponentRoamingManager.getInstance().setRoamingType(bean.componentName, type);
+    }
+  }
+
+  private void fireBeforeApplicationLoaded() {
+    final Object[] objects = Extensions.getRootArea().getExtensionPoint("com.intellij.ApplicationLoadListener").getExtensions();
+    for (Object object : objects) {
+      ((ApplicationLoadListener)object).beforeApplicationLoaded(this);
     }
   }
 

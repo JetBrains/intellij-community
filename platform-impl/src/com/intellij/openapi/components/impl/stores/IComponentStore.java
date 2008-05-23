@@ -16,6 +16,8 @@ public interface IComponentStore {
   void initComponent(Object component);
   void load() throws IOException, StateStorage.StateStorageException;
 
+  StateStorageManager getStateStorageManager();
+
 
   class SaveCancelledException extends IOException {
 

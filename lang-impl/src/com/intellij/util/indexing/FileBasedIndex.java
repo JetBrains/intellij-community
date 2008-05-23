@@ -4,10 +4,7 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -56,6 +53,7 @@ import java.util.concurrent.locks.Lock;
 
 @State(
   name = "FileBasedIndex",
+  roamingType = RoamingType.DISABLED,
   storages = {
   @Storage(
     id = "index",

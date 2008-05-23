@@ -8,16 +8,15 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.IllegalDataException;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ import java.util.*;
       file = "$APP_CONFIG$/other.xml"
     )}
 )
-public class TemplateSettings implements PersistentStateComponent<Element>, ExportableComponent {
+public class TemplateSettings implements PersistentStateComponent<Element>, ExportableComponent, SettingsSavingComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateSettings");
 
@@ -90,8 +89,52 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private String myLastSelectedTemplateKey;
   @NonNls
   public static final String XML_EXTENSION = ".xml";
+  private final SchemesManager mySchemesManager;
+  private final SchemeReaderWriter<TemplateGroup> myReaderWriter;
+  private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
 
-  public TemplateSettings() {
+  public TemplateSettings(SchemesManager schemesManager) {
+    mySchemesManager = schemesManager;
+
+    myReaderWriter = new SchemeReaderWriter<TemplateGroup>() {
+      public TemplateGroup readScheme(final Document schemeContent, final File file)
+          throws InvalidDataException, IOException, JDOMException {
+        String defGroupName = FileUtil.getNameWithoutExtension(file);
+        return readTemplateFile(JDOMUtil.loadDocument(file), defGroupName, false);
+      }
+
+
+      public boolean shouldBeSaved(final TemplateGroup template) {
+        for (TemplateImpl t : template.getTemplates()) {
+          if (!t.equals(myDefaultTemplates.get(t.getKey()))) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      public Document writeScheme(final TemplateGroup template) throws WriteExternalException {
+        Element templateSetElement = new Element(TEMPLATE_SET);
+        templateSetElement.setAttribute(GROUP, template.getName());
+
+        for (TemplateImpl t : template.getTemplates()) {
+          if (!t.equals(myDefaultTemplates.get(t.getKey()))) {
+            saveTemplate(t, templateSetElement);
+          }
+        }
+
+        return new Document(templateSetElement);
+      }
+
+      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        LOG.warn(e);
+      }
+
+      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        LOG.warn(e);
+      }
+    };
+
     loadTemplates();
   }
 
@@ -210,6 +253,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     saveTemplates(newTemplates);
   }
 
+  public void save() {
+    saveTemplates(getTemplates());
+  }
+
   public void addTemplate(Template template) {
     myTemplates.put(template.getKey(), template);
     addTemplateWithId(template);
@@ -265,27 +312,12 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return directory;
   }
 
-  @Nullable
-  private static File[] getUserTemplateFiles() {
-    File directory = getTemplateDirectory(false);
-    if (directory == null || !directory.exists()) {
-      directory = getTemplateDirectory(true);
-    }
-    return directory == null ? null : directory.listFiles();
-  }
-
   private void loadTemplates() {
-    File[] files = getUserTemplateFiles();
-    if (files == null) {
-      return;
-    }
+
+    mySchemesManager.loadSchemes(FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+
 
     try {
-      for (File file : files) {
-        if (!StringUtil.endsWithIgnoreCase(file.getName(), XML_EXTENSION)) continue;
-        readTemplateFile(file);
-      }
-
       for(DefaultLiveTemplatesProvider provider: Extensions.getExtensions(DefaultLiveTemplatesProvider.EP_NAME)) {
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
           String templateName = getDefaultTemplateName(defTemplate);
@@ -305,14 +337,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true);
   }
 
-  public void readTemplateFile(File file) throws JDOMException, InvalidDataException, IOException {
-    if (!file.exists()) return;
-
-    String defGroupName = FileUtil.getNameWithoutExtension(file);
-    readTemplateFile(JDOMUtil.loadDocument(file), defGroupName, false);
-  }
-
-  public void readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault) throws InvalidDataException {
+  public TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault) throws InvalidDataException {
     if (document == null) {
       throw new InvalidDataException();
     }
@@ -323,6 +348,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     String groupName = root.getAttributeValue(GROUP);
     if (groupName == null || groupName.length() == 0) groupName = defGroupName;
+
+    TemplateGroup result = new TemplateGroup(groupName);
 
     for (final Object o1 : root.getChildren(TEMPLATE)) {
       Element element = (Element)o1;
@@ -361,7 +388,13 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       if (context != null) {
         DefaultJDOMExternalizer.readExternal(template.getTemplateContext(), context);
       }
+
+      result.addTemplate(template);
+
     }
+
+    return result;
+
   }
 
   private void saveTemplates(final TemplateImpl[] templates) {
@@ -378,54 +411,30 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           }
         }
 
-        File[] files = getUserTemplateFiles();
-        if (files != null) {
-          for (File file : files) {
-            file.delete();
-          }
+        try {
+          mySchemesManager.saveSchemes(buildGroupList(templates), FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+        }
+        catch (WriteExternalException e) {
+          LOG.error(e);
         }
 
-        if (templates.length == 0) return;
-        HashMap<String,Element> groupToDocumentMap = new HashMap<String, Element>();
-        for (TemplateImpl template : templates) {
-          if (template.equals(myDefaultTemplates.get(template.getKey()))) continue;
-
-          String groupName = template.getGroupName();
-          Element templateSetElement = groupToDocumentMap.get(groupName);
-          if (templateSetElement == null) {
-            templateSetElement = new Element(TEMPLATE_SET);
-            templateSetElement.setAttribute(GROUP, groupName);
-            groupToDocumentMap.put(groupName, templateSetElement);
-          }
-          try {
-            saveTemplate(template, templateSetElement);
-          }
-          catch (IllegalDataException e) {
-          }
-        }
-
-        File dir = getTemplateDirectory(true);
-        if (dir == null) {
-          return;
-        }
-
-        Collection<Map.Entry<String,Element>> groups = groupToDocumentMap.entrySet();
-        for (Map.Entry<String, Element> entry : groups) {
-          String groupName = entry.getKey();
-          Element templateSetElement = entry.getValue();
-
-          String fileName = convertName(groupName);
-          String filePath = findFirstNotExistingFile(dir, fileName, XML_EXTENSION);
-          try {
-            JDOMUtil
-              .writeDocument(new Document(templateSetElement), filePath, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
       }
     });
+  }
+
+  private Collection<TemplateGroup> buildGroupList(final TemplateImpl[] templates) {
+    Map<String, TemplateGroup> result = new LinkedHashMap<String, TemplateGroup>();
+
+    for (TemplateImpl template : templates) {
+      final String name = template.getGroupName();
+      if (!result.containsKey(name)) {
+        result.put(name, new TemplateGroup(name));
+      }
+
+      result.get(name).addTemplate(template);
+    }
+
+    return result.values();
   }
 
   private static void saveTemplate(TemplateImpl template, Element templateSetElement) {
@@ -470,34 +479,4 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     templateSetElement.addContent(element);
   }
 
-  private static String findFirstNotExistingFile(File directory, String fileName, String extension) {
-    String filePath = directory.getAbsolutePath() + File.separator + fileName + extension;
-    File file = new File(filePath);
-    if (!file.exists()) {
-      return filePath;
-    }
-    for (int i = 1; ; i++) {
-      filePath = directory.getAbsolutePath() + File.separator + fileName + i + extension;
-      file = new File(filePath);
-      if (!file.exists()) {
-        return filePath;
-      }
-    }
-  }
-
-  private static String convertName(String s) {
-    if (s == null || s.length() == 0) {
-      return "_";
-    }
-    StringBuffer buf = new StringBuffer();
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (Character.isJavaIdentifierPart(c) || c == ' ') {
-        buf.append(c);
-      } else {
-        buf.append('_');
-      }
-    }
-    return buf.toString();
-  }
 }

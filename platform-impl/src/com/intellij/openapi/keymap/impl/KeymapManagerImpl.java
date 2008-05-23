@@ -27,7 +27,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
+public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent,
+                                                                  RoamingTypePerPlatform {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
 

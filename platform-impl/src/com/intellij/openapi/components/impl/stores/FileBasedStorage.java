@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,11 +39,14 @@ public class FileBasedStorage extends XmlElementStorage {
   private long myInitialFileTimestamp;
 
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
+                          StreamProvider streamProvider,
                           final String filePath,
+                          final String fileSpec,
                           String rootElementName,
                           Disposable parentDisposable,
-                          PicoContainer picoContainer) {
-    super(pathMacroManager, parentDisposable, rootElementName);
+                          PicoContainer picoContainer,
+                          ComponentRoamingManager componentRoamingManager) {
+    super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager);
 
     myRootElementName = rootElementName;
     myFilePath = filePath;
@@ -219,4 +223,5 @@ public class FileBasedStorage extends XmlElementStorage {
     element.setName(myRootElementName);
     super.setDefaultState(element);
   }
+
 }

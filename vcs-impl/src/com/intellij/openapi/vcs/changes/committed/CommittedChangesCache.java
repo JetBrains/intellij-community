@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
  */
 @State(
   name="CommittedChangesCache",
+  roamingType = RoamingType.DISABLED,
   storages= {
     @Storage(
       id="other",

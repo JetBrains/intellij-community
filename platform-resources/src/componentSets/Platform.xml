@@ -113,6 +113,11 @@
     <component>
       <implementation-class>com.intellij.diagnostic.PerformanceWatcher</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.openapi.options.SchemesManager</interface-class>
+      <implementation-class>com.intellij.openapi.options.SchemesManagerImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

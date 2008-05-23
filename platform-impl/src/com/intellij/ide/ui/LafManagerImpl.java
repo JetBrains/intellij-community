@@ -7,10 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SideBorder2;
@@ -38,7 +35,7 @@ import java.util.HashMap;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class LafManagerImpl extends LafManager implements ApplicationComponent,JDOMExternalizable{
+public final class LafManagerImpl extends LafManager implements ApplicationComponent,JDOMExternalizable, RoamingTypePerPlatform {
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";

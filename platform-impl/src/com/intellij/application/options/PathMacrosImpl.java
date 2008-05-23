@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -21,7 +22,7 @@ import java.util.Set;
 /**
  *  @author dsl
  */
-public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable {
+public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable, RoamingTypeDisabled {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
   private final Map<String,String> myMacrosDescriptions = new HashMap<String, String>();

@@ -23,6 +23,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   private StateStorageManager myStateStorageManager;
   @NonNls private static final String APP_CONFIG_STORAGE_MACRO = "APP_CONFIG";
   @NonNls private static final String OPTIONS_MACRO = "OPTIONS";
+  @NonNls private static final String CONFIG_MACRO = "ROOT_CONFIG";
   private DefaultsStateStorage myDefaultsStateStorage;
   @NonNls private static final String ROOT_ELEMENT_NAME = "application";
 
@@ -64,14 +65,18 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     myApplication.initComponents();
   }
 
-  public void setConfigPath(final String path) {
+  public void setOptionsPath(final String path) {
     myStateStorageManager.addMacro(APP_CONFIG_STORAGE_MACRO, path);
     myStateStorageManager.addMacro(OPTIONS_MACRO, path);
   }
 
+  public void setConfigPath(final String configPath) {
+    myStateStorageManager.addMacro(CONFIG_MACRO, configPath);
+  }
+
   public static final String DEFAULT_STORAGE_SPEC = "$" + APP_CONFIG_STORAGE_MACRO + "$/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
 
-  protected StateStorageManager getStateStorageManager() {
+  public StateStorageManager getStateStorageManager() {
     return myStateStorageManager;
   }
 

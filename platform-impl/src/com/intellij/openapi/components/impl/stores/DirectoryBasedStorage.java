@@ -412,7 +412,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)
         throws StateStorageException {
       assert mySession == this;
-      setState(componentName, state, storageSpec);
+      setState(componentName,state, storageSpec);
     }
 
     private void setState(final String componentName, Object state, final Storage storageSpec) throws StateStorageException {

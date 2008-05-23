@@ -16,7 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -315,7 +315,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
-  private class MyProjectManagerListener implements ProjectManagerListener {
+  private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
       ProjectImpl.this.projectOpened();
@@ -324,13 +324,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     public void projectClosed(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
       ProjectImpl.this.projectClosed();
-    }
-
-    public boolean canCloseProject(Project project) {
-      return true;
-    }
-
-    public void projectClosing(Project project) {
     }
   }
 

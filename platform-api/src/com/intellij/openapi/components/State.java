@@ -22,6 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface State {
   String name();
+  RoamingType roamingType() default RoamingType.PER_USER;
   Storage[] storages();
   Class<? extends StateStorageChooser> storageChooser() default StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
   boolean reloadable() default true;

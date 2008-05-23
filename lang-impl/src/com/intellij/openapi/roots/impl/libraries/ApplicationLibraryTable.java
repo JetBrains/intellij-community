@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.ProjectBundle;
@@ -16,6 +17,7 @@ import java.io.File;
  */
 @State(
   name = "libraryTable",
+  roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(id = "default", file = "$OPTIONS$/applicationLibraries.xml")
     }

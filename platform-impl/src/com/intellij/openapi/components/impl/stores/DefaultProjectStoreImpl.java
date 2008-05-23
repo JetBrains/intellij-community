@@ -5,6 +5,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -53,7 +54,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final Document document = _d;
 
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME) {
+                                                            ROOT_TAG_NAME, StreamProvider.DEFAULT, "", ComponentRoamingManager.getInstance()) {
       @Nullable
       protected Document loadDocument() throws StateStorageException {
         return document;
@@ -121,6 +122,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
+      public String expandMacroses(final String file) {
+        throw new UnsupportedOperationException("Method expandMacroses not implemented in " + getClass());
+      }
+
       @Nullable
       public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
       throws StateStorage.StateStorageException {
@@ -129,6 +134,17 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, final Set<String> changedComponents) {
         throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
+      }
+
+      public void registerStreamProvider(final StreamProvider streamProvider, final RoamingType type) {
+        throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
+      }
+
+      public void unregisterStreamProvider(final StreamProvider streamProvider, final RoamingType roamingType) {
+        throw new UnsupportedOperationException("Method unregisterStreamProvider not implemented in " + getClass());
+      }
+      public StreamProvider[] getStreamProviders(final RoamingType roamingType) {
+        throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
     };
   }

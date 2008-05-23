@@ -5,11 +5,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 
-public class TipOfTheDayManager implements ApplicationComponent, ProjectManagerListener {
+public class TipOfTheDayManager extends ProjectManagerAdapter implements ApplicationComponent {
   private boolean myDoNotShowThisTime = false;
   private boolean myVeryFirstProjectOpening = true;
 
@@ -59,17 +59,5 @@ public class TipOfTheDayManager implements ApplicationComponent, ProjectManagerL
 
   public void doNotShowThisTime() {
     myDoNotShowThisTime = true;
-  }
-
-  public boolean canCloseProject(Project project) {
-    return true;
-  }
-
-  public void projectClosed(Project project) {
-
-  }
-
-  public void projectClosing(Project project) {
-
   }
 }

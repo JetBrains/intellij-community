@@ -1,22 +1,30 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.fs.IFile;
+import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
+import java.net.ConnectException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-abstract class StateStorageManagerImpl implements StateStorageManager, Disposable {
+abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider {
+
+  private final static Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
+
   private Map<String, String> myMacros = new HashMap<String, String>();
   private Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
   private TrackingPathMacroSubstitutor myPathMacroSubstitutor;
@@ -24,6 +32,8 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   private Object mySession;
   private PicoContainer myPicoContainer;
   private Map<IFile, StateStorage> myFileToStorage = new HashMap<IFile, StateStorage>();
+
+  private final MultiMap<RoamingType, StreamProvider> myStreamProviders = new MultiMap<RoamingType, StreamProvider>();
 
   public StateStorageManagerImpl(
     @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
@@ -132,12 +142,59 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       return null;
     }
 
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec), expandedFile, myRootTagName, this, myPicoContainer) {
+    return new FileBasedStorage(getMacroSubstitutor(fileSpec),this,expandedFile,fileSpec, myRootTagName, this, myPicoContainer,
+                                ComponentRoamingManager.getInstance()) {
       @NotNull
       protected StorageData createStorageData() {
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
       }
     };
+  }
+
+  public void saveContent(final String fileSpec, final Document content, final RoamingType roamingType) {
+
+    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
+      try {
+        streamProvider.saveContent(fileSpec, content, roamingType);
+      }
+      catch (ConnectException e) {
+        LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
+      }
+      catch (Exception e) {
+        LOG.debug(e);
+      }
+    }
+
+
+  }
+
+  public StreamProvider[] getStreamProviders(RoamingType type) {
+    synchronized (myStreamProviders) {
+      final Collection<StreamProvider> providers = myStreamProviders.get(type);
+      return providers.toArray(new StreamProvider[providers.size()]);
+    }
+  }
+
+  public Document loadDocument(final String fileSpec, final RoamingType roamingType) {
+    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
+      try {
+        final Document document = streamProvider.loadDocument(fileSpec, roamingType);
+        if (document != null) return document;
+      }
+      catch (ConnectException e) {
+        LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());
+      }
+      catch (Exception e) {
+        LOG.debug(e);
+      }
+    }
+
+    return null;
+
+  }
+
+  public String[] listSubFiles(final String fileSpec) {
+    return new String[0];
   }
 
   protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
@@ -150,7 +207,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
   @Nullable
-  private String expandMacroses(final String file) {
+  public String expandMacroses(final String file) {
     final Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);
@@ -312,4 +369,17 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       storage.reload(changedComponents);
     }
   }
+
+  public void registerStreamProvider(StreamProvider streamProvider, final RoamingType type) {
+    synchronized (myStreamProviders) {
+      myStreamProviders.putValue(type, streamProvider);
+    }
+  }
+
+  public void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType) {
+    synchronized (myStreamProviders) {
+      myStreamProviders.removeValue(roamingType, streamProvider);
+    }
+  }
+
 }

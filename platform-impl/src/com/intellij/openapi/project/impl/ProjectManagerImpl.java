@@ -18,10 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ProjectReloadState;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -165,6 +162,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         project.getPicoContainer().registerComponentInstance(additionalPicoContainerComponent.first, additionalPicoContainerComponent.second);
       }
     }
+
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
 
     try {
       if (template != null) {

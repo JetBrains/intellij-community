@@ -49,7 +49,7 @@ public class UniqueFileNamesProvider {
     return false;
   }
 
-  private String convertName(String s) {
+  public static String convertName(String s) {
     if (s == null || s.length() == 0) {
       return "_";
     }
@@ -64,5 +64,9 @@ public class UniqueFileNamesProvider {
       }
     }
     return buf.toString();
+  }
+
+  public void reserveFileName(final String fileName) {
+    myExistingNames.add(fileName);
   }
 }

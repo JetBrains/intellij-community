@@ -22,7 +22,7 @@ import java.util.Arrays;
 /**
  * @author mike
  */
-class StorageUtil {
+public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
 
   private StorageUtil() {
@@ -101,7 +101,7 @@ class StorageUtil {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
-  static byte[] printDocument(final Document document) throws StateStorage.StateStorageException {
+  public static byte[] printDocument(final Document document) throws StateStorage.StateStorageException {
     try {
       return JDOMUtil.writeDocument(document, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
     }

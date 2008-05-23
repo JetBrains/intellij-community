@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.options.Scheme;
+
 /**
  * @author MYakovlev
  * Date: Jul 19, 2002
  */
-public interface CodeStyleScheme {
+public interface CodeStyleScheme extends Scheme {
   CodeStyleScheme getParentScheme();
   String getName();
   boolean isDefault();

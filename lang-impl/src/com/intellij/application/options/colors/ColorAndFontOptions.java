@@ -117,6 +117,17 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     selectScheme(newScheme.getName());
   }
 
+  public void addImportedScheme(final EditorColorsScheme exported) {
+    MyColorScheme newScheme = new MyColorScheme(exported);
+    initScheme(newScheme);
+
+    mySchemes.put(exported.getName(), newScheme);
+    myPanel.resetSchemesCombo();
+    myPanel.changeToScheme(newScheme);
+    selectScheme(newScheme.getName());
+
+  }  
+
   public void removeScheme(String name) {
     if (mySelectedScheme.getName().equals(name)) {
       //noinspection HardCodedStringLiteral
@@ -333,6 +344,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
     myPanel = null;
   }
+
 
 
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {

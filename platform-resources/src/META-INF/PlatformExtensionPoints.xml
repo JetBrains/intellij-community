@@ -60,4 +60,8 @@
 
   <extensionPoint name="directoryProjectConfigurator"
                   interface="com.intellij.platform.DirectoryProjectConfigurator"/>
+
+  <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
+  <extensionPoint name="ComponentRoamingType" beanClass="com.intellij.openapi.components.impl.stores.RoamingTypeExtensionPointBean"/>
+
 </extensionPoints>

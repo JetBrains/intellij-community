@@ -114,10 +114,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme{
     myCodeStyleSettings.readExternal(element);
   }
 
-  public static CodeStyleSchemeImpl readScheme(File file) throws InvalidDataException, JDOMException, IOException{
-    Document document = JDOMUtil.loadDocument(file);
-
-    if (document == null) throw new InvalidDataException();
+  public static CodeStyleSchemeImpl readScheme(Document document) throws InvalidDataException, JDOMException, IOException{
     Element root = document.getRootElement();
     if (root == null){
       throw new InvalidDataException();
@@ -130,9 +127,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme{
       throw new InvalidDataException();
     }
 
-    CodeStyleSchemeImpl newScheme = new CodeStyleSchemeImpl(schemeName, parentName, root);
-
-    return newScheme;
+    return new CodeStyleSchemeImpl(schemeName, parentName, root);
   }
 
   public void save(File dir) throws WriteExternalException{
@@ -147,5 +142,13 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme{
     catch (IOException e) {
       Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.scheme.file", filePath, e.getLocalizedMessage()), CommonBundle.getErrorTitle());
     }
+  }
+
+  public Document saveToDocument() throws WriteExternalException {
+    Element newElement = new Element(CODE_SCHEME);
+    newElement.setAttribute(NAME, getName());
+    (this).writeExternal(newElement);
+
+    return new Document(newElement);
   }
 }

@@ -16,11 +16,12 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.JDOMExternalizable;
 
 import java.awt.*;
 
-public interface EditorColorsScheme extends Cloneable, JDOMExternalizable {
+public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Scheme {
   String getName();
   void setName(String name);
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
@@ -199,17 +200,7 @@ public class FrameWrapper implements Disposable {
     }
   }
 
-  private class MyProjectManagerListener implements ProjectManagerListener {
-
-    public void projectOpened(Project project) {
-    }
-
-    public boolean canCloseProject(Project project) {
-      return true;
-    }
-
-    public void projectClosed(Project project) {
-    }
+  private class MyProjectManagerListener extends ProjectManagerAdapter {
 
     public void projectClosing(Project project) {
       if (project == myProject) {

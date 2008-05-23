@@ -65,6 +65,7 @@ public interface StorageAnnotationsDefaultValues {
     public void reload(final Set<String> changedComponents) throws StateStorageException {
       throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
     }
+
   }
 
   class NullStateStorageChooser implements StateStorageChooser {

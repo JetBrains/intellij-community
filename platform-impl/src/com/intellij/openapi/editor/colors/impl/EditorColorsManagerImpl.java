@@ -6,16 +6,22 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -23,12 +29,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
 public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable,
-                                                                            ExportableApplicationComponent {
+                                                                            ExportableApplicationComponent, SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
 
@@ -43,12 +48,58 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   private String myGlobalSchemeName;
   public boolean USE_ONLY_MONOSPACED_FONTS = true;
   private DefaultColorSchemesManager myDefaultColorSchemesManager;
+  private final SchemesManager mySchemesManager;
   @NonNls private static final String XML_EXT = ".xml";
   @NonNls private static final String NAME_ATTR = "name";
+  private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";
+  private final SchemeReaderWriter<EditorColorsScheme> mySchemeReaderWriter;
 
-  public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager) {
+  public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManager schemesManager) {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
+    mySchemesManager = schemesManager;
     addDefaultSchemes();
+        mySchemeReaderWriter = new SchemeReaderWriter<EditorColorsScheme>() {
+      public EditorColorsScheme readScheme(final Document document, final File file) throws InvalidDataException, IOException, JDOMException {
+        Element root = document.getRootElement();
+
+        if (root == null || !SCHEME_NODE_NAME.equals(root.getName())) {
+          throw new InvalidDataException();
+        }
+
+        EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
+        scheme.readExternal(root);
+        return scheme;
+      }
+
+      public Document writeScheme(final EditorColorsScheme scheme) throws WriteExternalException {
+        Element root = new Element(SCHEME_NODE_NAME);
+        try {
+          scheme.writeExternal(root);
+        }
+        catch (WriteExternalException e) {
+          LOG.error(e);
+          return null;
+        }
+
+        return new Document(root);
+      }
+
+      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        //ignore
+      }
+
+      public void showReadErrorMessage(final Exception e,
+                                       final String schemeName,
+                                       final String filePath) {
+        Messages.showErrorDialog(CommonBundle.message("error.reading.color.scheme.from.file.error.message", schemeName),
+                                 CommonBundle.message("corrupted.scheme.file.message.title"));
+
+      }
+
+      public boolean shouldBeSaved(final EditorColorsScheme scheme) {
+        return !(scheme instanceof DefaultColorsScheme);
+      }
+    };
     loadAllSchemes();
     setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
   }
@@ -131,87 +182,31 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   // -------------------------------------------------------------------------
 
   private void loadAllSchemes() {
-    File[] files = getSchemeFiles();
-    for (File file : files) {
-      try {
-        addColorsScheme(loadScheme(file));
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-        Messages.showErrorDialog(CommonBundle.message("error.reading.color.scheme.from.file.error.message", file.getName()),
-                                 CommonBundle.message("corrupted.scheme.file.message.title"));
-      }
+
+    final Collection<? extends Scheme> schemes = mySchemesManager.loadSchemes(FILE_SPEC, mySchemeReaderWriter, RoamingType.PER_USER);
+
+    for (Scheme scheme : schemes) {
+      addColorsScheme((EditorColorsScheme)scheme);
     }
+
   }
 
   public void saveAllSchemes() throws IOException {
-    File dir = getColorsDir(true);
-    if (dir == null) return;
-
-    File[] oldFiles = getSchemeFiles();
-
-    int size = mySchemesMap.values().size();
-    ArrayList<String> filePaths = new ArrayList<String>();
-    ArrayList<Document> documents = new ArrayList<Document>();
-
-    UniqueFileNamesProvider namesProvider = new UniqueFileNamesProvider();
-    Iterator<EditorColorsScheme> itr = mySchemesMap.values().iterator();
-    for (int i = 0; i < size; i++) {
-      AbstractColorsScheme scheme = (AbstractColorsScheme)itr.next();
-      if (scheme instanceof DefaultColorsScheme) continue;
-
-      Element root = new Element(SCHEME_NODE_NAME);
-      try {
-        scheme.writeExternal(root);
-      }
-      catch (WriteExternalException e) {
-        LOG.error(e);
-        return;
-      }
-
-      @NonNls String filePath = dir.getAbsolutePath() + File.separator + namesProvider.suggestName(scheme.getName()) + XML_EXT;
-
-      documents.add(new Document(root));
-      filePaths.add(filePath);
+    try {
+      mySchemesManager.saveSchemes(mySchemesMap.values(), FILE_SPEC,mySchemeReaderWriter , RoamingType.PER_USER);
     }
-
-    JDOMUtil.updateFileSet(oldFiles,
-                           filePaths.toArray(new String[filePaths.size()]),
-                           documents.toArray(new Document[documents.size()]), "\n");
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
   }
 
-  private static EditorColorsScheme loadScheme(File file) throws InvalidDataException, JDOMException, IOException {
-    Document document = JDOMUtil.loadDocument(file);
-
-    if (document == null) throw new InvalidDataException();
-    Element root = document.getRootElement();
-
-    if (root == null || !SCHEME_NODE_NAME.equals(root.getName())) {
-      throw new InvalidDataException();
+  public void save() {
+    try {
+      saveAllSchemes();
     }
-
-    EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
-    scheme.readExternal(root);
-
-    return scheme;
-  }
-
-  private File[] getSchemeFiles() {
-    File colorsDir = getColorsDir(true);
-    if (colorsDir == null) {
-      return new File[0];
+    catch (IOException e) {
+      //ignore
     }
-
-    File[] files = colorsDir.listFiles(new FileFilter() {
-      public boolean accept(File file) {
-        return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), XML_EXT);
-      }
-    });
-    if (files == null) {
-      LOG.error("Cannot read directory: " + colorsDir.getAbsolutePath());
-      return new File[0];
-    }
-    return files;
   }
 
   private static File getColorsDir(boolean create) {
@@ -299,5 +294,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   public String getComponentName() {
     return "EditorColorsManagerImpl";
+  }
+
+  public SchemeReaderWriter<EditorColorsScheme> getSchemesProcessor() {
+    return mySchemeReaderWriter;
   }
 }

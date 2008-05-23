@@ -2,10 +2,8 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableComponent;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -13,7 +11,6 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +25,7 @@ import java.util.Map;
 
 @State(
   name="ProjectJdkTable",
+  roamingType = RoamingType.DISABLED,
   storages= {
     @Storage(
       id="other",
@@ -185,7 +183,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   }
 
   public Element getState() {
-    Element element = new Element("ProjectJdkTableImpl"); 
+    Element element = new Element("ProjectJdkTableImpl");
     for (Sdk jdk : myJdks) {
       final Element e = new Element(ELEMENT_JDK);
       try {

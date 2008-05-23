@@ -33,7 +33,7 @@ public class CvsRepositoryLocation implements RepositoryLocation {
   }
 
   public String toString() {
-    return myEnvironment + "|" + myModuleName;
+    return myEnvironment.getCvsRootAsString() + "|" + myModuleName;
   }
 
   public String toPresentableString() {

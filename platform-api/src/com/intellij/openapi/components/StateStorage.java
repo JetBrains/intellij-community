@@ -35,7 +35,6 @@ public interface StateStorage {
   <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
   boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException;
 
-
   @NotNull
   ExternalizationSession startExternalization();
   @NotNull

@@ -5,9 +5,9 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
