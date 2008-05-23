@@ -139,7 +139,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     if (!baseConstructors.isEmpty()) {
       List<GenerationInfo> constructors = new ArrayList<GenerationInfo>(baseConstructors.size());
-      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseConstructors.get(0).getContainingClass(), aClass, PsiSubstitutor.EMPTY);
+      final PsiClass superClass = aClass.getSuperClass();
+      assert superClass != null;
+      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       for (PsiMethod baseConstructor : baseConstructors) {
         if (substitutor != PsiSubstitutor.EMPTY) {
           baseConstructor = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor);
