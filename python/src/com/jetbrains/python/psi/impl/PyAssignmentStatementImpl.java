@@ -19,6 +19,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -55,10 +56,14 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return PyExpression.EMPTY_ARRAY;
   }
 
+  /**
+   * @return rightmost expression in statement, which is supposedly the assigned value, or null.
+   */
   @Nullable
   public PyExpression getAssignedValue() {
     PsiElement child = getLastChild();
     while (child != null && !(child instanceof PyExpression)) {
+      if (child instanceof PsiErrorElement) return null; // incomplete assignment operator can't be analyzed properly, bail out.
       child = child.getPrevSibling();
     }
     return (PyExpression)child;
