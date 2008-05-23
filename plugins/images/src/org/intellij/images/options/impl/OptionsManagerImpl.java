@@ -16,10 +16,7 @@
 package org.intellij.images.options.impl;
 
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jdom.Element;
@@ -31,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class OptionsManagerImpl extends OptionsManager implements NamedJDOMExternalizable, ApplicationComponent {
+final class OptionsManagerImpl extends OptionsManager implements NamedJDOMExternalizable, ApplicationComponent, RoamingTypeDisabled {
     @NonNls private static final String CONFIGURATION_NAME = "images.support";
     @NonNls private static final String NAME = "Images.OptionsManager";
     private Options options = new OptionsImpl();
