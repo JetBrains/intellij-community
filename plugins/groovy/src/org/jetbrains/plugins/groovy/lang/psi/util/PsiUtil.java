@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -575,7 +576,8 @@ public class PsiUtil {
       return true;
     }
     return expr instanceof GrReferenceExpression ||
-        expr instanceof GrIndexProperty;
+        expr instanceof GrIndexProperty ||
+        expr instanceof GrPropertySelection;
   }
 
   public static PsiType[] skipOptionalClosureParameters(int argsNum, GrClosureType closureType) {
