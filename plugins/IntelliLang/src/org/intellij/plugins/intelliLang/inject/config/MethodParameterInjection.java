@@ -234,7 +234,7 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     final String name = singleInfo != null
                         ? StringUtil.getShortName(className) + "." + singleInfo.methodName
                         : StringUtil.getShortName(className);
-    return "["+getInjectedLanguageId()+"] " + name + " ("+StringUtil.getPackageName(className)+")";
+    return /*"["+getInjectedLanguageId()+"] " +*/ name + " ("+StringUtil.getPackageName(className)+")";
   }
 
   public static String fixSignature(final String signature, final boolean parameterNames) {
