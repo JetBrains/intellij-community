@@ -7,7 +7,7 @@ import com.intellij.psi.xml.XmlText;
 /**
  * Filter for lexical nodes
  */
-final public class LexicalNodesFilter  implements NodeFilter {
+public final class LexicalNodesFilter  implements NodeFilter {
   private boolean careKeyWords;
   private boolean result;
 
