@@ -3,7 +3,8 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.RangeMarkerImpl;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 
 import java.util.ArrayList;
 
@@ -56,7 +57,7 @@ public class TemplateSegments {
 
   public void replaceSegmentAt(int index, int start, int end) {
     RangeMarker rangeMarker = mySegments.get(index);
-    ((RangeMarkerImpl)rangeMarker).invalidate();
+    ((DocumentEx)rangeMarker.getDocument()).removeRangeMarker((RangeMarkerEx)rangeMarker);
     Document doc = myEditor.getDocument();
     rangeMarker = doc.createRangeMarker(start, end);
     rangeMarker.setGreedyToLeft(true);
