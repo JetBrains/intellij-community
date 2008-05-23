@@ -134,6 +134,42 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project", "Invalid (1)", "Invalid (2)");
   }
 
+  public void testInvalidProjectWithModules() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1" + // invalid tag
+
+                     "<modules>" +
+                     "  <module>foo</module>" +
+                     "</modules>");
+
+    createModulePom("foo", "<groupId>test</groupId>" +
+                           "<artifactId>foo</artifactId>" +
+                           "<version>1</version>");
+
+    importProject();
+
+    assertModules("Invalid");
+  }
+
+  public void testNonPOMProjectWithModules() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>foo</module>" +
+                     "</modules>");
+
+    createModulePom("foo", "<groupId>test</groupId>" +
+                           "<artifactId>foo</artifactId>" +
+                           "<version>1</version>");
+
+    importProject();
+
+    assertModules("project", "foo");
+  }
+
   public void testInvalidRepositoryLayout() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

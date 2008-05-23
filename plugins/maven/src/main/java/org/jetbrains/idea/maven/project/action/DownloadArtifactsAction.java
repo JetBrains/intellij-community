@@ -18,7 +18,6 @@ public class DownloadArtifactsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
 
-    MavenImportToolWindow w = new MavenImportToolWindow(project, ProjectBundle.message("maven.downloading"));
     try {
       MavenArtifactDownloader.download(project);
     }

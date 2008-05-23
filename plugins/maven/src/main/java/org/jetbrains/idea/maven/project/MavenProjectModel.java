@@ -11,15 +11,13 @@ import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.BuildBase;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
+import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.ProjectId;
-import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.core.util.Tree;
+import org.jetbrains.idea.maven.core.util.*;
 import org.jetbrains.idea.maven.embedder.CustomExtensionManager;
 import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 
@@ -517,18 +515,61 @@ public class MavenProjectModel {
     }
 
     public List<String> getModulePaths() {
-      if (!isValid()) return Collections.emptyList();
-      return myMavenProjectHolder.getModulePaths(myProfiles);
+      return getModulePaths(myProfiles);
     }
 
     public List<String> getModulePaths(Collection<String> profiles) {
-      if (!isValid()) return Collections.emptyList();
-      return myMavenProjectHolder.getModulePaths(profiles);
+      Set<String> paths = collectAbsoluteModulePaths(profiles);
+      if (myMavenProjectHolder.getSortedProjects() == null) return new ArrayList<String>(paths);
+
+      List<String> sorted = new ArrayList<String>();
+      for (MavenProject each : myMavenProjectHolder.getSortedProjects()) {
+        String path = new Path(each.getFile().getPath()).getPath();
+        if (paths.contains(path)) sorted.add(path);
+      }
+      return sorted;
     }
+
+    private Set<String> collectAbsoluteModulePaths(Collection<String> profiles) {
+      String basePath = getDirectory() + File.separator;
+      Set<String> result = new LinkedHashSet<String>();
+      for (String relPath : collectRelativeModulePaths(profiles)) {
+        result.add(new Path(basePath + relPath).getPath());
+      }
+      return result;
+    }
+
+    private List<String> collectRelativeModulePaths(Collection<String> profiles) {
+      List<String> result = new ArrayList<String>();
+      Model model = getMavenProject().getModel();
+      addModulesToList(model.getModules(), result);
+      for (Profile profile : (List<Profile>)model.getProfiles()) {
+        if (profiles == null || profiles.contains(profile.getId())) {
+          addModulesToList(profile.getModules(), result);
+        }
+      }
+      return result;
+    }
+
+    private void addModulesToList(List moduleNames, List<String> result) {
+      for (String name : (List<String>)moduleNames) {
+        if (name.trim().length() == 0) continue;
+
+        // module name can be relative and contain either / of \\ separators
+
+        name = FileUtil.toSystemIndependentName(name);
+        if (!name.endsWith("/")) name += "/";
+        name += Constants.POM_XML;
+        //name = name.substring(0, name.length() - 1);
+        //}
+        result.add(name);
+      }
+    }
+
 
     public List<String> getAllProfiles() {
       if (!isValid()) return Collections.emptyList();
-      
+
       Set<String> result = new HashSet<String>();
       for (Profile profile : (List<Profile>)getMavenProject().getModel().getProfiles()) {
         result.add(profile.getId());
@@ -553,6 +594,7 @@ public class MavenProjectModel {
       }
       return result;
     }
+
     public List<Plugin> getPlugins() {
       if (!isValid()) return Collections.emptyList();
 
@@ -587,8 +629,8 @@ public class MavenProjectModel {
 
     @Nullable
     public String findPluginConfigurationValue(String groupId,
-                                                      String artifactId,
-                                                      String... nodeNames) {
+                                               String artifactId,
+                                               String... nodeNames) {
       Xpp3Dom node = findPluginConfigurationNode(groupId, artifactId, nodeNames);
       if (node == null) return null;
       return node.getValue();
@@ -596,9 +638,9 @@ public class MavenProjectModel {
 
     @Nullable
     public Xpp3Dom findPluginConfigurationNode(
-                                                      String groupId,
-                                                      String artifactId,
-                                                      String... nodeNames) {
+        String groupId,
+        String artifactId,
+        String... nodeNames) {
       Plugin plugin = findPlugin(groupId, artifactId);
       if (plugin == null) return null;
 
@@ -614,7 +656,7 @@ public class MavenProjectModel {
     }
 
     @Nullable
-    public Plugin findPlugin( String groupId, String artifactId) {
+    public Plugin findPlugin(String groupId, String artifactId) {
       for (Plugin each : getPlugins()) {
         if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) return each;
       }
