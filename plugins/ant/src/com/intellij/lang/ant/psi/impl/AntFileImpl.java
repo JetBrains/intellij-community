@@ -400,9 +400,35 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     if (name == null) {
       return null;
     }
+
+    AntProperty antProperty;
+
     synchronized (PsiLock.LOCK) {
-      return myProperties != null? myProperties.get(name) : null;
+      antProperty = myProperties != null ? myProperties.get(name) : null;
     }
+    
+    if (antProperty == null) {
+      antProperty = new Object() {
+        @Nullable
+        AntProperty searchImportedFiles(AntFile from) {
+          final AntProject antProject = from.getAntProject();
+          if (antProject != null) {
+            for (AntFile imported : antProject.getImportedFiles()) {
+              AntProperty prop = imported.getProperty(name);
+              if (prop == null) {
+                prop = searchImportedFiles(imported);
+              }
+              if (prop != null) {
+                return prop;
+              }
+            }
+          }
+          return null;
+        }
+      }.searchImportedFiles(this);
+    }
+    
+    return antProperty;
   }
 
   public void buildPropertiesIfNeeded() {

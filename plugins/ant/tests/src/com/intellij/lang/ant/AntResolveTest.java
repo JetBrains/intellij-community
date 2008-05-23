@@ -1,9 +1,13 @@
 package com.intellij.lang.ant;
 
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
+import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
@@ -209,6 +213,23 @@ public class AntResolveTest extends ResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
+  public void testAntFilePropertyWithContexts() throws Exception {
+    final AntPropertyReference refImporting = (AntPropertyReference)configureByFile("PropertyAntFileImporting.ant");
+    final AntFile importing = refImporting.getElement().getAntFile();
+
+    final VirtualFile vFile = importing.getVirtualFile();
+    assertTrue(vFile != null);
+    
+    final AntPropertyReference refImported = (AntPropertyReference)configureByFile("PropertyAntFileImported.ant", vFile.getParent());
+    final AntFile imported = refImported.getElement().getAntFile();
+
+    AntConfigurationBase.getInstance(getProject()).setContextFile(imported, importing);
+    importing.clearCaches(); // need this because imported file was created after the importing
+                                    
+    assertTrue(refImported.resolve() != null);
+    assertTrue(refImporting.resolve() != null);
+  }
+  
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ref.resolve();

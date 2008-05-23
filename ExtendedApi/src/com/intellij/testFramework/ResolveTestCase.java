@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -15,6 +16,10 @@ public abstract class ResolveTestCase extends PsiTestCase {
   protected static final String MARKER = "<ref>";
 
   protected PsiReference configureByFile(@NonNls String filePath) throws Exception{
+    return configureByFile(filePath, null);
+  }
+  
+  protected PsiReference configureByFile(@NonNls String filePath, @Nullable VirtualFile parentDir) throws Exception{
     final String fullPath = getTestDataPath() + filePath;
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + filePath + " not found", vFile);
@@ -23,15 +28,19 @@ public abstract class ResolveTestCase extends PsiTestCase {
 
     final String fileName = vFile.getName();
 
-    return configureByFileText(fileText, fileName);
+    return configureByFileText(fileText, fileName, parentDir);
   }
 
   protected PsiReference configureByFileText(String fileText, String fileName) throws Exception {
+    return configureByFileText(fileText, fileName, null);
+  }
+  
+  protected PsiReference configureByFileText(String fileText, String fileName, @Nullable final VirtualFile parentDir) throws Exception {
     int offset = fileText.indexOf(MARKER);
     assertTrue(offset >= 0);
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());
 
-    myFile = createFile(fileName, fileText);
+    myFile = parentDir == null? createFile(myModule, fileName, fileText) : createFile(myModule, parentDir, fileName, fileText);
     PsiReference ref = myFile.findReferenceAt(offset);
 
     assertNotNull(ref);
