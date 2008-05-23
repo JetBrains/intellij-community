@@ -55,6 +55,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.IncorrectOperationException;
@@ -139,6 +140,7 @@ import java.util.Map;
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).cleanupForNextTest();
     if (ourProject != null) {
       UndoManager.getInstance(ourProject).dropHistory();
+      ((PsiManagerEx)getPsiManager()).getFileManager().cleanupForNextTest();
     }
 
     resetAllFields();
