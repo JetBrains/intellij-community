@@ -32,7 +32,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     if (o instanceof PsiMember) {
       final boolean isClass = o instanceof PsiClass;
       if (qualifierType != null) {
-        if (isClass && type == CompletionType.SMART) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
+        if (!(o instanceof PsiField) && type == CompletionType.SMART) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
         if (!isClass && type == CompletionType.BASIC) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
         return StatisticsInfo.EMPTY;
       }

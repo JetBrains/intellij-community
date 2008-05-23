@@ -6,7 +6,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiDocCommentOwner;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,13 +14,19 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PreferAccessibleWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
+  public MyEnum weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
     final Object object = item.getObject();
-    if (object instanceof PsiMember) {
-      final PsiMember member = (PsiMember)object;
-      if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, location.getCompletionParameters().getPosition(), null)) return -2;
+    if (object instanceof PsiDocCommentOwner) {
+      final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
+      if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, location.getCompletionParameters().getPosition(), null)) return MyEnum.INACCESSIBLE;
+      if (member.isDeprecated()) return MyEnum.DEPRECATED;
     }
+    return MyEnum.NORMAL;
+  }
 
-    return 0;
+  private enum MyEnum {
+    INACCESSIBLE,
+    DEPRECATED,
+    NORMAL
   }
 }

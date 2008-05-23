@@ -4,14 +4,21 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+
+import javax.swing.*;
+import java.util.Arrays;
 
 public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore {
   @NonNls public static final String CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup";
@@ -93,7 +100,9 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
 
     if (project != null && editor != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
-      if (LookupManager.getInstance(project).getActiveLookup() != null) {
+      final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).getActiveLookup();
+      if (lookup != null) {
+        dumpLookupElementWeights(lookup);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
       }
       actionPerformedImpl(project, editor);
@@ -109,6 +118,20 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
                                                       },
                                                       getCommandName(),
                                                       null);
+      }
+    }
+  }
+
+  private static void dumpLookupElementWeights(final LookupImpl lookup) {
+    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      final ListModel model = lookup.getList().getModel();
+      final int count = lookup.getPreferredItemsCount();
+      for (int i = 0; i < model.getSize(); i++) {
+        final LookupItem item = (LookupItem)model.getElementAt(i);
+        System.out.println(item.getLookupString() + Arrays.toString(item.getUserData(LookupItem.WEIGHT)));
+        if (i == count - 1) {
+          System.out.println("------------");
+        }
       }
     }
   }

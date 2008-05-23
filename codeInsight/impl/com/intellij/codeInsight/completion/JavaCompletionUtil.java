@@ -15,7 +15,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiElementPattern;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.html.HtmlTag;
@@ -75,6 +76,8 @@ public class JavaCompletionUtil {
       return getExpectedTypes(location.getCompletionParameters());
     }
   });
+  private static final PsiElementPattern.Capture<PsiElement> LEFT_PAREN = psiElement(JavaTokenType.LPARENTH).andOr(psiElement().withParent(
+      PsiExpressionList.class), psiElement().afterLeaf(".", PsiKeyword.NEW));
 
   @Nullable
   public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
@@ -538,13 +541,19 @@ public class JavaCompletionUtil {
   }
 
   public static void initOffsets(final PsiFile file, final Project project, final OffsetMap offsetMap){
-    final int selectionEndOffset = offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+    int selectionEndOffset = offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
 
     PsiElement element = file.findElementAt(selectionEndOffset);
     if (element == null) return;
 
+    if (LEFT_PAREN.accepts(element)) {
+      selectionEndOffset--;
+      element = file.findElementAt(selectionEndOffset);
+      if (element == null) return;
+    }
+
     final PsiReference reference = file.findReferenceAt(selectionEndOffset);
-    if(reference != null){
+    if(reference != null) {
       if(reference instanceof PsiJavaCodeReferenceElement){
         offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
       }
@@ -575,21 +584,16 @@ public class JavaCompletionUtil {
       element = file.findElementAt(element.getTextRange().getEndOffset());
     }
 
-    if (element instanceof PsiJavaToken
-        && ((PsiJavaToken)element).getTokenType() == JavaTokenType.LPARENTH){
-
-      if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(selectionEndOffset - 1).getText())
-        || PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(JavaTokenType.NEW_KEYWORD)).accepts(element)) {
-        offsetMap.addOffset(LPAREN_OFFSET, element.getTextRange().getStartOffset());
-        PsiElement list = element.getParent();
-        PsiElement last = list.getLastChild();
-        if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH){
-          offsetMap.addOffset(RPAREN_OFFSET, last.getTextRange().getStartOffset());
-        }
-
-
-        offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset());
+    if (LEFT_PAREN.accepts(element)) {
+      offsetMap.addOffset(LPAREN_OFFSET, element.getTextRange().getStartOffset());
+      PsiElement list = element.getParent();
+      PsiElement last = list.getLastChild();
+      if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH) {
+        offsetMap.addOffset(RPAREN_OFFSET, last.getTextRange().getStartOffset());
       }
+
+
+      offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset());
     }
   }
 
