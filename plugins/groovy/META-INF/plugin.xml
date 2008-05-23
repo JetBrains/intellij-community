@@ -20,7 +20,8 @@
   <name>JetGroovy</name>
   <description>Plugin for Groovy language support</description>
   <version>VERSION</version>
-  <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.</vendor>
+  <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
+  </vendor>
   <idea-version since-build="7821" until-build="7999"/>
   <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
 
@@ -158,6 +159,11 @@
             text="Rename To Groovy" description="Rename Java File to Groovy">
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </action>
+    <action id="org.jetbrains.plugins.groovy.actions.generate.CostructorGenerateAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.CostructorGenerateAction"
+            text="Constructor" description="Generates constructor">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
 
     <group id="Grails" class="org.jetbrains.plugins.grails.actions.GrailsGroup"
            text="Grails">
@@ -180,8 +186,8 @@
               text="Grails TagLib" description="Create new Grails tagLib">
       </action>
       <action id="Grails.GSP" class="org.jetbrains.plugins.grails.actions.NewGspAction"
-            text="GSP" description="Create new Groovy Server Page">
-    </action>
+              text="GSP" description="Create new Groovy Server Page">
+      </action>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 

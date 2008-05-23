@@ -45,12 +45,11 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -72,10 +71,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import javax.swing.*;
 import java.util.*;
@@ -854,6 +855,43 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   public PsiElement getOriginalElement() {
     return PsiImplUtil.getOriginalElement(this, getContainingFile());
+  }
+
+  public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
+    final GrTypeDefinitionBody body = getBody();
+
+    final PsiElement lBrace = body.getLBrace();
+
+    if (lBrace == null) throw new IncorrectOperationException("L brace unfound");
+    PsiElement anchor = null;
+
+    if (psiElement instanceof GrMethod && ((GrMethod) psiElement).isConstructor()) {
+
+      final GrMembersDeclaration[] memberDeclarations = body.getMemberDeclarations();
+
+      for (GrMembersDeclaration memberDeclaration : memberDeclarations) {
+        if (memberDeclaration instanceof GrMethodDefinitionImpl) {
+          anchor = memberDeclaration.getPrevSibling();
+          break;
+
+        } else if (memberDeclaration instanceof GrVariableDeclaration) {
+          anchor = memberDeclaration.getNextSibling();
+        }
+      }
+    } else {
+      anchor = lBrace.getNextSibling();
+      assert psiElement instanceof GroovyPsiElement;
+    }
+
+    if (GroovyElementTypes.mSEMI.equals(anchor.getNode().getElementType()))
+      anchor = anchor.getNextSibling();
+
+    final PsiElement lineTerminator = GroovyPsiElementFactory.getInstance(getProject()).createLineTerminator(1);
+
+    body.getNode().addChild(psiElement.getNode(), anchor.getNode());
+    body.getNode().addChild(lineTerminator.getNode(), psiElement.getNode());
+
+    return psiElement;
   }
 
   public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore) throws IncorrectOperationException {

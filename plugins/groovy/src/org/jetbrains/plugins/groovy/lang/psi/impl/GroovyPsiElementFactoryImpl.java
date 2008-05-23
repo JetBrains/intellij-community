@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -48,8 +49,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -137,7 +142,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     PsiFile file = createGroovyFile(text.toString());
     GrTopStatement[] topStatements = ((GroovyFileBase) file).getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
-      throw new RuntimeException("Invalid arguments, text = " + text.toString()); 
+      throw new RuntimeException("Invalid arguments, text = " + text.toString());
     }
     return (GrVariableDeclaration) topStatements[0];
   }
@@ -287,6 +292,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     return createReferenceExpressionFromText("a" + newDot + "b").getDotToken();
   }
 
+  public GrConstructorDefinitionImpl createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
+    final GrMethod method = createMethodFromText(constructorName, null, paramTypes, paramNames, body);
+
+    GroovyFileBase file = createDummyFile("class " + constructorName + "{" + method.getText() + "}");
+    GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
+    assert defintion != null && defintion instanceof GrClassDefinition;
+    final PsiMethod constructor = ((GrClassDefinition) defintion).getMethods()[0];
+    assert constructor instanceof GrConstructorDefinitionImpl;
+    return ((GrConstructorDefinitionImpl) constructor);
+  }
+
   public GrMethod createMethodFromText(@NotNull String methodText) {
     GroovyFileBase file = createDummyFile(methodText);
     GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
@@ -412,18 +428,57 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
 
-  public GrMethod createMethodFromText(String name, String type, String[] paramTypes) {
+  private GrMethod createMethodFromText(String name, String type, String[] paramTypes, String[] paramNames, String body) {
     StringBuilder builder = new StringBuilder();
-    builder.append("def ").append(type).append(" ").append(name).append("(");
+    builder.append("def ");
+
+    //This is for constructor creation
+    if (type != null) {
+      builder.append(type);
+      builder.append(" ");
+    }
+
+    builder.append(name);
+    builder.append("(");
+
+    assert paramNames.length == paramTypes.length;
     for (int i = 0; i < paramTypes.length; i++) {
       String paramType = paramTypes[i];
 
       if (i > 0) builder.append(", ");
 
-      builder.append(paramType).append(" ").append(QuickfixUtil.shortenType(paramType).toLowerCase()).append(i);
+      builder.append(paramType);
+      builder.append(" ");
+      builder.append(paramNames[i]);
     }
 
-    builder.append(")").append("{}");
+    builder.append(")");
+    if (body != null) {
+      builder.append(body);
+    } else {
+      builder.append("{");
+      builder.append("}");
+    }
+
     return createMethodFromText(builder.toString());
+  }
+
+  public GrMethod createMethodFromText(String name, @Nullable String type, String[] paramTypes) {
+    PsiType psiType;
+    List<PsiType> res = new ArrayList<PsiType>();
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
+
+    for (int i = 0; i < paramTypes.length; i++) {
+      String paramType = paramTypes[i];
+
+      try {
+        psiType = factory.createTypeElement(paramType).getType();
+      } catch (IncorrectOperationException e) {
+        psiType = PsiType.getJavaLangObject(PsiManager.getInstance(myProject), myProject.getAllScope());
+      }
+      res.add(psiType);
+    }
+
+    return createMethodFromText(name, type, paramTypes, QuickfixUtil.getMethodArgumentsNames(myProject, res.toArray(PsiType.EMPTY_ARRAY)), null);
   }
 }
