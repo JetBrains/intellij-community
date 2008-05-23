@@ -43,7 +43,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
           }
         });
     extend(
-        CompletionType.BASIC, psiElement(PsiIdentifier.class).withParent(PsiField.class), new CompletionProvider<CompletionParameters>() {
+        CompletionType.BASIC,
+        psiElement(PsiIdentifier.class).withParent(PsiField.class).andNot(INSIDE_TYPE_PARAMS_PATTERN),
+        new CompletionProvider<CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {

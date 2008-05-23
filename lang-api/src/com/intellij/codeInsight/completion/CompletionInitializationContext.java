@@ -45,8 +45,23 @@ public class CompletionInitializationContext {
       myOffsetMap.addOffset(IDENTIFIER_END_OFFSET,
                             reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
     } else {
-      myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, selectionEndOffset);
+      final String text = file.getText();
+      int idEnd = selectionEndOffset;
+      while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
+        idEnd++;
+      }
+      myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, idEnd);
     }
+  }
+
+  private static boolean isWord(final String text) {
+    boolean hasLetters = false;
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (!Character.isUnicodeIdentifierPart(c)) return false;
+      if (Character.isLetter(c)) hasLetters = true;
+    }
+    return hasLetters;
   }
 
   public void setDummyIdentifier(@NotNull @NonNls final String dummyIdentifier) {
