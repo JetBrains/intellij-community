@@ -7,17 +7,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.model.BuildBase;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.Profile;
-import org.apache.maven.model.Model;
+import org.apache.maven.model.*;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.util.*;
+import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.Path;
+import org.jetbrains.idea.maven.core.util.ProjectId;
+import org.jetbrains.idea.maven.core.util.Tree;
 import org.jetbrains.idea.maven.embedder.CustomExtensionManager;
 import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 
@@ -58,7 +59,6 @@ public class MavenProjectModel {
   private void resolveIntermoduleDependencies() {
     visit(new PlainNodeVisitor() {
       public void visit(Node node) {
-        if (!node.isValid()) return;
         for (Artifact each : node.getDependencies()) {
           VirtualFile pomFile = myProjectIdToFileMapping.get(new ProjectId(each));
           if (pomFile != null) {
@@ -453,6 +453,51 @@ public class MavenProjectModel {
       return myMavenProjectHolder.getProjectId();
     }
 
+    public String getPackaging() {
+      String result = getMavenProject().getPackaging();
+      return result == null ? "jar" : result;
+    }
+
+    public String getFinalName() {
+      if (!isValid()) return getMavenId().artifactId + ".jar";
+      return getMavenProject().getBuild().getFinalName();
+    }
+
+    public String getBuildDirectory() {
+      if (!isValid()) return getDirectory() + File.separator + "target";
+      return getMavenProject().getBuild().getDirectory();
+    }
+
+    public String getOutputDirectory() {
+      if (!isValid()) return getDirectory() + File.separator + "target/classes";
+      return getMavenProject().getBuild().getOutputDirectory();
+    }
+
+    public String getTestOutputDirectory() {
+      if (!isValid()) return getDirectory() + File.separator + "target/test-classes";
+      return getMavenProject().getBuild().getTestOutputDirectory();
+    }
+
+    public List<String> getCompileSourceRoots() {
+      if (!isValid()) return Collections.emptyList();
+      return getMavenProject().getCompileSourceRoots();
+    }
+
+    public List<String> getTestCompileSourceRoots() {
+      if (!isValid()) return Collections.emptyList();
+      return getMavenProject().getTestCompileSourceRoots();
+    }
+
+    public List<Resource> getResources() {
+      if (!isValid()) return Collections.emptyList();
+      return getMavenProject().getResources();
+    }
+
+    public List<Resource> getTestResources() {
+      if (!isValid()) return Collections.emptyList();
+      return getMavenProject().getTestResources();
+    }
+
     public boolean isIncluded() {
       return myIncluded;
     }
@@ -579,12 +624,49 @@ public class MavenProjectModel {
 
     public List<Artifact> getDependencies() {
       if (!isValid()) return Collections.emptyList();
-      return ProjectUtil.extractDependencies(this);
+
+      Map<String, Artifact> projectIdToArtifact = new LinkedHashMap<String, Artifact>();
+
+      for (Artifact artifact : (Collection<Artifact>)getMavenProject().getArtifacts()) {
+        if (!isSupportedArtifact(artifact)) continue;
+
+        String projectId = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier();
+
+        Artifact existing = projectIdToArtifact.get(projectId);
+        if (existing == null ||
+            new DefaultArtifactVersion(existing.getVersion()).compareTo(new DefaultArtifactVersion(artifact.getVersion())) < 0) {
+          projectIdToArtifact.put(projectId, artifact);
+        }
+      }
+      return new ArrayList<Artifact>(projectIdToArtifact.values());
     }
 
     public List<Artifact> getExportableDependencies() {
-      if (!isValid()) return Collections.emptyList();
-      return ProjectUtil.extractExportableDependencies(this);
+      List<Artifact> result = new ArrayList<Artifact>();
+
+      for (Artifact each : getDependencies()) {
+        if (isExportableDependency(each)) result.add(each);
+      }
+
+      return result;
+    }
+
+    private static boolean isSupportedArtifact(Artifact a) {
+      String t = a.getType();
+      return t.equalsIgnoreCase(Constants.JAR_TYPE) ||
+             t.equalsIgnoreCase("test-jar") ||
+             t.equalsIgnoreCase("ejb") ||
+             t.equalsIgnoreCase("ear") ||
+             t.equalsIgnoreCase("sar") ||
+             t.equalsIgnoreCase("war") ||
+             t.equalsIgnoreCase("ejb-client");
+    }
+
+    public boolean isExportableDependency(Artifact a) {
+      if (a.isOptional()) return false;
+
+      String scope = a.getScope();
+      return scope.equals(Artifact.SCOPE_COMPILE) || scope.equals(Artifact.SCOPE_RUNTIME);
     }
 
     public List<MavenId> getPluginsIds() {
@@ -661,6 +743,11 @@ public class MavenProjectModel {
         if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) return each;
       }
       return null;
+    }
+
+    public Properties getProperties() {
+      if (!isValid()) return new Properties();
+      return getMavenProject().getProperties();
     }
   }
 

@@ -61,7 +61,7 @@ public class ModuleConfigurator {
   }
 
   private void configFolders() {
-    new FoldersConfigurator(myMavenProject.getMavenProject(), mySettings, myModel).config();
+    new FoldersConfigurator(myMavenProject, mySettings, myModel).config();
   }
 
   private void configDependencies() {
@@ -70,8 +70,7 @@ public class ModuleConfigurator {
 
       if (isIgnored(id)) continue;
 
-      boolean isExportable = ProjectUtil.isExportableDependency(artifact);
-
+      boolean isExportable = myMavenProject.isExportableDependency(artifact);
       MavenProjectModel.Node p = myMavenModel.findProject(new ProjectId(artifact));
       if (p != null) {
         myModel.createModuleDependency(p.getModuleName(), isExportable);

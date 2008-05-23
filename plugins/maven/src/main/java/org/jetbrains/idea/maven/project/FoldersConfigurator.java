@@ -7,9 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.embedder.EmbedderFactory;
 import org.jetbrains.idea.maven.core.util.Path;
@@ -18,7 +16,7 @@ import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import java.io.File;
 
 public class FoldersConfigurator {
-  private MavenProject myMavenProject;
+  private MavenProjectModel.Node myMavenProject;
   private MavenImporterSettings myPrefs;
   private RootModelAdapter myModel;
 
@@ -61,14 +59,15 @@ public class FoldersConfigurator {
 
     VirtualFile f = manager.findPomForModule(m);
     if (f == null) return;
-    MavenProject project = r.readBare(f.getPath());
+    MavenProjectModel.Node project = manager.getExistingProject(f);
+    if (project == null) return;
 
     RootModelAdapter a = new RootModelAdapter(m);
     new FoldersConfigurator(project, settings, a).configFoldersUnderTargetDir();
     a.commit();
   }
 
-  public FoldersConfigurator(MavenProject mavenProject, MavenImporterSettings settings, RootModelAdapter model) {
+  public FoldersConfigurator(MavenProjectModel.Node mavenProject, MavenImporterSettings settings, RootModelAdapter model) {
     myMavenProject = mavenProject;
     myPrefs = settings;
     myModel = model;
@@ -81,36 +80,35 @@ public class FoldersConfigurator {
   }
 
   private void configSourceFolders() {
-    for (Object o : myMavenProject.getCompileSourceRoots()) {
-      myModel.addSourceFolder((String)o, false);
+    for (String o : myMavenProject.getCompileSourceRoots()) {
+      myModel.addSourceFolder(o, false);
     }
-    for (Object o : myMavenProject.getTestCompileSourceRoots()) {
-      myModel.addSourceFolder((String)o, true);
+    for (String o : myMavenProject.getTestCompileSourceRoots()) {
+      myModel.addSourceFolder(o, true);
     }
 
-    for (Object o : myMavenProject.getResources()) {
-      myModel.addSourceFolder(((Resource)o).getDirectory(), false);
+    for (Resource o : myMavenProject.getResources()) {
+      myModel.addSourceFolder(o.getDirectory(), false);
     }
-    for (Object o : myMavenProject.getTestResources()) {
-      myModel.addSourceFolder(((Resource)o).getDirectory(), true);
+    for (Resource each : myMavenProject.getTestResources()) {
+      myModel.addSourceFolder(each.getDirectory(), true);
     }
   }
 
   private void configOutputFolders() {
-    Build build = myMavenProject.getBuild();
-
     if (myPrefs.isUseMavenOutput()) {
-      myModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
+      myModel.useModuleOutput(myMavenProject.getOutputDirectory(),
+                              myMavenProject.getTestOutputDirectory());
     }
     else {
       myModel.useProjectOutput();
-      myModel.addExcludedFolder(build.getOutputDirectory());
-      myModel.addExcludedFolder(build.getTestOutputDirectory());
+      myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
+      myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
     }
   }
 
   private void configFoldersUnderTargetDir() {
-    File targetDir = new File(myMavenProject.getBuild().getDirectory());
+    File targetDir = new File(myMavenProject.getBuildDirectory());
 
     for (File f : getChildren(targetDir)) {
       if (!f.isDirectory()) continue;

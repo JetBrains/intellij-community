@@ -106,7 +106,7 @@ public class ProjectConfigurator {
     myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
       public void visit(MavenProjectModel.Node node) {
         Module m = createModule(node);
-        if (!node.isValid()) return;
+        //if (!node.isValid()) return;
         modules.put(node, m);
       }
     });

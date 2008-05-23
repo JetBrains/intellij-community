@@ -547,10 +547,6 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public String getId() {
-      if (!project.isValid()) {
-        return NavigatorBundle.message("node.pom.invalid");
-      }
-
       final String name = project.getProjectName();
       if (!StringUtil.isEmptyOrSpaces(name)) {
         return name;
