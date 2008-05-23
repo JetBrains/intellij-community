@@ -216,6 +216,7 @@
       <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction"/>
       <separator/>
       <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
+      <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
       <separator/>
       <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
       <separator/>
