@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 
 /**
  * @author yole
@@ -76,6 +77,11 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
   public void testFromInitPyImportFunction() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
+  }
+
+  public void testTransitiveImport() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyTargetExpression);
   }
 
   private PsiElement doResolve() throws Exception {

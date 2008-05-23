@@ -87,6 +87,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       if (!processor.execute(e, substitutor)) return false;
     }
 
+    for(PyFromImportStatement e: getFromImports()) {
+      if (e == lastParent) continue;
+      if (!e.processDeclarations(processor, substitutor, null, this)) return false;
+    }
+
     // if we're in a stmt (not place itself), try buitins:
     if (lastParent != null) {
       final String fileName = getName();
@@ -146,6 +151,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       }
     }
     return ret;
+  }
+  
+  public List<PyFromImportStatement> getFromImports() {
+    final List<PyFromImportStatement> result = new ArrayList<PyFromImportStatement>();
+    accept(new PyRecursiveElementVisitor() {
+      public void visitPyElement(final PyElement node) {
+        super.visitPyElement(node);
+        if (PyFromImportStatement.class.isInstance(node)) {
+          //noinspection unchecked
+          result.add((PyFromImportStatement)node);
+        }
+      }
+    });
+    return result;
   }
 
   private <T> List<T> getTopLevelItems(final IElementType elementType, final Class itemClass) {
