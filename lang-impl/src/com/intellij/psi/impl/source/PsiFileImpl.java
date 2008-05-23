@@ -61,7 +61,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private final Object myStubLock = new Object();
   private WeakReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
-  protected volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
+  private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
 
   protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
     this(provider);
@@ -273,7 +273,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     clearCaches();
     myViewProvider.beforeContentsSynchronized();
     setTreeElement(null);
-    myStub = null;
+    synchronized (myStubLock) {
+      myStub = null;
+    }
   }
 
   public void clearCaches() {}
@@ -524,7 +526,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     synchronized (myStubLock) {
       StubTree stubHolder = derefStub();
       if (stubHolder == null) {
-        if (getTreeElement() == null) {
+        if (getTreeElementNoLock() == null) {
 
           final VirtualFile vFile = getVirtualFile();
           stubHolder = StubTree.readFromVFile(vFile, getProject());
@@ -538,9 +540,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
+  @Nullable
   private StubTree derefStub() {
-    StubTree stubHolder = myStub != null ? myStub.get() : null;
-    return stubHolder;
+    return myStub != null ? myStub.get() : null;
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
