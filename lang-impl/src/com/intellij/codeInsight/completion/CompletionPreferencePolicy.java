@@ -23,7 +23,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   public CompletionPreferencePolicy(String prefix, final CompletionParameters parameters) {
     myParameters = parameters;
-    myLocation = new CompletionLocation(myParameters.getCompletionType(), prefix, myParameters);
+    myLocation = new CompletionLocation(prefix, myParameters);
   }
 
   public void setPrefix(String prefix) {

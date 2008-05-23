@@ -3,6 +3,7 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -44,5 +45,18 @@ public class ExpectedTypesGetter implements ContextGetter{
       }
     }
     return result.toArray(new PsiType[result.size()]);
+  }
+
+  public static PsiType[] getExpectedTypesWithoutWildcards(final PsiElement context) {
+    PsiType[] superResult = getExpectedTypes(context);
+    if (superResult.length == 0) return PsiType.EMPTY_ARRAY;
+
+    PsiType[] result = new PsiType[superResult.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = JavaCompletionUtil.eliminateWildcards((PsiType) superResult[i]);
+
+    }
+
+    return result;
   }
 }

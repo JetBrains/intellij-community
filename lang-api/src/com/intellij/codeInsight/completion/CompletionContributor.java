@@ -5,16 +5,14 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,11 +33,7 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
   public boolean fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       final ProcessingContext context = new ProcessingContext();
-      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          return pair.first.accepts(parameters.getPosition(), context);
-        }
-      }).booleanValue()) {
+      if (isPatternSuitable(pair.first, parameters, context)) {
         if (!pair.second.addCompletionVariants(parameters, context, result)) return false;
       }
     }

@@ -4,6 +4,12 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.util.ProcessingContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+
 /**
  * @author peter
  */
@@ -20,4 +26,13 @@ public abstract class AbstractCompletionContributor<Params extends CompletionPar
    * @see CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName, CompletionParameters, AbstractCompletionContributor , com.intellij.util.Consumer)
    */
   public abstract boolean fillCompletionVariants(Params parameters, CompletionResultSet result);
+
+  protected static boolean isPatternSuitable(final ElementPattern<? extends PsiElement> pattern, final CompletionParameters parameters,
+                                             final ProcessingContext context) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return pattern.accepts(parameters.getPosition(), context);
+      }
+    }).booleanValue();
+  }
 }

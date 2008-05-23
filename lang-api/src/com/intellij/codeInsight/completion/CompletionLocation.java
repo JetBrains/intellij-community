@@ -11,13 +11,10 @@ import com.intellij.openapi.util.UserDataHolderBase;
  * @author peter
  */
 public class CompletionLocation extends UserDataHolderBase {
-  private final CompletionType myCompletionType;
   private String myPrefix;
   private final CompletionParameters myCompletionParameters;
 
-  public CompletionLocation(final CompletionType completionType, final String prefix,
-                                    final CompletionParameters completionParameters) {
-    myCompletionType = completionType;
+  public CompletionLocation(final String prefix, final CompletionParameters completionParameters) {
     myPrefix = prefix;
     myCompletionParameters = completionParameters;
   }
@@ -35,7 +32,7 @@ public class CompletionLocation extends UserDataHolderBase {
   }
 
   public CompletionType getCompletionType() {
-    return myCompletionType;
+    return myCompletionParameters.getCompletionType();
   }
 
   public Project getProject() {

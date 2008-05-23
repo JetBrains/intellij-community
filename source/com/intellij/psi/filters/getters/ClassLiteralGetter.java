@@ -25,7 +25,7 @@ public class ClassLiteralGetter implements ContextGetter {
     myBaseGetter = baseGetter;
   }
 
-  public Object[] get(PsiElement context, CompletionContext completionContext) {
+  public LookupElement<PsiExpression>[] get(PsiElement context, CompletionContext completionContext) {
     final List<LookupElement<PsiExpression>> result = new ArrayList<LookupElement<PsiExpression>>();
     for (final Object element : myBaseGetter.get(context, completionContext)) {
       if (element instanceof PsiClassType) {
@@ -57,7 +57,7 @@ public class ClassLiteralGetter implements ContextGetter {
       }
     }
 
-    return result.toArray(new Object[result.size()]);
+    return result.toArray(new LookupElement[result.size()]);
   }
 
   private static void createLookupElement(@Nullable final PsiType type, final PsiElement context, final int priority, final List<LookupElement<PsiExpression>> list) {

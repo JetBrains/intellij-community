@@ -26,7 +26,7 @@ public class MembersGetter implements ContextGetter{
     myBaseGetter = baseGetter;
   }
 
-  public Object[] get(PsiElement context, CompletionContext completionContext){
+  public PsiElement[] get(PsiElement context, CompletionContext completionContext){
     final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(new OrFilter(
       new ClassFilter(PsiCompiledElement.class, false),
       new ModifierFilter(PsiModifier.PRIVATE, false)
@@ -38,7 +38,7 @@ public class MembersGetter implements ContextGetter{
       final PsiClass psiClass;
       final ElementFilter filter;
       if (element instanceof PsiClass) {
-        psiClass = (PsiClass)context;
+        psiClass = (PsiClass)element;
         psiClass.processDeclarations(processor, ResolveState.initial(), null, context);
         filter = new AssignableFromFilter(JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass, PsiSubstitutor.EMPTY));
       }

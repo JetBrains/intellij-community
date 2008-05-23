@@ -29,7 +29,13 @@ public abstract class CompletionService {
   public <Params extends CompletionParameters, T extends AbstractCompletionContributor<Params>> boolean getVariantsFromContributors(
       ExtensionPointName<T> contributorsEP,
       Params parameters, @Nullable T from, Consumer<LookupElement> consumer) {
-    final T[] contributors = Extensions.getExtensions(contributorsEP);
+    return getVariantsFromContributors(Extensions.getExtensions(contributorsEP), parameters, from, consumer);
+  }
+
+  public <Params extends CompletionParameters, T extends AbstractCompletionContributor<Params>> boolean getVariantsFromContributors(final T[] contributors,
+                                                                                                                                    final Params parameters,
+                                                                                                                                    final T from,
+                                                                                                                                    final Consumer<LookupElement> consumer) {
     final CompletionResultSet result = createResultSet(parameters, consumer);
     for (int i = Arrays.asList(contributors).indexOf(from) + 1; i < contributors.length; i++) {
       if (!contributors[i].fillCompletionVariants(parameters, result)) {

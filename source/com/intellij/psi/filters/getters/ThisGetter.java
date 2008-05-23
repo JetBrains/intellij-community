@@ -17,6 +17,10 @@ import java.util.List;
  */
 public class ThisGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext) {
+    return getThisExpressionVariants(context).toArray();
+  }
+
+  public static List<PsiExpression> getThisExpressionVariants(PsiElement context) {
     boolean first = true;
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
@@ -39,6 +43,6 @@ public class ThisGetter implements ContextGetter{
       }
       context = context.getContext();
     }
-    return expressions.toArray();
+    return expressions;
   }
 }
