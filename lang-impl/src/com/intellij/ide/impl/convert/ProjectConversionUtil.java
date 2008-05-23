@@ -18,8 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -43,6 +43,8 @@ public class ProjectConversionUtil {
 
   public static boolean convertSilently(String projectFilePath, ConversionListener listener) {
     try {
+      if (new File(projectFilePath).isDirectory()) return true;
+
       Element versionComponent = getVersionComponent(projectFilePath);
       if (versionComponent != null && isConverted(versionComponent)) return true;
 
