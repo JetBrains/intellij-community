@@ -61,7 +61,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myEventsHandling = false;
   private boolean myAssertWriteAccess = true;
   private static final Key<Boolean> DOING_BULK_UPDATE = Key.create("DoingBulkRefromat");
-  private static DocumentBulkUpdateListener ourBulkChangePublisher = null;
 
 
   private DocumentImpl() {
@@ -701,11 +700,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  private static class DocumentBulkUpdateListenerHolder {
+    private static final DocumentBulkUpdateListener ourBulkChangePublisher =
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentBulkUpdateListener.TOPIC);
+  }
+
   private static DocumentBulkUpdateListener getPublisher() {
-    if (ourBulkChangePublisher == null) {
-      ourBulkChangePublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentBulkUpdateListener.TOPIC);
-    }
-    return ourBulkChangePublisher;
+    return DocumentBulkUpdateListenerHolder.ourBulkChangePublisher;
   }
 }
 

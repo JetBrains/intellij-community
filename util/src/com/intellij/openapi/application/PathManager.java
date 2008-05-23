@@ -42,7 +42,6 @@ public class PathManager {
   @NonNls private static String ourSystemPath;
   @NonNls private static String ourConfigPath;
   @NonNls private static String ourPluginsPath;
-  @NonNls private static String ourPreinstalledPluginsPath;
 
   @NonNls private static final String FILE = "file";
   @NonNls private static final String JAR = "jar";
@@ -214,12 +213,13 @@ public class PathManager {
     return getConfigPathWithoutDialog() + File.separator + OPTIONS_FOLDER;
   }
 
-  public static String getPreinstalledPluginsPath() {
-    if (ourPreinstalledPluginsPath == null) {
-      ourPreinstalledPluginsPath = getHomePath() + File.separatorChar + PLUGINS_DIRECTORY;
-    }
+  private static class StringHolder {
+    private static final String ourPreinstalledPluginsPath = getHomePath() + File.separatorChar + PLUGINS_DIRECTORY;
+  }
 
-    return ourPreinstalledPluginsPath;
+  public static String getPreinstalledPluginsPath() {
+
+    return StringHolder.ourPreinstalledPluginsPath;
   }
 
   public static String getPluginsPath() {

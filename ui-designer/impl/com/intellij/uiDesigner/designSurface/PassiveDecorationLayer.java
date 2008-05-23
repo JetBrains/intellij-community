@@ -26,7 +26,6 @@ import java.util.Collection;
  */
 class PassiveDecorationLayer extends JComponent{
   @NotNull private final GuiEditor myEditor;
-  private static Icon ourDragIcon;
 
   public PassiveDecorationLayer(@NotNull final GuiEditor editor) {
     myEditor = editor;
@@ -80,11 +79,12 @@ class PassiveDecorationLayer extends JComponent{
     );
   }
 
+  private static class IconHolder {
+    private static final Icon ourDragIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/drag.png");
+  }
+
   private static Icon getDragIcon() {
-    if (ourDragIcon == null) {
-      ourDragIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/drag.png");
-    }
-    return ourDragIcon;
+    return IconHolder.ourDragIcon;
   }
 
   public void paint(final Graphics g){

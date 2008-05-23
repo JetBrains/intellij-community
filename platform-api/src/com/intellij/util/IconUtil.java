@@ -29,8 +29,6 @@ import javax.swing.*;
 
 
 public class IconUtil {
-  private static FileIconProvider[] ourProviders = null;
-  private static FileIconPatcher[] ourPatchers = null;
 
   private IconUtil() {
   }
@@ -72,17 +70,19 @@ public class IconUtil {
     return new EmptyIcon(baseIcon.getIconWidth(), baseIcon.getIconHeight());
   }
 
+  private static class FileIconProviderHolder {
+    private static final FileIconProvider[] ourProviders = ApplicationManager.getApplication().getComponents(FileIconProvider.class);
+  }
+
   private static FileIconProvider[] getProviders() {
-    if (ourProviders == null) {
-      ourProviders = ApplicationManager.getApplication().getComponents(FileIconProvider.class);
-    }
-    return ourProviders;
+    return FileIconProviderHolder.ourProviders;
+  }
+
+  private static class FileIconPatcherHolder {
+    private static final FileIconPatcher[] ourPatchers = ApplicationManager.getApplication().getComponents(FileIconPatcher.class);
   }
 
   private static FileIconPatcher[] getPatchers() {
-    if (ourPatchers == null) {
-      ourPatchers = ApplicationManager.getApplication().getComponents(FileIconPatcher.class);
-    }
-    return ourPatchers;
+    return FileIconPatcherHolder.ourPatchers;
   }
 }

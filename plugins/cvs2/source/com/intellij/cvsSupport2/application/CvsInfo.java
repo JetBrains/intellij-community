@@ -27,8 +27,6 @@ import java.util.HashSet;
  */
 public class CvsInfo {
 
-  private static CvsConnectionSettings ABSENT_SETTINGS;
-
   private volatile IgnoredFilesInfo myIgnoreFilter;
   private CvsConnectionSettings myConnectionSettings;
 
@@ -42,7 +40,6 @@ public class CvsInfo {
   private final CvsEntriesManager myCvsEntriesManager;
   private static final VirtualFile DUMMY_ROOT = null;
 
-  private static CvsInfo DUMMY;
   private boolean myStickyTagIsLoaded = false;
 
   public CvsInfo(VirtualFile parent, CvsEntriesManager cvsEntriesManager) {
@@ -220,18 +217,20 @@ public class CvsInfo {
     myStickyTagIsLoaded = false;
   }
 
+  private static class CvsConnectionSettingsHolder {
+    private static final CvsConnectionSettings ABSENT_SETTINGS = new MyInvalidCvsConnectionSettings();
+  }
+
   public static CvsConnectionSettings getAbsentSettings() {
-    if (ABSENT_SETTINGS == null) {
-      ABSENT_SETTINGS = new MyInvalidCvsConnectionSettings();
-    }
-    return ABSENT_SETTINGS;
+    return CvsConnectionSettingsHolder.ABSENT_SETTINGS;
+  }
+
+  private static class CvsInfoHolder {
+    private static final CvsInfo DUMMY = new DummyCvsInfo();
   }
 
   public static CvsInfo getDummyCvsInfo() {
-    if (DUMMY == null) {
-      DUMMY = new DummyCvsInfo();
-    }
-    return DUMMY;
+    return CvsInfoHolder.DUMMY;
   }
 
   private static class MyInvalidCvsConnectionSettings extends CvsConnectionSettings {

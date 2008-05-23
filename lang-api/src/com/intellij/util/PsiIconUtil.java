@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class PsiIconUtil {
-  private static IconProvider[] ourIconProviders = null;
 
   @Nullable
   public static Icon getProvidersIcon(PsiElement element, int flags) {
@@ -22,11 +21,12 @@ public class PsiIconUtil {
     return null;
   }
 
+  private static class IconProviderHolder {
+    private static final IconProvider[] ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
+  }
+
   private static IconProvider[] getIconProviders() {
-    if (ourIconProviders == null) {
-      ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
-    }
-    return ourIconProviders;
+    return IconProviderHolder.ourIconProviders;
   }
 
 }

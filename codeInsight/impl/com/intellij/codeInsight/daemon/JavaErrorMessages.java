@@ -13,7 +13,6 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class JavaErrorMessages {
-  private static ResourceBundle ourBundle;
 
   @NonNls private static final String BUNDLE = "messages.JavaErrorMessages";
 
@@ -24,10 +23,11 @@ public class JavaErrorMessages {
     return CommonBundle.message(getBundle(), key, params);
   }
 
+  private static class ResourceBundleHolder {
+    private static final ResourceBundle ourBundle = ResourceBundle.getBundle(BUNDLE);
+  }
+
   private static ResourceBundle getBundle() {
-    if (ourBundle == null) {
-      ourBundle = ResourceBundle.getBundle(BUNDLE);
-    }
-    return ourBundle;
+    return ResourceBundleHolder.ourBundle;
   }
 }

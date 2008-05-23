@@ -33,7 +33,15 @@ public class OSProcessHandler extends ProcessHandler {
 
   private final ProcessWaitFor myWaitFor;
 
-  private static ExecutorService ourThreadExecutorsService = null;
+  private static class ExecutorServiceHolder {
+    private static final ExecutorService ourThreadExecutorsService =
+        new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+          @SuppressWarnings({"HardCodedStringLiteral"})
+          public Thread newThread(Runnable r) {
+            return new Thread(r, "OSProcessHandler pooled thread");
+          }
+        });
+  }
 
   public static Future<?> executeOnPooledThread(Runnable task) {
     final Application application = ApplicationManager.getApplication();
@@ -42,23 +50,8 @@ public class OSProcessHandler extends ProcessHandler {
       return application.executeOnPooledThread(task);
     }
     else {
-      if (ourThreadExecutorsService == null) {
-        ourThreadExecutorsService = new ThreadPoolExecutor(
-          10,
-          Integer.MAX_VALUE,
-          60L,
-          TimeUnit.SECONDS,
-          new SynchronousQueue<Runnable>(),
-          new ThreadFactory() {
-            @SuppressWarnings({"HardCodedStringLiteral"})
-            public Thread newThread(Runnable r) {
-              return new Thread(r, "OSProcessHandler pooled thread");
-            }
-          }
-        );
-      }
 
-      return ourThreadExecutorsService.submit(task);
+      return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
     }
   }
 
@@ -86,7 +79,7 @@ public class OSProcessHandler extends ProcessHandler {
           try {
             myExitCode = process.waitFor();
           }
-          catch (InterruptedException e) {
+          catch (InterruptedException ignored) {
           }
           myWaitSemaphore.up();
         }
@@ -140,9 +133,9 @@ public class OSProcessHandler extends ProcessHandler {
                 stdErrReadingFuture.get();
                 stdOutReadingFuture.get();
               }
-              catch (InterruptedException e) {
+              catch (InterruptedException ignored) {
               }
-              catch (ExecutionException e) {
+              catch (ExecutionException ignored) {
               }
 
               onOSProcessTerminated(exitCode);

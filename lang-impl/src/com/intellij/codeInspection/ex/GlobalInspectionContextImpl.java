@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
@@ -137,11 +138,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public boolean isSuppressed(RefEntity entity, String id) {
-    return entity instanceof RefElement && ((RefElementImpl)entity).isSuppressed(id);
+    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(id);
   }
 
   public boolean shouldCheck(RefEntity entity, GlobalInspectionTool tool) {
-    if (entity instanceof RefElement) {
+    if (entity instanceof RefElementImpl) {
       final RefElementImpl refElement = (RefElementImpl)entity;
       if (refElement.isSuppressed(tool.getShortName())) return false;
 
@@ -422,18 +423,15 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
     });
 
-
     LOG.info("Code inspection started");
 
-    Runnable runInspection = new Runnable() {
-      public void run() {
+    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), InspectionsBundle.message("inspection.progress.title"), true, new PerformAnalysisInBackgroundOption(myProject)) {
+      public void run(@NotNull ProgressIndicator indicator) {
         performInspectionsWithProgress(scope, manager);
       }
-    };
 
-
-    final Runnable successRunnable = new Runnable() {
-      public void run() {
+      @Override
+      public void onSuccess() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             LOG.info("Code inspection finished");
@@ -452,11 +450,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
         });
       }
-    };
-    ProgressManager.getInstance()
-      .runProcessWithProgressAsynchronously(myProject, InspectionsBundle.message("inspection.progress.title"), runInspection,
-                                            successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
-
+    });
   }
 
   private void performInspectionsWithProgress(final AnalysisScope scope, final InspectionManager manager) {
@@ -682,7 +676,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     myProgressIndicator.setFraction(totalProgress);
     myProgressIndicator.setText(job.getDisplayName() + " " + message);
   }
-
 
   public void setExternalProfile(InspectionProfile profile) {
     myExternalProfile = profile;

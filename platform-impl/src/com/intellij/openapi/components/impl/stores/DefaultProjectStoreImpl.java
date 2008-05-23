@@ -20,7 +20,7 @@ import java.util.Set;
 
 //todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
-  private @Nullable Element myElement;
+  @Nullable private Element myElement;
   private ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
@@ -55,7 +55,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
                                                             ROOT_TAG_NAME) {
       @Nullable
-      protected Document loadDocument() throws StateStorage.StateStorageException {
+      protected Document loadDocument() throws StateStorageException {
         return document;
       }
 

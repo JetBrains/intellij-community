@@ -16,7 +16,6 @@ import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.PsiDocumentManager;
@@ -26,10 +25,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import java.util.Comparator;
 
 public class InspectionResultsViewComparator implements Comparator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.InspectionResultsViewComparator");
-
-  private static InspectionResultsViewComparator ourInstance = null;
-
   public int compare(Object o1, Object o2) {
     InspectionTreeNode node1 = (InspectionTreeNode)o1;
     InspectionTreeNode node2 = (InspectionTreeNode)o2;
@@ -55,8 +50,8 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof InspectionNode) return -1;
     if (node2 instanceof InspectionNode) return 1;
 
-    if ((node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode) ||
-        (node1 instanceof OfflineProblemDescriptorNode && node2 instanceof OfflineProblemDescriptorNode)) {
+    if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode ||
+        node1 instanceof OfflineProblemDescriptorNode && node2 instanceof OfflineProblemDescriptorNode) {
       final Object userObject1 = node1.getUserObject();
       final Object userObject2 = node2.getUserObject();
       if (userObject1 instanceof OfflineProblemDescriptor && userObject2 instanceof OfflineProblemDescriptor) {
@@ -137,11 +132,12 @@ public class InspectionResultsViewComparator implements Comparator {
     return -1;
   }
 
-  public static InspectionResultsViewComparator getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new InspectionResultsViewComparator();
-    }
+  private static class InspectionResultsViewComparatorHolder {
+    private static final InspectionResultsViewComparator ourInstance = new InspectionResultsViewComparator();
+  }
 
-    return ourInstance;
+  public static InspectionResultsViewComparator getInstance() {
+
+    return InspectionResultsViewComparatorHolder.ourInstance;
   }
 }

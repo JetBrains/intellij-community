@@ -20,8 +20,6 @@ public class MessagePool {
 
   private static int MAX_POOL_SIZE_FOR_FATALS = 100;
 
-  private static MessagePool ourInstance;
-
   private List<AbstractMessage> myIdeFatals = new ArrayList<AbstractMessage>();
 
   private Set<MessagePoolListener> myListeners = new HashSet<MessagePoolListener>();
@@ -34,12 +32,13 @@ public class MessagePool {
     JobScheduler.getScheduler().scheduleAtFixedRate(myFatalsGrouper, (long)300, (long)300, TimeUnit.MILLISECONDS);
   }
 
-  public static MessagePool getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new MessagePool(20, 1000);
-    }
+  private static class MessagePoolHolder {
+    private static final MessagePool ourInstance = new MessagePool(20, 1000);
+  }
 
-    return ourInstance;
+  public static MessagePool getInstance() {
+
+    return MessagePoolHolder.ourInstance;
   }
 
   public void addIdeFatalMessage(LoggingEvent aEvent) {

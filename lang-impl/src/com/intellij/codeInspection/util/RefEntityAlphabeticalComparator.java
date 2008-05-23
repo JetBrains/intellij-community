@@ -14,18 +14,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 public class RefEntityAlphabeticalComparator implements Comparator<RefEntity> {
-  private static RefEntityAlphabeticalComparator ourEntity;
 
   public int compare(@NotNull final RefEntity o1, @NotNull final RefEntity o2) {
     if (o1 == o2) return 0;
     return o1.getQualifiedName().compareToIgnoreCase(o2.getQualifiedName());
   }
 
-  public static RefEntityAlphabeticalComparator getInstance() {
-    if (ourEntity == null) {
-      ourEntity = new RefEntityAlphabeticalComparator();
-    }
+  private static class RefEntityAlphabeticalComparatorHolder {
+    private static final RefEntityAlphabeticalComparator ourEntity = new RefEntityAlphabeticalComparator();
+  }
 
-    return ourEntity;
+  public static RefEntityAlphabeticalComparator getInstance() {
+
+    return RefEntityAlphabeticalComparatorHolder.ourEntity;
   }
 }

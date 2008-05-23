@@ -19,7 +19,6 @@ import java.util.Stack;
 
 public class BraceMatchingUtil {
   public static final int UNDEFINED_TOKEN_GROUP = -1;
-  private static BraceMatcher ourDefaultBraceMatcher = null;
 
   private BraceMatchingUtil() {}
 
@@ -275,6 +274,10 @@ public class BraceMatchingUtil {
     return lastRbraceOffset;
   }
 
+  private static class BraceMatcherHolder {
+    private static final BraceMatcher ourDefaultBraceMatcher = new DefaultBraceMatcher();
+  }
+
   public static BraceMatcher getBraceMatcher(FileType fileType) {
     BraceMatcher braceMatcher = BRACE_MATCHERS.get(fileType);
     if (braceMatcher==null) {
@@ -294,10 +297,7 @@ public class BraceMatchingUtil {
         }
       }
       if (braceMatcher == null) {
-        if (ourDefaultBraceMatcher == null) {
-          ourDefaultBraceMatcher = new DefaultBraceMatcher();
-        }
-        braceMatcher = ourDefaultBraceMatcher;
+        braceMatcher = BraceMatcherHolder.ourDefaultBraceMatcher;
       }
       BRACE_MATCHERS.put(fileType, braceMatcher);
     }

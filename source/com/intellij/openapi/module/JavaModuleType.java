@@ -48,10 +48,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
-  private static Icon JAVA_MODULE_ICON;
-  private static Icon JAVA_MODULE_NODE_ICON_OPEN;
-  private static Icon JAVA_MODULE_NODE_ICON_CLOSED;
-  private static Icon WIZARD_ICON;
 
   public JavaModuleType() {
     this("JAVA_MODULE");
@@ -94,34 +90,38 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider), ModuleWizardStep.class);
   }
 
-  private static Icon getJavaModuleIcon() {
-    if (JAVA_MODULE_ICON == null) {
-      JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
-    }
+  private static class IconHolder {
+    private static final Icon JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
+  }
 
-    return JAVA_MODULE_ICON;
+  private static Icon getJavaModuleIcon() {
+
+    return IconHolder.JAVA_MODULE_ICON;
+  }
+
+  private static class JavaModuleOpenIconHolder {
+    private static final Icon JAVA_MODULE_NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
   }
 
   private static Icon getJavaModuleNodeIconOpen() {
-    if (JAVA_MODULE_NODE_ICON_OPEN == null) {
-      JAVA_MODULE_NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
-    }
-    return JAVA_MODULE_NODE_ICON_OPEN;
+    return JavaModuleOpenIconHolder.JAVA_MODULE_NODE_ICON_OPEN;
+  }
+
+  private static class JavaModuleClosedIconHolder {
+    private static final Icon JAVA_MODULE_NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
   }
 
   private static Icon getJavaModuleNodeIconClosed() {
-    if (JAVA_MODULE_NODE_ICON_CLOSED == null) {
-      JAVA_MODULE_NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
-    }
 
-    return JAVA_MODULE_NODE_ICON_CLOSED;
+    return JavaModuleClosedIconHolder.JAVA_MODULE_NODE_ICON_CLOSED;
+  }
+
+  private static class WizardIconHolder {
+    private static final Icon WIZARD_ICON = IconLoader.getIcon("/add_java_modulewizard.png");
   }
 
   private static Icon getWizardIcon() {
-    if (WIZARD_ICON == null) {
-      WIZARD_ICON = IconLoader.getIcon("/add_java_modulewizard.png");
-    }
 
-    return WIZARD_ICON;
+    return WizardIconHolder.WIZARD_ICON;
   }
 }

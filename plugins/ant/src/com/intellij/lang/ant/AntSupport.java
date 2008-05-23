@@ -21,11 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class AntSupport implements ApplicationComponent, InspectionToolProvider {
-
   private static LanguageFileType ourFileType = null;
   private static AntLanguage ourLanguage = null;
   private static AntChangeVisitor ourChangeVisitor = null;
-  private static Map<AntFile, WeakHashMap<AntFile, Boolean>> ourFileDependencies;
+  private static final Map<AntFile, WeakHashMap<AntFile, Boolean>> ourFileDependencies = new WeakHashMap<AntFile, WeakHashMap<AntFile, Boolean>>();
 
   public AntSupport(FileTypeManager fileTypeManager, ActionManager actionManager) {
     fileTypeManager.getRegisteredFileTypes();
@@ -85,13 +84,11 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   //
 
   public static synchronized List<AntFile> getImpotingFiles(final AntFile imported) {
-    checkDependenciesCache();
     final WeakHashMap<AntFile, Boolean> files = ourFileDependencies.get(imported);
     if (files != null) {
       final int size = files.size();
       if (size > 0) {
         final List<AntFile> result = new ArrayList<AntFile>(size);
-        int i = 0;
         for (final AntFile file : files.keySet()) {
           if (file != null) {
             result.add(file);
@@ -104,7 +101,6 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   }
 
   public static synchronized void registerDependency(final AntFile importing, final AntFile imported) {
-    checkDependenciesCache();
     final Map<AntFile, WeakHashMap<AntFile,Boolean>> dependencies = ourFileDependencies;
     WeakHashMap<AntFile, Boolean> files = dependencies.get(imported);
     if(files == null) {
@@ -114,18 +110,12 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
     files.put(importing, true);
   }
 
-  private static void checkDependenciesCache() {
-    if (ourFileDependencies == null) {
-      ourFileDependencies = new WeakHashMap<AntFile, WeakHashMap<AntFile, Boolean>>();
-    }
-  }
-
   public static AntFile getAntFile ( PsiFile psiFile ) {
     if (psiFile instanceof AntFile) {
       return (AntFile)psiFile;
     }
     else {
-      return (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+      return (AntFile)psiFile.getViewProvider().getPsi(getLanguage());
     }
   }
 }

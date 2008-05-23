@@ -51,7 +51,6 @@ import java.util.concurrent.TimeoutException;
  */
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
-  @NonNls private static String UPDATE_URL = null;
 
   private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
@@ -63,12 +62,12 @@ public final class UpdateChecker {
   private static final String DISABLED_UPDATE = "disabled_update.txt";
   private static TreeSet<String> ourDisabledToUpdatePlugins;
 
+  private static class StringHolder {
+    private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
+  }
+
   private static String getUpdateUrl() {
-    if (UPDATE_URL == null) {
-      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      UPDATE_URL = appInfo.getUpdateUrls().getCheckingUrl();
-    }
-    return UPDATE_URL;
+    return StringHolder.UPDATE_URL;
   }
 
   public static boolean isMyVeryFirstOpening() {
@@ -76,7 +75,7 @@ public final class UpdateChecker {
   }
 
   public static void setMyVeryFirstOpening(final boolean myVeryFirstProjectOpening) {
-    UpdateChecker.myVeryFirstOpening = myVeryFirstProjectOpening;
+    myVeryFirstOpening = myVeryFirstProjectOpening;
   }
 
   public static boolean checkNeeded() {
@@ -104,7 +103,7 @@ public final class UpdateChecker {
     return settings.CHECK_NEEDED;
   }
 
-  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog) throws ConnectionException {
+  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : UpdateSettingsConfigurable.getInstance().getPluginHosts()) {

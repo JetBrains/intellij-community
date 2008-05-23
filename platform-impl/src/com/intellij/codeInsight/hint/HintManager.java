@@ -72,8 +72,6 @@ public class HintManager implements ApplicationComponent {
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
 
-  private static EditorHintListener ourEditorHintPublisher = null;
-
   public static interface ActionToIgnore {
   }
 
@@ -799,10 +797,12 @@ public class HintManager implements ApplicationComponent {
     }
   }
 
+  private static class EditorHintListenerHolder {
+    private static final EditorHintListener ourEditorHintPublisher =
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorHintListener.TOPIC);
+  }
+
   private static EditorHintListener getPublisher() {
-    if (ourEditorHintPublisher == null) {
-      ourEditorHintPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorHintListener.TOPIC);
-    }
-    return ourEditorHintPublisher;
+    return EditorHintListenerHolder.ourEditorHintPublisher;
   }
 }

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class ApplicationNamesInfo {
   @NonNls
   private static final String COMPONENT_NAME = "ApplicationInfo";
-  private static ApplicationNamesInfo ourInstance;
   private String myProductName;
   private String myFullProductName;
   private String myLowercaseProductName;
@@ -35,11 +34,12 @@ public class ApplicationNamesInfo {
   @NonNls private static final String ATTRIBUTE_PRODUCT = "product";
   @NonNls private static final String ATTRIBUTE_FULLNAME = "fullname";
 
+  private static class ApplicationNamesInfoHolder {
+    private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
+  }
+
   public static ApplicationNamesInfo getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new ApplicationNamesInfo();
-    }
-    return ourInstance;
+    return ApplicationNamesInfoHolder.ourInstance;
   }
 
   private ApplicationNamesInfo() {

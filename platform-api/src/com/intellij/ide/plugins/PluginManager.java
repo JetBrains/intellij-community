@@ -43,8 +43,6 @@ import java.util.*;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"}) // No logger is loaded at this time so we have to use these.
 public class PluginManager {
-  @SuppressWarnings({"NonConstantLogger"}) //Logger is lasy-initialized in order not to use it outside the appClassLoader
-  private static Logger ourLogger = null;
 
   @NonNls public static final String AREA_IDEA_PROJECT = "IDEA_PROJECT";
   @NonNls public static final String AREA_IDEA_MODULE = "IDEA_MODULE";
@@ -917,10 +915,11 @@ public class PluginManager {
     }
   }
 
+  private static class LoggerHolder {
+    private static final Logger ourLogger = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+  }
+
   public static Logger getLogger() {
-    if (ourLogger == null) {
-      ourLogger = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
-    }
-    return ourLogger;
+    return LoggerHolder.ourLogger;
   }
 }

@@ -139,16 +139,18 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   }
 
   private static List<String> getRegisteredAnnotations() {
-    if (ANNOTATIONS == null) {
-      ANNOTATIONS = new ArrayList<String>();
+    List<String> annotations = ANNOTATIONS;
+    if (annotations == null) {
+      annotations = new ArrayList<String>();
       for (Object extension : Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL)) {
-        final String[] annotations = ((UnusedCodeExtension)extension).getIgnoreAnnotations();
-        if (annotations != null) {
-          ANNOTATIONS.addAll(Arrays.asList(annotations));
+        final String[] ignoredAnnotations = ((UnusedCodeExtension)extension).getIgnoreAnnotations();
+        if (ignoredAnnotations != null) {
+          annotations.addAll(Arrays.asList(ignoredAnnotations));
         }
       }
+      ANNOTATIONS = annotations;
     }
-    return ANNOTATIONS;
+    return annotations;
   }
 
   public static boolean isInjected(final PsiModifierListOwner modifierListOwner, final UnusedSymbolLocalInspection unusedSymbolInspection) {

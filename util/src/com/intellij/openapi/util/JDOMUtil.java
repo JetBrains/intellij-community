@@ -47,8 +47,6 @@ import java.util.List;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
-  //Logger is lasy-initialized in order not to use it outside the appClassLoader
-  private static Logger ourLogger = null;
   private static ThreadLocal<SAXBuilder> ourSaxBuilder = new ThreadLocal<SAXBuilder>(){
     protected SAXBuilder initialValue() {
       SAXBuilder saxBuilder = new SAXBuilder();
@@ -61,9 +59,12 @@ public class JDOMUtil {
     }
   };
 
+  private static class LoggerHolder {
+    private static final Logger ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
+  }
+
   private static Logger getLogger() {
-    if (ourLogger == null) ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
-    return ourLogger;
+    return LoggerHolder.ourLogger;
   }
 
   public static final String ENCODING = "UTF-8";

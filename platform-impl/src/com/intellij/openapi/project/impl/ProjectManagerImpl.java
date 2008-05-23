@@ -142,28 +142,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
-    ProjectImpl project;
     try {
-      project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
+      return createAndInitProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
                               useDefaultProjectSettings ? getDefaultProject() : null, null);
-      project.init();
     }
     catch (final Exception e) {
       LOG.info(e);
       Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
-      return null;
     }
-
-    return project;
+    return null;
   }
 
-  private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
+  private ProjectImpl createAndInitProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
                                     @Nullable Project template, @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException {
-    final ProjectImpl project;
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
-    project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
+    final ProjectImpl project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
 
     if (additionalPicoContainerComponents != null) {
       for (Pair<Class, Object> additionalPicoContainerComponent : additionalPicoContainerComponents) {
@@ -188,6 +183,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     project.loadProjectComponents();
+    project.init();
     return project;
   }
 
@@ -202,14 +198,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  private Project loadProject(String filePath, Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
+  private Project loadProject(String filePath, Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException, StateStorage.StateStorageException {
     filePath = canonicalize(filePath);
-    ProjectImpl project = createProject(filePath, false, false, false, null, additionalPicoContainerComponents);
+    ProjectImpl project = null;
     try {
-      project.init();
+      project = createAndInitProject(filePath, false, false, false, null, additionalPicoContainerComponents);
     }
     catch (ProcessCanceledException e) {
-      Disposer.dispose(project);
+      if (project != null) {
+        Disposer.dispose(project);
+      }
       throw e;
     }
 
@@ -233,9 +231,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
       try {
-        myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null, null);
+        myDefaultProject = createAndInitProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null, null);
         myDefaultProjectRootElement = null;
-        myDefaultProject.init();
       }
       catch (IOException e) {
         LOG.error(e);
@@ -317,16 +314,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       final Project[] project = new Project[1];
 
       final IOException[] io = new IOException[]{null};
-      final JDOMException[] jdom = new JDOMException[]{null};
-      final InvalidDataException[] invalidData = new InvalidDataException[]{null};
       final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
-      final boolean[] exThrown = new boolean[1];
       boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           try {
             if (indicator != null) {
-              indicator.setText("Loading components for '" + filePath + "'");
+              indicator.setText(ProjectBundle.message("loading.components.for", filePath));
               indicator.setIndeterminate(true);
             }
 
@@ -340,30 +334,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
           catch (IOException e) {
             io[0] = e;
-            exThrown[0] = true;
-            return;
-          }
-          catch (JDOMException e) {
-            jdom[0] = e;
-            exThrown[0] = true;
-            return;
-          }
-          catch (InvalidDataException e) {
-            invalidData[0] = e;
-            exThrown[0] = true;
             return;
           }
           catch (StateStorage.StateStorageException e) {
             stateStorage[0] = e;
-            exThrown[0] = true;
             return;
           }
 
           if (indicator != null) {
-            indicator.setText("Initializing components");
+            indicator.setText(ProjectBundle.message("initializing.components"));
           }
         }
-      }, "Loading Project", true, null);
+      }, ProjectBundle.message("project.load.progress"), true, null);
 
       if (!ok) {
         if (project[0] != null) {
@@ -374,8 +356,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
 
       if (io[0] != null) throw io[0];
-      if (jdom[0] != null) throw jdom[0];
-      if (invalidData[0] != null) throw invalidData[0];
       if (stateStorage[0] != null) throw stateStorage[0];
 
       if (project[0] == null || !ok) {

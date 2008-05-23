@@ -18,13 +18,13 @@ import org.picocontainer.PicoContainer;
  * @author max
  */
 public class DummyProject extends UserDataHolderBase implements Project {
-  private static DummyProject ourInstance;
+
+  private static class DummyProjectHolder {
+    private static final DummyProject ourInstance = new DummyProject();
+  }
 
   public static Project getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new DummyProject();
-    }
-    return ourInstance;
+    return DummyProjectHolder.ourInstance;
   }
 
   private DummyProject() {
