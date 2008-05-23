@@ -520,7 +520,7 @@ public class MavenProjectModel {
 
     public List<String> getModulePaths(Collection<String> profiles) {
       Set<String> paths = collectAbsoluteModulePaths(profiles);
-      if (myMavenProjectHolder.getSortedProjects() == null) return new ArrayList<String>(paths);
+      if (myMavenProjectHolder.getSortedProjects().isEmpty()) return new ArrayList<String>(paths);
 
       List<String> sorted = new ArrayList<String>();
       for (MavenProject each : myMavenProjectHolder.getSortedProjects()) {
