@@ -136,11 +136,6 @@
       <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToPreviousError"/>
     </group>
 
-    <group id="JavaCompletion">
-      <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
-      <add-to-group group-id="CodeCompletionGroup" anchor="after" relative-to-action="CodeCompletion"/>
-    </group>
-
     <group id="CodeMenu1">
       <reference ref="DelegateMethods"/>
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
