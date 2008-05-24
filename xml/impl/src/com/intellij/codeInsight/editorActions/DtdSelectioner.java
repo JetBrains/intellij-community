@@ -38,10 +38,10 @@ public class DtdSelectioner implements ExtendWordSelectionHandler {
 
     List<TextRange> result = new ArrayList<TextRange>(1);
     if (first != null && last != null) {
-      result.addAll(ExtendWordSelectionHandlerBase.expandToWholeLine(editorText,
-                                      new TextRange(first.getTextRange().getStartOffset(),
-                                                    last.getTextRange().getEndOffset() + 1),
-                                      false));
+      final int offset = last.getTextRange().getEndOffset() + 1;
+        result.addAll(ExtendWordSelectionHandlerBase.expandToWholeLine(editorText,
+                                        new TextRange(first.getTextRange().getStartOffset(), offset < editorText.length() ? offset:editorText.length()),
+                                        false));
     }
 
     return result;
