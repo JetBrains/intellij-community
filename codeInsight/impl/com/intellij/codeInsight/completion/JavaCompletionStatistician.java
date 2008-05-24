@@ -10,6 +10,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -40,7 +41,8 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       if (type == CompletionType.CLASS_NAME && isClass) {
         final String qualifiedName = ((PsiClass)o).getQualifiedName();
         if (qualifiedName != null) {
-          return new StatisticsInfo(CLASS_NAME_COMPLETION_PREFIX + PrefixMatchingWeigher.PREFIX_CAPITALS.getValue(location), qualifiedName);
+          return new StatisticsInfo(CLASS_NAME_COMPLETION_PREFIX + StringUtil.capitalsOnly(((LookupElement<?>)element)
+              .getPrefixMatcher().getPrefix()), qualifiedName);
         }
       }
     }

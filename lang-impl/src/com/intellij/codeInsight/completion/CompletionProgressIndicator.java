@@ -49,8 +49,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler = handler;
 
     final String prefix = CompletionData.findPrefixStatic(parameters.getPosition(), contextCopy.getStartOffset());
-    myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], prefix, new CompletionPreferencePolicy(
-        prefix, parameters), adText);
+    myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], new CompletionPreferencePolicy(
+        parameters), adText);
 
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {
@@ -60,7 +60,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (item == null) return;
 
         myHandler.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
-                                   event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems(), contextCopy.getPrefix()));
+                                   event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems()));
       }
 
       public void lookupCanceled(final LookupEvent event) {

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.extensions.Extensions;
@@ -19,7 +20,6 @@ import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompletionUtil {
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
-  public static final Key<PrefixMatcher> PREFIX_MATCHER = Key.create("PREFIX_MATCHER");
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
@@ -175,4 +174,5 @@ public class CompletionUtil {
   public static boolean shouldShowFeature(final CompletionParameters parameters, @NonNls final String id) {
     return FeatureUsageTracker.getInstance().isToBeShown(id, parameters.getPosition().getProject());
   }
+
 }

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.openapi.util.Comparing;
@@ -62,6 +63,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   private final Set<String> myAllLookupStrings = new THashSet<String>();
   private String myPresentable;
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
+  private PrefixMatcher myPrefixMatcher = PrefixMatcher.FALSE_MATCHER;
 
   public LookupItem(T o, @NotNull @NonNls String lookupString){
     setObject(o);
@@ -196,6 +198,20 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   public LookupItem<T> setAutoCompletionPolicy(final AutoCompletionPolicy policy) {
     myAutoCompletionPolicy = policy;
     return this;
+  }
+
+  public boolean setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+    myPrefixMatcher = matcher;
+    return isPrefixMatched();
+  }
+
+  public boolean isPrefixMatched() {
+    return myPrefixMatcher.prefixMatches(this);
+  }
+
+  @NotNull
+  public PrefixMatcher getPrefixMatcher() {
+    return myPrefixMatcher;
   }
 
   public AutoCompletionPolicy getAutoCompletionPolicy() {

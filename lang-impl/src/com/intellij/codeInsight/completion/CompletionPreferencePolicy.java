@@ -18,16 +18,10 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public static final Key<WeighingComparable<LookupElement<?>, CompletionLocation>> PRESELECT_WEIGHT = Key.create("PRESELECT_WEIGHT");
   @NonNls public static final String SELECTED = "selected";
   @NonNls public static final String IGNORED = "ignored";
-  private final CompletionParameters myParameters;
   private final CompletionLocation myLocation;
 
-  public CompletionPreferencePolicy(String prefix, final CompletionParameters parameters) {
-    myParameters = parameters;
-    myLocation = new CompletionLocation(prefix, myParameters);
-  }
-
-  public void setPrefix(String prefix) {
-    myLocation.setPrefix(prefix);
+  public CompletionPreferencePolicy(final CompletionParameters parameters) {
+    myLocation = new CompletionLocation(parameters);
   }
 
   public void itemSelected(LookupItem item, final Lookup lookup) {

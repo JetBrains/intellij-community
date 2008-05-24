@@ -5,20 +5,25 @@ package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NotNull;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.util.Consumer;
 
 /**
  * @author peter
  */
 public abstract class CompletionResultSet {
   private PrefixMatcher myPrefixMatcher;
-  private final PrefixMatcher myDefaultMatcher;
+  private final Consumer<LookupElement> myConsumer;
 
-  protected CompletionResultSet(final PrefixMatcher prefixMatcher) {
+  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<LookupElement> consumer) {
     myPrefixMatcher = prefixMatcher;
-    myDefaultMatcher = prefixMatcher;
+    myConsumer = consumer;
   }
 
-  public abstract void addElement(@NotNull final LookupElement result);
+  public void addElement(@NotNull final LookupElement result) {
+    if (result.isPrefixMatched() || result.setPrefixMatcher(getPrefixMatcher())) {
+      myConsumer.consume(result);
+    }
+  }
 
   public void setPrefixMatcher(@NotNull PrefixMatcher matcher) {
     myPrefixMatcher = matcher;

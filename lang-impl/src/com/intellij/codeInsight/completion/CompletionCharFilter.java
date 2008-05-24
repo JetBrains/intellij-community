@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompletionCharFilter extends CharFilter {
 
-  public Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup) {
+  public Result acceptChar(char c, @NotNull final int prefixLength, final Lookup lookup) {
     if (!lookup.isCompletion()) return null;
 
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;

@@ -16,24 +16,15 @@ import org.jetbrains.annotations.NotNull;
 public class CompletionServiceImpl extends CompletionService{
   public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<LookupElement> consumer) {
     final PsiElement position = parameters.getPosition();
-    final CompletionContext context = position.getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
-    context.setPrefix(prefix);
 
-    return new CompletionResultSet(new CamelHumpMatcher(prefix)) {
-      public void addElement(@NotNull final LookupElement result) {
-        PrefixMatcher matcher = result.getUserData(CompletionUtil.PREFIX_MATCHER);
-        if (matcher == null) {
-          matcher = getPrefixMatcher();
-          result.putUserData(CompletionUtil.PREFIX_MATCHER, matcher);
-          if (!matcher.prefixMatches(result)) return;
-        }
-        consumer.consume(result);
-      }
+    final String textBeforePosition = parameters.getOriginalFile().getText().substring(0, parameters.getOffset());
+
+    return new CompletionResultSet(new CamelHumpMatcher(prefix), consumer) {
 
       public void setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+        assert textBeforePosition.endsWith(matcher.getPrefix()) : "prefix should be some actual file string just before caret: " + matcher.getPrefix();
         super.setPrefixMatcher(matcher);
-        context.setPrefix(matcher.getPrefix());
       }
 
       public void setPrefixMatcher(@NotNull final String prefix) {

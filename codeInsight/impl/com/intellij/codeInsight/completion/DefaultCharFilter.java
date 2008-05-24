@@ -13,7 +13,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import org.jetbrains.annotations.NotNull;
 
 public class DefaultCharFilter extends CharFilter {
 
@@ -22,11 +21,11 @@ public class DefaultCharFilter extends CharFilter {
     return psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression;
   }
 
-  public Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup) {
+  public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     for (final CharFilter extension : Extensions.getExtensions(EP_NAME)) {
-      final Result result = extension.acceptChar(c, prefix, lookup);
+      final Result result = extension.acceptChar(c, prefixLength, lookup);
       if (result != null) {
-        return result;
+        return result;                                                                                          
       }
     }
 

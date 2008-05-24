@@ -22,10 +22,10 @@ public class TestLookupManager extends LookupManagerImpl{
     myProject = project;
   }
 
-  public Lookup showLookup(final Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText) {
+  public Lookup showLookup(final Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText) {
     hideActiveLookup();
 
-    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, bottomText);
+    myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy, bottomText);
     myActiveLookupEditor = editor;
     myActiveLookup.show();
     return myActiveLookup;

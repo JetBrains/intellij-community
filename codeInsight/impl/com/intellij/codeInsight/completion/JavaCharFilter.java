@@ -21,7 +21,7 @@ public class JavaCharFilter extends CharFilter {
     return psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression;
   }
 
-  public Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup) {
+  public Result acceptChar(char c, @NotNull final int prefixLength, final Lookup lookup) {
     if (lookup.isCompletion() && c == '!') return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (lookup.isCompletion() && c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
     return null;

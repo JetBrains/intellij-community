@@ -408,9 +408,7 @@ public class TemplateState implements Disposable {
         final LookupManager lookupManager = LookupManager.getInstance(myProject);
         if (lookupManager.isDisposed()) return;
         final Lookup lookup = lookupManager.showLookup(myEditor,
-                                                       lookupItems,
-                                                       "",
-                                                       new CompletionPreferencePolicy("", new CompletionParameters(psiFile, psiFile,
+                                                       lookupItems, new CompletionPreferencePolicy(new CompletionParameters(psiFile, psiFile,
                                                                                                                        CompletionType.BASIC, myEditor.getCaretModel().getOffset(),
                                                                                                                        1)));
         lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result

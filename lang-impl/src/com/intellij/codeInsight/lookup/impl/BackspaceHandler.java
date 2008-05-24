@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -21,8 +23,12 @@ class BackspaceHandler extends EditorActionHandler {
       return;
     }
 
-    if (lookup.getPrefix().length() > lookup.getInitialPrefix().length()){
-      lookup.setPrefix(lookup.getPrefix().substring(0, lookup.getPrefix().length() - 1));
+    if (lookup.getMinPrefixLength() > lookup.getInitialMinPrefixLength()) {
+      for (final LookupElement item : lookup.getItems()) {
+        final PrefixMatcher oldMatcher = item.getPrefixMatcher();
+        final String oldPrefix = oldMatcher.getPrefix();
+        assert item.setPrefixMatcher(oldMatcher.cloneWithPrefix(oldPrefix.substring(0, oldPrefix.length() - 1)));
+      }
       lookup.updateList();
       Point point = lookup.calculatePosition();
       Dimension preferredSize = lookup.getComponent().getPreferredSize();

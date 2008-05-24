@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,4 +73,17 @@ public interface LookupElement<T> extends UserDataHolder{
   LookupElement<T> setBold();
 
   LookupElement<T> setAutoCompletionPolicy(AutoCompletionPolicy policy);
+
+  /**
+   * @param matcher
+   * @return whether this item is matched by prefix matcher
+   */
+  boolean setPrefixMatcher(@NotNull PrefixMatcher matcher);
+
+  /**
+   * @return whether {@link #setPrefixMatcher(com.intellij.codeInsight.completion.PrefixMatcher)} was called and returned true
+   */
+  boolean isPrefixMatched();
+
+  @NotNull PrefixMatcher getPrefixMatcher();
 }

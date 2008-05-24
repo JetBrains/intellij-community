@@ -13,7 +13,6 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -65,7 +64,7 @@ public class XmlCharFilter extends CharFilter {
     return false;
   }
 
-  public Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup) {
+  public Result acceptChar(char c, @NotNull final int prefixLength, final Lookup lookup) {
     if (!isInXmlContext(lookup)) return null;
 
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
@@ -81,7 +80,7 @@ public class XmlCharFilter extends CharFilter {
 
       case '/':
         if (isWithinTag(lookup)) {
-          if (StringUtil.isNotEmpty(prefix)) {
+          if (prefixLength > 0) {
             return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
           }
           XmlAutoPopupHandler.autoPopupXmlLookup(lookup.getEditor().getProject(), lookup.getEditor());
@@ -89,7 +88,7 @@ public class XmlCharFilter extends CharFilter {
         }
         return Result.ADD_TO_PREFIX;
         
-      case '>': if (StringUtil.isNotEmpty(prefix)) {
+      case '>': if (prefixLength > 0) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
 

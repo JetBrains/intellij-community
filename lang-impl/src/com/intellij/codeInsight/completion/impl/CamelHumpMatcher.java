@@ -21,7 +21,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   private Perl5Matcher myMatcher;
   private final String myPrefix;
 
-  public CamelHumpMatcher(final String prefix) {
+  public CamelHumpMatcher(@NotNull final String prefix) {
     myPrefix = prefix;
   }
 
@@ -62,7 +62,13 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return myPrefix;
   }
 
-  public static String handleCaseInsensitiveVariant(final String prefix, final String uniqueText) {
+  @NotNull
+  public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
+    assert prefix.startsWith(myPrefix) || myPrefix.startsWith(prefix) : "oldPrefix=" + myPrefix + "; new prefix=" + prefix;
+    return new CamelHumpMatcher(prefix);
+  }
+
+  private static String handleCaseInsensitiveVariant(final String prefix, final String uniqueText) {
     final int length = prefix.length();
     if (length == 0) return uniqueText;
     boolean isAllLower = true;

@@ -14,6 +14,8 @@ public class NameEndMatchingDegreeWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement<?> element, final CompletionLocation location) {
     final String name = JavaCompletionUtil.getLookupObjectName(element.getObject());
-    return JavaCompletionUtil.getNameEndMatchingDegree(element.getObject(), name, JavaCompletionUtil.EXPECTED_TYPES.getValue(location), location.getPrefix());
+    return JavaCompletionUtil.getNameEndMatchingDegree(element.getObject(), name, JavaCompletionUtil.EXPECTED_TYPES.getValue(location),
+                                                       element.getPrefixMatcher().getPrefix());
   }
+
 }

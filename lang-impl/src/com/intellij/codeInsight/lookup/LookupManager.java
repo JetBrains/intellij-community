@@ -21,8 +21,8 @@ public abstract class LookupManager {
   }
 
   @Deprecated
-  public abstract Lookup showLookup(Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy);
-  public abstract Lookup showLookup(Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText);
+  public abstract Lookup showLookup(Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy);
+  public abstract Lookup showLookup(Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText);
   public abstract void hideActiveLookup();
   public abstract Lookup getActiveLookup();
 
@@ -33,6 +33,5 @@ public abstract class LookupManager {
 
   public abstract boolean isDisposed();
 
-  public abstract Lookup createLookup(Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy,
-                            String bottomText);
+  public abstract Lookup createLookup(Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, String bottomText);
 }

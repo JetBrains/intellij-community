@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -31,16 +32,20 @@ class TypedHandler implements TypedActionHandler {
       return;
     }
 
-    final String prefix = lookup.getPrefix();
     final LookupItem<?> currentItem = lookup.getCurrentItem();
-    final CharFilter.Result result = getLookupAction(charTyped, prefix, currentItem, lookup);
+    final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
 
     CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
       public void run() {
         EditorModificationUtil.deleteSelectedText(editor);
         if (result == CharFilter.Result.ADD_TO_PREFIX) {
-          lookup.setPrefix(lookup.getPrefix() + charTyped);
+          for (final LookupElement item : lookup.getItems()) {
+            final PrefixMatcher oldMatcher = item.getPrefixMatcher();
+            final String oldPrefix = oldMatcher.getPrefix();
+            item.setPrefixMatcher(oldMatcher.cloneWithPrefix(oldPrefix + charTyped));
+          }
           lookup.setSelectionChanged();
+          lookup.updateList();
           EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
         }
       }
@@ -69,15 +74,16 @@ class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private static CharFilter.Result getLookupAction(final char charTyped, final String prefix, final LookupItem<?> currentItem, final Lookup lookup) {
+  private static CharFilter.Result getLookupAction(final char charTyped, final LookupItem<?> currentItem, final LookupImpl lookup) {
     if (currentItem != null) {
-      for (String lookupString : currentItem.getAllLookupStrings()) {
-        if (lookupString.startsWith(prefix + charTyped)) return CharFilter.Result.ADD_TO_PREFIX;
+      final PrefixMatcher matcher = currentItem.getPrefixMatcher();
+      if (matcher.cloneWithPrefix(matcher.getPrefix() + charTyped).prefixMatches(currentItem)) {
+        return CharFilter.Result.ADD_TO_PREFIX;
       }
     }
     final CharFilter[] filters = Extensions.getExtensions(CharFilter.EP_NAME);
     for (final CharFilter extension : filters) {
-      final CharFilter.Result result = extension.acceptChar(charTyped, prefix, lookup);
+      final CharFilter.Result result = extension.acceptChar(charTyped, lookup.getMinPrefixLength(), lookup);
       if (result != null) {
         return result;
       }

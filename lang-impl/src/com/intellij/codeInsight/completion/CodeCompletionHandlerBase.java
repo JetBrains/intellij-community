@@ -158,8 +158,22 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           public void run() {
             try {
               startSemaphore.up();
-              final LookupData value = computeLookupData(insertedElement, insertedInfo.getFirst(), parameters, indicator);
-              data.set(value);
+              final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+
+              CompletionService.getCompletionService().getVariantsFromContributors(CompletionContributor.EP_NAME, parameters, null, new Consumer<LookupElement>() {
+                public void consume(final LookupElement lookupElement) {
+                  ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                      if (lookupSet.add(lookupElement)) {
+                        indicator.addItem((LookupItem)lookupElement);
+                      }
+                    }
+                  });
+                }
+              });
+              final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
+              final LookupData data1 = new LookupData(items);
+              data.set(data1);
             }
             catch (ProcessCanceledException e) {
             }
@@ -229,16 +243,13 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return;
     }
 
-    final String prefix = data.prefix;
-    context.setPrefix(data.prefix);
-    context.setStartOffset(offset1 - prefix.length());
-
     if (shouldAutoComplete(items, context)) {
       LookupItem item = items[0];
       indicator.closeAndFinish();
-      handleSingleItem(offset2, context, data, prefix, item.getLookupString(), item);
+      context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
+      handleSingleItem(offset2, context, data, item.getLookupString(), item);
     } else {
-      handleMultipleItems(offset1, context, items, prefix, indicator.getShownLookup());
+      handleMultipleItems(offset1, context, items, indicator.getShownLookup());
     }
   }
 
@@ -255,14 +266,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) return false;
     if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;
 
-    if (StringUtil.isEmpty(item.getUserData(CompletionUtil.PREFIX_MATCHER).getPrefix()) && myCompletionType != CompletionType.SMART) return false;
+    if (StringUtil.isEmpty(item.getPrefixMatcher().getPrefix()) && myCompletionType != CompletionType.SMART) return false;
     return true;
   }
 
-  protected void handleSingleItem(final int offset2, final CompletionContext context, final LookupData data,
-                                final String prefix,
-                                final String _uniqueText,
-                                final LookupItem item) {
+  protected void handleSingleItem(final int offset2, final CompletionContext context, final LookupData data, final String _uniqueText, final LookupItem item) {
 
     new WriteCommandAction(context.project) {
       protected void run(Result result) throws Throwable {
@@ -275,11 +283,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           }
 
           uniqueText = item.getLookupString(); // text may be not ready yet
-          data.prefix = "";
-          context.setPrefix(""); // prefix may be of no interest
         }
 
-        if (!StringUtil.startsWithIgnoreCase(uniqueText, prefix)) {
+        if (!StringUtil.startsWithIgnoreCase(uniqueText, item.getPrefixMatcher().getPrefix())) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
         }
 
@@ -291,25 +297,23 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }.execute();
   }
 
-
-
-  private void handleMultipleItems(final int offset1, final CompletionContext context, final LookupItem[] items, final String prefix, final LookupImpl lookup) {
+  private void handleMultipleItems(final int offset1, final CompletionContext context, final LookupItem[] items, final LookupImpl lookup) {
     final Project project = context.project;
-    final String newPrefix = new WriteCommandAction<String>(project) {
-      protected void run(Result<String> result) throws Throwable {
+    final int minPrefixLength = lookup.getMinPrefixLength();
+    context.setStartOffset(offset1 - minPrefixLength);
+
+    new WriteCommandAction(project) {
+      protected void run(Result result) throws Throwable {
         if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
-          result.setResult(fillInCommonPrefix(items, prefix, context.editor, lookup));
-        } else {
-          result.setResult(prefix);
+          lookup.fillInCommonPrefix(false);
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
         }
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
       }
     }.execute().getResultObject();
 
-    if (!newPrefix.equals(prefix)) {
-      lookup.setPrefix(newPrefix);
-      context.editor.getCaretModel().moveToOffset(offset1 - prefix.length() + newPrefix.length());
-      context.setPrefix(newPrefix);
+    final int newLength = lookup.getMinPrefixLength();
+    if (newLength != minPrefixLength) {
+      context.editor.getCaretModel().moveToOffset(offset1 - minPrefixLength + newLength);
       context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
@@ -335,82 +339,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                                                                                                                                     caretOffset:Math.max(caretOffset, context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset);
     lookupItemSelected(context, data, item, signatureSelected, completionChar);
-  }
-
-  protected String fillInCommonPrefix(LookupItem[] items, final String prefix, final Editor editor, final LookupImpl lookup) {
-    String commonPrefix = null;
-    boolean isStrict = false;
-
-    final int prefixLength = prefix.length();
-    for (final LookupItem item : items) {
-      final String lookupString = item.getLookupString();
-      if (!StringUtil.startsWithIgnoreCase(lookupString, prefix)) {
-        // since camel humps
-        return prefix;
-      }
-
-      if (commonPrefix != null) {
-        int matchingRegLength = lookupString.length();
-        while (!lookupString.regionMatches(0, commonPrefix, 0, matchingRegLength--)) {}
-        commonPrefix = lookupString.substring(0, matchingRegLength + 1);
-        if (commonPrefix.length() < lookupString.length()) {
-          isStrict = true;
-        }
-        if (commonPrefix.length() <= prefixLength) {
-          return prefix;
-        }
-      }
-      else {
-        commonPrefix = lookupString;
-      }
-    }
-
-    if (!isStrict) return prefix;
-    
-    lookup.setPrefix(commonPrefix);
-
-    int offset =
-        editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
-    int lookupStart = offset - prefixLength;
-    int replacedLength = prefixLength;
-    final int commonPrefixLength = commonPrefix.length();
-
-    if (prefixLength < commonPrefixLength) {
-      final CharSequence sequence = editor.getDocument().getCharsSequence();
-      final int sequenceLength = sequence.length();
-
-      while (replacedLength < commonPrefixLength &&
-             lookupStart + replacedLength < sequenceLength &&
-             sequence.charAt(lookupStart + replacedLength) == commonPrefix.charAt(replacedLength)) {
-        replacedLength++;
-      }
-    }
-
-    editor.getDocument().replaceString(lookupStart, lookupStart + replacedLength, commonPrefix);
-
-    return commonPrefix;
-  }
-
-  @Nullable
-  protected LookupData computeLookupData(final PsiElement insertedElement, final CompletionContext context,
-                                         final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
-    final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-
-    CompletionService.getCompletionService().getVariantsFromContributors(CompletionContributor.EP_NAME, parameters, null, new Consumer<LookupElement>() {
-      public void consume(final LookupElement lookupElement) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (lookupSet.add(lookupElement)) {
-              indicator.addItem((LookupItem)lookupElement);
-            }
-          }
-        });
-      }
-    });
-    final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
-    final LookupData data = new LookupData(items, context.getPrefix());
-    data.itemPreferencePolicy = new CompletionPreferencePolicy(context.getPrefix(), parameters);
-    return data;
   }
 
   private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final String dummyIdentifier) {
@@ -476,8 +404,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected abstract boolean isAutocompleteCommonPrefixOnInvocation();
 
-  protected void analyseItem(LookupItem item, PsiElement place, CompletionContext context) {}
-
   protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters,
                                    final CompletionProgressIndicator indicator) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -528,9 +454,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
-        context.setPrefix(data.prefix);
-        final PsiElement position = context.file.findElementAt(context.getStartOffset() + item.getLookupString().length() - 1);
-        analyseItem(item, position, context);
         handler.handleInsert(context, context.getStartOffset(), data, item, signatureSelected, completionChar);
       }
     });

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
@@ -89,18 +90,17 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myIsDisposed = true;
   }
 
-  public Lookup showLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy) {
-    return showLookup(editor, items, prefix, itemPreferencePolicy, null);
+  public Lookup showLookup(final Editor editor, final LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
+    return showLookup(editor, items, itemPreferencePolicy, null);
   }
 
-  public Lookup showLookup(final Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
-    final LookupImpl lookup = createLookup(editor, items, prefix, itemPreferencePolicy, bottomText);
+  public Lookup showLookup(final Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
+    final LookupImpl lookup = createLookup(editor, items, itemPreferencePolicy, bottomText);
     lookup.show();
     return lookup;
   }
 
-  public LookupImpl createLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
-                            final String bottomText) {
+  public LookupImpl createLookup(final Editor editor, final LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy, final String bottomText) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -121,7 +121,10 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     if (daemonCodeAnalyzer != null) {
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     }
-    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, bottomText);
+    for (final LookupItem item : items) {
+      item.setPrefixMatcher(new CamelHumpMatcher(""));
+    }
+    myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy, bottomText);
     myActiveLookupEditor = editor;
     myActiveLookup.addLookupListener(
       new LookupAdapter(){

@@ -154,7 +154,7 @@ class LookupCellRenderer implements ListCellRenderer {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }
 
-    final String prefix = myLookup.getPrefix();
+    final String prefix = item.getPrefixMatcher().getPrefix();
     if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
       myNameComponent.append(name.substring(0, prefix.length()), new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR));
       myNameComponent.append(name.substring(prefix.length()), new SimpleTextAttributes(style, foreground));

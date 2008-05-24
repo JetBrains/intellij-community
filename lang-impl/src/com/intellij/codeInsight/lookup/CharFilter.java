@@ -8,9 +8,8 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CharFilter {
   public static final ExtensionPointName<CharFilter> EP_NAME = ExtensionPointName.create("com.intellij.lookup.charFilter");
@@ -22,10 +21,9 @@ public abstract class CharFilter {
   /**
    * Informs about further action on typing character c when completion lookup has specified prefix
    * @param c character being inserted
-   * @param prefix current completion prefix
-   * @param lookup
-   * @return further action
+   * @param prefixLength
+   *@param lookup @return further action
    */
   @Nullable
-  public abstract Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup);
+  public abstract Result acceptChar(char c, final int prefixLength, final Lookup lookup);
 }

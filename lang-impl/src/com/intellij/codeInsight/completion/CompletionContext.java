@@ -3,8 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiFile;
 
 public class CompletionContext {
   public static final Key<CompletionContext> COMPLETION_CONTEXT_KEY = Key.create("CompletionContext");
@@ -14,25 +13,11 @@ public class CompletionContext {
   public final PsiFile file;
   private OffsetMap myOffsetMap;
 
-  private String myPrefix = "";
-
   public CompletionContext(Project project, Editor editor, PsiFile file, final OffsetMap offsetMap){
     this.project = project;
     this.editor = editor;
     this.file = file;
     myOffsetMap = offsetMap;
-  }
-
-  public String getPrefix() {
-    return myPrefix;
-  }
-
-  public void setPrefix(PsiElement insertedElement, int offset, @Nullable CompletionData completionData) {
-    setPrefix(completionData == null ? CompletionData.findPrefixStatic(insertedElement, offset) : completionData.findPrefix(insertedElement, offset));
-  }
-
-  public void setPrefix(final String prefix) {
-    myPrefix = prefix;
   }
 
   public int getStartOffset() {
