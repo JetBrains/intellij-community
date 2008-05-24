@@ -691,17 +691,7 @@ public class GroovyAnnotator implements Annotator {
       if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
     } else {
       GrExpression qualifier = refExpr.getQualifierExpression();
-      if (qualifier == null) {
-        if (isAssignmentLHS(refExpr)) return;
-
-        GroovyPsiElement context = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrField.class, GrClosableBlock.class);
-        if (context instanceof PsiModifierListOwner && ((PsiModifierListOwner) context).hasModifierProperty(PsiModifier.STATIC)) {
-          Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
-          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-          registerReferenceFixes(refExpr, annotation);
-          return;
-        }
-      }
+      if (qualifier == null && isAssignmentLHS(refExpr)) return;
     }
 
     final PsiType refExprType = refExpr.getType();
