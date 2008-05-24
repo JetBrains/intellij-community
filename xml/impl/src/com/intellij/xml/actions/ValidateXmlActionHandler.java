@@ -429,6 +429,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     }
     catch (Exception exception) {
       filterAppException(exception);
+    } catch(StackOverflowError error) {
+      // http://issues.apache.org/jira/browse/XERCESJ-589
     }
   }
 
