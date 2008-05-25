@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
@@ -25,6 +26,9 @@ public class TestLookupManager extends LookupManagerImpl{
   public Lookup showLookup(final Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText) {
     hideActiveLookup();
 
+    for (final LookupItem item : items) {
+      item.setPrefixMatcher(new CamelHumpMatcher(""));
+    }
     myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy, bottomText);
     myActiveLookupEditor = editor;
     myActiveLookup.show();

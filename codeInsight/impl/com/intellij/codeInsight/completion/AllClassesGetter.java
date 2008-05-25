@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.StdLanguages;
@@ -173,7 +172,7 @@ public class AllClassesGetter {
       lookingForAnnotations = true;
     }
 
-    final CamelHumpMatcher matcher = new CamelHumpMatcher(set.getPrefixMatcher().getPrefix());
+    final PrefixMatcher matcher = set.getPrefixMatcher();
     for (final String name : names) {
       if (!matcher.prefixMatches(name)) continue;
 

@@ -23,6 +23,7 @@ import java.util.*;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
+  private boolean myTemplateTesting;
   private EditorFactoryListener myEditorFactoryListener;
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
@@ -57,6 +58,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
+  }
+
+  public void setTemplateTesting(final boolean templateTesting) {
+    myTemplateTesting = templateTesting;
   }
 
   private void disposeState(final TemplateState tState) {
@@ -130,9 +135,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       CodeInsightBundle.message("insert.code.template.command"), null
     );
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (shouldSkipInTests()) {
       if (!templateState.isFinished()) templateState.gotoEnd();
     }
+  }
+
+  public boolean shouldSkipInTests() {
+    return ApplicationManager.getApplication().isUnitTestMode() && !myTemplateTesting;
   }
 
   public void startTemplate(final Editor editor, final Template template, TemplateEditingListener listener) {

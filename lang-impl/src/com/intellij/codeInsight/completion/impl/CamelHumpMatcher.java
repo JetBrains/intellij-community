@@ -25,7 +25,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     myPrefix = prefix;
   }
 
-  public boolean prefixMatches(@NotNull final String name) {
+  public synchronized boolean prefixMatches(@NotNull final String name) {
     if (myPattern == null) {
       myPattern = CompletionUtil.createCamelHumpsMatcher(myPrefix);
       myMatcher = new Perl5Matcher();
@@ -64,7 +64,6 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @NotNull
   public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
-    assert prefix.startsWith(myPrefix) || myPrefix.startsWith(prefix) : "oldPrefix=" + myPrefix + "; new prefix=" + prefix;
     return new CamelHumpMatcher(prefix);
   }
 

@@ -12,12 +12,13 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -48,7 +49,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myEditor = editor;
     myHandler = handler;
 
-    final String prefix = CompletionData.findPrefixStatic(parameters.getPosition(), contextCopy.getStartOffset());
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], new CompletionPreferencePolicy(
         parameters), adText);
 
@@ -195,11 +195,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean fillInCommonPrefix() {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return myLookup != null && myLookup.fillInCommonPrefix(true);
+    return new WriteCommandAction<Boolean>(myEditor.getProject()) {
+      protected void run(Result<Boolean> result) throws Throwable {
+        result.setResult(myLookup != null && myLookup.fillInCommonPrefix(true));
       }
-    });
+    }.execute().getResultObject().booleanValue();
   }
 
   public boolean isInitialized() {
@@ -207,8 +207,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean isActive(CodeCompletionHandlerBase handler) {
-    if (!getHandler().getClass().equals(handler.getClass())) return false;
-
-    return !isCanceled();
+    return getHandler().getClass().equals(handler.getClass()) && !isCanceled();
   }
 }

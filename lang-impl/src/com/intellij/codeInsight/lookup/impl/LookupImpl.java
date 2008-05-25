@@ -61,7 +61,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final LookupItemPreferencePolicy myItemPreferencePolicy;
 
   private RangeMarker myLookupStartMarker;
-  private final int myInitialMinPrefixLength;
+  private int myInitialMinPrefixLength = 0;
   private final JList myList;
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
@@ -74,6 +74,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myCanceled = true;
   private boolean myDisposed = false;
   private LookupItem myPreselectedItem = EMPTY_LOOKUP_ITEM;
+  private boolean myDirty;
   private PsiElement myElement;
   private final AsyncProcessIcon myProcessIcon;
   private final Comparator<? super LookupItem> myComparator;
@@ -86,7 +87,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myProject = project;
     myEditor = editor;
     myItemPreferencePolicy = itemPreferencePolicy;
-    myCaretOffset =  myEditor.getCaretModel().getOffset();
+    myCaretOffset = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
 
     final Document document = myEditor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -129,7 +130,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     updateList();
-    myInitialMinPrefixLength = myMinPrefixLength;
     
     myList.setFocusable(false);
 
@@ -168,14 +168,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myPreferredItemsCount;
   }
 
-  public void setSelectionChanged() {
+  public void markDirty() {
+    myDirty = true;
     myPreselectedItem = null;
   }
 
   @TestOnly
   public void resort() {
     final ArrayList<LookupItem> items = new ArrayList<LookupItem>(myItems);
-    
+    myDirty = false;
     myPreselectedItem = EMPTY_LOOKUP_ITEM;
     myItemsMap.clear();
     myItems.clear();
@@ -222,15 +223,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return new Comparable[]{i};
   }
 
-  public int getMinPrefixLength(){
+  public int getMinPrefixLength() {
     return myMinPrefixLength;
   }
 
-  int getInitialMinPrefixLength(){
+  int getInitialMinPrefixLength() {
     return myInitialMinPrefixLength;
   }
 
-  public JList getList(){
+  public JList getList() {
     return myList;
   }
 
@@ -244,15 +245,18 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
     }
     myMinPrefixLength = minPrefixLength;
+    if (!myDirty) {
+      myInitialMinPrefixLength = minPrefixLength;
+    }
 
-    Object oldSelected = myPreselectedItem != null ? null : myList.getSelectedValue();
+    Object oldSelected = !myDirty ? null : myList.getSelectedValue();
     DefaultListModel model = (DefaultListModel)myList.getModel();
     model.clear();
 
     ArrayList<LookupItem> allItems = new ArrayList<LookupItem>();
     Set<LookupItem> firstItems = new THashSet<LookupItem>();
 
-    final boolean hasPreselectedItem = myPreselectedItem != null && myPreselectedItem != EMPTY_LOOKUP_ITEM;
+    final boolean hasPreselectedItem = !myDirty && myPreselectedItem != EMPTY_LOOKUP_ITEM;
     boolean addPreselected = hasPreselectedItem;
 
     for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
@@ -430,10 +434,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       public void caretPositionChanged(CaretEvent e){
         int curOffset = myEditor.getCaretModel().getOffset();
         final LookupItem item = getCurrentItem();
-        if (item == null || item == EMPTY_LOOKUP_ITEM) {
-          hide();
-          return;
-        }
+        if (item == null || item == EMPTY_LOOKUP_ITEM) return;
 
         if (curOffset != item.getUserData(ITEM_START).intValue() + item.getPrefixMatcher().getPrefix().length()) {
           hide();
@@ -573,61 +574,85 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
+  private static int divideString(String lookupString, PrefixMatcher matcher) {
+    for (int i = matcher.getPrefix().length(); i <= lookupString.length(); i++) {
+      if (matcher.prefixMatches(lookupString.substring(0, i))) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   public boolean fillInCommonPrefix(boolean toCompleteUniqueName){
+    if (myDirty) return false;
+
     ListModel listModel = myList.getModel();
     if (listModel.getSize() <= 1) return false;
 
-    String commonPrefix = null;
-    String subprefix = null;
     boolean isStrict = false;
-    for(int i = 0; i < listModel.getSize(); i++){
+    if (listModel.getSize() == 0) return false;
+
+    final LookupItem firstItem = (LookupItem)listModel.getElementAt(0);
+    if (listModel.getSize() == 1 && firstItem.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null) return false;
+
+    final PrefixMatcher matcher = firstItem.getPrefixMatcher();
+    String lookupString = firstItem.getLookupString();
+    int div = divideString(lookupString, matcher);
+    if (div < 0) return false;
+
+    String beforeCaret = lookupString.substring(0, div);
+    String afterCaret = lookupString.substring(div);
+    String presentPrefix = matcher.getPrefix();
+
+    for (int i = 1; i < listModel.getSize(); i++) {
       LookupItem item = (LookupItem)listModel.getElementAt(i);
-      if (item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null) return false;
-      String string = item.getLookupString();
-      String string1 = string.substring(0, myMinPrefixLength);
-      String string2 = string.substring(myMinPrefixLength);
-      if (commonPrefix == null){
-        commonPrefix = string2;
-        subprefix = string1;
+      if (!presentPrefix.equals(item.getPrefixMatcher().getPrefix())) return false;
+
+      lookupString = item.getLookupString();
+      div = divideString(lookupString, item.getPrefixMatcher());
+      if (div < 0) return false;
+
+      String _afterCaret = lookupString.substring(div);
+      if (beforeCaret != null) {
+        if (div != beforeCaret.length() || !lookupString.startsWith(beforeCaret)) beforeCaret = null;
       }
-      else{
-        while(commonPrefix.length() > 0){
-          if (string2.startsWith(commonPrefix)){
-            if (string2.length() > commonPrefix.length()){
-              isStrict = true;
-            }
-            if (!string1.equals(subprefix)){
-              subprefix = null;
-            }
-            break;
+
+      while (afterCaret.length() > 0) {
+        if (_afterCaret.startsWith(afterCaret)) {
+          if (_afterCaret.length() > afterCaret.length()){
+            isStrict = true;
           }
-          commonPrefix = commonPrefix.substring(0, commonPrefix.length() - 1);
+          break;
         }
-        if (commonPrefix.length() == 0) return false;
+        afterCaret = afterCaret.substring(0, afterCaret.length() - 1);
+        isStrict = true;
       }
+      if (afterCaret.length() == 0) return false;
     }
 
     if (!isStrict && !toCompleteUniqueName) return false;
 
-    final String _subprefix = subprefix;
-    final String _commonPrefix = commonPrefix;
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run(){
-        if (_subprefix != null){ // correct case
-          int lookupStart = getLookupStart();
-          myEditor.getDocument().replaceString(lookupStart, lookupStart + _subprefix.length(), _subprefix);
-        }
-        for (final LookupElement item : myItems) {
-          final PrefixMatcher oldMatcher = item.getPrefixMatcher();
-          assert item.setPrefixMatcher(oldMatcher.cloneWithPrefix(oldMatcher.getPrefix() + _commonPrefix));
-        }
-        int offset = myEditor.getCaretModel().getOffset();
-        int i = 0;
-        final CharSequence text = myEditor.getDocument().getCharsSequence();
-        while (offset + i < text.length() && i < _commonPrefix.length() && text.charAt(offset + i) == _commonPrefix.charAt(i)) i++;
-        EditorModificationUtil.insertStringAtCaret(myEditor, _commonPrefix.substring(i));
-      }
-    }, null, null);
+    final LookupItem curItem = getCurrentItem();
+
+    int offset = myEditor.getCaretModel().getOffset();
+    if (beforeCaret != null) { // correct case, expand camel-humps
+      curItem.setPrefixMatcher(curItem.getPrefixMatcher().cloneWithPrefix(beforeCaret));
+      myEditor.getDocument().replaceString(offset - presentPrefix.length(), offset, beforeCaret);
+      presentPrefix = beforeCaret;
+    }
+
+    offset = myEditor.getCaretModel().getOffset();
+    int i = 0;
+    final CharSequence text = myEditor.getDocument().getCharsSequence();
+    while (offset + i < text.length() && i < afterCaret.length() && text.charAt(offset + i) == afterCaret.charAt(i)) i++;
+    curItem.setPrefixMatcher(curItem.getPrefixMatcher().cloneWithPrefix(presentPrefix + afterCaret.substring(0, i)));
+    myEditor.getCaretModel().moveToOffset(offset + i);
+
+    for (final LookupElement item : myItems) {
+      assert item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(presentPrefix + afterCaret));
+    }
+    EditorModificationUtil.insertStringAtCaret(myEditor, afterCaret.substring(i));
+
     updateList();
     return true;
   }

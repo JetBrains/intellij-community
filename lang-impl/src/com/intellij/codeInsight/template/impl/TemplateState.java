@@ -381,13 +381,13 @@ public class TemplateState implements Disposable {
     final LookupItem[] lookupItems = expressionNode.calculateLookupItems(context);
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (lookupItems != null && lookupItems.length > 0) {
-      if (ApplicationManager.getApplication().isUnitTestMode() && lookupItems.length > 1) {
+      if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
         final String s = lookupItems[0].getLookupString();
         EditorModificationUtil.insertStringAtCaret(myEditor, s);
         itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ');
       } else {
         lookupItems[0].setPriority(Integer.MAX_VALUE);
-        runLookup(currentSegmentNumber, end, lookupItems, psiFile);
+        runLookup(currentSegmentNumber, lookupItems, psiFile);
       }
     }
     else {
@@ -400,37 +400,28 @@ public class TemplateState implements Disposable {
     focusCurrentHighlighter(true);
   }
 
-  private void runLookup(final int currentSegmentNumber, final int end, final LookupItem[] lookupItems, final PsiFile psiFile) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myEditor == null) return;
+  private void runLookup(final int currentSegmentNumber, final LookupItem[] lookupItems, final PsiFile psiFile) {
+    if (myEditor == null) return;
 
-        final LookupManager lookupManager = LookupManager.getInstance(myProject);
-        if (lookupManager.isDisposed()) return;
-        final Lookup lookup = lookupManager.showLookup(myEditor,
-                                                       lookupItems, new CompletionPreferencePolicy(new CompletionParameters(psiFile, psiFile,
-                                                                                                                       CompletionType.BASIC, myEditor.getCaretModel().getOffset(),
-                                                                                                                       1)));
-        lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
-        toProcessTab = false;
-        lookup.addLookupListener(
-          new LookupAdapter() {
-            public void lookupCanceled(LookupEvent event) {
-              lookup.removeLookupListener(this);
-              toProcessTab = true;
-            }
+    final LookupManager lookupManager = LookupManager.getInstance(myProject);
+    if (lookupManager.isDisposed()) return;
 
-            public void itemSelected(LookupEvent event) {
-              lookup.removeLookupListener(this);
-              if (isFinished()) return;
-              toProcessTab = true;
+    final CompletionParameters parameters =
+        new CompletionParameters(psiFile, psiFile, CompletionType.BASIC, myEditor.getCaretModel().getOffset(), 1);
+    final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, new CompletionPreferencePolicy(parameters), null);
+    toProcessTab = false;
+    lookup.addLookupListener(new LookupAdapter() {
+      public void lookupCanceled(LookupEvent event) {
+        lookup.removeLookupListener(this);
+        toProcessTab = true;
+      }
 
-              final LookupItem item = event.getItem();
+      public void itemSelected(LookupEvent event) {
+        lookup.removeLookupListener(this);
+        if (isFinished()) return;
+        toProcessTab = true;
 
-              TemplateState.this.itemSelected(item, psiFile, currentSegmentNumber, event.getCompletionChar());
-            }
-          }
-        );
+        TemplateState.this.itemSelected(event.getItem(), psiFile, currentSegmentNumber, event.getCompletionChar());
       }
     });
   }

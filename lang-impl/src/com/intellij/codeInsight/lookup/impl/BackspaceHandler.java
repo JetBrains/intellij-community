@@ -27,7 +27,8 @@ class BackspaceHandler extends EditorActionHandler {
       for (final LookupElement item : lookup.getItems()) {
         final PrefixMatcher oldMatcher = item.getPrefixMatcher();
         final String oldPrefix = oldMatcher.getPrefix();
-        assert item.setPrefixMatcher(oldMatcher.cloneWithPrefix(oldPrefix.substring(0, oldPrefix.length() - 1)));
+        final String newPrefix = oldPrefix.substring(0, oldPrefix.length() - 1);
+        item.setPrefixMatcher(oldMatcher.cloneWithPrefix(newPrefix));
       }
       lookup.updateList();
       Point point = lookup.calculatePosition();

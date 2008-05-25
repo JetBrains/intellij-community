@@ -1,10 +1,8 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInsight.lookup.LookupManager;
 
 /**
@@ -24,7 +22,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       return;
     }
 
-    lookup.setSelectionChanged();
+    lookup.markDirty();
     executeInLookup(lookup);
   }
 

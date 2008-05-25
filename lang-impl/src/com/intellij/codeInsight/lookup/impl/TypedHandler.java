@@ -44,7 +44,7 @@ class TypedHandler implements TypedActionHandler {
             final String oldPrefix = oldMatcher.getPrefix();
             item.setPrefixMatcher(oldMatcher.cloneWithPrefix(oldPrefix + charTyped));
           }
-          lookup.setSelectionChanged();
+          lookup.markDirty();
           lookup.updateList();
           EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
         }
