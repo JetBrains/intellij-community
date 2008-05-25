@@ -39,7 +39,7 @@ public class GroovyCompilerUtil {
     URL[] classpathUrls = new URL[classpath.size()];
     for (int i = 0; i < classpathUrls.length; i++) {
       String classpathEntry = (String) classpath.get(i);
-      classpathUrls[i] = new File(classpathEntry).toURL();
+      classpathUrls[i] = new File(classpathEntry).toURI().toURL();
     }
     return classpathUrls;
   }
