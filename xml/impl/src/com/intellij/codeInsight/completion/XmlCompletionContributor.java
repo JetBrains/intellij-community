@@ -5,7 +5,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,11 +27,6 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class XmlCompletionContributor extends CompletionContributor {
-  private static final TailType EAT_QUOTE_TAIL_TYPE = new TailType() {
-    public int processTail(final Editor editor, final int tailOffset) {
-      return XmlCompletionData.eatClosingQuote(UNKNOWN, editor);
-    }
-  };
 
   public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     final PsiElement element = parameters.getPosition();
@@ -45,17 +39,6 @@ public class XmlCompletionContributor extends CompletionContributor {
     }
 
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
-      if (element.getParent() instanceof XmlAttributeValue) {
-        return CompletionService.getCompletionService().getVariantsFromContributors(EP_NAME, parameters, this, new Consumer<LookupElement>() {
-          public void consume(final LookupElement lookupElement) {
-            if (lookupElement.getTailType() == TailType.UNKNOWN) {
-              lookupElement.setTailType(EAT_QUOTE_TAIL_TYPE);
-            }
-            result.addElement(lookupElement);
-          }
-        });
-      }
-
       final ASTNode node = element.getNode();
       if (node != null && node.getElementType() == XmlTokenType.XML_NAME) {
         if (!(element.getParent() instanceof XmlTag)) {

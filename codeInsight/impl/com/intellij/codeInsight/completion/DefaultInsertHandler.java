@@ -16,6 +16,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -41,7 +41,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -476,7 +475,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case ' ': return TailType.SPACE;
       case ':': return TailType.CASE_COLON; //?
       case '(': return TailTypes.SMART_LPARENTH;
-      case '<': case '>': case '[': return TailType.createSimpleTailType(completionChar);
+      case '\'': return TailType.QUOTE;
+      case '<':
+      case '>':
+      case '\"':
+      case '[': return TailType.createSimpleTailType(completionChar);
       case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailTypes.SMART_COMPLETION;
       case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
     }

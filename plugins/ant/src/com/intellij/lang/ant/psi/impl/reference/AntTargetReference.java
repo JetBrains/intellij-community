@@ -1,9 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.AntConfigurationBase;
@@ -19,9 +16,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +26,6 @@ import java.util.List;
 
 public class AntTargetReference extends AntGenericReference {
   private boolean myShouldBeSkippedByAnnotator;
-  private static final NotNullFunction<AntTarget,LookupElement> VARIANT_MAPPER = new NotNullFunction<AntTarget, LookupElement>() {
-    @NotNull
-    public LookupElement fun(final AntTarget antTarget) {
-      return LookupElementFactory.getInstance().createLookupElement(antTarget).setTailType(TailType.NONE);
-    }
-  };
 
   public AntTargetReference(final AntElement antElement, final String str, final TextRange textRange, final XmlAttribute attribute) {
     super(antElement, str, textRange, attribute);
@@ -93,7 +82,7 @@ public class AntTargetReference extends AntGenericReference {
         AntFile antFile = AntSupport.getAntFile(psiFile);
         if (antFile != null) {
           final AntFile context = antConfig.getContextFile(antFile);
-          
+
           assert context != null;
 
           final AntProject project = context.getAntProject();
@@ -103,10 +92,10 @@ public class AntTargetReference extends AntGenericReference {
         }
       }
     }
-    
+
     if (result == null) {
       final AntFile context = antConfig.getContextFile(element.getAntFile());
-      
+
       assert context != null;
 
       result = resolveTargetImpl(name, context.getAntProject());
@@ -163,7 +152,7 @@ public class AntTargetReference extends AntGenericReference {
         }
         final AntProject project = (antFile == null) ? null : antFile.getAntProject();
         if (project != null) {
-          return ContainerUtil.map2Array(project.getTargets(), LookupElement.class, VARIANT_MAPPER);
+          return project.getTargets();
         }
       }
     }
@@ -179,7 +168,8 @@ public class AntTargetReference extends AntGenericReference {
     }
 
     result.addAll(Arrays.asList(project.getImportedTargets()));
-    return ContainerUtil.map2Array(result, LookupElement.class, VARIANT_MAPPER);
+
+    return result.toArray();
   }
 
   @NotNull

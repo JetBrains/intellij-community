@@ -83,6 +83,19 @@ public abstract class TailType {
   };
   public static final TailType SPACE = new CharTailType(' ');
   public static final TailType DOT = new CharTailType('.');
+  public static final TailType QUOTE = new TailType() {
+    public int processTail(final Editor editor, final int tailOffset) {
+      final Document document = editor.getDocument();
+      if (document.getTextLength() > tailOffset) {
+        final char c = document.getCharsSequence().charAt(tailOffset);
+        if (c == '\"' || c == '\'') {
+          editor.getCaretModel().moveToOffset(tailOffset + 1);
+          return tailOffset + 1;
+        }
+      }
+      return tailOffset;
+    }
+  };
 
   public static final TailType CASE_COLON = new CharTailType(':');
   public static final TailType COND_EXPR_COLON = new TailType(){

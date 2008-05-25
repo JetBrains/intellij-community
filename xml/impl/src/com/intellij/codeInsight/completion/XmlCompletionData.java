@@ -128,19 +128,19 @@ public class XmlCompletionData extends CompletionData {
                              char completionChar) {
       super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
 
-      eatClosingQuote(item.getTailType(), context.editor);
+      eatClosingQuote(completionChar, context.editor);
 
     }
 
   }
 
-  public static int eatClosingQuote(TailType tailType, final Editor editor) {
+  public static int eatClosingQuote(char completionChar, final Editor editor) {
     final Document document = editor.getDocument();
     int tailOffset = editor.getCaretModel().getOffset();
-    if (tailType == TailType.UNKNOWN) {
+    if (completionChar == '\"' || completionChar == '\'') {
       if (document.getTextLength() > tailOffset) {
         final char c = document.getCharsSequence().charAt(tailOffset);
-        if (c == '\"' || c == '\'') {
+        if (c == completionChar || completionChar == '\'') {
           editor.getCaretModel().moveToOffset(tailOffset + 1);
           return tailOffset + 1;
         }
@@ -307,7 +307,7 @@ public class XmlCompletionData extends CompletionData {
       final CaretModel caretModel = context.editor.getCaretModel();
       context.editor.getDocument().insertString(caretModel.getOffset(), ";");
       caretModel.moveToOffset(caretModel.getOffset() + 1);
-      eatClosingQuote(item.getTailType(), context.editor);
+      eatClosingQuote(completionChar, context.editor);
     }
   }
 }
