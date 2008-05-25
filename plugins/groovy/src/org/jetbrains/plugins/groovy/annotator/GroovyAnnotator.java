@@ -665,7 +665,11 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
     GroovyResolveResult resolveResult = refExpr.advancedResolve();
-    registerUsedImport(refExpr, resolveResult);
+    GroovyResolveResult[] results = refExpr.multiResolve(false); //cached
+    for (GroovyResolveResult result : results) {
+      registerUsedImport(refExpr, result);
+    }
+
     PsiElement resolved = resolveResult.getElement();
     if (resolved != null) {
       if (resolved instanceof PsiMember) {

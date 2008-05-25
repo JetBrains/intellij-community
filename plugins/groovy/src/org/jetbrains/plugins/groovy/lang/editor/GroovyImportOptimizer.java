@@ -68,52 +68,54 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
 
         private void visitRefElement(GrReferenceElement refElement) {
-          final GroovyResolveResult resolveResult = refElement.advancedResolve();
-          final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
-          if (context instanceof GrImportStatement) {
-          final GrImportStatement importStatement = (GrImportStatement) context;
+          final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);
+          for (GroovyResolveResult resolveResult : resolveResults) {
+            final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
+            if (context instanceof GrImportStatement) {
+              final GrImportStatement importStatement = (GrImportStatement) context;
 
-          usedImports.add(importStatement);
-            if (!importStatement.isAliasedImport()) {
-              String importedName = null;
-              if (importStatement.isOnDemand()) {
-                final PsiElement element = resolveResult.getElement();
-                if (element == null) return;
+              usedImports.add(importStatement);
+              if (!importStatement.isAliasedImport()) {
+                String importedName = null;
+                if (importStatement.isOnDemand()) {
+                  final PsiElement element = resolveResult.getElement();
+                  if (element == null) return;
 
-                if (importStatement.isStatic()) {
-                  if (element instanceof PsiMember) {
-                    final PsiMember member = (PsiMember) element;
-                    final PsiClass clazz = member.getContainingClass();
-                    if (clazz != null) {
-                      final String classQName = clazz.getQualifiedName();
-                      if (classQName != null) {
-                        final String name = member.getName();
-                        if (name != null) {
-                          importedName = classQName + "." + name;
+                  if (importStatement.isStatic()) {
+                    if (element instanceof PsiMember) {
+                      final PsiMember member = (PsiMember) element;
+                      final PsiClass clazz = member.getContainingClass();
+                      if (clazz != null) {
+                        final String classQName = clazz.getQualifiedName();
+                        if (classQName != null) {
+                          final String name = member.getName();
+                          if (name != null) {
+                            importedName = classQName + "." + name;
+                          }
                         }
                       }
                     }
+                  } else {
+                    if (element instanceof PsiClass) {
+                      importedName = ((PsiClass) element).getQualifiedName();
+                    } else if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) {
+                      importedName = ((PsiMethod) element).getContainingClass().getQualifiedName();
+                    }
                   }
                 } else {
-                  if (element instanceof PsiClass) {
-                    importedName = ((PsiClass) element).getQualifiedName();
-                  } else if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) {
-                    importedName = ((PsiMethod) element).getContainingClass().getQualifiedName();
+                  final GrCodeReferenceElement importReference = importStatement.getImportReference();
+                  if (importReference != null) {
+                    importedName = PsiUtil.getQualifiedReferenceText(importReference);
                   }
                 }
-              } else {
-                final GrCodeReferenceElement importReference = importStatement.getImportReference();
-                if (importReference != null) {
-                  importedName = PsiUtil.getQualifiedReferenceText(importReference);
+
+                if (importedName == null) return;
+
+                if (importStatement.isStatic()) {
+                  staticallyImportedMembers.add(importedName);
+                } else {
+                  importedClasses.add(importedName);
                 }
-              }
-
-              if (importedName == null) return;
-
-              if (importStatement.isStatic()) {
-                staticallyImportedMembers.add(importedName);
-              } else {
-                importedClasses.add(importedName);
               }
             }
           }
