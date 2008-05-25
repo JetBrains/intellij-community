@@ -257,7 +257,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     GrExpression lValue = expression.getLValue();
     if (expression.getOperationToken() != GroovyElementTypes.mASSIGN) {
       if (lValue instanceof GrReferenceExpression) {
-        addNode(new ReadWriteVariableInstructionImpl((GrReferenceExpression) lValue, myInstructionNumber++, false));
+        ReadWriteVariableInstructionImpl instruction = new ReadWriteVariableInstructionImpl((GrReferenceExpression) lValue, myInstructionNumber++, false);
+        addNode(instruction);
+        checkPending(instruction);
       }
     }
 
