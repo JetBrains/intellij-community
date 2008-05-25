@@ -89,6 +89,10 @@ public class OptimizeImportsTest extends IdeaTestCase {
     doTest("foldImports2", "A.groovy");
   }
 
+  public void testUntypedCall() throws Throwable {
+    doTest("untypedCall", "A.groovy");
+  }
+
   public void testFoldImports3() throws Throwable {
     doTest("foldImports3", "A.groovy");
   }
