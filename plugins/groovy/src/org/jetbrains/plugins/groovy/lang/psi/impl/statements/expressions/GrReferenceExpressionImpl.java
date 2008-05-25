@@ -230,7 +230,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else if (resolved instanceof GrVariableBase) {
-      result = ((GrVariableBase) resolved).getTypeGroovy(); //still infer from the initializer
+      result = ((GrVariableBase) resolved).getDeclaredType();
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
@@ -340,7 +340,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
       final PsiType nominal = refExpr.getNominalTypeImpl();
-      if (inferred == null || inferred == PsiType.NULL) return nominal;
+      if (inferred == null || inferred == PsiType.NULL) {
+        if (nominal == null) {
+          /*inside nested closure we could still try to infer from variable initializer.
+          * Not sound, but makes sense*/
+          final PsiElement resolved = refExpr.resolve();
+          if (resolved instanceof GrVariableBase) return ((GrVariableBase) resolved).getTypeGroovy();
+        }
+
+        return nominal;
+      }
+
       if (nominal == null) return inferred;
       if (!TypeConversionUtil.isAssignable(nominal, inferred, false)) {
         final PsiElement resolved = refExpr.resolve();
