@@ -534,7 +534,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         if (name != null) {
           builder.append("<property name=\"ant.file.");
           builder.append(name);
-          builder.append("\" value=\"${ant.file}\"/>");
+          builder.append("\" value=\"");
+          builder.append(path);
+          builder.append("\"/>");
         }
       }
       builder.append("</project>");
