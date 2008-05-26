@@ -76,12 +76,14 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   }
 
   private static void iterateRecursively(final VirtualFile root, final ContentIterator processor) {
-    for (VirtualFile file : root.getChildren()) {
-      if (file.isDirectory()) {
-        iterateRecursively(file, processor);
-      }
-      else {
-        processor.processFile(file);
+    if (root != null) {
+      for (VirtualFile file : root.getChildren()) {
+        if (file.isDirectory()) {
+          iterateRecursively(file, processor);
+        }
+        else {
+          processor.processFile(file);
+        }
       }
     }
   }
