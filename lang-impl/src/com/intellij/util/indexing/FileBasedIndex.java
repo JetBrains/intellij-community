@@ -79,6 +79,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   public static final int REQUIRES_REBUILD = 2;
   public static final int REBUILD_IN_PROGRESS = 3;
   private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
+  private static final String MARKER_FILE_NAME = "work_in_progress";
 
   private final ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
@@ -92,33 +93,46 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   public FileBasedIndex(final VirtualFileManagerEx vfManager) throws IOException {
     myVfManager = vfManager;
-    final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
-    for (FileBasedIndexExtension<?, ?> extension : extensions) {
-      myRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
-    }
-    for (FileBasedIndexExtension<?, ?> extension : extensions) {
-      registerIndexer(extension);
+    
+    final File workInProgressFile = new File(IndexInfrastructure.getPersistenceRoot(), MARKER_FILE_NAME);
+    if (workInProgressFile.exists()) {
+      // previous IDEA session was closed incorrectly, so drop all indices
+      FileUtil.delete(IndexInfrastructure.getPersistenceRoot());
     }
 
-    dropUnregisteredIndices();
-    
-    // check if rebuild was requested for any index during registration
-    for (ID<?, ?> indexId : myIndices.keySet()) {
-      if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
-        try {
-          clearIndex(indexId);
-        }
-        catch (StorageException e) {
-          requestRebuild(indexId);
-          LOG.error(e);
+    try {
+      final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
+      for (FileBasedIndexExtension<?, ?> extension : extensions) {
+        myRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
+      }
+      for (FileBasedIndexExtension<?, ?> extension : extensions) {
+        registerIndexer(extension);
+      }
+
+      dropUnregisteredIndices();
+
+      // check if rebuild was requested for any index during registration
+      for (ID<?, ?> indexId : myIndices.keySet()) {
+        if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
+          try {
+            clearIndex(indexId);
+          }
+          catch (StorageException e) {
+            requestRebuild(indexId);
+            LOG.error(e);
+          }
         }
       }
+
+      myChangedFilesUpdater = new ChangedFilesUpdater();
+      vfManager.addVirtualFileListener(myChangedFilesUpdater);
+      vfManager.registerRefreshUpdater(myChangedFilesUpdater);
+      myFileContentAttic = new FileContentStorage(new File(IndexInfrastructure.getPersistenceRoot(), "updates.tmp"));
     }
-    
-    myChangedFilesUpdater = new ChangedFilesUpdater();
-    vfManager.addVirtualFileListener(myChangedFilesUpdater);
-    vfManager.registerRefreshUpdater(myChangedFilesUpdater);
-    myFileContentAttic = new FileContentStorage(new File(IndexInfrastructure.getPersistenceRoot(), "updates.tmp"));
+    finally {
+      workInProgressFile.createNewFile();
+    }
+
   }
 
   public static FileBasedIndex getInstance() {
@@ -184,11 +198,16 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     for (ID<?, ?> indexId : myIndices.keySet()) {
-      getIndex(indexId).dispose();
+      final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+      assert index != null;
+      index.dispose();
     }
     
     myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
     myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
+    
+    final File workInProgressFile = new File(IndexInfrastructure.getPersistenceRoot(), MARKER_FILE_NAME);
+    FileUtil.delete(workInProgressFile);
   }
                 
   public FileBasedIndexState getState() {
