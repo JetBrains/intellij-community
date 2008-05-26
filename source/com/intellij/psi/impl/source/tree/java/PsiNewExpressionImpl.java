@@ -9,13 +9,14 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
 
-  private volatile JavaResolveResult myCachedConstructor;
+  private volatile SoftReference<JavaResolveResult> myCachedConstructor;
 
   public PsiNewExpressionImpl() {
     super(NEW_EXPRESSION);
@@ -85,9 +86,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
-    JavaResolveResult result = myCachedConstructor;
-    if (result != null) return result;
-    result = JavaResolveResult.EMPTY;
+    SoftReference<JavaResolveResult> ref = myCachedConstructor;
+    if (ref != null) {
+      final JavaResolveResult resolveResult = ref.get();
+      final PsiElement element = resolveResult != null? resolveResult.getElement() : null;
+      if (resolveResult != null && (element == null || element.isValid())) return resolveResult;
+    }
+    JavaResolveResult result = JavaResolveResult.EMPTY;
 
     ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
@@ -111,7 +116,8 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
                                                                   anonymousClass);
       }
     }
-    return myCachedConstructor = result;
+    myCachedConstructor = new SoftReference<JavaResolveResult>(result);
+    return result;
   }
 
   public PsiExpression getQualifier() {
