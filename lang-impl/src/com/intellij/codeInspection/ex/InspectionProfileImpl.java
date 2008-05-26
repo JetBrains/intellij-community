@@ -359,7 +359,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     }
     catch (FileNotFoundException e) {
-      //ignore
+      LOG.debug(e);
     }
     catch (Exception e) {
       ApplicationManager.getApplication().invokeLater(new Runnable(){

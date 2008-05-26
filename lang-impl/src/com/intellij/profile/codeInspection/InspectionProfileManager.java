@@ -115,7 +115,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
       mySchemesManager.saveSchemes(getProfiles().values(), FILE_SPEC, myProcessor, RoamingType.PER_USER);
     }
     catch (WriteExternalException e) {
-      //ignore
+      LOG.debug(e);
     }    
   }
 
@@ -186,7 +186,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
       if (profileName != null) return profileName;
     }
     catch (FileNotFoundException e) {
-      //ignore
+      LOG.debug(e);
     }
     return null;
   }

@@ -331,7 +331,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       mySchemesManager.saveSchemes(fileTypes, FILE_SPEC,createSchemeProcessor(new boolean[]{false}), RoamingType.PER_USER);
     }
     catch (WriteExternalException e) {
-      //ignore
+      LOG.debug(e);
     }
 
   }
@@ -626,11 +626,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
 
       public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        //ignore
+        LOG.debug(e);
       }
 
       public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        //ignore
+        LOG.debug(e);
       }
 
       public Document writeScheme(final FileType fileType) throws WriteExternalException {

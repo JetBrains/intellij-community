@@ -7,9 +7,11 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Document;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,6 +138,7 @@ public class SchemesManagerImpl extends SchemesManager {
 
     UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
 
+    Collection<String> usedNames = new HashSet<String>();
 
     for (T scheme : schemes) {
       if (processor.shouldBeSaved(scheme) ) {
@@ -150,6 +153,7 @@ public class SchemesManagerImpl extends SchemesManager {
         }
 
         final File file = new File(baseDir, fileName + EXT);
+        usedNames.add(file.getName());
         try {
 
           final Document document = processor.writeScheme(scheme);
@@ -170,8 +174,7 @@ public class SchemesManagerImpl extends SchemesManager {
                 provider.saveContent(fileSpec + "/" + file.getName(), document, roamingType);
               }
               catch (IOException e) {
-                LOG.info(e);
-                //ignore
+                LOG.debug(e);
               }
             }
           }
@@ -187,6 +190,27 @@ public class SchemesManagerImpl extends SchemesManager {
 
     }
 
+    clearDeletedFiles(fileSpec, roamingType, baseDir, providers, usedNames);
+
+  }
+
+  private <T extends Scheme> void clearDeletedFiles(final String fileSpec, final RoamingType roamingType, final File baseDir,
+                                                    final StreamProvider[] providers, final Collection<String> usedNames) {
+    for (String schemeName : mySchemeNameToFileName.keySet()) {
+      if (schemeName.startsWith(fileSpec + "/")) {
+        String fileName = mySchemeNameToFileName.get(schemeName) + EXT;
+        if (!usedNames.contains(fileName)) {
+          FileUtil.delete(new File(baseDir, fileName));
+
+          if (providers != null) {
+            for (StreamProvider provider : providers) {
+              provider.deleteFile(fileSpec + "/" + fileName, roamingType);
+            }
+          }
+
+        }
+      }
+    }
   }
 
   public <T extends Scheme> Collection<T> loadScharedSchemes(final String dirSpec, final SchemeProcessor<T> schemeProcessor) {
@@ -226,7 +250,7 @@ public class SchemesManagerImpl extends SchemesManager {
                                document, RoamingType.GLOBAL);
         }
         catch (IOException e) {
-          //ignore
+          LOG.debug(e);
         }
       }
     }

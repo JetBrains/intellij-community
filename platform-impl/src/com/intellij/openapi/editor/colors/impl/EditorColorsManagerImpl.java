@@ -85,7 +85,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       }
 
       public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        //ignore
+        LOG.debug(e);
       }
 
       public void showReadErrorMessage(final Exception e,

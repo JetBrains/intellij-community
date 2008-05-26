@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -25,10 +26,13 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
       addScheme(group, current, scheme);
     }
 
+    group.add(Separator.getInstance());
+
     Collection<EditorColorsScheme> sharedSchemes = SchemesManager.getInstance()
         .loadScharedSchemes("$ROOT_CONFIG$/colors", ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesProcessor());
 
     for (EditorColorsScheme sharedScheme : sharedSchemes) {
+      addScheme(group, current, sharedScheme);
     }
 
   }
@@ -46,6 +50,6 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
   }
 
   protected boolean isEnabled() {
-    return EditorColorsManager.getInstance().getAllSchemes().length > 1;
+    return EditorColorsManager.getInstance().getAllSchemes().length > 1 || SchemesManager.getInstance().isImportExportAvailable();
   }
 }

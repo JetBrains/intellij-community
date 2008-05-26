@@ -168,6 +168,18 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   }
 
+  public void deleteFile(final String fileSpec, final RoamingType roamingType) {
+    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
+      try {
+        streamProvider.deleteFile(fileSpec, roamingType);
+      }
+      catch (Exception e) {
+        LOG.debug(e);
+      }
+    }
+
+  }
+
   public StreamProvider[] getStreamProviders(RoamingType type) {
     synchronized (myStreamProviders) {
       final Collection<StreamProvider> providers = myStreamProviders.get(type);

@@ -20,6 +20,10 @@ public interface StreamProvider {
     public String[] listSubFiles(final String fileSpec) {
       return new String[0];
     }
+
+    public void deleteFile(final String fileSpec, final RoamingType roamingType) {
+
+    }
   };
 
   void saveContent(String fileSpec, Document content, final RoamingType roamingType) throws IOException;
@@ -28,4 +32,6 @@ public interface StreamProvider {
   Document loadDocument(final String fileSpec, final RoamingType roamingType) throws IOException, JDOMException;
 
   String[] listSubFiles(final String fileSpec);
+
+  void deleteFile(final String fileSpec, final RoamingType roamingType);
 }

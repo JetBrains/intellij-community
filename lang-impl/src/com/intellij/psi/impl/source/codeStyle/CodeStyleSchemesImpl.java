@@ -193,7 +193,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
                                    RoamingType.PER_USER);
     }
     catch (WriteExternalException e) {
-      //ignore
+      LOG.debug(e);
     }
   }
 
