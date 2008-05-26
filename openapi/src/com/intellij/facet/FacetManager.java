@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FacetManager implements FacetModel {
   public static final Topic<FacetManagerListener> FACETS_TOPIC = Topic.create("facet changes", FacetManagerListener.class);
 
-  public static FacetManager getInstance(Module module) {
+  public static FacetManager getInstance(@NotNull Module module) {
     return module.getComponent(FacetManager.class);
   }
 
