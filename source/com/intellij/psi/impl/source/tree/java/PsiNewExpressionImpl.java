@@ -15,8 +15,16 @@ import org.jetbrains.annotations.Nullable;
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
 
+  private volatile JavaResolveResult myCachedConstructor;
+
   public PsiNewExpressionImpl() {
     super(NEW_EXPRESSION);
+  }
+
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
+    myCachedConstructor = null;
   }
 
   public PsiType getType(){
@@ -77,13 +85,17 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
+    JavaResolveResult result = myCachedConstructor;
+    if (result != null) return result;
+    result = JavaResolveResult.EMPTY;
+
     ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (classRef != null){
       ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (argumentList != null && argumentList.getElementType() == EXPRESSION_LIST) {
         PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
-        return facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
+        result = facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
                                                                   (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
                                                                   this);
       }
@@ -94,13 +106,12 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
         PsiType aClass = anonymousClass.getBaseClassType();
         ASTNode argumentList = TreeUtil.findChild(anonymousClassElement, EXPRESSION_LIST);
-        return facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
+        result = facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
                                                                   (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
                                                                   anonymousClass);
       }
     }
-
-    return JavaResolveResult.EMPTY;
+    return myCachedConstructor = result;
   }
 
   public PsiExpression getQualifier() {
