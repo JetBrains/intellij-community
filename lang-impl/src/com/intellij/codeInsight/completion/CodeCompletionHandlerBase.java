@@ -243,13 +243,14 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return;
     }
 
+    indicator.getLookup().setCalculating(false);
     if (shouldAutoComplete(items, context)) {
       LookupItem item = items[0];
       indicator.closeAndFinish();
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
       handleSingleItem(offset2, context, data, item.getLookupString(), item);
     } else {
-      handleMultipleItems(offset1, context, items, indicator.getShownLookup());
+      handleMultipleItems(items, indicator.getShownLookup(), context.project);
     }
   }
 
@@ -297,11 +298,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }.execute();
   }
 
-  private void handleMultipleItems(final int offset1, final CompletionContext context, final LookupItem[] items, final LookupImpl lookup) {
-    final Project project = context.project;
-    final int minPrefixLength = lookup.getMinPrefixLength();
-    context.setStartOffset(offset1 - minPrefixLength);
-
+  private void handleMultipleItems(final LookupItem[] items, final LookupImpl lookup, final Project project) {
     new WriteCommandAction(project) {
       protected void run(Result result) throws Throwable {
         if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
@@ -310,12 +307,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
       }
     }.execute().getResultObject();
-
-    final int newLength = lookup.getMinPrefixLength();
-    if (newLength != minPrefixLength) {
-      context.editor.getCaretModel().moveToOffset(offset1 - minPrefixLength + newLength);
-      context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
   }
 
   private static void insertLookupString(final CompletionContext context, final int currentOffset, final String newText) {
@@ -327,7 +318,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected final void selectLookupItem(final LookupItem item, final boolean signatureSelected, final char completionChar, final CompletionContext context,
                                         final LookupData data) {
-    insertLookupString(context, context.editor.getCaretModel().getOffset(), item.getLookupString());
     final int caretOffset = context.editor.getCaretModel().getOffset();
 
     final int previousSelectionEndOffset = context.getSelectionEndOffset();

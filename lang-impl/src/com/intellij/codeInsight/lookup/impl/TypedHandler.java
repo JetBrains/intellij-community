@@ -3,7 +3,6 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -39,13 +38,7 @@ class TypedHandler implements TypedActionHandler {
       public void run() {
         EditorModificationUtil.deleteSelectedText(editor);
         if (result == CharFilter.Result.ADD_TO_PREFIX) {
-          for (final LookupElement item : lookup.getItems()) {
-            final PrefixMatcher oldMatcher = item.getPrefixMatcher();
-            final String oldPrefix = oldMatcher.getPrefix();
-            item.setPrefixMatcher(oldMatcher.cloneWithPrefix(oldPrefix + charTyped));
-          }
-          lookup.markDirty();
-          lookup.updateList();
+          lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
           EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
         }
       }

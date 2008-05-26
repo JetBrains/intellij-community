@@ -46,7 +46,6 @@ import java.util.List;
 public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
-  private static final Key<Integer> ITEM_START = Key.create("itemStart");
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
 
   private static final LookupItem EMPTY_LOOKUP_ITEM = new LookupItem("preselect", "preselect");
@@ -57,11 +56,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> myItemsMap;
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
-  private final int myCaretOffset;
+  private int myInitialOffset;
   private final LookupItemPreferencePolicy myItemPreferencePolicy;
 
   private RangeMarker myLookupStartMarker;
-  private int myInitialMinPrefixLength = 0;
   private final JList myList;
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
@@ -75,6 +73,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myDisposed = false;
   private LookupItem myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
+  private String myAdditionalPrefix = "";
   private PsiElement myElement;
   private final AsyncProcessIcon myProcessIcon;
   private final Comparator<? super LookupItem> myComparator;
@@ -87,7 +86,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myProject = project;
     myEditor = editor;
     myItemPreferencePolicy = itemPreferencePolicy;
-    myCaretOffset = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
+    myInitialOffset = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
 
     final Document document = myEditor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -188,7 +187,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public synchronized void addItem(LookupItem item) {
     myItems.add(item);
-    item.putUserData(ITEM_START, myCaretOffset - item.getPrefixMatcher().getPrefix().length());
     addItemWeight(item);
     final Icon icon = myCellRenderer.getRawIcon(item);
     if (icon != null) {
@@ -227,10 +225,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myMinPrefixLength;
   }
 
-  int getInitialMinPrefixLength() {
-    return myInitialMinPrefixLength;
-  }
-
   public JList getList() {
     return myList;
   }
@@ -239,15 +233,22 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myItems.toArray(new LookupItem[myItems.size()]);
   }
 
+  public String getAdditionalPrefix() {
+    return myAdditionalPrefix;
+  }
+
+  public void setAdditionalPrefix(final String additionalPrefix) {
+    myAdditionalPrefix = additionalPrefix;
+    markDirty();
+    updateList();
+  }
+
   public final synchronized void updateList() {
     int minPrefixLength = Integer.MAX_VALUE;
     for (final LookupItem item : myItems) {
       minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
     }
     myMinPrefixLength = minPrefixLength;
-    if (!myDirty) {
-      myInitialMinPrefixLength = minPrefixLength;
-    }
 
     Object oldSelected = !myDirty ? null : myList.getSelectedValue();
     DefaultListModel model = (DefaultListModel)myList.getModel();
@@ -262,7 +263,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
       final List<LookupItem> suitable = new SmartList<LookupItem>();
       for (final LookupItem item : myItemsMap.get(comparable)) {
-        if (item.isPrefixMatched()) {
+        if (prefixMatches(item)) {
           suitable.add(item);
         }
       }
@@ -287,7 +288,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myPreferredItemsCount = allItems.size();
 
     for (LookupItem<?> item : myItems) {
-      if (!firstItems.contains(item) && item.isPrefixMatched()) {
+      if (!firstItems.contains(item) && prefixMatches(item)) {
         model.addElement(item);
         allItems.add(item);
       }
@@ -320,6 +321,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         }
       }
     }
+  }
+
+  private boolean prefixMatches(final LookupItem item) {
+    if (myAdditionalPrefix.length() == 0) return true;
+
+    return item.getPrefixMatcher().cloneWithPrefix(item.getPrefixMatcher().getPrefix() + myAdditionalPrefix).prefixMatches(item);
   }
 
   /**
@@ -356,22 +363,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void finishLookup(final char completionChar){
     final LookupItem item = (LookupItem)myList.getSelectedValue();
-    if (item == null){
-      fireItemSelected(null, completionChar);
-      hide();
-      return;
-    }
-
-    if(item.getObject() instanceof DeferredUserLookupValue) {
-      if(!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item,myProject)) {
-        fireItemSelected(null, completionChar);
-        hide();
-        return;
-      }
-    }
-
-    final String s = item.getLookupString();
-    if (item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null){
+    if (item == null ||
+        item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null ||
+        item.getObject() instanceof DeferredUserLookupValue &&
+        !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item, myProject)) {
       fireItemSelected(null, completionChar);
       hide();
       return;
@@ -387,7 +382,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run(){
-            int lookupStart = item.getUserData(ITEM_START).intValue();
+            final int caretOffset = myEditor.getCaretModel().getOffset();
+            final String prefix = item.getPrefixMatcher().getPrefix();
+            int lookupStart = caretOffset - prefix.length() - myAdditionalPrefix.length();
             //SD - start
             //this patch fixes the problem, that template is finished after showing lookup
             LogicalPosition lookupPosition = myEditor.offsetToLogicalPosition(lookupStart);
@@ -397,11 +394,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
             if (myEditor.getSelectionModel().hasSelection()){
               myEditor.getDocument().deleteString(myEditor.getSelectionModel().getSelectionStart(), myEditor.getSelectionModel().getSelectionEnd());
             }
-            if (myMinPrefixLength > 0){
+            final String s = item.getLookupString();
+            if (!s.startsWith(prefix + myAdditionalPrefix)) {
               FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
-              myEditor.getDocument().deleteString(lookupStart, lookupStart + myMinPrefixLength);
             }
-            myEditor.getDocument().insertString(lookupStart, s);
+
+            myEditor.getDocument().replaceString(lookupStart, caretOffset, s);
 
             int offset = lookupStart + s.length();
             myEditor.getCaretModel().moveToOffset(offset);
@@ -436,7 +434,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         final LookupItem item = getCurrentItem();
         if (item == null || item == EMPTY_LOOKUP_ITEM) return;
 
-        if (curOffset != item.getUserData(ITEM_START).intValue() + item.getPrefixMatcher().getPrefix().length()) {
+        if (curOffset != myInitialOffset + myAdditionalPrefix.length()) {
           hide();
         }
       }
@@ -583,13 +581,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return -1;
   }
 
-  public boolean fillInCommonPrefix(boolean toCompleteUniqueName){
-    if (myDirty) return false;
+  public boolean fillInCommonPrefix(boolean explicitlyInvoked) {
+    if (explicitlyInvoked && myCalculating) return false;
+    if (!explicitlyInvoked && myDirty) return false;
 
     ListModel listModel = myList.getModel();
     if (listModel.getSize() <= 1) return false;
 
-    boolean isStrict = false;
     if (listModel.getSize() == 0) return false;
 
     final LookupItem firstItem = (LookupItem)listModel.getElementAt(0);
@@ -619,18 +617,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
       while (afterCaret.length() > 0) {
         if (_afterCaret.startsWith(afterCaret)) {
-          if (_afterCaret.length() > afterCaret.length()){
-            isStrict = true;
-          }
           break;
         }
         afterCaret = afterCaret.substring(0, afterCaret.length() - 1);
-        isStrict = true;
       }
       if (afterCaret.length() == 0) return false;
     }
-
-    if (!isStrict && !toCompleteUniqueName) return false;
 
     final LookupItem curItem = getCurrentItem();
 
@@ -645,15 +637,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int i = 0;
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     while (offset + i < text.length() && i < afterCaret.length() && text.charAt(offset + i) == afterCaret.charAt(i)) i++;
-    curItem.setPrefixMatcher(curItem.getPrefixMatcher().cloneWithPrefix(presentPrefix + afterCaret.substring(0, i)));
-    myEditor.getCaretModel().moveToOffset(offset + i);
+    myEditor.getDocument().insertString(offset + i, afterCaret.substring(i));
 
     for (final LookupElement item : myItems) {
       assert item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(presentPrefix + afterCaret));
     }
-    EditorModificationUtil.insertStringAtCaret(myEditor, afterCaret.substring(i));
-
+    myAdditionalPrefix = "";
     updateList();
+
+    offset += afterCaret.length();
+    myInitialOffset = offset;
+    myEditor.getCaretModel().moveToOffset(offset);
     return true;
   }
 

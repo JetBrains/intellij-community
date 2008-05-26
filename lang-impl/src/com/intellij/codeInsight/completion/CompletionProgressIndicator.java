@@ -59,6 +59,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         LookupItem item = event.getItem();
         if (item == null) return;
 
+        contextOriginal.setStartOffset(myEditor.getCaretModel().getOffset() - item.getLookupString().length());
         myHandler.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
                                    event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems()));
       }
@@ -165,7 +166,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       public void run() {
         if (isCanceled()) return;
 
-        myLookup.setCalculating(false);
         if (myLookup.isVisible()) {
           myLookup.getProcessIcon().suspend();
           myLookup.getProcessIcon().setVisible(false);
@@ -197,7 +197,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public boolean fillInCommonPrefix() {
     return new WriteCommandAction<Boolean>(myEditor.getProject()) {
       protected void run(Result<Boolean> result) throws Throwable {
-        result.setResult(myLookup != null && myLookup.fillInCommonPrefix(true));
+        result.setResult(myLookup.fillInCommonPrefix(true));
       }
     }.execute().getResultObject().booleanValue();
   }
