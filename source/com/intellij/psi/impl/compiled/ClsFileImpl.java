@@ -107,7 +107,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
 
   @NotNull
   public PsiClass[] getClasses() {
-    return getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.EMPTY_ARRAY);
+    final PsiJavaFileStub fileStub = getStub();
+    return fileStub != null ? fileStub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.EMPTY_ARRAY) : PsiClass.EMPTY_ARRAY;
   }
 
   public PsiPackageStatement getPackageStatement() {
