@@ -34,6 +34,7 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
     return ApplicationManager.getApplication().getComponent(JarFileSystem.class);
   }
 
+  @Nullable
   public abstract VirtualFile getVirtualFileForJar(VirtualFile entryVFile);
   public abstract ZipFile getJarFile(VirtualFile entryVFile) throws IOException;
 
