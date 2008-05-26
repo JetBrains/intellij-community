@@ -382,7 +382,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run(){
-            final int caretOffset = myEditor.getCaretModel().getOffset();
+            final int caretOffset = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
             final String prefix = item.getPrefixMatcher().getPrefix();
             int lookupStart = caretOffset - prefix.length() - myAdditionalPrefix.length();
             //SD - start
