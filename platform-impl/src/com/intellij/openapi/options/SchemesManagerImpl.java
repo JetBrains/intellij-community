@@ -50,10 +50,12 @@ public class SchemesManagerImpl extends SchemesManager {
             final T scheme = processor.readScheme(document, file);
             if (scheme != null) {
               final String schemeName = scheme.getName();
-              result.put(schemeName, scheme);
-              final String schemeKey = fileSpec + "/" + schemeName;
-              saveFileName(file, schemeKey);
-              mySchemeNameToHashValue.put(schemeKey,  computeHashValue(document));
+              if (schemeName != null) {
+                result.put(schemeName, scheme);
+                final String schemeKey = fileSpec + "/" + schemeName;
+                saveFileName(file, schemeKey);
+                mySchemeNameToHashValue.put(schemeKey,  computeHashValue(document));
+              }
             }
           }
           catch (Exception e) {
