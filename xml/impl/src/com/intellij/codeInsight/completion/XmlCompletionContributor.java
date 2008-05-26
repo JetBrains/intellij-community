@@ -55,7 +55,11 @@ public class XmlCompletionContributor extends CompletionContributor {
         final int pos = prefix.indexOf(':');
         final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
-        final PsiReference reference = parent.getReference();
+        final PsiReference reference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
+          public PsiReference compute() {
+            return parent.getReference();
+          }
+        });
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
           new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), parameters.getOriginalFile(), parameters.getOffset());

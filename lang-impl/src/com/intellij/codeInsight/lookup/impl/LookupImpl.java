@@ -382,26 +382,19 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run(){
-            final int caretOffset = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
+            EditorModificationUtil.deleteSelectedText(myEditor);
+            final int caretOffset = myEditor.getCaretModel().getOffset();
             final String prefix = item.getPrefixMatcher().getPrefix();
             int lookupStart = caretOffset - prefix.length() - myAdditionalPrefix.length();
-            //SD - start
-            //this patch fixes the problem, that template is finished after showing lookup
-            LogicalPosition lookupPosition = myEditor.offsetToLogicalPosition(lookupStart);
-            myEditor.getCaretModel().moveToLogicalPosition(lookupPosition);
-            //SD - end
 
-            if (myEditor.getSelectionModel().hasSelection()){
-              myEditor.getDocument().deleteString(myEditor.getSelectionModel().getSelectionStart(), myEditor.getSelectionModel().getSelectionEnd());
-            }
-            final String s = item.getLookupString();
-            if (!s.startsWith(prefix + myAdditionalPrefix)) {
+            final String lookupString = item.getLookupString();
+            if (!lookupString.startsWith(prefix + myAdditionalPrefix)) {
               FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
             }
 
-            myEditor.getDocument().replaceString(lookupStart, caretOffset, s);
+            myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
 
-            int offset = lookupStart + s.length();
+            int offset = lookupStart + lookupString.length();
             myEditor.getCaretModel().moveToOffset(offset);
             myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
             myEditor.getSelectionModel().removeSelection();
