@@ -190,6 +190,53 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertNull(ref.resolve());
   }
 
+  public void testResolutionWithSlashes() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>./m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m</artifactId>" +
+                                     "<version>1</version>");
+
+
+    importProject();
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>./m<caret></module>" +
+                     "</modules>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    assertEquals("./m", ref.getCanonicalText());
+    assertEquals(getPsiFile(m), ref.resolve());
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>.\\m<caret></module>" +
+                     "</modules>");
+
+    ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    assertEquals(".\\m", ref.getCanonicalText());
+    assertEquals(getPsiFile(m), ref.resolve());
+  }
+
   public void testCreatePomQuickFix() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

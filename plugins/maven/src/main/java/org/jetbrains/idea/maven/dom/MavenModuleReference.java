@@ -66,7 +66,8 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
 
   public PsiElement resolve() {
     VirtualFile baseDir = myPsiFile.getVirtualFile().getParent();
-    VirtualFile file = baseDir.findFileByRelativePath(myText + "/" + Constants.POM_XML);
+    String relPath = FileUtil.toSystemIndependentName(myText + "/" + Constants.POM_XML);
+    VirtualFile file = baseDir.findFileByRelativePath(relPath);
     
     if (file == null) return null;
 
