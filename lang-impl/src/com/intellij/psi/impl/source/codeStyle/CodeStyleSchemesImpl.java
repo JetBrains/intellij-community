@@ -6,7 +6,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -44,12 +44,12 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
 
   private final SchemesManager mySchemesManager;
-  private final SchemeReaderWriter<CodeStyleScheme> myReaderWriter;
+  private final SchemeProcessor<CodeStyleScheme> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManager schemesManager) {
     mySchemesManager = schemesManager;
-    myReaderWriter = new SchemeReaderWriter<CodeStyleScheme>() {
+    myProcessor = new SchemeProcessor<CodeStyleScheme>() {
       public CodeStyleScheme readScheme(final Document schemeContent, final File file) throws IOException, JDOMException, InvalidDataException {
         return CodeStyleSchemeImpl.readScheme(schemeContent);
       }
@@ -171,7 +171,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     myIsInitialized = true;
     mySchemes.clear();
 
-    final Collection<CodeStyleScheme> readSchemes = mySchemesManager.loadSchemes(FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+    final Collection<CodeStyleScheme> readSchemes = mySchemesManager.loadSchemes(FILE_SPEC, myProcessor, RoamingType.PER_USER);
 
     for (CodeStyleScheme scheme : readSchemes) {
       addScheme(scheme);
@@ -189,7 +189,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
   public void save() {
     try {
-      mySchemesManager.saveSchemes(mySchemes.values(), FILE_SPEC, myReaderWriter,
+      mySchemesManager.saveSchemes(mySchemes.values(), FILE_SPEC, myProcessor,
                                    RoamingType.PER_USER);
     }
     catch (WriteExternalException e) {

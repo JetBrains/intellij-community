@@ -42,6 +42,8 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
   private final boolean myIsProjectSettings;
+  private Integer myUpToDateHash;
+
 
 
   protected XmlElementStorage(
@@ -225,55 +227,92 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public final boolean needsSave() throws StateStorageException {
       assert mySession == this;
-      return _needsSave();
+      return _needsSave(calcHash());
     }
 
-    protected abstract boolean _needsSave() throws StateStorageException;
+    private boolean _needsSave(final Integer hash) {
+      if (myUpToDateHash == null) {
+        if (hash != null) {
+          if (!phisicalContentNeedsSave()) {
+            myUpToDateHash = hash;
+            return false;
+          }
+          else {
+            return true;
+          }
+        }
+        else {
+          return true;
+        }
+      }
+      else {
+        return !myUpToDateHash.equals(hash);
+      }
+    }
+
+    protected boolean phisicalContentNeedsSave() {
+      return true;
+    }
+
     protected abstract void doSave() throws StateStorage.StateStorageException;
+
+    public void clearHash() {
+      myUpToDateHash = null;
+    }
+
+
+    protected Integer calcHash() {
+      return null;
+    }
 
     public final void save() throws StateStorageException {
       assert mySession == this;
 
+      Integer hash = calcHash();
       try {
-        if (!myIsProjectSettings) {
-          for (RoamingType roamingType : RoamingType.values()) {
-            if (roamingType != RoamingType.DISABLED) {
-              try {
-                final Document filteredDocument = getDocumentAllowedForRoaming(roamingType);
-                if (filteredDocument.getRootElement().getChildren().size() > 0) {
-                  myStreamProvider.saveContent(myFileSpec, filteredDocument, roamingType);
+        if (!isHashUpToDate(hash)) {
+          try {
+            if (!myIsProjectSettings) {
+              for (RoamingType roamingType : RoamingType.values()) {
+                if (roamingType != RoamingType.DISABLED) {
+                  try {
+                    Document copy = (Document)getDocumentToSave().clone();
+                    filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
+
+                    if (copy.getRootElement().getChildren().size() > 0) {
+                      myStreamProvider.saveContent(myFileSpec, copy, roamingType);
+                    }
+                  }
+                  catch (IOException e) {
+                    LOG.warn(e);
+                  }
                 }
-              }
-              catch (IOException e) {
-                LOG.warn(e);
+
               }
             }
 
           }
-        }
+          finally {
+            if (_needsSave(hash)) {
+              doSave();
+            }
+          }
 
+        }
       }
       finally {
-        if (!_needsSave()) return;
-        doSave();
+        myUpToDateHash = hash;
       }
+
 
     }
 
-    private Document getDocumentAllowedForRoaming(final RoamingType roamingType) {
-      final Element element = myStorageData.save();
+    private boolean isHashUpToDate(final Integer hash) {
+      return myUpToDateHash != null && myUpToDateHash.equals(hash);
+    }
 
-      filterComponentsDisabledForRoaming(element, roamingType);
-
-
-      Document result = new Document(element);
-
-      if (myPathMacroSubstitutor != null) {
-        myPathMacroSubstitutor.collapsePaths(element);
-      }
-
-      return result;
-
+    public boolean isHashUpToDate() {
+      return isHashUpToDate(calcHash());
     }
 
     public Set<String> getUsedMacros() {

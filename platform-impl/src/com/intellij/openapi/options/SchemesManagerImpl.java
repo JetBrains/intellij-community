@@ -27,7 +27,7 @@ public class SchemesManagerImpl extends SchemesManager {
   private final Map<String, String> mySchemeNameToFileName = new HashMap<String, String>();
   private final Map<String, Long> mySchemeNameToHashValue = new HashMap<String, Long>();
 
-  public <T extends Scheme> Collection<T> loadSchemes(String fileSpec, SchemeReaderWriter<T> readerWriter, final RoamingType roamingType){
+  public <T extends Scheme> Collection<T> loadSchemes(String fileSpec, SchemeProcessor<T> processor, final RoamingType roamingType){
 
     final String path = expandMacroses(fileSpec);
 
@@ -47,7 +47,7 @@ public class SchemesManagerImpl extends SchemesManager {
         if (file.isFile() && StringUtil.endsWithIgnoreCase(name, EXT)) {
           try {
             final Document document = JDOMUtil.loadDocument(file);
-            final T scheme = readerWriter.readScheme(document, file);
+            final T scheme = processor.readScheme(document, file);
             if (scheme != null) {
               final String schemeName = scheme.getName();
               result.put(schemeName, scheme);
@@ -57,7 +57,7 @@ public class SchemesManagerImpl extends SchemesManager {
             }
           }
           catch (Exception e) {
-            readerWriter.showReadErrorMessage(e, name, file.getPath());
+            processor.showReadErrorMessage(e, name, file.getPath());
           }
         }
       }
@@ -77,7 +77,7 @@ public class SchemesManagerImpl extends SchemesManager {
             if (subDocument != null) {
               final File file = new File(baseDir, subpath);
               JDOMUtil.writeDocument(subDocument, file, "\n");
-              final T scheme = readerWriter.readScheme(subDocument, file);
+              final T scheme = processor.readScheme(subDocument, file);
               final String schemeName = scheme.getName();
               result.put(schemeName, scheme);
               final String schemeKey = fileSpec + "/" + schemeName;
@@ -115,7 +115,7 @@ public class SchemesManagerImpl extends SchemesManager {
     return ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacroses(fileSpec);
   }
 
-  public <T extends Scheme> void saveSchemes(Collection<T> schemes, final String fileSpec, SchemeReaderWriter<T> readerWriter,
+  public <T extends Scheme> void saveSchemes(Collection<T> schemes, final String fileSpec, SchemeProcessor<T> processor,
                           final RoamingType roamingType) throws
 
                                                                                                                       WriteExternalException {
@@ -136,7 +136,7 @@ public class SchemesManagerImpl extends SchemesManager {
 
 
     for (T scheme : schemes) {
-      if (readerWriter.shouldBeSaved(scheme) ) {
+      if (processor.shouldBeSaved(scheme) ) {
         String schemeKey = fileSpec + "/" + scheme.getName();
         final String fileName;
         if (mySchemeNameToFileName.containsKey(schemeKey)) {
@@ -150,7 +150,7 @@ public class SchemesManagerImpl extends SchemesManager {
         final File file = new File(baseDir, fileName + EXT);
         try {
 
-          final Document document = readerWriter.writeScheme(scheme);
+          final Document document = processor.writeScheme(scheme);
 
           long newHash = computeHashValue(document);
 
@@ -176,7 +176,7 @@ public class SchemesManagerImpl extends SchemesManager {
 
         }
         catch (IOException e) {
-          readerWriter.showWriteErrorMessage(e, scheme.getName(), file.getPath());
+          processor.showWriteErrorMessage(e, scheme.getName(), file.getPath());
         }
 
 
@@ -187,7 +187,7 @@ public class SchemesManagerImpl extends SchemesManager {
 
   }
 
-  public <T extends Scheme> Collection<T> loadScharedSchemes(final String dirSpec, final SchemeReaderWriter<T> schemeProcessor) {
+  public <T extends Scheme> Collection<T> loadScharedSchemes(final String dirSpec, final SchemeProcessor<T> schemeProcessor) {
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(RoamingType.GLOBAL);
     final HashMap<String, T> result = new HashMap<String, T>();
     if (providers != null) {
@@ -213,7 +213,7 @@ public class SchemesManagerImpl extends SchemesManager {
 
   }
 
-  public <T extends Scheme> void exportScheme(final T scheme, final String dirSpec, final SchemeReaderWriter<T> schemesProcessor)
+  public <T extends Scheme> void exportScheme(final T scheme, final String dirSpec, final SchemeProcessor<T> schemesProcessor)
       throws WriteExternalException {
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(RoamingType.GLOBAL);
     if (providers != null) {

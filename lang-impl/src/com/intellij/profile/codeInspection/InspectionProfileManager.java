@@ -25,7 +25,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -60,7 +60,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   private AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private SeverityRegistrar mySeverityRegistrar;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/inspection";
-  private final SchemeReaderWriter<Profile> myReaderWriter;
+  private final SchemeProcessor<Profile> myProcessor;
 
   public static InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
@@ -78,7 +78,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     myRegistrar = registrar;
     mySchemesManager = schemesManager;
     mySeverityRegistrar = new SeverityRegistrar();
-    myReaderWriter = new SchemeReaderWriter<Profile>(){
+    myProcessor = new SchemeProcessor<Profile>(){
       public Profile readScheme(final Document document, final File file) throws InvalidDataException, IOException, JDOMException {
         InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar, InspectionProfileManager.this);
         profile.load();
@@ -112,7 +112,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
 
   public void save() {
     try {
-      mySchemesManager.saveSchemes(getProfiles().values(), FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+      mySchemesManager.saveSchemes(getProfiles().values(), FILE_SPEC, myProcessor, RoamingType.PER_USER);
     }
     catch (WriteExternalException e) {
       //ignore
@@ -139,7 +139,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
       final Collection<Profile> profiles =
-          mySchemesManager.loadSchemes(FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+          mySchemesManager.loadSchemes(FILE_SPEC, myProcessor, RoamingType.PER_USER);
 
 
       if (profiles.isEmpty()) {

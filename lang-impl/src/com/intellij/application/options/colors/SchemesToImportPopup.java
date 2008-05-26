@@ -1,7 +1,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -11,16 +11,15 @@ import java.awt.*;
 import java.util.Collection;
 
 
-public class SchemesToImportPopup<T extends Scheme> {
+public abstract class SchemesToImportPopup<T extends Scheme> {
 
   private final Component myParent;
-  private T mySelectedScheme;
 
   public SchemesToImportPopup(final Component parent) {
     myParent = parent;
   }
 
-  public void show(SchemesManager schemesManager, String dirSpec, SchemeReaderWriter<T> schemeProcessor) {
+  public void show(SchemesManager schemesManager, String dirSpec, SchemeProcessor<T> schemeProcessor) {
     Collection<T> schemes = schemesManager.loadScharedSchemes(dirSpec, schemeProcessor);
     final JList list = new JList(createModel(schemes));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -30,7 +29,7 @@ public class SchemesToImportPopup<T extends Scheme> {
 
     Runnable selectAction = new Runnable() {
       public void run() {
-        mySelectedScheme = (T)list.getSelectedValue();
+        onSchemeSelected((T)list.getSelectedValue());
       }
     };
 
@@ -51,10 +50,6 @@ public class SchemesToImportPopup<T extends Scheme> {
       setItemChoosenCallback(selectAction).
       createPopup().
       showInCenterOf(myParent);
-  }
-
-  public T getSelectedScheme() {
-    return mySelectedScheme;
   }
 
   private String getTitle() {
@@ -91,5 +86,7 @@ public class SchemesToImportPopup<T extends Scheme> {
       }
     }
   }
+
+  abstract protected void onSchemeSelected(T scheme);
 
 }

@@ -8,7 +8,7 @@ import org.jdom.JDOMException;
 import java.io.IOException;
 import java.io.File;
 
-public interface SchemeReaderWriter<T extends Scheme> {
+public interface SchemeProcessor<T extends Scheme> {
   T readScheme(Document schemeContent, final File file) throws InvalidDataException, IOException, JDOMException;
   Document writeScheme(T scheme) throws WriteExternalException;
   void showReadErrorMessage(Exception e, final String schemeName, final String filePath);

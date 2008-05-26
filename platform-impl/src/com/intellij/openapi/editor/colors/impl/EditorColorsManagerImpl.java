@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -52,13 +52,13 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   @NonNls private static final String XML_EXT = ".xml";
   @NonNls private static final String NAME_ATTR = "name";
   private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";
-  private final SchemeReaderWriter<EditorColorsScheme> mySchemeReaderWriter;
+  private final SchemeProcessor<EditorColorsScheme> mySchemeProcessor;
 
   public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManager schemesManager) {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
     mySchemesManager = schemesManager;
     addDefaultSchemes();
-        mySchemeReaderWriter = new SchemeReaderWriter<EditorColorsScheme>() {
+        mySchemeProcessor = new SchemeProcessor<EditorColorsScheme>() {
       public EditorColorsScheme readScheme(final Document document, final File file) throws InvalidDataException, IOException, JDOMException {
         Element root = document.getRootElement();
 
@@ -183,7 +183,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private void loadAllSchemes() {
 
-    final Collection<? extends Scheme> schemes = mySchemesManager.loadSchemes(FILE_SPEC, mySchemeReaderWriter, RoamingType.PER_USER);
+    final Collection<? extends Scheme> schemes = mySchemesManager.loadSchemes(FILE_SPEC, mySchemeProcessor, RoamingType.PER_USER);
 
     for (Scheme scheme : schemes) {
       addColorsScheme((EditorColorsScheme)scheme);
@@ -193,7 +193,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   public void saveAllSchemes() throws IOException {
     try {
-      mySchemesManager.saveSchemes(mySchemesMap.values(), FILE_SPEC,mySchemeReaderWriter , RoamingType.PER_USER);
+      mySchemesManager.saveSchemes(mySchemesMap.values(), FILE_SPEC, mySchemeProcessor, RoamingType.PER_USER);
     }
     catch (WriteExternalException e) {
       LOG.error(e);
@@ -296,7 +296,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     return "EditorColorsManagerImpl";
   }
 
-  public SchemeReaderWriter<EditorColorsScheme> getSchemesProcessor() {
-    return mySchemeReaderWriter;
+  public SchemeProcessor<EditorColorsScheme> getSchemesProcessor() {
+    return mySchemeProcessor;
   }
 }

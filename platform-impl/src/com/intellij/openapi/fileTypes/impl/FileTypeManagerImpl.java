@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
-import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -602,8 +602,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return standardFileTypeRead[0];
   }
 
-  private SchemeReaderWriter<FileType> createSchemeProcessor(final boolean[] standardFileTypeRead) {
-    return new SchemeReaderWriter<FileType>(){
+  private SchemeProcessor<FileType> createSchemeProcessor(final boolean[] standardFileTypeRead) {
+    return new SchemeProcessor<FileType>(){
       public FileType readScheme(final Document document, final File file) throws InvalidDataException, IOException, JDOMException {
         if (document == null) {
           throw new InvalidDataException();

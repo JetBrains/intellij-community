@@ -74,10 +74,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           super(externalizationSession);
         }
 
-        protected boolean _needsSave() throws StateStorageException {
-          return true;
-        }
-
         protected void doSave() throws StateStorageException {
           myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
         }

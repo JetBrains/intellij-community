@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.SchemeReaderWriter;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -90,13 +90,13 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   @NonNls
   public static final String XML_EXTENSION = ".xml";
   private final SchemesManager mySchemesManager;
-  private final SchemeReaderWriter<TemplateGroup> myReaderWriter;
+  private final SchemeProcessor<TemplateGroup> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
 
   public TemplateSettings(SchemesManager schemesManager) {
     mySchemesManager = schemesManager;
 
-    myReaderWriter = new SchemeReaderWriter<TemplateGroup>() {
+    myProcessor = new SchemeProcessor<TemplateGroup>() {
       public TemplateGroup readScheme(final Document schemeContent, final File file)
           throws InvalidDataException, IOException, JDOMException {
         String defGroupName = FileUtil.getNameWithoutExtension(file);
@@ -314,7 +314,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   private void loadTemplates() {
 
-    mySchemesManager.loadSchemes(FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+    mySchemesManager.loadSchemes(FILE_SPEC, myProcessor, RoamingType.PER_USER);
 
 
     try {
@@ -412,7 +412,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         }
 
         try {
-          mySchemesManager.saveSchemes(buildGroupList(templates), FILE_SPEC, myReaderWriter, RoamingType.PER_USER);
+          mySchemesManager.saveSchemes(buildGroupList(templates), FILE_SPEC, myProcessor, RoamingType.PER_USER);
         }
         catch (WriteExternalException e) {
           LOG.error(e);

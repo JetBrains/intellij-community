@@ -35,7 +35,6 @@ public class FileBasedStorage extends XmlElementStorage {
   private final String myFilePath;
   private final IFile myFile;
   protected final String myRootElementName;
-  private Integer myUpToDateHash;
   private long myInitialFileTimestamp;
 
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
@@ -85,23 +84,14 @@ public class FileBasedStorage extends XmlElementStorage {
       super(externalizationSession);
     }
 
-    protected boolean _needsSave() throws StateStorageException {
-      int hash = getHash();
+    @Override
+    protected boolean phisicalContentNeedsSave() {
+      if (!myFile.exists()) return true;
 
-      if (isHashUpToDate(hash)) return false;
+      final byte[] text = StorageUtil.printDocument(getDocumentToSave());
 
-      myUpToDateHash = null;
       try {
-        if (!myFile.exists()) return true;
-
-        final byte[] text = StorageUtil.printDocument(getDocumentToSave());
-
-        if (Arrays.equals(myFile.loadBytes(), text)) {
-          myUpToDateHash = hash;
-          return false;
-        }
-
-        return true;
+        return !Arrays.equals(myFile.loadBytes(), text);
       }
       catch (IOException e) {
         LOG.debug(e);
@@ -109,15 +99,8 @@ public class FileBasedStorage extends XmlElementStorage {
       }
     }
 
-    private boolean isHashUpToDate(final int hash) {
-      return myUpToDateHash != null && hash == myUpToDateHash.intValue();
-    }
-
-    boolean isHashUpToDate() {
-      return myUpToDateHash != null && getHash() == myUpToDateHash.intValue();
-    }
-
-    private int getHash() {
+    @Override
+    protected Integer calcHash() {
       int hash = myStorageData.getHash();
 
       if (myPathMacroSubstitutor != null) {
@@ -127,8 +110,6 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     protected void doSave() throws StateStorageException {
-      myUpToDateHash = myStorageData.getHash();
-
       final byte[] text = StorageUtil.printDocument(getDocumentToSave());
 
       StorageUtil.save(myFile, text);
@@ -142,9 +123,6 @@ public class FileBasedStorage extends XmlElementStorage {
       return Collections.singletonList(myFile);
     }
 
-    public void clearHash() {
-      myUpToDateHash = null;
-    }
   }
 
 
