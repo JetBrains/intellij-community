@@ -4,7 +4,7 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,19 +27,18 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.IOUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,22 +50,12 @@ import java.util.concurrent.locks.Lock;
  *         Date: Dec 20, 2007
  */
 
-@State(
-  name = "FileBasedIndex",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-  @Storage(
-    id = "index",
-    file = "$APP_CONFIG$/index.xml")
-    }
-)
-public class FileBasedIndex implements ApplicationComponent, PersistentStateComponent<FileBasedIndexState> {
+public class FileBasedIndex implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
 
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
-  private FileBasedIndexState myPreviouslyRegistered;
 
   private final Map<Document, AtomicLong> myLastIndexedDocStamps = new HashMap<Document, AtomicLong>();
   private final Map<Document, CharSequence> myLastIndexedUnsavedContent = new HashMap<Document, CharSequence>();
@@ -79,7 +68,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   public static final int REQUIRES_REBUILD = 2;
   public static final int REBUILD_IN_PROGRESS = 3;
   private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
-  private static final String MARKER_FILE_NAME = "work_in_progress";
 
   private final ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
@@ -94,7 +82,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   public FileBasedIndex(final VirtualFileManagerEx vfManager) throws IOException {
     myVfManager = vfManager;
     
-    final File workInProgressFile = new File(IndexInfrastructure.getPersistenceRoot(), MARKER_FILE_NAME);
+    final File workInProgressFile = getMarkerFile();
     if (workInProgressFile.exists()) {
       // previous IDEA session was closed incorrectly, so drop all indices
       FileUtil.delete(IndexInfrastructure.getPersistenceRoot());
@@ -131,8 +119,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     finally {
       workInProgressFile.createNewFile();
+      saveRegisteredInices(myIndices.keySet());
     }
-
   }
 
   public static FileBasedIndex getInstance() {
@@ -171,6 +159,53 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
+  private static void saveRegisteredInices(Collection<ID<?, ?>> ids) {
+    final File file = getRegisteredIndicesFile();
+    try {
+      file.getParentFile().mkdirs();
+      file.createNewFile();
+      final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+      try {
+        os.writeInt(ids.size());
+        for (ID<?, ?> id : ids) {
+          IOUtil.writeString(id.toString(), os);
+        }
+      }
+      finally {
+        os.close();
+      }
+    }
+    catch (IOException ignored) {
+    }
+  }
+
+  private static Set<String> readRegistsredIndexNames() {
+    final Set<String> result = new HashSet<String>();
+    try {
+      final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(getRegisteredIndicesFile())));
+      try {
+        final int size = in.readInt();
+        for (int idx = 0; idx < size; idx++) {
+          result.add(IOUtil.readString(in));
+        }
+      }
+      finally {
+        in.close();
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return result;
+  }
+  
+  private static File getRegisteredIndicesFile() {
+    return new File(IndexInfrastructure.getPersistenceRoot(), "registered");
+  }
+
+  private static File getMarkerFile() {
+    return new File(IndexInfrastructure.getPersistenceRoot(), "work_in_progress");
+  }
+
   private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) {
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(this, storage);
@@ -205,17 +240,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     
     myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
     myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
-    
-    final File workInProgressFile = new File(IndexInfrastructure.getPersistenceRoot(), MARKER_FILE_NAME);
-    FileUtil.delete(workInProgressFile);
-  }
-                
-  public FileBasedIndexState getState() {
-    return new FileBasedIndexState(myIndices.keySet());
-  }
 
-  public void loadState(final FileBasedIndexState state) {
-    myPreviouslyRegistered = state;
+    FileUtil.delete(getMarkerFile());
   }
 
   @NotNull
@@ -450,7 +476,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   private void clearIndex(final ID<?, ?> indexId) throws StorageException {
-    getIndex(indexId).clear();
+    final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+    assert index != null;
+    index.clear();
     try {
       IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
     }
@@ -518,13 +546,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private void setDataBufferingEnabled(final boolean enabled) {
     for (ID<?, ?> indexId : myIndices.keySet()) {
-      final IndexStorage indexStorage = ((MapReduceIndex)getIndex(indexId)).getStorage();
+      final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
+      assert index != null;
+      final IndexStorage indexStorage = index.getStorage();
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
   }
 
   private void dropUnregisteredIndices() {
-    final Set<String> indicesToDrop = new HashSet<String>(myPreviouslyRegistered != null? myPreviouslyRegistered.registeredIndices : Collections.<String>emptyList());
+    final Set<String> indicesToDrop = readRegistsredIndexNames();
     for (ID<?, ?> key : myIndices.keySet()) {
       indicesToDrop.remove(key.toString());
     }
@@ -591,15 +621,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     final int inputId = Math.abs(getFileId(file));
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-    if (CachesBasedRefSearcher.DEBUG) {
-      System.out.println("FileBasedIndex.updateSingleIndex");
-      System.out.println("indexId = " + indexId);
-      System.out.println("Indexing inputId = " + inputId);
-      System.out.println("file = " + file.getPresentableUrl());
-      System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
-    }
-
-
+    assert index != null;
+    
     index.update(inputId, currentFC, oldFC);
     if (file.isValid()) {
       if (currentFC != null) {
