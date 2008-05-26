@@ -212,10 +212,10 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
           if (sourceRoot != null) {
             final String packagePrefix = sourceRootToPrefixMap.get(srcpath);
             if (packagePrefix == null || "".equals(packagePrefix)) {
-              contentEntry.addSourceFolder(sourceRoot, false);
+              contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot));
             }
             else {
-              contentEntry.addSourceFolder(sourceRoot, false, packagePrefix);
+              contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot), packagePrefix);
             }
           }
         }
@@ -243,6 +243,15 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       }
     }
 
+  }
+
+  private static boolean shouldBeTestRoot(final File srcRoot) {
+    final String name = srcRoot.getName();
+    return "test".equalsIgnoreCase(name) || 
+           "tests".equalsIgnoreCase(name) || 
+           "testSource".equalsIgnoreCase(name) || 
+           "testSources".equalsIgnoreCase(name) || 
+           "testSrc".equalsIgnoreCase(name);
   }
 
   public void setLibraries(final List<LibraryDescriptor> libraries) {

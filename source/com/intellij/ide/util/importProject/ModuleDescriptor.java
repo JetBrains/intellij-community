@@ -15,10 +15,31 @@ public class ModuleDescriptor {
   private final Map<File, Set<File>> myContentToSourceRoots = new HashMap<File, Set<File>>();
   private final Set<File> myLibraryFiles = new HashSet<File>();
   private final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
+  private static final String[] ourModuleNameStoplist = new String[] {
+      "java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp"
+  };
   
   public ModuleDescriptor(final File contentRoot, final Set<File> sourceRoots) {
-    myName = StringUtil.capitalize(contentRoot.getName());
+    myName = suggestModuleName(contentRoot);
     myContentToSourceRoots.put(contentRoot, sourceRoots);
+  }
+
+  private static String suggestModuleName(final File contentRoot) {
+    for (File dir = contentRoot; dir != null; dir = dir.getParentFile()) {
+      final String suggestion = dir.getName();
+      boolean belongsToStopList = false;
+      for (String undesirableName : ourModuleNameStoplist) {
+        if (suggestion.equalsIgnoreCase(undesirableName)) {
+          belongsToStopList = true;
+          break;
+        }
+      }
+      if (!belongsToStopList) {
+        return StringUtil.capitalize(suggestion);
+      }
+    }
+    
+    return StringUtil.capitalize(contentRoot.getName());
   }
 
   public String getName() {
