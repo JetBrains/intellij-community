@@ -168,7 +168,6 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
   IElementType kBOOLEAN = new GroovyElementType("boolean");
   IElementType kBYTE = new GroovyElementType("byte");
   IElementType kCHAR = new GroovyElementType("char");
-  IElementType kANY = new GroovyElementType("any");
   IElementType kSHORT = new GroovyElementType("short");
   IElementType kINT = new GroovyElementType("int");
   IElementType kFLOAT = new GroovyElementType("float");
@@ -210,7 +209,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
   IElementType kFALSE = new GroovyElementType("false");
   IElementType kNULL = new GroovyElementType("null");
 
-  TokenSet KEYWORDS = TokenSet.create(kPACKAGE, kANY, kIMPORT, kSTATIC, kDEF, kCLASS, kINTERFACE, kENUM, kEXTENDS,
+  TokenSet KEYWORDS = TokenSet.create(kPACKAGE, kIMPORT, kSTATIC, kDEF, kCLASS, kINTERFACE, kENUM, kEXTENDS,
       kSUPER, kVOID, kBOOLEAN, kBYTE, kCHAR, kSHORT, kINT, kFLOAT, kLONG, kDOUBLE, kAS, kPRIVATE, kPUBLIC,
       kPROTECTED, kTRANSIENT, kNATIVE, kSYNCHRONIZED, kVOLATILE, kDEFAULT, kTHROWS, kIMPLEMENTS, kTHIS, kIF,
       kELSE, kWHILE, kSWITCH, kFOR, kIN, kRETURN, kBREAK, kCONTINUE, kTHROW, kASSERT, kCASE, kTRY,

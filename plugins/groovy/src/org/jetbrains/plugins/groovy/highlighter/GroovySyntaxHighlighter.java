@@ -154,7 +154,6 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
       GroovyTokenTypes.kEXTENDS,
       GroovyTokenTypes.kSUPER,
       GroovyTokenTypes.kVOID,
-      GroovyTokenTypes.kANY,
       GroovyTokenTypes.kBOOLEAN,
       GroovyTokenTypes.kBYTE,
       GroovyTokenTypes.kCHAR,
