@@ -66,9 +66,12 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
 
   public void setLanguage(final Language language) {
     myLanguage = language;
-    myFileType = null;
     myFileType = language.getAssociatedFileType();
     if (myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(myName);
+  }
+
+  public void setFileType(final FileType fileType) {
+    myFileType = fileType;
   }
 
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {
