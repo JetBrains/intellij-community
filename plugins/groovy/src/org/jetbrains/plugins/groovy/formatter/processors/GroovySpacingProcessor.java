@@ -25,10 +25,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kELSE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
@@ -42,24 +45,24 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GDOC_TAG;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mCLOSABLE_BLOCK_OP;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_ASTERISKS;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_END;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_START;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_TAG_VALUE_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURLY;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
-import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 
 /**
  * @author ilyas
@@ -235,7 +238,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       if (myChild1.getElementType() == mLCURLY && myChild2.getElementType() == mRCURLY) {
         myResult = Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       } else if (myChild1.getElementType() == mLCURLY) {
-        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER,
+        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
             mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       } else if (myChild2.getElementType() == mRCURLY) {
         myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
