@@ -28,7 +28,7 @@ public class VariableArrayTypeFix implements IntentionAction {
   @NotNull
   private final PsiArrayType myTargetType;
 
-  public VariableArrayTypeFix(final PsiArrayInitializerExpression initializer, final PsiType componentType) {
+  public VariableArrayTypeFix(@NotNull PsiArrayInitializerExpression initializer, @NotNull PsiType componentType) {
     PsiArrayType arrayType = new PsiArrayType(componentType);
     PsiArrayInitializerExpression arrayInitializer = initializer;
     while (arrayInitializer.getParent() instanceof PsiArrayInitializerExpression) {
@@ -64,8 +64,8 @@ public class VariableArrayTypeFix implements IntentionAction {
   @Nullable
   private static PsiVariable getFromAssignment(final PsiAssignmentExpression assignment) {
     final PsiExpression reference = assignment.getLExpression();
-    final PsiElement referencedElement = (reference instanceof PsiReferenceExpression) ? ((PsiReferenceExpression) reference).resolve() : null;
-    return ((referencedElement != null) && (referencedElement instanceof PsiVariable)) ? (PsiVariable) referencedElement : null;
+    final PsiElement referencedElement = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference).resolve() : null;
+    return referencedElement != null && referencedElement instanceof PsiVariable ? (PsiVariable)referencedElement : null;
   }
 
   private String getNewText() {
@@ -79,22 +79,21 @@ public class VariableArrayTypeFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return myTargetType.equals(myVariable.getType()) && (myNewExpression != null) ?
+    return myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
            QuickFixBundle.message("change.new.operator.type.text", getNewText(), myTargetType.getCanonicalText(), "") :
            QuickFixBundle.message("fix.variable.type.text", myVariable.getName(), myTargetType.getCanonicalText());
   }
 
   @NotNull
   public String getFamilyName() {
-    return myTargetType.equals(myVariable.getType()) && (myNewExpression != null) ?
+    return myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
            QuickFixBundle.message("change.new.operator.type.family") :
            QuickFixBundle.message("fix.variable.type.family");
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return (myVariable != null) && myVariable.isValid()
+    return myVariable != null && myVariable.isValid()
         && myVariable.getManager().isInProject(myVariable)
-        && myTargetType != null
         && myTargetType.isValid()
         && myInitializer.isValid();
   }
