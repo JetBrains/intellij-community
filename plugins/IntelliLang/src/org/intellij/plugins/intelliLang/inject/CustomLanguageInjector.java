@@ -84,6 +84,10 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
 
   private void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+    // optimization
+    if (place instanceof PsiLiteralExpression && !isStringLiteral(place) ||
+        place instanceof PsiReferenceExpression && !myInjectionConfiguration.isResolveReferences()) return;
+    
     synchronized (myTempPlaces) {
       for (Iterator<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> it = myTempPlaces.iterator(); it.hasNext();) {
         final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair = it.next();
