@@ -1,0 +1,7 @@
+/$1\/
+-----
+Groovy script
+  Compound regular expression
+    PsiElement(regex begin)('/$1\/')
+    PsiErrorElement:Identifier or code block expected
+      <empty list>

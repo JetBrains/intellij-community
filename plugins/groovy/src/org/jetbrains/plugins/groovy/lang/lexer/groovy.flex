@@ -428,6 +428,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
   "$"                                     {  yybegin(KING_STATE);
                                              return mREGEX_BEGIN; }
 
+  {ESCAPPED_REGEX_SEP}                    {  return mREGEX_BEGIN; }
+
   "/"                                     {  if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {
@@ -447,6 +449,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 <KING_STATE_INNER_CONTENT> {
   "$"                                     {  yybegin(KING_STATE_CONTENT);
                                              return mREGEX_CONTENT; }
+
+  {ESCAPPED_REGEX_SEP}                    {  return mREGEX_CONTENT; }
 
   "/"                                     {  if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
