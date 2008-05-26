@@ -3,7 +3,7 @@ if(true) {  blah += 'b' }
 blah += 'c'
 println blah
 -----
-[0(1) element: null
+0(1) element: null
 1(2) WRITE blah
 2(3,6) element: IF statement
 3(4) element: Block statement
