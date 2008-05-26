@@ -21,4 +21,6 @@ public abstract class SchemesManager {
 
   public abstract <T extends Scheme> void exportScheme(final T scheme, final String dirSpec, final SchemeProcessor<T> schemesProcessor)
       throws WriteExternalException;
+
+  public abstract boolean isImportExportAvailable();
 }

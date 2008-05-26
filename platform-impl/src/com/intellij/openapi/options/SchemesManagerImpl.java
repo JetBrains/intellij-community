@@ -233,4 +233,10 @@ public class SchemesManagerImpl extends SchemesManager {
 
   }
 
+  public boolean isImportExportAvailable() {
+    final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(RoamingType.GLOBAL);
+
+    return providers != null && providers.length > 0;
+  }
+
 }

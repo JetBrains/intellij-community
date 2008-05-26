@@ -121,11 +121,11 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     selectScheme(newScheme.getName());
   }
 
-  public void addImportedScheme(final EditorColorsScheme exported) {
-    MyColorScheme newScheme = new MyColorScheme(exported);
+  public void addImportedScheme(final EditorColorsScheme imported) {
+    MyColorScheme newScheme = new MyColorScheme(imported);
     initScheme(newScheme);
 
-    mySchemes.put(exported.getName(), newScheme);
+    mySchemes.put(imported.getName(), newScheme);
     myPanel.resetSchemesCombo();
     myPanel.changeToScheme(newScheme);
     selectScheme(newScheme.getName());
