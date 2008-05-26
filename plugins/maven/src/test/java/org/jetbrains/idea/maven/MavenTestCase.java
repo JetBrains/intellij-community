@@ -1,8 +1,11 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -13,8 +16,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import junit.framework.TestCase;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.project.MavenImporterSettings;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,6 +115,11 @@ public abstract class MavenTestCase extends TestCase {
 
   protected String getParentPath() {
     return myProjectRoot.getParent().getPath();
+  }
+
+  protected Module createModule(String name) throws IOException {
+    VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
+    return ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
   }
 
   protected void createProjectPom(String xml) throws IOException {

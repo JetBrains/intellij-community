@@ -7,7 +7,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -21,13 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.Constants;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenImportToolWindow;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
@@ -53,14 +51,14 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   public void initComponent() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return;
-        if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
-
-        doInit();
-      }
-    });
+    //StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    //  public void run() {
+    //    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    //    if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
+    //
+    //    doInit();
+    //  }
+    //});
   }
 
   public void doInit() {

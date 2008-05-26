@@ -6,7 +6,6 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -58,11 +57,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected MavenImporterSettings getMavenImporterSettings() {
     return myMavenProjectsManager.getImporterSettings();
-  }
-
-  protected void createModule(String name) throws IOException {
-    VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
-    ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
