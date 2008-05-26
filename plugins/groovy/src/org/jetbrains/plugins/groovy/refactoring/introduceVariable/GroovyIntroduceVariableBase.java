@@ -62,9 +62,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       editor.getSelectionModel().selectLineAtCaret();
     }
     GroovyRefactoringUtil.trimSpacesAndComments(editor, file, true);
-    if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
-      editor.getSelectionModel().removeSelection();
-    }
+    invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
   }
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
@@ -113,7 +111,6 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       return false;
     }
 
-
     // Cannot perform refactoring in parameter default values
     PsiElement parent = selectedExpr.getParent();
     while (parent != null &&
@@ -122,7 +119,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       parent = parent.getParent();
     }
 
-    if (checkInFieldInitializer(selectedExpr)){
+    if (checkInFieldInitializer(selectedExpr)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
       showErrorMessage(message, project);
       return false;
@@ -182,7 +179,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (parent instanceof GrField && expr == ((GrField) parent).getInitializerGroovy()) {
       return true;
     }
-    if (parent instanceof GrExpression){
+    if (parent instanceof GrExpression) {
       return checkInFieldInitializer(((GrExpression) parent));
     }
     return false;
@@ -270,6 +267,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
           // Setting caret to ogical position
           if (editor != null && getPositionMarker() != null) {
             editor.getCaretModel().moveToOffset(getPositionMarker().getTextRange().getEndOffset());
+            editor.getSelectionModel().removeSelection();
           }
         } catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -297,7 +295,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             String fieldName = getFieldName(resolved);
             if (fieldName != null &&
                 varDef.getName().equals(fieldName)) {
-                GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(tempContainer.getProject());
+              GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(tempContainer.getProject());
               ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
             }
           }
@@ -426,8 +424,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   }
 
   protected abstract GroovyIntroduceVariableDialog getDialog(final Project project, Editor editor, GrExpression expr,
-                                                                 PsiType type, PsiElement[] occurrences, boolean decalreFinal,
-                                                                 Validator validator);
+                                                             PsiType type, PsiElement[] occurrences, boolean decalreFinal,
+                                                             Validator validator);
 
   protected abstract void showErrorMessage(String message, Project project);
 
