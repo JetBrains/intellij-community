@@ -60,7 +60,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
     assert node != null;
     final int textLength = xmlAttributeValue.getTextLength();
     if (node.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
-      return new TextRange(1, textLength - 1);
+      return new TextRange(1, textLength <= 1 ? 1 : textLength - 1);
     } else {
       return new TextRange(0, textLength);
     }
