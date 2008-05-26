@@ -89,7 +89,8 @@ public class GroovyCreateClassDialog extends DialogWrapper {
 
     myPackageTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        getOKAction().setEnabled(PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(myPackageTextField.getText()));
+        getOKAction().setEnabled(PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(getPackageName()) ||
+            "".equals(getPackageName()));
       }
     });
 

@@ -928,8 +928,14 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation, boolean createConstructor) {
-    if (PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class) == null) {
-      annotation.registerFix(CreateClassFix.createClassFixAction(refElement, createConstructor));
+    GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
+    if (packageDefinition == null && refElement.getQualifier() == null) {
+      PsiElement parent = refElement.getParent();
+      if (parent instanceof GrNewExpression) {
+        annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression) parent));
+      } else {
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
+      }
     }
   }
 
