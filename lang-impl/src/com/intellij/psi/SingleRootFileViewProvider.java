@@ -81,9 +81,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
     }
 
+    final FileType fileType = file.getFileType();
+    if (fileType.isBinary()) return Language.ANY;
     if (isTooLarge(file)) return PlainTextLanguage.INSTANCE;
 
-    final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
       return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
     }
