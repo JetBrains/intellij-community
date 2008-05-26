@@ -8,7 +8,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModuleNameMapper {
+public class MavenModuleNameMapper {
   public static void map(MavenProjectModel mavenProjectModel, String moduleDir) {
     resolveModuleNames(mavenProjectModel);
     resolveModulePaths(mavenProjectModel, moduleDir);

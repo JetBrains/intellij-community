@@ -17,7 +17,7 @@ import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
@@ -42,7 +42,7 @@ public class MavenArtifactDownloader {
   public static void download(final Project project) throws CanceledException {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
-    final MavenEmbedder e = EmbedderFactory.createEmbedderForExecute(MavenCore.getInstance(project).getState());
+    final MavenEmbedder e = MavenEmbedderFactory.createEmbedderForExecute(MavenCore.getInstance(project).getState());
     try {
       MavenProcess.run(project, ProjectBundle.message("maven.downloading"), new MavenProcess.MavenTask() {
         public void run(MavenProcess p) throws CanceledException {
@@ -52,7 +52,7 @@ public class MavenArtifactDownloader {
       });
     }
     finally {
-      EmbedderFactory.releaseEmbedder(e);
+      MavenEmbedderFactory.releaseEmbedder(e);
     }
 
     VirtualFileManager.getInstance().refresh(false);

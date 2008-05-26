@@ -178,7 +178,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>");
 
-    model.update(m, getMavenCoreSettings());
+    model.update(m, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     MavenProjectModel.Node n = model.findProject(m);
     assertEquals("m1", n.getMavenProject().getArtifactId());
@@ -224,7 +224,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(myProjectPom, getMavenCoreSettings());
+    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     MavenProjectModel.Node n = model.findProject(m);
     assertEquals("name2", n.getMavenProject().getArtifactId());
@@ -304,7 +304,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>");
 
-    model.update(myProjectPom, getMavenCoreSettings());
+    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -341,7 +341,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(myProjectPom, getMavenCoreSettings());
+    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -406,7 +406,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
 
-    model.update(m1, getMavenCoreSettings());
+    model.update(m1, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(2, roots.size());
@@ -437,7 +437,7 @@ public class MavenProjectModelTest extends MavenImportingTestCase {
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
 
-    model.update(m, getMavenCoreSettings());
+    model.update(m, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());

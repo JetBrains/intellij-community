@@ -18,7 +18,7 @@ import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -224,7 +224,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     if (standardGoalOrder == null) {
       standardGoalOrder = new HashMap<String, Integer>();
       int i = 0;
-      for (String aGoal : EmbedderFactory.getStandardGoalsList()) {
+      for (String aGoal : MavenEmbedderFactory.getStandardGoalsList()) {
         standardGoalOrder.put(aGoal, i++);
       }
     }

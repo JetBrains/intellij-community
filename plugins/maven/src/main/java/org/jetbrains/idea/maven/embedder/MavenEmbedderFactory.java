@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class EmbedderFactory {
-  private static final Logger LOG = Logger.getInstance("#" + EmbedderFactory.class.getName());
+public class MavenEmbedderFactory {
+  private static final Logger LOG = Logger.getInstance("#" + MavenEmbedderFactory.class.getName());
 
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
   @NonNls private static final String PROP_USER_HOME = "user.home";
@@ -120,7 +120,7 @@ public class EmbedderFactory {
 
     final File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {
-      final String fromUserSettings = EmbedderFactory.getRepositoryFromSettings(userSettingsFile);
+      final String fromUserSettings = MavenEmbedderFactory.getRepositoryFromSettings(userSettingsFile);
       if (!StringUtil.isEmpty(fromUserSettings)) {
         return new File(fromUserSettings);
       }
@@ -128,7 +128,7 @@ public class EmbedderFactory {
 
     final File globalSettingsFile = resolveGlobalSettingsFile(mavenHome);
     if (globalSettingsFile != null) {
-      final String fromGlobalSettings = EmbedderFactory.getRepositoryFromSettings(globalSettingsFile);
+      final String fromGlobalSettings = MavenEmbedderFactory.getRepositoryFromSettings(globalSettingsFile);
       if (!StringUtil.isEmpty(fromGlobalSettings)) {
         return new File(fromGlobalSettings);
       }

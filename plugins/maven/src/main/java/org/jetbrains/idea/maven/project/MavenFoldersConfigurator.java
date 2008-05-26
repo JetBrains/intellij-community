@@ -9,13 +9,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 
-public class FoldersConfigurator {
+public class MavenFoldersConfigurator {
   private MavenProjectModel.Node myMavenProject;
   private MavenImporterSettings myPrefs;
   private RootModelAdapter myModel;
@@ -41,7 +41,7 @@ public class FoldersConfigurator {
   }
 
   private static void doUpdateProjectsExcludeFolders(Project p) throws MavenException {
-    MavenEmbedder embedder = EmbedderFactory.createEmbedderForRead(MavenCore.getInstance(p).getState());
+    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForRead(MavenCore.getInstance(p).getState());
     try {
       MavenProjectReader r = new MavenProjectReader(embedder);
       for (Module m : ModuleManager.getInstance(p).getModules()) {
@@ -49,7 +49,7 @@ public class FoldersConfigurator {
       }
     }
     finally {
-      EmbedderFactory.releaseEmbedder(embedder);
+      MavenEmbedderFactory.releaseEmbedder(embedder);
     }
   }
 
@@ -63,11 +63,11 @@ public class FoldersConfigurator {
     if (project == null) return;
 
     RootModelAdapter a = new RootModelAdapter(m);
-    new FoldersConfigurator(project, settings, a).configFoldersUnderTargetDir();
+    new MavenFoldersConfigurator(project, settings, a).configFoldersUnderTargetDir();
     a.commit();
   }
 
-  public FoldersConfigurator(MavenProjectModel.Node mavenProject, MavenImporterSettings settings, RootModelAdapter model) {
+  public MavenFoldersConfigurator(MavenProjectModel.Node mavenProject, MavenImporterSettings settings, RootModelAdapter model) {
     myMavenProject = mavenProject;
     myPrefs = settings;
     myModel = model;

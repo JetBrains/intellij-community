@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
@@ -36,7 +36,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   private void initIndex() throws Exception {
-    myEmbedder = EmbedderFactory.createEmbedderForExecute(getMavenCoreSettings());
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings());
     myIndexDir = new File(myDir, "index");
     myIndex = new MavenIndices(myEmbedder, myIndexDir);
   }

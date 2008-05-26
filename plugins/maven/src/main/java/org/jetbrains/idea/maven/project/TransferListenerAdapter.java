@@ -54,6 +54,7 @@ public class TransferListenerAdapter implements TransferListener {
 
   public void transferError(TransferEvent event) {
     checkCanceled();
+    indicator.setText2("");
   }
 
   public void debug(String s) {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.project.Constants;
@@ -85,7 +85,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   private void initIndices() throws MavenException {
-    myEmbedder = EmbedderFactory.createEmbedderForExecute(getSettings());
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getSettings());
     myIndices = new MavenIndices(myEmbedder, getIndicesDir());
 
     try {
@@ -259,8 +259,12 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   private void rehighlightAllPoms() {
-    ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+        DaemonCodeAnalyzer.getInstance(myProject).restart();
+      }
+    });
   }
 
   public MavenIndex getLocalIndex() {

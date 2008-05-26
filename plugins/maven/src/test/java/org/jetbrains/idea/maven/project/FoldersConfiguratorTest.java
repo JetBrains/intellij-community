@@ -134,6 +134,6 @@ public class FoldersConfiguratorTest extends MavenImportingTestCase {
   }
 
   private void updateFolders() throws MavenException {
-    FoldersConfigurator.updateProjectExcludedFolders(myProject);
+    MavenFoldersConfigurator.updateProjectExcludedFolders(myProject);
   }
 }

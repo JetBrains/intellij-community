@@ -37,7 +37,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     if (parent instanceof PluginExecution) {
       executionElement = (PluginExecution)parent;
       pluginElement = (Plugin)parent.getParent().getParent();
-    } else {
+    } else  {
       pluginElement = (Plugin)parent;
     }
 

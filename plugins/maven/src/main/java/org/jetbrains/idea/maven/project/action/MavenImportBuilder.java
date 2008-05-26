@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -138,7 +138,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     Map<VirtualFile, Set<String>> result = new HashMap<VirtualFile, Set<String>>();
 
     try {
-      MavenEmbedder e = EmbedderFactory.createEmbedderForRead(getCoreState());
+      MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(getCoreState());
       MavenProjectReader r = new MavenProjectReader(e);
 
       for (VirtualFile f : files) {
@@ -150,10 +150,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         if (!profiles.isEmpty()) result.put(f, profiles);
       }
 
-      EmbedderFactory.releaseEmbedder(e);
+      MavenEmbedderFactory.releaseEmbedder(e);
     }
     catch (CanceledException e) {
-      throw new RuntimeException(e);
     }
 
     return result;

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.ProjectBundle;
@@ -124,39 +123,45 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
           pomNode.setProfiles(profiles);
         }
       }
-
-      public void attachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
-      }
-
-      public void detachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
-      }
     });
 
     myProjectsManager.getMavenProjectModel().addListener(new MavenProjectModel.Listener() {
-      public void projectAdded(MavenProjectModel.Node n) {
-        final PomNode newNode = new PomNode(n);
-        fileToNode.put(n.getFile(), newNode);
-        root.addToStructure(newNode);
+      public void projectAdded(final MavenProjectModel.Node n) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final PomNode newNode = new PomNode(n);
+            fileToNode.put(n.getFile(), newNode);
+            root.addToStructure(newNode);
 
-        updateFromRoot(true, true);
+            updateFromRoot(true, true);
+          }
+        });
       }
 
-      public void projectUpdated(MavenProjectModel.Node n) {
-        final PomNode pomNode = fileToNode.get(n.getFile());
-        if (pomNode != null) {
-          pomNode.onFileUpdate();
-        }
-        else {
-          projectAdded(n);
-        }
+      public void projectUpdated(final MavenProjectModel.Node n) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final PomNode pomNode = fileToNode.get(n.getFile());
+            if (pomNode != null) {
+              pomNode.onFileUpdate();
+            }
+            else {
+              projectAdded(n);
+            }
+          }
+        });
       }
 
-      public void projectRemoved(MavenProjectModel.Node n) {
-        final PomNode pomNode = fileToNode.get(n.getFile());
-        if (pomNode != null) {
-          fileToNode.remove(n.getFile());
-          pomNode.removeFromParent();
-        }
+      public void projectRemoved(final MavenProjectModel.Node n) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final PomNode pomNode = fileToNode.get(n.getFile());
+            if (pomNode != null) {
+              fileToNode.remove(n.getFile());
+              pomNode.removeFromParent();
+            }
+          }
+        });
       }
     });
 

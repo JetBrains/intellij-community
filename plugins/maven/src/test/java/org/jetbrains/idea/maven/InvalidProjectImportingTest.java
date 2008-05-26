@@ -240,6 +240,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     importProject();
+    resolveProject();// ensure junit is resolved
 
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertProblems(root);

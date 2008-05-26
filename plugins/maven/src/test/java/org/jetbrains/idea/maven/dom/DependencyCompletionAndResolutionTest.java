@@ -339,8 +339,4 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     checkHighlighting();
   }
-
-  private void checkHighlighting() throws Throwable {
-    myCodeInsightFixture.testHighlighting(true, true, true, myProjectPom);
-  }
 }

@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,8 +18,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.Tree;
-import org.jetbrains.idea.maven.embedder.CustomExtensionManager;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
 import java.util.*;
@@ -40,11 +38,11 @@ public class MavenProjectModel {
                    MavenProcess p) throws CanceledException {
     myProfiles = activeProfiles;
 
-    update(filesToImport, mavenSettings);
+    update(filesToImport, mavenSettings, p);
 
     updateModules(existingModules);
     resolveIntermoduleDependencies();
-    ModuleNameMapper.map(this, importerSettings.getDedicatedModuleDir());
+    MavenModuleNameMapper.map(this, importerSettings.getDedicatedModuleDir());
   }
 
   private void updateModules(final Map<VirtualFile, Module> existingModules) {
@@ -70,12 +68,12 @@ public class MavenProjectModel {
     });
   }
 
-  public void update(VirtualFile f, MavenCoreSettings mavenSettings) throws CanceledException {
-    update(Collections.singleton(f), mavenSettings);
+  public void update(VirtualFile f, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
+    update(Collections.singleton(f), mavenSettings, p);
   }
 
-  private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings) throws CanceledException {
-    MavenEmbedder e = EmbedderFactory.createEmbedderForRead(mavenSettings, myProjectIdToFileMapping);
+  private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
+    MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, myProjectIdToFileMapping);
 
     try {
       MavenProjectReader reader = new MavenProjectReader(e);
@@ -84,21 +82,21 @@ public class MavenProjectModel {
       for (VirtualFile each : files) {
         Node n = findProject(each);
         if (n == null) {
-          doAdd(each, reader, updatedFiles);
+          doAdd(each, reader, updatedFiles, p);
         }
         else {
-          doUpdate(n, reader, false, updatedFiles);
+          doUpdate(n, reader, false, updatedFiles, p);
         }
       }
     }
     finally {
-      EmbedderFactory.releaseEmbedder(e);
+      MavenEmbedderFactory.releaseEmbedder(e);
     }
   }
 
-  private void doAdd(final VirtualFile f, MavenProjectReader reader, Set<VirtualFile> updatedFiles) throws CanceledException {
+  private void doAdd(final VirtualFile f, MavenProjectReader reader, Set<VirtualFile> updatedFiles, MavenProcess p) throws CanceledException {
     Node newProject = new Node(f, null);
-    doUpdate(newProject, reader, true, updatedFiles);
+    doUpdate(newProject, reader, true, updatedFiles, p);
 
     Node parent = visit(new NodeVisitor<Node>() {
       public void visit(Node node) {
@@ -116,8 +114,10 @@ public class MavenProjectModel {
     }
   }
 
-  private void doUpdate(Node n, MavenProjectReader reader, boolean isNew, Set<VirtualFile> updatedFiles) throws CanceledException {
+  private void doUpdate(Node n, MavenProjectReader reader, boolean isNew, Set<VirtualFile> updatedFiles, MavenProcess p) throws CanceledException {
     if (updatedFiles.contains(n.getFile())) return;
+    p.checkCanceled();
+    p.setText(ProjectBundle.message("maven.reading", n.getPath()));
 
     List<Node> oldModules = n.mySubProjects;
     List<Node> newModules = new ArrayList<Node>();
@@ -138,7 +138,7 @@ public class MavenProjectModel {
       if (isNewChild) {
         child = new Node(each, null);
       }
-      doUpdate(child, reader, isNewChild, updatedFiles);
+      doUpdate(child, reader, isNewChild, updatedFiles, p);
       newModules.add(child);
       myRootProjects.remove(child);
     }
@@ -223,36 +223,30 @@ public class MavenProjectModel {
   }
 
   public void resolve(Project project,
-                      List<Pair<File, List<String>>> problems,
                       MavenProcess p,
                       MavenCoreSettings coreSettings,
                       MavenArtifactSettings artifactSettings) throws CanceledException {
 
-    MavenEmbedder embedder = EmbedderFactory.createEmbedderForResolve(coreSettings, myProjectIdToFileMapping);
+    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, myProjectIdToFileMapping);
 
     try {
-      resolveNodes(new MavenProjectReader(embedder), p);
-      p.checkCanceled();
+      List<Node> projects = getProjects();
+      List<Artifact> allArtifacts = new ArrayList<Artifact>();
 
-      final List<MavenProjectModel.Node> projects = new ArrayList<MavenProjectModel.Node>();
-      final List<Artifact> allArtifacts = new ArrayList<Artifact>();
+      MavenProjectReader projectReader = new MavenProjectReader(embedder);
+      for (Node each : projects) {
+        p.checkCanceled();
+        p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
+        p.setText2("");
+        each.resolve(projectReader);
+      }
 
-      final LinkedHashMap<File, List<String>> problemsMap = new LinkedHashMap<File, List<String>>();
-
-      visit(new MavenProjectModel.PlainNodeVisitor() {
-        public void visit(MavenProjectModel.Node node) {
-          if (!node.isValid()) return;
-
-          projects.add(node);
-
-          MavenProject mavenProject = node.getMavenProject();
-          collectUnresolvedArtifacts(mavenProject, problemsMap);
-          allArtifacts.addAll((Set<Artifact>)mavenProject.getArtifacts());
-        }
-      });
-
-      //collectUnresolvedBuildExtensions(EmbedderFactory.getExtensionManager(embedder), problemsMap);
-      convertToList(problemsMap, problems);
+      for (Node each : projects) {
+        p.checkCanceled();
+        p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
+        p.setText2("");
+        each.generateSources(projectReader);
+      }
 
       // We have to refresh all the resolved artifacts manually in order to
       // update all the VirtualFilePointers. It is not enough to call
@@ -267,72 +261,14 @@ public class MavenProjectModel {
       d.download(project, projects, false);
     }
     finally {
-      EmbedderFactory.releaseEmbedder(embedder);
-    }
-  }
-
-  private void resolveNodes(final MavenProjectReader projectReader, final MavenProcess p)
-      throws CanceledException {
-    try {
-      visit(new PlainNodeVisitor() {
-        public void visit(Node node) {
-          try {
-            p.checkCanceled();
-            p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(node.getPath())));
-            node.resolve(projectReader);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
-    }
-    catch (RuntimeException e) {
-      if (e.getCause() instanceof CanceledException) throw (CanceledException)e.getCause();
-      throw e;
+      MavenEmbedderFactory.releaseEmbedder(embedder);
     }
   }
 
   private void refreshResolvedArtifacts(List<Artifact> artifacts) {
     for (Artifact a : artifacts) {
-      if (!a.isResolved()) return;
+      if (!a.isResolved()) continue;
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(a.getFile());
-    }
-  }
-
-  private void collectUnresolvedArtifacts(MavenProject p, LinkedHashMap<File, List<String>> result) {
-    List<String> problems = new ArrayList<String>();
-
-    for (Artifact a : (Collection<Artifact>)p.getArtifacts()) {
-      if (a.isResolved()) continue;
-      problems.add("Unresolved dependency: " + a.toString());
-    }
-
-    if (problems.isEmpty()) return;
-    getProblems(result, p.getFile()).addAll(problems);
-  }
-
-  private void collectUnresolvedBuildExtensions(CustomExtensionManager m,
-                                                LinkedHashMap<File, List<String>> result) {
-    for (Pair<File, String> each : m.getUnresolvedExtensions()) {
-      List<String> problems = getProblems(result, each.first);
-      problems.add("Unresolved build extension: " + each.second);
-    }
-  }
-
-  private List<String> getProblems(LinkedHashMap<File, List<String>> result, File f) {
-    List<String> problems = result.get(f);
-    if (problems == null) {
-      problems = new ArrayList<String>();
-      result.put(f, problems);
-    }
-    return problems;
-  }
-
-  private void convertToList(LinkedHashMap<File, List<String>> map, List<Pair<File, List<String>>> list) {
-    for (Map.Entry<File, List<String>> each : map.entrySet()) {
-      ArrayList<String> uniqStrings = new ArrayList<String>(new LinkedHashSet<String>(each.getValue()));
-      list.add(new Pair<File, List<String>>(each.getKey(), uniqStrings));
     }
   }
 
@@ -520,9 +456,13 @@ public class MavenProjectModel {
     }
 
     public void resolve(MavenProjectReader projectReader) throws CanceledException {
-      myMavenProjectHolder = projectReader.resolve(getPath(), myProfiles);
+      MavenProjectHolder newHolder = projectReader.readProject(getPath(), myProfiles);
+      if (newHolder.isValid()) myMavenProjectHolder = newHolder;
     }
 
+    public void generateSources(MavenProjectReader projectReader) throws CanceledException {
+      projectReader.generateSources(getMavenProject(), myProfiles);
+    }
 
     public List<String> getProblems() {
       if (!isValid()) return Collections.singletonList("pom.xml is invalid");

@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.core.util.Strings;
 import java.text.MessageFormat;
 import java.util.regex.Pattern;
 
-public class ModuleConfigurator {
+public class MavenModuleConfigurator {
   private ModifiableModuleModel myModuleModel;
   private MavenProjectModel myMavenModel;
   private MavenImporterSettings mySettings;
@@ -28,7 +28,7 @@ public class ModuleConfigurator {
   private MavenProjectModel.Node myMavenProject;
   private RootModelAdapter myModel;
 
-  public ModuleConfigurator(ModifiableModuleModel moduleModel,
+  public MavenModuleConfigurator(ModifiableModuleModel moduleModel,
                             MavenProjectModel mavenModel,
                             MavenImporterSettings settings,
                             Module module,
@@ -61,7 +61,7 @@ public class ModuleConfigurator {
   }
 
   private void configFolders() {
-    new FoldersConfigurator(myMavenProject, mySettings, myModel).config();
+    new MavenFoldersConfigurator(myMavenProject, mySettings, myModel).config();
   }
 
   private void configDependencies() {

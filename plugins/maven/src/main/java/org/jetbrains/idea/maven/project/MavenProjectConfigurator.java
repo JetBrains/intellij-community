@@ -18,7 +18,7 @@ import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import java.io.IOException;
 import java.util.*;
 
-public class ProjectConfigurator {
+public class MavenProjectConfigurator {
   private Project myProject;
   private ModifiableModuleModel myModuleModel;
   private MavenProjectModel myProjectModel;
@@ -28,11 +28,11 @@ public class ProjectConfigurator {
   public static void config(Project p,
                             MavenProjectModel projectModel,
                             MavenImporterSettings settings) {
-    ProjectConfigurator c = new ProjectConfigurator(p, projectModel, settings);
+    MavenProjectConfigurator c = new MavenProjectConfigurator(p, projectModel, settings);
     c.config();
   }
 
-  private ProjectConfigurator(Project p,
+  private MavenProjectConfigurator(Project p,
                               MavenProjectModel projectModel,
                               MavenImporterSettings settings) {
     myProject = p;
@@ -139,8 +139,8 @@ public class ProjectConfigurator {
     return module;
   }
 
-  private ModuleConfigurator createModuleConfigurator(Module module, MavenProjectModel.Node mavenProject) {
-    return new ModuleConfigurator(myModuleModel, myProjectModel, mySettings, module, mavenProject);
+  private MavenModuleConfigurator createModuleConfigurator(Module module, MavenProjectModel.Node mavenProject) {
+    return new MavenModuleConfigurator(myModuleModel, myProjectModel, mySettings, module, mavenProject);
   }
 
   private void removeExistingIml(String path) {

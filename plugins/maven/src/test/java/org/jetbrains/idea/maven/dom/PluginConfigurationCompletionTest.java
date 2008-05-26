@@ -160,4 +160,25 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
 
     assertDocumentation("The -source argument for the Java compiler.");
   }
+
+  public void testDoNotCompleteNorHighlightNonPluginConfiguration() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<ciManagement>" +
+                     "  <system>foo</system>" +
+                     "  <notifiers>" +
+                     "    <notifier>" +
+                     "      <type>mail</type>" +
+                     "      <configuration>" +
+                     "        <address>foo@bar.com</address>" +
+                     "      </configuration>" +
+                     "    </notifier>" +
+                     "  </notifiers>" +
+                     "</ciManagement>");
+
+    checkHighlighting();
+  }
 }

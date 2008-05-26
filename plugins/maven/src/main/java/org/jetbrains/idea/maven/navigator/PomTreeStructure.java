@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.embedder.EmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.repository.MavenPluginInfo;
@@ -72,8 +72,8 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   protected final RootNode root = new RootNode();
 
-  private final Collection<String> standardPhases = EmbedderFactory.getStandardPhasesList();
-  final Collection<String> standardGoals = EmbedderFactory.getStandardGoalsList();
+  private final Collection<String> standardPhases = MavenEmbedderFactory.getStandardPhasesList();
+  final Collection<String> standardGoals = MavenEmbedderFactory.getStandardGoalsList();
 
   // TODO : update tree after local repository location change
   public PomTreeStructure(Project project,

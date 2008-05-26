@@ -325,14 +325,6 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
       requestKeymapUpdate();
     }
 
-    public void attachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
-      requestKeymapUpdate();
-    }
-
-    public void detachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
-      requestKeymapUpdate();
-    }
-
     private void requestKeymapUpdate() {
       if (!updateScheduled) {
         updateScheduled = true;

@@ -22,6 +22,37 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
     assertTestSources("project", "src/test/java", "src/test/resources");
   }
 
+  public void testInvalidProjectHasContentRoot() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1");
+
+    assertModules("Invalid");
+    assertContentRoots("Invalid", getProjectPath());
+  }
+
+  public void testDoNotResetFoldersAfterResolveIfProjectIsInvalid() throws Exception {
+    createStdProjectFolders();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <extensions>" +
+                  "    <extension>" +
+                  "      <groupId>xxx</groupId>" +
+                  "      <artifactId>xxx</artifactId>" +
+                  "      <version>xxx</version>" +
+                  "    </extension>" +
+                  "  </extensions>" +
+                  "</build>");
+
+    assertModules("project");
+    assertSources("project", "src/main/java", "src/main/resources");
+    assertTestSources("project", "src/test/java", "src/test/resources");
+  }
+
   public void testCustomSourceFolders() throws Exception {
     createStdProjectFolders();
     createProjectSubDirs("src", "test", "res1", "res2", "testRes1", "testRes2");

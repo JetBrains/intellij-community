@@ -104,6 +104,10 @@ public class MavenProcess {
       myIndicator[0].cancel();
       myFinishSemaphore.waitFor();
     }
+
+    public void waitFor() {
+      myFinishSemaphore.waitFor();
+    }
   }
 
   public static interface MavenTask {

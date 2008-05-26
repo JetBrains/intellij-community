@@ -93,6 +93,10 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     assertSame(targetElement, lookupElement);
   }
 
+  protected void checkHighlighting() throws Throwable {
+    myCodeInsightFixture.testHighlighting(true, true, true, myProjectPom);
+  }
+
   protected PsiFile getPsiFile(VirtualFile f) {
     Document d = FileDocumentManager.getInstance().getDocument(f);
     return PsiDocumentManager.getInstance(myProject).getPsiFile(d);
