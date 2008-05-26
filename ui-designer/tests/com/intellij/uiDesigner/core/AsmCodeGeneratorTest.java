@@ -62,6 +62,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     }
     finally {
       classStream.close();
+      FileUtil.delete(new File(classPath));
     }
     return codeGenerator;
   }
