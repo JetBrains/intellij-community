@@ -75,6 +75,10 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     return mySelectedScheme;
   }
 
+  public EditorColorsScheme getOriginalSelectedScheme() {
+    return mySelectedScheme == null ? null : mySelectedScheme.getOriginalScheme();
+  }
+
   public EditorSchemeAttributeDescriptor[] getCurrentDescriptions() {
     return mySelectedScheme.getDescriptors();
   }
