@@ -244,15 +244,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-        TextRange editable = documentRange.intersectWithEditable(range);
-        boolean shouldHighlight = editable != null;
-        if (editable == null) editable = new TextRange(0,0);
-        TextRange patched = documentRange.injectedToHost(editable);
-        Annotation annotation = super.createAnnotation(patched, severity, message);
-        if (shouldHighlight) { //do not highlight generated header/footer
+        final TextRange editable = documentRange.intersectWithEditable(range);
+        if (editable != null) {
+          final TextRange patched = documentRange.injectedToHost(editable);
+          final Annotation annotation = super.createAnnotation(patched, severity, message);
           annotationHolder.add(annotation);
+          return annotation;
         }
-        return annotation;
+        // fake
+        return super.createAnnotation(documentRange.injectedToHost(TextRange.from(0, 0)), severity, message);
       }
     };
     PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
@@ -284,6 +284,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (editable==null) return; //do not highlight generated header/footer
         Annotation annotation = fixingOffsetsHolder.createErrorAnnotation(editable, info.description);
         annotation.setTooltip(info.toolTip);
+        if (info.quickFixActionRanges != null) {
+          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> o : info.quickFixActionRanges) {
+            final TextRange fixEditable = documentRange.intersectWithEditable(o.second);
+            if (fixEditable != null) {
+              annotation.registerFix(o.first.getAction(), documentRange.injectedToHost(fixEditable));
+            }
+          }
+        }
       }
     };
 
