@@ -60,7 +60,7 @@ public class PyResolveUtil {
 
     PsiElement cur = elt;
     do {
-      if ((processor instanceof ResolveProcessor) && !(((ResolveProcessor)processor).probe(cur))) {
+      if ((processor instanceof ResolveProcessor) && !(((ResolveProcessor)processor).approve(cur))) {
         return null;
       }
       if (!cur.processDeclarations(processor, ResolveState.initial(), cur == elt ? lastParent : null, elt)) {
@@ -78,14 +78,63 @@ public class PyResolveUtil {
     return treeWalkUp(processor, elt.getContext(), elt, place);
   }
 
+  // NOTE: to be moved to more general scope
+  /**
+   * Tries to match two [qualified] reference expression paths; target must be a 'sublist' of source to match.
+   * E.g., 'a.b.c.d' and 'a.b.c' would match, while 'a.b.c' and 'a.b.c.d' would not. Eqaully, 'a.b.c' and 'a.b.d' would not match.
+   * If either source or target is null, false is returned.
+   * @see #unwindRefPath(PyReferenceExpression).
+   * @param source_path expression path to match (the longer list of qualifiers).
+   * @param target_path expression path to match against (hopeful sublist of qualifiers of source).
+   * @return true if source matches target.
+   */
+  public static boolean matchPaths(List<PyReferenceExpression> source_path, List<PyReferenceExpression> target_path) {
+    // turn qualifiers into lists
+    if ((source_path == null) || (target_path == null)) return false;
+    // compare until target is exhausted
+    Iterator<PyReferenceExpression> source_iter = source_path.iterator();
+    for (final PyReferenceExpression target_elt : target_path) {
+      if (source_iter.hasNext()) {
+        PyReferenceExpression source_elt = source_iter.next();
+        if (!target_elt.getText().equals(source_elt.getText())) return false;
+      }
+      else return false; // source exhausted before target
+    }
+    return true;
+  }
+
+  /**
+   * Unwinds a [multi-level] qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
+   * If any qualifier happens to be not a referencce expression, or expr is null, null is returned.
+   * @param expr an experssion to unwind.
+   * @return path as a list of ref expressions, or null.
+   */
+  @Nullable
+  public static List<PyReferenceExpression> unwindRefPath(final PyReferenceExpression expr) {
+    final List<PyReferenceExpression> path = new LinkedList<PyReferenceExpression>();
+    PyExpression maybe_step;
+    PyReferenceExpression step = expr;
+    try {
+      while (step != null) {
+        path.add(0, step);
+        maybe_step = step.getQualifier();
+        step = (PyReferenceExpression)maybe_step;
+      }
+    }
+    catch (ClassCastException e) {
+      return null;
+    }
+    return path;
+  }
+
   public static class ResolveProcessor implements PyScopeProcessor {
     private String myName;
     private PsiElement myResult = null;
-    private Set<PsiElement> mySeen;
+    private Set<String> mySeen;
 
     public ResolveProcessor(final String name) {
       myName = name;
-      mySeen = new HashSet<PsiElement>();
+      mySeen = new HashSet<String>();
     }
 
     public PsiElement getResult() {
@@ -149,10 +198,11 @@ public class PyResolveUtil {
      * @param element to be analyzed and probably remembered.
      * @return true if execute() may be tried with this element; else treeWalkUp and the like should immediately return negative result.
      */
-    public boolean probe(PsiElement element) {
+    public boolean approve(PsiElement element) {
       if ((element instanceof PyFile) && (ResolveImportUtil.INIT_PY.equals(((PyFile)element).getName()))) {
-        if (mySeen.contains(element)) return false; // already seen it, may not try again
-        else mySeen.add(element);
+        String path = ((PyFile)element).getVirtualFile().getPath(); // TODO: handle possible NPE
+        if (mySeen.contains(path)) return false; // already seen it, may not try again
+        else mySeen.add(path);
       }
       return true;
     }
