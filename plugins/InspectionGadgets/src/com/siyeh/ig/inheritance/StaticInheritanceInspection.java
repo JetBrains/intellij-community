@@ -18,6 +18,7 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
@@ -48,16 +49,24 @@ public class StaticInheritanceInspection extends BaseInspection {
                 "static.inheritance.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new StaticInheritanceFix();
-    }
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    return new InspectionGadgetsFix[]{new StaticInheritanceFix(false), new StaticInheritanceFix(true)};
+  }
+
 
     private static class StaticInheritanceFix extends InspectionGadgetsFix {
+      private final boolean myReplaceInWholeProject;
 
-        @NotNull
+      private StaticInheritanceFix(boolean replaceInWholeProject) {
+        myReplaceInWholeProject = replaceInWholeProject;
+      }
+
+      @NotNull
         public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "static.inheritance.replace.quickfix");
+        String scope = myReplaceInWholeProject ? InspectionGadgetsBundle.message("the.whole.project") : InspectionGadgetsBundle.message("this.class");
+        return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix", scope);
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -72,7 +81,7 @@ public class StaticInheritanceInspection extends BaseInspection {
                     ClassUtils.getContainingClass(referenceElement);
             final PsiManager manager = referenceElement.getManager();
             assert implementingClass != null;
-            final SearchScope searchScope = implementingClass.getUseScope();
+            final SearchScope searchScope = myReplaceInWholeProject ? implementingClass.getUseScope() : new LocalSearchScope(implementingClass);
             final Map<PsiReferenceExpression, PsiField> refsToRebind =
                     new HashMap<PsiReferenceExpression, PsiField>();
             for (final PsiField field : allFields) {
@@ -128,7 +137,7 @@ public class StaticInheritanceInspection extends BaseInspection {
             for (final PsiJavaCodeReferenceElement reference : references) {
                 final PsiClass iface = (PsiClass)reference.resolve();
                 if (iface != null) {
-                    if (interfaceContainsOnlyConstants(iface, new HashSet())) {
+                    if (interfaceContainsOnlyConstants(iface, new HashSet<PsiClass>())) {
                         registerError(reference);
                     }
                 }
