@@ -29,7 +29,7 @@ final class ShowHintAction extends AnAction{
     // 2. Commit possible non committed value and show popup
     final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(myManager.getEditor().getProject());
     final PropertyInspector propertyInspector = manager.getPropertyInspector();
-    if(propertyInspector.isEditing()){
+    if(propertyInspector != null && propertyInspector.isEditing()) {
       propertyInspector.stopEditing();
     }
     myManager.showIntentionPopup();
