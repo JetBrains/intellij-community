@@ -135,7 +135,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   public String getHelpId() {
-    return "cvs.selectionHistory";
+    return "reference.versionControl.toolwindow.history";
   }
 
   @Nullable
