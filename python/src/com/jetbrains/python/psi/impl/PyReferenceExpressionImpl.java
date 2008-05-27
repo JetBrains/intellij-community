@@ -36,9 +36,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -115,6 +113,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
         if (file != null) {
           target = file; // ResolveImportUtil will extract directory part as needed.
+          file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
           /* NOTE: can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
           This is because isPsiUpToDate() relies on identity of objects returned by FileViewProvider.getPsi().
           If we ever need to exactly tell a dir from __init__.py, that logic has to change. 
@@ -318,4 +317,5 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     return null;
   }
+
 }
