@@ -25,6 +25,7 @@ public class VcsSelection {
   private final int mySelectionStartLineNumber;
   private final int mySelectionEndLineNumber;
   private final String myActionName;
+  private final String myDialogTitle;
 
   public VcsSelection(Document document, SelectionModel selectionModel) {
     this(document, new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
@@ -37,7 +38,8 @@ public class VcsSelection {
     mySelectionStartLineNumber = document.getLineNumber(startOffset);
     int endOffset = textRange.getEndOffset();
     mySelectionEndLineNumber = endOffset >= document.getTextLength() ? document.getLineCount() - 1 : document.getLineNumber(endOffset);
-    myActionName = actionName;
+    myActionName = VcsBundle.message("show.history.action.name.template", actionName);
+    myDialogTitle = VcsBundle.message("show.history.dialog.title.template", actionName);
   }
 
   public Document getDocument() {
@@ -54,5 +56,9 @@ public class VcsSelection {
 
   public String getActionName() {
     return myActionName;
+  }
+
+  public String getDialogTitle() {
+    return myDialogTitle;
   }
 }

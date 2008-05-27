@@ -59,7 +59,8 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
                                   provider,
                                   session,
                                   Math.min(selectionStart, selectionEnd),
-                                  Math.max(selectionStart, selectionEnd));
+                                  Math.max(selectionStart, selectionEnd),
+                                  selection.getDialogTitle());
 
       vcsHistoryDialog.show();
     }

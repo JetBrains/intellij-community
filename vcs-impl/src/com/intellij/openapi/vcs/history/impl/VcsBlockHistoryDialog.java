@@ -29,10 +29,22 @@ public class VcsBlockHistoryDialog extends VcsHistoryDialog{
   public VcsBlockHistoryDialog(Project project, final VirtualFile file,
                                AbstractVcs vcs,
                                VcsHistoryProvider provider,
-                               VcsHistorySession session, int selectionStart, int selectionEnd){
+                               VcsHistorySession session, int selectionStart, int selectionEnd) {
+    this(project, file, vcs, provider, session, selectionStart, selectionEnd, "History for Selection");
+  }
+
+  public VcsBlockHistoryDialog(Project project,
+                               final VirtualFile file,
+                               AbstractVcs vcs,
+                               VcsHistoryProvider provider,
+                               VcsHistorySession session,
+                               int selectionStart,
+                               int selectionEnd,
+                               final String title) {
     super(project, file, provider, session,vcs);
     mySelectionStart = selectionStart;
     mySelectionEnd = selectionEnd;
+    setTitle(title);
   }
 
   protected String getContentToShow(VcsFileRevision revision) {

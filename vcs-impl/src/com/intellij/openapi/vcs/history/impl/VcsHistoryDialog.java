@@ -53,7 +53,7 @@ public class VcsHistoryDialog extends DialogWrapper {
   private final DiffPanel myDiffPanel;
   private final Project myProject;
 
-  private final static ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.list.revision")) {
+  private final static ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getRevisionNumber();
     }
