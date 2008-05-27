@@ -371,10 +371,11 @@ public class RecordUtil {
     }
   }
 
+  @Nullable
   public static String createTypeText(TypeInfo typeInfo) {
     if (typeInfo == null) return null;
-    if (typeInfo.arrayCount == 0) return typeInfo.text.getString();
     if (typeInfo.text == null) return null;
+    if (typeInfo.arrayCount == 0) return typeInfo.text.getString();
 
     StringBuffer buf = new StringBuffer(typeInfo.text.getString());
     final int arrayCount = !typeInfo.isEllipsis ? typeInfo.arrayCount : typeInfo.arrayCount - 1;
