@@ -11,19 +11,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Set;
 
 public class EncodingManagerImpl extends EncodingManager {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
@@ -50,13 +49,6 @@ public class EncodingManagerImpl extends EncodingManager {
       result.addAll(EncodingProjectManager.getInstance(project).getFavorites());
     }
     return result;
-  }
-
-  public void setMapping(final Map<VirtualFile, Charset> map) {
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project)).setMapping(map);
-    }
   }
 
   @Nullable

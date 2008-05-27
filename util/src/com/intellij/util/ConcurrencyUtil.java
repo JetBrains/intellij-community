@@ -48,7 +48,9 @@ public class ConcurrencyUtil {
         futures.add(future);
       }
       // force unstarted futures to execute using the current thread
-      for (Future f : futures) ((FutureTask)f).run();
+      for (Future f : futures) {
+        ((Runnable)f).run();
+      }
       for (Future f : futures) {
         try {
           f.get();

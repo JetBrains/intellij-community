@@ -112,31 +112,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   }
 
-  private void registerReferencesFromInjectedFragments(final PsiFile hostFile, final RefCountHolder refCountHolder) {
-    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostFile);
-    for (DocumentWindow documentRange : injected) {
-      PsiFile file = PsiDocumentManager.getInstance(hostFile.getProject()).getPsiFile(documentRange);
-      if (file == null) continue;
-      PsiElement context = file.getContext();
-      if (context == null || !context.isValid() || file.getProject().isDisposed()) {
-        continue;
-      }
-      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-        @Override public void visitElement(PsiElement element) {
-          super.visitElement(element);
-
-          for (PsiReference reference : element.getReferences()) {
-            PsiElement resolved = reference.resolve();
-            if (resolved instanceof PsiNamedElement) {
-              refCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
-            }
-          }
-        }
-      };
-      file.accept(visitor);
-    }
-  }
-
   public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
     myFile = file;
     assert released;

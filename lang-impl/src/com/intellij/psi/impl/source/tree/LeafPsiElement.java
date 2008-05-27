@@ -240,4 +240,8 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     VirtualFile vFile = contFile.getVirtualFile();
     return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
   }
+  
+  public boolean isEquivalentTo(final PsiElement another) {
+    return this == another;
+  }
 }

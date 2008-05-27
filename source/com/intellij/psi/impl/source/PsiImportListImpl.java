@@ -4,7 +4,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportListStub;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -13,7 +15,12 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   private volatile Map<String,PsiImportStatement> myClassNameToImportMap = null;
   private volatile Map<String,PsiImportStatement> myPackageNameToImportMap = null;
   private volatile Map<String,PsiImportStatementBase> myNameToSingleImportMap = null;
-  private static final PsiImportStatementBase[] EMPTY_IMPORTS = new PsiImportStatementBase[0];
+  private static final PsiImportStatementBase[] EMPTY_ARRAY = new PsiImportStatementBase[0];
+  private static final ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementBase>() {
+    public PsiImportStatementBase[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
+    }
+  };
 
   public PsiImportListImpl(final PsiImportListStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_LIST);
@@ -40,18 +47,18 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
 
   @NotNull
   public PsiImportStatement[] getImportStatements() {
-    return getStubOrPsiChildren(Constants.IMPORT_STATEMENT_BIT_SET, PsiImportStatementImpl.EMPTY_ARRAY);
+    return getStubOrPsiChildren(ElementType.IMPORT_STATEMENT_BIT_SET, PsiImportStatementImpl.ARRAY_FACTORY);
   }
 
   @NotNull
   public PsiImportStaticStatement[] getImportStaticStatements() {
-    return getStubOrPsiChildren(Constants.IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.EMPTY_ARRAY);
+    return getStubOrPsiChildren(ElementType.IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
 
   }
 
   @NotNull
   public PsiImportStatementBase[] getAllImportStatements() {
-    return getStubOrPsiChildren(Constants.IMPORT_STATEMENT_BASE_BIT_SET, EMPTY_IMPORTS);
+    return getStubOrPsiChildren(ElementType.IMPORT_STATEMENT_BASE_BIT_SET, ARRAY_FACTORY);
   }
 
   public PsiImportStatement findSingleClassImportStatement(String name) {

@@ -180,12 +180,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implemen
 
   @NotNull
   public PsiField[] getFields() {
-    return getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.EMPTY_ARRAY);
+    return getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    return getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.EMPTY_ARRAY);
+    return getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
   }
 
   @NotNull
@@ -195,7 +195,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implemen
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    return getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.EMPTY_ARRAY);
+    return getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
   }
 
   @NotNull

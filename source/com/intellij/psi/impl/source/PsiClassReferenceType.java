@@ -125,7 +125,7 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   public PsiClassType createImmediateCopy() {
-    final PsiClassType.ClassResolveResult resolveResult = resolveGenerics();
+    final ClassResolveResult resolveResult = resolveGenerics();
     if (resolveResult.getElement() == null) return this;
     return new PsiImmediateClassType(resolveResult.getElement(), resolveResult.getSubstitutor());
   }

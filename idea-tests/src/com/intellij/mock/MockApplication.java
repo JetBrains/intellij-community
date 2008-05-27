@@ -50,15 +50,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
 
-
-  public void setupIdeQueue(EventQueue queue) {
-  }
-
-  //used in Fabrique
-  public boolean isExceptionalThreadWithReadAccess(Thread thread) {
-    return false;
-  }
-
   public void exit(boolean force) {
   }
 
@@ -166,13 +157,6 @@ public class MockApplication extends MockComponentManager implements Application
     return false;
   }
 
-  public boolean runProcessWithProgressSynchronously(Runnable process,
-                                                     String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     Project project,
-                                                     boolean smoothProgress) {
-    return false;
-  }
 
   public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
   }

@@ -346,8 +346,7 @@ public class TreeUtil {
       length += tree.getTextLength();
     }
     else{
-      final ASTNode composite = tree;
-      TreeElement firstChild = (TreeElement)composite.getFirstChildNode();
+      TreeElement firstChild = (TreeElement)tree.getFirstChildNode();
       while(firstChild != null){
         length += getNotCachedLength(firstChild);
         firstChild = firstChild.getTreeNext();
@@ -370,8 +369,7 @@ public class TreeUtil {
   public static void clearCaches(TreeElement tree) {
     tree.clearCaches();
     if(tree instanceof CompositeElement){
-      final ASTNode composite = tree;
-      TreeElement child = (TreeElement)composite.getFirstChildNode();
+      TreeElement child = (TreeElement)((ASTNode)tree).getFirstChildNode();
       while(child != null){
         clearCaches(child);
         child = child.getTreeNext();
@@ -441,12 +439,12 @@ public class TreeUtil {
 
   @Nullable
   public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent, IElementType searchedType) {
-    TreeElement next = null;
     if (commonParent != null) {
       commonParent.startLeafBranchStart = start;
       initStrongWhitespaceHolder(commonParent, start, true);
     }
     TreeElement nextTree = start;
+    TreeElement next = null;
     while (next == null && (nextTree = nextTree.getTreeNext()) != null) {
       if (nextTree.getElementType() == searchedType) {
         return nextTree;
@@ -490,7 +488,6 @@ public class TreeUtil {
   @Nullable
   public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
     if (start == null) return null;
-    LeafElement prev = null;
     if (commonParent != null) {
       if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
         commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
@@ -498,6 +495,7 @@ public class TreeUtil {
       commonParent.nextLeafBranchStart = start;
     }
     ASTNode prevTree = start;
+    LeafElement prev = null;
     while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
       prev = findLastLeaf(prevTree);
     }

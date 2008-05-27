@@ -278,4 +278,8 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     if (treeElement != null) return ChangeUtil.decodeInformation(treeElement).getPsi();
     throw new IncorrectOperationException("Element cannot be added");
   }
+
+  public boolean isEquivalentTo(final PsiElement another) {
+    return this == another;
+  }
 }

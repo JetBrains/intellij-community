@@ -3,7 +3,6 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.extapi.psi.PsiFileBase;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -183,10 +182,11 @@ public class FileManagerImpl implements FileManager {
 
   private void dispatchPendingEvents() {
     if (!myInitialized) {
+      LOG.error("Project is not yet initialized");
+    }
+    if (myDisposed) {
       LOG.error("Project is already disposed");
     }
-
-    //LOG.assertTrue(!myDisposed);
 
     // [dsl]todo[max, dsl] this is a hack. MUST FIX
     if (!ApplicationManager.getApplication().isDispatchThread()) return;

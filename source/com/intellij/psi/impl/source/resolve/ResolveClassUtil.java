@@ -3,21 +3,20 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 
-public class ResolveClassUtil implements Constants{
+public class ResolveClassUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveClassUtil");
 
   public static PsiClass resolveClass(PsiJavaCodeReferenceElement ref) {
     if (ref instanceof PsiJavaCodeReferenceElementImpl && ((PsiJavaCodeReferenceElementImpl)ref).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND){
-      PsiExpression qualifier;
       PsiElement parent = ref.getParent();
       if (parent instanceof PsiAnonymousClass){
         parent = parent.getParent();
       }
+      PsiExpression qualifier;
       if (parent instanceof PsiNewExpression){
         qualifier = ((PsiNewExpression)parent).getQualifier();
         LOG.assertTrue(qualifier != null);
@@ -39,8 +38,7 @@ public class ResolveClassUtil implements Constants{
       return qualifierClass.findInnerClassByName(name, true);
     }
 
-    final PsiElement classNameElement;
-    classNameElement = ref.getReferenceNameElement();
+    final PsiElement classNameElement = ref.getReferenceNameElement();
     if (!(classNameElement instanceof PsiIdentifier)) return null;
     String className = classNameElement.getText();
 

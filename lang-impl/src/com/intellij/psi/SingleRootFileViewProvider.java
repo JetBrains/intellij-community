@@ -181,10 +181,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private void calcPhysical() {
-    myPhysical = !(getVirtualFile() instanceof LightVirtualFile) &&
-                 !(getVirtualFile().getFileSystem() instanceof DummyFileSystem) &&
-                 !(getVirtualFile().getFileSystem() instanceof TempFileSystem) &&
-                 isEventSystemEnabled();
+    VirtualFile virtualFile = getVirtualFile();
+    myPhysical = isEventSystemEnabled() &&
+                 !(virtualFile instanceof LightVirtualFile) &&
+                 !(virtualFile.getFileSystem() instanceof DummyFileSystem) &&
+                 !(virtualFile.getFileSystem() instanceof TempFileSystem);
   }
 
   public long getModificationStamp() {

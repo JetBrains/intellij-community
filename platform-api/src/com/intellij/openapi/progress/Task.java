@@ -113,21 +113,18 @@ public abstract class Task implements TaskInfo {
   public final Modal asModal() {
     if (isModal()) {
       return (Modal)this;
-    } else {
-      throw new IllegalStateException("Not a modal task");
     }
+    throw new IllegalStateException("Not a modal task");
   }
 
   public final Backgroundable asBackgroundable() {
     if (!isModal()) {
       return (Backgroundable)this;
-    } else {
-      throw new IllegalStateException("Not a backgroundable task");
     }
+    throw new IllegalStateException("Not a backgroundable task");
   }
 
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
-
     protected final PerformInBackgroundOption myBackgroundOption;
 
     public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
@@ -169,7 +166,6 @@ public abstract class Task implements TaskInfo {
   }
 
   public abstract static class Modal extends Task {
-
     public Modal(@Nullable final Project project, @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }

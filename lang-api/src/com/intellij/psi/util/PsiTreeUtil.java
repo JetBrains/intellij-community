@@ -259,11 +259,13 @@ public class PsiTreeUtil {
     if (strict) {
       element = element.getParent();
     }
+    boolean stopAtFileLevel = !ReflectionCache.isAssignable(PsiDirectory.class, aClass);
 
     while (element != null && !instanceOf(aClass, element)) {
       for (Class<? extends PsiElement> stopClass : stopAt) {
         if (instanceOf(stopClass, element)) return null;
       }
+      if (stopAtFileLevel && element instanceof PsiFile) return null;
       element = element.getParent();
     }
 

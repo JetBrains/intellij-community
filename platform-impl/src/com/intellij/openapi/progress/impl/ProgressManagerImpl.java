@@ -160,18 +160,22 @@ public class ProgressManagerImpl extends ProgressManager {
     return myThreadIndicator.get();
   }
 
-  public boolean runProcessWithProgressSynchronously(Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
-    return ((ApplicationEx)ApplicationManager.getApplication())
-      .runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project);
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
+    Task.Modal task = new Task.Modal(project, progressTitle, canBeCanceled) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        process.run();
+      }
+    };
+    return runProcessWithProgressSynchronously(task);
   }
 
   private static boolean runProcessWithProgressSynchronously(final Task task) {
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
-      .runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          task.run(ProgressManager.getInstance().getProgressIndicator());
-        }
-      }, task.getTitle(), task.isCancellable(), task.getProject());
+        .runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            task.run(ProgressManager.getInstance().getProgressIndicator());
+          }
+        }, task.getTitle(), task.isCancellable(), task.getProject());
     if (result) {
       final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
       if (notificationInfo != null) {
@@ -293,7 +297,8 @@ public class ProgressManagerImpl extends ProgressManager {
 
     if (task.isModal()) {
       runProcessWithProgressSynchronously(task.asModal());
-    } else {
+    }
+    else {
       final Task.Backgroundable backgroundable = task.asBackgroundable();
       if (backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground()) {
         runProcessWithProgressSynchronously(task);

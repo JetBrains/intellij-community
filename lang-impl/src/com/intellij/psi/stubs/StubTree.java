@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public class StubTree {
-  private final Key<StubTree> HARD_REF_IN_STUB = new Key<StubTree>("HARD_REF_IN_STUB");
+  private static final Key<StubTree> HARD_REF_IN_STUB = new Key<StubTree>("HARD_REF_IN_STUB");
   private final PsiFileStub myRoot;
   private final List<StubElement<?>> myPlainList = new ArrayList<StubElement<?>>();
 

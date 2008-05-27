@@ -7,7 +7,6 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -49,7 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, PsiElement, Cloneable, NavigationItem {
+public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
 
   private IElementType myElementType;
@@ -532,7 +531,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           stubHolder = StubTree.readFromVFile(vFile, getProject());
           if (stubHolder != null) {
             myStub = new WeakReference<StubTree>(stubHolder);
-            ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
+            StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
+            base.setPsi(this);
           }
         }
       }
@@ -663,7 +663,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public final PsiElement copy() {
-    return (PsiElement)clone();
+    return clone();
   }
 
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {

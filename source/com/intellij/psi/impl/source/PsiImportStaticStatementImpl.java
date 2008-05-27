@@ -3,11 +3,17 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
   public static final PsiImportStaticStatementImpl[] EMPTY_ARRAY = new PsiImportStaticStatementImpl[0];
+  public static final ArrayFactory<PsiImportStaticStatementImpl> ARRAY_FACTORY = new ArrayFactory<PsiImportStaticStatementImpl>() {
+    public PsiImportStaticStatementImpl[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiImportStaticStatementImpl[count];
+    }
+  };
 
   public PsiImportStaticStatementImpl(final PsiImportStatementStub stub) {
     super(stub);

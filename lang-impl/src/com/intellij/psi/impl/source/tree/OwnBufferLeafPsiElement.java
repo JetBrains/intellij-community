@@ -207,4 +207,7 @@ public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl imple
   public PsiElement getPsi() {
     return this;
   }
+  public boolean isEquivalentTo(final PsiElement another) {
+    return this == another;
+  }
 }

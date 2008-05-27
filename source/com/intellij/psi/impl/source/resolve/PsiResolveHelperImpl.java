@@ -37,8 +37,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   @NotNull
   public JavaResolveResult resolveConstructor(PsiClassType classType, PsiExpressionList argumentList, PsiElement place) {
     JavaResolveResult[] result = multiResolveConstructor(classType, argumentList, place);
-    if (result.length != 1) return JavaResolveResult.EMPTY;
-    return result[0];
+    return result.length == 1 ? result[0] : JavaResolveResult.EMPTY;
   }
 
   @NotNull
@@ -91,7 +90,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return isAccessible(member, member.getModifierList(), place, accessObjectClass, null);
   }
 
-
   public boolean isAccessible(PsiMember member,
                               PsiModifierList modifierList,
                               PsiElement place,
@@ -125,8 +123,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
         PsiExpression argument = arguments[j];
-        if (argument instanceof PsiMethodCallExpression &&
-          myBlockedForInferenceMethodCalls.get().contains(argument)) continue;
+        if (argument instanceof PsiMethodCallExpression && myBlockedForInferenceMethodCalls.get().contains(argument)) continue;
 
         final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
         if (j >= parameters.length && !parameter.isVarArgs()) break;
@@ -603,7 +600,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     }
 
-    final Pair<PsiType, ConstraintType> result;
     final PsiManager manager = typeParameter.getManager();
     final GlobalSearchScope scope = parent.getResolveScope();
     PsiType returnType = null;
@@ -619,6 +615,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       constraint = getSubstitutionForTypeParameterConstraint(typeParameter, returnType, expectedType, false, PsiUtil.getLanguageLevel(parent));
     }
 
+    final Pair<PsiType, ConstraintType> result;
     if (constraint == null) {
       final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
       PsiType superType = finalSubstitutor.substitute(typeParameter.getSuperTypes()[0]);

@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,16 +48,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     }
   }
 
-  public abstract int getTextLength();
-
   public abstract LeafElement findLeafElementAt(int offset);
-
-  public abstract String getText();
 
   @NotNull
   public abstract char[] textToCharArray();
-
-  public abstract boolean textContains(char c);
 
   public abstract TreeElement getFirstChildNode();
 
@@ -123,8 +116,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return "Element" + "(" + getElementType().toString() + ")";
   }
 
-  public abstract IElementType getElementType();
-
   public final CompositeElement getTreeParent() {
     return parent;
     /*
@@ -174,7 +165,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public void clearCaches() { }
 
   public final boolean equals(Object obj) {
-    return super.equals(obj);
+    return obj == this;
   }
 
   public final int hashCode() {
@@ -200,9 +191,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       new Throwable("Element invalidated:" + this).printStackTrace();
     }
   }
-  
-  public boolean isEquivalentTo(final PsiElement another) {
-    return this == another;
-  }
+
 }
 

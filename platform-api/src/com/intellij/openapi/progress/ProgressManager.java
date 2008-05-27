@@ -57,7 +57,7 @@ public abstract class ProgressManager {
    * @param project       the project in the context of which the operation is executed.
    * @return true if the operation completed successfully, false if it was cancelled.
    */
-  public abstract boolean runProcessWithProgressSynchronously(Runnable process,
+  public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                               @Nls String progressTitle,
                                                               boolean canBeCanceled,
                                                               Project project);

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class CachingReference implements PsiReference, EmptyResolveMessageProvider {
-
   public PsiElement resolve(){
     final PsiManager manager = getElement().getManager();
     if(manager instanceof PsiManagerImpl){
@@ -39,7 +38,7 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
   }
 
   private static class MyResolver implements ResolveCache.Resolver {
-    static MyResolver INSTANCE = new MyResolver();
+    private static MyResolver INSTANCE = new MyResolver();
     @Nullable
     public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
       return ((CachingReference)ref).resolveInner();

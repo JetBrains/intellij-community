@@ -462,30 +462,26 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myPercentLabel.setHorizontalAlignment(SwingConstants.RIGHT);
     }
 
-    private void update() {
-      synchronized (this) {
-        if (myRepaintedFlag) {
-          if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
-            myRepaintedFlag = false;
-            SwingUtilities.invokeLater(myRepaintRunnable);
-          }
-          else {
-            if (myUpdateAlarm.getActiveRequestCount() == 0){
-              myUpdateAlarm.addRequest(myUpdateRequest, 500, getModalityState());
-            }
+    private synchronized void update() {
+      if (myRepaintedFlag) {
+        if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
+          myRepaintedFlag = false;
+          SwingUtilities.invokeLater(myRepaintRunnable);
+        }
+        else {
+          if (myUpdateAlarm.getActiveRequestCount() == 0) {
+            myUpdateAlarm.addRequest(myUpdateRequest, 500, getModalityState());
           }
         }
       }
     }
 
-    public void background() {
-      synchronized (this) {
-        if (myShouldShowBackground) {
-          myBackgroundButton.setEnabled(false);
-        }
-
-        hide();
+    public synchronized void background() {
+      if (myShouldShowBackground) {
+        myBackgroundButton.setEnabled(false);
       }
+
+      hide();
     }
 
     public void hide() {

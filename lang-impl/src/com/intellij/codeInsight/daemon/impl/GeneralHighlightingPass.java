@@ -263,15 +263,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           Annotator annotator = annotators.get(i);
           annotator.annotate(element, fixingOffsetsHolder);
         }
-
-        //if (refCountHolder != null) {
-        //  for (PsiReference reference : element.getReferences()) {
-        //    PsiElement resolved = reference.resolve();
-        //    if (resolved instanceof PsiNamedElement) {
-        //      refCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
-        //    }
-        //  }
-        //}
       }
 
       @Override public void visitErrorElement(PsiErrorElement element) {

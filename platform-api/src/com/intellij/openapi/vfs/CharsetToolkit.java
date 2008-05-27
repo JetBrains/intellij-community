@@ -81,7 +81,7 @@ public class CharsetToolkit {
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
 
   private final byte[] buffer;
-  private Charset defaultCharset;
+  private final Charset defaultCharset;
   private boolean enforce8Bit = false;
 
   public static final byte[] UTF8_BOM = new byte[]{-17, -69, -65, };
@@ -113,17 +113,6 @@ public class CharsetToolkit {
    */
   public CharsetToolkit(byte[] buffer, Charset defaultCharset) {
     this.buffer = buffer;
-    setDefaultCharset(defaultCharset);
-  }
-
-  /**
-   * Defines the default <code>Charset</code> used in case the buffer represents
-   * an 8-bit <code>Charset</code>.
-   *
-   * @param defaultCharset the default <code>Charset</code> to be returned by <code>guessEncoding()</code>
-   * if an 8-bit <code>Charset</code> is encountered.
-   */
-  public void setDefaultCharset(Charset defaultCharset) {
     if (defaultCharset != null)
       this.defaultCharset = defaultCharset;
     else
@@ -327,8 +316,7 @@ public class CharsetToolkit {
     finally {
       fis.close();
     }
-    CharsetToolkit toolkit = new CharsetToolkit(buffer);
-    toolkit.setDefaultCharset(defaultCharset);
+    CharsetToolkit toolkit = new CharsetToolkit(buffer, defaultCharset);
     return toolkit.guessEncoding(read);
   }
 

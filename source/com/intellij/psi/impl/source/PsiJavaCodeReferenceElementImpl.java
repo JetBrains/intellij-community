@@ -267,7 +267,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
-    public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
+    private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
     public static JavaResolveResult[] _resolve(final PsiJavaReference ref, final boolean incompleteCode) {
       final PsiJavaCodeReferenceElementImpl referenceElement = (PsiJavaCodeReferenceElementImpl)ref;
