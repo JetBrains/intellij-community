@@ -1,8 +1,5 @@
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.util.Comparing;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Date;
 
 /**
@@ -10,7 +7,7 @@ import java.util.Date;
  */
 public class SvnBranchItem implements Comparable<SvnBranchItem> {
   private String myUrl;
-  private Date myCreationDate;
+  private long myCreationDateMillis;
   private long myRevision;
 
   // to be serializable
@@ -20,7 +17,7 @@ public class SvnBranchItem implements Comparable<SvnBranchItem> {
   public SvnBranchItem(final String url, final Date creationDate, final long revision) {
     myUrl = url;
     // descendant can be passed (and is passed) (java.util.Date is not final)
-    myCreationDate = new Date(creationDate.getTime());
+    myCreationDateMillis = creationDate.getTime();
     myRevision = revision;
   }
 
@@ -28,8 +25,8 @@ public class SvnBranchItem implements Comparable<SvnBranchItem> {
     myUrl = url;
   }
 
-  public void setCreationDate(final Date creationDate) {
-    myCreationDate = creationDate;
+  public void setCreationDateMillis(final long creationDate) {
+    myCreationDateMillis = creationDate;
   }
 
   public void setRevision(final long revision) {
@@ -40,9 +37,8 @@ public class SvnBranchItem implements Comparable<SvnBranchItem> {
     return myUrl;
   }
 
-  @Nullable
-  public Date getCreationDate() {
-    return myCreationDate;
+  public long getCreationDateMillis() {
+    return myCreationDateMillis;
   }
 
   public long getRevision() {
@@ -50,6 +46,7 @@ public class SvnBranchItem implements Comparable<SvnBranchItem> {
   }
 
   public int compareTo(SvnBranchItem o) {
-    return -Comparing.compare(myCreationDate, o.getCreationDate());
+    // === -compare()
+    return myCreationDateMillis < o.myCreationDateMillis ? 1 : ((myCreationDateMillis == o.myCreationDateMillis) ? 0 : -1);
   }
 }

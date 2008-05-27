@@ -214,8 +214,8 @@ public class SelectBranchPopup {
       } else {
         SvnBranchItem item = (SvnBranchItem) value;
         myUrlLabel.setText(SVNPathUtil.tail(item.getUrl()));
-        final Date creationDate = item.getCreationDate();
-        myDateLabel.setText(creationDate != null ? SimpleDateFormat.getDateInstance(DateFormat.SHORT).format(creationDate) : "");
+        final long creationMillis = item.getCreationDateMillis();
+        myDateLabel.setText((creationMillis > 0) ? SimpleDateFormat.getDateInstance(DateFormat.SHORT).format(new Date(creationMillis)) : "");
       }
       return this;
     }

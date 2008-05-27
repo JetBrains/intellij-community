@@ -273,7 +273,7 @@ public class SvnBranchConfiguration {
 
   public List<SvnBranchItem> getBranches(final String url, final Project project, final boolean underProgress) throws SVNException {
     List<SvnBranchItem> result = myBranchMap.get(url);
-    if (result != null) {
+    if ((result != null) && (result.isEmpty() || (result.get(0).getCreationDateMillis() > 0))) {
       return result;
     }
     result = underProgress ? getBranchesUnderProgress(url, project) : getBranchesWithoutProgress(url, project);
