@@ -111,8 +111,6 @@ public class SvnChangeList implements CommittedChangeList {
     }
 
     myCommonPathRoot = commonPathSearcher.getCommon();
-
-    updateCachedInfo();
   }
 
   public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream, final boolean supportsCopyFromInfo) throws IOException {
@@ -130,7 +128,6 @@ public class SvnChangeList implements CommittedChangeList {
       commonPathSearcher.next(path);
     }
     myCommonPathRoot = commonPathSearcher.getCommon();
-    updateCachedInfo();
   }
 
   private void uploadDeletedRenamedChildren(final List<Change> out) {
