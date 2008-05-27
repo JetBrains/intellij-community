@@ -242,10 +242,11 @@ public class SvnChangeList implements CommittedChangeList {
     for(String path: myChangedPaths) {
       boolean moveAndChange = false;
       for (String addedPath : myAddedPaths) {
-        if (SVNPathUtil.isAncestor(addedPath, path)) {
+        final String copyFromPath = myCopiedAddedPaths.get(addedPath);
+        if ((copyFromPath != null) && (SVNPathUtil.isAncestor(addedPath, path))) {
           moveAndChange = true;
           final Change renamedChange =
-              new Change(createRevisionLazily(myCopiedAddedPaths.get(addedPath), true), createRevisionLazily(path, false));
+              new Change(createRevisionLazily(copyFromPath, true), createRevisionLazily(path, false));
           renamedChange.getMoveRelativePath(myVcs.getProject());
           myChanges.add(renamedChange);
           break;
