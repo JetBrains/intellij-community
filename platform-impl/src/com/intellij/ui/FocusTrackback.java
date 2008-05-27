@@ -127,7 +127,8 @@ public class FocusTrackback {
   }
 
   public void restoreFocus() {
-    if (wrongOS() || myConsumed) return;
+    final Application app = ApplicationManager.getApplication();
+    if (app == null || wrongOS() || myConsumed) return;
 
     consume();
 
