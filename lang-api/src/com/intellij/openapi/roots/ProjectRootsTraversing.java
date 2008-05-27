@@ -182,7 +182,7 @@ public class ProjectRootsTraversing {
       return traverseState;
     }
 
-    interface Visit<T extends OrderEntry> {
+    public interface Visit<T extends OrderEntry> {
       void visit(T entry, TraverseState state, RootPolicy<TraverseState> policy);
     }
 
