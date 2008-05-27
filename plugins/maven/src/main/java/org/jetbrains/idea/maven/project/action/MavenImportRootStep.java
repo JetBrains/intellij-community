@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenPathsForm;
 import org.jetbrains.idea.maven.project.ImporterSettingsForm;
-import org.jetbrains.idea.maven.project.MavenImportProcessorContext;
 import org.jetbrains.idea.maven.project.MavenImporterSettings;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
@@ -29,7 +28,7 @@ import java.awt.event.MouseEvent;
 class MavenImportRootStep extends ProjectImportWizardStep {
 
   private MavenCoreSettings myCoreSettings;
-  private MavenImportProcessorContext myImportContext;
+  private MavenImportBuilder myImportContext;
   private MavenImporterSettings myImporterSettings;
 
   private final JPanel myPanel;
@@ -48,20 +47,23 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-    myRootPathComponent = new NamePathComponent("", ProjectBundle.message("maven.import.label.select.root"),
-                                                ProjectBundle.message("maven.import.title.select.root"), "", false);
+    myRootPathComponent = new NamePathComponent("",
+                                                ProjectBundle.message("maven.import.label.select.root"),
+                                                ProjectBundle.message("maven.import.title.select.root"),
+                                                "", false);
+
     myRootPathComponent.setNameComponentVisible(false);
 
     myPanel.add(myRootPathComponent, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                             GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 6), 0, 0));
 
     myPanel.add(myImporterSettingsForm.createComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                                                    GridBagConstraints.HORIZONTAL, new Insets(15, 6, 0, 6),
-                                                                                    0, 0));
+                                                                                 GridBagConstraints.HORIZONTAL, new Insets(15, 6, 0, 6),
+                                                                                 0, 0));
     JButton advancedButton = new JButton(ProjectBundle.message("maven.advanced.button.name"));
     myPanel.add(advancedButton, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHEAST, 0, new Insets(15, 6, 0, 6),
-                                                                                    0, 0));
-    advancedButton.addMouseListener(new MouseAdapter(){
+                                                       0, 0));
+    advancedButton.addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent event) {
         super.mouseClicked(event);
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, new MavenPathsConfigurable());
@@ -80,6 +82,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
   }
 
   public boolean validate() throws ConfigurationException {
+    updateDataModel(); // needed to make 'exhaustive search' take an effect.
     return getImportContext().setRootDirectory(myRootPathComponent.getPath());
   }
 
@@ -106,15 +109,15 @@ class MavenImportRootStep extends ProjectImportWizardStep {
   }
 
   private MavenCoreSettings getCoreSettings() {
-    if(myCoreSettings == null){
+    if (myCoreSettings == null) {
       myCoreSettings = ((MavenImportBuilder)getBuilder()).getCoreState();
     }
     return myCoreSettings;
   }
 
-  public MavenImportProcessorContext getImportContext() {
+  public MavenImportBuilder getImportContext() {
     if (myImportContext == null) {
-      myImportContext = (MavenImportProcessorContext)getBuilder();
+      myImportContext = (MavenImportBuilder)getBuilder();
     }
     return myImportContext;
   }

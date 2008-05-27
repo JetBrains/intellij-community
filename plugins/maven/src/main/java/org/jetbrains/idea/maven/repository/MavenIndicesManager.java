@@ -50,17 +50,6 @@ public class MavenIndicesManager extends DummyProjectComponent {
     myProject = p;
   }
 
-  public void initComponent() {
-    //StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-    //  public void run() {
-    //    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    //    if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
-    //
-    //    doInit();
-    //  }
-    //});
-  }
-
   public void doInit() {
     isInitialized = true;
 

@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.Node> implements MavenImportProcessorContext {
+public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.Node> {
   private final static Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
   private Project projectToUpdate;
