@@ -134,12 +134,8 @@ public abstract class XmlExtension {
   }
 
   @Nullable
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag) {
-    final XmlTag parentTag = tag.getParentTag();
-    assert parentTag != null;
-    final XmlElementDescriptor descriptor = parentTag.getDescriptor();
-    assert descriptor != null;
-    return descriptor.getElementDescriptor(tag, contextTag);
+  public XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag, final XmlElementDescriptor parentDescriptor) {
+    return parentDescriptor.getElementDescriptor(tag, contextTag);
   }
 
   @Nullable

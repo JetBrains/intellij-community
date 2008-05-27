@@ -222,7 +222,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if (parentDescriptor != null) {
-        elementDescriptor = XmlExtension.getExtension((XmlFile)tag.getContainingFile()).getElementDescriptor(tag, parentTag);
+        elementDescriptor = XmlExtension.getExtension((XmlFile)tag.getContainingFile()).getElementDescriptor(tag, parentTag, parentDescriptor);
       }
 
       if (parentDescriptor != null &&
@@ -335,7 +335,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       addElementsForTag(
         tag,
         localizedMessage,
-        HighlightInfoType.WRONG_REF,
+        HighlightInfoType.ERROR,
         basicIntention
       );
     }
