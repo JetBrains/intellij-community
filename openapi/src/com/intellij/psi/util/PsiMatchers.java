@@ -3,10 +3,7 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +13,7 @@ public class PsiMatchers {
   private PsiMatchers() {
   }
 
-  public static PsiMatcherExpression hasModifier(final String modifier, final boolean shouldHave) {
+  public static PsiMatcherExpression hasModifier(@Modifier final String modifier, final boolean shouldHave) {
     return new PsiMatcherExpression() {
       public Boolean match(PsiElement element) {
         PsiModifierListOwner owner = element instanceof PsiModifierListOwner ? (PsiModifierListOwner) element : null;

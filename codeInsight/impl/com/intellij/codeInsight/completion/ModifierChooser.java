@@ -81,7 +81,7 @@ scopes:
               final String[] keywords = keywordSets[keywordSets.length - i - 1];
               boolean containModifierFlag = false;
               if (list != null) {
-                for (String keyword : keywords) {
+                for (@Modifier String keyword : keywords) {
                   if (list.hasModifierProperty(keyword)) {
                     containModifierFlag = true;
                     break;

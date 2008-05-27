@@ -193,6 +193,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
     return myCbUseAccessorsWhenAccessible.isSelected();
   }
 
+  @Modifier
   public String getFieldsVisibility() {
     if (myRbFieldPrivate.isSelected()) {
       return PsiModifier.PRIVATE;
@@ -212,7 +213,8 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
     return "#com.intellij.refactoring.encapsulateFields.EncalpsulateFieldsDialog";
   }
 
-  public String getAccessorsVisibility() {
+@Modifier
+public String getAccessorsVisibility() {
     if (myRbAccessorPublic.isSelected()) {
       return PsiModifier.PUBLIC;
     } else if (myRbAccessorProtected.isSelected()) {

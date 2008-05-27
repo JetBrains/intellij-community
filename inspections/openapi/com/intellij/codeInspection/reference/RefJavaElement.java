@@ -4,6 +4,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.psi.Modifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,5 +54,6 @@ public interface RefJavaElement extends RefElement {
    * @return the modifier, or null if the element does not have any access modifier.
    */
   @Nullable
-  String getAccessModifier();
+  @Modifier
+    String getAccessModifier();
 }

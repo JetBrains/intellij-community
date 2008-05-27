@@ -273,7 +273,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myVisibilityPanel = new VisibilityPanel(false, false);
     myVisibilityPanel.setVisibility(PsiModifier.PRIVATE);
     myVisibilityPanel.addStateChangedListener(new VisibilityPanel.StateChanged() {
-      public void visibilityChanged(String newVisibility) {
+      public void visibilityChanged() {
         updateSignature();
         if (!myChangingVisibility) {
           myDefaultVisibility = false;

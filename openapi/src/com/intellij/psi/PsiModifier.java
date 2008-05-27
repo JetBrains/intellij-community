@@ -15,21 +15,22 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Provides a list of possible modifier keywords for Java classes, methods and fields.
  */
-@SuppressWarnings({"HardCodedStringLiteral", "JavaDoc"})
 public interface PsiModifier {
-  String PUBLIC = "public";
-  String PROTECTED = "protected";
-  String PRIVATE = "private";
-  String PACKAGE_LOCAL = "packageLocal";
-  String STATIC = "static";
-  String ABSTRACT = "abstract";
-  String FINAL = "final";
-  String NATIVE = "native";
-  String SYNCHRONIZED = "synchronized";
-  String STRICTFP = "strictfp";
-  String TRANSIENT = "transient";
-  String VOLATILE = "volatile";
+  @NonNls String PUBLIC = "public";
+  @NonNls String PROTECTED = "protected";
+  @NonNls String PRIVATE = "private";
+  @NonNls String PACKAGE_LOCAL = "packageLocal";
+  @NonNls String STATIC = "static";
+  @NonNls String ABSTRACT = "abstract";
+  @NonNls String FINAL = "final";
+  @NonNls String NATIVE = "native";
+  @NonNls String SYNCHRONIZED = "synchronized";
+  @NonNls String STRICTFP = "strictfp";
+  @NonNls String TRANSIENT = "transient";
+  @NonNls String VOLATILE = "volatile";
 }

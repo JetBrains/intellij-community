@@ -175,6 +175,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     return IN_FIELD_DECLARATION;
   }
 
+  @Modifier
   public String getFieldVisibility() {
     if (myRbPublic.isSelected()) {
       return PsiModifier.PUBLIC;

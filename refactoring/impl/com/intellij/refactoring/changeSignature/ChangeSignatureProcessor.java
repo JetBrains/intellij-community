@@ -20,7 +20,6 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -47,10 +46,10 @@ import java.util.*;
 public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
 
-  private final String myNewVisibility;
-  private ChangeInfo myChangeInfo;
-  private PsiManager myManager;
-  private PsiElementFactory myFactory;
+  @Modifier private final String myNewVisibility;
+  private final ChangeInfo myChangeInfo;
+  private final PsiManager myManager;
+  private final PsiElementFactory myFactory;
   private final boolean myGenerateDelegate;
   private final Set<PsiMethod> myPropagateParametersMethods;
   private final Set<PsiMethod> myPropagateExceptionsMethods;
@@ -58,7 +57,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   public ChangeSignatureProcessor(Project project,
                                   PsiMethod method,
                                   final boolean generateDelegate,
-                                  String newVisibility,
+                                  @Modifier String newVisibility,
                                   String newName,
                                   PsiType newType,
                                   @NotNull ParameterInfo[] parameterInfo) {
@@ -400,7 +399,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void askToRemoveCovariantOverriders(Set<UsageInfo> usages) {
-    if (PsiUtil.getLanguageLevel(myChangeInfo.getMethod()).compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (PsiUtil.isLanguageLevel5OrHigher(myChangeInfo.getMethod())) {
       List<UsageInfo> covariantOverriderInfos = new ArrayList<UsageInfo>();
       for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
@@ -920,10 +919,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   ArrayList<UsageInfo> results,
                                   ParameterInfo info) {
     PsiManager manager = parameter.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiReference[] parmRefs = ReferencesSearch.search(parameter, projectScope, false).toArray(new PsiReference[0]);
-    for (PsiReference psiReference : parmRefs) {
+    for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false)) {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new MyParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);

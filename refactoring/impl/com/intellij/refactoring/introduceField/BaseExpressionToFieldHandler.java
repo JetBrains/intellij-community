@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -49,7 +48,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     IN_CURRENT_METHOD,
     IN_FIELD_DECLARATION,
     IN_CONSTRUCTOR,
-    IN_SETUP_METHOD;
+    IN_SETUP_METHOD
   }
 
   private PsiClass myParentClass;
@@ -111,9 +110,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     ArrayList<RangeHighlighter> highlighters = null;
     if (editor != null) {
-      final HighlightManager highlightManager;
       highlighters = new ArrayList<RangeHighlighter>();
-      highlightManager = HighlightManager.getInstance(project);
+      final HighlightManager highlightManager = HighlightManager.getInstance(project);
       if (occurrences.length > 1) {
         highlightManager.addOccurrenceHighlights(editor, occurrences, highlightAttributes(), true, highlighters);
       }
@@ -180,7 +178,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
 
           ChangeContextUtil.encodeContextInfo(initializer, true);
-          PsiField field = createField(fieldName, type, initializer, initializerPlace == IN_FIELD_DECLARATION && initializer != null);
+          PsiField field = createField(fieldName, type, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null);
           field.getModifierList().setModifierProperty(settings.getFieldVisibility(), true);
           if (settings.isDeclareFinal()) {
             field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
@@ -199,10 +197,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             for (finalAnchorElement = anchorElement;
                  finalAnchorElement != null && finalAnchorElement.getParent() != destClass;
                  finalAnchorElement = finalAnchorElement.getParent()) {
-              ;
+
             }
           }
-          PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? ((PsiMember)finalAnchorElement) : null;
+          PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
           if ((anchorMember instanceof PsiField || anchorMember instanceof PsiClassInitializer) &&
               anchorMember.hasModifierProperty(PsiModifier.STATIC) == field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -213,7 +211,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           }
           PsiStatement assignStatement = null;
           PsiElement anchorElementHere = null;
-          if ((initializerPlace == IN_CURRENT_METHOD && initializer != null) || (initializerPlace == IN_CONSTRUCTOR && enclosingConstructor != null && initializer != null)) {
+          if (initializerPlace == InitializationPlace.IN_CURRENT_METHOD && initializer != null ||
+              initializerPlace == InitializationPlace.IN_CONSTRUCTOR && enclosingConstructor != null && initializer != null) {
             if (replaceAll) {
               if (enclosingConstructor != null) {
                 final PsiElement anchorInConstructor = occurenceManager.getAnchorStatementForAllInScope(enclosingConstructor);
@@ -231,10 +230,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               anchorElementHere.getParent().addBefore(assignStatement, getNormalizedAnchor(anchorElementHere));
             }
           }
-          if (initializerPlace == IN_CONSTRUCTOR && initializer != null) {
+          if (initializerPlace == InitializationPlace.IN_CONSTRUCTOR && initializer != null) {
             addInitializationToConstructors(initializer, field, enclosingConstructor);
           }
-          if (initializerPlace == IN_SETUP_METHOD && initializer != null) {
+          if (initializerPlace == InitializationPlace.IN_SETUP_METHOD && initializer != null) {
             addInitializationToSetUp(initializer, field, occurenceManager, replaceAll);
           }
           if (expr.getParent() instanceof PsiParenthesizedExpression) {
@@ -304,7 +303,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return true;
   }
 
-  private TextAttributes highlightAttributes() {
+  private static TextAttributes highlightAttributes() {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
                 EditorColors.SEARCH_RESULT_ATTRIBUTES
               );
@@ -316,13 +315,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return myParentClass;
   }
 
-  abstract protected boolean validClass(PsiClass parentClass);
+  protected abstract boolean validClass(PsiClass parentClass);
 
   protected boolean isStaticField() {
     return false;
   }
 
-  private PsiElement getNormalizedAnchor(PsiElement anchorElement) {
+  private static PsiElement getNormalizedAnchor(PsiElement anchorElement) {
     PsiElement child = anchorElement;
     while (child != null) {
       PsiElement prev = child.getPrevSibling();
@@ -331,7 +330,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       child = prev;
     }
 
-    child = PsiTreeUtil.skipSiblingsForward(child, new Class[] {PsiWhiteSpace.class, PsiComment.class});
+    child = PsiTreeUtil.skipSiblingsForward(child, PsiWhiteSpace.class, PsiComment.class);
     PsiElement anchor;
     if (child != null) {
       anchor = child;
@@ -349,7 +348,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                                     PsiElement anchorElementIfAll);
 
 
-  private PsiType getTypeByExpression(PsiExpression expr) {
+  private static PsiType getTypeByExpression(PsiExpression expr) {
     return RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
   }
 
@@ -445,7 +444,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   private PsiField createField(String fieldName, PsiType type, PsiExpression initializerExpr, boolean includeInitializer) {
-    @NonNls StringBuffer pattern = new StringBuffer();
+    @NonNls StringBuilder pattern = new StringBuilder();
     pattern.append("private int ");
     pattern.append(fieldName);
     if (includeInitializer) {
@@ -494,10 +493,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   protected abstract String getRefactoringName();
 
-  public boolean startInWriteAction() {
-    return false;
-  }
-
   public static class Settings {
     private final String myFieldName;
     private final PsiType myForcedType;
@@ -506,7 +501,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final boolean myDeclareStatic;
     private final boolean myDeclareFinal;
     private final InitializationPlace myInitializerPlace;
-    private final String myVisibility;
+    @Modifier private final String myVisibility;
     private final boolean myDeleteLocalVariable;
     private final PsiClass myTargetClass;
     private final boolean myAnnotateAsNonNls;
@@ -537,6 +532,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myInitializerPlace;
     }
 
+    @Modifier
     public String getFieldVisibility() {
       return myVisibility;
     }
@@ -557,7 +553,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public Settings(String fieldName, boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
-                    InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable, PsiClass targetClass, final boolean annotateAsNonNls) {
 
       myFieldName = fieldName;

@@ -35,7 +35,7 @@ public interface PsiModifierList extends PsiElement {
    * @return true if the list has the modifier, false otherwise
    * @see #hasExplicitModifier(String)
    */
-  boolean hasModifierProperty(@NotNull @NonNls String name);
+  boolean hasModifierProperty(@Modifier @NotNull @NonNls String name);
 
   /**
    * Checks if the modifier list has the specified modifier set by an explicit keyword.
@@ -44,7 +44,7 @@ public interface PsiModifierList extends PsiElement {
    * @return true if the list has the modifier, false otherwise
    * @see #hasModifierProperty(String)
    */
-  boolean hasExplicitModifier(@NotNull @NonNls String name);
+  boolean hasExplicitModifier(@Modifier @NotNull @NonNls String name);
 
   /**
    * Adds or removes the specified modifier to the modifier list.
@@ -53,7 +53,7 @@ public interface PsiModifierList extends PsiElement {
    * @param value true if the modifier should be added, false if it should be removed.
    * @throws IncorrectOperationException if the modification fails for some reason.
    */
-  void setModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
+  void setModifierProperty(@Modifier @NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
 
   /**
    * Checks if it is possible to add or remove the specified modifier to the modifier list,
@@ -64,7 +64,7 @@ public interface PsiModifierList extends PsiElement {
    * @param value true if the modifier should be added, false if it should be removed.
    * @throws IncorrectOperationException if the modification fails for some reason.
    */
-  void checkSetModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
+  void checkSetModifierProperty(@Modifier @NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
 
   /**
    * Returns the list of annotations contained in the modifier list.

@@ -49,7 +49,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   private class OptionsPanel extends JPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
     private final JCheckBox myPrivateForInnersCheckbox;
-    private JCheckBox myPackageLocalForTopClassesCheckbox;
+    private final JCheckBox myPackageLocalForTopClassesCheckbox;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -158,7 +158,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
         RefClass refClass = (RefClass) refElement.getOwner();
         if (refClass.isInterface()) return null;
       }
-      final String access = getPossibleAccess(refElement);
+      @Modifier String access = getPossibleAccess(refElement);
       if (access != refElement.getAccessModifier()) {
         final PsiElement psiElement = HighlightUsagesHandler.getNameIdentifier(refElement.getElement());
         if (psiElement != null) {
@@ -173,10 +173,11 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   }
 
   @Nullable
+  @Modifier
   public String getPossibleAccess(@Nullable RefJavaElement refElement) {
     if (refElement == null) return null;
-    String curAccess = refElement.getAccessModifier();
-    String weakestAccess = PsiModifier.PRIVATE;
+    @Modifier String curAccess = refElement.getAccessModifier();
+    @Modifier String weakestAccess = PsiModifier.PRIVATE;
 
     if (isTopLevelClass(refElement) || isCalledOnSubClasses(refElement)) {
       weakestAccess = PsiModifier.PACKAGE_LOCAL;
@@ -189,7 +190,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     if (curAccess == weakestAccess) return curAccess;
 
     while (true) {
-      String weakerAccess = getWeakerAccess(curAccess, refElement);
+      @Modifier String weakerAccess = getWeakerAccess(curAccess, refElement);
       if (weakerAccess == null || RefJavaUtil.getInstance().compareAccess(weakerAccess, weakestAccess) < 0) break;
       if (isAccessible(refElement, weakerAccess)) {
         curAccess = weakerAccess;
@@ -214,6 +215,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   }
 
   @Nullable
+  @Modifier
   private String getWeakerAccess(String curAccess, RefElement refElement) {
     if (curAccess == PsiModifier.PUBLIC) {
       return isTopLevelClass(refElement) ? PsiModifier.PACKAGE_LOCAL : PsiModifier.PROTECTED;
@@ -439,10 +441,10 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   }
 
   private static class AcceptSuggestedAccess implements LocalQuickFix{
-    private RefManager myManager;
-    private String myHint;
+    private final RefManager myManager;
+    @Modifier private final String myHint;
 
-    public AcceptSuggestedAccess(final RefManager manager, final String hint) {
+    public AcceptSuggestedAccess(final RefManager manager, @Modifier String hint) {
       myManager = manager;
       myHint = Comparing.strEqual(hint, PACKAGE_LOCAL) ? PsiModifier.PACKAGE_LOCAL : hint;
     }

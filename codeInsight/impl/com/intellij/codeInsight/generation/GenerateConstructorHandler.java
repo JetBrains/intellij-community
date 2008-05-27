@@ -159,7 +159,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor();
-    String modifier = getConstructorModifier(aClass);
+    @Modifier String modifier = getConstructorModifier(aClass);
     if (modifier != null) {
       constructor.getModifierList().setModifierProperty(modifier, true);
     }
@@ -238,9 +238,10 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructor;
   }
 
+  @Modifier
   @Nullable
   private static String getConstructorModifier(final PsiClass aClass) {
-    String modifier = PsiModifier.PUBLIC;
+    @Modifier String modifier = PsiModifier.PUBLIC;
 
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       modifier =  PsiModifier.PROTECTED;

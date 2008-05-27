@@ -6,15 +6,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -35,8 +34,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   private final PsiElementFactory myFactory;
   private final PsiClass myOriginalClass;
   private final PsiClass myTargetClass;
-  private PsiManager myManager;
-  private boolean myIsInner;
+  private final PsiManager myManager;
+  private final boolean myIsInner;
 
   public ReplaceConstructorWithFactoryProcessor(Project project,
                                                 PsiMethod originalConstructor,
@@ -75,20 +74,12 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    final PsiSearchHelper searchHelper = myManager.getSearchHelper();
-    final PsiReference[] references;
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    if (myConstructor != null) {
-      references = ReferencesSearch.search(myConstructor, projectScope, false).toArray(new PsiReference[0]);
-    }
-    else {
-      references = ReferencesSearch.search(myOriginalClass, projectScope, false).toArray(new PsiReference[0]);
-    }
 
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
     myNonNewConstructorUsages = new ArrayList<PsiElement>();
 
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(myConstructor == null ? myOriginalClass : myConstructor, projectScope, false)) {
       PsiElement element = reference.getElement();
 
       if (element.getParent() instanceof PsiNewExpression) {
@@ -279,7 +270,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(factoryMethod);
   }
 
-  private String getDefaultFactoryVisibility() {
+  @Modifier private String getDefaultFactoryVisibility() {
     final PsiModifierList modifierList;
     if (myConstructor != null) {
       modifierList = myConstructor.getModifierList();

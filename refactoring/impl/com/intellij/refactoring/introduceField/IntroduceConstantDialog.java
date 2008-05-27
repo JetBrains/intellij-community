@@ -132,6 +132,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     return myDestinationClass;
   }
 
+  @Modifier
   public String getFieldVisibility() {
     if (myRbPublic.isSelected()) {
       return PsiModifier.PUBLIC;

@@ -26,18 +26,18 @@ public class ModifierFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix");
 
   private final PsiModifierList myModifierList;
-  private final String myModifier;
+  @Modifier private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
   private PsiVariable myVariable;
 
-  public ModifierFix(PsiModifierList modifierList, @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
+  public ModifierFix(PsiModifierList modifierList, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
     myModifierList = modifierList;
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
   }
-  public ModifierFix(@NotNull PsiModifierListOwner owner, @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
+  public ModifierFix(@NotNull PsiModifierListOwner owner, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
     this(owner.getModifierList(), modifier, shouldHave, showContainingClass);
     if (owner instanceof PsiVariable) {
       myVariable = (PsiVariable)owner;

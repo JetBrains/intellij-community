@@ -239,7 +239,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       myVisibilityPanel = new VisibilityPanel(false, false);
       myVisibilityPanel.setVisibility(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()));
       myVisibilityPanel.addStateChangedListener(new VisibilityPanel.StateChanged() {
-        public void visibilityChanged(String newVisibility) {
+        public void visibilityChanged() {
           updateSignature();
         }
       });

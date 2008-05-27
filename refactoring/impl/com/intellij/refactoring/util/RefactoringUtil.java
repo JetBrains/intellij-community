@@ -366,7 +366,7 @@ public class RefactoringUtil {
   }
 
   public static void renameVariableReferences(PsiVariable variable, String newName, SearchScope scope) throws IncorrectOperationException {
-    for (PsiReference reference : ReferencesSearch.search(variable, scope).findAll()) {
+    for (PsiReference reference : ReferencesSearch.search(variable, scope)) {
       reference.handleElementRename(newName);
     }
   }
@@ -565,7 +565,7 @@ public class RefactoringUtil {
     return anchor;
   }
 
-  public static void setVisibility(PsiModifierList modifierList, String newVisibility) throws IncorrectOperationException {
+  public static void setVisibility(PsiModifierList modifierList, @Modifier String newVisibility) throws IncorrectOperationException {
     modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
     modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
     modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
@@ -898,7 +898,7 @@ public class RefactoringUtil {
   }
 
   public static boolean isModifiedInScope(PsiVariable variable, PsiElement scope) {
-    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false).findAll()) {
+    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false)) {
       if (isAssignmentLHS(reference.getElement())) return true;
     }
     return false;

@@ -29,11 +29,11 @@ public abstract class QuickFixFactory {
   }
 
   public abstract IntentionAction createModifierListFix(@NotNull PsiModifierList modifierList,
-                                                        @NotNull String modifier,
+                                                        @Modifier @NotNull String modifier,
                                                         boolean shouldHave,
                                                         final boolean showContainingClass);
   public abstract IntentionAction createModifierListFix(@NotNull PsiModifierListOwner owner,
-                                                        @NotNull String modifier,
+                                                        @Modifier @NotNull String modifier,
                                                         boolean shouldHave,
                                                         final boolean showContainingClass);
   public abstract IntentionAction createMethodReturnFix(@NotNull PsiMethod method, @NotNull PsiType toReturn, boolean fixWholeHierarchy);

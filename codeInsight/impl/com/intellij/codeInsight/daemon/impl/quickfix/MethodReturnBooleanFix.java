@@ -261,7 +261,7 @@ public class MethodReturnBooleanFix implements IntentionAction {
     private final UsageVisitor myUsageVisitor;
 
     private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,
-                                                final String newVisibility, final String newName, final PsiType newType,
+                                                @Modifier final String newVisibility, final String newName, final PsiType newType,
                                                 @NotNull final ParameterInfo[] parameterInfo, final UsageVisitor usageVisitor) {
       super(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo);
       myUsageVisitor = usageVisitor;

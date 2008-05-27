@@ -1,13 +1,10 @@
 package com.intellij.psi.filters.element;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.FilterUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -22,29 +19,25 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class ModifierFilter extends ClassFilter{
-  public List myModifierRestrictions = new ArrayList();
-  @NonNls
-  private static final String MODIFIER_TAG = "modifier";
-  @NonNls
-  private static final String IS_SET_ATT = "is-set";
+  public final List<ModifierRestriction> myModifierRestrictions = new ArrayList<ModifierRestriction>();
 
-  public ModifierFilter(){
+  private ModifierFilter(){
     super(PsiModifierListOwner.class);
   }
 
-  public ModifierFilter(String modifier, boolean hasToBe){
+  public ModifierFilter(@Modifier String modifier, boolean hasToBe){
     this();
     addModiferRestriction(modifier, hasToBe);
   }
 
   public ModifierFilter(String... modifiers){
     this();
-    for (final String modifier : modifiers) {
+    for (@Modifier String modifier : modifiers) {
       addModiferRestriction(modifier, true);
     }
   }
 
-  public void addModiferRestriction(String mod, boolean hasToBe){
+  private void addModiferRestriction(@Modifier String mod, boolean hasToBe){
     myModifierRestrictions.add(new ModifierRestriction(mod, hasToBe));
   }
 
@@ -65,10 +58,10 @@ public class ModifierFilter extends ClassFilter{
   }
 
   protected static final class ModifierRestriction{
-    public String myModifierName;
-    public boolean myIsSet;
+    @Modifier public final String myModifierName;
+    public final boolean myIsSet;
 
-    ModifierRestriction(String modifierName, boolean isSet){
+    ModifierRestriction(@Modifier String modifierName, boolean isSet){
       myModifierName = modifierName;
       myIsSet = isSet;
     }
@@ -76,9 +69,9 @@ public class ModifierFilter extends ClassFilter{
 
   public String toString(){
     @NonNls String ret = "modifiers(";
-    Iterator iter = myModifierRestrictions.iterator();
+    Iterator<ModifierRestriction> iter = myModifierRestrictions.iterator();
     while(iter.hasNext()){
-      final ModifierRestriction rest = (ModifierRestriction) iter.next();
+      final ModifierRestriction rest = iter.next();
       ret += rest.myModifierName + "=" + rest.myIsSet;
       if(iter.hasNext()){
         ret += ", ";

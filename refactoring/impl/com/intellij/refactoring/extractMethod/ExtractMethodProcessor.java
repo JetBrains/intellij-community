@@ -97,7 +97,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected boolean myIsChainedConstructor;
   private DuplicatesFinder myDuplicatesFinder;
   private List<Match> myDuplicates;
-  private String myMethodVisibility = PsiModifier.PRIVATE;
+  @Modifier private String myMethodVisibility = PsiModifier.PRIVATE;
   private boolean myGenerateConditionalExit;
   private PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
@@ -470,8 +470,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     Variables:
     for (Iterator<PsiVariable> iterator = inputVariables.iterator(); iterator.hasNext();) {
       PsiVariable variable = iterator.next();
-      Collection<PsiReference> refs = ReferencesSearch.search(variable, scope).findAll();
-      for (PsiReference ref : refs) {
+      for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
         PsiElement element = ref.getElement();
         int elementOffset = controlFlow.getStartOffset(element);
         if (elementOffset >= startOffset && elementOffset <= endOffset) {

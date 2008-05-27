@@ -8,11 +8,10 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiModifier;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -22,10 +21,10 @@ import java.util.EventListener;
 public class VisibilityPanel extends JPanel {
   private JRadioButton myRbAsIs;
   private JRadioButton myRbEscalate;
-  private JRadioButton myRbPrivate;
-  private JRadioButton myRbProtected;
-  private JRadioButton myRbPackageLocal;
-  private JRadioButton myRbPublic;
+  private final JRadioButton myRbPrivate;
+  private final JRadioButton myRbProtected;
+  private final JRadioButton myRbPackageLocal;
+  private final JRadioButton myRbPublic;
 
   public VisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
     setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title")));
@@ -108,13 +107,6 @@ public class VisibilityPanel extends JPanel {
     return null;
   }
 
-  public void setVisibilityEnabled(String visibility, boolean value) {
-    if(PsiModifier.PRIVATE.equals(visibility)) myRbPrivate.setEnabled(value);
-    else if(PsiModifier.PROTECTED.equals(visibility)) myRbProtected.setEnabled(value);
-    else if(PsiModifier.PACKAGE_LOCAL.equals(visibility)) myRbPackageLocal.setEnabled(value);
-    else if(PsiModifier.PUBLIC.equals(visibility)) myRbPublic.setEnabled(value);
-  }
-
   public void setVisibility(String visibility) {
     if (PsiModifier.PUBLIC.equals(visibility)) {
       myRbPublic.setSelected(true);
@@ -137,19 +129,18 @@ public class VisibilityPanel extends JPanel {
   }
 
   public static interface StateChanged extends EventListener {
-    void visibilityChanged(String newVisibility);
+    void visibilityChanged();
   }
 
   public void addStateChangedListener(StateChanged l) {
     listenerList.add(StateChanged.class, l);
   }
-  public void fireStateChanged() {
+  private void fireStateChanged() {
     Object[] list = listenerList.getListenerList();
 
-    String visibility = getVisibility();
     for (Object obj : list) {
       if (obj instanceof StateChanged) {
-        ((StateChanged)obj).visibilityChanged(visibility);
+        ((StateChanged)obj).visibilityChanged();
       }
     }
   }

@@ -43,7 +43,7 @@ public class LocalToFieldHandler {
     final String fieldName;
     final BaseExpressionToFieldHandler.InitializationPlace initializerPlace;
     final boolean declareFinal;
-    final String fieldVisibility;
+    @Modifier String fieldVisibility;
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(myProject, local.getType(),
                                                                                     occurences
     );
@@ -119,7 +119,7 @@ public class LocalToFieldHandler {
     final String fieldName = settings.getFieldName();
     final BaseExpressionToFieldHandler.InitializationPlace initializerPlace = settings.getInitializerPlace();
     final boolean declareFinal = settings.isDeclareFinal();
-    final String fieldVisibility = settings.getFieldVisibility();
+    @Modifier final String fieldVisibility = settings.getFieldVisibility();
     final PsiClass destinationClass = settings.getDestinationClass();
     boolean rebindNeeded = false;
     if (destinationClass != null) {

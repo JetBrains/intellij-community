@@ -95,9 +95,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    PsiReference[] parameterReferences =
-      ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false).toArray(new PsiReference[0]);
-    for (final PsiReference ref : parameterReferences) {
+    for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false)) {
       if (ref.getElement() instanceof PsiReferenceExpression) {
         result.add(new ParameterUsageInfo((PsiReferenceExpression)ref));
       }
@@ -177,10 +175,10 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       if (usage instanceof MethodCallUsageInfo) {
         final PsiMethodCallExpression call = ((MethodCallUsageInfo)usage).getMethodCall();
-        PsiClass accessObjectClass = null;
         final PsiExpression[] arguments = call.getArgumentList().getExpressions();
         final int index = myMethod.getParameterList().getParameterIndex(myTargetParameter);
         LOG.assertTrue(index >= 0);
+        PsiClass accessObjectClass = null;
         if (index < arguments.length) {
           final PsiExpression argument = arguments[index];
           final PsiType argumentType = argument.getType();
@@ -247,9 +245,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
       for (final PsiClass psiClass : inheritors) {
         final PsiMethod newMethod = addMethodToClass(psiClass);
-        newMethod.getModifierList().setModifierProperty((myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)
-                                                         ? myNewVisibility
-                                                         : PsiModifier.PUBLIC), true);
+        newMethod.getModifierList().setModifierProperty(
+            myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY) ? myNewVisibility : PsiModifier.PUBLIC, true);
       }
     }
     myMethod.delete();
@@ -267,7 +264,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    else if (myNewVisibility != null && myNewVisibility != myOldVisibility) {
+    else if (myNewVisibility != null && !myNewVisibility.equals(myOldVisibility)) {
       modifierList.setModifierProperty(myNewVisibility, true);
     }
   }
@@ -276,9 +273,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     if (myTypeParameterReplacements == null) return;
     final Collection<PsiTypeParameter> typeParameters = myTypeParameterReplacements.keySet();
     for (final PsiTypeParameter parameter : typeParameters) {
-      final PsiReference[] references =
-        ReferencesSearch.search(parameter, new LocalSearchScope(myMethod), false).toArray(new PsiReference[0]);
-      for (final PsiReference reference : references) {
+      for (final PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myMethod), false)) {
         if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
           reference.getElement().putCopyableUserData(BIND_TO_TYPE_PARAMETER, myTypeParameterReplacements.get(parameter));
         }

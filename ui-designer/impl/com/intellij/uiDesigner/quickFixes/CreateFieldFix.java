@@ -114,10 +114,10 @@ public final class CreateFieldFix extends QuickFix{
     try {
       final PsiField field = factory.createField(fieldName, type);
       final String accessibility = GuiDesignerConfiguration.getInstance(project).DEFAULT_FIELD_ACCESSIBILITY;
-      String[] modifiers = new String[] { PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC };
       final PsiModifierList modifierList = field.getModifierList();
       assert modifierList != null;
-      for(String modifier: modifiers) {
+      String[] modifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
+      for(@Modifier String modifier: modifiers) {
         modifierList.setModifierProperty(modifier, accessibility.equals(modifier));
       }
       PsiField lastUiField = null;

@@ -68,8 +68,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ParameterInfo[] array = parameterInfos.toArray(new ParameterInfo[parameterInfos.size()]);
-      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project, method, false, PsiUtil.getAccessModifier(
-        PsiUtil.getAccessLevel(method.getModifierList())), method.getName(), method.getReturnType(), array);
+      @Modifier String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
+      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
       processor.run();
     }
     else {

@@ -42,12 +42,12 @@ class ChangeInfo {
   final boolean obtainsVarags;
   PsiIdentifier newNameIdentifier;
   PsiType newTypeElement;
-  PsiExpression[] defaultValues;
+  final PsiExpression[] defaultValues;
 
   /**
    * @param newExceptions null if not changed
    */
-  public ChangeInfo(String newVisibility,
+  public ChangeInfo(@Modifier String newVisibility,
                     PsiMethod method,
                     String newName,
                     CanonicalTypes.Type newType,

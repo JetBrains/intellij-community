@@ -28,7 +28,8 @@ public class VisibilityUtil  {
   private VisibilityUtil() {
   }
 
-  public static String getHighestVisibility(String v1, String v2) {
+  @Modifier
+  public static String getHighestVisibility(@Modifier String v1, @Modifier String v2) {
     if(v1.equals(v2)) return v1;
 
     if(PsiModifier.PRIVATE.equals(v1)) return v2;
@@ -51,6 +52,7 @@ public class VisibilityUtil  {
     }
   }
 
+
   public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) {
     if (PsiUtil.isAccessible(psiMethod, place, null)) return getVisibilityStringToDisplay(psiMethod);
     if (JavaPsiFacade.getInstance(psiMethod.getProject()).arePackagesTheSame(psiMethod, place)) {
@@ -63,9 +65,10 @@ public class VisibilityUtil  {
     return PsiModifier.PUBLIC;
   }
 
+  @Modifier
   public static String getVisibilityModifier(PsiModifierList list) {
     if (list == null) return PsiModifier.PACKAGE_LOCAL;
-    for (String modifier : visibilityModifiers) {
+    for (@Modifier String modifier : visibilityModifiers) {
       if (list.hasModifierProperty(modifier)) {
         return modifier;
       }
@@ -73,14 +76,15 @@ public class VisibilityUtil  {
     return PsiModifier.PACKAGE_LOCAL;
   }
 
-  public static String getVisibilityString(String visibilityModifier) {
+  public static String getVisibilityString(@Modifier String visibilityModifier) {
     if(PsiModifier.PACKAGE_LOCAL.equals(visibilityModifier)) {
       return "";
     }
-    else return visibilityModifier;
+    return visibilityModifier;
   }
 
-  public static @NonNls String getVisibilityStringToDisplay(PsiMember member) {
+  @NonNls
+  public static String getVisibilityStringToDisplay(PsiMember member) {
     if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
       return "public";
     }
