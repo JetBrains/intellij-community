@@ -120,19 +120,13 @@ public class CachedGridImage {
         final GridConstraints constraints = childComponent.getConstraints();
         if (constraints.getColSpan() > 1) {
           for(int col = constraints.getColumn()+1; col < constraints.getColumn() + constraints.getColSpan(); col++) {
-            g2d.drawLine(myVertGridLines [col],
-                         myHorzGridLines [constraints.getRow()]+4,
-                         myVertGridLines [col],
-                         myHorzGridLines [constraints.getRow() + constraints.getRowSpan()]-4);
+            drawVertGridLine(g2d, col, constraints.getRow(), constraints.getRowSpan());
           }
 
         }
         if (constraints.getRowSpan() > 1) {
           for(int row = constraints.getRow()+1; row < constraints.getRow() + constraints.getRowSpan(); row++) {
-            g2d.drawLine(myVertGridLines [constraints.getColumn()]+4,
-                         myHorzGridLines [row],
-                         myVertGridLines [constraints.getColumn() + constraints.getColSpan()]-4,
-                         myHorzGridLines [row]);
+            drawHorzGridLine(g2d, row, constraints.getColumn(), constraints.getColSpan());
           }
         }
       }
@@ -140,6 +134,24 @@ public class CachedGridImage {
     finally {
       g2d.dispose();
     }
+  }
+
+  private void drawVertGridLine(final Graphics2D g2d, final int col, final int row, final int rowSpan) {
+    // protect against invalid constraints
+    if (col < 0 || col >= myVertGridLines.length || row < 0 || row+rowSpan >= myHorzGridLines.length) return;
+    g2d.drawLine(myVertGridLines [col],
+                 myHorzGridLines [row]+4,
+                 myVertGridLines [col],
+                 myHorzGridLines [row+rowSpan]-4);
+  }
+
+  private void drawHorzGridLine(final Graphics2D g2d, final int row, final int col, final int colSpan) {
+    // protect against invalid constraints
+    if (col < 0 || col+colSpan >= myVertGridLines.length || row < 0 || row >= myHorzGridLines.length) return;
+    g2d.drawLine(myVertGridLines [col]+4,
+                 myHorzGridLines [row],
+                 myVertGridLines [col + colSpan]-4,
+                 myHorzGridLines [row]);
   }
 
   private static boolean arraysEqual(final int[] newArray, final int[] oldArray) {
