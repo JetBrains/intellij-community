@@ -91,7 +91,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       }
 
       public void visitCode() {
-        if (myIsNotNull || myNotNullParams.size() > 0) {
+        if (myNotNullParams.size() > 0) {
           myStartGeneratedCodeLabel = new Label();
           mv.visitLabel(myStartGeneratedCodeLabel);
         }
@@ -108,18 +108,6 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
           generateThrow("java/lang/IllegalArgumentException",
                         "Argument " + param + " for @NotNull parameter of " + myClassName + "." + name + " must not be null", end);
-
-        }
-
-        if (myIsNotNull) {
-          Label codeStart = new Label();
-          mv.visitJumpInsn(Opcodes.GOTO, codeStart);
-
-          myThrowLabel = new Label();
-          mv.visitLabel(myThrowLabel);
-          //generate throw for method null return
-          generateThrow("java/lang/IllegalStateException", "@NotNull method " + myClassName + "." + name + " must not return null",
-                        codeStart);
         }
       }
 
@@ -135,7 +123,17 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
           mv.visitInsn(Opcodes.DUP);
           /*generateConditionalThrow("@NotNull method " + myClassName + "." + name + " must not return null",
                                    "java/lang/IllegalStateException");*/
-          mv.visitJumpInsn(Opcodes.IFNULL, myThrowLabel);
+          if (myThrowLabel == null) {
+            Label skipLabel = new Label();
+            mv.visitJumpInsn(Opcodes.IFNONNULL, skipLabel);
+            myThrowLabel = new Label();
+            mv.visitLabel(myThrowLabel);            
+            generateThrow("java/lang/IllegalStateException", "@NotNull method " + myClassName + "." + name + " must not return null",
+                          skipLabel);
+          }
+          else {
+            mv.visitJumpInsn(Opcodes.IFNULL, myThrowLabel);
+          }
         }
 
         mv.visitInsn(opcode);
