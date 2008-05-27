@@ -158,6 +158,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   protected JComponent createCenterPanel() {
     myCenterPanel.add(CARD_STATUS, ScrollPaneFactory.createScrollPane(myTree));
     myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    myTreeBrowser.setHelpId(getHelpId());
     myCenterPanel.add(CARD_CHANGES, myTreeBrowser);
     return myCenterPanel;
   }

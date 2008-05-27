@@ -71,6 +71,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
   private final CopyProvider myCopyProvider;
   private final TreeExpander myTreeExpander;
+  private String myHelpId;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
@@ -129,6 +130,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myCopyProvider = new TreeCopyProvider(myChangesTree);
     myTreeExpander = new DefaultTreeExpander(myChangesTree);
     myChangesView.addToolbarAction(ActionManager.getInstance().getAction("Vcs.ShowTabbedFileHistory"));
+
+    myHelpId = ourHelpId;
   }
 
   private TreeModel buildTreeModel() {
@@ -149,6 +152,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       lastGroupNode.add(new DefaultMutableTreeNode(list));
     }
     return model;
+  }
+
+  public void setHelpId(final String helpId) {
+    myHelpId = helpId;
   }
 
   public void setEmptyText(final String emptyText) {
@@ -291,7 +298,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.add(expandAllAction);
     toolbarGroup.add(collapseAllAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
-    toolbarGroup.add(new ContextHelpAction(ourHelpId));
+    toolbarGroup.add(new ContextHelpAction(myHelpId));
     if (tailGroup != null) {
       toolbarGroup.add(tailGroup);
     }
@@ -319,7 +326,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
-      sink.put(PlatformDataKeys.HELP_ID, ourHelpId);
+      sink.put(PlatformDataKeys.HELP_ID, myHelpId);
     }
   }
 
