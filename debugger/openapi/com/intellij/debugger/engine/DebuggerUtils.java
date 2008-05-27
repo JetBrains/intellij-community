@@ -93,7 +93,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
         if (toStringMethod == null) {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
-        final StringReference stringReference = (StringReference)debugProcess.invokeInstanceMethod(evaluationContext, objRef, toStringMethod, Collections.emptyList(), ObjectReference.INVOKE_SINGLE_THREADED);
+        final StringReference stringReference = (StringReference)debugProcess.invokeInstanceMethod(evaluationContext, objRef, toStringMethod, Collections.emptyList(), 0);
         return  stringReference == null ? "null" : stringReference.value();
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unsupported.expression.type"));
