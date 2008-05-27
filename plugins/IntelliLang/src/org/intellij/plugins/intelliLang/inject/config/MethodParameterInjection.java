@@ -192,8 +192,8 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     //noinspection ForLoopThatDoesntUseLoopVariable
     for (int i = 0; st.hasMoreTokens(); i++) {
       final String token = st.nextToken().trim();
-      final int idx;
       if (i > 1) sb.append(", ");
+      final int idx;
       if (i == 0) {
         sb.append(token).append("(");
       }
@@ -340,9 +340,10 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
       return Pair.create(result, returnFlag);
     }
 
+    @NonNls
     private static String calcMethodName(final String methodSignature) {
       final String s = methodSignature.split("\\(", 2)[0];
-      return s.length() != 0 ? s : "<none>";
+      return s.length() == 0 ? "<none>" : s;
     }
 
     public String getFlagsString() {
