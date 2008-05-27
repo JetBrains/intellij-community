@@ -35,11 +35,6 @@ public class XmlTagInjection extends AbstractTagInjection<XmlTagInjection, XmlTe
     setTagName("<none>");
   }
 
-  public boolean isApplicable(@NotNull final XmlText text) {
-    final XmlTag context = text.getParentTag();
-    return context != null && isApplicable(context);
-  }
-
   public boolean isApplicable(@NotNull final XmlTag context) {
     return matches(context) && matchXPath(context);
   }

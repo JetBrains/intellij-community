@@ -46,11 +46,6 @@ public interface Injection<T extends PsiElement> {
   List<TextRange> getInjectedArea(T element);
 
   /**
-   * Determines whether the injection should be applied to the supplied element
-   */
-  boolean isApplicable(@NotNull T element);
-
-  /**
    * Determines how the injection would like being displayed (e.g. attributes
    * return a qualified TAG-NAME/@ATT-NAME combination name instead of just
    * the plain name.

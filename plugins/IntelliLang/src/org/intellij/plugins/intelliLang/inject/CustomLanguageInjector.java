@@ -66,6 +66,8 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
   private final Project myProject;
   private final Configuration myInjectionConfiguration;
+  private long myConfigurationModificationCount;
+  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> myMethodCache;
 
   @SuppressWarnings({"unchecked"})
   private final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> myTempPlaces = new ArrayList();
@@ -231,16 +233,39 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
   private void processLiteralExpressionInjections(final PsiExpression place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     if (!processAnnotationInjections(place, processor)) {
-      final PsiExpression parameterExpression = MethodParameterInjection.findParameterExpression(place);
-      if (parameterExpression == null) return;
-      final List<MethodParameterInjection> injections = myInjectionConfiguration.getParameterInjections();
+      final Pair<Trinity<String, Integer, Integer>, PsiMethod> info = MethodParameterInjection.getParameterInfo(place);
+      final Collection<MethodParameterInjection> injections = info == null? null : getMethodCache().get(info.first);
+      if (injections == null) return;
       for (MethodParameterInjection injection : injections) {
-        if (injection.isApplicable(parameterExpression)) {
+        if (injection.isApplicable(info.second)) {
           processInjection(place, injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), processor);
           return;
         }
       }
     }
+  }
+
+  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> getMethodCache() {
+    if (myMethodCache != null && myInjectionConfiguration.getModificationCount() == myConfigurationModificationCount) {
+      return myMethodCache;
+    }
+    myConfigurationModificationCount = myInjectionConfiguration.getModificationCount();
+    final MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> tmpMap =
+        new MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection>();
+    for (MethodParameterInjection injection : myInjectionConfiguration.getParameterInjections()) {
+      for (MethodParameterInjection.MethodInfo info : injection.getMethodInfos()) {
+        final boolean[] flags = info.getParamFlags();
+        for (int i = 0; i < flags.length; i++) {
+          if (!flags[i]) continue;
+          tmpMap.put(Trinity.create(info.getMethodName(), flags.length, i), injection);
+        }
+        if (info.isReturnFlag()) {
+          tmpMap.put(Trinity.create(info.getMethodName(), 0, -1), injection);
+        }
+      }
+    }
+    myMethodCache = tmpMap;
+    return tmpMap;
   }
 
   private boolean processAnnotationInjections(final PsiExpression psiExpression, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {

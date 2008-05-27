@@ -43,64 +43,13 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     return Collections.singletonList(TextRange.from(1, element.getTextLength() - 2));
   }
 
-  public boolean isApplicable(@NotNull final PsiLiteralExpression element) {
-    final PsiExpression expression = findParameterExpression(element);
-    return expression != null && isApplicable(expression);
-  }
-
-  public boolean isApplicable(@NotNull final PsiExpression element) {
-    final PsiMethod method;
-    final int parameterIndex;
-    final int curParameterCount;
-    final PsiElement tmp = element.getParent();
-    final PsiElement elementParent = tmp instanceof PsiArrayInitializerMemberValue? tmp.getParent() : tmp;
-    if (elementParent instanceof PsiReturnStatement) {
-      parameterIndex = -1;
-      curParameterCount = 0;
-      method = PsiTreeUtil.getParentOfType(elementParent, PsiMethod.class, true, true);
-    }
-    else if (elementParent instanceof PsiNameValuePair) {
-      parameterIndex = -1;
-      curParameterCount = 0;
-      final PsiReference psiReference = elementParent.getReference();
-      final PsiElement resolved = psiReference == null? null : psiReference.resolve();
-      method = resolved instanceof PsiMethod? (PsiMethod)resolved : null;
-    }
-    else {
-      final PsiParameter parameter = PsiUtilEx.getParameterForArgument(element);
-      if (parameter == null) {
-        return false;
-      }
-      final PsiElement _parent = parameter.getParent();
-      final PsiParameterList list;
-      if (_parent instanceof PsiParameterList) {
-        list = (PsiParameterList)_parent;
-      }
-      else {
-        return false;
-      }
-      parameterIndex = list.getParameterIndex(parameter);
-      curParameterCount = list.getParametersCount();
-      method = PsiTreeUtil.getParentOfType(list, PsiMethod.class, true, true);
-    }
-    if (method == null) return false;
-    final String methodName = method.getName();
-    boolean found = false;
-    for (MethodInfo info : myParameterMap.values()) {
-      if (!info.methodName.equals(methodName)) continue;
-      if (parameterIndex == -1 && info.returnFlag
-          || info.paramFlags.length == curParameterCount && info.paramFlags[parameterIndex]) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) return false;
+  public boolean isApplicable(@NotNull final PsiMethod method) {
     final PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
     if (myClassName.equals(psiClass.getQualifiedName())) return true;
     if (myApplyInHierarchy) {
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(element.getProject());
-      final PsiClass baseClass = JavaPsiFacade.getInstance(element.getProject()).findClass(myClassName, scope);
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
+      final PsiClass baseClass = JavaPsiFacade.getInstance(method.getProject()).findClass(myClassName, scope);
       if (baseClass != null && psiClass.isInheritor(baseClass, true)) {
         return true;
       }
@@ -282,6 +231,48 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     return (PsiExpression)e;
   }
 
+  @Nullable
+  public static Pair<Trinity<String, Integer, Integer>, PsiMethod> getParameterInfo(@NotNull final PsiExpression place) {
+    final PsiExpression element = findParameterExpression(place);
+    if (element == null) return null;
+    final PsiMethod method;
+    final int parameterIndex;
+    final int curParameterCount;
+    final PsiElement tmp = element.getParent();
+    final PsiElement elementParent = tmp instanceof PsiArrayInitializerMemberValue ? tmp.getParent() : tmp;
+    if (elementParent instanceof PsiReturnStatement) {
+      parameterIndex = -1;
+      curParameterCount = 0;
+      method = PsiTreeUtil.getParentOfType(elementParent, PsiMethod.class, true, true);
+    }
+    else if (elementParent instanceof PsiNameValuePair) {
+      parameterIndex = -1;
+      curParameterCount = 0;
+      final PsiReference psiReference = elementParent.getReference();
+      final PsiElement resolved = psiReference == null ? null : psiReference.resolve();
+      method = resolved instanceof PsiMethod ? (PsiMethod)resolved : null;
+    }
+    else {
+      final PsiParameter parameter = PsiUtilEx.getParameterForArgument(element);
+      if (parameter == null) {
+        return null;
+      }
+      final PsiElement _parent = parameter.getParent();
+      final PsiParameterList list;
+      if (_parent instanceof PsiParameterList) {
+        list = (PsiParameterList)_parent;
+      }
+      else {
+        return null;
+      }
+      parameterIndex = list.getParameterIndex(parameter);
+      curParameterCount = list.getParametersCount();
+      method = PsiTreeUtil.getParentOfType(list, PsiMethod.class, true, true);
+    }
+    if (method == null) return null;
+    return Pair.create(Trinity.create(method.getName(), curParameterCount, parameterIndex), method);
+  }
+
   public static class MethodInfo {
     @NotNull
     final String methodSignature;
@@ -310,6 +301,11 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     @NotNull
     public String getMethodSignature() {
       return methodSignature;
+    }
+
+    @NotNull
+    public String getMethodName() {
+      return methodName;
     }
 
     @NotNull

@@ -100,6 +100,8 @@ public final class Configuration implements PersistentStateComponent<Element> {
   private Pair<String, ? extends Set<String>> myPatternAnnotationPair;
   private Pair<String, ? extends Set<String>> mySubstAnnotationPair;
 
+  private volatile long myModificationCount;
+
   Configuration() {
     setLanguageAnnotation("org.intellij.lang.annotations.Language");
     setPatternAnnotation("org.intellij.lang.annotations.Pattern");
@@ -289,7 +291,16 @@ public final class Configuration implements PersistentStateComponent<Element> {
         n++;
       }
     }
+    if (n < 0) configurationModified();
     return n;
+  }
+
+  public void configurationModified() {
+    myModificationCount ++;
+  }
+
+  public long getModificationCount() {
+    return myModificationCount;
   }
 
   public boolean isResolveReferences() {
