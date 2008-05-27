@@ -796,6 +796,21 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
   public XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
     List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
 
+    initSubstitutes();
+
+    List<XmlTag> substitutions = mySubstitutions.get(localName);
+    if (substitutions==null) return XmlElementDescriptor.EMPTY_ARRAY;
+    for (XmlTag tag : substitutions) {
+      final String substAttr = tag.getAttributeValue("substitutionGroup");
+      if (substAttr != null && checkElementNameEquivalence(localName, namespace, substAttr, tag)) {
+        result.add(createElementDescriptor(tag));
+      }
+    }
+
+    return result.toArray(new XmlElementDescriptor[result.size()]);
+  }
+
+  private void initSubstitutes() {
     if (mySubstitutions ==null) {
       mySubstitutions = new HashMap<String, List<XmlTag>>();
 
@@ -816,17 +831,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
         }
       }
     }
-
-    List<XmlTag> substitutions = mySubstitutions.get(localName);
-    if (substitutions==null) return XmlElementDescriptor.EMPTY_ARRAY;
-    for (XmlTag tag : substitutions) {
-      final String substAttr = tag.getAttributeValue("substitutionGroup");
-      if (substAttr != null && checkElementNameEquivalence(localName, namespace, substAttr, tag)) {
-        result.add(createElementDescriptor(tag));
-      }
-    }
-
-    return result.toArray(new XmlElementDescriptor[result.size()]);
   }
 
   public static String getSchemaNamespace(XmlFile file) {
@@ -961,4 +965,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return null;
   }
 
+  public boolean hasSubstitutions() {
+    initSubstitutes();
+    return mySubstitutions != null && mySubstitutions.size() > 0;
+  }
 }

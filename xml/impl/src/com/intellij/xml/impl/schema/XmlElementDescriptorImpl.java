@@ -187,7 +187,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       }
 
       if (context != null &&
-          ( descriptor.canContainTag(context.getLocalName(), contextNs = context.getNamespace() ) &&
+          ( descriptor.canContainTag(context.getLocalName(), contextNs = context.getNamespace(), context ) &&
             (!contextNs.equals(getNamespace()) || descriptor.hasAnyInContentModel())
           ) ) {
         final XmlNSDescriptor nsDescriptor = getNSDescriptor();
@@ -379,7 +379,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     TypeDescriptor type = getType(context);
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
-      if (descriptor.canContainTag(localName, namespace)) {
+      if (descriptor.canContainTag(localName, namespace, context)) {
         return new AnyXmlElementDescriptor(this, getNSDescriptor());
       }
     }
@@ -464,7 +464,9 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     final TypeDescriptor type = getType(context);
     
     if (type instanceof ComplexTypeDescriptor) {
-      return ((ComplexTypeDescriptor)type).canContainTag("a", namespace) ||
+      final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
+      return typeDescriptor.canContainTag("a", namespace, context) ||
+             typeDescriptor.getNsDescriptors().hasSubstitutions() ||
              XmlUtil.nsFromTemplateFramework(namespace)
         ;
     }
