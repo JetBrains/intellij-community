@@ -1,10 +1,10 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -51,6 +51,16 @@ public class ResolveImportUtil {
   @Nullable
   private static PsiElement resolvePythonImport(final PyReferenceExpression importRef, final PsiElement importFrom,
                                                 final String referencedName) {
+    /*
+    True resolve order is:
+    - local modules,
+    - builtins (in fact),
+    - modules from sys.path (aka SdkOrderEntries).
+    (http://docs.python.org/ref/import.html)
+    */
+    // TODO: assume some things like sys to be only from __builtins__
+    // FIXME: resolve sources relatively to file in hand, not project root
+    
     final PyExpression qualifier = importRef.getQualifier();
     if (qualifier instanceof PyReferenceExpression) {
       PsiElement qualifierElement = ((PyReferenceExpression) qualifier).resolve();
@@ -157,14 +167,25 @@ public class ResolveImportUtil {
   public static PsiElement resolveChild(final PsiElement parent, final String referencedName, final PyReferenceExpression importRef) {
     PsiDirectory dir = null;
     PsiElement ret = null;
+    PyResolveUtil.ResolveProcessor processor = null;
     if (parent instanceof PyFile) {
+      boolean is_dir = (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE);
       PyFile pfparent = (PyFile)parent; 
-      if (INIT_PY.equals(pfparent.getName())) {
-        // try both file and dir, for we can't tell.
+      if (! is_dir) {
+        /*
+        if (INIT_PY.equals(pfparent.getName())) {
+          // try both file and dir, for we can't tell.
+          dir = pfparent.getContainingDirectory();
+        }
+        */
+        // look for name in the file:
+        processor = new PyResolveUtil.ResolveProcessor(referencedName);
+        ret = PyResolveUtil.treeWalkUp(processor, parent, null, importRef);
+        if (ret != null) return ret;
+      }
+      else { // the file was a fake __init__.py covering a reference to dir
         dir = pfparent.getContainingDirectory();
       }
-      // to be used if dir resolution is not applicable:
-      ret = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), parent, null, importRef);
     }
     else if (parent instanceof PsiDirectory) {
       dir = (PsiDirectory)parent;
@@ -177,7 +198,8 @@ public class ResolveImportUtil {
       else { // not a subdir, not a file; could be a name in parent/__init__.py
         final PsiFile initPy = dir.findFile(INIT_PY);
         if (initPy != null) {
-          return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), initPy, null, importRef);
+          if (processor == null) processor = new PyResolveUtil.ResolveProcessor(referencedName); // should not normally happen 
+          return PyResolveUtil.treeWalkUp(processor, initPy, null, importRef);
         }
       }
     }
