@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
-import org.jetbrains.idea.svn.dialogs.RepositoryTreeModel;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -43,7 +42,13 @@ public class CopyOptionsDialog extends DialogWrapper {
     myURL = node.getURL();
 
     myURLLabel.setText(myURL.toString());
-    myBrowser.setRepositoryURL(root.getURL(), false);
+
+    final TreeNode[] path = node.getSelfPath();
+    final TreeNode[] subPath = new TreeNode[path.length - 1];
+    System.arraycopy(path, 1, subPath, 0, path.length - 1);
+
+    myBrowser.setRepositoryURL(root.getURL(), false, 
+        new OpeningExpander.Factory(subPath, (RepositoryTreeNode)((node.getParent() instanceof RepositoryTreeNode) ? node.getParent() : null)));
     myBrowser.addChangeListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         update();
@@ -82,16 +87,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     setTitle(title);
     init();
     update();
-
-    expandNode(node);
-  }
-
-  private void expandNode(final RepositoryTreeNode node) {
-    // we need only a path to root, i.e. without first element
-    final RepositoryTreeModel model = (RepositoryTreeModel) myBrowser.getRepositoryTree().getModel();
-    final TreeNode[] subPath = model.getPathToSubRoot(node);
-
-    ((RepositoryTreeNode) model.getRoot()).reload(new Expander(subPath, myBrowser));
+    
   }
 
   @Override
@@ -113,6 +109,10 @@ public class CopyOptionsDialog extends DialogWrapper {
     return myURL;
   }
 
+  public String getName() {
+    return myNameField.getText();
+  }
+
   @Nullable
   public SVNURL getTargetURL() {
     if (getOKAction().isEnabled()) {
@@ -126,9 +126,8 @@ public class CopyOptionsDialog extends DialogWrapper {
   }
 
   @Nullable
-  public TreeNode[] getTargetPath() {
-    final RepositoryTreeNode selectedNode = myBrowser.getSelectedNode();
-    return (selectedNode == null) ? null : selectedNode.getSelfPath();
+  public RepositoryTreeNode getTargetParentNode() {
+    return myBrowser.getSelectedNode();
   }
 
   @Nullable

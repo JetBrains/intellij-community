@@ -20,9 +20,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNDirEntry;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,7 +41,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
         setDirectoryIcon(expanded);
       } else {
         String name = node.getSVNDirEntry().getName();
-        append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(name, node.isCached() ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         if (myIsShowDetails) {
           SVNDirEntry entry = node.getSVNDirEntry();
           append(" " + entry.getRevision(), SimpleTextAttributes.GRAY_ATTRIBUTES);

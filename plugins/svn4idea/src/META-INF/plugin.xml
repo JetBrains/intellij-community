@@ -102,6 +102,10 @@
                     serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.SvnBranchMapperManager"
       serviceImplementation="org.jetbrains.idea.svn.SvnBranchMapperManager"/>
+    <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"
+      serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"/>
+    <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"
+                    serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs"/>
 

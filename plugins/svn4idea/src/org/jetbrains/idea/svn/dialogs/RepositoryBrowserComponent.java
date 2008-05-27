@@ -26,10 +26,12 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
@@ -43,6 +45,10 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,14 +72,26 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   }
 
   public void setRepositoryURLs(SVNURL[] urls) {
-    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, true);
+    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, true, this);
     model.setRoots(urls);
     Disposer.register(this, model);
     myRepositoryTree.setModel(model);
   }
 
+  public void setRepositoryURL(SVNURL url, boolean showFiles, final NotNullFunction<RepositoryBrowserComponent, Expander> defaultExpanderFactory) {
+    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles, this);
+
+    model.setDefaultExpanderFactory(defaultExpanderFactory);
+
+    model.setSingleRoot(url);
+    Disposer.register(this, model);
+    myRepositoryTree.setModel(model);
+    myRepositoryTree.setRootVisible(true);
+    myRepositoryTree.setSelectionRow(0);
+  }
+
   public void setRepositoryURL(SVNURL url, boolean showFiles) {
-    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles);
+    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles, this);
     model.setSingleRoot(url);
     Disposer.register(this, model);
     myRepositoryTree.setModel(model);
@@ -88,6 +106,25 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       final TreePath treePath = new TreePath(pathToNode);
       myRepositoryTree.expandPath(treePath);
     }
+  }
+
+  public Collection<TreeNode> getExpandedSubTree(@NotNull final TreeNode treeNode) {
+    final TreeNode[] pathToNode = ((RepositoryTreeModel) myRepositoryTree.getModel()).getPathToRoot(treeNode);
+
+    final Enumeration<TreePath> expanded = myRepositoryTree.getExpandedDescendants(new TreePath(pathToNode));
+
+    final List<TreeNode> result = new ArrayList<TreeNode>();
+    while (expanded.hasMoreElements()) {
+      final TreePath treePath = expanded.nextElement();
+      result.add((TreeNode) treePath.getLastPathComponent());
+    }
+    return result;
+  }
+
+  public boolean isExpanded(@NotNull final TreeNode treeNode) {
+    final TreeNode[] pathToNode = ((RepositoryTreeModel) myRepositoryTree.getModel()).getPathToRoot(treeNode);
+
+    return (pathToNode != null) && (pathToNode.length > 0) && myRepositoryTree.isExpanded(new TreePath(pathToNode));
   }
 
   public void addURL(String url) {
@@ -138,9 +175,6 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       return node.getURL();
     }
     return null;
-  }
-
-  public void refresh(SVNDirEntry entry, boolean deleted) {
   }
 
   public boolean isValid() {
@@ -228,5 +262,9 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   }
 
   public void dispose() {
+  }
+
+  public void setLazyLoadingExpander(final NotNullFunction<RepositoryBrowserComponent, Expander> expanderFactory) {
+    ((RepositoryTreeModel) myRepositoryTree.getModel()).setDefaultExpanderFactory(expanderFactory);
   }
 }

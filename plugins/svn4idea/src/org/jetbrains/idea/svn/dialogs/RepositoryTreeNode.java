@@ -2,20 +2,28 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.*;
+import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
+import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
+import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 public class RepositoryTreeNode implements TreeNode, Disposable {
 
-  private final TreeNode myParentNode;
+  private TreeNode myParentNode;
   private final SVNRepository myRepository;
   private List<TreeNode> myChildren;
   private final RepositoryTreeModel myModel;
@@ -23,16 +31,14 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   private final SVNURL myURL;
   private final Object myUserObject;
 
-  private ReloadListener myAfterChildrenLoad;
-  /**
-   * true is children was not loaded jet = are made null by reload OR contain only fake element
-   */
-  private boolean myChildrenInvalidated;
+  private final NodeLoadState myLoadState;
+  private NodeLoadState myChildrenLoadState;
 
   public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNRepository repository,
-                            @NotNull SVNURL url, Object userObject) {
+                            @NotNull SVNURL url, Object userObject, final NodeLoadState state) {
     myParentNode = parentNode;
     myRepository = repository;
+
     myURL = url;
     final SVNURL location = myRepository.getLocation();
     assert location != null;
@@ -42,7 +48,15 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     }
     myModel = model;
     myUserObject = userObject;
-    myChildrenInvalidated = true;
+
+    myLoadState = state;
+    myChildrenLoadState = NodeLoadState.EMPTY;
+  }
+
+  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNRepository repository,
+                            @NotNull SVNURL url, Object userObject) {
+    // created outside: only roots
+    this(model, parentNode, repository, url, userObject, NodeLoadState.REFRESHED);
   }
 
   public Object getUserObject() {
@@ -77,40 +91,9 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myParentNode;
   }
 
-  public void reload() {
-    reload(null);
-  }
-
-  public void reload(@Nullable final ReloadListener doAfterChildrenLoad) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    // couldn't do that when 'loading' is in progress.
-    myChildren = null;
-    myChildrenInvalidated = true;
-
-    if (doAfterChildrenLoad != null) {
-      myAfterChildrenLoad = doAfterChildrenLoad;
-    }
-
-    myModel.reload(this);
-    if (isLeaf()) {
-      ((RepositoryTreeNode) getParent()).reload(doAfterChildrenLoad);
-    }
-  }
-
-  public void registerReloadListener(@Nullable final ReloadListener doAfterChildrenLoad) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (doAfterChildrenLoad != null) {
-      if (myChildrenInvalidated) {
-        myAfterChildrenLoad = doAfterChildrenLoad;
-
-        getChildren();
-      } else {
-        // for next level children: call directly
-        doAfterChildrenLoad.onAfterReload(this);
-      }
-    }
+  public void reload(final boolean removeCurrentChildren) {
+    // todo lazyLoading as explicit: keeping...
+    reload(removeCurrentChildren ? myModel.getSelectionKeepingExpander() : myModel.getLazyLoadingExpander(), removeCurrentChildren);
   }
 
   @Nullable
@@ -127,66 +110,30 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return SVNPathUtil.tail(myURL.getPath());
   }
 
+  public void reload(final Expander expander, final boolean removeCurrentChildren) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (removeCurrentChildren || (myChildren == null)) {
+      initChildren();
+    }
+    
+    myModel.getCacheLoader().load(this, expander);
+  }
+
+  private void initChildren() {
+    myChildren = new ArrayList<TreeNode>();
+    myChildren.add(new DefaultMutableTreeNode("Loading"));
+    myChildrenLoadState = NodeLoadState.LOADING;
+  }
+
   private List getChildren() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     
-    if ((myChildren == null) && myChildrenInvalidated) {
-      myChildren = new ArrayList<TreeNode>();
-      myChildren.add(new DefaultMutableTreeNode("Loading"));
-      loadChildren();
+    if (myChildren == null) {
+      initChildren();
+      myModel.getCacheLoader().load(this, myModel.getLazyLoadingExpander());
     }
     return myChildren;
-  }
-
-  private void loadChildren() {
-    Runnable loader = new Runnable() {
-      public void run() {
-        final Collection<SVNDirEntry> entries = new TreeSet<SVNDirEntry>();
-        try {
-          myRepository.getDir(myPath, -1, null, new ISVNDirEntryHandler() {
-            public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-              entries.add(dirEntry);
-            }
-          });
-        } catch (SVNException e) {
-          final SVNErrorMessage err = e.getErrorMessage();
-          invokeLaterTreeFilling(Collections.singletonList((TreeNode) new DefaultMutableTreeNode(err)));
-          return;
-        }
-        // create new node for each entry, then update browser in a swing thread.
-        final List<TreeNode> nodes = new ArrayList<TreeNode>();
-        for (final SVNDirEntry entry : entries) {
-          if (!myModel.isShowFiles() && entry.getKind() != SVNNodeKind.DIR) {
-            continue;
-          }
-          nodes.add(new RepositoryTreeNode(myModel, RepositoryTreeNode.this, myRepository, entry.getURL(), entry));
-        }
-
-        invokeLaterTreeFilling(nodes);
-      }
-
-      private void invokeLaterTreeFilling(@NotNull final List<TreeNode> nodesToFillWith) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (myChildrenInvalidated) {
-              // could be null if refresh was called during 'loading'.
-              if (myChildren != null) {
-                myChildren.clear();
-                myChildren.addAll(nodesToFillWith);
-              }
-              myModel.reload(RepositoryTreeNode.this);
-
-              if (myAfterChildrenLoad != null) {
-                myAfterChildrenLoad.onAfterReload(RepositoryTreeNode.this);
-                myAfterChildrenLoad = null;
-              }
-              myChildrenInvalidated = false;
-            }
-          }
-        });
-      }
-    };
-    ApplicationManager.getApplication().executeOnPooledThread(loader);
   }
 
   public SVNURL getURL() {
@@ -211,5 +158,138 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   public boolean isRepositoryRoot() {
     return ! (myUserObject instanceof SVNDirEntry);
+  }
+
+  @NotNull
+  public List<TreeNode> getAllAlreadyLoadedChildren() {
+    if (myChildren != null) {
+      final List<TreeNode> result = new ArrayList<TreeNode>(myChildren.size());
+      for (TreeNode child : myChildren) {
+        result.add(child);
+      }
+      return result;
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public List<RepositoryTreeNode> getAlreadyLoadedChildren() {
+    if (myChildren != null) {
+      final List<RepositoryTreeNode> result = new ArrayList<RepositoryTreeNode>(myChildren.size());
+      for (TreeNode child : myChildren) {
+        if (child instanceof RepositoryTreeNode) {
+          result.add((RepositoryTreeNode) child);
+        }
+      }
+      return result;
+    }
+    return Collections.emptyList();
+  }
+
+  public boolean isDisposed() {
+    return myModel.isDisposed();
+  }
+
+  public void setChildren(final List<SVNDirEntry> children, final NodeLoadState state) {
+    final List<TreeNode> nodes = new ArrayList<TreeNode>();
+    for (final SVNDirEntry entry : children) {
+      if (!myModel.isShowFiles() && entry.getKind() != SVNNodeKind.DIR) {
+        continue;
+      }
+      nodes.add(new RepositoryTreeNode(myModel, this, myRepository, entry.getURL(), entry, state));
+    }
+
+    myChildrenLoadState = state;
+    myChildren.clear();
+    myChildren.addAll(nodes);
+
+    myModel.reload(this);
+  }
+
+  public void setParentNode(final TreeNode parentNode) {
+    myParentNode = parentNode;
+  }
+
+  public void setAlienChildren(final List<TreeNode> children, final NodeLoadState oldState) {
+    if (myChildren == null) {
+      myChildren = new ArrayList<TreeNode>();
+    } else {
+      myChildren.clear();
+    }
+
+    for (TreeNode child : children) {
+      if (child instanceof RepositoryTreeNode) {
+        ((RepositoryTreeNode) child).setParentNode(this);
+        myChildren.add(child);
+        myChildrenLoadState = oldState;
+      } else if (child instanceof DefaultMutableTreeNode) {
+        myChildren.add(new DefaultMutableTreeNode(((DefaultMutableTreeNode) child).getUserObject()));
+        myChildrenLoadState = oldState;
+      }
+    }
+
+    myModel.reload(this);
+  }
+
+  public void setErrorNode(final SVNErrorMessage text, final NodeLoadState state) {
+    if (myChildren == null) {
+      myChildren = new ArrayList<TreeNode>();
+    }
+    myChildren.clear();
+    myChildren.add(new DefaultMutableTreeNode(text));
+
+    myChildrenLoadState = NodeLoadState.ERROR;
+    myModel.reload(this);
+  }
+
+  public SVNRepository getRepository() {
+    return myRepository;
+  }
+
+  public String getPath() {
+    return myPath;
+  }
+
+  public boolean isCached() {
+    return NodeLoadState.CACHED.equals(myLoadState);
+  }
+
+  @Nullable
+  public RepositoryTreeNode getNodeWithSamePathUnderModelRoot() {
+    return myModel.findByUrl(this);
+  }
+
+  public RepositoryTreeModel getModel() {
+    return myModel;
+  }
+
+  public NodeLoadState getChildrenLoadState() {
+    return myChildrenLoadState;
+  }
+
+  public void doOnSubtree(final NotNullFunction<RepositoryTreeNode, Object> function) {
+    final SubTreeWalker walker = new SubTreeWalker(this, function);
+    walker.execute();
+  }
+
+  private static class SubTreeWalker {
+    private final RepositoryTreeNode myNode;
+    private final NotNullFunction<RepositoryTreeNode, Object> myFunction;
+
+    private SubTreeWalker(final RepositoryTreeNode node, final NotNullFunction<RepositoryTreeNode, Object> function) {
+      myNode = node;
+      myFunction = function;
+    }
+
+    public void execute() {
+      executeImpl(myNode);
+    }
+
+    private void executeImpl(final RepositoryTreeNode node) {
+      myFunction.fun(node);
+      for (RepositoryTreeNode child : node.getAlreadyLoadedChildren()) {
+        myFunction.fun(child);
+      }
+    }
   }
 }
