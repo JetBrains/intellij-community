@@ -750,7 +750,7 @@ public class MatchingVisitor {
     @Override public final void visitModifierList(final PsiModifierList list) {
       final PsiModifierList list2 = (PsiModifierList) element;
 
-      for (String aMODIFIERS : MODIFIERS) {
+      for (@Modifier String aMODIFIERS : MODIFIERS) {
         if (list.hasModifierProperty(aMODIFIERS) && !list2.hasModifierProperty(aMODIFIERS)) {
           result = false;
           return;
