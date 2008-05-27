@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
@@ -933,6 +934,9 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
+    if (SingleRootFileViewProvider.isTooLarge(file)) {
+      return false;
+    }
     return getInputFilter(indexId).acceptInput(file) && (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
@@ -941,6 +945,9 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
+    if (SingleRootFileViewProvider.isTooLarge(file)) {
+      return false;
+    }
     return getInputFilter(indexId).acceptInput(file) && (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
