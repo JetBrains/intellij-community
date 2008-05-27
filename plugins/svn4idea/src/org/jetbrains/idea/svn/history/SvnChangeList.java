@@ -65,6 +65,7 @@ public class SvnChangeList implements CommittedChangeList {
   private Set<String> myAddedPaths = new HashSet<String>();
   private Set<String> myDeletedPaths = new HashSet<String>();
   private List<Change> myChanges;
+  private final String myCommonPathRoot;
 
   private SVNURL myBranchUrl;
   private VirtualFile myVcsRoot;
@@ -87,10 +88,14 @@ public class SvnChangeList implements CommittedChangeList {
 
     myRepositoryRoot = repositoryRoot.endsWith("/") ? repositoryRoot.substring(0, repositoryRoot.length() - 1) : repositoryRoot;
 
+    final CommonPathSearcher commonPathSearcher = new CommonPathSearcher();
+
     for(Object o: logEntry.getChangedPaths().values()) {
       final SVNLogEntryPath entry = (SVNLogEntryPath) o;
       final String path = entry.getPath();
 
+      commonPathSearcher.next(path);
+      
       if (entry.getType() == 'A') {
         if (entry.getCopyPath() != null) {
           myCopiedAddedPaths.put(path, entry.getCopyPath());
@@ -105,6 +110,8 @@ public class SvnChangeList implements CommittedChangeList {
       }
     }
 
+    myCommonPathRoot = commonPathSearcher.getCommon();
+
     updateCachedInfo();
   }
 
@@ -112,6 +119,17 @@ public class SvnChangeList implements CommittedChangeList {
     myVcs = vcs;
     myLocation = location;
     readFromStream(stream, supportsCopyFromInfo);
+    final CommonPathSearcher commonPathSearcher = new CommonPathSearcher();
+    for (String path : myAddedPaths) {
+      commonPathSearcher.next(path);
+    }
+    for (String path : myDeletedPaths) {
+      commonPathSearcher.next(path);
+    }
+    for (String path : myChangedPaths) {
+      commonPathSearcher.next(path);
+    }
+    myCommonPathRoot = commonPathSearcher.getCommon();
     updateCachedInfo();
   }
 
@@ -395,34 +413,40 @@ public class SvnChangeList implements CommittedChangeList {
     return myVcsRoot;
   }
 
-  @Nullable
-  private String getAnyPath() {
-    if (! myAddedPaths.isEmpty()) {
-      return myAddedPaths.iterator().next();
+  private static class CommonPathSearcher {
+    private String myCommon;
+
+    public void next(final String value) {
+      if (value == null) {
+        return;
+      }
+      if (myCommon == null) {
+        myCommon = value;
+        return;
+      }
+
+      if (value.startsWith(myCommon)) {
+        return;
+      }
+
+      myCommon = SVNPathUtil.getCommonPathAncestor(myCommon, value);
     }
-    if (! myDeletedPaths.isEmpty()) {
-      return myDeletedPaths.iterator().next();
+
+    public String getCommon() {
+      return myCommon;
     }
-    if (! myChangedPaths.isEmpty()) {
-      return myChangedPaths.iterator().next();
-    }
-    return null;
   }
 
   private void updateCachedInfo() {
     myCachedInfoLoaded = true;
 
-    String anyRelativePath = getAnyPath();
-    if (anyRelativePath == null) {
-      return;
-    }
-    final String absolutePath = myRepositoryRoot + (anyRelativePath.startsWith("/") ? anyRelativePath : ("/" + anyRelativePath));
+    final String absolutePath = myRepositoryRoot + (myCommonPathRoot.startsWith("/") ? myCommonPathRoot : ("/" + myCommonPathRoot));
 
     myVcsRoot = myVcs.getSvnFileUrlMapping().getVcRootByUrl(absolutePath);
     if (myVcsRoot == null) {
       return;
     }
-
+    
     myBranchUrl = getBranchForUrl(myVcsRoot, absolutePath);
   }
 

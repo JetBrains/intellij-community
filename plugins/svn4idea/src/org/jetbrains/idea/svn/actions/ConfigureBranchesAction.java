@@ -31,7 +31,8 @@ public class ConfigureBranchesAction extends AnAction {
     
     final ChangeList[] cls = e.getData(VcsDataKeys.CHANGE_LISTS);
     presentation.setEnabled((cls != null) && (cls.length > 0) &&
-                            (SvnVcs.getInstance(project).getName().equals(((CommittedChangeList) cls[0]).getVcs().getName())));
+                            (SvnVcs.getInstance(project).getName().equals(((CommittedChangeList) cls[0]).getVcs().getName())) &&
+                            (((SvnChangeList) cls[0]).getVcsRoot() != null));
   }
 
   public void actionPerformed(final AnActionEvent e) {
