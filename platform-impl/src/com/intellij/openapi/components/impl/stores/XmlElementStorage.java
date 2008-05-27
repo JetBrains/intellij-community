@@ -1,16 +1,13 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.StringInterner;
 import org.jdom.Attribute;
@@ -42,7 +39,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
   private final boolean myIsProjectSettings;
-  private Integer myUpToDateHash;
+  protected Integer myUpToDateHash;
 
 
 
@@ -246,7 +243,20 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
         }
       }
       else {
-        return !myUpToDateHash.equals(hash);
+        if (hash != null) {
+          if (!phisicalContentNeedsSave()) {
+            myUpToDateHash = hash;
+            return false;
+          }
+          else {
+            return true;
+          }
+
+        }
+        else {
+          return phisicalContentNeedsSave();
+        }
+
       }
     }
 
