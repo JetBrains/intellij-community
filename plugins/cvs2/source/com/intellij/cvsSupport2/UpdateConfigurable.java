@@ -61,7 +61,7 @@ public class UpdateConfigurable extends BaseConfigurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.versionControl.cvs.options";
   }
 
   public JComponent createComponent() {
