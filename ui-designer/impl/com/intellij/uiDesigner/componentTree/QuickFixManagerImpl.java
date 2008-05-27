@@ -23,7 +23,7 @@ import java.awt.*;
 public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.componentTree.QuickFixManagerImpl");
 
-  public QuickFixManagerImpl(final GuiEditor editor, final ComponentTree componentTree, final JViewport viewPort) {
+  public QuickFixManagerImpl(final GuiEditor editor, @NotNull final ComponentTree componentTree, final JViewport viewPort) {
     super(editor, componentTree, viewPort);
     myComponent.addTreeSelectionListener(new MyTreeSelectionListener());
   }
@@ -49,7 +49,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
       updateIntentionHintVisibility();
 
       ErrorInfo[] errorInfos = getErrorInfos();
-      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(getEditor().getProject());
+      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myComponent.getProject());
       if (errorInfos.length > 0 && errorInfos [0].myDescription != null) {
         statusBar.setInfo(errorInfos [0].myDescription);
       }

@@ -80,7 +80,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
   private final Project myProject;
 
-  public ComponentTree(final Project project) {
+  public ComponentTree(@NotNull final Project project) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myProject = project;
 
@@ -123,6 +123,11 @@ public final class ComponentTree extends Tree implements DataProvider {
       });
       setDropTarget(new DropTarget(this, new MyDropTargetListener()));
     }
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   public void initQuickFixManager(JViewport viewPort) {
