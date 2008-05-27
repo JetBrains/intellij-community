@@ -16,14 +16,11 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
-import com.intellij.psi.impl.compiled.ClsLiteralExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +70,7 @@ public class AnnotationUtilEx {
     final PsiElement parent = element.getParent();
 
     if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression p = ((PsiAssignmentExpression)parent);
+      final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
       if (p.getRExpression() == element) {
         return getAnnotatedElementFor(p.getLExpression(), type);
       }
@@ -94,11 +91,11 @@ public class AnnotationUtilEx {
       final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
       final PsiElement pair = value.getParent();
       if (pair instanceof PsiNameValuePair) {
-        return getAnnotationMethod(((PsiNameValuePair)pair), element);
+        return getAnnotationMethod((PsiNameValuePair)pair, element);
       }
     }
     else if (parent instanceof PsiNameValuePair) {
-      return getAnnotationMethod(((PsiNameValuePair)parent), element);
+      return getAnnotationMethod((PsiNameValuePair)parent, element);
     }
     else {
       return PsiUtilEx.getParameterForArgument(element);
@@ -124,7 +121,7 @@ public class AnnotationUtilEx {
     assert annotation != null;
 
     final String fqn = annotation.getQualifiedName();
-    assert fqn != null;
+    if (fqn == null) return null;
 
     final PsiClass psiClass = JavaPsiFacade.getInstance(element.getProject()).findClass(fqn, element.getResolveScope());
     if (psiClass != null && psiClass.isAnnotationType()) {
@@ -174,16 +171,14 @@ public class AnnotationUtilEx {
 
       return new PsiAnnotation[]{annotation};
     }
-    else if (allowIndirect) {
+    if (allowIndirect) {
       final PsiAnnotation[] annotations = getAnnotations(owner, inHierarchy);
       for (PsiAnnotation annotation : annotations) {
-        final String fqn = annotation.getQualifiedName();
-        if (fqn == null) {
-          continue;
-        }
-        final PsiClass psiClass = JavaPsiFacade.getInstance(owner.getProject()).findClass(fqn, annotation.getResolveScope());
-        if (psiClass != null) {
-          final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotationInHierarchy(psiClass, annotationName.second);
+        PsiJavaCodeReferenceElement nameReference = annotation.getNameReferenceElement();
+        if (nameReference == null) continue;
+        PsiElement resolved = nameReference.resolve();
+        if (resolved instanceof PsiClass) {
+          final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotationInHierarchy((PsiModifierListOwner)resolved, annotationName.second);
           if (psiAnnotation != null) {
             return new PsiAnnotation[]{psiAnnotation, annotation};
           }
@@ -205,7 +200,7 @@ public class AnnotationUtilEx {
    * it finds.
    */
   @Nullable
-  public static String calcAnnotationValue(PsiAnnotation annotation[], @NonNls String attr) {
+  public static String calcAnnotationValue(PsiAnnotation[] annotation, @NonNls String attr) {
     for (PsiAnnotation psiAnnotation : annotation) {
       final String value = calcAnnotationValue(psiAnnotation, attr);
       if (value != null) return value;
@@ -216,33 +211,11 @@ public class AnnotationUtilEx {
   @Nullable
   public static String calcAnnotationValue(@NotNull PsiAnnotation annotation, @NonNls String attr) {
     PsiElement value = annotation.findAttributeValue(attr);
-    final Object o;
-    if (value instanceof ClsLiteralExpressionImpl) {
-      final ClsLiteralExpressionImpl expr = ((ClsLiteralExpressionImpl)value);
-      if (expr.getValue() == null) {
-        // This happens when the expression isn't a simple literal but e.g. a concatenated string and the
-        // string contains characters that must be escaped: "A" + "\\w" + "B" -> "A\wB" which isn't a legal
-        // string literal any more -> value == null (IDEA-10001)
-        try {
-          final String s = expr.getText();
-          if (s.startsWith("\"") && s.endsWith("\"")) {
-            final String e = "\"" + StringUtil.escapeStringCharacters(s.substring(1, s.length() - 1)) + "\"";
-            value = JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory().createExpressionFromText(e, annotation);
-          }
-        }
-        catch (IncorrectOperationException e) {
-          Logger.getInstance(AnnotationUtilEx.class.getName()).error(e);
-        }
-      }
-    }
     if (value instanceof PsiExpression) {
-      o = CONSTANT_EVALUATION_HELPER.computeConstantExpression((PsiExpression)value);
-    }
-    else {
-      return null;
-    }
-    if (o instanceof String) {
-      return (String)o;
+      Object o = CONSTANT_EVALUATION_HELPER.computeConstantExpression((PsiExpression)value);
+      if (o instanceof String) {
+        return (String)o;
+      }
     }
     return null;
   }
@@ -252,37 +225,52 @@ public class AnnotationUtilEx {
    *
    * @see com.intellij.codeInsight.AnnotationUtil#isAnnotated(com.intellij.psi.PsiModifierListOwner, java.lang.String, boolean)
    */
-  public static PsiAnnotation[] getAnnotations(@NotNull PsiModifierListOwner listOwner, boolean inHierarchy) {
-    if (listOwner instanceof PsiParameter) {
-      // this is more efficient than getting the modifier list
-      return ((PsiParameter)listOwner).getAnnotations();
-    }
+  private static PsiAnnotation[] getAnnotations(@NotNull PsiModifierListOwner listOwner, boolean inHierarchy) {
     final PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) {
       return PsiAnnotation.EMPTY_ARRAY;
     }
-    if (inHierarchy && listOwner instanceof PsiMethod) {
+    if (inHierarchy) {
       final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
         public boolean add(PsiAnnotation o) {
           // don't overwrite "higher level" annotations
           return !contains(o) && super.add(o);
         }
       };
-      all.addAll(Arrays.asList(modifierList.getAnnotations()));
-      addSuperAnnotations(all, (PsiMethod)listOwner);
-      return all.toArray(new PsiAnnotation[all.size()]);
+      if (listOwner instanceof PsiMethod) {
+        all.addAll(Arrays.asList(modifierList.getAnnotations()));
+        processSuperMethods((PsiMethod)listOwner, new Processor<PsiMethod>() {
+          public boolean process(final PsiMethod superMethod) {
+            all.addAll(Arrays.asList(superMethod.getModifierList().getAnnotations()));
+            return true;
+          }
+        });
+        return all.toArray(new PsiAnnotation[all.size()]);
+      }
+      if (listOwner instanceof PsiParameter && ((PsiParameter)listOwner).getDeclarationScope() instanceof PsiMethod) {
+        PsiParameter parameter = (PsiParameter)listOwner;
+        PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+        final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+        all.addAll(Arrays.asList(modifierList.getAnnotations()));
+        processSuperMethods(method, new Processor<PsiMethod>() {
+          public boolean process(final PsiMethod superMethod) {
+            PsiParameter superParameter = superMethod.getParameterList().getParameters()[parameterIndex];
+            PsiModifierList modifierList = superParameter.getModifierList();
+            all.addAll(Arrays.asList(modifierList.getAnnotations()));
+            return true;
+          }
+        });
+        return all.toArray(new PsiAnnotation[all.size()]);
+      }
     }
-    else {
-      return modifierList.getAnnotations();
-    }
+    return modifierList.getAnnotations();
   }
 
-  private static void addSuperAnnotations(Set<PsiAnnotation> annotations, PsiMethod method) {
+  private static void processSuperMethods(PsiMethod method, Processor<PsiMethod> processor) {
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
-      final PsiModifierList modifierList = superMethod.getModifierList();
-      annotations.addAll(Arrays.asList(modifierList.getAnnotations()));
-      addSuperAnnotations(annotations, superMethod);
+      processor.process(superMethod);
+      processSuperMethods(superMethod, processor);
     }
   }
 }

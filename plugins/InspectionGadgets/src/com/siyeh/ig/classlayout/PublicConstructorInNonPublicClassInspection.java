@@ -68,9 +68,9 @@ public class PublicConstructorInNonPublicClassInspection
     private static class SetConstructorModifierFix
             extends InspectionGadgetsFix {
 
-        private final String modifier;
+        @Modifier private final String modifier;
 
-        SetConstructorModifierFix(String modifier) {
+        SetConstructorModifierFix(@Modifier String modifier) {
             this.modifier = modifier;
         }
 

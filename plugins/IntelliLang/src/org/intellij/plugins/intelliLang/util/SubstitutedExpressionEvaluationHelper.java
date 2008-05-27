@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Computes the constant value of an expression while considering the substitution annotation for non-compile-time
@@ -33,7 +32,6 @@ import java.util.Set;
  * This is a quite simplified implementation at the moment.
  */
 public class SubstitutedExpressionEvaluationHelper {
-
   private final PsiConstantEvaluationHelper myHelper;
   private final Configuration myConfiguration;
 
@@ -48,7 +46,7 @@ public class SubstitutedExpressionEvaluationHelper {
       return myHelper.computeConstantExpression(e);
     }
     else if (e instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression ref = ((PsiReferenceExpression)e);
+      final PsiReferenceExpression ref = (PsiReferenceExpression)e;
       final PsiElement psiElement = ref.resolve();
       if (psiElement != null) {
         final Object o = myHelper.computeConstantExpression(e);
@@ -57,11 +55,7 @@ public class SubstitutedExpressionEvaluationHelper {
         }
         else if (psiElement instanceof PsiModifierListOwner) {
           // find substitution
-          final Set<String> annotationNames = myConfiguration.getSubstAnnotationPair().second;
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)psiElement, annotationNames);
-          if (annotation != null) {
-            return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
-          }
+          return calcSubstituted((PsiModifierListOwner)psiElement);
         }
       }
       else {
@@ -72,17 +66,22 @@ public class SubstitutedExpressionEvaluationHelper {
       return computeSimpleExpression(((PsiParenthesizedExpression)e).getExpression());
     }
     else if (e instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression c = ((PsiMethodCallExpression)e);
+      final PsiMethodCallExpression c = (PsiMethodCallExpression)e;
       final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
       if (m != null && m.getReturnType() != PsiType.VOID) {
         // find substitution
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(m, myConfiguration.getSubstAnnotationPair().second);
-        if (annotation != null) {
-          return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
-        }
+        return calcSubstituted(m);
       }
     }
     return myHelper.computeConstantExpression(e);
+  }
+
+  private Object calcSubstituted(final PsiModifierListOwner owner) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, myConfiguration.getSubstAnnotationPair().second);
+    if (annotation != null) {
+      return AnnotationUtilEx.calcAnnotationValue(annotation, "value");
+    }
+    return null;
   }
 
   /**
@@ -98,10 +97,9 @@ public class SubstitutedExpressionEvaluationHelper {
     final List<PsiExpression> list = nonConstant != null ? nonConstant : new SmartList<PsiExpression>();
     final PsiElementVisitor processor = new JavaRecursiveElementVisitor() {
       SubstitutedExpressionEvaluationHelper helper = new SubstitutedExpressionEvaluationHelper(e.getProject());
-
       @Override
       public void visitConditionalExpression(PsiConditionalExpression expression) {
-        final PsiExpression c = expression.getCondition();
+        PsiExpression c = expression.getCondition();
         final Object o = helper.myHelper.computeConstantExpression(c);
         if (Boolean.TRUE.equals(o)) {
           final PsiExpression then = expression.getThenExpression();
@@ -153,6 +151,6 @@ public class SubstitutedExpressionEvaluationHelper {
     };
     e.accept(processor);
 
-    return list.size() == 0 ? builder.toString() : null;
+    return list.isEmpty() ? builder.toString() : null;
   }
 }

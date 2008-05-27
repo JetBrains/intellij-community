@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -44,6 +45,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.MessageFormat;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -151,7 +153,7 @@ public class PatternValidator extends LocalInspectionTool {
 
       private void check(@NotNull PsiExpression expression, ProblemsHolder holder, boolean isAnnotationValue) {
         if (expression instanceof PsiConditionalExpression) {
-          final PsiConditionalExpression expr = ((PsiConditionalExpression)expression);
+          final PsiConditionalExpression expr = (PsiConditionalExpression)expression;
           PsiExpression e = expr.getThenExpression();
           if (e != null) {
             check(e, holder, isAnnotationValue);
@@ -179,8 +181,7 @@ public class PatternValidator extends LocalInspectionTool {
               element = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
             }
             if (element != null) {
-              final PsiAnnotation[] annotations =
-                  AnnotationUtilEx.getAnnotationFrom(element, myConfiguration.getPatternAnnotationPair(), true);
+              PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(element, myConfiguration.getPatternAnnotationPair(), true);
               checkExpression(expression, annotations, holder);
             }
           }
@@ -189,82 +190,83 @@ public class PatternValidator extends LocalInspectionTool {
     };
   }
 
-  void checkExpression(PsiExpression expression, final PsiAnnotation[] annotations, ProblemsHolder holder) {
-    if (annotations.length > 0) {
-      final PsiAnnotation psiAnnotation = annotations[0];
+  private void checkExpression(PsiExpression expression, final PsiAnnotation[] annotations, ProblemsHolder holder) {
+    if (annotations.length == 0) return;
+    final PsiAnnotation psiAnnotation = annotations[0];
 
-      // cache compiled pattern with annotation
-      CachedValue<Pattern> p = psiAnnotation.getUserData(COMPLIED_PATTERN);
-      if (p == null) {
-        final CachedValueProvider<Pattern> provider = new CachedValueProvider<Pattern>() {
-          public Result<Pattern> compute() {
-            final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
-            Pattern p = null;
-            if (pattern != null) {
-              try {
-                p = Pattern.compile(pattern);
-              }
-              catch (PatternSyntaxException e) {
-                // pattern stays null
-              }
+    // cache compiled pattern with annotation
+    CachedValue<Pattern> p = psiAnnotation.getUserData(COMPLIED_PATTERN);
+    if (p == null) {
+      final CachedValueProvider<Pattern> provider = new CachedValueProvider<Pattern>() {
+        public Result<Pattern> compute() {
+          final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
+          Pattern p = null;
+          if (pattern != null) {
+            try {
+              p = Pattern.compile(pattern);
             }
-            return Result.create(p, (Object[])annotations);
+            catch (PatternSyntaxException e) {
+              // pattern stays null
+            }
           }
-        };
-        p = expression.getManager().getCachedValuesManager().createCachedValue(provider, false);
-        psiAnnotation.putUserData(COMPLIED_PATTERN, p);
+          return Result.create(p, (Object[])annotations);
+        }
+      };
+      p = expression.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      psiAnnotation.putUserData(COMPLIED_PATTERN, p);
+    }
+
+    final Pattern pattern = p.getValue();
+    if (pattern == null) return;
+
+    List<PsiExpression> nonConstantElements = new SmartList<PsiExpression>();
+    String o = SubstitutedExpressionEvaluationHelper.computeExpression(expression, nonConstantElements);
+    if (o != null) {
+      if (!pattern.matcher(o).matches()) {
+        if (annotations.length > 1) {
+          // the last element contains the element's actual annotation
+          final String fqn = annotations[annotations.length - 1].getQualifiedName();
+          assert fqn != null;
+
+          final String name = StringUtil.getShortName(fqn);
+          holder.registerProblem(expression, MessageFormat.format("Expression ''{0}'' doesn''t match ''{1}'' pattern: {2}", o, name,
+                                                                  pattern.pattern()));
+        }
+        else {
+          holder.registerProblem(expression,
+                                 MessageFormat.format("Expression ''{0}'' doesn''t match pattern: {1}", o, pattern.pattern()));
+        }
       }
-
-      final Pattern pattern = p.getValue();
-      if (pattern != null) {
-        final SmartList<PsiExpression> nonConstantElements = new SmartList<PsiExpression>();
-        final String o = SubstitutedExpressionEvaluationHelper.computeExpression(expression, nonConstantElements);
-
-        if (o != null) {
-          if (!pattern.matcher(o).matches()) {
-            if (annotations.length > 1) {
-              // the last element contains the element's actual annotation
-              final String fqn = annotations[annotations.length - 1].getQualifiedName();
-              assert fqn != null;
-
-              final String name = StringUtil.getShortName(fqn);
-              holder.registerProblem(expression, MessageFormat.format("Expression ''{0}'' doesn''t match ''{1}'' pattern: {2}", o, name,
-                                                                      pattern.pattern()));
-            }
-            else {
-              holder.registerProblem(expression,
-                                     MessageFormat.format("Expression ''{0}'' doesn''t match pattern: {1}", o, pattern.pattern()));
-            }
-          }
+    }
+    else if (CHECK_NON_CONSTANT_VALUES) {
+      for (PsiExpression expr : nonConstantElements) {
+        final PsiElement e;
+        if (expr instanceof PsiReferenceExpression) {
+          e = ((PsiReferenceExpression)expr).resolve();
         }
-        else if (CHECK_NON_CONSTANT_VALUES) {
-          for (PsiExpression expr : nonConstantElements) {
-            final PsiElement e;
-            if (expr instanceof PsiReferenceExpression) {
-              e = ((PsiReferenceExpression)expr).resolve();
-            }
-            else if (expr instanceof PsiMethodCallExpression) {
-              e = ((PsiMethodCallExpression)expr).getMethodExpression().resolve();
-            }
-            else {
-              e = expr;
-            }
-
-            if (e instanceof PsiModifierListOwner) {
-              final String classname = Configuration.getInstance().getSubstAnnotationPair().first;
-              final AnnotateFix fix = new AnnotateFix((PsiModifierListOwner)e, classname);
-              if (fix.canApply()) {
-                holder.registerProblem(expr, "Unsubstituted expression", fix);
-              }
-              else {
-                holder.registerProblem(expr, "Unsubstituted expression", new IntroduceVariableFix(expr));
-              }
-            }
-            else {
-              holder.registerProblem(expr, "Unsubstituted expression", new IntroduceVariableFix(expr));
-            }
-          }
+        else if (expr instanceof PsiMethodCallExpression) {
+          e = ((PsiMethodCallExpression)expr).getMethodExpression().resolve();
         }
+        else {
+          e = expr;
+        }
+
+        LocalQuickFix quickFix;
+        if (e instanceof PsiModifierListOwner) {
+          PsiAnnotation[] resolvedAnnos = AnnotationUtilEx.getAnnotationFrom((PsiModifierListOwner)e, myConfiguration.getPatternAnnotationPair(), true);
+          if (resolvedAnnos.length == 2 && annotations.length == 2 && Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
+            // both target and source annotated indirectly with the same anno
+            return;
+          }
+
+          final String classname = Configuration.getInstance().getSubstAnnotationPair().first;
+          final AnnotateFix fix = new AnnotateFix((PsiModifierListOwner)e, classname);
+          quickFix = fix.canApply() ? fix : new IntroduceVariableFix(expr);
+        }
+        else {
+          quickFix = new IntroduceVariableFix(expr);
+        }
+        holder.registerProblem(expr, "Unsubstituted expression", quickFix);
       }
     }
   }
