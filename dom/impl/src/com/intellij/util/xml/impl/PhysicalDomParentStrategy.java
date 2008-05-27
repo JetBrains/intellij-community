@@ -4,7 +4,9 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,11 +22,16 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
 
   @NotNull
   public DomInvocationHandler getParentHandler() {
-    final XmlTag parentTag = (XmlTag)myElement.getParent();
+    final XmlTag parentTag = (XmlTag)getParentTag();
     assert parentTag != null;
     final DomInvocationHandler handler = DomManagerImpl.getDomManager(myElement.getProject()).getDomHandler(parentTag);
-    assert handler != null : parentTag.getText() + Thread.currentThread().hashCode();
+    assert handler != null : parentTag.getText();
     return handler;
+  }
+
+  private PsiElement getParentTag() {
+    final PsiElement parent = myElement.getParent();
+    return parent instanceof XmlEntityRef ? parent.getParent() : parent;
   }
 
   @NotNull
