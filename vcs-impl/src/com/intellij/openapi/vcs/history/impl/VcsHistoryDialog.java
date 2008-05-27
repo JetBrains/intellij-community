@@ -26,6 +26,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -93,7 +94,7 @@ public class VcsHistoryDialog extends DialogWrapper {
   private final JTextArea myComments = new JTextArea();
   private static final int CURRENT = 0;
   private boolean myIsInLoading = false;
-  private final String myHelpId;
+  @NonNls private final String myHelpId;
   private boolean myIsDisposed = false;
   private final FileType myContentFileType;
 
@@ -108,7 +109,8 @@ public class VcsHistoryDialog extends DialogWrapper {
     myActiveVcs = vcs;
     myRevisions = new ArrayList<VcsFileRevision>();
     myFile = file;
-    myHelpId = vcsHistoryProvider.getHelpId();
+    String helpId = vcsHistoryProvider.getHelpId();
+    myHelpId = helpId != null ? helpId : "reference.dialogs.vcs.selection.history";
     myList = new TableView(new ListTableModel(createColumns(vcsHistoryProvider.getRevisionColumns())));
     ((SortableColumnModel)myList.getModel()).setSortable(false);
 
