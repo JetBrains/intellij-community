@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,16 @@ public class IgnoredSettingsDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("configureIgnoredFilesDialog");
   }
 
   private void setItems(final IgnoredFileBean[] filesToIgnore) {

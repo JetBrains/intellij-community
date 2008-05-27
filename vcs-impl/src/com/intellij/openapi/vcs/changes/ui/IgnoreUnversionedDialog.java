@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,16 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     myIgnoreAllFilesMatchingRadioButton.addActionListener(listener);
     myIgnoreSpecifiedFileRadioButton.addActionListener(listener);
     updateControls();
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("ignoreUnversionedFilesDialog");
   }
 
   private void updateControls() {
