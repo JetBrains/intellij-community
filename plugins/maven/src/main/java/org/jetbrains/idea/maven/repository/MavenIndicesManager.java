@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -71,16 +72,11 @@ public class MavenIndicesManager extends DummyProjectComponent {
     listenForArtifactChanges();
   }
 
-  private void initIndices() throws MavenException {
+  private void initIndices() {
     myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getSettings());
     myIndices = new MavenIndices(myEmbedder, getIndicesDir());
 
-    try {
-      myIndices.load();
-    }
-    catch (MavenIndexException e) {
-      throw new MavenException("Couldn't load Maven Repositories: " + e.getMessage());
-    }
+    myIndices.load();
   }
 
   private void listenForArtifactChanges() {
@@ -227,9 +223,13 @@ public class MavenIndicesManager extends DummyProjectComponent {
         try {
           List<MavenIndex> infos = info != null ? Collections.singletonList(info) : myIndices.getIndices();
 
-          for (MavenIndex each : infos) {
-            indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getId()));
-            myIndices.update(each, myProject, indicator);
+          try {
+            for (MavenIndex each : infos) {
+              indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getId()));
+              myIndices.update(each, myProject, indicator);
+            }
+          }
+          catch (ProcessCanceledException ignore) {
           }
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {

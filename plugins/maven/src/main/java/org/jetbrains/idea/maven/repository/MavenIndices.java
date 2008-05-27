@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.repository;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,12 +17,16 @@ import org.apache.maven.settings.Proxy;
 import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.PomDescriptor;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.sonatype.nexus.index.ArtifactInfo;
 import org.sonatype.nexus.index.NexusIndexer;
+import org.sonatype.nexus.index.ArtifactScanningListener;
+import org.sonatype.nexus.index.ArtifactContext;
+import org.sonatype.nexus.index.scan.ScanningResult;
 import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.context.UnsupportedExistingLuceneIndexException;
@@ -32,10 +37,10 @@ import java.util.*;
 
 public class MavenIndices {
   protected static final String INDICES_LIST_FILE = "list.dat";
-  private static final String CACHES_DIR = "caches";
-  private static final String GROUP_IDS_FILE = "groupIds.dat";
-  private static final String ARTIFACT_IDS_FILE = "artifactIds.dat";
-  private static final String VERSIONS_FILE = "versions.dat";
+  protected static final String CACHES_DIR = "caches";
+  protected static final String GROUP_IDS_FILE = "groupIds.dat";
+  protected static final String ARTIFACT_IDS_FILE = "artifactIds.dat";
+  protected static final String VERSIONS_FILE = "versions.dat";
 
   private MavenEmbedder myEmbedder;
   private NexusIndexer myIndexer;
@@ -58,35 +63,45 @@ public class MavenIndices {
     }
   }
 
-  public void load() throws MavenIndexException {
+  public void load() {
     try {
+      File f = getListFile();
+      if (!f.exists()) return;
+
+      FileInputStream fs = new FileInputStream(f);
+
       try {
-        File f = getListFile();
-        if (!f.exists()) return;
-
-        FileInputStream fs = new FileInputStream(f);
-
-        try {
-          DataInputStream is = new DataInputStream(fs);
-          myIndicesData = new LinkedHashMap<MavenIndex, IndexData>();
-          int size = is.readInt();
-          while (size-- > 0) {
-            add(new MavenIndex(is));
+        DataInputStream is = new DataInputStream(fs);
+        myIndicesData = new LinkedHashMap<MavenIndex, IndexData>();
+        int size = is.readInt();
+        while (size-- > 0) {
+          MavenIndex i = new MavenIndex(is);
+          try {
+            add(i);
+          }
+          catch (MavenIndexException e) {
+            MavenLog.LOG.info(e);
           }
         }
-        finally {
-          fs.close();
-        }
       }
-      catch (Exception e) {
-        throw new MavenIndexException(e);
+      finally {
+        fs.close();
       }
     }
-    catch (MavenIndexException e) {
-      closeOpenIndices();
-      clearIndices();
+    catch (Exception e) {
+      MavenLog.LOG.info(e);
 
-      throw e;
+      try {
+        try {
+          closeOpenIndices();
+        }
+        catch (IOException e1) {
+          MavenLog.LOG.info(e1);
+        }
+      }
+      finally {
+        clearIndices();
+      }
     }
   }
 
@@ -119,36 +134,64 @@ public class MavenIndices {
   }
 
   public void close() {
-    closeOpenIndices();
+    try {
+      closeOpenIndices();
+    }
+    catch (IOException e) {
+      MavenLog.LOG.info(e);
+    }
   }
 
-  private void closeOpenIndices() {
+  private void closeOpenIndices() throws IOException {
     try {
       for (IndexData data : myIndicesData.values()) {
         closeIndexData(data);
       }
-      myIndicesData.clear();
     }
-    catch (IOException e) {
-      // shouldn't throw any exception, since we are not deleting the
-      // content from the disk.
-      throw new RuntimeException(e);
+    finally {
+      myIndicesData.clear();
     }
   }
 
   public void add(MavenIndex i) throws MavenIndexException {
     try {
-      IndexData data = new IndexData();
+      doAdd(i);
+    }
+    catch (Exception e) {
+      MavenLog.LOG.info(e);
+      try {
+        doAdd(i);
+      }
+      catch (Exception e1) {
+        throw new MavenIndexException(e1);
+      }
+    }
+  }
+
+  private void doAdd(MavenIndex i) throws Exception {
+    IndexData data = new IndexData();
+
+    try {
       data.context = createContext(i);
       data.cache = createCache(i);
-      myIndicesData.put(i, data);
     }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
+    catch (Exception e) {
+      try {
+        try {
+          closeIndexData(data);
+        }
+        catch (IOException e1) {
+          MavenLog.LOG.info(e1);
+        }
+      }
+      finally {
+        clearIndexData(i);
+      }
+
+      throw e;
     }
-    catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenIndexException(e);
-    }
+
+    myIndicesData.put(i, data);
   }
 
   private IndexingContext createContext(MavenIndex i) throws IOException, UnsupportedExistingLuceneIndexException {
@@ -183,10 +226,11 @@ public class MavenIndices {
     add(i);
   }
 
-  public void update(MavenIndex i, Project project, ProgressIndicator progress) throws MavenIndexException {
+  public void update(MavenIndex i, Project project, ProgressIndicator progress) throws MavenIndexException,
+                                                                                       ProcessCanceledException {
     try {
-      updateIndexContext(i, project, progress);
-      updateIndexCache(i, project);
+      updateIndexContext(i, progress);
+      updateIndexCache(i, project, progress);
     }
     catch (IOException e) {
       throw new MavenIndexException(e);
@@ -196,17 +240,17 @@ public class MavenIndices {
     }
   }
 
-  private void updateIndexContext(MavenIndex i, Project project, ProgressIndicator progress)
+  private void updateIndexContext(MavenIndex i, ProgressIndicator progress)
       throws IOException, UnsupportedExistingLuceneIndexException, MavenIndexException {
     switch (i.getKind()) {
       case LOCAL:
-        progress.setIndeterminate(true);
         // NexusIndexer.scan does not overwrite an existing index, so we have to
         // remove it manually.
         remove(i);
         add(i);
 
-        myIndexer.scan(myIndicesData.get(i).context);
+        progress.setIndeterminate(true);
+        myIndexer.scan(myIndicesData.get(i).context, new MyScanningListener(progress), false);
         return;
       case REMOTE:
         Proxy proxy = myEmbedder.getSettings().getActiveProxy();
@@ -227,12 +271,10 @@ public class MavenIndices {
     }
   }
 
-  private void updateIndexCache(MavenIndex index, Project project) throws IOException {
-    MavenIndices.IndexData data = myIndicesData.get(index);
+  private void updateIndexCache(MavenIndex index, Project project, ProgressIndicator progress) throws IOException {
+    IndexData data = myIndicesData.get(index);
 
-    data.cache.close();
-    FileUtil.delete(getCacheDir(index));
-    data.cache = createCache(index);
+    progress.setText2("Updating caches...");
 
     Set<String> groupIds = new HashSet<String>();
     Map<String, List<String>> artifactIds = new HashMap<String, List<String>>();
@@ -247,9 +289,15 @@ public class MavenIndices {
         getOrCreate(artifactIds, id.groupId).add(id.artifactId);
         getOrCreate(versions, id.groupId + ":" + id.artifactId).add(id.version);
       }
-    } else {
+    }
+    else {
       IndexReader r = data.context.getIndexReader();
-      for (int i = 0; i < r.numDocs(); i++) {
+      int total = r.numDocs();
+      for (int i = 0; i < total; i++) {
+        progress.setFraction(i / total);
+
+        if (r.isDeleted(i)) continue;
+
         Document doc = r.document(i);
         String uinfo = doc.get(ArtifactInfo.UINFO);
         if (uinfo == null) continue;
@@ -265,21 +313,32 @@ public class MavenIndices {
       }
     }
 
-    for (String each : groupIds) {
-      data.cache.groupIds.enumerate(each);
-    }
+    progress.startNonCancelableSection();
+    try {
+      progress.setText2("Saving caches...");
+      data.cache.close();
+      FileUtil.delete(getCacheDir(index));
+      data.cache = createCache(index);
 
-    for (Map.Entry<String, List<String>> each : artifactIds.entrySet()) {
-      data.cache.artifactIds.put(each.getKey(), each.getValue());
-    }
+      for (String each : groupIds) {
+        data.cache.groupIds.enumerate(each);
+      }
 
-    for (Map.Entry<String, List<String>> each : versions.entrySet()) {
-      data.cache.versions.put(each.getKey(), each.getValue());
-    }
+      for (Map.Entry<String, List<String>> each : artifactIds.entrySet()) {
+        data.cache.artifactIds.put(each.getKey(), each.getValue());
+      }
 
-    data.cache.groupIds.flush();
-    data.cache.artifactIds.flush();
-    data.cache.versions.flush();
+      for (Map.Entry<String, List<String>> each : versions.entrySet()) {
+        data.cache.versions.put(each.getKey(), each.getValue());
+      }
+
+      data.cache.groupIds.flush();
+      data.cache.artifactIds.flush();
+      data.cache.versions.flush();
+    }
+    finally {
+      progress.finishNonCancelableSection();
+    }
   }
 
   private List<String> getOrCreate(Map<String, List<String>> map, String key) {
@@ -293,8 +352,12 @@ public class MavenIndices {
 
   public void remove(MavenIndex i) throws MavenIndexException {
     try {
-      closeIndexData(myIndicesData.remove(i));
-      FileUtil.delete(getIndexDir(i));
+      try {
+        closeIndexData(myIndicesData.remove(i));
+      }
+      finally {
+        clearIndexData(i);
+      }
     }
     catch (IOException e) {
       throw new MavenIndexException(e);
@@ -302,8 +365,16 @@ public class MavenIndices {
   }
 
   private void closeIndexData(IndexData data) throws IOException {
-    myIndexer.removeIndexingContext(data.context, false);
-    data.cache.close();
+    try {
+      if (data.context != null) myIndexer.removeIndexingContext(data.context, false);
+    }
+    finally {
+      if (data.cache != null) data.cache.close();
+    }
+  }
+
+  private void clearIndexData(MavenIndex i) {
+    FileUtil.delete(getIndexDir(i));
   }
 
   public List<MavenIndex> getIndices() {
@@ -416,9 +487,17 @@ public class MavenIndices {
     }
 
     public void close() throws IOException {
-      groupIds.close();
-      artifactIds.close();
-      versions.close();
+      try {
+        if (groupIds != null) groupIds.close();
+      }
+      finally {
+        try {
+          if (artifactIds != null) artifactIds.close();
+        }
+        finally {
+          if (versions != null) versions.close();
+        }
+      }
     }
   }
 
@@ -437,6 +516,32 @@ public class MavenIndices {
         result.add(s.readUTF());
       }
       return result;
+    }
+  }
+
+  private class MyScanningListener implements ArtifactScanningListener {
+    private ProgressIndicator p;
+
+    public MyScanningListener(ProgressIndicator progress) {
+      p = progress;
+    }
+
+    public void scanningStarted(IndexingContext ctx) {
+      p.checkCanceled();
+      p.setText2("Starting...");
+    }
+
+    public void scanningFinished(IndexingContext ctx, ScanningResult result) {
+      p.checkCanceled();
+      p.setText2("Done");
+    }
+
+    public void artifactError(ArtifactContext ac, Exception e) {
+    }
+
+    public void artifactDiscovered(ArtifactContext ac) {
+      p.checkCanceled();
+      p.setText2("Indexing " + ac.getArtifact());
     }
   }
 }
