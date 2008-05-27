@@ -10,8 +10,7 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -81,10 +80,11 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
       assertTrue(instrumenter.isModification());
 
       MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
-      return classLoader.doDefineClass(getTestName(false), writer.toByteArray());
+      byte[] instrumented = writer.toByteArray();
+      return classLoader.doDefineClass(getTestName(false), instrumented);
     }
     finally {
-      //FileUtil.delete(new File(classPath));
+      FileUtil.delete(new File(classPath));
     }
   }
 
