@@ -536,6 +536,19 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
+  public boolean wereChildrenAccessed(int id) {
+    try {
+      synchronized (lock) {
+        int encodedAttId = DbConnection.getAttributeId(CHILDREN_ATT);
+        final int att = findAttributePage(id, encodedAttId, false);
+        return att != 0;
+      }
+    }
+    catch (IOException e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+  
   public void updateList(int id, int[] children) {
     synchronized (lock) {
       try {

@@ -82,6 +82,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return areChildrenLoaded(getFileId(dir));
   }
 
+  public boolean wereChildrenAccessed(final VirtualFile dir) {
+    return myRecords.wereChildrenAccessed(getFileId(dir));
+  }
+
   public String[] list(final VirtualFile file) {
     int id = getFileId(file);
     if (areChildrenLoaded(id)) {

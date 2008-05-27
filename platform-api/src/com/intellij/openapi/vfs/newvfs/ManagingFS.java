@@ -44,6 +44,8 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract boolean areChildrenLoaded(VirtualFile dir);
 
+  public abstract boolean wereChildrenAccessed(VirtualFile dir);
+
   public abstract void processEvents(List<? extends VFileEvent> events);
 
   @Nullable
