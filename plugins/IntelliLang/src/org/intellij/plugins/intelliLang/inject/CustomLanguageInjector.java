@@ -42,6 +42,7 @@ import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,13 +190,39 @@ public final class CustomLanguageInjector implements ProjectComponent {
         for (JavaResolveResult result : results) {
           final PsiElement element = result.getElement();
           if (element instanceof PsiVariable) {
-            for (PsiExpression expression : getVariableAssignmentsInFile((PsiVariable)element, concatFlag)) {
-              ContainerUtil.addIfNotNull(findFirstLiteralExpression(expression), list);
+            final PsiVariable psiVariable = (PsiVariable)element;
+            final PsiType type = psiVariable.getType();
+            if (!PsiUtilEx.isStringOrStringArray(type)) continue;
+            boolean isArray = type instanceof PsiArrayType;
+            for (PsiExpression expression : getVariableAssignmentsInFile(psiVariable, concatFlag)) {
+              if (isArray) {
+                if (expression instanceof PsiNewExpression) {
+                  final PsiArrayInitializerExpression arrayInit = ((PsiNewExpression)expression).getArrayInitializer();
+                  if (arrayInit != null) {
+                    for (PsiExpression psiExpression : arrayInit.getInitializers()) {
+                      ContainerUtil.addIfNotNull(findFirstLiteralExpression(psiExpression), list);
+                    }
+                  }
+                }
+              }
+              else {
+                ContainerUtil.addIfNotNull(findFirstLiteralExpression(expression), list);
+              }
             }
           }
         }
         return list;
       }
+    }
+    else if (place instanceof PsiNewExpression) {
+      final ArrayList<PsiLiteralExpression> list = new ArrayList<PsiLiteralExpression>();
+      final PsiArrayInitializerExpression arrayInit = ((PsiNewExpression)place).getArrayInitializer();
+      if (arrayInit != null) {
+        for (PsiExpression psiExpression : arrayInit.getInitializers()) {
+          ContainerUtil.addIfNotNull(findFirstLiteralExpression(psiExpression), list);
+        }
+      }
+      return list;
     }
     else if (place instanceof PsiExpression) {
       final PsiLiteralExpression expression = findFirstLiteralExpression((PsiExpression)place);
