@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -65,7 +66,15 @@ public class ChooseTypeExpression implements Expression {
   }
 
   private void processSupertypes(PsiType type, Set<LookupItem> result) {
-    LookupItemUtil.addLookupItem(result, type, "");
+    String text = type.getCanonicalText();
+    String unboxed = PsiTypesUtil.unboxIfPossible(text);
+    if (unboxed != null && !unboxed.equals(text)) {
+      LookupItem item = LookupItemUtil.objectToLookupItem(unboxed);
+      item.setBold();
+      LookupItemUtil.addLookupItem(result, item, "");
+    } else {
+      LookupItemUtil.addLookupItem(result, type, "");
+    }
     PsiType[] superTypes = type.getSuperTypes();
     for (PsiType superType : superTypes) {
       processSupertypes(superType, result);

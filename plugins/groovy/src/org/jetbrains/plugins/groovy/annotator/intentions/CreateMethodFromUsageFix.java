@@ -14,28 +14,21 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
-import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ParameterNameExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -75,7 +68,6 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefExpression, false, false);
     assert argTypes != null;
     ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
-    ParameterNameExpression paramNameExpression = new ParameterNameExpression();
     for (int i = 0; i < argTypes.length; i++) {
       PsiType argType = argTypes[i];
       if (argType == null) argType = TypesUtil.getJavaLangObject(myRefExpression);
@@ -84,39 +76,12 @@ public class CreateMethodFromUsageFix implements IntentionAction {
       paramTypesExpressions[i] = new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager());
     }
     methodBuffer.append(") {\n}");
-
-
     GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(methodBuffer.toString());
-    method = myTargetClass.addMemberDeclaration(method, null);
-    GrTypeElement typeElement = method.getReturnTypeElementGroovy();
-    assert typeElement != null;
+    GrMemberOwner owner = myTargetClass;
     TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints((GrCallExpression) myRefExpression.getParent());
-    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
-    TemplateBuilder builder = new TemplateBuilder(method);
-    builder.replaceElement(typeElement, expr);
-    GrParameter[] parameters = method.getParameterList().getParameters();
-    assert parameters.length == argTypes.length;
-    for (int i = 0; i < parameters.length; i++) {
-      GrParameter parameter = parameters[i];
-      GrTypeElement parameterTypeElement = parameter.getTypeElementGroovy();
-      builder.replaceElement(parameterTypeElement, paramTypesExpressions[i]);
-      builder.replaceElement(parameter.getNameIdentifierGroovy(), paramNameExpression);
-    }
-    GrOpenBlock body = method.getBlock();
-    assert body != null;
-    PsiElement lbrace = body.getLBrace();
-    assert lbrace != null;
-    builder.setEndVariableAfter(lbrace);
+    method = owner.addMemberDeclaration(method, null);
 
-    method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
-    Template template = builder.buildTemplate();
-
-    Editor newEditor = QuickfixUtil.positionCursor(project, myTargetClass.getContainingFile(), method);
-    TextRange range = method.getTextRange();
-    newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-
-    TemplateManager manager = TemplateManager.getInstance(project);
-    manager.startTemplate(newEditor, template);
+    IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, owner, constraints, false);
   }
 
   public boolean startInWriteAction() {
