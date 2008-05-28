@@ -98,7 +98,8 @@ public class CompletionUtil {
                                                   final int startOffset,
                                                   final CompletionData mainCompletionData) {
     CompletionData wordCompletionData = null;
-    if (!hasNonSoftReference(file, startOffset)) {
+    final PsiReference reference = file.findReferenceAt(startOffset);
+    if (reference == null) {
       ASTNode textContainer = element != null ? element.getNode() : null;
       while (textContainer != null) {
         final IElementType elementType = textContainer.getElementType();

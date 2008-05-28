@@ -1,7 +1,7 @@
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -21,7 +21,7 @@ public class PropertyValueImpl extends LeafPsiElement {
     String text = getText();
     String[] words = text.split("\\s");
     if (words.length == 0) return PsiReference.EMPTY_ARRAY;
-    return new JavaClassReferenceProvider(){
+    return new JavaClassListReferenceProvider(){
       public boolean isSoft() {
         return true;
       }

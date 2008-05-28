@@ -35,4 +35,8 @@ public abstract class ExtendClassImpl implements ExtendClass {
   public Class<? extends Annotation> annotationType() {
     return ExtendClass.class;
   }
+
+  public boolean jvmFormat() {
+    return true;
+  }
 }

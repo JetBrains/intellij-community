@@ -19,7 +19,7 @@ package com.intellij.util.xml;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-/**                                                                                                      
+/**
  * Annotates DOM methods that return either {@link com.intellij.psi.PsiClass} or
  * {@link com.intellij.util.xml.GenericDomValue}<{@link com.intellij.psi.PsiClass}>.
  * Specifies that the references class should extend some other class (or implement interface).
@@ -51,4 +51,6 @@ public @interface ExtendClass {
   boolean allowAbstract() default true;
 
   boolean allowInterface() default true;
+
+  boolean jvmFormat() default true;
 }

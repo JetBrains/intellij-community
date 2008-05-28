@@ -234,8 +234,11 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param newName new name for the element.
    * @param additionalFiles
    * @throws Throwable any exception.
+   * @see #testRename(String, String, String, String[])
    */
   void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles) throws Throwable;
+
+  void testRename(String fileAfter, String newName) throws Throwable;
 
   PsiReference[] testFindUsages(@NonNls String... fileNames) throws Throwable;
 
@@ -266,8 +269,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   @NotNull
   Collection<GutterIconRenderer> findAllGutters(String filePath) throws Throwable;
-
-  void testRename(String fileAfter, String newName) throws Throwable;
 
   void type(final char c);
 

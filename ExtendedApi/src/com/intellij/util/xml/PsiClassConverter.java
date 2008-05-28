@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +51,9 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
       }
       if (!extendClass.allowInterface()) {
         provider.setOption(JavaClassReferenceProvider.NOT_INTERFACE, Boolean.TRUE);
+      }
+      if (extendClass.jvmFormat()) {
+        provider.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
       }
       provider.setAllowEmpty(extendClass.allowEmpty());
 
