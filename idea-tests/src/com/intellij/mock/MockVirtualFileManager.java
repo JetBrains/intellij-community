@@ -30,30 +30,30 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   public void refresh(boolean asynchronous, Runnable postAction) {
   }
 
-  public VirtualFile findFileByUrl(String url) {
+  public VirtualFile findFileByUrl(@NotNull String url) {
     return null;
   }
 
-  public VirtualFile refreshAndFindFileByUrl(String url) {
+  public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
     return null;
   }
 
-  public void addVirtualFileListener(VirtualFileListener listener) {
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
   }
 
   public void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable) {
   }
 
-  public void removeVirtualFileListener(VirtualFileListener listener) {
+  public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
   }
 
-  public void addModificationAttemptListener(ModificationAttemptListener listener) {
+  public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
   }
 
-  public void removeModificationAttemptListener(ModificationAttemptListener listener) {
+  public void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
   }
 
-  public void fireReadOnlyModificationAttempt(VirtualFile... files) {
+  public void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files) {
   }
 
   public void addVirtualFileManagerListener(VirtualFileManagerListener listener) {

@@ -1,7 +1,6 @@
 package com.intellij.history.integration;
 
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.core.InMemoryLocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.LocalVcsTestCase;
@@ -9,7 +8,8 @@ import com.intellij.history.integration.stubs.StubCommandProcessor;
 import com.intellij.history.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.history.integration.stubs.StubStartupManagerEx;
 import com.intellij.history.integration.stubs.StubVirtualFileManagerEx;
-import com.intellij.history.LocalHistoryConfiguration;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
@@ -146,12 +146,12 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
     }
 
     @Override
-    public void addVirtualFileListener(VirtualFileListener l) {
+    public void addVirtualFileListener(@NotNull VirtualFileListener l) {
       myFileListener = l;
     }
 
     @Override
-    public void removeVirtualFileListener(VirtualFileListener l) {
+    public void removeVirtualFileListener(@NotNull VirtualFileListener l) {
       if (myFileListener == l) myFileListener = null;
     }
 
