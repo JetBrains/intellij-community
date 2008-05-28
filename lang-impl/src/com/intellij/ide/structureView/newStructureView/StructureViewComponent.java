@@ -555,7 +555,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public boolean isActionActive(String name) {
-    return StructureViewFactoryEx.getInstanceEx(myProject).isActionActive(name);
+    return !myProject.isDisposed() && StructureViewFactoryEx.getInstanceEx(myProject).isActionActive(name);
   }
 
   public AbstractTreeStructure getTreeStructure() {
