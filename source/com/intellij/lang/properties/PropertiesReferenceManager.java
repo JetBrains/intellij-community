@@ -68,6 +68,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     });
     myPropertiesFileListener = new PropertiesFilesManager.PropertiesFileListener() {
       public void fileAdded(final VirtualFile propertiesFile) {
+        if (myPsiManager.isDisposed()) return;
         PsiFile psi = myPsiManager.findFile(propertiesFile);
         if (psi instanceof PropertiesFile) {
           beforePropertiesFileChange((PropertiesFile)psi, null);
