@@ -224,11 +224,18 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private Object[] processPackage(final PsiPackage aPackage) {
-    final PsiPackage[] subPackages = aPackage.getSubPackages();
+    final ArrayList<Object> list = new ArrayList<Object>();
+    final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getName().length() + 1;
+    for (final PsiPackage subPackage : aPackage.getSubPackages()) {
+      final String shortName = subPackage.getQualifiedName().substring(startOffset);
+      if (JavaPsiFacade.getInstance(subPackage.getProject()).getNameHelper().isIdentifier(shortName)) {
+        list.add(subPackage);
+      }
+    }
+
     final PsiClass[] classes = aPackage.getClasses();
     final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
     if (options != null) {
-      final ArrayList<Object> list = new ArrayList<Object>(Arrays.asList(subPackages));
       final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);
       final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(options);
       final boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options);
@@ -237,9 +244,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
           list.add(clazz);
         }
       }
-      return list.toArray();
+    } else {
+      list.addAll(Arrays.asList(classes));
     }
-    return ArrayUtil.mergeArrays(subPackages, classes, Object.class);
+    return list.toArray();
   }
 
   private static boolean isClassAccepted(final PsiClass clazz, final boolean instantiatable, final boolean concrete, final boolean notInterface) {
