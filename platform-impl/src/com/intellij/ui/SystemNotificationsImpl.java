@@ -3,6 +3,7 @@ package com.intellij.ui;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -24,7 +25,7 @@ public class SystemNotificationsImpl implements SystemNotifications, PersistentS
   private boolean myCannotInitializeNotifications = false;
 
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (myCannotInitializeNotifications) return;
+    if (myCannotInitializeNotifications || !SystemInfo.isMac) return;
 
     final GrowlNotifications nofications;
     try {
