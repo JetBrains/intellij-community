@@ -173,7 +173,7 @@ public class StatementParsing extends Parsing {
   private void parseCodeBlockDeep(CompositeElement elementToAdd,
                                   Lexer lexer,
                                   boolean parseToEndOfLexer) {
-    LOG.assertTrue(lexer.getTokenType() == LBRACE);
+    LOG.assertTrue(lexer.getTokenType() == LBRACE, lexer.getTokenType());
 
     TreeUtil.addChildren(elementToAdd, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
