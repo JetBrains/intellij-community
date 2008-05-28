@@ -540,7 +540,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       LookupEvent event = new LookupEvent(this, item, completionChar);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for (LookupListener listener : listeners) {
-        listener.itemSelected(event);
+        try {
+          listener.itemSelected(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -550,7 +555,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       LookupEvent event = new LookupEvent(this, null);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for (LookupListener listener : listeners) {
-        listener.lookupCanceled(event);
+        try {
+          listener.lookupCanceled(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -617,12 +627,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (afterCaret.length() == 0) return false;
     }
 
-    final LookupItem curItem = getCurrentItem();
-
     int offset = myEditor.getCaretModel().getOffset();
     if (beforeCaret != null) { // correct case, expand camel-humps
-      curItem.setPrefixMatcher(curItem.getPrefixMatcher().cloneWithPrefix(beforeCaret));
-      myEditor.getDocument().replaceString(offset - presentPrefix.length(), offset, beforeCaret);
+      final int start = offset - presentPrefix.length();
+      myInitialOffset = start + beforeCaret.length();
+      myEditor.getDocument().replaceString(start, offset, beforeCaret);
       presentPrefix = beforeCaret;
     }
 
@@ -633,7 +642,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditor.getDocument().insertString(offset + i, afterCaret.substring(i));
 
     for (final LookupElement item : myItems) {
-      assert item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(presentPrefix + afterCaret));
+      final String newPrefix = presentPrefix + afterCaret;
+      assert item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix)) : newPrefix + "\n" + item;
     }
     myAdditionalPrefix = "";
     updateList();
