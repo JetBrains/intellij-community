@@ -730,6 +730,8 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
       else {
+        if (SingleRootFileViewProvider.isTooLarge(file)) return;
+
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
         for (ID<?, ?> indexId : myIndices.keySet()) {
           if (shouldUpdateIndex(file, indexId)) {
@@ -893,20 +895,22 @@ public class FileBasedIndex implements ApplicationComponent {
 
     public boolean processFile(final VirtualFile file) {
       if (!file.isDirectory()) {
-        for (ID<?, ?> indexId : myIndexIds) {
-          if (shouldIndexFile(file, indexId)) {
-            myFiles.add(file);
-            break;
-          }
-        }
-        for (ID<?, ?> indexId : mySkipContentLoading) {
-          if (shouldIndexFile(file, indexId)) {
-            try {
-              updateSingleIndex(indexId, file, new FileContent(file, (byte[])null), null);
+        if (!SingleRootFileViewProvider.isTooLarge(file)) {
+          for (ID<?, ?> indexId : myIndexIds) {
+            if (shouldIndexFile(file, indexId)) {
+              myFiles.add(file);
+              break;
             }
-            catch (StorageException e) {
-              LOG.info(e);
-              requestRebuild(indexId);
+          }
+          for (ID<?, ?> indexId : mySkipContentLoading) {
+            if (shouldIndexFile(file, indexId)) {
+              try {
+                updateSingleIndex(indexId, file, new FileContent(file, (byte[])null), null);
+              }
+              catch (StorageException e) {
+                LOG.info(e);
+                requestRebuild(indexId);
+              }
             }
           }
         }
@@ -922,9 +926,6 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
-    if (SingleRootFileViewProvider.isTooLarge(file)) {
-      return false;
-    }
     return getInputFilter(indexId).acceptInput(file) && (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
@@ -933,9 +934,6 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
-    if (SingleRootFileViewProvider.isTooLarge(file)) {
-      return false;
-    }
     return getInputFilter(indexId).acceptInput(file) && (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
