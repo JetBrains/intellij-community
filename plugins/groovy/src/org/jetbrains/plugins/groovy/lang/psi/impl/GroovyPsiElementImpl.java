@@ -41,11 +41,13 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
   public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
     ASTNode parentNode = getNode();
     for (PsiElement element : elements) {
-      ASTNode node = element.getNode();
-      if (node == null || node.getTreeParent() != parentNode) {
-        throw new IncorrectOperationException();
+      if (element.isValid()) {
+        ASTNode node = element.getNode();
+        if (node == null || node.getTreeParent() != parentNode) {
+          throw new IncorrectOperationException();
+        }
+        parentNode.removeChild(node);
       }
-      parentNode.removeChild(node);
     }
   }
 

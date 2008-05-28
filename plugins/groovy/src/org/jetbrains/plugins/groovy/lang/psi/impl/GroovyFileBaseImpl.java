@@ -107,8 +107,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
     for (PsiElement element : elements) {
-      if (element.getParent() != this) throw new IncorrectOperationException();
-      deleteChildRange(element, element);
+      if (element.isValid()) {
+        if (element.getParent() != this) throw new IncorrectOperationException();
+        deleteChildRange(element, element);
+      }
     }
   }
 
