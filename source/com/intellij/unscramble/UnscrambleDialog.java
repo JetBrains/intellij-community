@@ -490,8 +490,14 @@ public class UnscrambleDialog extends DialogWrapper{
       threadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       threadList.addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(final ListSelectionEvent e) {
-          ThreadState selection = threadDump.get(threadList.getSelectedIndex());
-          printStacktrace(consoleView, selection.getStackTrace());
+          int index = threadList.getSelectedIndex();
+          if (index >= 0) {
+            ThreadState selection = threadDump.get(index);
+            printStacktrace(consoleView, selection.getStackTrace());
+          }
+          else {
+            printStacktrace(consoleView, "");
+          }
           threadList.repaint();
         }
       });
