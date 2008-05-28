@@ -77,7 +77,6 @@ public class XmlCharFilter extends CharFilter {
       case ';':
       case '=':
       case '(':
-
       case '/':
         if (isWithinTag(lookup)) {
           if (prefixLength > 0) {
@@ -95,6 +94,8 @@ public class XmlCharFilter extends CharFilter {
       default:
         return Result.HIDE_LOOKUP;
       case ' ':
+      case '\'':
+      case '\"':
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     }
   }

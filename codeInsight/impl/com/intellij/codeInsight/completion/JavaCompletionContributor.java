@@ -21,12 +21,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -86,13 +83,6 @@ public class JavaCompletionContributor extends CompletionContributor {
         result.addElement(item);
       }
       return false;
-    }
-
-    final PsiElement parent = parameters.getPosition().getParent();
-    if (parent instanceof XmlAttributeValue) {
-      if (!XmlCompletionContributor.setNoneTailType(result, (XmlElement)parent, JavaClassReference.class, this, parameters)) {
-        return false;
-      }
     }
 
     return true;
