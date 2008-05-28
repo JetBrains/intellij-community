@@ -20,8 +20,10 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +65,14 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
   }
 
   private boolean isWellEndedComment(PsiElement element) {
-    String text = element.getText();
-    return text != null && text.endsWith("*/");
+    if (element instanceof PsiComment) {
+      PsiComment comment = (PsiComment) element;
+      ASTNode node = comment.getNode();
+      if (node != null &&
+          node.getElementType() == GroovyTokenTypes.mML_COMMENT &&
+          node.getText().endsWith("*/")) return true;
+    }
+    return true;
   }
 
   private static boolean isMultiline(PsiElement element) {
