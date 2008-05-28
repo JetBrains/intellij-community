@@ -430,7 +430,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     private static boolean isInsideCodeBlock(PsiElement element) {
+      if (element instanceof PsiFileSystemItem) {
+        return false;
+      }
+      
       if (element == null || element.getParent() == null) return true;
+
       while(true){
         if (element instanceof PsiFile || element instanceof PsiDirectory || element == null){
           return false;

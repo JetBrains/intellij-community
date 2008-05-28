@@ -9,13 +9,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -34,8 +31,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private ArrayList<VirtualFileSystem> myFileSystems = null;
   private HashMap<String, VirtualFileSystem> myProtocolToSystemMap = null;
 
-  private PendingEventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster =
-    PendingEventDispatcher.create(VirtualFileListener.class);
+  private EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster =
+    EventDispatcher.create(VirtualFileListener.class);
   private List<VirtualFileManagerListener> myVirtualFileManagerListeners = new CopyOnWriteArrayList<VirtualFileManagerListener>();
   private EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster =
     EventDispatcher.create(ModificationAttemptListener.class);
@@ -54,78 +51,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       addVirtualFileListener(new LoggingListener());
     }
 
-    bus.connect().subscribe(VFS_CHANGES, new BulkFileListener() {
-      public void before(final List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          fireBefore(event);
-        }
-      }
-
-      public void after(final List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          fireAfter(event);
-        }
-      }
-    });
-  }
-
-  private void fireAfter(final VFileEvent event) {
-    if (event instanceof VFileContentChangeEvent) {
-      final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
-      final VirtualFile file = ce.getFile();
-      myVirtualFileListenerMulticaster.getMulticaster()
-        .contentsChanged(new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
-    }
-    else if (event instanceof VFileCopyEvent) {
-      final VFileCopyEvent ce = (VFileCopyEvent)event;
-      myVirtualFileListenerMulticaster.getMulticaster()
-        .fileCopied(new VirtualFileCopyEvent(event.getRequestor(), ce.getFile(), ce.getNewParent().findChild(ce.getNewChildName())));
-    }
-    else if (event instanceof VFileCreateEvent) {
-      final VFileCreateEvent ce = (VFileCreateEvent)event;
-      final VirtualFile newChild = ce.getParent().findChild(ce.getChildName());
-      if (newChild != null) {
-        myVirtualFileListenerMulticaster.getMulticaster().fileCreated(
-        new VirtualFileEvent(event.getRequestor(), newChild, ce.getChildName(), ce.getParent()));
-      }
-    }
-    else if (event instanceof VFileDeleteEvent) {
-      final VFileDeleteEvent de = (VFileDeleteEvent)event;
-      myVirtualFileListenerMulticaster.getMulticaster()
-        .fileDeleted(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
-    }
-    else if (event instanceof VFileMoveEvent) {
-      final VFileMoveEvent me = (VFileMoveEvent)event;
-      myVirtualFileListenerMulticaster.getMulticaster().fileMoved(new VirtualFileMoveEvent(event.getRequestor(), me.getFile(), me.getOldParent(), me.getNewParent()));
-    }
-    else if (event instanceof VFilePropertyChangeEvent) {
-      final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
-      myVirtualFileListenerMulticaster.getMulticaster().propertyChanged(
-        new VirtualFilePropertyEvent(event.getRequestor(), pce.getFile(), pce.getPropertyName(), pce.getOldValue(), pce.getNewValue()));
-    }
-  }
-
-  private void fireBefore(final VFileEvent event) {
-    if (event instanceof VFileContentChangeEvent) {
-      final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
-      final VirtualFile file = ce.getFile();
-      myVirtualFileListenerMulticaster.getMulticaster()
-        .beforeContentsChange(new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
-    }
-    else if (event instanceof VFileDeleteEvent) {
-      final VFileDeleteEvent de = (VFileDeleteEvent)event;
-      myVirtualFileListenerMulticaster.getMulticaster()
-        .beforeFileDeletion(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
-    }
-    else if (event instanceof VFileMoveEvent) {
-      final VFileMoveEvent me = (VFileMoveEvent)event;
-      myVirtualFileListenerMulticaster.getMulticaster().beforeFileMovement(new VirtualFileMoveEvent(event.getRequestor(), me.getFile(), me.getOldParent(), me.getNewParent()));
-    }
-    else if (event instanceof VFilePropertyChangeEvent) {
-      final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
-      myVirtualFileListenerMulticaster.getMulticaster().beforePropertyChange(
-        new VirtualFilePropertyEvent(event.getRequestor(), pce.getFile(), pce.getPropertyName(), pce.getOldValue(), pce.getNewValue()));
-    }
+    bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
   }
 
   @NotNull
@@ -237,10 +163,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.removeListener(listener);
-  }
-
-  public void dispatchPendingEvent(@NotNull VirtualFileListener listener) {
-    myVirtualFileListenerMulticaster.dispatchPendingEvent(listener);
   }
 
   public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {

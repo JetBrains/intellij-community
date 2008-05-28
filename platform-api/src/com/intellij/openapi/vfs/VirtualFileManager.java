@@ -126,8 +126,6 @@ public abstract class VirtualFileManager {
    */
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
-  public abstract void dispatchPendingEvent(@NotNull VirtualFileListener listener);
-
   public abstract void addModificationAttemptListener(@NotNull ModificationAttemptListener listener);
   public abstract void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener);
 

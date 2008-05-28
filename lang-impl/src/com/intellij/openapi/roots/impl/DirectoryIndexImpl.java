@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
@@ -48,7 +49,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private Map<String, VirtualFile[]> myPackageNameToDirsMap = Collections.synchronizedMap(new THashMap<String, VirtualFile[]>());
 
   private DirectoryIndexExcludePolicy[] myExcludePolicies;
-  private VirtualFileListener myVirtualFileListener;
   private MessageBusConnection myConnection;
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManager startupManager) {
@@ -75,7 +75,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   public void disposeComponent() {
     if (myInitialized) {
       myConnection.disconnect();
-      VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     }
     myDisposed = true;
   }
@@ -160,9 +159,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void subscribeToFileChanges() {
-    myVirtualFileListener = new MyVirtualFileListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
-
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
       }
@@ -180,6 +176,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         doInitialize();
       }
     });
+
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new MyVirtualFileListener()));
   }
 
   private void doInitialize() {
@@ -752,10 +750,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private void dispatchPendingEvents() {
     myConnection.deliverImmediately();
-    if (myInitialized && PendingEventDispatcher.isDispatchingAnyEvent()) { // optimization
-      VirtualFileManager.getInstance().dispatchPendingEvent(myVirtualFileListener);
-      //TODO: other listners!!!
-    }
   }
 
   private void checkAvailability() {

@@ -3,15 +3,15 @@ package com.intellij.ide.todo;
 import com.intellij.ExtensionPoints;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
-import com.intellij.util.PendingEventDispatcher;
+import com.intellij.util.EventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
 
-  private PendingEventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = PendingEventDispatcher.create(PropertyChangeListener.class);
+  private EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
 
   @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
   @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";
@@ -117,10 +117,6 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
 
   public void removePropertyChangeListener(PropertyChangeListener listener) {
     myPropertyChangeMulticaster.removeListener(listener);
-  }
-
-  public void dispatchPendingEvent(PropertyChangeListener listener) {
-    myPropertyChangeMulticaster.dispatchPendingEvent(listener);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

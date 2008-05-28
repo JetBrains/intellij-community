@@ -48,10 +48,6 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void dispatchPendingEvent(@NotNull VirtualFileListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
   public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
     throw new UnsupportedOperationException();
   }

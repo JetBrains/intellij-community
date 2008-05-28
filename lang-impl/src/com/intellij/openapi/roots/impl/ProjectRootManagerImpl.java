@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -60,7 +59,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final ProjectEx myProject;
   private final ProjectFileIndex myProjectFileIndex;
 
-  private final PendingEventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = PendingEventDispatcher.create(ProjectJdkListener.class);
+  private final EventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener.class);
 
   private final MyVirtualFilePointerListener myVirtualFilePointerListener = new MyVirtualFilePointerListener();
 

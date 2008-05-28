@@ -61,6 +61,4 @@ public interface IndexPatternProvider {
    */
   void removePropertyChangeListener(PropertyChangeListener listener);
 
-  void dispatchPendingEvent(PropertyChangeListener listener);
-
 }

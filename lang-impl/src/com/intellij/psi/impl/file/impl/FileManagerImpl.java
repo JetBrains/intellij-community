@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -56,7 +57,6 @@ public class FileManagerImpl implements FileManager {
   private final ConcurrentHashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>();
   private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
-  private VirtualFileListener myVirtualFileListener = null;
   private boolean myInitialized = false;
   private boolean myDisposed = false;
 
@@ -83,8 +83,6 @@ public class FileManagerImpl implements FileManager {
   public void dispose() {
     if (myInitialized) {
       myConnection.disconnect();
-
-      myVirtualFileManager.removeVirtualFileListener(myVirtualFileListener);
     }
     myDisposed = true;
   }
@@ -151,8 +149,7 @@ public class FileManagerImpl implements FileManager {
 
     myProjectFileIndex = myProjectRootManager.getFileIndex();
 
-    myVirtualFileListener = new MyVirtualFileListener();
-    myVirtualFileManager.addVirtualFileListener(myVirtualFileListener);
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new MyVirtualFileListener()));
 
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {}
@@ -188,13 +185,7 @@ public class FileManagerImpl implements FileManager {
       LOG.error("Project is already disposed");
     }
 
-    // [dsl]todo[max, dsl] this is a hack. MUST FIX
-    if (!ApplicationManager.getApplication().isDispatchThread()) return;
-
-    myVirtualFileManager.dispatchPendingEvent(myVirtualFileListener);
-
     myConnection.deliverImmediately();
-    //TODO: other listeners
   }
 
   @TestOnly

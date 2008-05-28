@@ -47,9 +47,6 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   public void removeVirtualFileListener(VirtualFileListener listener) {
   }
 
-  public void dispatchPendingEvent(VirtualFileListener listener) {
-  }
-
   public void addModificationAttemptListener(ModificationAttemptListener listener) {
   }
 
