@@ -81,6 +81,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(new Runnable(){
           public void run() {
+            if (myProject.isDisposed()) return;
             if (myBaseStructureViewDescriptor != null && ((StructureViewComponent)myBaseStructureViewDescriptor.structureView).getTree() == null) return;
             if (!myVirtualFile.isValid()) return;
             ApplicationManager.getApplication().runReadAction(new Runnable(){
