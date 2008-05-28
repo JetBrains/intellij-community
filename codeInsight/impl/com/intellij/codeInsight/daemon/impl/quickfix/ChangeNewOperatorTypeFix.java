@@ -38,7 +38,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myType.isValid() && myExpression.isValid() && myExpression.getManager().isInProject(myExpression);
+    return myType.isValid() && myExpression.isValid() && myExpression.getManager().isInProject(myExpression) && !TypeConversionUtil.isPrimitiveAndNotNull(myType);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
