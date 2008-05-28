@@ -114,7 +114,7 @@ public abstract class LeafElement extends TreeElement {
     return TreeElement.EMPTY_ARRAY;
   }
 
-  public void addChild(ASTNode child, ASTNode anchorBefore) {
+  public void addChild(@NotNull ASTNode child, ASTNode anchorBefore) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
@@ -122,15 +122,15 @@ public abstract class LeafElement extends TreeElement {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
-  public void addChild(ASTNode child) {
+  public void addChild(@NotNull ASTNode child) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
-  public void removeChild(ASTNode child) {
+  public void removeChild(@NotNull ASTNode child) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
-  public void replaceChild(ASTNode oldChild, ASTNode newChild) {
+  public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
@@ -138,7 +138,7 @@ public abstract class LeafElement extends TreeElement {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
-  public void removeRange(ASTNode first, ASTNode firstWhichStayInTree) {
+  public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
