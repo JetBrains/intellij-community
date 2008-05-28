@@ -18,10 +18,8 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.ResolveState;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
@@ -35,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PyFileImpl extends PsiFileBase implements PyFile {
   public PyFileImpl(FileViewProvider viewProvider) {
@@ -49,6 +49,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
 
   public String toString() {
     return "PyFile:" + getName();
+  }
+  
+  @NotNull
+  public String getUrl() {
+    String fname;
+    VirtualFile vfile = getVirtualFile();
+    if (vfile != null) fname = vfile.getUrl();
+    else fname = "(null)://" + ((Object)this).toString();
+    return fname;
   }
 
   public Icon getIcon(int flags) {
@@ -87,7 +96,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       if (!processor.execute(e, substitutor)) return false;
     }
 
-    for(PyFromImportStatement e: getFromImports()) {
+    Set<String> procSeen = null;
+    if (processor instanceof PyResolveUtil.ResolveProcessor) {
+      procSeen = ((PyResolveUtil.ResolveProcessor)processor).getSeen();
+    }
+    for(PyFromImportStatement e: getFromImports(procSeen)) {
       if (e == lastParent) continue;
       if (!e.processDeclarations(processor, substitutor, null, this)) return false;
     }
@@ -153,10 +166,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     return ret;
   }
   
-  public List<PyFromImportStatement> getFromImports() {
+  public List<PyFromImportStatement> getFromImports(final Set<String> outerSeen) {
     final List<PyFromImportStatement> result = new ArrayList<PyFromImportStatement>();
     accept(new PyRecursiveElementVisitor() {
+      Set<String> alreadySeen;
+      {
+        alreadySeen = new HashSet<String>();
+        if (outerSeen != null) alreadySeen.addAll(outerSeen);
+      }
       public void visitPyElement(final PyElement node) {
+        if (node instanceof PyFile) { 
+          final String fname = ((PyFile)node).getUrl(); 
+          if (alreadySeen.contains(fname)) return; // don't descend into the same file again
+          else alreadySeen.add(fname);
+        }
         super.visitPyElement(node);
         if (PyFromImportStatement.class.isInstance(node)) {
           //noinspection unchecked

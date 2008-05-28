@@ -63,6 +63,10 @@ public class PyResolveUtil {
       if ((processor instanceof ResolveProcessor) && !(((ResolveProcessor)processor).approve(cur))) {
         return null;
       }
+      /* // resolution debug tracker
+      if (cur instanceof PsiFile) System.out.println(processor.toString() + ": " + cur.toString());
+      else System.out.println(processor.toString() + ": " + _fmt_node(cur)); 
+      */
       if (!cur.processDeclarations(processor, ResolveState.initial(), cur == elt ? lastParent : null, elt)) {
         if (processor instanceof ResolveProcessor) {
           return ((ResolveProcessor)processor).getResult();
@@ -140,7 +144,20 @@ public class PyResolveUtil {
     public PsiElement getResult() {
       return myResult;
     }
-
+    
+    static String _nvl(Object s) {
+      if (s != null) return "'" + s.toString() + "'";
+      else return "null";
+    }
+    
+    public Set<String> getSeen() {
+      return mySeen;
+    }
+    
+    public String toString() {
+      return _nvl(myName) + ", " + _nvl(myResult);
+    }
+    
     public boolean execute(PsiElement element, ResolveState substitutor) {
       if (element instanceof PyFile) {
         final VirtualFile file = ((PyFile)element).getVirtualFile();

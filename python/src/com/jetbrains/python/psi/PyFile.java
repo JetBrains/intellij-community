@@ -5,6 +5,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -19,4 +20,10 @@ public interface PyFile extends PyElement, PsiFile {
   List<PyFunction> getTopLevelFunctions();
 
   List<PyTargetExpression> getTopLevelAttributes();
+  
+  /**
+  @return an URL of file, maybe bogus if virtual file is not present.
+  */
+  @NotNull
+  String getUrl(); 
 }

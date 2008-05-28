@@ -54,13 +54,14 @@ public class ResolveImportUtil {
     /*
     True resolve order is:
     - local modules,
-    - builtins (in fact),
+    - builtins? (check),
     - modules from sys.path (aka SdkOrderEntries).
     (http://docs.python.org/ref/import.html)
     */
     // TODO: assume some things like sys to be only from __builtins__
-    // FIXME: resolve sources relatively to file in hand, not project root
-    
+    // TODO: rewrite entirely imitating Python import process: global module table, under-initialisation, etc.
+
+    // qualified imports resolve their children    
     final PyExpression qualifier = importRef.getQualifier();
     if (qualifier instanceof PyReferenceExpression) {
       PsiElement qualifierElement = ((PyReferenceExpression) qualifier).resolve();
@@ -71,15 +72,29 @@ public class ResolveImportUtil {
     if (importFrom != null) {
       return resolveChild(importFrom, referencedName, importRef);
     }
-
+    
+    // unqualified import can be found:
+    // in the same dir
+    final PsiFile pfile = importRef.getContainingFile();
+    if (pfile != null) {
+      PsiDirectory pdir = pfile.getContainingDirectory();
+      if (pdir != null) {
+        PsiElement elt = resolveChild(pdir, referencedName, importRef);
+        if (elt != null) return elt;
+      }
+      
+    } 
+    
+    // .. or in SDK roots
     final Module module = ModuleUtil.findModuleForPsiElement(importRef);
     if (module != null) {
       RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
+        /*         
         public PsiElement visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleOrderEntry, final PsiElement value) {
           if (value != null) return value;
           return resolveInRoots(moduleOrderEntry.getRootModel().getContentRoots(), referencedName, importRef);
         }
-
+        */
         public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
           if (value != null) return value;
           return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), referencedName, importRef);
@@ -197,6 +212,7 @@ public class ResolveImportUtil {
       if (subdir != null) return subdir;
       else { // not a subdir, not a file; could be a name in parent/__init__.py
         final PsiFile initPy = dir.findFile(INIT_PY);
+        if ((importRef != null) && (initPy == importRef.getContainingFile())) return ret; // don't dive into the file we're in
         if (initPy != null) {
           if (processor == null) processor = new PyResolveUtil.ResolveProcessor(referencedName); // should not normally happen 
           return PyResolveUtil.treeWalkUp(processor, initPy, null, importRef);

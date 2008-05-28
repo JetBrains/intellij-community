@@ -84,6 +84,11 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertTrue(element instanceof PyTargetExpression);
   }
 
+  public void testResolveInPkg() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyFunction);
+  }
+
   private PsiElement doResolve() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
