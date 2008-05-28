@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -729,11 +730,16 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           final PsiElement pointerElement = pointer.getElement();
           if (pointerElement instanceof PsiClass) {
             if (!(ref instanceof PsiImportStaticReferenceElement)) {
-              final String oldText = parent.getParent().getText();
-              final String oldText1 = parent.getText();
+              String debugText;
+              if (parent.getParent().getParent() != null) {
+                debugText = "grandparent: " + DebugUtil.psiToString(parent.getParent().getParent(), false) + "\n ref: " + parent.getText();
+              } else {
+                debugText = "no grandparent, parent: " + DebugUtil.psiToString(parent.getParent(), false) + "\n ref: " + parent.getText();
+              }
+
               PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
               newRef = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newRef);
-              LOG.assertTrue(newRef != null, oldText + "$$$" + oldText1 + "###" + (parent.isValid() ? "valid: " + parent.getParent().getText() : "not valid"));
+              LOG.assertTrue(newRef != null, debugText);
               final TextRange textRange = newRef.getTextRange();
               endOffset = textRange.getEndOffset();
               newStartOffset = textRange.getStartOffset();
