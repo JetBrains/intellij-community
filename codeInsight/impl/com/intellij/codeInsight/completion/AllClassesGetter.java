@@ -94,11 +94,9 @@ public class AllClassesGetter {
                 for (final PsiReference reference : psiElement.getReferences()) {
                   if (psiManager.areElementsEquivalent(psiClass, DefaultInsertHandler.resolveReference(reference))) {
                     insertFqn = false;
+                    endOffset = reference.getRangeInElement().getEndOffset() + reference.getElement().getTextRange().getStartOffset();
                     break;
                   }
-                }
-                if (!insertFqn) {
-                  endOffset = psiElement.getTextRange().getEndOffset();
                 }
               }
             }
