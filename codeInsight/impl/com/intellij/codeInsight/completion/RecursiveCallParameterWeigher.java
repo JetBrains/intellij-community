@@ -46,7 +46,7 @@ public class RecursiveCallParameterWeigher extends CompletionWeigher {
       return 0;
     }
 
-    if (PsiTreeUtil.isAncestor(positionMethod, position, false) && PsiTreeUtil.isAncestor(reference, position, false)) {
+    if (positionMethod.equals(object) && PsiTreeUtil.isAncestor(positionMethod, position, false) && PsiTreeUtil.isAncestor(reference, position, false)) {
       return isDelegate ? 2 : -1;
     }
 

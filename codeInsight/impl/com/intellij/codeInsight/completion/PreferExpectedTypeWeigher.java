@@ -16,22 +16,36 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PreferExpectedTypeWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
+  private enum MyResult {
+    normal,
+    ofDefaultType,
+    expected,
+    expectedNoSelect
+  }
+
+  public MyResult weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
     final Object object = item.getObject();
     final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
-    if (expectedInfos == null) return 0;
+    if (expectedInfos == null) return MyResult.normal;
 
     final PsiType itemType = JavaCompletionUtil.getPsiType(object);
-    if (itemType == null) return 0;
+    if (itemType == null) return MyResult.normal;
 
     if (object instanceof PsiClass) {
       for (final ExpectedTypeInfo info : expectedInfos) {
         if (TypeConversionUtil.erasure(info.getType().getDeepComponentType()).equals(TypeConversionUtil.erasure(itemType))) {
-          return SkipAbstractExpectedTypeWeigher.getSkippingStatus(item, location) != SkipAbstractExpectedTypeWeigher.Result.ACCEPT ? 2 : 1;
+          return SkipAbstractExpectedTypeWeigher.getSkippingStatus(item, location) != SkipAbstractExpectedTypeWeigher.Result.ACCEPT ? MyResult.expectedNoSelect : MyResult.expected;
         }
       }
     }
 
-    return 0;
+    for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
+      final PsiType defaultType = expectedInfo.getDefaultType();
+      if (defaultType != expectedInfo.getType() && defaultType.isAssignableFrom(itemType)) {
+        return MyResult.ofDefaultType;
+      }
+    }
+
+    return MyResult.normal;
   }
 }

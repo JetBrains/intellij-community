@@ -21,6 +21,11 @@ public class JavaCompletionStatistician extends CompletionStatistician{
 
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
     final Object o = element.getObject();
+
+    if (o instanceof PsiLocalVariable || o instanceof PsiParameter || o instanceof PsiThisExpression) {
+      return StatisticsInfo.EMPTY;
+    }
+
     PsiType qualifierType = JavaCompletionUtil.getQualifierType((LookupItem) element);
     if (qualifierType == null) {
       final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
@@ -33,7 +38,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     if (o instanceof PsiMember) {
       final boolean isClass = o instanceof PsiClass;
       if (qualifierType != null) {
-        if (!(o instanceof PsiField) && type == CompletionType.SMART) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
+        if (type == CompletionType.SMART) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
         if (!isClass && type == CompletionType.BASIC) return JavaStatisticsManager.createInfo(qualifierType, (PsiMember)o);
         return StatisticsInfo.EMPTY;
       }
@@ -41,8 +46,8 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       if (type == CompletionType.CLASS_NAME && isClass) {
         final String qualifiedName = ((PsiClass)o).getQualifiedName();
         if (qualifiedName != null) {
-          return new StatisticsInfo(CLASS_NAME_COMPLETION_PREFIX + StringUtil.capitalsOnly(((LookupElement<?>)element)
-              .getPrefixMatcher().getPrefix()), qualifiedName);
+          final String prefixCapitals = StringUtil.capitalsOnly(element.getPrefixMatcher().getPrefix());
+          return new StatisticsInfo(CLASS_NAME_COMPLETION_PREFIX + prefixCapitals, qualifiedName);
         }
       }
     }
