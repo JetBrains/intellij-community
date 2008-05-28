@@ -48,7 +48,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public RenameProcessor(Project project,
                          PsiElement element,
-                         @NonNls String newName,
+                         @NotNull @NonNls String newName,
                          boolean isSearchInComments,
                          boolean isSearchTextOccurrences) {
     super(project);
@@ -61,7 +61,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public RenameProcessor(Project project) {
-    this(project, null, null, false, false);
+    this(project, null, "", false, false);
   }
 
   public Set<PsiElement> getElements() {
