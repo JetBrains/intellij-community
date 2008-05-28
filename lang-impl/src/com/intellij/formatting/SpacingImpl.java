@@ -1,5 +1,7 @@
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NonNls;
+
 class SpacingImpl extends Spacing {
   private int myMinSpaces;
   private int myKeepBlankLines;
@@ -95,5 +97,11 @@ class SpacingImpl extends Spacing {
 
   public int hashCode() {
     return myMinSpaces + myMaxSpaces * 29 + myMinLineFeeds * 11 + myFlags + myKeepBlankLines;
+  }
+
+  @NonNls
+  @Override
+  public String toString() {
+    return "<Spacing: minSpaces=" + myMinSpaces + " maxSpaces=" + myMaxSpaces + " minLineFeeds=" + myMinLineFeeds + ">";
   }
 }

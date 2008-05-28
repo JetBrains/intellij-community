@@ -57,4 +57,13 @@ class IndentImpl extends Indent {
   boolean isAbsolute(){
     return myIsAbsolute;
   }
+
+  @NonNls
+  @Override
+  public String toString() {
+    if (myType == Type.SPACES) {
+      return "<Indent: SPACES(" + mySpaces + ")>";
+    }
+    return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE" : "") + ">";
+  }
 }
