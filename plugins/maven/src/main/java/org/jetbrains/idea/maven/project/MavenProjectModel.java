@@ -96,7 +96,6 @@ public class MavenProjectModel {
 
   private void doAdd(final VirtualFile f, MavenProjectReader reader, Set<VirtualFile> updatedFiles, MavenProcess p) throws CanceledException {
     Node newProject = new Node(f, null);
-    doUpdate(newProject, reader, true, updatedFiles, p);
 
     Node parent = visit(new NodeVisitor<Node>() {
       public void visit(Node node) {
@@ -112,6 +111,8 @@ public class MavenProjectModel {
     else {
       myRootProjects.add(newProject);
     }
+
+    doUpdate(newProject, reader, true, updatedFiles, p);
   }
 
   private void doUpdate(Node n, MavenProjectReader reader, boolean isNew, Set<VirtualFile> updatedFiles, MavenProcess p) throws CanceledException {
@@ -508,15 +509,7 @@ public class MavenProjectModel {
     }
 
     public List<String> getModulePaths(Collection<String> profiles) {
-      Set<String> paths = collectAbsoluteModulePaths(profiles);
-      if (myMavenProjectHolder.getSortedProjects().isEmpty()) return new ArrayList<String>(paths);
-
-      List<String> sorted = new ArrayList<String>();
-      for (MavenProject each : myMavenProjectHolder.getSortedProjects()) {
-        String path = new Path(each.getFile().getPath()).getPath();
-        if (paths.contains(path)) sorted.add(path);
-      }
-      return sorted;
+      return new ArrayList<String>(collectAbsoluteModulePaths(profiles));
     }
 
     private Set<String> collectAbsoluteModulePaths(Collection<String> profiles) {
@@ -549,12 +542,10 @@ public class MavenProjectModel {
         name = FileUtil.toSystemIndependentName(name);
         if (!name.endsWith("/")) name += "/";
         name += Constants.POM_XML;
-        //name = name.substring(0, name.length() - 1);
-        //}
+
         result.add(name);
       }
     }
-
 
     public List<String> getAllProfiles() {
       if (!isValid()) return Collections.emptyList();
@@ -645,7 +636,6 @@ public class MavenProjectModel {
       if (plugins == null) return;
       result.addAll(plugins);
     }
-
 
     public List<Artifact> getExtensions() {
       if (!isValid()) return Collections.emptyList();

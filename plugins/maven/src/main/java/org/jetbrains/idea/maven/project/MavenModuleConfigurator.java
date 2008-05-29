@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
+import org.jetbrains.idea.maven.web.FacetImporter;
 
 import java.text.MessageFormat;
 import java.util.regex.Pattern;
@@ -29,10 +30,10 @@ public class MavenModuleConfigurator {
   private RootModelAdapter myModel;
 
   public MavenModuleConfigurator(ModifiableModuleModel moduleModel,
-                            MavenProjectModel mavenModel,
-                            MavenImporterSettings settings,
-                            Module module,
-                            MavenProjectModel.Node mavenProject) {
+                                 MavenProjectModel mavenModel,
+                                 MavenImporterSettings settings,
+                                 Module module,
+                                 MavenProjectModel.Node mavenProject) {
     myModuleModel = moduleModel;
     myMavenModel = mavenModel;
     mySettings = settings;
@@ -50,6 +51,14 @@ public class MavenModuleConfigurator {
     configLanguageLevel();
 
     return myModel.getRootModel();
+  }
+
+  public void preConfigFacets(ModuleRootModel rootModel) {
+    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
+      if (importer.isApplicable(myMavenProject)) {
+        importer.preProcess(myModule, myMavenProject);
+      }
+    }
   }
 
   public void configFacets(ModuleRootModel rootModel) {

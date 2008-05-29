@@ -11,7 +11,6 @@ import org.apache.maven.extension.ExtensionManager;
 import org.apache.maven.project.build.model.ModelLineageBuilder;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -227,7 +226,7 @@ public class MavenEmbedderFactory {
     }
   }
 
-  private static Properties collectSystemProperties() {
+  public static Properties collectSystemProperties() {
     Properties result = new Properties();
     result.putAll(System.getProperties());
 
@@ -267,15 +266,6 @@ public class MavenEmbedderFactory {
     }
   }
 
-  public static CustomExtensionManager getExtensionManager(MavenEmbedder e) {
-    try {
-      return (CustomExtensionManager)e.getPlexusContainer().lookup(ExtensionManager.class.getName());
-    }
-    catch (ComponentLookupException ex) {
-      throw new RuntimeException(ex);
-    }
-  }
-
   public static class ReadingCustomizer implements ContainerCustomizer {
     private Map<ProjectId, VirtualFile> myProjectMapping;
 
@@ -298,6 +288,9 @@ public class MavenEmbedderFactory {
 
       d = c.getComponentDescriptor(ModelLineageBuilder.ROLE);
       d.setImplementation(CustomLineageBuilder.class.getName());
+
+      d = c.getComponentDescriptor(ExtensionManager.class.getName());
+      d.setImplementation(CustomExtensionManager.class.getName());
     }
   }
 

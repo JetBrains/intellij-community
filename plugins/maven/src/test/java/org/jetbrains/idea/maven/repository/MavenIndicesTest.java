@@ -335,4 +335,25 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "junit");
   }
+
+  public void testHasArtifactInfo() throws Exception {
+    MavenIndex i1 = new MavenIndex("local1", myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i2 = new MavenIndex("local2", myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
+    myIndices.add(i1);
+    myIndices.add(i2);
+    myIndices.update(i1, myProject, new EmptyProgressIndicator());
+    myIndices.update(i2, myProject, new EmptyProgressIndicator());
+
+    assertTrue(myIndices.hasGroupId("junit"));
+    assertTrue(myIndices.hasGroupId("jmock"));
+    assertFalse(myIndices.hasGroupId("xxx"));
+
+    assertTrue(myIndices.hasArtifactId("junit", "junit"));
+    assertTrue(myIndices.hasArtifactId("jmock", "jmock"));
+    assertFalse(myIndices.hasArtifactId("junit", "jmock"));
+
+    assertTrue(myIndices.hasVersion("junit", "junit", "4.0"));
+    assertTrue(myIndices.hasVersion("jmock", "jmock", "1.0.0"));
+    assertFalse(myIndices.hasVersion("junit", "junit", "666"));
+  }
 }

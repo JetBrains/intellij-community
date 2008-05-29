@@ -34,8 +34,10 @@ public class NonMavenProjectInspectionsTest extends MavenCompletionAndResolution
     checkHighlighting(); // should not fail nor highlight errors
   }
 
-  public void testEnabligInpaectionForNonMavenProjectsAfterImport() throws Throwable {
+  public void testEnabligInspectionForNonMavenProjectsAfterImport() throws Throwable {
     if (ignore()) return;
+    // can not reproduce in tests because of StartupManager.runWhenProjectIsInitialized
+    // relies on ProjectManager.isProjectOpen. In tests the project is never being opened.
     
     ProjectManagerEx.getInstanceEx().openProject(myProject);
     

@@ -7,14 +7,12 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
-import hidden.org.codehaus.plexus.util.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
@@ -38,7 +36,6 @@ import java.util.List;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectModel myProjectModel;
-  protected ArrayList<Pair<File, List<String>>> myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
   protected MavenProjectsManager myMavenProjectsManager;
   private List<String> myProfilesList;
 
@@ -330,7 +327,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveProject() throws MavenException, CanceledException {
-    myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
     myMavenProjectsManager.resolve();
   }
 
@@ -349,7 +345,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void removeFromLocalRepository(String relativePath) throws IOException {
-    String path = getRepositoryPath() + "/" + relativePath;
-    FileUtils.deleteDirectory(path);
+    FileUtil.delete(new File(getRepositoryPath(), relativePath));
   }
 }

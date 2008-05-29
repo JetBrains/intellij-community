@@ -41,15 +41,22 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
   private PsiElement myElement;
   private VirtualFile myVirtualFile;
   private PsiFile myPsiFile;
-  private String myText;
+  private String myResolvedText;
+  private String myOriginalText;
   private TextRange myRange;
 
-  public MavenModuleReference(PsiElement element, VirtualFile virtualFile, PsiFile psiFile, String text, TextRange range) {
+  public MavenModuleReference(PsiElement element,
+                              VirtualFile virtualFile,
+                              PsiFile psiFile,
+                              String originalText,
+                              String resolvedText,
+                              TextRange range) {
     myElement = element;
     myPsiFile = psiFile;
     myVirtualFile = virtualFile;
+    myOriginalText = originalText;
+    myResolvedText = resolvedText;
     myRange = range;
-    myText = text;
   }
 
   public PsiElement getElement() {
@@ -57,7 +64,7 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
   }
 
   public String getCanonicalText() {
-    return myText;
+    return myOriginalText;
   }
 
   public TextRange getRangeInElement() {
@@ -66,9 +73,9 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
 
   public PsiElement resolve() {
     VirtualFile baseDir = myPsiFile.getVirtualFile().getParent();
-    String relPath = FileUtil.toSystemIndependentName(myText + "/" + Constants.POM_XML);
+    String relPath = FileUtil.toSystemIndependentName(myResolvedText + "/" + Constants.POM_XML);
     VirtualFile file = baseDir.findFileByRelativePath(relPath);
-    
+
     if (file == null) return null;
 
     return getPsiFile(file);
@@ -118,8 +125,8 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
   }
 
   public LocalQuickFix[] getQuickFixes() {
-    if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
-    return new LocalQuickFix[] {new CreatePomFix()};
+    if (myResolvedText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
+    return new LocalQuickFix[]{new CreatePomFix()};
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
@@ -136,12 +143,12 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
 
   private class CreatePomFix implements LocalQuickFix {
     @NotNull
-      public String getName() {
+    public String getName() {
       return MavenDomBundle.message("fix.create.pom");
     }
 
     @NotNull
-      public String getFamilyName() {
+    public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 
@@ -158,7 +165,7 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
 
     private VirtualFile createModulePom() throws IOException {
       VirtualFile baseDir = myVirtualFile.getParent();
-      String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myText);
+      String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myResolvedText);
       VirtualFile moduleDir = VfsUtil.createDirectories(modulePath);
       return moduleDir.createChildData(this, Constants.POM_XML);
     }
@@ -176,11 +183,11 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
           "    <version>xxx</version>\n" +
           "</project>");
 
-      MavenId parentId = PomDescriptor.describe(PomDescriptor.getPom(myPsiFile)); 
+      MavenId parentId = PomDescriptor.describe(PomDescriptor.getPom(myPsiFile));
 
       parentId.artifactId = modulePomFile.getParent().getName();
       if (parentId.groupId == null) parentId.groupId = "groupId";
-      if (parentId.version== null) parentId.version = "version";
+      if (parentId.version == null) parentId.version = "version";
 
       TemplateBuilder b = new TemplateBuilder(psiFile);
 

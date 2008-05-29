@@ -184,6 +184,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</distributionManagement>");
 
     assertModules("project");
+
+    MavenProjectModel.Node root = getRootProjects().get(0);
+    assertFalse(root.isValid());
   }
 
   public void testUnresolvedDependencies() throws Exception {
@@ -243,6 +246,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     resolveProject();// ensure junit is resolved
 
     MavenProjectModel.Node root = getRootProjects().get(0);
+    assertTrue(root.isValid());
+
     assertProblems(root);
 
     assertProblems(root.getSubProjects().get(0),
@@ -276,6 +281,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project");
 
     MavenProjectModel.Node root = getRootProjects().get(0);
+    assertTrue(root.isValid());
     assertProblems(root, "Unresolved dependency: xxx:xxx:pom:4.0:compile");
   }
 
@@ -365,6 +371,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     importProject();
 
     MavenProjectModel.Node root = getRootProjects().get(0);
+    assertTrue(root.isValid());
     assertProblems(root);
     assertProblems(root.getSubProjects().get(0));
     assertProblems(root.getSubProjects().get(1));
@@ -387,6 +394,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     MavenProjectModel.Node root = getRootProjects().get(0);
+    assertTrue(root.isValid());
     assertProblems(root, "Unresolved build extension: xxx:yyy:jar:1:runtime");
   }
 
@@ -439,8 +447,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     importProject();
 
     MavenProjectModel.Node root = getRootProjects().get(0);
-    assertProblems(root);
+    assertTrue(root.isValid());
 
+    assertProblems(root);
     assertProblems(root.getSubProjects().get(0),
                    "Unresolved build extension: xxx:xxx:jar:1:runtime");
     assertProblems(root.getSubProjects().get(1),
@@ -448,9 +457,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Unresolved build extension: zzz:zzz:jar:1:runtime");
   }
 
-  public void testReportingUnresolvedPlugins() throws Exception {
-    if (ignore()) return;
-
+  public void testUnresolvedPlugins() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -466,7 +473,33 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     MavenProjectModel.Node root = getRootProjects().get(0);
+    assertTrue(root.isValid());
+
+    if (ignore()) return;
     assertProblems(root, "Unresolved plugin: xxx:yyy:jar:1");
+  }
+
+  public void testUnresolvedPluginsAsExtensions() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <plugins>" +
+                  "   <plugin>" +
+                  "     <groupId>xxx</groupId>" +
+                  "     <artifactId>yyy</artifactId>" +
+                  "     <version>1</version>" +
+                  "     <extensions>true</extensions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+    assertTrue(getRootProjects().get(0).isValid());
+
+    //MavenProjectModel.Node root = getRootProjects().get(0);
+    //assertProblems(root, "Unresolved plugin: xxx:yyy:jar:1");
   }
 
   private void assertProblems(MavenProjectModel.Node root, String... problems) {

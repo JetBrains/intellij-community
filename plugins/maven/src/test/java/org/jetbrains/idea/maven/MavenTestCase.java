@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -19,6 +19,8 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,12 +77,36 @@ public abstract class MavenTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     tearDownCommonFixtures();
+    resetClassFields(getClass());    
     super.tearDown();
   }
 
   protected void tearDownCommonFixtures() throws Exception {
     myTestFixture.tearDown();
     myTempDirFixture.tearDown();
+  }
+
+  private void resetClassFields(final Class<?> aClass) {
+    if (aClass == null) return;
+
+    final Field[] fields = aClass.getDeclaredFields();
+    for (Field field : fields) {
+      final int modifiers = field.getModifiers();
+      if ((modifiers & Modifier.FINAL) == 0
+          &&  (modifiers & Modifier.STATIC) == 0
+          && !field.getType().isPrimitive()) {
+        field.setAccessible(true);
+        try {
+          field.set(this, null);
+        }
+        catch (IllegalAccessException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    if (aClass == MavenTestCase.class) return;
+    resetClassFields(aClass.getSuperclass());
   }
 
   @Override
@@ -145,11 +171,11 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   private VirtualFile setFileContent(VirtualFile f, String xml) throws IOException {
-    f.setBinaryContent(createValidPom(xml).getBytes());
+    f.setBinaryContent(createProjectXml(xml).getBytes());
     return f;
   }
 
-  protected String createValidPom(String xml) {
+  protected String createProjectXml(String xml) {
     return "<?xml version=\"1.0\"?>" +
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +

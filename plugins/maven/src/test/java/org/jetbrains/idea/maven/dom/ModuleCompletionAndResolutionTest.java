@@ -237,6 +237,46 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertEquals(getPsiFile(m), ref.resolve());
   }
 
+  public void testResolutionWithProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<properties>" +
+                     "  <dirName>subDir</dirName>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>${dirName}/m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("subDir/m",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m</artifactId>" +
+                                     "<version>1</version>");
+
+    importProject();
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<properties>" +
+                     "  <dirName>subDir</dirName>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module><caret>${dirName}/m</module>" +
+                     "</modules>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    assertEquals("${dirName}/m", ref.getCanonicalText());
+    assertEquals(getPsiFile(m), ref.resolve());
+  }
+
   public void testCreatePomQuickFix() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -306,7 +346,35 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
         "    <version>parentVersion</version>\n" +
         "</project>");
   }
-  
+
+  public void testCreatePomQuickFixWithProperties() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
+    importProject();
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <dirName>subDir</dirName>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>${dirName}/new<caret>Module</module>" +
+                     "</modules>");
+
+    IntentionAction i = getIntentionAtCaret("Create pom.xml");
+    assertNotNull(i);
+
+    myCodeInsightFixture.launchAction(i);
+
+    VirtualFile pom = myProjectRoot.findFileByRelativePath("subDir/newModule/pom.xml");
+    assertNotNull(pom);
+  }
+
   public void testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

@@ -342,6 +342,9 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
   }
 
   public void testDownloadingNecessaryPlugins() throws Exception {
+    if (ignore()) return;
+    // maven loads plugin classes into JVM and does not len us remove the jar.
+
     String pathToPlugin = "org/codehaus/mojo/build-helper-maven-plugin";
     removeFromLocalRepository(pathToPlugin);
 

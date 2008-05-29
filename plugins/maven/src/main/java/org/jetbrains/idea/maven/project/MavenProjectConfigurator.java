@@ -118,6 +118,10 @@ public class MavenProjectConfigurator {
 
 
     for (Map.Entry<MavenProjectModel.Node, Module> each : modules.entrySet()) {
+      createModuleConfigurator(each.getValue(), each.getKey()).preConfigFacets(rootModels.get(each.getValue()));
+    }
+
+    for (Map.Entry<MavenProjectModel.Node, Module> each : modules.entrySet()) {
       createModuleConfigurator(each.getValue(), each.getKey()).configFacets(rootModels.get(each.getValue()));
     }
 

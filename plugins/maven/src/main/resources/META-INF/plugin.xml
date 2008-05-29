@@ -11,7 +11,7 @@
   <idea-version since-build="6800"/>
 
   <extensionPoints>
-    <extensionPoint name="facetImporter" interface="org.jetbrains.idea.maven.project.FacetImporter"/>
+    <extensionPoint name="facetImporter" interface="org.jetbrains.idea.maven.web.FacetImporter"/>
   </extensionPoints>
 
   <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>

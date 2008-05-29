@@ -120,14 +120,19 @@ public class MavenIndicesManager extends DummyProjectComponent {
   }
 
   public void disposeComponent() {
+    doShutdown();
+  }
+
+  public void doShutdown() {
     if (!isInitialized) return;
 
     VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
     closeIndex();
+
+    isInitialized = false;
   }
 
-  @TestOnly
-  public void closeIndex() {
+  private void closeIndex() {
     try {
       if (myIndices != null) {
         myIndices.save();
@@ -276,12 +281,24 @@ public class MavenIndicesManager extends DummyProjectComponent {
     return myIndices.getGroupIds();
   }
 
+  public boolean hasGroupId(String groupId) throws MavenIndexException {
+    return myIndices.hasGroupId(groupId);
+  }
+
   public Set<String> getArtifactIds(String groupId) throws MavenIndexException {
     return myIndices.getArtifactIds(groupId);
   }
 
+  public boolean hasArtifactId(String groupId, String artifactId) throws MavenIndexException {
+    return myIndices.hasArtifactId(groupId, artifactId);
+  }
+
   public Set<String> getVersions(String groupId, String artifactId) throws MavenIndexException {
     return myIndices.getVersions(groupId, artifactId);
+  }
+
+  public boolean hasVersion(String groupId, String artifactId, String version) throws MavenIndexException {
+    return myIndices.hasVersion(groupId, artifactId, version);
   }
 
   public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenIndexException {

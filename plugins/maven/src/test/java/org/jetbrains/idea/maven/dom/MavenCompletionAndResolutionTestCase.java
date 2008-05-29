@@ -94,7 +94,11 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
   }
 
   protected void checkHighlighting() throws Throwable {
-    myCodeInsightFixture.testHighlighting(true, true, true, myProjectPom);
+    checkHighlighting(myProjectPom);
+  }
+
+  protected void checkHighlighting(VirtualFile f) throws Throwable {
+    myCodeInsightFixture.testHighlighting(true, true, true, f);
   }
 
   protected PsiFile getPsiFile(VirtualFile f) {

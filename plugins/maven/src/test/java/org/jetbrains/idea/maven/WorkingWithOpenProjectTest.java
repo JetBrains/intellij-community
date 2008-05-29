@@ -43,7 +43,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
   
   public void testSavingAllDocumentBeforeReimport() throws Exception {
     Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    d.setText(createValidPom("<groupId>test</groupId>" +
+    d.setText(createProjectXml("<groupId>test</groupId>" +
                              "<artifactId>project</artifactId>" +
                              "<version>1</version>" +
 

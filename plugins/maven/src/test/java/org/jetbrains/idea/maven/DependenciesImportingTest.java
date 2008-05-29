@@ -343,6 +343,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     importProject();
+    resolveProject();
     assertModules("project", "m1", "m2");
 
     assertModuleLibDeps("m2", "group:id:1");

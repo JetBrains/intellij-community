@@ -36,8 +36,9 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
+    myRepositoryManager.doShutdown();
     myRepositoryManager.clearIndices();
+    super.tearDown();
   }
 
   public void testGroupIdCompletion() throws Exception {
@@ -50,7 +51,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <groupId><caret></groupId>" +
                      "  </dependency>" +
                      "</dependencies>");
-    
+
     assertCompletionVariants(myProjectPom, "junit", "jmock", "test");
   }
 
@@ -83,7 +84,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     assertCompletionVariants(myProjectPom);
   }
-  
+
   public void testVersionCompletion() throws Exception {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -194,10 +195,10 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testRemovingExistingProjects() throws Exception {
-    VirtualFile m =createModulePom("m1",
-                    "<groupId>project-group</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+    VirtualFile m = createModulePom("m1",
+                                    "<groupId>project-group</groupId>" +
+                                    "<artifactId>m1</artifactId>" +
+                                    "<version>1</version>");
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -338,5 +339,73 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "</dependencies>");
 
     checkHighlighting();
+  }
+
+  public void testHandlingProperties() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <dep.groupId>junit</dep.groupId>" +
+                     "  <dep.artifactId>junit</dep.artifactId>" +
+                     "  <dep.version>4.0</dep.version>" +
+                     "</properties>");
+    importProject();
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     // properties are taken from loaded project
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>${dep.groupId}</groupId>" +
+                     "    <artifactId>${dep.artifactId}</artifactId>" +
+                     "    <version>${dep.version}</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
+  public void testHandlingPropertiesWhenProjectIsNotYetLoaded() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <dep.groupId>junit</dep.groupId>" +
+                     "  <dep.artifactId>junit</dep.artifactId>" +
+                     "  <dep.version>4.0</dep.version>" +
+                     "</properties>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>${dep.groupId}</groupId>" +
+                     "    <artifactId>${dep.artifactId}</artifactId>" +
+                     "    <version>${dep.version}</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
+  public void testDoNotHighlightProblemsInNotLoadedProject() throws Throwable {
+    VirtualFile m = createModulePom("not-a-module",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>project</artifactId>" +
+                                    "<version>1</version>" +
+
+                                    "<dependencies>" +
+                                    "  <dependency>" +
+                                    "    <groupId><error>${xxx}</error></groupId>" +
+                                    "    <artifactId><error>${xxx}</error></artifactId>" +
+                                    "    <version><error>${xxx}</error></version>" +
+                                    "  </dependency>" +
+                                    "</dependencies>");
+
+    checkHighlighting(m);
   }
 }

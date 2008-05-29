@@ -90,11 +90,15 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
 
     for (Mojo eachMojo : pluginModel.getMojos().getMojos()) {
       String goal = eachMojo.getGoal().getStringValue();
+      if (goal == null) continue;
+
       if (selectedGoals == null || selectedGoals.contains(goal)) {
         for (Parameter eachParameter : eachMojo.getParameters().getParameters()) {
           if (!eachParameter.getEditable().getValue()) continue;
 
           String name = eachParameter.getName().getStringValue();
+          if (name == null) continue;
+
           if (namesWithParameters.containsKey(name)) continue;
           namesWithParameters.put(name, eachParameter);
         }

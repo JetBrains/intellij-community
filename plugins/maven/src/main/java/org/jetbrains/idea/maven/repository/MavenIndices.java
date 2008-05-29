@@ -416,7 +416,7 @@ public class MavenIndices {
   }
 
   public Set<String> getGroupIds() throws MavenIndexException {
-    return processCaches(new CacheProcessor() {
+    return collectCaches(new CacheProcessor<Collection<String>>() {
       public Collection<String> process(final IndexCache cache) throws Exception {
         final Set<String> result = new HashSet<String>();
 
@@ -432,7 +432,7 @@ public class MavenIndices {
   }
 
   public Set<String> getArtifactIds(final String groupId) throws MavenIndexException {
-    return processCaches(new CacheProcessor() {
+    return collectCaches(new CacheProcessor<Collection<String>>() {
       public Collection<String> process(IndexCache cache) throws Exception {
         return cache.artifactIds.get(groupId);
       }
@@ -440,14 +440,42 @@ public class MavenIndices {
   }
 
   public Set<String> getVersions(final String groupId, final String artifactId) throws MavenIndexException {
-    return processCaches(new CacheProcessor() {
+    return collectCaches(new CacheProcessor<Collection<String>>() {
       public Collection<String> process(IndexCache cache) throws Exception {
         return cache.versions.get(groupId + ":" + artifactId);
       }
     });
   }
 
-  private Set<String> processCaches(CacheProcessor p) throws MavenIndexException {
+  public boolean hasGroupId(final String groupId) throws MavenIndexException {
+    return processCaches(new CacheProcessor<Boolean>() {
+      public Boolean process(IndexCache cache) throws Exception {
+        return cache.artifactIds.hasKey(groupId);
+      }
+    });
+  }
+
+  public boolean hasArtifactId(final String groupId, final String artifactId) throws MavenIndexException {
+    return processCaches(new CacheProcessor<Boolean>() {
+      public Boolean process(IndexCache cache) throws Exception {
+        return cache.versions.hasKey(groupId + ":" + artifactId);
+      }
+    });
+  }
+
+  public boolean hasVersion(final String groupId, final String artifactId, final String version) throws MavenIndexException {
+    return processCaches(new CacheProcessor<Boolean>() {
+      public Boolean process(IndexCache cache) throws Exception {
+        String key = groupId + ":" + artifactId;
+        if (!cache.versions.hasKey(key)) return false;
+
+        List<String> versions = cache.versions.get(key);
+        return versions != null && versions.contains(version);
+      }
+    });
+  }
+
+  private Set<String> collectCaches(CacheProcessor<Collection<String>> p) throws MavenIndexException {
     try {
       final Set<String> result = new HashSet<String>();
       for (final IndexData data : myIndicesData.values()) {
@@ -462,8 +490,21 @@ public class MavenIndices {
     }
   }
 
-  private static interface CacheProcessor {
-    Collection<String> process(IndexCache cache) throws Exception;
+  private boolean processCaches(CacheProcessor<Boolean> p) throws MavenIndexException {
+    try {
+      for (final IndexData data : myIndicesData.values()) {
+        if (data.cache == null) continue;
+        if (p.process(data.cache)) return true;
+      }
+      return false;
+    }
+    catch (Exception e) {
+      throw new MavenIndexException(e);
+    }
+  }
+
+  private static interface CacheProcessor<T> {
+    T process(IndexCache cache) throws Exception;
   }
 
   private static class IndexData {
