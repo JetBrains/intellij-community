@@ -22,7 +22,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import java.awt.*;
 
 public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Scheme {
-  String getName();
   void setName(String name);
 
   TextAttributes getAttributes(TextAttributesKey key);

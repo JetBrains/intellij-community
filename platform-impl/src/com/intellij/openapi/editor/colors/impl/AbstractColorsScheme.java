@@ -26,7 +26,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected int myEditorFontSize;
   protected float myLineSpacing;
 
-  private Map<EditorFontType, Font> myFonts = new THashMap<EditorFontType, Font>();
+  private Map<EditorFontType, Font> myFonts = new EnumMap<EditorFontType, Font>(EditorFontType.class);
   private String myEditorFontName;
   private String mySchemeName;
 
@@ -63,12 +63,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public AbstractColorsScheme(DefaultColorSchemesManager defaultColorSchemesManager) {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
   }
-
-  public abstract void setAttributes(TextAttributesKey key, TextAttributes attributes);
-  public abstract TextAttributes getAttributes(TextAttributesKey key);
-
-  public abstract void setColor(ColorKey key, Color color);
-  public abstract Color getColor(ColorKey key);
 
   public Color getDefaultBackground() {
     final Color c = getAttributes(HighlighterColors.TEXT).getBackgroundColor();
@@ -129,7 +123,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public String getEditorFontName() {
-    return myEditorFontName == null ? AbstractColorsScheme.DEFAULT_FONT_NAME : myEditorFontName;
+    return myEditorFontName == null ? DEFAULT_FONT_NAME : myEditorFontName;
   }
 
   public int getEditorFontSize() {
@@ -137,7 +131,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public float getLineSpacing() {
-    return myLineSpacing <= 0?1f:myLineSpacing;
+    return myLineSpacing <= 0 ? 1.0f : myLineSpacing;
   }
 
   protected void initFonts() {
@@ -177,7 +171,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       setName(node.getAttributeValue(NAME_ATTR));
       myVersion = Integer.parseInt(node.getAttributeValue(VERSION_ATTR, "0"));
       String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
-      if (isDefaultScheme == null || !Boolean.valueOf(isDefaultScheme)) {
+      if (isDefaultScheme == null || !Boolean.parseBoolean(isDefaultScheme)) {
         String parentSchemeName = node.getAttributeValue(PARENT_SCHEME_ATTR);
         if (parentSchemeName == null) parentSchemeName = DEFAULT_SCHEME_NAME;
         myParentScheme = myDefaultColorSchemesManager.getScheme(parentSchemeName);
@@ -263,7 +257,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (value != null && value.trim().length() > 0) {
       try {
         valueColor = new Color(Integer.parseInt(value, 16));
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException ignored) {
       }
     }
     return valueColor;
@@ -302,7 +297,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     parentNode.addContent(element);
 
     element = new Element(OPTION_ELEMENT);
-    element.setAttribute(NAME_ATTR, AbstractColorsScheme.EDITOR_FONT_NAME);
+    element.setAttribute(NAME_ATTR, EDITOR_FONT_NAME);
     element.setAttribute(VALUE_ELEMENT, getEditorFontName());
     parentNode.addContent(element);
 
@@ -326,7 +321,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
-    Element element;
     List<TextAttributesKey> list = new ArrayList<TextAttributesKey>(myAttributesMap.keySet());
     Collections.sort(list);
 
@@ -334,7 +328,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     for (TextAttributesKey key: list) {
       TextAttributes value = myAttributesMap.get(key);
       if (!haveToWrite(key,value,defaultAttr)) continue;
-      element = new Element(OPTION_ELEMENT);
+      Element element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, key.getExternalName());
       Element valueElement = new Element(VALUE_ELEMENT);
       value.writeExternal(valueElement);

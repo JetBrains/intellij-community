@@ -18,7 +18,7 @@ package com.intellij.openapi.vfs;
 /**
  *
  */
-abstract public class VirtualFileAdapter implements VirtualFileListener {
+public abstract class VirtualFileAdapter implements VirtualFileListener {
   public void propertyChanged(VirtualFilePropertyEvent event){
   }
 

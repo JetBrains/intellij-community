@@ -1,13 +1,12 @@
 package com.intellij.openapi.editor.impl;
 
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -58,8 +57,7 @@ public class ComplementaryFontsRegistry {
     ourFontNames = new ArrayList<String>();
     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
-    for (int i = 0; i < fontNames.length; i++) {
-      final String fontName = fontNames[i];
+    for (final String fontName : fontNames) {
       if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX)) {
         ourFontNames.add(fontName);
       }

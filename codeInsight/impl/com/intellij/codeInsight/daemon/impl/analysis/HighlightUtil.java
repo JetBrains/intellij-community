@@ -251,7 +251,7 @@ public class HighlightUtil {
       }
       String[] modifiers = new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
       for (; i < modifiers.length; i++) {
-        String modifier = modifiers[i];
+        @Modifier String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
           IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement, modifier, true, true);
@@ -1163,7 +1163,7 @@ public class HighlightUtil {
     // check constant expression
     PsiExpression caseValue = statement.getCaseValue();
 
-    // Every case constant expression associated with a switch statement must be assignable (?5.2) to the type of the switch Expression.
+    // Every case constant expression associated with a switch statement must be assignable ($5.2) to the type of the switch Expression.
     if (caseValue != null && switchExpression != null) {
       HighlightInfo highlightInfo = checkAssignability(switchType, caseValue.getType(), caseValue, caseValue);
       if (highlightInfo != null) return highlightInfo;
@@ -1803,7 +1803,7 @@ public class HighlightUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   private static String redIfNotMatch(PsiType type, boolean matches) {
     if (matches) return getFQName(type, false);
     return "<font color=red><b>" + getFQName(type, true) + "</b></font>";
@@ -2003,8 +2003,7 @@ public class HighlightUtil {
       PsiElement qualifierResolved = ((PsiReferenceExpression)qualifier).resolve();
       if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) return null;
     }
-    HighlightInfo info =
-      HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("expected.class.or.package"));
+    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("expected.class.or.package"));
     QuickFixAction.registerQuickFixAction(info, new RemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
     return info;
   }

@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
@@ -68,9 +69,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.TooManyListenersException;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -87,6 +86,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private EditorGutterComponentImpl myGutterComponent;
 
   static {
+    @SuppressWarnings({"UnusedDeclaration"})
     ComplementaryFontsRegistry registry; // load costly font info
   }
 
@@ -161,7 +161,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Runnable myCursorUpdater;
   private int myCaretUpdateVShift;
-  final Project myProject;
+  private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
   private final ArrayList<FocusChangeListener> myFocusListeners = new ArrayList<FocusChangeListener>();
@@ -246,7 +246,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretCursor = new CaretCursor();
 
     myFoldingModel.flushCaretShift();
-    myScrollbarOrientation = EditorEx.VERTICAL_SCROLLBAR_RIGHT;
+    myScrollbarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
     EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
     setHighlighter(highlighter);
@@ -456,18 +456,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myPanel.add(myHeaderPanel, BorderLayout.NORTH);
 
-    myVerticalScrollBar = new MyScrollBar(JScrollBar.VERTICAL);
+    myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);
 
     myGutterComponent = new EditorGutterComponentImpl(this);
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
-    final MyScrollBar horizontalScrollBar = new MyScrollBar(JScrollBar.HORIZONTAL);
+    final MyScrollBar horizontalScrollBar = new MyScrollBar(Adjustable.HORIZONTAL);
     myScrollPane.setHorizontalScrollBar(horizontalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
-    myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-    myScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
 
     myScrollPane.setRowHeaderView(myGutterComponent);
@@ -548,7 +548,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setFontSize(final int fontSize) {
     int oldFontSize = myScheme.getEditorFontSize();
     myScheme.setEditorFontSize(fontSize);
-    myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_FONT_SIZE, oldFontSize, fontSize);
+    myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
   }
 
   private void processKeyTyped(char c) {
@@ -624,7 +624,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ApplicationManager.getApplication().assertIsDispatchThread();
     boolean oldValue = myIsInsertMode;
     myIsInsertMode = mode;
-    myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_INSERT_MODE, oldValue, mode);
+    myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, mode);
     //Repaint the caret line by moving caret to the same place
     LogicalPosition caretPosition = getCaretModel().getLogicalPosition();
     getCaretModel().moveToLogicalPosition(caretPosition);
@@ -2074,9 +2074,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new VisualPosition(line, Math.max(0, column));
   }
 
-  private
   @Nullable
-  FoldRegion getLastCollapsedBeforePosition(VisualPosition visual) {
+  private FoldRegion getLastCollapsedBeforePosition(VisualPosition visual) {
     FoldRegion[] topLevelCollapsed = myFoldingModel.fetchTopLevel();
 
     if (topLevelCollapsed == null) return null;
@@ -2193,7 +2192,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getTabSize() {
-    return mySettings.getTabSize(myProject);
+    Project project = myProject;
+    return project != null && project.isDisposed() ? 0 : mySettings.getTabSize(project);
   }
 
   private void moveCaretToScreenPos(int x, int y) {
@@ -2546,7 +2546,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myGutterComponent.setActiveFoldRegion(null);
-      if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK)) == 0) {
+      if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
         int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
         if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
           myEditorComponent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -3176,7 +3176,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ApplicationManager.getApplication().assertIsDispatchThread();
     int currentHorOffset = myScrollingModel.getHorizontalScrollOffset();
     myScrollbarOrientation = type;
-    if (type == EditorEx.VERTICAL_SCROLLBAR_LEFT) {
+    if (type == VERTICAL_SCROLLBAR_LEFT) {
       myScrollPane.setLayout(new LeftHandScrollbarLayout());
     }
     else {
@@ -3187,19 +3187,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void setVerticalScrollbarVisible(boolean b) {
     if (b) {
-      myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+      myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     }
     else {
-      myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+      myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     }
   }
 
   public void setHorizontalScrollbarVisible(boolean b) {
     if (b) {
-      myScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
     else {
-      myScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+      myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     }
   }
 
@@ -3655,7 +3655,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyColorSchemeDelegate implements EditorColorsScheme {
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
-    private HashMap<EditorFontType, Font> myFontsMap = null;
+    private Map<EditorFontType, Font> myFontsMap = null;
     private int myFontSize = -1;
     private String myFaceName = null;
     private final EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
@@ -3673,7 +3673,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String editorFontName = getEditorFontName();
       int editorFontSize = getEditorFontSize();
 
-      myFontsMap = new HashMap<EditorFontType, Font>();
+      myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
 
       Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
       Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
@@ -4125,5 +4125,4 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     return column;
   }
-
 }

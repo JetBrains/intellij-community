@@ -445,7 +445,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
 
-      final MarkupModel docMarkup = getDocument().getMarkupModel(myEditor.myProject);
+      final MarkupModel docMarkup = getDocument().getMarkupModel(myEditor.getProject());
       for (RangeHighlighter highlighter : docMarkup.getAllHighlighters()) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           myCachedSortedHighlighters.add(highlighter);
@@ -504,8 +504,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     // mouse events
     public void mouseClicked(final MouseEvent e) {
-      CommandProcessor.getInstance().executeCommand(
-        myEditor.myProject, new Runnable() {
+      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
           public void run() {
             doMouseClicked(e);
           }

@@ -94,7 +94,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setRightMargin(int rightMargin) {
-    myRightMargin = new Integer(rightMargin);
+    myRightMargin = Integer.valueOf(rightMargin);
     fireEditorRefresh();
   }
 
@@ -156,7 +156,7 @@ public class SettingsImpl implements EditorSettings {
 
     FileType fileType = getFileType();
     int tabSize = CodeStyleFacade.getInstance(project).getTabSize(fileType);
-    myCachedTabSize = new Integer(tabSize);
+    myCachedTabSize = Integer.valueOf(tabSize);
     return tabSize;
   }
 
@@ -167,7 +167,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setTabSize(int tabSize) {
-    myTabSize = new Integer(tabSize);
+    myTabSize = Integer.valueOf(tabSize);
     fireEditorRefresh();
   }
 
@@ -201,7 +201,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setAdditionalPageAtBottom(boolean val) {
-    myIsAdditionalPageAtBottom = new Boolean(val);
+    myIsAdditionalPageAtBottom = Boolean.valueOf(val);
   }
 
   public boolean isCaretInsideTabs() {
@@ -273,7 +273,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setCaretBlinkPeriod(int blinkPeriod) {
-    myCaretBlinkingPeriod = new Integer(blinkPeriod);
+    myCaretBlinkingPeriod = Integer.valueOf(blinkPeriod);
     fireEditorRefresh();
   }
 

@@ -319,7 +319,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void processRangeHighlighters(RangeHighlighterProcessor p, int startOffset, int endOffset) {
-    final MarkupModelEx docMarkup = (MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.myProject);
+    final MarkupModelEx docMarkup = (MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.getProject());
     final HighlighterList docList = docMarkup.getHighlighterList();
     Iterator<RangeHighlighterImpl> docHighlighters = docList != null ? docList.getHighlighterIterator() : null;
 
