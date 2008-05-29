@@ -263,14 +263,6 @@
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </action>
 
-    <group id="ToolsXmlGroup">
-      <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
-      <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
-      <separator/>
-
-      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
-    </group>
-
     <group text="Internal Actions" internal="true" popup="true">
       <separator/>
       <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
@@ -382,12 +374,6 @@
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
     </group>
 
-    <group id="EditorValidatePopupMenu">
-      <reference ref="ValidateXml"/>
-
-      <add-to-group group-id="EditorPopupMenu.Run" anchor="last"/>
-    </group>
-
     <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction">
       <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
     </action>
@@ -401,8 +387,6 @@
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
-      <reference ref="ValidateXml"/>
-      <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
@@ -411,11 +395,6 @@
     </group>
 
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
-
-    <group id="ProjectViewValidateGroup">
-      <reference ref="ValidateXml"/>
-      <add-to-group group-id="ProjectViewPopupMenuRefactoringGroup" anchor="last"/>
-    </group>
 
     <group id="ProjectViewAnalysisGroup">
       <reference ref="TypeHierarchy"/>
@@ -551,8 +530,6 @@
       <reference ref="AddToFavorites"/>
       <reference ref="MoveToChangeList"/>
       <separator/>
-      <reference ref="ValidateXml"/>
-      <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -574,7 +551,6 @@
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="RefactoringMenu"/>
-      <reference ref="ValidateXml"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -843,43 +819,6 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
 
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
-            class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
-            text="Goto Element">
-      <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
-    </action>
-
-    <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction"
-            text="Insert element">
-      <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
-    </action>
-    <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
-            text="Delete element">
-      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
-    </action>
-
-    <group id="DomElementsTreeView.AddElementGroup" class="com.intellij.util.xml.tree.actions.AddDomElementActionGroup"/>
-
-    <group id="DomElementsTreeView.TreePopup">
-      <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
-
-      <separator/>
-      <reference ref="DomElementsTreeView.AddElementGroup"/>
-      <reference ref="DomElementsTreeView.DeleteElement"/>
-    </group>
-
-    <group id="DomCollectionControl">
-      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction" text="Add">
-        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
-      </action>
-      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" text="Edit">
-        <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
-      </action>
-      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" text="Remove">
-        <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
-      </action>
-    </group>
-
     <group id="PropertyInspectorActions" text="InspectorActions">
       <group id="PropertyInspectorActions.CommonActions">
         <action id="PropertyInspectorActions.AddProperty" class="com.intellij.designer.inspector.impl.actions.AddPropertyAction"
@@ -894,11 +833,12 @@
       </action>
     </group>
 
-
-
     <group id="DiffPanel.Toolbar.IDEA">
       <reference ref="Find"/>
       <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
   </actions>
+
+  <xi:include href="XmlActions.xml" xpointer="xpointer(/component/*)"/>
+
 </component>

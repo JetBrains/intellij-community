@@ -1,0 +1,76 @@
+<component xmlns:xi="http://www.w3.org/2001/XInclude">
+  <actions>
+
+    <group id="ToolsXmlGroup">
+      <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
+      <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
+      <separator/>
+
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
+    </group>
+
+    <group id="EditorValidatePopupMenu">
+      <reference ref="ValidateXml"/>
+      <add-to-group group-id="EditorPopupMenu.Run" anchor="last"/>
+    </group>
+
+    <group id="ProjectViewValidateGroup">
+      <reference ref="ValidateXml"/>
+      <add-to-group group-id="ProjectViewPopupMenuRefactoringGroup" anchor="last"/>
+    </group>
+
+    <group id="ValidateXmlGroup">
+      <reference ref="ValidateXml"/>
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
+    </group>
+
+    <group id="ValidateXmlGroupForCommander">
+      <reference ref="ValidateXml"/>
+      <add-to-group group-id="CommanderPopupMenu" anchor="last"/>
+    </group>
+
+    <group id="ValidateXmlGroupForVcs">
+      <reference ref="ValidateXml"/>
+      <add-to-group group-id="Vcs.FileViewPopup" anchor="last"/>
+    </group>
+
+    <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
+            class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
+            text="Goto Element">
+      <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
+    </action>
+
+    <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction"
+            text="Insert element">
+      <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+    </action>
+    <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
+            text="Delete element">
+      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+    </action>
+
+    <group id="DomElementsTreeView.AddElementGroup" class="com.intellij.util.xml.tree.actions.AddDomElementActionGroup"/>
+
+    <group id="DomElementsTreeView.TreePopup">
+      <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
+
+      <separator/>
+      <reference ref="DomElementsTreeView.AddElementGroup"/>
+      <reference ref="DomElementsTreeView.DeleteElement"/>
+    </group>
+
+    <group id="DomCollectionControl">
+      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction" text="Add">
+        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+      </action>
+      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" text="Edit">
+        <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
+      </action>
+      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" text="Remove">
+        <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+      </action>
+    </group>
+
+
+  </actions>
+</component>

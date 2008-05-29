@@ -19,10 +19,6 @@
       <implementation-class>com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
-      <implementation-class>com.intellij.javaee.ExternalResourceManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.psi.impl.PsiManagerConfiguration</interface-class>
       <implementation-class>com.intellij.psi.impl.PsiManagerConfigurationImpl</implementation-class>
     </component>
@@ -64,17 +60,7 @@
       <implementation-class>com.intellij.ide.impl.convert.ProjectFileVersionImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.util.xml.DomManager</interface-class>
-      <implementation-class>com.intellij.util.xml.impl.DomManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomComponent</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.util.xml.actions.generate.DomTemplateRunner</interface-class>
-      <implementation-class>com.intellij.util.xml.impl.DomTemplateRunnerImpl</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
@@ -94,10 +80,6 @@
       <skipForDummyProject/>
     </component>
 
-    <component>
-      <interface-class>com.intellij.pom.xml.XmlAspect</interface-class>
-      <implementation-class>com.intellij.pom.xml.impl.XmlAspectImpl</implementation-class>
-    </component>
     <component>
       <implementation-class>com.intellij.psi.impl.IncludeAspectImpl</implementation-class>
     </component>
@@ -121,10 +103,6 @@
       <interface-class>com.intellij.facet.ProjectFacetManager</interface-class>
       <implementation-class>com.intellij.facet.impl.ProjectFacetManagerImpl</implementation-class>
       <skipForDummyProject/>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
     </component>
 
     <!--

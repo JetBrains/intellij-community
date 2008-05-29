@@ -1,0 +1,224 @@
+<idea-plugin>
+  <extensionPoints>
+
+    <extensionPoint name="xml.startTagEndToken"
+                    interface="com.intellij.psi.xml.XmlChildRole$StartTagEndTokenProvider"/>
+    <extensionPoint name="xml.schemaProvider"
+                    interface="com.intellij.xml.XmlSchemaProvider"/>
+    <extensionPoint name="xml.xmlExtension"
+                    interface="com.intellij.xml.XmlExtension"/>
+    <extensionPoint name="xml.fileNSInfoProvider"
+                    interface="com.intellij.psi.xml.XmlFileNSInfoProvider"/>
+    <extensionPoint name="xml.attributeDescriptorsProvider"
+                    interface="com.intellij.xml.XmlAttributeDescriptorsProvider"/>
+
+    <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider"/>
+
+    <extensionPoint name="xmlStructureViewElementProvider"
+                    interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"/>
+
+    <extensionPoint name="xmlStructureViewBuilderProvider"
+                        interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider"/>
+
+
+    <extensionPoint name="dom.fileDescription"
+                    interface="com.intellij.util.xml.DomFileDescription"/>
+
+    <extensionPoint name="dom.extender"
+                    interface="com.intellij.util.xml.reflect.DomExtenderEP"/>
+
+    <extensionPoint name="dom.customAnnotationChecker"
+                    interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"/>
+
+
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <renameHandler implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
+
+
+    <completion.contributor implementation="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"/>
+
+    <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
+
+    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttributeValue" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttribute" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlToken" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlTag" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagManipulator"/>
+
+
+    <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
+    <editorOptionsProvider implementation="com.intellij.application.options.editor.XmlEditorOptionsProvider"/>
+
+    <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
+    <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
+    <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
+    <indexedRootsProvider implementation="com.intellij.xml.index.ExternalResourcesRootsProvider"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.DomService"
+                        serviceImplementation="com.intellij.util.xml.impl.DomServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.ui.DomUIFactory"
+                        serviceImplementation="com.intellij.util.xml.ui.DomUIFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.ElementPresentationManager"
+                        serviceImplementation="com.intellij.util.xml.ElementPresentationManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.util.xml.ui.CommittableUtil"
+                    serviceImplementation="com.intellij.util.xml.ui.CommittableUtil"/>
+
+    <projectService serviceInterface="com.intellij.util.xml.highlighting.DomElementAnnotationsManager"
+                    serviceImplementation="com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.util.xml.DomElementsNavigationManager"
+                    serviceImplementation="com.intellij.util.xml.impl.DomElementsNavigationManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.psi.XmlElementFactory"
+                    serviceImplementation="com.intellij.psi.XmlElementFactoryImpl"/>
+
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"/>
+
+    <annotator language="XML" implementationClass="com.intellij.util.xml.impl.DefaultDomAnnotator"/>
+
+
+    <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
+    <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
+    <externalAnnotator language="XHTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
+    <externalAnnotator language="JSP" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
+    <externalAnnotator language="JSPX" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
+
+    <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
+    <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
+    <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
+    <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
+
+    <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
+    <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
+    <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
+
+    <lang.documentationProvider language="XML" implementationClass="com.intellij.xml.util.documentation.XmlDocumentationProvider"/>
+    <lang.documentationProvider language="HTML" implementationClass="com.intellij.xml.util.documentation.HtmlDocumentationProvider"/>
+    <lang.documentationProvider language="XHTML" implementationClass="com.intellij.xml.util.documentation.XHtmlDocumentationProvider"/>
+
+    <lang.surroundDescriptor language="XML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor"/>
+    <lang.surroundDescriptor language="XHTML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor"/>
+
+    <lang.unwrapDescriptor language="XML" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
+    <lang.unwrapDescriptor language="HTML" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
+    <lang.unwrapDescriptor language="XHTML" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
+    <lang.unwrapDescriptor language="JSP" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
+    <lang.unwrapDescriptor language="JSPX" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
+
+    <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="HTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="XHTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+
+    <lang.commenter language="DTD" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+    <lang.commenter language="XML" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+    <lang.commenter language="HTML" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+    <lang.commenter language="XHTML" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+
+    <braceMatcher filetype="XML" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+    <braceMatcher filetype="DTD" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+    <braceMatcher filetype="XHTML" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+    <braceMatcher filetype="HTML" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+
+    <lang.foldingBuilder language="DTD" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="XML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="HTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+
+    <codeInsight.parameterInfo language="XML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="HTML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="XHTML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
+
+    <codeInsight.wordCompletionFilter language="XML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
+    <codeInsight.wordCompletionFilter language="HTML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
+    <codeInsight.wordCompletionFilter language="XHTML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
+    <codeInsight.wordCompletionFilter language="JSP" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
+    <codeInsight.wordCompletionFilter language="JSPX" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
+
+    <lang.fileViewProviderFactory language="XML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
+    <lang.fileViewProviderFactory language="HTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
+    <lang.fileViewProviderFactory language="XHTML" implementationClass="com.intellij.lang.xml.XmlFileViewProviderFactory"/>
+
+    <lang.psiStructureViewFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdStructureViewBuilderFactory"/>
+    <lang.psiStructureViewFactory language="XML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
+    <lang.psiStructureViewFactory language="HTML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
+    <lang.psiStructureViewFactory language="XHTML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
+
+    <lang.ast.factory language="XML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
+    <lang.ast.factory language="DTD" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
+    <lang.ast.factory language="HTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
+    <lang.ast.factory language="XHTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
+    <lang.ast.factory language="JAVA_HOLDER_METHOD_TREE" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
+
+    <usageTypeProvider implementation="com.intellij.util.xml.DomUsageTypeProvider"/>
+    <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
+
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.XmlCodeStyleSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.HtmlCodeStyleSettingsProvider"/>
+
+    <!-- XML -->
+    <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
+    <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
+    <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
+
+    <completionData fileType="XML" className="com.intellij.codeInsight.completion.XmlCompletionData"/>
+    <completionData fileType="HTML" className="com.intellij.codeInsight.completion.HtmlCompletionData"/>
+    <completionData fileType="XHTML" className="com.intellij.codeInsight.completion.XHtmlCompletionData"/>
+    <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
+
+    <psi.referenceContributor implementation="com.intellij.util.xml.impl.DomReferenceContributor"/>
+    <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
+    <anchorReferenceProvider implementation="com.intellij.xml.util.AnchorPathReferenceProvider"/>
+
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.HtmlSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlTagSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlCDATAContentSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.DtdSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlElementSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlTokenSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlLineSelectioner"/>
+
+
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlSlashTypedHandler" id="xmlSlash"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlAutoPopupHandler"/>
+
+    <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+    <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+    <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+    <syntaxHighlighter key="GUI_DESIGNER_FORM" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+
+    <psi.includeHandler implementation="com.intellij.xml.util.XmlIncludeHandler"/>
+
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler"/>
+
+    <declarationRangeHandler key="com.intellij.psi.xml.XmlTag"
+                             implementationClass="com.intellij.codeInsight.hint.TagDeclarationRangeHandler"/>
+
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.HtmlContextType"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlContextType"/>
+
+    <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlErrorQuickFixProvider"/>
+
+    <elementDescriptionProvider implementation="com.intellij.refactoring.util.XmlNonCodeSearchElementDescriptionProvider"/>
+
+    <referenceProviderType key="Uri references provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider"/>
+    <referenceProviderType key="Schema references provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider"/>
+
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameXmlAttributeProcessor"/>
+
+    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.XmlReadWriteAccessDetector"/>
+
+    <elementDescriptionProvider implementation="com.intellij.usageView.XmlUsageViewDescriptionProvider"/>
+
+    <fileTypeIndentOptionsProvider implementation="com.intellij.application.options.XmlIndentOptionsProvider"/>
+    
+
+  </extensions>
+  
+</idea-plugin>
