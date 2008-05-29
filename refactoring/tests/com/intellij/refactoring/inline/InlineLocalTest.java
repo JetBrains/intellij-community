@@ -12,6 +12,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.refactoring.RefactoringBundle;
 
 /**
  * @author ven
@@ -67,14 +68,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   public void testAugmentedAssignment() throws Exception {
-    String expectedException = null;
+    String exception = null;
     try {
       doTest(false);
     }
     catch(RuntimeException ex) {
-      expectedException = ex.getMessage();
+      exception = ex.getMessage();
     }
-    assertEquals("Cannot perform refactoring.\nVariable 'text' is accessed for writing. ", expectedException);
+    String error = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", "text"));
+    assertEquals(error, exception);
   }
 
   private void doTest(final boolean inlineDef) throws Exception {
