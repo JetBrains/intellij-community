@@ -19,4 +19,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract Color getFoldingColor(boolean isActive);
 
   public abstract void revalidateMarkup();
+
+  public abstract int getLineMarkerAreaOffset();
+
+  public abstract int getIconsAreaWidth();
 }

@@ -33,4 +33,6 @@ public interface ActiveGutterRenderer extends LineMarkerRenderer {
    * @param e      the mouse event instance.
    */
   void doAction(Editor editor, MouseEvent e);
+
+  boolean canDoAction(final MouseEvent e);
 }

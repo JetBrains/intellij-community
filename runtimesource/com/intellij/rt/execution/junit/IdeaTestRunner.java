@@ -1,11 +1,10 @@
 package com.intellij.rt.execution.junit;
 
+import com.intellij.rt.execution.coverage.data.ProjectData;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import junit.framework.Test;
-import junit.framework.TestListener;
-import junit.framework.TestResult;
+import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
@@ -50,6 +49,26 @@ public class IdeaTestRunner extends TestRunner {
   protected TestResult createTestResult() {
     TestResult testResult = super.createTestResult();
     testResult.addListener(myTestsListener);
+    final ProjectData data = ProjectData.getProjectData();
+    if (data != null) {
+      testResult.addListener(new TestListener() {
+        public void addError(final Test test, final Throwable t) {}
+        public void addFailure(final Test test, final AssertionFailedError t) {}
+
+        public void startTest(final Test test) {
+          if (test instanceof TestCase) {
+            data.testStarted(((TestCase)test).getName());
+          }
+        }
+
+        public void endTest(final Test test) {
+          if (test instanceof TestCase) {
+            data.testEnded(((TestCase)test).getName());
+          }
+        }
+      });
+    }
+
     return testResult;
   }
 

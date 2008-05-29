@@ -233,6 +233,11 @@ public class LineStatusTracker {
         Point point = SwingUtilities.convertPoint(comp, ((EditorEx)editor).getGutterComponentEx().getWidth(), e.getY(), layeredPane);
         showActiveHint(range, editor, point);
       }
+
+      public boolean canDoAction(final MouseEvent e) {
+        final EditorGutterComponentEx gutter = (EditorGutterComponentEx)e.getComponent();
+        return  e.getX() > gutter.getLineMarkerAreaOffset() + gutter.getIconsAreaWidth();
+      }
     };
   }
 

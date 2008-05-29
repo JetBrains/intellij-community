@@ -897,6 +897,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return getAnnotationsAreaOffset() + getAnnotationsAreaWidth();
   }
 
+  public int getIconsAreaWidth() {
+    return myIconsAreaWidth;
+  }
+
   private boolean isMirrored() {
     return myEditor.getVerticalScrollbarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
@@ -1060,7 +1064,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final ActiveGutterRenderer[] gutterRenderer = new ActiveGutterRenderer[]{null};
     if (findFoldingAnchorAt(e.getX(), e.getY()) == null) {
       if (!e.isConsumed() &&
-          e.getX() > getLineMarkerAreaOffset() + myIconsAreaWidth &&
+
           e.getX() <= getWhitespaceSeparatorOffset()) {
         Rectangle clip = myEditor.getScrollingModel().getVisibleArea();
         int firstVisibleOffset = myEditor.logicalPositionToOffset(
@@ -1082,8 +1086,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             }
 
             if (startY < e.getY() && e.getY() <= endY) {
-              if (highlighter.getLineMarkerRenderer() instanceof ActiveGutterRenderer) {
-                gutterRenderer[0] = (ActiveGutterRenderer)highlighter.getLineMarkerRenderer();
+              final LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
+              if (renderer instanceof ActiveGutterRenderer && ((ActiveGutterRenderer)renderer).canDoAction(e)) {
+                gutterRenderer[0] = (ActiveGutterRenderer)renderer;
               }
             }
           }
