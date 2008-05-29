@@ -39,4 +39,51 @@ public class TailRecursionInspection {
 
         return hasParent(child.getParent(), parent);
     }
+
+    private TailRecursionInspection getRootSO() {
+        if (getParent() instanceof TailRecursionInspection)
+        {
+            return ((TailRecursionInspection) getParent()).getRootSO();
+        }
+        return this;
+    }
+
+    public Object getParent() {
+        return null;
+    }
+}
+class TailRecursion
+{
+    private boolean duplicate;
+    private Something something;
+    private TailRecursion original;
+
+    public Something getSomething() {
+        if (something == null) {
+            if (isDuplicate()) {
+                final TailRecursion recursion = getOriginal();
+                return recursion.getSomething();
+            } else {
+                something = new Something();
+            }
+        }
+        return something;
+    }
+
+    public Something foo() {
+        if (!duplicate) {
+            return something;
+        } else {
+            return getOriginal().foo();
+        }
+    }
+
+    private TailRecursion getOriginal() {
+        return original;
+    }
+    private boolean isDuplicate() {
+        return duplicate;
+    }
+
+    public static class Something {}
 }
