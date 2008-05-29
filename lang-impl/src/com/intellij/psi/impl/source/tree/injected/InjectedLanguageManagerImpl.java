@@ -163,7 +163,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
       else if (index < cachedList.size() - 1) {
         VirtualFileWindow nextFile = cachedList.get(index + 1);
-        if (oldFile.getDocumentWindow().areRangesEqual(nextFile.getDocumentWindow())) {
+        if (nextFile.isValid() && oldFile.getDocumentWindow().areRangesEqual(nextFile.getDocumentWindow())) {
           PsiFile nextCached = fileManager.getCachedPsiFile((VirtualFile)nextFile);
           if (nextCached != null && nextCached.isValid()) {
             isValid = false;
