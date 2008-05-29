@@ -61,6 +61,9 @@ public abstract class JspManager {
   public abstract Collection<XmlFile> getPossibleTldFiles(@NotNull Module module);
 
   @Nullable
+  public abstract String getTaglibUri(@NotNull XmlFile taglibFile);
+
+  @Nullable
   public abstract XmlFile getTldFileByUri(String uri, @NotNull JspFile jspFile);
 
   @Nullable
