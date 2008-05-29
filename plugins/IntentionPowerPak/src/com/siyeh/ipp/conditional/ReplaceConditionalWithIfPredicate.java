@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
@@ -24,6 +25,20 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if (!(element instanceof PsiConditionalExpression)) {
             return false;
+        }
+        final PsiConditionalExpression conditionalExpression =
+                (PsiConditionalExpression) element;
+        if (PsiUtil.isInJspFile(element)) {
+            final PsiExpression thenExpression =
+                    conditionalExpression.getThenExpression();
+            if (thenExpression == null) {
+                return false;
+            }
+            final PsiExpression elseExpression =
+                    conditionalExpression.getElseExpression();
+            if (elseExpression == null) {
+                return false;
+            }
         }
         final PsiMember member = PsiTreeUtil.getParentOfType(element,
                 PsiMember.class);

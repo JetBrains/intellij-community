@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
                                             @NotNull PsiExpression expression)
             throws IncorrectOperationException{
         final PsiManager mgr = expression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
+        final JavaPsiFacade psiFacade =
+                JavaPsiFacade.getInstance(mgr.getProject());
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         final PsiExpression newCall =
                 factory.createExpressionFromText(newExpression, expression);
         final PsiElement insertedElement = expression.replace(newCall);
@@ -76,7 +78,9 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             @NotNull PsiExpression expression)
             throws IncorrectOperationException{
         final PsiManager manager = expression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final JavaPsiFacade psiFacade =
+                JavaPsiFacade.getInstance(manager.getProject());
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         PsiExpression expressionToReplace = expression;
         final String newExpressionText = newExpression.getText();
         final String expString;
@@ -114,8 +118,9 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             @NotNull PsiExpression expression)
             throws IncorrectOperationException{
         final PsiManager mgr = expression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
-
+        final Project project = mgr.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         PsiExpression expressionToReplace = expression;
         final String expString;
         if(BoolUtils.isNegated(expression)){
@@ -133,29 +138,34 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
     }
 
     protected static void replaceStatement(
-            @NonNls @NotNull String newStatement,
+            @NonNls @NotNull String newStatementText,
             @NonNls @NotNull PsiStatement statement)
             throws IncorrectOperationException{
         final PsiManager mgr = statement.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
-        final PsiStatement newCall =
-                factory.createStatementFromText(newStatement, statement);
-        final PsiElement insertedElement = statement.replace(newCall);
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(mgr.getProject());
+        final PsiElementFactory factory = psiFacade.getElementFactory();
+        final PsiStatement newStatement =
+                factory.createStatementFromText(newStatementText, statement);
+        final PsiElement insertedElement = statement.replace(newStatement);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
     }
 
     protected static void replaceStatementAndShorten(
-            @NonNls @NotNull String newStatement,
+            @NonNls @NotNull String newStatementText,
             @NonNls @NotNull PsiStatement statement)
             throws IncorrectOperationException{
         final PsiManager mgr = statement.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
-        final PsiStatement newCall =
-                factory.createStatementFromText(newStatement, statement);
-        final PsiElement insertedElement = statement.replace(newCall);
+        final Project project = mgr.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
+        final PsiStatement newStatement =
+                factory.createStatementFromText(newStatementText, statement);
+        final PsiElement insertedElement = statement.replace(newStatement);
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
         final PsiElement shortenedElement =
-                JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
+                codeStyleManager.shortenClassReferences(insertedElement);
         mgr.getCodeStyleManager().reformat(shortenedElement);
     }
 
