@@ -16,29 +16,34 @@
 package com.intellij.util.containers;
 
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
-public class StringInterner extends THashSet<String> {
-  public StringInterner() {
-    super(5, 0.9f);
-  }
+public class StringInterner {
+  private static class MySet extends THashSet<String> {
+    public String intern(String name) {
+      int idx = index(name);
+      if (idx >= 0) {
+        return (String)_set[idx];
+      }
 
-  public StringInterner(final TObjectHashingStrategy<String> strategy) {
-    super(5, 0.9f, strategy);
-  }
+      boolean added = add(name);
+      assert added;
 
-  public String intern(String name) {
-    int idx = index(name);
-    if (idx >= 0) {
-      return (String)_set[idx];
+      return name;
     }
+  }
 
-    boolean added = add(name);
-    assert added;
+  private final MySet mySet = new MySet();
 
-    return name;
+  @NotNull
+  public String intern(@NotNull String name) {
+    return mySet.intern(name);
+  }
+
+  public void clear() {
+    mySet.clear();
   }
 }

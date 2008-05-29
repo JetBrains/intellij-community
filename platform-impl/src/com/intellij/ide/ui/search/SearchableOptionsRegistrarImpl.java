@@ -40,7 +40,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private StringInterner myIdentifierTable = new StringInterner() {
-    public String intern(final String name) {
+    @NotNull
+    public String intern(@NotNull final String name) {
       synchronized (this) {
         return super.intern(name);
       }
