@@ -189,9 +189,9 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     final Runnable rebuildRunnable = new Runnable() {
       public void run() {
         final StubIndexImpl stubIndex = (StubIndexImpl)StubIndexImpl.getInstance();
-        final Collection<StubIndexKey<?, ?>> allIndexKeys = stubIndex.getAllStubIndexKeys();
+        final Collection<StubIndexKey> allIndexKeys = stubIndex.getAllStubIndexKeys();
         try {
-          for (StubIndexKey<?, ?> key : allIndexKeys) {
+          for (StubIndexKey key : allIndexKeys) {
             stubIndex.getWriteLock(key).lock();
           }
           stubIndex.clearAllIndices();   
@@ -204,7 +204,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
           });
         }
         finally {
-          for (StubIndexKey<?, ?> key : allIndexKeys) {
+          for (StubIndexKey key : allIndexKeys) {
             stubIndex.getWriteLock(key).unlock();
           }
           if (finishCallback != null) {
@@ -341,7 +341,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     public void clear() throws StorageException {
       final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
       try {
-        for (StubIndexKey<?, ?> key : stubIndex.getAllStubIndexKeys()) {
+        for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
           stubIndex.getWriteLock(key).lock();
         }
         getWriteLock().lock();
@@ -350,7 +350,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       }
       finally {
         getWriteLock().unlock();
-        for (StubIndexKey<?, ?> key : stubIndex.getAllStubIndexKeys()) {
+        for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
           stubIndex.getWriteLock(key).unlock();
         }
       }

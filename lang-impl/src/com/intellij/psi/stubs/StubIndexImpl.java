@@ -313,8 +313,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return myIndices.get(indexKey).getWriteLock();
   }
   
-  public Collection<StubIndexKey<?, ?>> getAllStubIndexKeys() {
-    return Collections.unmodifiableCollection(myIndices.keySet());
+  public Collection<StubIndexKey> getAllStubIndexKeys() {
+    return Collections.<StubIndexKey>unmodifiableCollection(myIndices.keySet());
   }
   
   public void updateIndex(StubIndexKey key, int fileId, Map<?, TIntArrayList> oldValues, Map<?, TIntArrayList> newValues) {
