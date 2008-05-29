@@ -13,7 +13,6 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -32,7 +31,7 @@ public class CompletionVariant {
   private final List<CompletionVariantItem> myCompletionsList = new ArrayList<CompletionVariantItem>();
   private final Set<Class> myScopeClassExceptions = new HashSet<Class>();
   private InsertHandler myInsertHandler = null;
-  private final Map<Object, Serializable> myItemProperties = new HashMap<Object, Serializable>();
+  private final Map<Object, Object> myItemProperties = new HashMap<Object, Object>();
 
   public CompletionVariant() {
   }
@@ -68,11 +67,11 @@ public class CompletionVariant {
     myInsertHandler = handler;
   }
 
-  public void setItemProperty(Object id, Serializable value){
+  public void setItemProperty(Object id, Object value){
     myItemProperties.put(id, value);
   }
 
-  public Map<Object, Serializable> getItemProperties() {
+  public Map<Object, Object> getItemProperties() {
     return myItemProperties;
   }
 

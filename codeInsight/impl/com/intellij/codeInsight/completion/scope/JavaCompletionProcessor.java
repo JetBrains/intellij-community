@@ -10,9 +10,13 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.PsiUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +29,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
  implements ElementClassHint{
   private final PrefixMatcher myMatcher;
   private boolean myStatic = false;
-  private final Set<Object> myResultNames = new HashSet<Object>();
+  private final Set<Object> myResultNames = new THashSet<Object>();
   private final List<CompletionElement> myResults;
   private final PsiElement myElement;
   private PsiElement myScope;
@@ -35,10 +39,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
 
-  private JavaCompletionProcessor(PrefixMatcher matcher, PsiElement element, List<CompletionElement> container, ElementFilter filter){
+  public JavaCompletionProcessor(PrefixMatcher matcher, PsiElement element, ElementFilter filter){
     mySettings = CodeInsightSettings.getInstance();
     myMatcher = matcher;
-    myResults = container;
+    myResults = new ArrayList<CompletionElement>();
     myElement = element;
     myFilter = filter;
     myScope = element;
@@ -66,11 +70,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
       }
     }
   }
-
-  public JavaCompletionProcessor(PrefixMatcher matcher, PsiElement element, ElementFilter filter){
-    this(matcher, element, new ArrayList<CompletionElement>(), filter);
-  }
-
 
   public void handleEvent(Event event, Object associated){
     if(event == JavaScopeProcessorEvent.START_STATIC){

@@ -260,7 +260,7 @@ public class CompletionData {
     else if (tailType != TailType.NONE) {
       ret.setTailType(tailType);
     }
-    final Map<Object, Serializable> itemProperties = variant.getItemProperties();
+    final Map<Object, Object> itemProperties = variant.getItemProperties();
     for (final Object key : itemProperties.keySet()) {
       ret.setAttribute(key, itemProperties.get(key));
     }

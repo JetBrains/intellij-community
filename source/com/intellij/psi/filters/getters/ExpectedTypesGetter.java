@@ -3,16 +3,15 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,38 +24,26 @@ public class ExpectedTypesGetter implements ContextGetter{
 
   @NotNull
   public PsiType[] get(PsiElement context, CompletionContext completionContext){
-    return getExpectedTypes(context);
+    return getExpectedTypes(context, false);
   }
 
-  public static PsiType[] getExpectedTypes(final PsiElement context) {
+  public static PsiType[] getExpectedTypes(final PsiElement context, boolean includeDefault) {
     ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
     if(expression == null) return PsiType.EMPTY_ARRAY;
 
     ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
 
-    List<PsiType> result = new ArrayList<PsiType>(infos.length);
+    Set<PsiType> result = new THashSet<PsiType>(infos.length);
     for (ExpectedTypeInfo info : infos) {
       final PsiType type = info.getType();
       result.add(type);
       final PsiType defaultType = info.getDefaultType();
-      if (!defaultType.equals(type)) {
+      if (includeDefault && !defaultType.equals(type)) {
         result.add(defaultType);
       }
     }
     return result.toArray(new PsiType[result.size()]);
   }
 
-  public static PsiType[] getExpectedTypesWithoutWildcards(final PsiElement context) {
-    PsiType[] superResult = getExpectedTypes(context);
-    if (superResult.length == 0) return PsiType.EMPTY_ARRAY;
-
-    PsiType[] result = new PsiType[superResult.length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = JavaCompletionUtil.eliminateWildcards((PsiType) superResult[i]);
-
-    }
-
-    return result;
-  }
 }

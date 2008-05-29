@@ -40,6 +40,9 @@ public class CompletionElement{
     else if(myElement instanceof PsiMethod){
       return ((PsiMethod)myElement).getSignature(mySubstitutor);
     }
+    else if (myElement instanceof PsiField) {
+      return ((PsiField)myElement).getContainingClass().getQualifiedName() + "#" + ((PsiField)myElement).getName();
+    }
     else if(myElement instanceof PsiElement){
       name = PsiUtil.getName((PsiElement)myElement);
     }

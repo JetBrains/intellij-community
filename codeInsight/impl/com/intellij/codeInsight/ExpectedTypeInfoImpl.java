@@ -37,7 +37,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   private PsiMethod myCalledMethod;
 
 
-  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
+  public ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
     this.type = type;
     this.kind = kind;
     this.defaultType = defaultType;

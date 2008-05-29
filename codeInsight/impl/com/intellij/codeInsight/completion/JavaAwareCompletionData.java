@@ -7,9 +7,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.StandardPatterns.character;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -80,7 +79,7 @@ public class JavaAwareCompletionData extends CompletionData{
         else if (completion instanceof CandidateInfo) {
           final CandidateInfo info = (CandidateInfo)completion;
           if (info.isValidResult() && filter.isAcceptable(info, position)) {
-            processor.execute(info.getElement(), ResolveState.initial());
+            processor.execute(info.getElement(), ResolveState.initial().put(PsiSubstitutor.KEY, info.getSubstitutor()));
           }
         }
         else {
@@ -99,13 +98,11 @@ public class JavaAwareCompletionData extends CompletionData{
     Collection<CompletionElement> results = processor.getResults();
     if (results != null) {
       for (CompletionElement element : results) {
-        final LookupItem lookupItem = addLookupItem(set, tailType, element.getElement(), matcher, file, variant);
-        if (lookupItem != null) {
-          lookupItem.setAttribute(LookupItem.SUBSTITUTOR, element.getSubstitutor());
-          if (element.getQualifier() != null){
-            JavaCompletionUtil.setQualifierType(lookupItem, element.getQualifier());
-          }
-        }
+        variant.setItemProperty(LookupItem.SUBSTITUTOR, element.getSubstitutor());
+        variant.setItemProperty(JavaCompletionUtil.QUALIFIER_TYPE_ATTR, element.getQualifier());
+        addLookupItem(set, tailType, element.getElement(), matcher, file, variant);
+        variant.setItemProperty(LookupItem.SUBSTITUTOR, null);
+        variant.setItemProperty(JavaCompletionUtil.QUALIFIER_TYPE_ATTR, null);
       }
     }
   }
@@ -188,7 +185,7 @@ public class JavaAwareCompletionData extends CompletionData{
       }
     }
 
-    final Map<Object, Serializable> itemProperties = variant.getItemProperties();
+    final Map<Object, Object> itemProperties = variant.getItemProperties();
     for (final Object key : itemProperties.keySet()) {
       if (key == LookupItem.DO_AUTOCOMPLETE_ATTR) {
         ret.setAutoCompletionPolicy(AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE);

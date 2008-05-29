@@ -27,7 +27,7 @@ public class ReturnTypeFilter implements ElementFilter{
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionCache.isAssignable(PsiVariable.class, hintClass) || ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
            ReflectionCache.isAssignable(PsiExpression.class, hintClass) || ReflectionCache.isAssignable(Template.class, hintClass) ||
-           ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
+           ReflectionCache.isAssignable(CandidateInfo.class, hintClass) || ReflectionCache.isAssignable(PsiKeyword.class, hintClass);
 
   }
 

@@ -1,13 +1,11 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.psi.filters.ContextGetter;
-import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
-
-import java.util.Set;
-import java.util.HashSet;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.filters.ContextGetter;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,18 +15,11 @@ import java.util.HashSet;
  * To change this template use Options | File Templates.
  */
 public class ThrowsListGetter implements ContextGetter{
-  public Object[] get(PsiElement context, CompletionContext completionContext){
-    final Set throwsSet = new HashSet();
+  public PsiType[] get(PsiElement context, CompletionContext completionContext){
     final PsiMethod method = PsiTreeUtil.getContextOfType(context, PsiMethod.class, true);
     if(method != null){
-      final PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
-      for (PsiClassType ref : refs) {
-        final PsiClass exception = ref.resolve();
-        if (exception != null) {
-          throwsSet.add(exception);
-        }
-      }
+      return method.getThrowsList().getReferencedTypes();
     }
-    return throwsSet.toArray();
+    return PsiType.EMPTY_ARRAY;
   }
 }

@@ -4,10 +4,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -15,23 +12,24 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
-import static com.intellij.patterns.StandardPatterns.get;
-import static com.intellij.patterns.StandardPatterns.string;
+import static com.intellij.patterns.StandardPatterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.GeneratorFilter;
 import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.filters.getters.InheritorsGetter;
-import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
-import com.intellij.psi.filters.getters.ThrowsListGetter;
+import com.intellij.psi.filters.getters.*;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
+import com.intellij.psi.filters.types.AssignableToFilter;
+import com.intellij.psi.filters.types.ReturnTypeFilter;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -45,14 +43,12 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -93,6 +89,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       return new Pair<ElementFilter, TailType>(THROWABLES_FILTER, TailType.NONE);
     }
 
+    if (PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText(")").withParent(PsiTypeCastExpression.class)).accepts(element)) {
+      return new Pair<ElementFilter, TailType>(new ReturnTypeFilter(new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter())), TailType.NONE);
+    }
+
     return null;
   }
 
@@ -101,8 +101,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   public JavaSmartCompletionContributor() {
     extend(CompletionType.SMART, psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class)), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(parameters.getPosition())) {
-          result.addElement(LookupItemUtil.objectToLookupItem(type).setTailType(TailTypes.CAST_RPARENTH).setAutoCompletionPolicy(
+        for (final ExpectedTypeInfo type : getExpectedTypes(parameters.getPosition())) {
+          result.addElement(LookupItemUtil.objectToLookupItem(type.getType()).setTailType(TailTypes.CAST_RPARENTH).setAutoCompletionPolicy(
               AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE));
         }
       }
@@ -140,20 +140,76 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     });
 
+    extend(CompletionType.SMART, PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.CASE), new EnumConstantsGetter());
+
     extend(CompletionType.SMART, PlatformPatterns.or(
         psiElement().withParent(PsiExpression.class),
         psiElement().inside(PsiClassObjectAccessExpression.class)),
            new CompletionProvider<CompletionParameters>(true, false) {
              public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
-               final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params);
-               CompletionService.getCompletionService().getVariantsFromContributors(ExpressionSmartCompletionContributor.CONTRIBUTORS, parameters, null,
-                                                                                    new Consumer<LookupElement>() {
-                                                                                      public void consume(final LookupElement lookupElement) {
-                                                                                        result.addElement(lookupElement);
-                                                                                      }
-                                                                                    });
+               final PsiElement position = params.getPosition();
+               final THashSet<ExpectedTypeInfo> infos = new THashSet<ExpectedTypeInfo>(Arrays.asList(getExpectedTypes(position)), new TObjectHashingStrategy<ExpectedTypeInfo>() {
+                 public int computeHashCode(final ExpectedTypeInfo object) {
+                   return object.getType().hashCode();
+                 }
+
+                 public boolean equals(final ExpectedTypeInfo o1, final ExpectedTypeInfo o2) {
+                   return o1.getType().equals(o2.getType());
+                 }
+               });
+               for (final ExpectedTypeInfo type : infos) {
+                 final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params, type);
+                 final ElementFilter filter = new ReturnTypeFilter(new AssignableFromFilter(type.getType()));
+
+                 CompletionService.getCompletionService().getVariantsFromContributors(
+                     ExpressionSmartCompletionContributor.CONTRIBUTORS, parameters, null,
+                     new Consumer<LookupElement>() {
+                       public void consume
+                           (
+                               final LookupElement lookupElement) {
+                         final Object object = lookupElement.getObject();
+                         if (!filter.isClassAcceptable(object.getClass())) return;
+
+                         final PsiSubstitutor substitutor;
+                         if (lookupElement instanceof LookupItem) {
+                           substitutor = (PsiSubstitutor)((LookupItem)lookupElement).getAttribute(LookupItem.SUBSTITUTOR);
+                         }
+                         else {
+                           substitutor = null;
+                         }
+                         if (filter.isAcceptable(object, position)) {
+                           result.addElement(lookupElement);
+                         }
+                         else if (substitutor != null &&
+                                  object instanceof PsiElement &&
+                                  filter.isAcceptable(new CandidateInfo((PsiElement)object, substitutor), position)) {
+                           result.addElement(lookupElement);
+                         }
+                       }
+                     });
+               }
              }
            });
+
+    extend(CompletionType.SMART, or(
+        PsiJavaPatterns.psiElement().withParent(PsiNameValuePair.class),
+        PsiJavaPatterns.psiElement().withSuperParent(2, PsiNameValuePair.class)), new CompletionProvider<CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        final PsiElement element = parameters.getPosition();
+        final ElementPattern<? extends PsiElement> leftNeighbor = PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("."));
+        final boolean needQualify = leftNeighbor.accepts(element);
+
+        for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(element, false)) {
+          final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+          if (psiClass != null && psiClass.isAnnotationType()) {
+            final LookupItem item = LookupItemUtil.objectToLookupItem(type).setTailType(TailType.NONE);
+            if (needQualify) JavaAwareCompletionData.qualify(item);
+            result.addElement(item);
+          }
+        }
+
+      }
+    });
 
     extend(CompletionType.SMART, psiElement().inside(
         psiElement(PsiDocTag.class).withName(
@@ -223,7 +279,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                final PsiTypeParameter targetParameter = typeParameters[parameterIndex];
 
                PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
-               for (PsiType type : ExpectedTypesGetter.getExpectedTypes(context)) {
+               for (PsiType type : ExpectedTypesGetter.getExpectedTypes(context, false)) {
                  if (!(type instanceof PsiClassType)) continue;
                  final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
                  final PsiClass typeClass = result.getElement();
@@ -257,7 +313,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            for (final PsiType type : ExpectedTypesGetter.getExpectedTypesWithoutWildcards(identifierCopy)) {
+            for (PsiType type : ExpectedTypesGetter.getExpectedTypes(identifierCopy, true)) {
+              type = JavaCompletionUtil.eliminateWildcards(type);
               if (type instanceof PsiClassType) {
                 final PsiClassType classType = (PsiClassType)type;
                 if (classType.resolve() != null) {
@@ -331,6 +388,32 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             }
           });
         }
+      }
+    });
+  }
+
+  private static ExpectedTypeInfo[] getExpectedTypes(final PsiElement position) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<ExpectedTypeInfo[]>() {
+      public ExpectedTypeInfo[] compute() {
+        if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
+          final PsiClassType classType = factory
+              .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
+          final List<ExpectedTypeInfo> result = new SmartList<ExpectedTypeInfo>();
+          result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, classType, TailType.SEMICOLON));
+          final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
+          if (method != null) {
+            for (final PsiClassType type : method.getThrowsList().getReferencedTypes()) {
+              result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, type, TailType.SEMICOLON));
+            }
+          }
+          return result.toArray(new ExpectedTypeInfo[result.size()]);
+        }
+
+        PsiExpression expression = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
+        if (expression == null) return ExpectedTypeInfo.EMPTY_ARRAY;
+
+        return ExpectedTypesProvider.getInstance(position.getProject()).getExpectedTypes(expression, true);
       }
     });
   }

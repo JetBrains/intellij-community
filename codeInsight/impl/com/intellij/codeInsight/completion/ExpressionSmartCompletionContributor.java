@@ -16,7 +16,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class ExpressionSmartCompletionContributor extends AbstractCompletionContributor<JavaSmartCompletionParameters> {
-  public static final ExpressionSmartCompletionContributor[] CONTRIBUTORS = {new BasicExpressionCompletionContributor(), new ReferenceExpressionCompletionContributor()};
+  public static final ExpressionSmartCompletionContributor[] CONTRIBUTORS = {new BasicExpressionCompletionContributor()};
 
   private final List<Pair<ElementPattern<? extends PsiElement>, CompletionProvider<JavaSmartCompletionParameters>>> myList =
       new ArrayList<Pair<ElementPattern<? extends PsiElement>, CompletionProvider<JavaSmartCompletionParameters>>>();

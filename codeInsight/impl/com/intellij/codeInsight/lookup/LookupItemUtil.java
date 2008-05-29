@@ -101,10 +101,10 @@ public class LookupItemUtil{
       s = StringUtil.notNullize(s);
     }
     else if (object instanceof PsiKeyword) {
-      s = ((PsiKeyword)object).getText();
+      return new KeywordLookupItem((PsiKeyword)object).setTailType(tailType);
     }
     else if (object instanceof PsiExpression) {
-      s = ((PsiExpression)object).getText();
+      return new ExpressionLookupItem((PsiExpression) object).setTailType(tailType);
     }
     else if (object instanceof PsiType) {
       PsiType type = (PsiType)object;

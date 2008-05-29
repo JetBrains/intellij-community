@@ -148,6 +148,11 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   }
 
   public <T> void setAttribute(Key<T> key, T value){
+    if (value == null && myAttributes != null) {
+      myAttributes.remove(key);
+      return;
+    }
+
     if (myAttributes == null){
       myAttributes = new HashMap<Object, Object>(5);
     }
