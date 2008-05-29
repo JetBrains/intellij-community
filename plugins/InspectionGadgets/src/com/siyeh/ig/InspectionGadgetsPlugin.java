@@ -1025,6 +1025,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     private void registerJUnitInspections() {
         m_inspectionClasses.add(AssertEqualsBetweenInconvertibleTypesInspection.class);
+        m_inspectionClasses.add(AssertEqualsMayBeAssertSameInspection.class);
         m_inspectionClasses.add(AssertsWithoutMessagesInspection.class);
         m_inspectionClasses.add(BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection.class);
         m_inspectionClasses.add(BeforeOrAfterIsPublicVoidNoArgInspection.class);

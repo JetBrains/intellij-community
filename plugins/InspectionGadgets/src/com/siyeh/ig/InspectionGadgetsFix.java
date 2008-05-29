@@ -137,7 +137,6 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull @NonNls String newStatementText)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
-        PsiStatement newStatement;
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         final Project project = psiManager.getProject();
         final JavaCodeStyleManager javaStyleManager =
@@ -172,7 +171,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
                     return;
                 }
             }
-            newStatement = (PsiStatement) elementAt;
+            final PsiStatement newStatement = (PsiStatement) elementAt;
             javaStyleManager.shortenClassReferences(newStatement);
             final TextRange newTextRange = newStatement.getTextRange();
             final Language baseLanguage = viewProvider.getBaseLanguage();
@@ -185,8 +184,8 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         } else {
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
             final PsiElementFactory factory = facade.getElementFactory();
-            newStatement =
-                    factory.createStatementFromText(newStatementText, statement);
+            PsiStatement newStatement = factory.createStatementFromText(
+                    newStatementText, statement);
             newStatement = (PsiStatement) statement.replace(newStatement);
             javaStyleManager.shortenClassReferences(newStatement);
             styleManager.reformat(newStatement);

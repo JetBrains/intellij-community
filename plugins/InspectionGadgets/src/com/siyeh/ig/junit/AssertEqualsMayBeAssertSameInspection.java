@@ -15,13 +15,14 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.Assert;
@@ -38,6 +39,35 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "assertequals.may.be.assertsame.problem.descriptor");
+    }
+
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        return new AssertEqualsMayBeAssertSameFix();
+    }
+
+    private static class AssertEqualsMayBeAssertSameFix
+            extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return "Replace with 'assertSame()'";
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement grandParent = element.getParent().getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
+                return;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) grandParent;
+            final String text = methodCallExpression.getText();
+            final String newExpressionText =
+                    text.replace("assertEquals", "assertSame");
+            replaceExpression(methodCallExpression, newExpressionText);
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -61,14 +91,58 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
             if (arguments.length == 3 && arguments.length == 2) {
                 return;
             }
-
-            // only consider final classes
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            final String qualifiedName = aClass.getQualifiedName();
+            if (!"org.junit.Assert".equals(qualifiedName) &&
+                    !"junit.framework.Assert".equals(qualifiedName)) {
+                return;
+            }
+            final PsiExpression argument1 = arguments[arguments.length - 2];
+            if (!couldBeAssertSameArgument(argument1)) {
+                return;
+            }
+            final PsiExpression argument2 = arguments[arguments.length - 1];
+            if (!couldBeAssertSameArgument(argument2)) {
+                return;
+            }
+            registerMethodCallError(expression);
         }
 
-        @Test
-        void foo() {
-            Assert.assertEquals(new Object(), new Object());
-            Assert.assertSame(new Object(), new Object());
+        private static boolean couldBeAssertSameArgument(
+                PsiExpression argument1) {
+            final PsiType type = argument1.getType();
+            if (!(type instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClassType classType = (PsiClassType) type;
+            final PsiClass argumentClass = classType.resolve();
+            if (argumentClass == null) {
+                return false;
+            }
+            if (!argumentClass.hasModifierProperty(PsiModifier.FINAL)) {
+                return false;
+            }
+            final PsiMethod[] methods =
+                    argumentClass.findMethodsByName("equals", true);
+            final PsiManager manager = argument1.getManager();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(
+                    manager.getProject());
+            final PsiClass objectClass = psiFacade.findClass("java.lang.Object",
+                    argumentClass.getResolveScope());
+            if (objectClass == null) {
+                return false;
+            }
+            for (PsiMethod psiMethod : methods) {
+                final PsiClass containingClass = psiMethod.getContainingClass();
+                if (!objectClass.equals(containingClass)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
