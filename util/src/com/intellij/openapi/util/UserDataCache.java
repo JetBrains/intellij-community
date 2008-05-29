@@ -18,8 +18,7 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
 
-public abstract class UserDataCache<T, Owner extends UserDataHolder, S> extends FieldCache<T,Owner,Key<T>,S> {
-
+public abstract class UserDataCache<T, Owner extends UserDataHolder, S> extends FieldCache<T, Owner, Key<T>, S> {
   private final Key<T> myKey;
 
   protected UserDataCache() {

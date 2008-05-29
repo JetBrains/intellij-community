@@ -5,13 +5,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 public class ConstantExpressionEvaluator extends JavaElementVisitor {
   private final StringInterner myInterner = new StringInterner();
@@ -22,8 +23,8 @@ public class ConstantExpressionEvaluator extends JavaElementVisitor {
 
   private Object myValue;
   
-  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY");
-  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY");
+  private static final Key<CachedValue<ConcurrentMap<PsiElement,Object>>> CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY = Key.create("CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY");
+  private static final Key<CachedValue<ConcurrentMap<PsiElement,Object>>> CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY = Key.create("CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
   private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow, final Project project) {
@@ -360,34 +361,28 @@ public class ConstantExpressionEvaluator extends JavaElementVisitor {
   private Object accept(PsiElement element) {
     if (element == null) return null;
 
-    final Key<CachedValue<Map<PsiElement, Object>>> key = myThrowExceptionOnOverflow ?
+    Key<CachedValue<ConcurrentMap<PsiElement, Object>>> key = myThrowExceptionOnOverflow ?
                                                           CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY :
                                                           CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY;
     return calculateWithCaching(key, element);
   }
 
-  private Object calculateWithCaching(final Key<CachedValue<Map<PsiElement, Object>>> key,
-                                      final PsiElement element) {
-    CachedValue<Map<PsiElement,Object>> cachedValue = myProject.getUserData(key);
-    if (cachedValue == null) {
-      cachedValue = PsiManager.getInstance(myProject).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
-        public Result<Map<PsiElement,Object>> compute() {
-          Map<PsiElement, Object> value = Collections.synchronizedMap(new SoftHashMap<PsiElement, Object>());
-          return new Result<Map<PsiElement, Object>>(value, PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      }, false);
-      myProject.putUserData(key, cachedValue);
+  private static final CachedValueProvider<ConcurrentMap<PsiElement,Object>> PROVIDER = new CachedValueProvider<ConcurrentMap<PsiElement,Object>>() {
+    public Result<ConcurrentMap<PsiElement,Object>> compute() {
+      ConcurrentMap<PsiElement, Object> value = new ConcurrentSoftHashMap<PsiElement, Object>();
+      return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
     }
-    Map<PsiElement, Object> map = cachedValue.getValue();
+  };
+  private Object calculateWithCaching(final Key<CachedValue<ConcurrentMap<PsiElement, Object>>> key, @NotNull PsiElement element) {
+    ConcurrentMap<PsiElement, Object> map = PsiManager.getInstance(myProject).getCachedValuesManager().getCachedValue(myProject, key, PROVIDER, false);
     Object value = map.get(element);
     if (value == null) {
       myValue = null;
       element.accept(this);
-      map.put(element, myValue == null ? NO_VALUE : myValue);
-      return myValue;
+      value = ConcurrencyUtil.cacheOrGet(map, element, myValue == null ? NO_VALUE : myValue);
     }
-    else if (value == NO_VALUE) {
-      return null;
+    if (value == NO_VALUE) {
+      value = null;
     }
     return value;
   }
@@ -582,11 +577,6 @@ public class ConstantExpressionEvaluator extends JavaElementVisitor {
   public static Object computeConstantExpression(PsiExpression expression, Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
     if (expression == null) return null;
     ConstantExpressionEvaluator evaluator = new ConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject());
-    return _compute(evaluator, expression);
-  }
-
-  private static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
     return evaluator.accept(expression);
   }
-
 }

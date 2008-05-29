@@ -51,7 +51,7 @@ public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedVal
   private final JBLock r = rw.readLock();
   private final JBLock w = rw.writeLock();
 
-  public ParameterizedCachedValueImpl(PsiManager manager, ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
+  public ParameterizedCachedValueImpl(@NotNull PsiManager manager, @NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
     myManager = manager;
     myProvider = provider;
     myTrackValue = trackValue;

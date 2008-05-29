@@ -43,13 +43,12 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   private final MyTimedReference<T> myData = new MyTimedReference<T>();
 
-
   private long myLastPsiTimeStamp = -1;
   private JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
   private JBLock r = rw.readLock();
   private JBLock w = rw.writeLock();
 
-  public CachedValueImpl(PsiManager manager, CachedValueProvider<T> provider, boolean trackValue) {
+  public CachedValueImpl(@NotNull PsiManager manager, @NotNull CachedValueProvider<T> provider, boolean trackValue) {
     myManager = manager;
     myProvider = provider;
     myTrackValue = trackValue;

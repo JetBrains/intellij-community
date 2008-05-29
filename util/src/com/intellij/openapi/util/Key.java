@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "UnusedDeclaration"})
 public class Key<T> {
@@ -24,12 +25,17 @@ public class Key<T> {
 
   private final String myName; // for debug purposes only
 
-  public Key(@NonNls String name) {
+  public Key(@NotNull @NonNls String name) {
     myName = name;
   }
 
   public int hashCode() {
     return myIndex;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj == this;
   }
 
   public String toString() {

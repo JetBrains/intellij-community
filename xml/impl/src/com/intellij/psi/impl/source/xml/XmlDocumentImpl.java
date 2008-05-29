@@ -38,11 +38,11 @@ import java.util.Map;
 /**
  * @author Mike
  */
-public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlElementType {
+public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
 
   public XmlDocumentImpl() {
-    this(XML_DOCUMENT);
+    this(XmlElementType.XML_DOCUMENT);
   }
 
   protected XmlDocumentImpl(IElementType type) {
@@ -61,10 +61,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == XML_PROLOG) {
+    if (i == XmlElementType.XML_PROLOG) {
       return XmlChildRole.XML_PROLOG;
     }
-    else if (i == XML_TAG) {
+    else if (i == XmlElementType.XML_TAG) {
       return XmlChildRole.XML_TAG;
     }
     else {
@@ -73,11 +73,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
   }
 
   public XmlProlog getProlog() {
-    return (XmlProlog)findElementByTokenType(XML_PROLOG);
+    return (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
   }
 
   public XmlTag getRootTag() {
-    return (XmlTag)findElementByTokenType(XML_TAG);
+    return (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
   }
 
   public XmlNSDescriptor getRootTagNSDescriptor() {
@@ -87,7 +87,19 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
 
   private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
   private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
-  private static final CachedValue NULL = new CachedValueImpl(null,null,false);
+  private static final CachedValue NULL = new CachedValue(){
+    public Object getValue() {
+      return null;
+    }
+
+    public CachedValueProvider getValueProvider() {
+      return null;
+    }
+
+    public boolean hasUpToDateValue() {
+      return false;
+    }
+  };
 
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
@@ -140,21 +152,25 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
   }
 
   private boolean isGeneratedFromDtd(XmlNSDescriptor defaultNSDescriptorInner) {
-    return defaultNSDescriptorInner != null &&
-        defaultNSDescriptorInner.getDescriptorFile() != null &&
-        defaultNSDescriptorInner.getDescriptorFile().getName().equals(
-          XmlUtil.getContainingFile(XmlDocumentImpl.this).getName() + ".dtd"
-        );
+    if (defaultNSDescriptorInner == null) {
+      return false;
+    }
+    XmlFile descriptorFile = defaultNSDescriptorInner.getDescriptorFile();
+    if (descriptorFile == null) {
+        return false;
+    }
+    @NonNls String otherName = XmlUtil.getContainingFile(this).getName() + ".dtd";
+    return descriptorFile.getName().equals(otherName);
   }
 
   public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
     final XmlFile containingFile = XmlUtil.getContainingFile(this);
     final XmlProlog prolog = getProlog();
-    final XmlDoctype doctype = (prolog != null) ? prolog.getDoctype() : null;
+    final XmlDoctype doctype = prolog != null ? prolog.getDoctype() : null;
     boolean dtdUriFromDocTypeIsNamespace = false;
 
     if (XmlUtil.HTML_URI.equals(namespace)) {
-      XmlNSDescriptor nsDescriptor = (doctype != null) ? getNsDescriptorFormDocType(doctype, containingFile) : null;
+      XmlNSDescriptor nsDescriptor = doctype != null ? getNsDescriptorFormDocType(doctype, containingFile) : null;
       if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
       return new HtmlNSDescriptorImpl(nsDescriptor);
     }
@@ -200,7 +216,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     catch (ProcessCanceledException ex) {
       throw ex;
     }
-    catch (RuntimeException ex) {
+    catch (RuntimeException ignored) {
     } // e.g. dtd isn't mapped to xml type
 
     return null;
@@ -299,7 +315,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
       }
     };
 
-    this.accept(psiRecursiveElementVisitor);
+    accept(psiRecursiveElementVisitor);
 
     final Object[] keys = map.keys();
     for (final Object key : keys) {
@@ -319,7 +335,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
         }
       });
     }
-    catch(IncorrectOperationException e){}
+    catch(IncorrectOperationException ignored){}
     return holder[0];
   }
 
@@ -334,7 +350,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
         }
       });
     }
-    catch(IncorrectOperationException e){}
+    catch(IncorrectOperationException ignored){}
   }
 
   public void replaceChildInternal(@NotNull final ASTNode child, @NotNull final TreeElement newElement) {
@@ -348,6 +364,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
         }
       });
     }
-    catch(IncorrectOperationException e){}
+    catch(IncorrectOperationException ignored){}
   }
 }
