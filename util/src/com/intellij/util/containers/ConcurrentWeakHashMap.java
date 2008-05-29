@@ -23,12 +23,12 @@
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Fully copied from java.util.WeakHashMap except "get" method optimization.
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implements ConcurrentMap<K,V> {
 
   private static interface Key<K>{
-    public K get();
+    K get();
   }
 
   private static class WeakKey extends WeakReference implements Key{
@@ -63,9 +63,9 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
-      Object t = this.get();
+      Object t = get();
       Object u = ((Key)o).get();
-      if ((t == null) || (u == null)) return false;
+      if (t == null || u == null) return false;
       if (t == u) return true;
       return t.equals(u);
     }
@@ -95,9 +95,9 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
-      Object t = this.get();
+      Object t = get();
       Object u = ((Key)o).get();
-      if ((t == null) || (u == null)) return false;
+      if (t == null || u == null) return false;
       if (t == u) return true;
       return t.equals(u);
     }
@@ -171,22 +171,21 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     //return myMap.containsKey(WeakKey.create(key));
   }
 
-  private final AtomicReference<HardKey> myHardKeyPool = new AtomicReference<HardKey>(null);
+  private static final ThreadLocal<HardKey> myHardKey = new ThreadLocal<HardKey>(){
+    @Override
+    protected HardKey initialValue() {
+      return new HardKey(null);
+    }
+  };
 
-  private HardKey createHardKey(final Object key) {
-    HardKey hardKey = myHardKeyPool.getAndSet(null);
-    if (hardKey == null) {
-      hardKey = new HardKey(key);
-    }
-    else {
-      hardKey.setObject(key);
-    }
+  private static HardKey createHardKey(final Object key) {
+    HardKey hardKey = myHardKey.get();
+    hardKey.setObject(key);
     return hardKey;
   }
 
-  private void releaseHardKey(HardKey key) {
+  private static void releaseHardKey(HardKey key) {
     key.setObject(null);
-    myHardKeyPool.set(key);
   }
 
   public V get(Object key) {
@@ -230,7 +229,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     myMap.clear();
   }
 
-  static private class Entry implements Map.Entry {
+  private static class Entry implements Map.Entry {
     private Map.Entry ent;
     private Object key;	/* Strong reference to key, so that the GC
                                  will leave it alone as long as this Entry
@@ -254,20 +253,18 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     }
 
     private static boolean valEquals(Object o1, Object o2) {
-      return (o1 == null) ? (o2 == null) : o1.equals(o2);
+      return o1 == null ? o2 == null : o1.equals(o2);
     }
 
     public boolean equals(Object o) {
       if (!(o instanceof Map.Entry)) return false;
       Map.Entry e = (Map.Entry)o;
-      return (valEquals(key, e.getKey())
-        && valEquals(getValue(), e.getValue()));
+      return valEquals(key, e.getKey()) && valEquals(getValue(), e.getValue());
     }
 
     public int hashCode() {
       Object v;
-      return (((key == null) ? 0 : key.hashCode())
-        ^ (((v = getValue()) == null) ? 0 : v.hashCode()));
+      return (key == null ? 0 : key.hashCode()) ^ ((v = getValue()) == null ? 0 : v.hashCode());
     }
 
   }
@@ -277,7 +274,6 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     Set hashEntrySet = myMap.entrySet();
 
     public Iterator iterator() {
-
       return new Iterator() {
         Iterator hashIterator = hashEntrySet.iterator();
         Entry next = null;
@@ -287,7 +283,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
             Map.Entry ent = (Map.Entry)hashIterator.next();
             WeakKey wk = (WeakKey)ent.getKey();
             Object k = null;
-            if ((wk != null) && ((k = wk.get()) == null)){
+            if (wk != null && (k = wk.get()) == null){
               /* Weak key has been cleared by GC */
               continue;
             }
@@ -298,7 +294,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
         }
 
         public Object next() {
-          if ((next == null) && !hasNext())
+          if (next == null && !hasNext())
             throw new NoSuchElementException();
           Entry e = next;
           next = null;
@@ -308,12 +304,11 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
         public void remove() {
           hashIterator.remove();
         }
-
       };
     }
 
     public boolean isEmpty() {
-      return !(iterator().hasNext());
+      return !iterator().hasNext();
     }
 
     public int size() {
@@ -328,12 +323,10 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       Map.Entry e = (Map.Entry)o;
       Object ev = e.getValue();
 
-      // optimization:
       HardKey key = createHardKey(o);
-      //WeakKey key = WeakKey.create(e.getKey());
 
       Object hv = myMap.get(key);
-      boolean toRemove = hv == null ? (ev == null && myMap.containsKey(key)) : hv.equals(ev);
+      boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
       if (toRemove){
         myMap.remove(key);
       }
@@ -344,13 +337,12 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
 
     public int hashCode() {
       int h = 0;
-      for(Iterator i = hashEntrySet.iterator(); i.hasNext();){
-        Map.Entry ent = (Map.Entry)i.next();
+      for (Object aHashEntrySet : hashEntrySet) {
+        Map.Entry ent = (Map.Entry)aHashEntrySet;
         WeakKey wk = (WeakKey)ent.getKey();
-        Object v;
         if (wk == null) continue;
-        h += (wk.hashCode()
-          ^ (((v = ent.getValue()) == null) ? 0 : v.hashCode()));
+        Object v;
+        h += wk.hashCode() ^ ((v = ent.getValue()) == null ? 0 : v.hashCode());
       }
       return h;
     }
@@ -364,22 +356,22 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     return entrySet;
   }
 
-  public V putIfAbsent(final K key, final V value) {
+  public V putIfAbsent(@NotNull final K key, final V value) {
     processQueue();
     return (V)myMap.putIfAbsent(WeakKey.create(key, myReferenceQueue), value);
   }
 
-  public boolean remove(final Object key, final Object value) {
+  public boolean remove(@NotNull final Object key, final Object value) {
     processQueue();
     return myMap.remove(WeakKey.create(key, myReferenceQueue), value);
   }
 
-  public boolean replace(final K key, final V oldValue, final V newValue) {
+  public boolean replace(@NotNull final K key, @NotNull final V oldValue, @NotNull final V newValue) {
     processQueue();
     return myMap.replace(WeakKey.create(key, myReferenceQueue), oldValue,newValue);
   }
 
-  public V replace(final K key, final V value) {
+  public V replace(@NotNull final K key, @NotNull final V value) {
     processQueue();
     return (V)myMap.replace(WeakKey.create(key, myReferenceQueue), value);
   }

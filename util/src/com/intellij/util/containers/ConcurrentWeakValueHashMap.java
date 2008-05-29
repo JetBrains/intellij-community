@@ -17,12 +17,13 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 
 public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V> {
   private final ConcurrentHashMap<K,MyReference<K,V>> myMap;
@@ -88,7 +89,7 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     return oldRef != null ? oldRef.get() : null;
   }
 
-  public V putIfAbsent(K key, V value) {
+  public V putIfAbsent(@NotNull K key, V value) {
     while (true) {
       processQueue();
       MyReference<K, V> newRef = new MyReference<K, V>(key, value, myQueue);
@@ -104,17 +105,17 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     }
   }
 
-  public boolean remove(final Object key, final Object value) {
+  public boolean remove(@NotNull final Object key, final Object value) {
     processQueue();
     return myMap.remove(key, new MyReference<K,V>((K)key, (V)value, myQueue));
   }
 
-  public boolean replace(final K key, final V oldValue, final V newValue) {
+  public boolean replace(@NotNull final K key, @NotNull final V oldValue, @NotNull final V newValue) {
     processQueue();
     return myMap.replace(key, new MyReference<K,V>(key, oldValue, myQueue), new MyReference<K,V>(key, newValue, myQueue));
   }
 
-  public V replace(final K key, final V value) {
+  public V replace(@NotNull final K key, @NotNull final V value) {
     processQueue();
     MyReference<K, V> ref = myMap.replace(key, new MyReference<K, V>(key, value, myQueue));
     return ref == null ? null : ref.get();
