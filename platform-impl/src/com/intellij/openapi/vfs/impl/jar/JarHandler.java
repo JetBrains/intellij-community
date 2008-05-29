@@ -82,29 +82,6 @@ public class JarHandler implements FileSystemInterface {
     }
   }
 
-  /*
-        final Application app = ApplicationManager.getApplication();
-        app.invokeLater(new Runnable() {
-          public void run() {
-            final ManagingFS fs = ManagingFS.getInstance();
-            app.runWriteAction(new Runnable() {
-              public void run() {
-                for (VirtualFile child : root.getChildren()) {
-                  if (child != null) {
-                    fs.processEvents(Collections.singletonList(new VFileDeleteEvent(this, child, true)));
-                  }
-                }
-              }
-            });
-
-            root.markDirtyRecursively();
-            RefreshQueue.getInstance().refresh(true, true, null, root);
-          }
-        }, ModalityState.NON_MODAL);
-
-   */
-
-
   @NotNull
   private Map<String, EntryInfo> initEntries() {
     synchronized (lock) {

@@ -9,10 +9,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -65,23 +63,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
           final Application app = ApplicationManager.getApplication();
           app.invokeLater(new Runnable() {
             public void run() {
-              final List<VFileEvent> deleteEvents = new ArrayList<VFileEvent>();
               for (VirtualFile root : rootsToRefresh) {
                 if (root.isValid()) {
-                  for (VirtualFile child : root.getChildren()) {
-                    if (child != null) {
-                      deleteEvents.add(new VFileDeleteEvent(this, child, true));
-                    }
-                  }
                   ((NewVirtualFile)root).markDirtyRecursively();
                 }
               }
-
-              app.runWriteAction(new Runnable() {
-                public void run() {
-                  ManagingFS.getInstance().processEvents(deleteEvents);
-                }
-              });
 
               VirtualFile[] roots = rootsToRefresh.toArray(new VirtualFile[rootsToRefresh.size()]);
               RefreshQueue.getInstance().refresh(false, true, null, roots);
