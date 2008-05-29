@@ -64,7 +64,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
 
     myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
 
-    return !myAutoHandleBeforeShow || !tryToAutoSelect(true);
+    return super.beforeShow() && (!myAutoHandleBeforeShow || !tryToAutoSelect(true));
   }
 
   protected void afterShow() {
@@ -251,9 +251,9 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
           ((ListPopupImpl)myChild).addListSelectionListener(listener);
         }
       }
-      final JComponent container = getContainer();
+      final JComponent container = getContent();
       assert container != null : "container == null";
-      myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, point.y);
+      myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, point.y, true);
       setIndexForShowingChild(myList.getSelectedIndex());
       return false;
     }
@@ -315,6 +315,10 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   private class MyList extends JList {
     public MyList() {
       super(myListModel);
+    }
+
+    public Dimension getPreferredScrollableViewportSize() {
+      return new Dimension(super.getPreferredScrollableViewportSize().width, getPreferredSize().height);
     }
 
     public void processKeyEvent(KeyEvent e) {

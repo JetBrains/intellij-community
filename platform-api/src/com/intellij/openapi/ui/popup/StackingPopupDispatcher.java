@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public abstract class StackingPopupDispatcher implements IdePopup {
+public abstract class StackingPopupDispatcher implements IdePopupEventDispatcher {
   
   public abstract boolean isPopupFocused();
 

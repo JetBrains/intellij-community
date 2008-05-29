@@ -176,7 +176,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
       myWizardTree.setSelectionPath(mySavedSelected);
     }
 
-    return true;
+    return super.beforeShow();
   }
 
   protected void afterShow() {
@@ -325,9 +325,9 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
 
   private void handleNextStep(PopupStep nextStep, Object parentValue) {
     final Rectangle pathBounds = myWizardTree.getPathBounds(myWizardTree.getSelectionPath());
-    final Point point = new RelativePoint(myWizardTree, new Point(myContainer.getWidth() + 2, (int) pathBounds.getY())).getScreenPoint();
+    final Point point = new RelativePoint(myWizardTree, new Point(getContent().getWidth() + 2, (int) pathBounds.getY())).getScreenPoint();
     myChild = createPopup(this, nextStep, parentValue);
-    myChild.show(getContainer(), point.x - STEP_X_PADDING, point.y);
+    myChild.show(getContent(), point.x - STEP_X_PADDING, point.y, true);
   }
 
   private class MyRenderer extends SimpleNodeRenderer {

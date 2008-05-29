@@ -5,7 +5,6 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1370,7 +1369,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         public void run() {
           _requestFocus(command, forced, result);
         }
-      }, ModalityState.NON_MODAL);
+      });
     } else {
       _requestFocus(command, forced, result);
     }

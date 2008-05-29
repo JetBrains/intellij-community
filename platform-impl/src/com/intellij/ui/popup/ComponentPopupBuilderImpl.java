@@ -55,6 +55,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   private String myAd;
   private boolean myFocusable = true;
+  private boolean myHeaderAlwaysFocusable;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -154,7 +155,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd);
+                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
+                                              myHeaderAlwaysFocusable);
     if (myProject != null) {
       popup.setProject(myProject);
     }

@@ -5,7 +5,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.AbstractPopup;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,14 +19,14 @@ import java.awt.event.MouseMotionListener;
  */
 public class ResizeComponentListener extends MouseAdapter implements MouseMotionListener {
   private static final int SENSITIVITY = 4;
-  private final JBPopupImpl myPopup;
-  private final JBPopupImpl.MyContentPanel myComponent;
+  private final AbstractPopup myPopup;
+  private final AbstractPopup.MyContentPanel myComponent;
   private Point myStartPoint = null;
   private int myDirection = -1;
 
-  public ResizeComponentListener(final JBPopupImpl popup) {
+  public ResizeComponentListener(final AbstractPopup popup) {
     myPopup = popup;
-    myComponent = (JBPopupImpl.MyContentPanel)popup.getContent();
+    myComponent = (AbstractPopup.MyContentPanel)popup.getContent();
   }
 
   public void mousePressed(MouseEvent e) {

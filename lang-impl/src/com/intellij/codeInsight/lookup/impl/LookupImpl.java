@@ -683,7 +683,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void hide(){
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (IdeEventQueue.getInstance().getPopupManager().closeActivePopup()) return;
+    if (IdeEventQueue.getInstance().getPopupManager().closeAllPopups()) return;
 
     if (myDisposed) return;
 

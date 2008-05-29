@@ -88,7 +88,6 @@ public class FocusTrackback {
   }
 
   private static boolean wrongOS() {
-    //return !SystemInfo.isMac;
     return false;
   }
 
@@ -132,8 +131,12 @@ public class FocusTrackback {
 
     consume();
 
-    final DataContext context = myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
-    final Project project = (Project)context.getData(DataConstants.PROJECT);
+    Project project = null;
+    DataContext context = myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
+    if (context != null) {
+      project = (Project)context.getData(DataConstants.PROJECT);
+    }
+
     if (project != null && !project.isDisposed()) {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
       focusManager.requestFocus(new ActionCallback.Runnable() {
@@ -267,6 +270,10 @@ public class FocusTrackback {
 
   public void setMustBeShown(final boolean mustBeShown) {
     myMustBeShown = mustBeShown;
+  }
+
+  public boolean isMustBeShown() {
+    return myMustBeShown;
   }
 
   public static void release(@NotNull final JFrame frame) {

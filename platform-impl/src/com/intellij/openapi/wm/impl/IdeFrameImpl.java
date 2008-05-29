@@ -224,10 +224,13 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   @Nullable
-  public static IdeFrameImpl findFrame(@NotNull Component c) {
+  public static Component findNearestModalComponent(@NotNull Component c) {
     Component eachParent = c;
     while (eachParent != null) {
-      if (eachParent instanceof IdeFrameImpl) return (IdeFrameImpl)eachParent;
+      if (eachParent instanceof IdeFrameImpl) return eachParent;
+      if (eachParent instanceof JDialog) {
+        if (((JDialog)eachParent).isModal()) return eachParent;
+      }
       eachParent = eachParent.getParent();
     }
 

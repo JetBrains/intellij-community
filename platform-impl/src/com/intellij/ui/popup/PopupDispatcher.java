@@ -7,7 +7,7 @@ package com.intellij.ui.popup;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.ui.popup.IdePopup;
+import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +15,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopup {
+public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopupEventDispatcher {
 
   private static BasePopup ourActiveWizardRoot;
   private static BasePopup ourShowingStep;
@@ -24,7 +24,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
 
   static {
     if (System.getProperty("is.popup.test") != null ||
-      ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
+      (ApplicationManagerEx.getApplicationEx() != null && ApplicationManagerEx.getApplicationEx().isUnitTestMode())) {
       Toolkit.getDefaultToolkit().addAWTEventListener(ourInstance, MouseEvent.MOUSE_PRESSED);
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(ourInstance);
     }
@@ -42,7 +42,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     ourActiveWizardRoot = aRootPopup;
     ourShowingStep = aRootPopup;
     if (ApplicationManager.getApplication() != null) {
-      IdeEventQueue.getInstance().getPopupManager().setActivePopup(ourInstance);
+      IdeEventQueue.getInstance().getPopupManager().push(ourInstance);
     }
   }
 
@@ -51,7 +51,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
       ourActiveWizardRoot = null;
       ourShowingStep = null;
       if (ApplicationManager.getApplication() != null) {
-        IdeEventQueue.getInstance().getPopupManager().resetActivePopup();
+        IdeEventQueue.getInstance().getPopupManager().remove(ourInstance);
       }
     }
   }
@@ -76,7 +76,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     SwingUtilities.convertPointToScreen(point, mouseEvent.getComponent());
 
     while (true) {
-      if (!eachParent.getContainer().isShowing()) {
+      if (!eachParent.getContent().isShowing()) {
         getActiveRoot().cancel();
         return false;
       }
@@ -136,7 +136,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   }
 
   public Component getComponent() {
-    return ourShowingStep.myContent;
+    return ourShowingStep.getContent();
   }
 
   public boolean dispatch(AWTEvent event) {
@@ -156,6 +156,8 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   }
 
   public boolean close() {
+    final String s = "sdfsf";
+
     return disposeActiveWizard();
   }
 }

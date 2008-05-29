@@ -20,7 +20,7 @@ import java.util.Stack;
 
 public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
-  private Stack<JBPopupImpl> myStack = new Stack<JBPopupImpl>();
+  private Stack<JBPopup> myStack = new Stack<JBPopup>();
   private WeakList<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
 
   private WeakList<JBPopup> myAllPopups = new WeakList<JBPopup>();
@@ -31,9 +31,9 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   public void onPopupShown(JBPopup popup, boolean inStack) {
     if (inStack) {
-      myStack.push((JBPopupImpl)popup);
+      myStack.push(popup);
       if (ApplicationManager.getApplication() != null) {
-        IdeEventQueue.getInstance().getPopupManager().setActivePopup(getInstance());
+        IdeEventQueue.getInstance().getPopupManager().push(getInstance());
       }
     } else if (popup.isPersistent()) {
       myPersistentPopups.add(popup);
@@ -48,7 +48,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
     if (wasInStack && myStack.isEmpty()) {
       if (ApplicationManager.getApplication() != null) {
-        IdeEventQueue.getInstance().getPopupManager().resetActivePopup();
+        IdeEventQueue.getInstance().getPopupManager().remove(this);
       }
     }
 
@@ -82,7 +82,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
       return false;
     }
 
-    JBPopupImpl popup = findPopup();
+    AbstractPopup popup = (AbstractPopup)findPopup();
 
     final MouseEvent mouseEvent = ((MouseEvent) event);
 
@@ -112,17 +112,17 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
         return false;
       }
 
-      popup = myStack.peek();
+      popup = (AbstractPopup)myStack.peek();
       if (popup == null || popup.isDisposed()) {
         myStack.pop();
       }
     }
   }
 
-  protected JBPopupImpl findPopup() {
+  protected JBPopup findPopup() {
     while(true) {
       if (myStack.isEmpty()) break;
-      final JBPopupImpl each = myStack.peek();
+      final AbstractPopup each = (AbstractPopup)myStack.peek();
       if (each == null || each.isDisposed()) {
         myStack.pop();
       } else {
@@ -165,7 +165,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   public void requestFocus() {
     if (myStack.isEmpty()) return;
 
-    final JBPopupImpl popup = myStack.peek();
+    final AbstractPopup popup = (AbstractPopup)myStack.peek();
     popup.requestFocus();
 
   }
@@ -177,7 +177,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   public boolean closeActivePopup() {
     if (myStack.isEmpty()) return false;
 
-    final JBPopupImpl popup = myStack.pop();
+    final AbstractPopup popup = (AbstractPopup)myStack.pop();
     if (popup != null && popup.isVisible()){
       popup.cancel();
       return true;

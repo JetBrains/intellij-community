@@ -1,0 +1,1012 @@
+package com.intellij.ui.popup;
+
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.ChildFocusWatcher;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
+public class AbstractPopup implements JBPopup, Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
+
+  private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
+
+  public static final String KEY = "JBPopup";
+
+  private Popup myPopup;
+  private MyContentPanel myContent;
+  private JComponent myPreferredFocusedComponent;
+  private boolean myRequestFocus;
+  private boolean myFocusable;
+  private boolean myForcedHeavyweight = false;
+  private boolean myLocateWithinScreen = true;
+  private boolean myResizable = false;
+  private CaptionPanel myCaption = null;
+  private JComponent myComponent;
+  private String myDimensionServiceKey = null;
+  private Computable<Boolean> myCallBack = null;
+  private Project myProject;
+  private boolean myCancelOnClickOutside;
+  private Set<JBPopupListener> myListeners;
+  private boolean myUseDimServiceForXYLocation;
+  private MouseChecker myCancelOnMouseOutCallback;
+  private Canceller myMouseOutCanceller;
+  private boolean myCancelOnWindow;
+  private Dimension myForcedSize;
+  private Point myForcedLocation;
+  private ChildFocusWatcher myFocusWatcher;
+  private boolean myCancelKeyEnabled;
+  private boolean myLocateByContent;
+  protected FocusTrackback myFocusTrackback;
+  private Dimension myMinSize;
+  private ArrayList<Object> myUserData;
+
+  private float myAlpha = 0;
+  private float myLastAlpha = 0;
+
+  private MaskProvider myMaskProvider;
+
+  private Dimension myLastSize;
+  private Shape myLastSizeMask;
+
+  private Window myWindow;
+  private boolean myInStack;
+  private MyWindowListener myWindowListener;
+
+  private boolean myModalContext;
+
+  private Component[] myFocusOwners;
+  private PopupBorder myPopupBorder;
+  private Dimension myRestoreWindowSize;
+  protected Component myOwner;
+  private boolean myHeaderAlwaysFocusable;
+
+  protected AbstractPopup() {
+  }
+
+  protected void init(final Project project, @NotNull final JComponent content, @Nullable final JComponent preferredFocusedComponent, final boolean requestFocus,
+                      final boolean focusable,
+                      final boolean forceHeavyweight,
+                      final String dimensionServiceKey,
+                      final boolean resizable,
+                      @Nullable final String caption,
+                      @Nullable final Computable<Boolean> callback,
+                      final boolean cancelOnClickOutside,
+                      @Nullable final Set<JBPopupListener> listeners,
+                      final boolean useDimServiceForXYLocation,
+                      @Nullable final IconButton cancelButton,
+                      @Nullable final MouseChecker cancelOnMouseOutCallback,
+                      final boolean cancelOnWindow,
+                      @Nullable final ActiveIcon titleIcon,
+                      final boolean cancelKeyEnabled,
+                      final boolean locateBycontent,
+                      final boolean placeWithinScreenBounds,
+                      @Nullable final Dimension minSize,
+                      float alpha,
+                      @Nullable MaskProvider maskProvider,
+                      boolean inStack,
+                      boolean modalContext,
+                      @Nullable Component[] focusOwners,
+                      @Nullable String adText,
+                      final boolean headerAlwaysFocusable) {
+
+    if (requestFocus && !focusable) {
+      assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
+    }
+
+    myProject = project;
+    myComponent = content;
+    myPopupBorder = PopupBorder.Factory.create(true);
+    myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner());
+
+    myContent.add(content, BorderLayout.CENTER);
+    if (adText != null) {
+      myContent.add(HintUtil.createAdComponent(adText), BorderLayout.SOUTH);
+    }
+
+    myCancelKeyEnabled = cancelKeyEnabled;
+    myLocateByContent = locateBycontent;
+    myLocateWithinScreen = placeWithinScreenBounds;
+    myAlpha = alpha;
+    myMaskProvider = maskProvider;
+    myInStack = inStack;
+    myModalContext = modalContext;
+    myFocusOwners = focusOwners;
+    myHeaderAlwaysFocusable = headerAlwaysFocusable;
+
+    ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(new EmptyIcon(0)) : titleIcon;
+
+    if (caption != null) {
+      if (caption.length() > 0) {
+        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
+        ((TitlePanel)myCaption).setText(caption);
+      }
+      else {
+        myCaption = new CaptionPanel();
+      }
+      if (cancelButton != null) {
+        myCaption.setButtonComponent(new InplaceButton(cancelButton, new ActionListener() {
+          public void actionPerformed(final ActionEvent e) {
+            cancel();
+          }
+        }));
+      }
+    } else {
+      myCaption = new CaptionPanel();
+      myCaption.setBorder(null);
+      myCaption.setPreferredSize(new Dimension(0, 0));
+    }
+
+    setWindowActive(myHeaderAlwaysFocusable);
+
+    myContent.add(myCaption, BorderLayout.NORTH);
+
+    myForcedHeavyweight = forceHeavyweight;
+    myResizable = resizable;
+    myPreferredFocusedComponent = preferredFocusedComponent;
+    myRequestFocus = requestFocus;
+    myFocusable = focusable;
+    myDimensionServiceKey = dimensionServiceKey;
+    myCallBack = callback;
+    myCancelOnClickOutside = cancelOnClickOutside;
+    myCancelOnMouseOutCallback = cancelOnMouseOutCallback;
+    myListeners = listeners == null ? new HashSet<JBPopupListener>() : listeners;
+    myUseDimServiceForXYLocation = useDimServiceForXYLocation;
+    myCancelOnWindow = cancelOnWindow;
+    myMinSize = minSize;
+
+    final MouseAdapter mouseAdapter = new MouseAdapter() {
+      public void mousePressed(MouseEvent e) {
+        Point point = (Point)e.getPoint().clone();
+        SwingUtilities.convertPointToScreen(point, e.getComponent());
+
+        final Dimension dimension = content.getSize();
+        dimension.height += myResizable && isToDrawMacCorner() ? ourMacCorner.getHeight(myContent) : 4;
+        dimension.width += 4;
+        Point locationOnScreen = content.getLocationOnScreen();
+        final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
+        if (!bounds.contains(point)) {
+          cancel();
+        }
+      }
+    };
+    myContent.addMouseListener(mouseAdapter);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        myContent.removeMouseListener(mouseAdapter);
+      }
+    });
+    myContent.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (myCancelKeyEnabled) {
+          cancel();
+        }
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+
+    if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
+      myMouseOutCanceller = new Canceller();
+      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller, MouseEvent.MOUSE_EVENT_MASK | WindowEvent.WINDOW_ACTIVATED | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+    }
+
+
+    myFocusWatcher = new ChildFocusWatcher(myContent) {
+      protected void onFocusGained(final FocusEvent event) {
+        setWindowActive(true);
+      }
+
+      protected void onFocusLost(final FocusEvent event) {
+        setWindowActive(false);
+      }
+
+    };
+  }
+
+  private void setWindowActive(boolean active) {
+    boolean value = myHeaderAlwaysFocusable ? true : active;
+
+    if (myCaption != null) {
+      myCaption.setActive(value);
+    }
+    myPopupBorder.setActive(value);
+    myContent.repaint();
+  }
+
+
+  protected MyContentPanel createContentPanel(final boolean resizable, PopupBorder border, boolean isToDrawMacCorner) {
+    return new MyContentPanel(resizable, border, isToDrawMacCorner);
+  }
+
+  public boolean isToDrawMacCorner() {
+    return SystemInfo.isMac;
+  }
+
+
+
+  public String getDimensionServiceKey() {
+    return myDimensionServiceKey;
+  }
+
+  public void setDimensionServiceKey(final String dimensionServiceKey) {
+    myDimensionServiceKey = dimensionServiceKey;
+  }
+
+  public void showInCenterOf(@NotNull Component aContainer) {
+    final Point popupPoint = getCenterOf(aContainer, myContent);
+    show(aContainer, popupPoint.x, popupPoint.y, false);
+  }
+
+  public static Point getCenterOf(final Component aContainer, final JComponent content) {
+    final JComponent component = getTargetComponent(aContainer);
+
+    Point containerScreenPoint = component.getVisibleRect().getLocation();
+    SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
+
+    return getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), content.getPreferredSize());
+  }
+
+  public void showCenteredInCurrentWindow(@NotNull Project project) {
+    Window window = null;
+
+    Component focusedComponent = getWndManager().getFocusedComponent(project);
+    if (focusedComponent != null) {
+      if (focusedComponent instanceof Window) {
+        window = (Window)focusedComponent;
+      }
+      else {
+        window = SwingUtilities.getWindowAncestor(focusedComponent);
+      }
+    }
+    if (window == null) {
+      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    }
+
+    if (window != null) {
+      showInCenterOf(window);
+    }
+  }
+
+  public void showUnderneathOf(@NotNull Component aComponent) {
+    final JComponent component = getTargetComponent(aComponent);
+
+    final Point point = aComponent.getLocationOnScreen();
+    point.y += component.getVisibleRect().height;
+    show(aComponent, point.x, point.y, false);
+  }
+
+  private static Point getCenterPoint(Rectangle aContainerRec, Dimension aPopupSize) {
+    Point result = new Point();
+
+    Point containerLocation = aContainerRec.getLocation();
+    Dimension containerSize = aContainerRec.getSize();
+
+    result.x = containerLocation.x + (containerSize.width / 2 - aPopupSize.width / 2);
+    result.y = containerLocation.y + (containerSize.height / 2 - aPopupSize.height / 2);
+
+    return result;
+  }
+
+  public void show(@NotNull RelativePoint aPoint) {
+    final Point screenPoint = aPoint.getScreenPoint();
+    show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
+  }
+
+  public void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point) {
+    show(owner, point.x, point.y, false);
+  }
+
+  public void showInBestPositionFor(@NotNull DataContext dataContext) {
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    if (editor != null) {
+      showInBestPositionFor(editor);
+    }
+    else {
+      show(relativePointByQuickSearch(dataContext));
+    }
+  }
+
+  private RelativePoint relativePointByQuickSearch(final DataContext dataContext) {
+    Rectangle dominantArea = (Rectangle)dataContext.getData(DataConstants.DOMINANT_HINT_AREA_RECTANGLE);
+
+    if (dominantArea != null) {
+      final Component focusedComponent = getWndManager().getFocusedComponent(myProject);
+      Window window = SwingUtilities.windowForComponent(focusedComponent);
+      JLayeredPane layeredPane;
+      if (window instanceof JFrame) {
+        layeredPane = ((JFrame)window).getLayeredPane();
+      }
+      else if (window instanceof JDialog) {
+        layeredPane = ((JDialog)window).getLayeredPane();
+      }
+      else {
+        throw new IllegalStateException("cannot find parent window: project=" + myProject + "; window=" + window);
+      }
+
+      return relativePointWithDominantRectangle(layeredPane, dominantArea);
+    }
+
+    return JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+  }
+
+  public void showInBestPositionFor(@NotNull Editor editor) {
+    assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
+
+    DataContext context = ((EditorEx)editor).getDataContext();
+    Rectangle dominantArea = (Rectangle)context.getData(DataConstants.DOMINANT_HINT_AREA_RECTANGLE);
+    if (dominantArea != null && !myRequestFocus) {
+      final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
+      show(relativePointWithDominantRectangle(layeredPane, dominantArea));
+    }
+    else {
+      show(JBPopupFactory.getInstance().guessBestPopupLocation(editor));
+    }
+  }
+
+  public void addPopupListener(JBPopupListener listener) {
+    myListeners.add(listener);
+  }
+
+  private RelativePoint relativePointWithDominantRectangle(final JLayeredPane layeredPane, final Rectangle bounds) {
+    Dimension preferredSize = getComponent().getPreferredSize();
+    if (myDimensionServiceKey != null) {
+      final Dimension dimension = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+      if (dimension != null) {
+        preferredSize = dimension;
+      }
+    }
+    final RelativePoint relativePoint;
+    final Point leftTopCorner = new Point(bounds.x + bounds.width, bounds.y);
+    final Point leftTopCornerScreen = (Point)leftTopCorner.clone();
+    SwingUtilities.convertPointToScreen(leftTopCornerScreen, layeredPane);
+    if (!ScreenUtil.isOutsideOnTheRightOFScreen(
+      new Rectangle(leftTopCornerScreen.x, leftTopCornerScreen.y, preferredSize.width, preferredSize.height))) {
+      relativePoint = new RelativePoint(layeredPane, leftTopCorner);
+    }
+    else {
+      if (bounds.x > preferredSize.width) {
+        relativePoint = new RelativePoint(layeredPane, new Point(bounds.x - preferredSize.width, bounds.y));
+      }
+      else {
+        setDimensionServiceKey(null); // going to cut width
+        Rectangle screen = ScreenUtil.getScreenRectangle(leftTopCornerScreen.x, leftTopCornerScreen.y);
+        final int spaceOnTheLeft = bounds.x;
+        final int spaceOnTheRight = (screen.x + screen.width) - leftTopCornerScreen.x;
+        if (spaceOnTheLeft > spaceOnTheRight) {
+          relativePoint = new RelativePoint(layeredPane, new Point(0, bounds.y));
+          myComponent.setPreferredSize(new Dimension(spaceOnTheLeft, Math.max(preferredSize.height, 200)));
+        }
+        else {
+          relativePoint = new RelativePoint(layeredPane, leftTopCorner);
+          myComponent.setPreferredSize(new Dimension(spaceOnTheRight, Math.max(preferredSize.height, 200)));
+        }
+      }
+    }
+    return relativePoint;
+  }
+
+  public void cancel() {
+    if (myPopup != null) {
+      if (!canClose()) {
+        return;
+      }
+      storeDimensionSize(myContent.getSize());
+      if (myUseDimServiceForXYLocation) {
+        final JRootPane root = myComponent.getRootPane();
+        if (root != null) {
+          final Container popupWindow = root.getParent();
+          if (popupWindow != null && popupWindow.isShowing()) {
+            storeLocation(popupWindow.getLocationOnScreen());
+          }
+        }
+      }
+
+      myPopup.hide();
+
+      if (ApplicationManagerEx.getApplicationEx() != null) {
+        StackingPopupDispatcher.getInstance().onPopupHidden(this);
+      }
+
+      if (myInStack) {
+        myFocusTrackback.restoreFocus();
+      }
+
+
+      disposePopup();
+
+      if (myListeners != null) {
+        for (JBPopupListener each : myListeners) {
+          each.onClosed(this);
+        }
+      }
+    }
+
+    Disposer.dispose(this);
+  }
+
+  private void disposePopup() {
+    if (myPopup != null) {
+      myPopup.hide();
+    }
+    myPopup = null;
+  }
+
+  public boolean canClose() {
+    return myCallBack == null || myCallBack.compute().booleanValue();
+  }
+
+  public boolean isVisible() {
+    return myPopup != null;
+  }
+
+  public void show(final Component owner) {
+    show(owner, -1, -1, true);
+  }
+
+  public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+    if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (isDisposed()) {
+      throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
+    }
+
+    assert ApplicationManager.getApplication().isDispatchThread();
+
+    final boolean shouldShow = beforeShow();
+    if (myInStack) {
+      myFocusTrackback = new FocusTrackback(this, owner, true);
+      myFocusTrackback.setMustBeShown(shouldShow);
+    }
+
+
+    Dimension sizeToSet = null;
+
+    if (myDimensionServiceKey != null) {
+      sizeToSet = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+    }
+
+    if (myForcedSize != null) {
+      sizeToSet = myForcedSize;
+    }
+
+    if (myMinSize == null) {
+      myMinSize = myContent.getMinimumSize();
+    }
+
+    if (sizeToSet != null) {
+      sizeToSet.width = Math.max(sizeToSet.width, myMinSize.width);
+      sizeToSet.height = Math.max(sizeToSet.height, myMinSize.height);
+
+      myContent.setSize(sizeToSet);
+      myContent.setPreferredSize(sizeToSet);
+    }
+
+    Point xy = new Point(aScreenX, aScreenY);
+    boolean adjustXY = true;
+    if (myDimensionServiceKey != null) {
+      final Point storedLocation = DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
+      if (storedLocation != null) {
+        xy = storedLocation;
+        adjustXY = false;
+      }
+    }
+
+    if (adjustXY) {
+      final Insets insets = myContent.getInsets();
+      if (insets != null) {
+        xy.x -= insets.left;
+        xy.y -= insets.top;
+      }
+    }
+
+    if (considerForcedXY && myForcedLocation != null) {
+      xy = myForcedLocation;
+    }
+
+    if (myLocateByContent) {
+      final Dimension captionSize = myCaption.getPreferredSize();
+      xy.y -= captionSize.height;
+    }
+
+    Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
+    Rectangle original = new Rectangle(targetBounds);
+    if (myLocateWithinScreen) {
+      ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
+    }
+
+    if (myMouseOutCanceller != null) {
+      myMouseOutCanceller.myEverEntered = targetBounds.equals(original);
+    }
+
+    myOwner = IdeFrameImpl.findNearestModalComponent(owner);
+    if (myOwner == null) {
+      myOwner = owner;
+    }
+
+    myPopup = setupPopupFactory(myForcedHeavyweight || myResizable).getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
+
+    if (myResizable) {
+      final JRootPane root = myContent.getRootPane();
+      final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
+      root.setGlassPane(glass);
+
+      final ResizeComponentListener resizeListener = new ResizeComponentListener(this);
+      glass.addMousePreprocessor(resizeListener, this);
+      glass.addMouseMotionPreprocessor(resizeListener, this);
+    }
+
+    if (myCaption != null) {
+      final MoveComponentListener moveListener = new MoveComponentListener(myCaption) {
+        public void mousePressed(final MouseEvent e) {
+          super.mousePressed(e);
+          if (e.isConsumed()) return;
+
+          if (UIUtil.isCloseClick(e)) {
+            if (myCaption.isWithinPanel(e)) {
+              cancel();
+            }
+          }
+        }
+      };
+      ListenerUtil.addMouseListener(myCaption, moveListener);
+      ListenerUtil.addMouseMotionListener(myCaption, moveListener);
+      Disposer.register(this, new Disposable() {
+        public void dispose() {
+          ListenerUtil.removeMouseListener(myContent, moveListener);
+          ListenerUtil.removeMouseMotionListener(myContent, moveListener);
+        }
+      });
+    }
+
+    for(JBPopupListener listener: myListeners) {
+      listener.beforeShown(myProject, this);
+    }
+
+    myPopup.show();
+
+    final Window window = SwingUtilities.getWindowAncestor(myContent);
+
+    myWindowListener = new MyWindowListener();
+    window.addWindowListener(myWindowListener);
+
+    if (myFocusable) {
+      window.setFocusableWindowState(true);
+      window.setFocusable(true);
+      if (myRequestFocus) {
+        window.requestFocusInWindow();
+      }
+    }
+
+    myWindow = updateMaskAndAlpha(window);
+
+    if (myWindow instanceof JWindow) {
+      ((JWindow)myWindow).getRootPane().putClientProperty(KEY, this);
+    }
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (isDisposed()) return;
+
+        if (myRequestFocus) {
+          requestFocus();
+        }
+
+        if (myPreferredFocusedComponent != null && myInStack) {
+          myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
+        }
+
+        afterShow();
+      }
+    });
+  }
+
+  private Window updateMaskAndAlpha(Window window) {
+    if (window == null) return window;
+
+    final WindowManagerEx wndManager = getWndManager();
+    if (wndManager == null) return window;
+
+    if (!wndManager.isAlphaModeEnabled(window)) return window;
+
+    if (myAlpha != myLastAlpha) {
+      wndManager.setAlphaModeRatio(window, myAlpha);
+      myLastAlpha = myAlpha;
+    }
+
+    if (myMaskProvider != null) {
+      final Dimension size = window.getSize();
+      Shape mask = myLastSizeMask;
+      if (!size.equals(myLastSize)) {
+        mask = myMaskProvider.getMask(size);
+      }
+      wndManager.setWindowMask(window, mask);
+    }
+
+    return window;
+  }
+
+  private WindowManagerEx getWndManager() {
+    return ApplicationManagerEx.getApplicationEx() != null ? WindowManagerEx.getInstanceEx() : null;
+  }
+
+  public boolean isDisposed() {
+    return myContent == null;
+  }
+
+  protected boolean beforeShow() {
+    if (ApplicationManagerEx.getApplicationEx() == null) return true;
+    StackingPopupDispatcherImpl.getInstance().onPopupShown(this, myInStack);
+    return true;
+  }
+
+  protected void afterShow() {
+  }
+
+  protected void requestFocus() {
+    if (!myFocusable) return;
+
+    if (myPreferredFocusedComponent != null) {
+      if (myProject != null) {
+        getFocusManager().requestFocus(myPreferredFocusedComponent, true);
+      }
+      else {
+        myPreferredFocusedComponent.requestFocus();
+      }
+    }
+  }
+
+  private IdeFocusManager getFocusManager() {
+    return IdeFocusManager.getInstance(myProject);
+  }
+
+  private static JComponent getTargetComponent(Component aComponent) {
+    if (aComponent instanceof JComponent) {
+      return (JComponent)aComponent;
+    }
+    else if (aComponent instanceof RootPaneContainer) {
+      return ((RootPaneContainer)aComponent).getRootPane();
+    }
+
+    LOG.error("Cannot find target for:" + aComponent);
+    return null;
+  }
+
+  private static PopupFactory setupPopupFactory(boolean forceHeavyweight) {
+    final PopupFactory factory = PopupFactory.getSharedInstance();
+
+    if (forceHeavyweight || !SystemInfo.isWindows) {
+      try {
+        final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
+        method.setAccessible(true);
+        method.invoke(factory, 2);
+
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+    return factory;
+  }
+
+  public JComponent getContent() {
+    return myContent;
+  }
+
+  public void setLocation(RelativePoint p) {
+    setLocation(p, myPopup, myContent);
+  }
+
+  private static void setLocation(final RelativePoint p, final Popup popup, Component content) {
+    if (popup == null) return;
+
+    Component cmp;
+    try {
+      final Method method = Popup.class.getDeclaredMethod("getComponent");
+      method.setAccessible(true);
+      cmp = (Component)method.invoke(popup);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return;
+    }
+
+    if (cmp instanceof Window) {
+      ((Window)cmp).pack();
+    }
+    else {
+      final Point screenPoint = p.getPoint(cmp.getParent());
+      final Dimension prefSize = content.getPreferredSize();
+      cmp.setBounds(screenPoint.x, screenPoint.y, prefSize.width, prefSize.height);
+      cmp.validate();
+      cmp.repaint();
+    }
+  }
+
+  public void pack() {
+    final Window window = SwingUtilities.getWindowAncestor(myContent);
+
+    window.pack();
+  }
+
+  public JComponent getComponent() {
+    return myComponent;
+  }
+
+  public void setProject(Project project) {
+    myProject = project;
+  }
+
+
+  public void dispose() {
+    assert ApplicationManager.getApplication().isDispatchThread();
+
+    if (myPopup != null) {
+      cancel();
+    }
+
+    if (myContent != null) {
+      myContent.removeAll();
+    }
+    myContent = null;
+    myComponent = null;
+    myFocusTrackback = null;
+    myCallBack = null;
+    myListeners = null;
+
+    if (myMouseOutCanceller != null) {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      // it may happen, but have no idea how
+      // http://www.jetbrains.net/jira/browse/IDEADEV-21265
+      if (toolkit != null) {
+        toolkit.removeAWTEventListener(myMouseOutCanceller);
+      }
+    }
+    myMouseOutCanceller = null;
+
+    if (myFocusWatcher != null) {
+      myFocusWatcher.dispose();
+      myFocusWatcher = null;
+    }
+
+    resetWindow();
+  }
+
+  private void resetWindow() {
+    if (myWindow != null && getWndManager() != null) {
+      getWndManager().resetWindow(myWindow);
+      if (myWindowListener != null) {
+        myWindow.removeWindowListener(myWindowListener);
+      }
+
+      if (myWindow instanceof JWindow) {
+        ((JWindow)myWindow).getRootPane().putClientProperty(KEY, null);
+      }
+
+      myWindow = null;
+      myWindowListener = null;
+    }
+  }
+
+  public void storeDimensionSize(final Dimension size) {
+    if (myDimensionServiceKey != null) {
+      DimensionService.getInstance().setSize(myDimensionServiceKey, size, myProject);
+    }
+  }
+
+  public void storeLocation(final Point xy) {
+    if (myDimensionServiceKey != null) {
+      DimensionService.getInstance().setLocation(myDimensionServiceKey, xy, myProject);
+    }
+  }
+
+  public static class MyContentPanel extends JPanel {
+    private final boolean myResizable;
+    private final boolean myDrawMacCorner;
+
+    public MyContentPanel(final boolean resizable, PopupBorder border, boolean drawMacCorner) {
+      super(new BorderLayout());
+      myResizable = resizable;
+      myDrawMacCorner = drawMacCorner;
+      setBorder(border);
+    }
+
+    public void paint(Graphics g) {
+      super.paint(g);
+      if (myResizable && myDrawMacCorner) {
+        g.drawImage(ourMacCorner, getX() + getWidth() - ourMacCorner.getWidth(this), getY() + getHeight() - ourMacCorner.getHeight(this),
+                    this);
+      }
+    }
+  }
+
+
+  public boolean isCancelOnClickOutside() {
+    return myCancelOnClickOutside;
+  }
+
+  private class Canceller implements AWTEventListener {
+
+    private boolean myEverEntered = false;
+
+    public void eventDispatched(final AWTEvent event) {
+      if (event.getID() == WindowEvent.WINDOW_ACTIVATED) {
+        if (myCancelOnWindow) {
+          cancel();
+        }
+      } else if (event.getID() == MouseEvent.MOUSE_ENTERED) {
+        if (withinPopup(event)) {
+          myEverEntered = true;
+        }
+      } else if (event.getID() == MouseEvent.MOUSE_MOVED) {
+        if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
+          if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
+            cancel();
+          }
+        }
+      }
+    }
+
+    private boolean withinPopup(final AWTEvent event) {
+      if (!myContent.isShowing()) return false;
+
+      final MouseEvent mouse = (MouseEvent)event;
+      final Point point = mouse.getPoint();
+      SwingUtilities.convertPointToScreen(point, mouse.getComponent());
+      return new Rectangle(myContent.getLocationOnScreen(), myContent.getSize()).contains(point);
+    }
+  }
+
+  public void setLocation(@NotNull final Point screenPoint) {
+    if (myPopup == null) {
+      myForcedLocation = screenPoint;
+    } else {
+      moveTo(myContent, screenPoint, myLocateByContent ? myCaption.getPreferredSize() : null);
+    }
+  }
+
+  public static Window moveTo(JComponent content, Point screenPoint, final Dimension headerCorrectionSize) {
+    setDefaultCursor(content);
+    final Window wnd = SwingUtilities.getWindowAncestor(content);
+    if (headerCorrectionSize != null) {
+      screenPoint.y -= headerCorrectionSize.height;
+    }
+    wnd.setLocation(screenPoint);
+    return wnd;
+  }
+
+  public void setSize(@NotNull final Dimension size) {
+    if (myPopup == null) {
+      myForcedSize = size;
+    } else {
+      updateMaskAndAlpha(setSize(myContent, size));
+    }
+  }
+
+  public static Window setSize(JComponent content, final Dimension size) {
+    final Window popupWindow = SwingUtilities.windowForComponent(content);
+    final Point location = popupWindow.getLocation();
+    popupWindow.setBounds(location.x, location.y, size.width, size.height);
+    return popupWindow;
+  }
+
+  public static void setDefaultCursor(JComponent content) {
+    final Window wnd = SwingUtilities.getWindowAncestor(content);
+    if (wnd != null) {
+      wnd.setCursor(Cursor.getDefaultCursor());
+    }
+  }
+
+  public void setCaption(String title) {
+    if (myCaption instanceof TitlePanel) {
+      ((TitlePanel)myCaption).setText(title);
+    }
+  }
+
+  private class MyWindowListener extends WindowAdapter {
+    public void windowClosed(final WindowEvent e) {
+        resetWindow();
+      }
+ }
+
+  public boolean isPersistent() {
+    return !myCancelOnClickOutside || !myCancelOnWindow;
+  }
+
+  public void setUiVisible(final boolean visible) {
+    if (myPopup != null) {
+      if (visible) {
+        myPopup.show();
+        final JWindow window = getPopupWindow();
+        if (window != null) {
+          window.setSize(myRestoreWindowSize);
+          myRestoreWindowSize = null;
+        }
+      } else {
+        final JWindow window = getPopupWindow();
+        if (window != null) {
+          myRestoreWindowSize = window.getSize();
+          window.hide();
+        }
+      }
+    }
+  }
+
+  private JWindow getPopupWindow() {
+    final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
+    return c instanceof JWindow ? (JWindow)c : null;
+  }
+
+  public void setUserData(ArrayList<Object> userData) {
+    myUserData = userData;
+  }
+
+  public <T> T getUserData(final Class<T> userDataClass) {
+    if (myUserData != null) {
+      for(Object o: myUserData) {
+        if (userDataClass.isInstance(o)) {
+          //noinspection unchecked
+          return (T) o;
+        }
+      }
+    }
+    return null;
+  }
+
+  public boolean isModalContext() {
+    return myModalContext;
+  }
+
+  public boolean isFocused() {
+    return isFocused(new Component[] {myComponent}) || isFocused(myFocusOwners);
+  }
+
+  public static boolean isFocused(@Nullable Component[] components) {
+    if (components == null) return false;
+
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null) return false;
+    for (Component each : components) {
+      if (each != null && SwingUtilities.isDescendingFrom(owner, each)) return true;
+    }
+
+    return false;
+  }
+
+  public boolean isCancelKeyEnabled() {
+    return myCancelKeyEnabled;
+  }
+
+  @NotNull
+  CaptionPanel getTitle() {
+    return myCaption;
+  }
+
+}

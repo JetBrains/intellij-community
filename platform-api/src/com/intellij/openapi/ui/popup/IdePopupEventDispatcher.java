@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public interface IdePopup {
+public interface IdePopupEventDispatcher {
 
   @Nullable
   Component getComponent();

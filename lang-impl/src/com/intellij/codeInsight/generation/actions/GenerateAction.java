@@ -12,7 +12,8 @@ public class GenerateAction extends AnAction {
     DataContext dataContext = e.getDataContext();
 
     final ListPopup popup =
-      JBPopupFactory.getInstance().createActionGroupPopup(CodeInsightBundle.message("generate.list.popup.title"),
+      JBPopupFactory.getInstance().createActionGroupPopup(
+          CodeInsightBundle.message("generate.list.popup.title"),
                                                           getGroup(),
                                                           dataContext,
                                                           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
@@ -73,7 +74,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       };
       step.setDefaultOptionIndex(defaultOptionIndex);
 
-    if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
+    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    if (app == null || !app.isUnitTestMode()) {
       return new ListPopupImpl(step);
     } else {
       return new MockConfirmation(step, yesText);

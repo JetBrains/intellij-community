@@ -17,14 +17,15 @@
 package com.intellij.openapi.ui.popup;
 
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -112,7 +113,7 @@ public interface JBPopup extends Disposable {
    *
    * @return the contents of the popup.
    */
-  Component getContent();
+  JComponent getContent();
 
   /**
    * Moves popup to the given point. Does nothhinbg if popup is invisible.
