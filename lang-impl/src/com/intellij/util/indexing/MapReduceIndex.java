@@ -49,23 +49,22 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   public void clear() throws StorageException {
-    final Lock lock = getWriteLock();
-    lock.lock();
     try {
+      getWriteLock().lock();
       myStorage.clear();
     }
     catch (StorageException e) {
       LOG.error(e);
     }
     finally {
-      lock.unlock();
+      getWriteLock().unlock();
     }
   }
 
   public void dispose() {
     final Lock lock = getWriteLock();
-    lock.lock();
     try {
+      lock.lock();
       myStorage.close();
     }
     catch (StorageException e) {
@@ -86,8 +85,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   public Collection<Key> getAllKeys() throws StorageException {
     final Lock lock = getReadLock();
-    lock.lock();
     try {
+      lock.lock();
       return myStorage.getKeys();
     }
     finally {
@@ -98,8 +97,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   @NotNull
   public ValueContainer<Value> getData(final Key key) throws StorageException {
     final Lock lock = getReadLock();
-    lock.lock();
     try {
+      lock.lock();
       return myStorage.read(key);
     }
     finally {
@@ -109,8 +108,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   public void removeData(final Key key) throws StorageException {
     final Lock lock = getWriteLock();
-    lock.lock();
     try {
+      lock.lock();
       myStorage.remove(key);
     }
     finally {
@@ -143,8 +142,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       final Lock writeLock = getWriteLock();
       for (Key key : allKeys) {
         // remove outdated values
-        writeLock.lock();
         try {
+          writeLock.lock();
           if (oldData.containsKey(key)) {
             final Value oldValue = oldData.get(key);
             //if (getClass().getName().contains("StubUpdatingIndex")) {

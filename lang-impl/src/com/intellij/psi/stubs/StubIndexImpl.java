@@ -141,46 +141,50 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final List<Psi> result = new ArrayList<Psi>();
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
-    final Lock lock = index.getReadLock();
-    lock.lock();
     try {
-      final ValueContainer<TIntArrayList> container = index.getData(key);
-      container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
-        public void perform(final int id, final TIntArrayList value) {
-          final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
-          if (file != null && (scope == null || scope.contains(file))) {
-            final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
-            if (psiFile != null) {
-              StubTree stubTree = psiFile.getStubTree();
-              if (stubTree == null) {
-                stubTree = StubTree.readFromVFile(file, project);
-                if (stubTree != null) {
-                  final List<StubElement<?>> plained = stubTree.getPlainList();
-                  for (int i = 0; i < value.size(); i++) {
-                    final StubElement<?> stub = plained.get(value.get(i));
-                    final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
-
-                    if (tree != null) {
-                      if (tree.getElementType() == stub.getStubType()) {
-                        result.add((Psi)tree.getPsi());
-                      }
-                      else {
-                        System.out.println("Oops");
+      try {
+        index.getReadLock().lock();
+        final ValueContainer<TIntArrayList> container = index.getData(key);
+        container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+          public void perform(final int id, final TIntArrayList value) {
+            final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
+            if (file != null && (scope == null || scope.contains(file))) {
+              final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
+              if (psiFile != null) {
+                StubTree stubTree = psiFile.getStubTree();
+                if (stubTree == null) {
+                  stubTree = StubTree.readFromVFile(file, project);
+                  if (stubTree != null) {
+                    final List<StubElement<?>> plained = stubTree.getPlainList();
+                    for (int i = 0; i < value.size(); i++) {
+                      final StubElement<?> stub = plained.get(value.get(i));
+                      final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
+  
+                      if (tree != null) {
+                        if (tree.getElementType() == stub.getStubType()) {
+                          result.add((Psi)tree.getPsi());
+                        }
+                        else {
+                          System.out.println("Oops");
+                        }
                       }
                     }
                   }
                 }
-              }
-              else {
-                final List<StubElement<?>> plained = stubTree.getPlainList();
-                for (int i = 0; i < value.size(); i++) {
-                  result.add((Psi)plained.get(value.get(i)).getPsi());
+                else {
+                  final List<StubElement<?>> plained = stubTree.getPlainList();
+                  for (int i = 0; i < value.size(); i++) {
+                    result.add((Psi)plained.get(value.get(i)).getPsi());
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      }
+      finally {
+        index.getReadLock().unlock();
+      }
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -190,10 +194,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       if (cause instanceof IOException || cause instanceof StorageException) {
         forceRebuild(e);
       }
-      throw e;
-    }
-    finally {
-      lock.unlock();
+      else {
+        throw e;
+      }
     }
 
     return result;
@@ -302,6 +305,18 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     myPreviouslyRegistered = state;
   }
 
+  public Lock getReadLock(StubIndexKey indexKey) {
+    return myIndices.get(indexKey).getReadLock();
+  }
+
+  public Lock getWriteLock(StubIndexKey indexKey) {
+    return myIndices.get(indexKey).getWriteLock();
+  }
+  
+  public Collection<StubIndexKey<?, ?>> getAllStubIndexKeys() {
+    return Collections.unmodifiableCollection(myIndices.keySet());
+  }
+  
   public void updateIndex(StubIndexKey key, int fileId, Map<?, TIntArrayList> oldValues, Map<?, TIntArrayList> newValues) {
     try {
       final MyIndex index = myIndices.get(key);

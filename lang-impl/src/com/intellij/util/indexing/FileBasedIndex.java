@@ -329,8 +329,8 @@ public class FileBasedIndex implements ApplicationComponent {
       }
   
       final Lock readLock = index.getReadLock();
-      readLock.lock();
       try {
+        readLock.lock();
         final ValueContainer<V> container = index.getData(dataKey);
   
         if (restrictToFile != null) {
@@ -362,7 +362,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
       finally {
-        readLock.unlock();
+        index.getReadLock().unlock();
       }
     }
     catch (StorageException e) {
@@ -390,10 +390,8 @@ public class FileBasedIndex implements ApplicationComponent {
       if (index == null) {
         return;
       }
-  
-      final Lock readLock = index.getReadLock();
-      readLock.lock();
       try {
+        index.getReadLock().lock();
         for (K dataKey : index.getAllKeys()) {
           final ValueContainer<V> container = index.getData(dataKey);
           for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
@@ -405,7 +403,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
       finally {
-        readLock.unlock();
+        index.getReadLock().unlock();
       }
     }
     catch (StorageException e) {

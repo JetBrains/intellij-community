@@ -188,15 +188,25 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   public static void scheduleStubIndicesRebuild(@Nullable final Runnable finishCallback) {
     final Runnable rebuildRunnable = new Runnable() {
       public void run() {
+        final StubIndexImpl stubIndex = (StubIndexImpl)StubIndexImpl.getInstance();
+        final Collection<StubIndexKey<?, ?>> allIndexKeys = stubIndex.getAllStubIndexKeys();
         try {
+          for (StubIndexKey<?, ?> key : allIndexKeys) {
+            stubIndex.getWriteLock(key).lock();
+          }
+          stubIndex.clearAllIndices();   
+          final Map<StubIndexKey, Map<Object, TIntArrayList>> empty = Collections.emptyMap();
           FileBasedIndex.getInstance().processAllValues(INDEX_ID, new FileBasedIndex.AllValuesProcessor<SerializedStubTree>() {
             public void process(final int inputId, final SerializedStubTree value) {
               final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree = new StubTree((PsiFileStub)value.getStub()).indexStubTree();
-              updateAffectedStubIndices(inputId, Collections.<StubIndexKey, Map<Object, TIntArrayList>>emptyMap(), stubTree);
+              updateStubIndices(getAffectedIndices(empty, stubTree), inputId, empty, stubTree);
             }
           });
         }
         finally {
+          for (StubIndexKey<?, ?> key : allIndexKeys) {
+            stubIndex.getWriteLock(key).unlock();
+          }
           if (finishCallback != null) {
             finishCallback.run();
           }
@@ -220,22 +230,26 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       });
     }    
   }
-
-  private static void updateAffectedStubIndices(final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree,
-                                         final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
-    Set<StubIndexKey> allIndices = new HashSet<StubIndexKey>();
-    allIndices.addAll(oldStubTree.keySet());
-    allIndices.addAll(newStubTree.keySet());
-    for (StubIndexKey key : allIndices) {
+  
+  private static void updateStubIndices(final Collection<StubIndexKey> indexKeys, final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree,
+                                                final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+    final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+    for (StubIndexKey key : indexKeys) {
         final Map<Object, TIntArrayList> oldMap = oldStubTree.get(key);
         final Map<Object, TIntArrayList> newMap = newStubTree.get(key);
     
         final Map<Object, TIntArrayList> _oldMap = oldMap != null ? oldMap : Collections.<Object, TIntArrayList>emptyMap();
         final Map<Object, TIntArrayList> _newMap = newMap != null ? newMap : Collections.<Object, TIntArrayList>emptyMap();
             
-        final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
         stubIndex.updateIndex(key, inputId, _oldMap, _newMap);
       }
+  }
+  
+  private static Collection<StubIndexKey> getAffectedIndices(final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+    Set<StubIndexKey> allIndices = new HashSet<StubIndexKey>();
+    allIndices.addAll(oldStubTree.keySet());
+    allIndices.addAll(newStubTree.keySet());
+    return allIndices;
   }
 
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
@@ -256,14 +270,24 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       checkNameStorage();
       final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree = getStubTree(oldData);
       final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
-      final Lock lock = getWriteLock();
-      lock.lock();
+
+      final Collection<StubIndexKey> affectedIndices = getAffectedIndices(oldStubTree, newStubTree);
+      final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
       try {
+        // first write-lock affected stub indices to avoid deadlocks
+        for (StubIndexKey key : affectedIndices) {
+          stubIndex.getWriteLock(key).lock();
+        }
+        getWriteLock().lock();
+        
         super.updateWithMap(inputId, oldData, newData);
-        updateAffectedStubIndices(inputId, oldStubTree, newStubTree);
+        updateStubIndices(affectedIndices, inputId, oldStubTree, newStubTree);
       }
       finally {
-        lock.unlock();
+        getWriteLock().unlock();
+        for (StubIndexKey key : affectedIndices) {
+          stubIndex.getWriteLock(key).unlock();
+        }
       }
     }
 
@@ -297,8 +321,8 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
 
       final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
       final Lock lock = getReadLock();
-      lock.lock();
       try {
+        lock.lock();
         final ValueContainer<SerializedStubTree> valueContainer = getData(key);
         if (valueContainer.size() != 1) {
           return result;
@@ -315,14 +339,20 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     }
     
     public void clear() throws StorageException {
-      final Lock lock = getWriteLock();
-      lock.lock();
+      final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
       try {
-        ((StubIndexImpl)StubIndex.getInstance()).clearAllIndices();
+        for (StubIndexKey<?, ?> key : stubIndex.getAllStubIndexKeys()) {
+          stubIndex.getWriteLock(key).lock();
+        }
+        getWriteLock().lock();
+        stubIndex.clearAllIndices();
         super.clear();
       }
       finally {
-        lock.unlock();
+        getWriteLock().unlock();
+        for (StubIndexKey<?, ?> key : stubIndex.getAllStubIndexKeys()) {
+          stubIndex.getWriteLock(key).unlock();
+        }
       }
     }
     
