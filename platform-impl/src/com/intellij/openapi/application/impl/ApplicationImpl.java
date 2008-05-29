@@ -348,7 +348,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private void loadComponentRoamingTypes() {
+  private static void loadComponentRoamingTypes() {
     final Object[] componentRoamingTypes = Extensions.getRootArea().getExtensionPoint("com.intellij.ComponentRoamingType").getExtensions();
 
     for (Object object : componentRoamingTypes) {
@@ -397,6 +397,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     super.dispose();
   }
 
+  private final Object lock = new Object();
+  private void makeChangesVisibleToEDT() {
+    synchronized (lock) {
+      lock.hashCode();
+    }
+  }
   public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
     assertIsDispatchThread();
 
@@ -440,6 +446,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               }
               finally {
                 setExceptionalThreadWithReadAccessFlag(old);
+                makeChangesVisibleToEDT();
               }
             }
           });
@@ -453,13 +460,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     finally {
       myExceptionalThreadWithReadAccessRunnable = null;
+      makeChangesVisibleToEDT();
     }
 
     return !progress.isCanceled();
   }
 
-  public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, final ExecutorService executorService) throws
-                                                                                                                               Throwable {
+  public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, final ExecutorService executorService) throws Throwable {
     final List<Callable<T>> newCallables = new ArrayList<Callable<T>>(tasks.size());
     for (final Callable<T> task : tasks) {
       Callable<T> newCallable = new Callable<T>() {
@@ -488,7 +495,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
       }
     });
-    if (exception.get() != null) throw exception.get();
+    Throwable throwable = exception.get();
+    if (throwable != null) throw throwable;
     return result;
   }
 
@@ -505,6 +513,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     if (myActionsLock.isReadLockAcquired(Thread.currentThread())) {
+      @SuppressWarnings({"ThrowableInstanceNeverThrown"})
       final Throwable stack = new Throwable();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -755,21 +764,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isReadAccessAllowed() {
     Thread currentThread = Thread.currentThread();
-    if (ourDispatchThread == currentThread) {
-      //TODO!
-      /*
-      IdeEventQueue eventQueue = IdeEventQueue.getInstance(); //TODO: cache?
-      if (!eventQueue.isInInputEvent() && !LaterInvocator.isInMyRunnable() && !myInEditorPaint) {
-        LOG.error("Read access from event dispatch thread is allowed only inside input event processing or LaterInvocator.invokeLater");
-      }
-      */
-
-      return true;
-    }
-    if (isExceptionalThreadWithReadAccess()) return true;
-    if (myActionsLock.isReadLockAcquired(currentThread)) return true;
-    if (myActionsLock.isWriteLockAcquired(currentThread)) return true;
-    return isDispatchThread();
+    return ourDispatchThread == currentThread ||
+           isExceptionalThreadWithReadAccess() ||
+           myActionsLock.isReadLockAcquired(currentThread) ||
+           myActionsLock.isWriteLockAcquired(currentThread) ||
+           isDispatchThread();
   }
 
   public void assertReadAccessToDocumentsAllowed() {
