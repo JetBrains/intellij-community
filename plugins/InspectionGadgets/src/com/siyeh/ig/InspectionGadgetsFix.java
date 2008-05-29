@@ -150,6 +150,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             if (document == null) {
                 return;
             }
+            documentManager.doPostponedOperationsAndUnblockDocument(document);
             final TextRange textRange = statement.getTextRange();
             document.replaceString(textRange.getStartOffset(),
                     textRange.getEndOffset(), newStatementText);
