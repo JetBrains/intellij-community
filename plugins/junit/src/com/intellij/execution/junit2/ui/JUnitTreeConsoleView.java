@@ -109,7 +109,7 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
 
   private void disposeModel() {
     if (myModel != null) {
-      myModel.dispose();
+      Disposer.dispose(myModel);
       myModel = null;
     }
   }

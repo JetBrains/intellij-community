@@ -16,6 +16,7 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
+import com.intellij.coverage.actions.TrackCoverageAction;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 public class JUnitToolbarPanel extends ToolbarPanel {
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
   private RerunFailedTestsAction myRerunFailedTestsAction;
+  private TrackCoverageAction myTrackCoverageAction;
 
   public JUnitToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
@@ -47,6 +49,8 @@ public class JUnitToolbarPanel extends ToolbarPanel {
 
   protected void appendAdditionalActions(final DefaultActionGroup actionGroup, final TestConsoleProperties properties, final RunnerSettings runnerSettings,
                                          final ConfigurationPerRunnerSettings configurationSettings) {
+    myTrackCoverageAction = new TrackCoverageAction(properties);
+    actionGroup.add(myTrackCoverageAction);
     myRerunFailedTestsAction = new RerunFailedTestsAction((JUnitConsoleProperties)properties, runnerSettings, configurationSettings);
     actionGroup.add(myRerunFailedTestsAction);
   }
@@ -56,6 +60,7 @@ public class JUnitToolbarPanel extends ToolbarPanel {
     super.setModel(model);
     final JUnitRunningModel jUnitModel = (JUnitRunningModel)model;
     myRerunFailedTestsAction.setModel(jUnitModel);
+    myTrackCoverageAction.setModel(jUnitModel);
     JUnitActions.installAutoscrollToFirstDefect(jUnitModel);
     RunningTestTracker.install(jUnitModel);
     jUnitModel.addListener(new LvcsLabeler(jUnitModel));

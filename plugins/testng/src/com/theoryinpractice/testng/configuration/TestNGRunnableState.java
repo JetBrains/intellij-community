@@ -43,6 +43,7 @@ import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
@@ -158,6 +159,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     // Add plugin jars first...
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
         new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
+    if (config.isCoverageEnabled()) javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
@@ -206,19 +208,21 @@ public class TestNGRunnableState extends JavaCommandLineState
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, data.getOutputDirectory());
     }
 
+    @NonNls final StringBuilder buf = new StringBuilder();
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
       for (Iterator<String> it = data.TEST_LISTENERS.iterator(); it.hasNext();) {
         String listenerClassName = it.next();
         if (listenerClassName != null && !"".equals(listenerClassName)) {
-          sb.append(listenerClassName);
+          buf.append(listenerClassName);
           if (it.hasNext()) {
-            sb.append(";");
+            buf.append(";");
           }
         }
       }
-      javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, sb.toString());
     }
+    if (buf.length() > 0) buf.append(";");
+    if (config.isCoverageEnabled()) buf.append(IDEACoverageListener.class.getName());
+    if (buf.length() > 0) javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, buf.toString());
 
     // Always include the source paths - just makes things easier :)
     VirtualFile[] sources;

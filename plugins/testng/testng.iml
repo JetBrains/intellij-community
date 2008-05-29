@@ -34,6 +34,7 @@
     </orderEntry>
     <orderEntry type="library" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="testRunner" />
+    <orderEntry type="module" module-name="idea_rt" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
