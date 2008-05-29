@@ -27,18 +27,53 @@ import java.util.regex.Matcher;
  */
 public class WildcardFileNameMatcher implements FileNameMatcher {
   private final String myPattern;
-  private final Matcher myMatcher;
+  private final MaskMatcher myMatcher;
+
+  private interface MaskMatcher {
+    boolean matches(String filename);
+  }
+
+  private static final class RegexpMatcher implements MaskMatcher {
+    private final Matcher myMatcher;
+
+    private RegexpMatcher(String pattern) {
+      myMatcher = PatternUtil.fromMask(pattern).matcher("");
+    }
+
+    public boolean matches(final String filename) {
+      synchronized (myMatcher) {
+        myMatcher.reset(filename);
+        return myMatcher.matches();
+      }
+    }
+  }
+
+  private static final class SuffixMatcher implements MaskMatcher {
+    private final String mySuffix;
+
+    private SuffixMatcher(final String suffix) {
+      mySuffix = suffix;
+    }
+
+    public boolean matches(final String filename) {
+      return filename.endsWith(mySuffix);
+    }
+  }
 
   public WildcardFileNameMatcher(@NotNull @NonNls String pattern) {
     myPattern = pattern;
-    myMatcher = PatternUtil.fromMask(pattern).matcher("");
+    myMatcher = createMatcher(pattern);
   }
 
-  public boolean accept(String fileName) {
-    synchronized (myMatcher) {
-      myMatcher.reset(fileName);
-      return myMatcher.matches();
+  private static MaskMatcher createMatcher(final String pattern) {
+    if (pattern.length() > 1 && pattern.charAt(0) == '*' && pattern.indexOf('*', 1) < 0 && pattern.indexOf('?') < 0) {
+      return new SuffixMatcher(pattern.substring(1));
     }
+    return new RegexpMatcher(pattern);
+  }
+
+  public boolean accept(@NotNull String fileName) {
+    return myMatcher.matches(fileName);
   }
 
   @NonNls
