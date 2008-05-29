@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -198,7 +199,10 @@ public class PatternCompiler {
         }
 
         if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
-          predicate = new ScriptPredicate(name, constraint.getScriptCodeConstraint());
+          final String script = StringUtil.stripQuotesAroundValue(constraint.getScriptCodeConstraint());
+          final String s = ScriptPredicate.checkValidScript(script);
+          if (s != null) throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem "+s);
+          predicate = new ScriptPredicate(name, script);
           addPredicate(handler,predicate);
         }
 

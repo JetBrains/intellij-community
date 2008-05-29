@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptPredicate;
 import com.intellij.ui.ComboboxWithBrowseButton;
 
 import javax.swing.*;
@@ -21,8 +22,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -230,6 +231,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private boolean validateParameters() {
     return validateRegExp(regexp) && validateRegExp(regexprForExprType) &&
            validateIntOccurence(minoccurs) &&
+           validateScript(customScriptCode.getTextField()) &&
            (maxoccursUnlimited.isSelected() || validateIntOccurence(maxoccurs));
   }
 
@@ -377,6 +379,21 @@ class EditVarConstraintsDialog extends DialogWrapper {
       Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression"), SSRBundle.message("invalid.regular.expression"));
       field.requestFocus();
       return false;
+    }
+    return true;
+  }
+
+  private static boolean validateScript(JTextField field) {
+    final String text = field.getText();
+
+    if (text.length() > 0) {
+      final String s = ScriptPredicate.checkValidScript(text);
+
+      if (s != null) {
+        Messages.showErrorDialog(SSRBundle.message("invalid.groovy.script"), SSRBundle.message("invalid.groovy.script"));
+        field.requestFocus();
+        return false;
+      }
     }
     return true;
   }

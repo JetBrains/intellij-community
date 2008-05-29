@@ -1039,6 +1039,30 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
+  public void testCheckScriptValidation() {
+    final String s1 = "";
+    final String s2 = "'_b:[script( \"^^^\" )]";
+
+    try {
+      final int count = findMatchesCount(s1, s2);
+      assertFalse("Validation does not work", true);
+    } catch (MalformedPatternException ex) {}
+  }
+
+  //public void testRelationBetweenVars() {
+  //  final String s1 = "public class Foo {\n" +
+  //                      "    public static final Logger log = Logger.getInstance(Foo.class);\n" +
+  //                      "    public static final Logger log2 = Logger.getInstance(Foo2.class);\n" +
+  //                      "    public static final Logger log3 = Logger.getInstance(Foo2.class);\n" +
+  //                      "}";
+  //  final String s2 = "class '_a { static Logger 'log+ = Logger.getInstance('_b:[script( \"_a != _b\" )].class); }";
+  //  assertEquals(
+  //    "relation between vars in script",
+  //    2,
+  //    findMatchesCount(s1,s2)
+  //  );
+  //}
+
   public void testExprTypeWithObject() {
     String s1 = "import java.util.*;\n" +
                 "class A {\n" +
