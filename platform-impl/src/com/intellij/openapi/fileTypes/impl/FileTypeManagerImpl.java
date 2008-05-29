@@ -378,7 +378,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           String name = mapping.getAttributeValue(ATTRIBUTE_TYPE);
           FileType type = getFileTypeByName(name);
 
-          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : createFromPattern(pattern);
+          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : parseFromString(pattern);
 
           if (type != null) {
             associate(type, matcher, false);
@@ -396,7 +396,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
           String name = mapping.getAttributeValue(ATTRIBUTE_TYPE);
           FileType type = getFileTypeByName(name);
-          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : createFromPattern(pattern);
+          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : parseFromString(pattern);
 
           if (type != null) {
             removeAssociation(type, matcher, false);
@@ -421,15 +421,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (!myIgnoredFileMasksSet.contains(ignoreMask)) {
       myIgnorePatterns.add(PatternUtil.fromMask(ignoreMask));
       myIgnoredFileMasksSet.add(ignoreMask);
-    }
-  }
-
-  private static FileNameMatcher createFromPattern(final String pattern) {
-    if (pattern.contains("?") || pattern.contains("*")) {
-      return new WildcardFileNameMatcher(pattern);
-    }
-    else {
-      return new ExactFileNameMatcher(pattern);
     }
   }
 
