@@ -49,6 +49,7 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     }
     finally {
       myAnnotationHolder.clear();
+      myHolder = null;
     }
     return true;
   }
