@@ -114,8 +114,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileTypeManager,
-                                                                                                    virtualFileManager, fileDocumentManager,
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileTypeManager, fileDocumentManager,
                                                                                                     projectRootManagerEx);
     mySearchHelper = new PsiSearchHelperImpl(this);
     final CompositeCacheManager cacheManager = new CompositeCacheManager();

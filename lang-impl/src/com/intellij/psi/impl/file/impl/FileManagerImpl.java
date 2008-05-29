@@ -60,22 +60,18 @@ public class FileManagerImpl implements FileManager {
   private boolean myInitialized = false;
   private boolean myDisposed = false;
 
-  private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
 
   @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
 
   public FileManagerImpl(PsiManagerImpl manager,
-                         FileTypeManager fileTypeManager,
-                         VirtualFileManager virtualFileManager,
-                         FileDocumentManager fileDocumentManager,
+                         FileTypeManager fileTypeManager, FileDocumentManager fileDocumentManager,
                          ProjectRootManager projectRootManager) {
     myFileTypeManager = fileTypeManager;
     myManager = manager;
     myConnection = manager.getProject().getMessageBus().connect();
 
-    myVirtualFileManager = virtualFileManager;
     myFileDocumentManager = fileDocumentManager;
     myProjectRootManager = projectRootManager;
   }
@@ -773,7 +769,6 @@ public class FileManagerImpl implements FileManager {
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
                            languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
-                           !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages()) ||
                            !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages())
                           ) {
                     myVFileToViewProviderMap.put(vFile, fileViewProvider);
@@ -947,13 +942,9 @@ public class FileManagerImpl implements FileManager {
   // We could detect it right now with checks of parser definition equivalence
   // The file name under passed psi file is "new" but parser def is from old name
   private static boolean languageDialectChanged(final PsiFile newPsiFile, String oldFileName) {
-    return ( LanguageParserDefinitions.INSTANCE.forLanguage(newPsiFile.getLanguage()).getClass() != LanguageParserDefinitions
-               .INSTANCE.forLanguage(newPsiFile.getLanguage()).getClass()
-           ) ||
-           ( newPsiFile instanceof PsiFileBase &&
-             LanguageParserDefinitions.INSTANCE.forLanguage(newPsiFile.getLanguage()).getClass() == ((PsiFileBase)newPsiFile).getParserDefinition().getClass() &&
-             !FileUtil.getExtension(newPsiFile.getName()).equals(FileUtil.getExtension(oldFileName))
-           );
+    return newPsiFile instanceof PsiFileBase
+           && LanguageParserDefinitions.INSTANCE.forLanguage(newPsiFile.getLanguage()).getClass() == ((PsiFileBase)newPsiFile).getParserDefinition().getClass()
+           && !FileUtil.getExtension(newPsiFile.getName()).equals(FileUtil.getExtension(oldFileName));
   }
 
   private class MyModuleRootListener implements ModuleRootListener {
