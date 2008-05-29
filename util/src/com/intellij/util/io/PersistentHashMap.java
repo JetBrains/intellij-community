@@ -195,6 +195,21 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       input.close();
     }
   }
+
+  public synchronized boolean hasKey(Key key) throws IOException {
+    myAppendCache.remove(key);
+
+    final int id = tryEnumerate(key);
+    if (id == NULL_ID) {
+      return false;
+    }
+    final HeaderRecord header = readValueId(id);
+    if (header.address == NULL_ID) {
+      return false;
+    }
+
+    return true;
+  }
   
   public synchronized void remove(Key key) throws IOException {
     myAppendCache.remove(key);
