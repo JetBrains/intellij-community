@@ -49,4 +49,15 @@ public interface RefactoringSupportProvider {
    */
   @Nullable RefactoringActionHandler getExtractMethodHandler();
 
+  /**
+   * @return handler for introducing constants in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler;
+   */
+  @Nullable RefactoringActionHandler getIntroduceConstantHandler();
+
+  /**
+   * @return handler for introducing fields in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler;
+   */
+  @Nullable RefactoringActionHandler getIntroduceFieldHandler();
 }

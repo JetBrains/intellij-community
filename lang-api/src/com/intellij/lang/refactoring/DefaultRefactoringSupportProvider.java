@@ -37,4 +37,12 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
   public RefactoringActionHandler getExtractMethodHandler() {
     return null;
   }
+
+  public RefactoringActionHandler getIntroduceConstantHandler() {
+    return null;
+  }
+
+  public RefactoringActionHandler getIntroduceFieldHandler() {
+    return null;
+  }
 }
