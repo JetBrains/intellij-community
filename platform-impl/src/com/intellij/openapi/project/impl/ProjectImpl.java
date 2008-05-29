@@ -177,6 +177,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @Deprecated
   @NotNull
   public String getProjectFilePath() {
     LOG.warn(
@@ -185,9 +186,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return getStateStore().getProjectFilePath();
   }
 
-  /**
-   * @deprecated
-   */
+
+  @Deprecated
   @Nullable
   public VirtualFile getProjectFile() {
     LOG.warn(
@@ -230,9 +230,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return getStateStore().getLocation();
   }
 
-  /**
-   * @deprecated
-   */
+  @Deprecated
   @Nullable
   public VirtualFile getWorkspaceFile() {
     LOG.warn(
@@ -273,6 +271,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   public synchronized void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!isDisposed());
     if (myProjectManagerListener != null) {
       myManager.removeProjectManagerListener(this, myProjectManagerListener);
