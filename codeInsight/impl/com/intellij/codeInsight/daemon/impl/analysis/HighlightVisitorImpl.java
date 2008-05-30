@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -144,6 +143,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myRefCountHolder = null;
       myFile = null;
       released = true;
+      myHolder = null;
     }
 
     return success;
