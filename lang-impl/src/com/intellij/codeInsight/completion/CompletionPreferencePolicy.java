@@ -33,7 +33,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     for (int i = 0; i < count; i++) {
       final LookupElement element = (LookupElement)model.getElementAt(i);
       StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
-      if (info != null && manager.getUseCount(info) == 0) {
+      if (info != null && info != StatisticsInfo.EMPTY && manager.getUseCount(info) == 0) {
         manager.incUseCount(new StatisticsInfo(composeContextWithValue(info), item == element ? SELECTED : IGNORED));
       }
     }

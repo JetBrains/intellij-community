@@ -17,12 +17,13 @@ public class NegativeStatisticsWeigher extends CompletionWeigher {
   public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
     final StatisticsManager manager = StatisticsManager.getInstance();
     final StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
-    if (info == null) return 0;
+    if (info == null || info == StatisticsInfo.EMPTY) return 0;
 
     final StatisticsInfo ignoreInfo = new StatisticsInfo(CompletionPreferencePolicy.composeContextWithValue(info), CompletionPreferencePolicy.IGNORED);
-    final int count = manager
-        .getUseCount(ignoreInfo);
-    if (count >= StatisticsManager.OBLIVION_THRESHOLD - 1) return -1;
+    final int count = manager.getUseCount(ignoreInfo);
+    if (count >= StatisticsManager.OBLIVION_THRESHOLD - 1) {
+      return -1;
+    }
 
     return 0;
   }
