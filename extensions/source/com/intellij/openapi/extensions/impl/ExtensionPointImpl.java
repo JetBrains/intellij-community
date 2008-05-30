@@ -159,9 +159,9 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         myExtensionsCache = new SoftReference<T[]>(result);
       }
     }
-    //for (int i = 1; i < result.length; i++) {
-    //  assert result[i] != result[i - 1];
-    //}
+    for (int i = 1; i < result.length; i++) {
+      assert result[i] != result[i - 1];
+    }
     return result;
   }
 
@@ -294,11 +294,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public Class<T> getExtensionClass() {
     if (myExtensionClass == null) {
       try {
-        if (myDescriptor.getPluginClassLoader() == null) {
+        ClassLoader pluginClassLoader = myDescriptor.getPluginClassLoader();
+        if (pluginClassLoader == null) {
+          //noinspection unchecked
           myExtensionClass = (Class<T>)Class.forName(myBeanClassName);
         }
         else {
-          myExtensionClass = (Class<T>)Class.forName(myBeanClassName, true, myDescriptor.getPluginClassLoader());
+          //noinspection unchecked
+          myExtensionClass = (Class<T>)Class.forName(myBeanClassName, true, pluginClassLoader);
         }
       }
       catch (ClassNotFoundException e) {
