@@ -536,7 +536,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     error += "Psi Text tail:(" + (fileText.length - i) + ")\n";// + new String(fileText, i, Math.min(i + 300, fileText.length) - i) + "\n";
     error += "*********************************************" + "\n";
     LOG.error(error);
-    document.replaceString(0, documentLength, psiFile.getText());
+    //document.replaceString(0, documentLength, psiFile.getText());
     return false;
   }
 
