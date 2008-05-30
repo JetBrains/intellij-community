@@ -182,7 +182,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     }
   }
 
-  private Collection<PsiLiteralExpression> findLiteralExpressions(final PsiElement place, final boolean resolveReferences, final Ref<Boolean> concatFlag) {
+  private static Collection<PsiLiteralExpression> findLiteralExpressions(final PsiElement place, final boolean resolveReferences, final Ref<Boolean> concatFlag) {
     if (place instanceof PsiReferenceExpression) {
       if (resolveReferences) {
         final ArrayList<PsiLiteralExpression> list = new ArrayList<PsiLiteralExpression>();
@@ -336,14 +336,14 @@ public final class CustomLanguageInjector implements ProjectComponent {
     final int len = objects.size();
     for (int i = 0; i < len; i++) {
       String curPrefix = null;
-      String curSuffix = null;
-      PsiLanguageInjectionHost curHost = null;
       Object o = objects.get(i);
       if (o instanceof String) {
         curPrefix = (String)o;
         if (i == len - 1) return; // IDEADEV-26751
         o = objects.get(++i);
       }
+      String curSuffix = null;
+      PsiLanguageInjectionHost curHost = null;
       if (o instanceof PsiLanguageInjectionHost) {
         curHost = (PsiLanguageInjectionHost)o;
         if (i == len-2) {
@@ -407,12 +407,12 @@ public final class CustomLanguageInjector implements ProjectComponent {
           // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
           // Maybe IDEA core is caching a bit too aggressively here?
           if (language != null/* && (pair.second.getLength() > 0*/) {
+            // do not handle overlapping injections
+            for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+              if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
+            }
+            registrar.startInjecting(language);
             try {
-              // do not handle overlapping injections
-              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-                if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
-              }
-              registrar.startInjecting(language);
               for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
                 final PsiLanguageInjectionHost host = trinity.first;
                 final TextRange textRange = trinity.third;
