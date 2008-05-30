@@ -1,4 +1,4 @@
-package com.intellij.lang;
+package com.intellij.openapi.extensions;
 
 /**
  * @author yole

@@ -18,15 +18,15 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-public class IntentionActionBean implements PluginAware {
+public class IntentionActionBean extends CustomLoadingExtensionPointBean {
 
   @Tag("className")
   public String className;
@@ -38,8 +38,6 @@ public class IntentionActionBean implements PluginAware {
   public String bundleName;
   @Tag("descriptionDirectoryName")
   public String descriptionDirectoryName;
-
-  private PluginDescriptor myPluginDescriptor;
 
   @Nullable
   public String[] getCategories() {
@@ -56,11 +54,7 @@ public class IntentionActionBean implements PluginAware {
     return descriptionDirectoryName;
   }
 
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
-    myPluginDescriptor = pluginDescriptor;
-  }
-
-  public PluginDescriptor getPluginDescriptor() {
-    return myPluginDescriptor;
+  public IntentionAction instantiate() throws ClassNotFoundException {
+    return (IntentionAction)instantiateExtension(className, ApplicationManager.getApplication().getPicoContainer());
   }
 }

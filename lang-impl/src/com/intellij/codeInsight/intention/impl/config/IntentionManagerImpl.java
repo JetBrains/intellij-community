@@ -44,7 +44,7 @@ public class IntentionManagerImpl extends IntentionManager {
 
     point.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
       public void extensionAdded(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
-        registerIntentionFromBean(extension, pluginDescriptor);
+        registerIntentionFromBean(extension);
       }
 
       public void extensionRemoved(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
@@ -52,13 +52,11 @@ public class IntentionManagerImpl extends IntentionManager {
     });
   }
 
-  private void registerIntentionFromBean(final IntentionActionBean extension, final PluginDescriptor pluginDescriptor) {
-    ClassLoader classLoader = pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+  private void registerIntentionFromBean(final IntentionActionBean extension) {
     try {
-      final Class<?> aClass = Class.forName(extension.className, true, classLoader);
       final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
       final String[] categories = extension.getCategories();
-      final IntentionAction instance = (IntentionAction)aClass.newInstance();
+      final IntentionAction instance = extension.instantiate();
       if (categories == null) {
         addAction(instance);
       }
@@ -72,12 +70,6 @@ public class IntentionManagerImpl extends IntentionManager {
       }
     }
     catch (ClassNotFoundException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InstantiationException e) {
       LOG.error(e);
     }
   }
