@@ -26,6 +26,15 @@ public class PyResolveTest extends ResolveTestCase {
     assertTrue(targetElement instanceof PyFunction);
   }
 
+  // NOTE: maybe this test does not belong exactly here; still it's the best place currently. 
+  public void testComplexCallee() throws Exception {
+    PsiElement targetElement = resolve();
+    PyExpression assigned = ((PyAssignmentStatement) targetElement.getContext()).getAssignedValue();
+    assertTrue(assigned instanceof PyCallExpression);
+    PsiElement callee = ((PyCallExpression)assigned).getCallee();
+    assertTrue(callee instanceof PySubscriptionExpression);
+  }
+
   public void testVar() throws Exception {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);

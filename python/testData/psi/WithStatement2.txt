@@ -37,7 +37,7 @@ PyFile:WithStatement2.py
     PsiElement(Py:WITH_KEYWORD)('with')
     PsiWhiteSpace(' ')
     PySubscriptionExpression
-      PyCallExpression: y
+      PyCallExpression: x.y
         PyReferenceExpression: y
           PyReferenceExpression: x
             PsiElement(Py:IDENTIFIER)('x')

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyCallExpression extends PyExpression {
-  PyReferenceExpression getCalledFunctionReference();
+  PyExpression getCallee();
   PyArgumentList getArgumentList();
 
   void addArgument(PyExpression expression);

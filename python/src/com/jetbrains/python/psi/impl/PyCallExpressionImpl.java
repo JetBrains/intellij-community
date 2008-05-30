@@ -42,8 +42,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @PsiCached
-  public PyReferenceExpression getCalledFunctionReference() {
-    return PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class);
+  public PyExpression getCallee() {
+    //return PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class); what we call can be whatever expr, not always a ref
+    return (PyExpression)getFirstChild();
   }
 
   @PsiCached
@@ -63,21 +64,24 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   public PyElement resolveCallee() {
-    PyReferenceExpression calleeReference = getCalledFunctionReference();
+    PyExpression calleeReference = getCallee();
     return (PyElement) calleeReference.getReference().resolve();
   }
 
   @Override
   public String toString() {
-    return "PyCallExpression: " + getCalledFunctionReference().getReferencedName();
+    return "PyCallExpression: " + PyResolveUtil.getReadableRepr(getCallee()); //getCalledFunctionReference().getReferencedName();
   }
 
   public PyType getType() {
-    PyReferenceExpression callee = getCalledFunctionReference();
-    PsiElement target = callee.resolve();
-    if (target instanceof PyClass) {
-      return new PyClassType((PyClass) target);
+    PyExpression callee = getCallee();
+    if (callee instanceof PyReferenceExpression) {
+      PsiElement target = ((PyReferenceExpression)callee).resolve();
+      if (target instanceof PyClass) {
+        return new PyClassType((PyClass) target);
+      }
+      return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
     }
-    return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
+    return callee.getType();
   }
 }
