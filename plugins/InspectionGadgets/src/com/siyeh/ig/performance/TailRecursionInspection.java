@@ -128,7 +128,9 @@ public class TailRecursionInspection extends BaseInspection {
                         tailCallIsContainedInLoop, builder);
             builder.append('}');
             @NonNls final String replacementText = builder.toString();
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory elementFactory =
+                    psiFacade.getElementFactory();
             final PsiCodeBlock block =
                     elementFactory.createCodeBlockFromText(replacementText,
                             method);
@@ -175,7 +177,7 @@ public class TailRecursionInspection extends BaseInspection {
             private boolean containsCallOnOtherInstance = false;
             private final PsiClass aClass;
 
-            public MethodContainsCallOnOtherInstanceVisitor(
+            MethodContainsCallOnOtherInstanceVisitor(
                     PsiClass aClass) {
                 this.aClass = aClass;
             }
@@ -320,7 +322,7 @@ public class TailRecursionInspection extends BaseInspection {
                         methodExpression.getQualifierExpression();
                 return qualifierExpression == null;
             } else if (element instanceof PsiReferenceExpression) {
-                PsiReferenceExpression referenceExpression =
+                final PsiReferenceExpression referenceExpression =
                         (PsiReferenceExpression) element;
                 final PsiElement parent = referenceExpression.getParent();
                 if (parent instanceof PsiMethodCallExpression) {
