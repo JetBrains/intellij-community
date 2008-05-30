@@ -12,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -69,6 +68,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   private static final OrFilter THROWABLE_TYPE_FILTER = new OrFilter(
       new GeneratorFilter(AssignableGroupFilter.class, new ThrowsListGetter()),
       new AssignableFromFilter("java.lang.RuntimeException"));
+  private static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new TObjectHashingStrategy<ExpectedTypeInfo>() {
+    public int computeHashCode(final ExpectedTypeInfo object) {
+      return object.getType().hashCode();
+    }
+
+    public boolean equals(final ExpectedTypeInfo o1, final ExpectedTypeInfo o2) {
+      return o1.getType().equals(o2.getType());
+    }
+  };
 
   @Nullable
   private static Pair<ElementFilter, TailType> getReferenceFilter(PsiElement element) {
@@ -148,13 +156,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>(true, false) {
              public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
                final PsiElement position = params.getPosition();
-               final THashSet<ExpectedTypeInfo> infos = new THashSet<ExpectedTypeInfo>(Arrays.asList(getExpectedTypes(position)), new TObjectHashingStrategy<ExpectedTypeInfo>() {
-                 public int computeHashCode(final ExpectedTypeInfo object) {
-                   return object.getType().hashCode();
-                 }
-
-                 public boolean equals(final ExpectedTypeInfo o1, final ExpectedTypeInfo o2) {
-                   return o1.getType().equals(o2.getType());
+               final THashSet<ExpectedTypeInfo> infos = new THashSet<ExpectedTypeInfo>(EXPECTED_TYPE_INFO_STRATEGY);
+               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                 public void run() {
+                   infos.addAll(Arrays.asList(getExpectedTypes(position)));
                  }
                });
                for (final ExpectedTypeInfo type : infos) {
@@ -164,9 +169,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                  CompletionService.getCompletionService().getVariantsFromContributors(
                      ExpressionSmartCompletionContributor.CONTRIBUTORS, parameters, null,
                      new Consumer<LookupElement>() {
-                       public void consume
-                           (
-                               final LookupElement lookupElement) {
+                       public void consume(final LookupElement lookupElement) {
                          final Object object = lookupElement.getObject();
                          if (!filter.isClassAcceptable(object.getClass())) return;
 
@@ -393,29 +396,25 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
   private static ExpectedTypeInfo[] getExpectedTypes(final PsiElement position) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ExpectedTypeInfo[]>() {
-      public ExpectedTypeInfo[] compute() {
-        if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
-          final PsiClassType classType = factory
-              .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
-          final List<ExpectedTypeInfo> result = new SmartList<ExpectedTypeInfo>();
-          result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, classType, TailType.SEMICOLON));
-          final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
-          if (method != null) {
-            for (final PsiClassType type : method.getThrowsList().getReferencedTypes()) {
-              result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, type, TailType.SEMICOLON));
-            }
-          }
-          return result.toArray(new ExpectedTypeInfo[result.size()]);
+    if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
+      final PsiClassType classType = factory
+          .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
+      final List<ExpectedTypeInfo> result = new SmartList<ExpectedTypeInfo>();
+      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, classType, TailType.SEMICOLON));
+      final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
+      if (method != null) {
+        for (final PsiClassType type : method.getThrowsList().getReferencedTypes()) {
+          result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, type, TailType.SEMICOLON));
         }
-
-        PsiExpression expression = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
-        if (expression == null) return ExpectedTypeInfo.EMPTY_ARRAY;
-
-        return ExpectedTypesProvider.getInstance(position.getProject()).getExpectedTypes(expression, true);
       }
-    });
+      return result.toArray(new ExpectedTypeInfo[result.size()]);
+    }
+
+    PsiExpression expression = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
+    if (expression == null) return ExpectedTypeInfo.EMPTY_ARRAY;
+
+    return ExpectedTypesProvider.getInstance(position.getProject()).getExpectedTypes(expression, true);
   }
 
   private static void addExpectedType(final CompletionResultSet result, final PsiType type) {
