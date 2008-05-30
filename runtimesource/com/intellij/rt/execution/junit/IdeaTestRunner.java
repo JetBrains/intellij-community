@@ -57,13 +57,13 @@ public class IdeaTestRunner extends TestRunner {
 
         public void startTest(final Test test) {
           if (test instanceof TestCase) {
-            data.testStarted(((TestCase)test).getName());
+            data.testStarted(test.getClass().getName() + "." + ((TestCase)test).getName());
           }
         }
 
         public void endTest(final Test test) {
           if (test instanceof TestCase) {
-            data.testEnded(((TestCase)test).getName());
+            data.testEnded(test.getClass().getName() + "." + ((TestCase)test).getName());
           }
         }
       });
