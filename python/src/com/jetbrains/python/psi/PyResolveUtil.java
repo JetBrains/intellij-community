@@ -40,7 +40,7 @@ public class PyResolveUtil {
 
 
   @NotNull
-  protected static String _fmt_node(PsiElement elt) {
+  public static String getReadableRepr(PsiElement elt) {
     ASTNode node = elt.getNode();
     if (node == null) return "null";
     else {
@@ -217,9 +217,9 @@ public class PyResolveUtil {
      */
     public boolean approve(PsiElement element) {
       if ((element instanceof PyFile) && (ResolveImportUtil.INIT_PY.equals(((PyFile)element).getName()))) {
-        String path = ((PyFile)element).getVirtualFile().getPath(); // TODO: handle possible NPE
-        if (mySeen.contains(path)) return false; // already seen it, may not try again
-        else mySeen.add(path);
+        String fname = ((PyFile)element).getUrl();
+        if (mySeen.contains(fname)) return false; // already seen it, may not try again
+        else mySeen.add(fname);
       }
       return true;
     }
