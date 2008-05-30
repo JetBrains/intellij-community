@@ -317,10 +317,20 @@ public final class CustomLanguageInjector implements ProjectComponent {
                                 final String prefix,
                                 final String suffix,
                                 final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    final Ref<Boolean> concatFlag = Ref.create(Boolean.FALSE);
+    final Ref<Boolean> concatFlag = Ref.create(isReferenceAndHasPrefix(psiExpression));
     for (PsiLiteralExpression literalExpression : findLiteralExpressions(psiExpression, myInjectionConfiguration.isResolveReferences(), concatFlag)) {
       processInjectionWithContext(literalExpression, id, prefix, suffix, concatFlag, processor);
     }
+  }
+
+  private static boolean isReferenceAndHasPrefix(final PsiExpression psiExpression) {
+    if (!(psiExpression instanceof PsiReferenceExpression)) return false;
+    for (PsiElement expression = psiExpression, parent = psiExpression.getParent();
+         parent != null && !(parent instanceof PsiStatement);
+         expression = parent, parent = expression.getParent()) {
+      if (parent instanceof PsiBinaryExpression && ((PsiBinaryExpression)parent).getROperand() == expression) return true;
+    }
+    return false;
   }
 
   private static void processInjectionWithContext(final PsiLiteralExpression place,
