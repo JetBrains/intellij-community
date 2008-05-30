@@ -44,5 +44,5 @@ public interface ExtensionPoint<T> {
 
   void reset();
 
-  Class getExtensionClass();
+  Class<T> getExtensionClass();
 }

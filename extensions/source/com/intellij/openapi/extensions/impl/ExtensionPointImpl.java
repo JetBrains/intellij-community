@@ -46,14 +46,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final PluginDescriptor myDescriptor;
   private final Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
 
-  private final Set<ExtensionPointListener<T>> myEPListeners = new LinkedHashSet<ExtensionPointListener<T>>();
+  private final List<ExtensionPointListener<T>> myEPListeners = new CopyOnWriteArrayList<ExtensionPointListener<T>>();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private final List<ExtensionComponentAdapter> myLoadedAdapters = new CopyOnWriteArrayList<ExtensionComponentAdapter>();
 
   private SoftReference<T[]> myExtensionsCache;
 
-  private Class myExtensionClass;
+  private Class<T> myExtensionClass;
 
   public ExtensionPointImpl(String name,
                             String beanClassName,
@@ -119,10 +119,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters.add(index, adapter);
       if (runNotifications) {
         if (extension instanceof Extension) {
-          Extension o = (Extension) extension;
           try {
-            o.extensionAdded(this);
-          } catch (Throwable e) {
+            ((Extension)extension).extensionAdded(this);
+          }
+          catch (Throwable e) {
             myLogger.error(e);
           }
         }
@@ -133,8 +133,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void notifyListenersOnAdd(T extension, final PluginDescriptor pluginDescriptor) {
-    //noinspection unchecked
-    for (ExtensionPointListener<T> listener : getListenersCopy()) {
+    for (ExtensionPointListener<T> listener : myEPListeners) {
       try {
         listener.extensionAdded(extension, pluginDescriptor);
       }
@@ -142,10 +141,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         myLogger.error(e);
       }
     }
-  }
-
-  private ExtensionPointListener<T>[] getListenersCopy() {
-    return myEPListeners.toArray(new ExtensionPointListener[myEPListeners.size()]);
   }
 
   @NotNull
@@ -164,7 +159,9 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         myExtensionsCache = new SoftReference<T[]>(result);
       }
     }
-
+    //for (int i = 1; i < result.length; i++) {
+    //  assert result[i] != result[i - 1];
+    //}
     return result;
   }
 
@@ -246,7 +243,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void notifyListenersOnRemove(T extensionObject, PluginDescriptor pluginDescriptor) {
-    for (ExtensionPointListener<T> listener : getListenersCopy()) {
+    for (ExtensionPointListener<T> listener : myEPListeners) {
       try {
         listener.extensionRemoved(extensionObject, pluginDescriptor);
       }
@@ -272,18 +269,18 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    if (myEPListeners.contains(listener)) {
-      for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
-        try {
-          //noinspection unchecked
-          listener.extensionRemoved((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
-        } catch (Throwable e) {
-          myLogger.error(e);
-        }
+    for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
+      try {
+        //noinspection unchecked
+        listener.extensionRemoved((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
       }
-
-      myEPListeners.remove(listener);
+      catch (Throwable e) {
+        myLogger.error(e);
+      }
     }
+
+    boolean success = myEPListeners.remove(listener);
+    assert success;
   }
 
   public synchronized void reset() {
@@ -294,14 +291,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  public Class getExtensionClass() {
+  public Class<T> getExtensionClass() {
     if (myExtensionClass == null) {
       try {
         if (myDescriptor.getPluginClassLoader() == null) {
-          myExtensionClass = Class.forName(myBeanClassName);
+          myExtensionClass = (Class<T>)Class.forName(myBeanClassName);
         }
         else {
-          myExtensionClass = Class.forName(myBeanClassName, true, myDescriptor.getPluginClassLoader());
+          myExtensionClass = (Class<T>)Class.forName(myBeanClassName, true, myDescriptor.getPluginClassLoader());
         }
       }
       catch (ClassNotFoundException e) {
@@ -341,7 +338,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @TestOnly
   final void notifyAreaReplaced(final ExtensionsArea area) {
-    for (final ExtensionPointListener<T> listener : getListenersCopy()) {
+    for (final ExtensionPointListener<T> listener : myEPListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
         ((ExtensionPointAndAreaListener)listener).areaReplaced(area);
       }
