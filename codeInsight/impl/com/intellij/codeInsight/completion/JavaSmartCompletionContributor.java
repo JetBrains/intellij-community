@@ -97,7 +97,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       return new Pair<ElementFilter, TailType>(THROWABLES_FILTER, TailType.NONE);
     }
 
-    if (PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText(")").withParent(PsiTypeCastExpression.class)).accepts(element)) {
+    if (psiElement().withParent(
+        psiElement(PsiReferenceExpression.class).afterLeaf(
+            psiElement().withText(")").withParent(PsiTypeCastExpression.class))).accepts(element)) {
       return new Pair<ElementFilter, TailType>(new ReturnTypeFilter(new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter())), TailType.NONE);
     }
 
