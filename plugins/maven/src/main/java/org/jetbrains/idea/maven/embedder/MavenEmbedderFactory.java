@@ -169,12 +169,14 @@ public class MavenEmbedderFactory {
     return createEmbedderForRead(settings, null);
   }
 
-  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) {
-    return createEmbedder(settings, new ReadingCustomizer(projectMapping));
+  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings,
+                                                    Map<ProjectId, VirtualFile> projectMapping) {
+    return createEmbedder(settings, new MyCustomizer(projectMapping, false));
   }
 
-  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) {
-    return createEmbedder(settings, new ResolvingCustomizer(projectMapping));
+  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings,
+                                                       Map<ProjectId, VirtualFile> projectMapping) {
+    return createEmbedder(settings, new MyCustomizer(projectMapping, true));
   }
 
   public static MavenEmbedder createEmbedderForExecute(MavenCoreSettings settings) {
@@ -266,19 +268,19 @@ public class MavenEmbedderFactory {
     }
   }
 
-  public static class ReadingCustomizer implements ContainerCustomizer {
-    private Map<ProjectId, VirtualFile> myProjectMapping;
+  public static class MyCustomizer implements ContainerCustomizer {
+    private Map<ProjectId, VirtualFile> myMapping;
+    private boolean isOnline;
 
-    public ReadingCustomizer(Map<ProjectId, VirtualFile> projectMapping) {
-
-      myProjectMapping = projectMapping;
+    public MyCustomizer(Map<ProjectId, VirtualFile> projectMapping, boolean online) {
+      myMapping = projectMapping;
+      isOnline = online;
     }
 
     public void customize(PlexusContainer c) {
-      c.getContext().put("MavenProjectsMapping", myProjectMapping);
+      c.getContext().put(CustomArtifactResolver.MAVEN_PROJECTS_MAPPING_KEY, myMapping);
 
-      ComponentDescriptor d = c.getComponentDescriptor(WagonManager.ROLE);
-      d.setImplementation(CustomWagonManager.class.getName());
+      ComponentDescriptor d;
 
       d = c.getComponentDescriptor(ArtifactFactory.ROLE);
       d.setImplementation(CustomArtifactFactory.class.getName());
@@ -286,29 +288,16 @@ public class MavenEmbedderFactory {
       d = c.getComponentDescriptor(ArtifactResolver.ROLE);
       d.setImplementation(CustomArtifactResolver.class.getName());
 
+      if (isOnline) return;
+
+      d = c.getComponentDescriptor(WagonManager.ROLE);
+      d.setImplementation(CustomWagonManager.class.getName());
+
       d = c.getComponentDescriptor(ModelLineageBuilder.ROLE);
       d.setImplementation(CustomLineageBuilder.class.getName());
 
       d = c.getComponentDescriptor(ExtensionManager.class.getName());
       d.setImplementation(CustomExtensionManager.class.getName());
-    }
-  }
-
-  public static class ResolvingCustomizer implements ContainerCustomizer {
-    private Map<ProjectId, VirtualFile> myMapping;
-
-    public ResolvingCustomizer(Map<ProjectId, VirtualFile> projectMapping) {
-      myMapping = projectMapping;
-    }
-
-    public void customize(PlexusContainer c) {
-      c.getContext().put("MavenProjectsMapping", myMapping);
-
-      ComponentDescriptor d = c.getComponentDescriptor(ArtifactFactory.ROLE);
-      d.setImplementation(CustomArtifactFactory.class.getName());
-
-      d = c.getComponentDescriptor(ArtifactResolver.ROLE);
-      d.setImplementation(CustomArtifactResolver.class.getName());
     }
   }
 }

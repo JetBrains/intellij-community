@@ -27,11 +27,11 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
 
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenPluginModelDomDescription"/>
-    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="last"/>
-    <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
-    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
+    <!--<dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>-->
+    <!--<dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenPluginModelDomDescription"/>-->
+    <!--<lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="last"/>-->
+    <!--<inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>-->
+    <!--<dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>-->
   </extensions>
 
   <application-components>
@@ -51,9 +51,9 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.repository.MavenIndicesManager</implementation-class>
-    </component>
+    <!--<component>-->
+      <!--<implementation-class>org.jetbrains.idea.maven.repository.MavenIndicesManager</implementation-class>-->
+    <!--</component>-->
     <component>
       <implementation-class>org.jetbrains.idea.maven.repository.MavenPluginsRepository</implementation-class>
     </component>
@@ -156,11 +156,11 @@
     </action>
 
     <group id="Maven.State">
-      <action id="Maven.AddDependency"
-              class="org.jetbrains.idea.maven.state.action.AddDependencyAction" text="Add Dependency"
-              description="Add Dependency"
-              icon="/modules/library.png">
-      </action>
+      <!--<action id="Maven.AddDependency"-->
+              <!--class="org.jetbrains.idea.maven.state.action.AddDependencyAction" text="Add Dependency"-->
+              <!--description="Add Dependency"-->
+              <!--icon="/modules/library.png">-->
+      <!--</action>-->
       <action id="Maven.Ignore"
               class="org.jetbrains.idea.maven.state.action.IgnoreProjectAction" text="_Ignore"
               description="Toggle ignore flag for Maven project">
@@ -211,8 +211,8 @@
       <reference id="Maven.ShowDefaultSettings"/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
-      <separator/>
-      <reference id="Maven.AddDependency"/>
+      <!--<separator/>-->
+      <!--<reference id="Maven.AddDependency"/>-->
       <separator/>
       <reference id="Maven.Reimport"/>
       <reference id="Maven.DownloadArtifacts"/>

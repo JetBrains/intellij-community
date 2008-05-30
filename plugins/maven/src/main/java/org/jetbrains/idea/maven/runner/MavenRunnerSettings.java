@@ -61,19 +61,16 @@ public class MavenRunnerSettings implements Cloneable {
 
   @NotNull
   public String getJreName() {
-    return this.jreName;
-  }
-
-  public void setJreName(@Nullable String jdkPath) {
-    if (jdkPath != null) {
-      this.jreName = jdkPath;
-    }
-  }
-
-  public void useExternalMaven() {
-    setUseMavenEmbedder(false);
-    if (StringUtil.isEmpty(jreName)) {
+    if (!isUseMavenEmbedder() && StringUtil.isEmpty(jreName)) {
       jreName = collectJdkNamesAndDescriptions().get(0).getFirst();
+    }
+    return jreName;
+
+  }
+
+  public void setJreName(@Nullable String jreName) {
+    if (jreName != null) {
+      this.jreName = jreName;
     }
   }
 

@@ -7,7 +7,7 @@ import org.jetbrains.idea.maven.repository.MavenWithDataTestFixture;
 
 import java.io.File;
 
-public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
+public abstract class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
   private MavenWithDataTestFixture myDataTestFixture;
   private MavenIndicesManager myRepositoryManager;
 
@@ -131,29 +131,101 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testAddingCreatedProjectsIntoCompletion() throws Exception {
+  public void testAddingLocalProjectsIntoCompletion() throws Exception {
+    updateProjectPom("<groupId>project-group</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     " <module>m1</module>" +
+                     " <module>m2</module>" +
+                     "</modules>");
+
     createModulePom("m1",
                     "<groupId>project-group</groupId>" +
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>");
 
-    createModulePom("m2",
+    VirtualFile m = createModulePom("m2",
+                                    "<groupId>project-group</groupId>" +
+                                    "<artifactId>m2</artifactId>" +
+                                    "<version>2</version>");
+
+    updateModulePom("m2",
                     "<groupId>project-group</groupId>" +
                     "<artifactId>m2</artifactId>" +
-                    "<version>2</version>");
+                    "<version>2</version>" +
 
-    updateProjectPom("<groupId>test</groupId>" +
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>project-group</groupId>" +
+                    "    <artifactId><caret></artifactId>" +
+                    "  </dependency>" +
+                    "</dependencies>");
+
+    assertCompletionVariants(m, "m1", "m2");
+  }
+
+  public void testResolvingPropertiesForLocalProjectsInCompletion() throws Throwable {
+    updateProjectPom("<groupId>project-group</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>project-group</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                     "<properties>" +
+                     "  <module1Name>module1</module1Name>" +
+                     "</properties>" +
 
-    assertCompletionVariants(myProjectPom, "m1", "m2");
+                     "<modules>" +
+                     " <module>m1</module>" +
+                     " <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>${pom.parent.groupId}</groupId>" +
+                    "<artifactId>${module1Name}</artifactId>" +
+
+                    "<parent>" +
+                    "  <groupId>project-group</groupId>" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>");
+
+    VirtualFile m = createModulePom("m2",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>module2</artifactId>" +
+                                    "<version>1</version>");
+
+    importProject();
+    assertModules("project", "module1", "module2");
+
+    updateModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>module2</artifactId>" +
+                    "<version>1</version>" +
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>project-group</groupId>" +
+                    "    <artifactId>module1</artifactId>" +
+                    "    <version><caret></version>" +
+                    "  </dependency>" +
+                    "</dependencies>");
+
+    assertCompletionVariants(m, "1");
+
+    updateModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>module2</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>project-group</groupId>" +
+                    "    <artifactId>module1</artifactId>" +
+                    "    <version>1</version>" +
+                    "  </dependency>" +
+                    "</dependencies>");
+
+    checkHighlighting(m);
   }
 
   public void testChaningExistingProjects() throws Exception {
@@ -192,6 +264,40 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "</dependencies>");
 
     assertCompletionVariants(myProjectPom, "m2");
+  }
+
+  public void testChaningExistingProjectsWithArtifactIdsRemoval() throws Exception {
+    createModulePom("m1",
+                    "<groupId>project-group</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "m1");
+
+    updateModulePom("m1", "");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId><caret></groupId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom);
   }
 
   public void testRemovingExistingProjects() throws Exception {

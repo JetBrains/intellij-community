@@ -15,7 +15,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +37,7 @@ import java.util.List;
 public abstract class PomTreeStructure extends SimpleTreeStructure {
   private static final Icon iconProjectRoot = IconLoader.getIcon("/general/ijLogo.png");
   private static final Icon iconPom = IconLoader.getIcon("/images/mavenProject.png");
+  private static final Icon iconInvalidPom = IconLoader.getIcon("/images/mavenProjectInvalid.png");
 
   private static final Icon iconProfilesOpen = IconLoader.getIcon("/images/profilesOpen.png");
   private static final Icon iconProfilesClosed = IconLoader.getIcon("/images/profilesClosed.png");
@@ -46,18 +46,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   private static final Icon iconPhasesOpen = IconLoader.getIcon("/images/phasesOpen.png");
   private static final Icon iconPhasesClosed = IconLoader.getIcon("/images/phasesClosed.png");
 
-  private static final Icon iconDependency = IconLoader.getIcon("/images/phase.png");
-  private static final Icon iconDependenciesOpen = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon iconDependenciesClosed = IconLoader.getIcon("/images/phasesClosed.png");
-
   private static final Icon iconPluginsOpen = IconLoader.getIcon("/images/phasesOpen.png");
   private static final Icon iconPluginsClosed = IconLoader.getIcon("/images/phasesClosed.png");
   private static final Icon iconPlugin = IconLoader.getIcon("/images/mavenPlugin.png");
   private static final Icon iconPluginGoal = IconLoader.getIcon("/images/pluginGoal.png");
-
-  private static final Icon iconExtensionsOpen = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon iconExtensionsClosed = IconLoader.getIcon("/images/phasesClosed.png");
-  private static final Icon iconExtension = IconLoader.getIcon("/images/mavenPlugin.png");
 
   private static final Icon iconModulesOpen = IconLoader.getIcon("/images/nestedPomsOpen.png");
   private static final Icon iconModulesClosed = IconLoader.getIcon("/images/nestedPomsClosed.png");
@@ -484,9 +476,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private LifecycleNode lifecycleNode;
     private ProfilesNode profilesNode;
-    private DependenciesNode dependenciesNode;
     private PluginsNode  pluginsNode;
-    private ExtensionsNode extensionsNode;
     public NestedPomsNode modulePomsNode;
     public NestedPomsNode nonModulePomsNode;
 
@@ -496,16 +486,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
       lifecycleNode = new LifecycleNode(this);
       profilesNode = new ProfilesNode(this);
-      dependenciesNode = new DependenciesNode(this);
       pluginsNode = new PluginsNode(this);
-      extensionsNode = new ExtensionsNode(this);
       modulePomsNode = new ModulePomsNode(this);
       nonModulePomsNode = new NonModulePomsNode(this);
 
       modulePomsNode.sibling = nonModulePomsNode;
       nonModulePomsNode.sibling = modulePomsNode;
 
-      setUniformIcon(iconPom);
 
       updateNode();
     }
@@ -527,9 +514,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     protected void displayChildren(DisplayList displayList) {
       displayList.add(profilesNode);
       displayList.add(lifecycleNode);
-      displayList.add(dependenciesNode);
       displayList.add(pluginsNode);
-      displayList.add(extensionsNode);
       displayList.add(modulePomsNode);
       displayList.add(nonModulePomsNode);
     }
@@ -580,20 +565,12 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void updateNode() {
       updateText();
+      setUniformIcon(project.getProblems().isEmpty() ? iconPom : iconInvalidPom);
 
       lifecycleNode.updateGoals();
       createProfileNodes();
-      createDependenciesNode();
       createPluginsNode();
-      createExtensionsNode();
       regroupNested();
-    }
-
-    private void createDependenciesNode() {
-      dependenciesNode.clear();
-      for (Artifact each : project.getDependencies()) {
-        dependenciesNode.add(new DependencyNode(this, each, project.isResolved(each)));
-      }
     }
 
     private void createPluginsNode() {
@@ -612,13 +589,6 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
         }
       }
       return false;
-    }
-
-    private void createExtensionsNode() {
-      extensionsNode.clear();
-      for (Artifact each : project.getExtensions()) {
-        extensionsNode.add(new ExtensionNode(this, each, project.isResolved(each)));
-      }
     }
 
     private void updateText() {
@@ -1002,41 +972,6 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  public class DependenciesNode extends ListNode {
-    final List<DependencyNode> children = new ArrayList<DependencyNode>();
-
-    public DependenciesNode(final PomNode parent) {
-      super(parent);
-      addPlainText(NavigatorBundle.message("node.dependencies"));
-      setIcons(iconDependenciesClosed, iconDependenciesOpen);
-    }
-
-    boolean isVisible() {
-      return !children.isEmpty() && !isMinimalView();
-    }
-
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(children);
-    }
-
-    public void clear() {
-      children.clear();
-    }
-
-    public void add(DependencyNode node) {
-      insertSorted(children, node);
-    }
-  }
-
-  private class DependencyNode extends CustomNode {
-    public DependencyNode(CustomNode parent, Artifact artifact, boolean isResolved) {
-      super(parent);
-      String name = new MavenId(artifact).toString();
-      addColoredFragment(name, isResolved ? getPlainAttributes() : getErrorAttributes());
-      setUniformIcon(iconDependency);
-    }
-  }
-
   private class PluginsNode extends ListNode {
     final List<PluginNode> pluginNodes = new ArrayList<PluginNode>();
 
@@ -1093,41 +1028,6 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public PluginGoalNode(PluginNode parent, String goal) {
       super(parent, goal);
       setUniformIcon(iconPluginGoal);
-    }
-  }
-
-  public class ExtensionsNode extends ListNode {
-    final List<ExtensionNode> children = new ArrayList<ExtensionNode>();
-
-    public ExtensionsNode(final PomNode parent) {
-      super(parent);
-      addPlainText(NavigatorBundle.message("node.extensions"));
-      setIcons(iconExtensionsClosed, iconExtensionsOpen);
-    }
-
-    boolean isVisible() {
-      return !children.isEmpty() && !isMinimalView();
-    }
-
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(children);
-    }
-
-    public void clear() {
-      children.clear();
-    }
-
-    public void add(ExtensionNode node) {
-      insertSorted(children, node);
-    }
-  }
-
-  private class ExtensionNode extends CustomNode {
-    public ExtensionNode(CustomNode parent, Artifact artifact, boolean isResolved) {
-      super(parent);
-      String name = new MavenId(artifact).toString();
-      addColoredFragment(name, isResolved ? getPlainAttributes() : getErrorAttributes());
-      setUniformIcon(iconExtension);
     }
   }
 }

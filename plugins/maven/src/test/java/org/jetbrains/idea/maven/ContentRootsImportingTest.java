@@ -27,8 +27,8 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1");
 
-    assertModules("Invalid");
-    assertContentRoots("Invalid", getProjectPath());
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
   }
 
   public void testDoNotResetFoldersAfterResolveIfProjectIsInvalid() throws Exception {

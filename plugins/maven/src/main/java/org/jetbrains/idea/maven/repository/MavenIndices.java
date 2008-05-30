@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.*;
-import com.intellij.util.xml.DomFileElement;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -19,17 +18,17 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.dom.PomDescriptor;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
-import org.sonatype.nexus.index.ArtifactInfo;
-import org.sonatype.nexus.index.NexusIndexer;
-import org.sonatype.nexus.index.ArtifactScanningListener;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.sonatype.nexus.index.ArtifactContext;
-import org.sonatype.nexus.index.scan.ScanningResult;
+import org.sonatype.nexus.index.ArtifactInfo;
+import org.sonatype.nexus.index.ArtifactScanningListener;
+import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.context.UnsupportedExistingLuceneIndexException;
+import org.sonatype.nexus.index.scan.ScanningResult;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.*;
@@ -281,9 +280,9 @@ public class MavenIndices {
     Map<String, List<String>> versions = new HashMap<String, List<String>>();
 
     if (index.getKind() == MavenIndex.Kind.PROJECT) {
-      List<DomFileElement<MavenModel>> poms = PomDescriptor.collectProjectPoms(project);
-      for (DomFileElement<MavenModel> each : poms) {
-        MavenId id = PomDescriptor.describe(each);
+      List<MavenProjectModel.Node> projects = MavenProjectsManager.getInstance(project).getExistingProjects();
+      for (MavenProjectModel.Node each : projects) {
+        MavenId id = each.getMavenId();
 
         groupIds.add(id.groupId);
         getOrCreate(artifactIds, id.groupId).add(id.artifactId);

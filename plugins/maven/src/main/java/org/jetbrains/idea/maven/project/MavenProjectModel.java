@@ -6,18 +6,23 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.*;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.Tree;
+import org.jetbrains.idea.maven.embedder.CustomArtifact;
+import org.jetbrains.idea.maven.embedder.CustomWagonManager;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
@@ -60,6 +65,7 @@ public class MavenProjectModel {
         for (Artifact each : node.getDependencies()) {
           VirtualFile pomFile = myProjectIdToFileMapping.get(new ProjectId(each));
           if (pomFile != null) {
+            node.removeUnresolvedDependency(each);
             each.setFile(new File(pomFile.getPath()));
             each.setResolved(true);
           }
@@ -94,7 +100,8 @@ public class MavenProjectModel {
     }
   }
 
-  private void doAdd(final VirtualFile f, MavenProjectReader reader, Set<VirtualFile> updatedFiles, MavenProcess p) throws CanceledException {
+  private void doAdd(final VirtualFile f, MavenProjectReader reader, Set<VirtualFile> updatedFiles, MavenProcess p)
+      throws CanceledException {
     Node newProject = new Node(f, null);
 
     Node parent = visit(new NodeVisitor<Node>() {
@@ -115,10 +122,12 @@ public class MavenProjectModel {
     doUpdate(newProject, reader, true, updatedFiles, p);
   }
 
-  private void doUpdate(Node n, MavenProjectReader reader, boolean isNew, Set<VirtualFile> updatedFiles, MavenProcess p) throws CanceledException {
+  private void doUpdate(Node n, MavenProjectReader reader, boolean isNew, Set<VirtualFile> updatedFiles, MavenProcess p)
+      throws CanceledException {
     if (updatedFiles.contains(n.getFile())) return;
     p.checkCanceled();
     p.setText(ProjectBundle.message("maven.reading", n.getPath()));
+    p.setText2("");
 
     List<Node> oldModules = n.mySubProjects;
     List<Node> newModules = new ArrayList<Node>();
@@ -327,6 +336,8 @@ public class MavenProjectModel {
     private String myModuleName;
     private String myModulePath;
 
+    private Set<Artifact> myUnresolvedArtifacts;
+
     private Node(@NotNull VirtualFile pomFile, Module module) {
       myPomFile = pomFile;
       myModule = module;
@@ -454,6 +465,17 @@ public class MavenProjectModel {
     public void read(MavenProjectReader r, List<String> profiles) throws CanceledException {
       myProfiles = profiles;
       myMavenProjectHolder = r.readProject(myPomFile.getPath(), myProfiles);
+
+      try {
+        CustomWagonManager wagonManager = (CustomWagonManager)r.getEmbedder().getPlexusContainer().lookup(WagonManager.ROLE);
+        myUnresolvedArtifacts = wagonManager.getUnresolvedArtifacts();
+        wagonManager.resetUnresolvedArtifacts();
+      }
+      catch (ComponentLookupException e) {
+        myUnresolvedArtifacts = new HashSet<Artifact>();
+        MavenLog.LOG.info(e);
+      }
+
     }
 
     public void resolve(MavenProjectReader projectReader) throws CanceledException {
@@ -466,12 +488,27 @@ public class MavenProjectModel {
     }
 
     public List<String> getProblems() {
-      if (!isValid()) return Collections.singletonList("pom.xml is invalid");
-
       List<String> result = new ArrayList<String>();
+      if (!isValid()) {
+        result.add("Invalid Maven Model");
+      }
 
-      validate(getDependencies(), "dependency", result);
+      result.addAll(myMavenProjectHolder.getProblems());
+
+      Artifact parent = getMavenProject().getParentArtifact();
+      if (myUnresolvedArtifacts.contains(parent)) {
+        result.add("Parent '" + parent + "' not found");
+      }
+
+      for (Map.Entry<String, String> each : collectAbsoluteModulePaths(myProfiles).entrySet()) {
+        if (LocalFileSystem.getInstance().findFileByPath(each.getKey()) == null) {
+          result.add("Missing module: '" + each.getValue() + "'");
+        }
+      }
+
+      validate(getAllDependencies(), "dependency", result);
       validate(getExtensions(), "build extension", result);
+      //validate(getPluginArtifacts(), "plugin", result);
 
       return result;
     }
@@ -484,8 +521,14 @@ public class MavenProjectModel {
       }
     }
 
-    public boolean isResolved(Artifact each) {
-      return each.isResolved() && each.getFile().exists();
+    private boolean isResolved(Artifact each) {
+      if (!each.isResolved() || each.getFile() == null) return false;
+      if (myUnresolvedArtifacts.contains(each)) return false;
+      return !(each instanceof CustomArtifact && ((CustomArtifact)each).isStub());
+    }
+
+    public void removeUnresolvedDependency(Artifact a) {
+      myUnresolvedArtifacts.remove(a);
     }
 
     public List<Node> getSubProjects() {
@@ -509,20 +552,20 @@ public class MavenProjectModel {
     }
 
     public List<String> getModulePaths(Collection<String> profiles) {
-      return new ArrayList<String>(collectAbsoluteModulePaths(profiles));
+      return new ArrayList<String>(collectAbsoluteModulePaths(profiles).keySet());
     }
 
-    private Set<String> collectAbsoluteModulePaths(Collection<String> profiles) {
+    private Map<String, String> collectAbsoluteModulePaths(Collection<String> profiles) {
       String basePath = getDirectory() + File.separator;
-      Set<String> result = new LinkedHashSet<String>();
-      for (String relPath : collectRelativeModulePaths(profiles)) {
-        result.add(new Path(basePath + relPath).getPath());
+      Map<String, String> result = new LinkedHashMap<String, String>();
+      for (Map.Entry<String, String> each : collectRelativeModulePaths(profiles).entrySet()) {
+        result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
       }
       return result;
     }
 
-    private List<String> collectRelativeModulePaths(Collection<String> profiles) {
-      List<String> result = new ArrayList<String>();
+    private Map<String, String> collectRelativeModulePaths(Collection<String> profiles) {
+      LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
       Model model = getMavenProject().getModel();
       addModulesToList(model.getModules(), result);
       for (Profile profile : (List<Profile>)model.getProfiles()) {
@@ -533,17 +576,18 @@ public class MavenProjectModel {
       return result;
     }
 
-    private void addModulesToList(List moduleNames, List<String> result) {
+    private void addModulesToList(List moduleNames, LinkedHashMap<String, String> result) {
       for (String name : (List<String>)moduleNames) {
         if (name.trim().length() == 0) continue;
 
+        String originalName = name;
         // module name can be relative and contain either / of \\ separators
 
         name = FileUtil.toSystemIndependentName(name);
         if (!name.endsWith("/")) name += "/";
         name += Constants.POM_XML;
 
-        result.add(name);
+        result.put(name, originalName);
       }
     }
 
@@ -558,13 +602,28 @@ public class MavenProjectModel {
     }
 
     public List<Artifact> getDependencies() {
+      List<Artifact> result = new ArrayList<Artifact>();
+      for (Artifact each : getAllDependencies()) {
+        if (!isSupportedArtifact(each)) continue;
+        result.add(each);
+      }
+      return result;
+    }
+
+    public List<Artifact> getExportableDependencies() {
+      List<Artifact> result = new ArrayList<Artifact>();
+      for (Artifact each : getDependencies()) {
+        if (isExportableDependency(each)) result.add(each);
+      }
+      return result;
+    }
+
+    public List<Artifact> getAllDependencies() {
       if (!isValid()) return Collections.emptyList();
 
       Map<String, Artifact> projectIdToArtifact = new LinkedHashMap<String, Artifact>();
 
       for (Artifact artifact : (Collection<Artifact>)getMavenProject().getArtifacts()) {
-        if (!isSupportedArtifact(artifact)) continue;
-
         String projectId = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier();
 
         Artifact existing = projectIdToArtifact.get(projectId);
@@ -574,16 +633,6 @@ public class MavenProjectModel {
         }
       }
       return new ArrayList<Artifact>(projectIdToArtifact.values());
-    }
-
-    public List<Artifact> getExportableDependencies() {
-      List<Artifact> result = new ArrayList<Artifact>();
-
-      for (Artifact each : getDependencies()) {
-        if (isExportableDependency(each)) result.add(each);
-      }
-
-      return result;
     }
 
     private static boolean isSupportedArtifact(Artifact a) {
@@ -608,6 +657,16 @@ public class MavenProjectModel {
       List<MavenId> result = new ArrayList<MavenId>();
       for (Plugin plugin : getPlugins()) {
         result.add(new MavenId(plugin.getGroupId(), plugin.getArtifactId(), plugin.getVersion()));
+      }
+      return result;
+    }
+
+    public List<Artifact> getPluginArtifacts() {
+      if (!isValid()) return Collections.emptyList();
+
+      List<Artifact> result = new ArrayList<Artifact>();
+      for (Object each : getMavenProject().getPluginArtifacts()) {
+        result.add((Artifact)each);
       }
       return result;
     }

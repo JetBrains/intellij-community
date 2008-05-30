@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -34,8 +35,11 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
@@ -95,14 +99,36 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+
+    tree.addMouseMotionListener(new MouseMotionListener() {
+      public void mouseDragged(MouseEvent e) {
+      }
+
+      public void mouseMoved(MouseEvent e) {
+        TreePath p = tree.getPathForLocation(e.getX(), e.getY());
+        if (p != null) {
+          Object last = p.getLastPathComponent();
+          Object object = ((DefaultMutableTreeNode)last).getUserObject();
+          if (object instanceof PomNode) {
+            PomNode pomNode = (PomNode)object;
+            List<String> problems = pomNode.getProjectNode().getProblems();
+            if (problems.isEmpty()) {
+              tree.setToolTipText(null);
+            } else {
+              String s = StringUtil.join(problems, "<br>");
+              tree.setToolTipText("<html>" + s + "</html>");
+            }
+          }
+        }
+      }
+    });
+
     treeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
     treeBuilder.initRoot();
     Disposer.register(project, treeBuilder);
 
     myProjectsManager.addListener(new MavenProjectsManager.Listener() {
       public void activate() {
-        MavenProjectNavigator.LOG.assertTrue(fileToNode.isEmpty());
-
         for (MavenProjectModel.Node each : myProjectsManager.getExistingProjects()) {
           fileToNode.put(each.getFile(), new PomNode(each));
         }
@@ -134,6 +160,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
             root.addToStructure(newNode);
 
             updateFromRoot(true, true);
+            tree.repaint();
           }
         });
       }
@@ -148,6 +175,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
             else {
               projectAdded(n);
             }
+            tree.repaint();
           }
         });
       }
@@ -159,6 +187,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
             if (pomNode != null) {
               fileToNode.remove(n.getFile());
               pomNode.removeFromParent();
+              tree.repaint();
             }
           }
         });

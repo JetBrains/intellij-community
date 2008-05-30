@@ -17,46 +17,29 @@ import java.util.List;
 import java.util.Map;
 
 public class CustomArtifactResolver extends DefaultArtifactResolver implements Contextualizable {
+  public static final String MAVEN_PROJECTS_MAPPING_KEY = "MAVEN_PROJECTS_MAPPING";
+
   private Map<ProjectId, VirtualFile> myMapping;
   private Map<Artifact, Artifact> myAlreadyResolved = new HashMap<Artifact, Artifact>();
 
   public void contextualize(Context context) throws ContextException {
-    if (context.contains("MavenProjectsMapping")) {
-      myMapping = (Map<ProjectId, VirtualFile>)context.get("MavenProjectsMapping");
+    if (context.contains(MAVEN_PROJECTS_MAPPING_KEY)) {
+      myMapping = (Map<ProjectId, VirtualFile>)context.get(MAVEN_PROJECTS_MAPPING_KEY);
     }
   }
 
   @Override
   public void resolve(Artifact artifact, List remoteRepositories, ArtifactRepository localRepository)
       throws ArtifactResolutionException, ArtifactNotFoundException {
-    if (resolveFromCache(artifact)) return;
     if (resolveAsModule(artifact)) return;
-
     super.resolve(artifact, remoteRepositories, localRepository);
   }
 
   @Override
   public void resolveAlways(Artifact artifact, List remoteRepositories, ArtifactRepository localRepository)
       throws ArtifactResolutionException, ArtifactNotFoundException {
-    if (resolveFromCache(artifact)) return;
     if (resolveAsModule(artifact)) return;
-
     super.resolveAlways(artifact, remoteRepositories, localRepository);
-  }
-
-  private boolean resolveFromCache(Artifact artifact) {
-    Artifact resolved = myAlreadyResolved.get(artifact);
-    if (resolved == null) {
-      myAlreadyResolved.put(artifact, artifact);
-      return false;
-    }
-
-    artifact.setResolved(resolved.isResolved());
-    artifact.setFile(resolved.getFile());
-    artifact.setResolvedVersion(resolved.getVersion());
-    artifact.setRepository(resolved.getRepository());
-
-    return true;
   }
 
   private boolean resolveAsModule(Artifact a) {

@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom;
 import java.io.IOException;
 import java.util.List;
 
-public class PluginConfigurationCompletionTest extends MavenCompletionAndResolutionTestCase {
+public abstract class PluginConfigurationCompletionTest extends MavenCompletionAndResolutionTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();

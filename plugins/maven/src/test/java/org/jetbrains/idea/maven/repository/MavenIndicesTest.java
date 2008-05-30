@@ -13,7 +13,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.List;
 
-public class MavenIndicesTest extends MavenImportingTestCase {
+public abstract class MavenIndicesTest extends MavenImportingTestCase {
   private MavenWithDataTestFixture myDataTestFixture;
   private MavenIndices myIndices;
   private MavenEmbedder myEmbedder;

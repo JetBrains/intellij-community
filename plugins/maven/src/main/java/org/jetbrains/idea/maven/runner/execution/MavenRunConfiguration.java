@@ -139,7 +139,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     private MavenSettings(MavenCoreSettings cs, MavenRunnerSettings rs, MavenRunnerParameters rp) {
       myCoreSettings = cs.clone();
       myRunnerSettings = rs.clone();
-      myRunnerSettings.useExternalMaven();
+      myRunnerSettings.setUseMavenEmbedder(false);
       myRunnerParameters = rp.clone();
     }
 

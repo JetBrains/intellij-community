@@ -24,6 +24,7 @@ public class CustomArtifact implements Artifact {
   private static Map<String, File> ourCache = new HashMap<String, File>();
 
   private Artifact myWrapee;
+  private boolean isStub;
 
   public CustomArtifact(Artifact a) {
     myWrapee = a;
@@ -76,6 +77,8 @@ public class CustomArtifact implements Artifact {
     File f = myWrapee.getFile();
     if (f == null || f.exists()) return;
 
+    isStub = true;
+
     f = ourCache.get(getId());
     if (f != null) {
       myWrapee.setFile(f);
@@ -83,7 +86,8 @@ public class CustomArtifact implements Artifact {
     }
 
     try {
-      f = createTempFile(".pom");
+      f = FileUtil.createTempFile("idea.maven.stub", ".pom");
+      f.deleteOnExit();
 
       FileOutputStream s = new FileOutputStream(f);
       try {
@@ -108,14 +112,12 @@ public class CustomArtifact implements Artifact {
     }
   }
 
-  private File createTempFile(String suffix) throws IOException {
-    File f = FileUtil.createTempFile("idea.maven.fake", suffix);
-    f.deleteOnExit();
-    return f;
-  }
-
   public void setFile(File destination) {
     myWrapee.setFile(destination);
+  }
+
+  public boolean isStub() {
+    return isStub;
   }
 
   public String getBaseVersion() {

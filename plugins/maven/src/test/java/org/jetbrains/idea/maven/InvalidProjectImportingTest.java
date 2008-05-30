@@ -7,11 +7,11 @@ import java.util.List;
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
   public void testUnknownProblem() throws Exception {
     importProject("");
-    assertModules("Invalid");
+    assertModules("project");
 
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertFalse(root.isValid());
-    assertProblems(root, "pom.xml is invalid");
+    assertProblems(root, "Invalid Maven Model");
   }
 
   public void testUndefinedPropertyInHeader() throws Exception {
@@ -19,15 +19,13 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "<artifactId>${undefined}</artifactId>" +
                   "<version>1</version>");
 
-    assertModules("${undefined}");
+    assertModules("project");
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertFalse(root.isValid());
-    assertProblems(root, "pom.xml is invalid");
+    assertProblems(root, "Invalid Maven Model", "'artifactId' with value '${undefined}' does not match a valid id pattern.");
   }
 
   public void testUnresolvedParent() throws Exception {
-    if (ignore()) return;
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -43,12 +41,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertTrue(root.isValid());
 
-    assertProblems(root, "Unresolved parent: test:parent:1");
+    assertProblems(root, "Parent 'test:parent:pom:1' not found");
   }
 
   public void testNonExistentModules() throws Exception {
-    if (ignore()) return;
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -63,24 +59,28 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertTrue(root.isValid());
 
-    assertProblems(root, "Module 'foo' was not found");
+    assertProblems(root, "Missing module: 'foo'");
   }
 
   public void testInvalidProjectModel() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>jar</packaging>" + // invalid packaging
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>jar</packaging>" + // invalid packaging
 
-                  "<modules>" +
-                  "  <module>foo</module>" +
-                  "</modules>");
+                     "<modules>" +
+                     "  <module>foo</module>" +
+                     "</modules>");
 
-    assertModules("project");
+    createModulePom("foo", "<groupId>test</groupId>" +
+                           "<artifactId>foo</artifactId>" +
+                           "<version>1</version>");
+    importProject();
+    assertModules("project", "foo");
 
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertFalse(root.isValid());
-    assertProblems(root, "pom.xml is invalid");
+    assertProblems(root, "Invalid Maven Model", "Packaging 'jar' is invalid. Aggregator projects require 'pom' as packaging.");
   }
 
   public void testInvalidModuleModel() throws Exception {
@@ -98,19 +98,17 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                            "<version>1"); //  invalid tag
 
     importProject();
-    assertModules("project", "Invalid");
+    assertModules("project", "foo");
 
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertTrue(root.isValid());
     assertProblems(root);
 
     assertFalse(root.getSubProjects().get(0).isValid());
-    assertProblems(root.getSubProjects().get(0), "pom.xml is invalid");
+    assertProblems(root.getSubProjects().get(0), "Invalid Maven Model");
   }
 
-  public void testTwoInvalidModules() throws Exception {
-    if (ignore()) return;
-
+  public void testSeveratInvalidModulesAndWithSameName() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -119,6 +117,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>foo</module>" +
                      "  <module>bar</module>" +
+                     "  <module>bar/bar</module>" +
                      "</modules>");
 
     createModulePom("foo", "<groupId>test</groupId>" +
@@ -126,12 +125,15 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                            "<version>1"); //  invalid tag
 
     createModulePom("bar", "<groupId>test</groupId>" +
-                           "<artifactId>foo</artifactId>" +
+                           "<artifactId>bar</artifactId>" +
                            "<version>1"); //  invalid tag
 
-    importProject();
+    createModulePom("bar/bar", "<groupId>test</groupId>" +
+                               "<artifactId>bar-bar</artifactId>" +
+                               "<version>1"); //  invalid tag
 
-    assertModules("project", "Invalid (1)", "Invalid (2)");
+    importProject();
+    assertModules("project", "foo", "bar (1)", "bar (2)");
   }
 
   public void testInvalidProjectWithModules() throws Exception {
@@ -149,7 +151,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertModules("Invalid");
+    assertModules("project");
   }
 
   public void testNonPOMProjectWithModules() throws Exception {
@@ -198,7 +200,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>m1</module>" +
                      "  <module>m2</module>" +
-                     "  <module>m3</module>" +
                      "</modules>");
 
     createModulePom("m1", "<groupId>test</groupId>" +
@@ -230,20 +231,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                           "  </dependency>" +
                           "</dependencies>");
 
-    createModulePom("m3", "<groupId>test</groupId>" +
-                          "<artifactId>m3</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>junit</groupId>" +
-                          "    <artifactId>junit</artifactId>" +
-                          "    <version>4.0</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
     importProject();
-    resolveProject();// ensure junit is resolved
 
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertTrue(root.isValid());
@@ -256,13 +244,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(root.getSubProjects().get(1),
                    "Unresolved dependency: zzz:zzz:jar:3:compile");
-
-    assertProblems(root.getSubProjects().get(2));
   }
 
   public void testUnresolvedPomTypeDependency() throws Exception {
-    if (ignore()) return;
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -282,7 +266,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertTrue(root.isValid());
-    assertProblems(root, "Unresolved dependency: xxx:xxx:pom:4.0:compile");
+    assertProblems(root, "Unresolved dependency: xxx:yyy:pom:4.0:compile");
   }
 
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws Exception {
@@ -321,6 +305,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testCircularDependencies() throws Exception {
+    if (ignore()) return;
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -458,6 +444,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testUnresolvedPlugins() throws Exception {
+    if (ignore()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -475,11 +463,35 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel.Node root = getRootProjects().get(0);
     assertTrue(root.isValid());
 
+    assertProblems(root, "Unresolved plugin: xxx:yyy:maven-plugin:1:runtime");
+  }
+
+  public void testDoNotReportResolvedPlugins() throws Exception {
     if (ignore()) return;
-    assertProblems(root, "Unresolved plugin: xxx:yyy:jar:1");
+    
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <plugins>" +
+                  "   <plugin>" +
+                  "     <groupId>org.apache.maven.plugins</groupId>" +
+                  "     <artifactId>maven-compiler-plugin</artifactId>" +
+                  "     <version>1</version>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    MavenProjectModel.Node root = getRootProjects().get(0);
+    assertTrue(root.isValid());
+
+    assertProblems(root);
   }
 
   public void testUnresolvedPluginsAsExtensions() throws Exception {
+    if (ignore()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -498,8 +510,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project");
     assertTrue(getRootProjects().get(0).isValid());
 
-    //MavenProjectModel.Node root = getRootProjects().get(0);
-    //assertProblems(root, "Unresolved plugin: xxx:yyy:jar:1");
+    MavenProjectModel.Node root = getRootProjects().get(0);
+    assertProblems(root, "Unresolved plugin: xxx:yyy:maven-plugin:1:runtime");
   }
 
   private void assertProblems(MavenProjectModel.Node root, String... problems) {
