@@ -23,15 +23,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NotNull;
-
+import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltParameter;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
+import org.intellij.lang.xpath.xslt.psi.*;
 import org.intellij.lang.xpath.xslt.quickfix.AddWithParamFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -50,7 +46,7 @@ public class AddOptionalArgumentsIntention extends AddWithParamFix {
     }
 
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltSupport.isXsltFile(file)) return false;
+        if (!XsltConfig.getInstance().isEnabled() || !XsltSupport.isXsltFile(file)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);

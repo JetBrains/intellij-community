@@ -72,6 +72,23 @@
     <lang.syntaxHighlighterFactory key="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
+
+    <intentionAction>
+      <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
+      <category>XSLT</category>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.lang.xpath.xslt.intentions.ConvertIfToChooseIntention</className>
+      <category>XSLT</category>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.lang.xpath.xslt.intentions.ReplaceWithXslAttribute</className>
+      <category>XSLT</category>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.lang.xpath.xslt.intentions.InlineXslAttribute</className>
+      <category>XSLT</category>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">

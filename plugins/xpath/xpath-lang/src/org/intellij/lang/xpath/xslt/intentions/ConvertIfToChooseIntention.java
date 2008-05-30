@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.xslt.intentions;
 
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.XsltConfig;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
@@ -65,7 +66,7 @@ public class ConvertIfToChooseIntention implements IntentionAction {
     }
 
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltSupport.isXsltFile(file)) return false;
+        if (!XsltConfig.getInstance().isEnabled() || !XsltSupport.isXsltFile(file)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);

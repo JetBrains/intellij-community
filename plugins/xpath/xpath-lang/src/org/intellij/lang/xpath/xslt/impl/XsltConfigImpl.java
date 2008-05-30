@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectView.ProjectView;
@@ -39,21 +38,16 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.lang.xpath.XPathFileType;
+import org.intellij.lang.xpath.xslt.XsltConfig;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport;
+import org.intellij.lang.xpath.xslt.validation.XsltAnnotator;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention;
-import org.intellij.lang.xpath.xslt.intentions.ConvertIfToChooseIntention;
-import org.intellij.lang.xpath.xslt.intentions.InlineXslAttribute;
-import org.intellij.lang.xpath.xslt.intentions.ReplaceWithXslAttribute;
-import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport;
-import org.intellij.lang.xpath.xslt.validation.XsltAnnotator;
-import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,14 +111,8 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             LanguageDocumentation.INSTANCE.addExplicitExtension(xmlLang, provider);
             LanguageDocumentation.INSTANCE.addExplicitExtension(xpathLang, provider);
 
-            final IntentionManager intentionManager = IntentionManager.getInstance();
 //            intentionManager.addAction(new DeleteUnusedParameterFix());
 //            intentionManager.addAction(new DeleteUnusedVariableFix());
-
-            intentionManager.registerIntentionAndMetaData(new AddOptionalArgumentsIntention(), CATEGORY);
-            intentionManager.registerIntentionAndMetaData(new ConvertIfToChooseIntention(), CATEGORY);
-            intentionManager.registerIntentionAndMetaData(new ReplaceWithXslAttribute(), CATEGORY);
-            intentionManager.registerIntentionAndMetaData(new InlineXslAttribute(), CATEGORY);
 
             final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
             LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);

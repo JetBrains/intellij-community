@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.XsltConfig;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,7 +50,7 @@ public class InlineXslAttribute implements IntentionAction {
     }
 
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltSupport.isXsltFile(file)) return false;
+        if (!XsltConfig.getInstance().isEnabled() || !XsltSupport.isXsltFile(file)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement element = file.findElementAt(offset);
