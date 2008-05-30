@@ -33,11 +33,11 @@ public final class IntentionActionMetaData {
   private URL myDescription = null;
   private URL myDirURL = null;
 
-  private static final @NonNls String BEFORE_TEMPLATE_PREFIX = "before";
-  private static final @NonNls String AFTER_TEMPLATE_PREFIX = "after";
-  static final @NonNls String EXAMPLE_USAGE_URL_SUFFIX = ".template";
-  private static final @NonNls String DESCRIPTION_FILE_NAME = "description.html";
-  private static final @NonNls String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
+  @NonNls private static final String BEFORE_TEMPLATE_PREFIX = "before";
+  @NonNls private static final String AFTER_TEMPLATE_PREFIX = "after";
+  @NonNls static final String EXAMPLE_USAGE_URL_SUFFIX = ".template";
+  @NonNls private static final String DESCRIPTION_FILE_NAME = "description.html";
+  @NonNls private static final String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
 
   public IntentionActionMetaData(@NotNull String family,
                                  @Nullable ClassLoader loader,
@@ -135,7 +135,7 @@ public final class IntentionActionMetaData {
     if (myDirURL == null) { //plugin compatibility
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myFamily);
     }
-    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " + myFamily);
+    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " + myFamily+"; "+myDescriptionDirectoryName);
     return myDirURL;
   }
 

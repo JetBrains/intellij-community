@@ -30,7 +30,7 @@ public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
   private final List<URL> myURLs;
   @NonNls static final String CLASS_EXTENSION = ".class";
-  protected static boolean myDebugTime = false;
+  protected static final boolean myDebugTime = false;
   protected static final long NS_THRESHOLD = 10000000;
 
   public UrlClassLoader(ClassLoader parent) {

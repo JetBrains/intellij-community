@@ -37,7 +37,7 @@ class ClassPath {
   private final ClasspathCache myCache = new ClasspathCache();
 
   @NonNls private static final String FILE_PROTOCOL = "file";
-  private static boolean myDebugTime = false;
+  private static final boolean myDebugTime = false;
   private boolean myCanLockJars;
   private final boolean myCanUseCache;
   private static final long NS_THRESHOLD = 10000000L;
@@ -77,8 +77,7 @@ class ClassPath {
         i = 0;
       }
 
-      Loader loader;
-      for (; (loader = getLoader(i)) != null; i++) {
+      for (Loader loader; (loader = getLoader(i)) != null; i++) {
         Resource resource = loader.getResource(s, flag);
         if (resource != null) {
           return resource;
