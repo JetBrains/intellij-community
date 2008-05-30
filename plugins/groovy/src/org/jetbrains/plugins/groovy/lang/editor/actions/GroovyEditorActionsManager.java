@@ -15,23 +15,35 @@
 
 package org.jetbrains.plugins.groovy.lang.editor.actions;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.actionSystem.IdeActions;
-import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler;
-import org.jetbrains.plugins.grails.lang.gsp.editor.actions.GspTypedHandler;
+import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown.GroovyMoveStatementHandler;
 
 /**
  * @author ilyas
  */
 public class GroovyEditorActionsManager {
+  public static final String MOVE_STATEMENT_UP_ACTION = "MoveStatementUp";
+  public static final String MOVE_STATEMENT_DOWN_ACTION = "MoveStatementDown";
 
   public static void registerGroovyEditorActions() {
     EditorActionManager manager = EditorActionManager.getInstance();
     registerEnterActionHandler(manager);
     registerTypedActionHandler(manager);
+    registerMoveActionHandlers(manager);
+  }
+
+  private static void registerMoveActionHandlers(EditorActionManager manager) {
+    EditorActionHandler downHandler = new GroovyMoveStatementHandler(manager.getActionHandler(MOVE_STATEMENT_DOWN_ACTION), true);
+    manager.setActionHandler(MOVE_STATEMENT_DOWN_ACTION, downHandler);
+    assert (downHandler == manager.getActionHandler(MOVE_STATEMENT_DOWN_ACTION));
+
+    EditorActionHandler upHandler = new GroovyMoveStatementHandler(manager.getActionHandler(MOVE_STATEMENT_UP_ACTION), false);
+    manager.setActionHandler(MOVE_STATEMENT_UP_ACTION, upHandler);
+    assert (upHandler == manager.getActionHandler(MOVE_STATEMENT_UP_ACTION));
   }
 
   private static EditorActionHandler registerEnterActionHandler(EditorActionManager manager) {

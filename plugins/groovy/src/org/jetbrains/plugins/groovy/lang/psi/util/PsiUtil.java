@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -234,7 +236,7 @@ public class PsiUtil {
     } else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
       final GrArgumentList argList = (GrArgumentList) ((GrCall) parent).getArgumentList();
       if (argList == null) return PsiType.EMPTY_ARRAY;
-      
+
       List<PsiType> result = new ArrayList<PsiType>();
       if (argList.getNamedArguments().length > 0) {
         result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
@@ -401,15 +403,15 @@ public class PsiUtil {
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
     return methodName.startsWith("get") && methodName.length() > 3 ?
-           decapitalize(methodName.substring(3)) :
-           methodName;
+        decapitalize(methodName.substring(3)) :
+        methodName;
   }
 
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
     @NonNls String methodName = setterMethod.getName();
     return methodName.startsWith("set") && methodName.length() > 3 ?
-           decapitalize(methodName.substring(3)) :
-           methodName;
+        decapitalize(methodName.substring(3)) :
+        methodName;
   }
 
   private static String decapitalize(String s) {
@@ -447,7 +449,7 @@ public class PsiUtil {
   public static boolean isAccessible(PsiElement place, PsiMember member) {
 
     if (PsiTreeUtil.getParentOfType(place, GrDocComment.class) != null) return true;
-    
+
     if (place instanceof GrReferenceExpression && ((GrReferenceExpression) place).getQualifierExpression() == null) {
       if (member.getContainingClass() instanceof GroovyScriptClass) { //calling toplevel script members from the same script file
         return true;
@@ -460,7 +462,7 @@ public class PsiUtil {
     final TextRange textRange = element.getTextRange();
     try {
       CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
-        textRange.getStartOffset(), textRange.getEndOffset());
+          textRange.getStartOffset(), textRange.getEndOffset());
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
@@ -469,11 +471,13 @@ public class PsiUtil {
   public static boolean isInStaticContext(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
     if (refExpression.isQualified()) {
       GrExpression qualifer = refExpression.getQualifierExpression();
-      if (qualifer instanceof GrReferenceExpression) return ((GrReferenceExpression) qualifer).resolve() instanceof PsiClass;
+      if (qualifer instanceof GrReferenceExpression)
+        return ((GrReferenceExpression) qualifer).resolve() instanceof PsiClass;
     } else {
       PsiElement run = refExpression;
       while (run != null && run != targetClass) {
-        if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner) run).hasModifierProperty(PsiModifier.STATIC)) return true;
+        if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner) run).hasModifierProperty(PsiModifier.STATIC))
+          return true;
         run = run.getParent();
       }
     }
@@ -564,8 +568,9 @@ public class PsiUtil {
   }
 
   public static boolean mightBeLVlaue(GrExpression expr) {
-    if (expr instanceof GrParenthesizedExpression) return mightBeLVlaue(((GrParenthesizedExpression) expr).getOperand());
-    
+    if (expr instanceof GrParenthesizedExpression)
+      return mightBeLVlaue(((GrParenthesizedExpression) expr).getOperand());
+
     if (expr instanceof GrListOrMap) {
       GrListOrMap listOrMap = (GrListOrMap) expr;
       if (listOrMap.isMap()) return false;
@@ -595,5 +600,12 @@ public class PsiUtil {
     }
 
     return result.toArray(new PsiType[result.size()]);
+  }
+
+  public static boolean isNewLine(PsiElement element) {
+    if (element == null) return false;
+    ASTNode node = element.getNode();
+    if (node == null) return false;
+    return node.getElementType() == GroovyTokenTypes.mNLS;
   }
 }
