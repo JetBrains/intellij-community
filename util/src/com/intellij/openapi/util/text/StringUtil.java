@@ -871,7 +871,11 @@ public class StringUtil {
     return result;
   }
 
-  @NotNull public static <T> String join(@NotNull Collection<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
+  @NotNull public static <T> String join(@NotNull T[] items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
+    return join(Arrays.asList(items), f, separator);
+  }
+
+  @NotNull public static <T> String join(@NotNull Iterable<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
     for (T item : items) {
       String string = f.fun(item);
