@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,9 +31,41 @@ import java.util.regex.Pattern;
 public class IntentionManagerSettings implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
 
+  private class MetaDataKey {
+    @NotNull private String categoryNames;
+    @NotNull private String familyName;
+
+    private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
+      this.categoryNames = StringUtil.join(categoryNames, ":");
+      this.familyName = familyName;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final MetaDataKey that = (MetaDataKey)o;
+
+      if (!categoryNames.equals(that.categoryNames)) return false;
+      if (!familyName.equals(that.familyName)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result;
+      result = categoryNames.hashCode();
+      result = 31 * result + familyName.hashCode();
+      return result;
+    }
+  }
+  
+
   private final Set<String> myIgnoredActions = new LinkedHashSet<String>();
 
-  private final Map<String,IntentionActionMetaData> myMetaData = new LinkedHashMap<String, IntentionActionMetaData>();
+  private final Map<MetaDataKey, IntentionActionMetaData> myMetaData = new LinkedHashMap<MetaDataKey, IntentionActionMetaData>();
   private static final @NonNls String IGNORE_ACTION_TAG = "ignoreAction";
   private static final @NonNls String NAME_ATT = "name";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
@@ -102,8 +135,9 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   }
 
   private void registerMetaData(IntentionActionMetaData metaData) {
+    MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.myFamily);
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
-    if (!myMetaData.containsKey(metaData.myFamily)){
+    if (!myMetaData.containsKey(key)){
       try {
         processMetaData(metaData);
       }
@@ -111,7 +145,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
         LOG.error(e);
       }
     }
-    myMetaData.put(metaData.myFamily, metaData);
+    myMetaData.put(key, metaData);
   }
 
   private static void processMetaData(@NotNull final IntentionActionMetaData metaData) throws IOException {
