@@ -6,13 +6,18 @@
     <patternset id="resources.excluded">
       <exclude name="**/*.properties"/>
     </patternset>
+    <patternset id="classes.excluded">
+      <exclude name="*$py.class"/>
+    </patternset>
 
     <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
       <dir name="python">
         <dir name="lib">
           <jar name="python.jar">
             <module name="python"> <patternset refid="resources.excluded"/> </module>
-            <module name="python-py"/>
+            <module name="python-py">
+              <patternset refid="classes.excluded"/>
+            </module>
             <module name="python-plugin"/>
           </jar>
           <jar name="resources_en.jar">

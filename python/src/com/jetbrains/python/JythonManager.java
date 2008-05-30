@@ -2,11 +2,12 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
-import org.python.core.PyObject;
-import org.python.core.PySystemState;
+import org.python.core.*;
 import org.python.util.PythonInterpreter;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -26,8 +27,24 @@ public class JythonManager {
   public JythonManager() {
     @NonNls Properties postProperties = new Properties();
     postProperties.put("python.cachedir.skip", "true");
+    String pythonScriptPath = findPythonScriptPath();
+    postProperties.put("python.path", pythonScriptPath);
+    LOG.info("Loading Python scripts from " + pythonScriptPath);
     PySystemState.initialize(PySystemState.getBaseProperties(), postProperties, new String[] { "" });
     myInterpreter = new PythonInterpreter();
+  }
+
+  private String findPythonScriptPath() {
+    @NonNls String classRoot = PathUtil.getJarPathForClass(getClass());
+    if (classRoot.endsWith(".jar")) {
+      return classRoot;
+    }
+    // compiled classes
+    File f = new File(new File(classRoot).getParent(), "python-py");
+    if (f.exists()) {
+      return f.getPath();
+    }
+    throw new RuntimeException("Can't figure out Python script path: " + classRoot);
   }
 
   public void execScriptFromResource(@NonNls String resourcePath) {

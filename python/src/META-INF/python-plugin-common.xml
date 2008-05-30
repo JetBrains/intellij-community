@@ -13,9 +13,6 @@
     <component>
       <implementation-class>com.jetbrains.python.PyInspectionToolProvider</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.jetbrains.python.PyIntentionsRegistrar</implementation-class>
-    </component>
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -59,6 +56,13 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoImplementationRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoImplementationRendererProvider"/>
+
+    <intentionAction factoryClass="com.jetbrains.python.PyExtensionFactory"
+                     factoryArgument="intentions/PyDemorganIntention.py">
+      <className>PyDemorganIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>PyDemorganIntention</descriptionDirectoryName>
+    </intentionAction>
   </extensions>
 
   <extensionPoints>
