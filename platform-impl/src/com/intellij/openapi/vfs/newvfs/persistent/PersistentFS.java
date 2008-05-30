@@ -590,7 +590,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final TIntObjectHashMap<VirtualFile> myIdToDirCache = new TIntObjectHashMap<VirtualFile>();
 
-  private void clearIdCache() {
+  public void clearIdCache() {
     synchronized (myIdToDirCache) {
       myIdToDirCache.clear();
     }

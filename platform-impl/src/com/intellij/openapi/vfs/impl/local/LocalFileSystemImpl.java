@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.JBLock;
@@ -129,7 +130,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         refresh(false);
       }
     });
-
+    ((PersistentFS)ManagingFS.getInstance()).clearIdCache();
+    
     final VirtualFile[] roots = ManagingFS.getInstance().getRoots(this);
     for (VirtualFile root : roots) {
       if (root instanceof VirtualDirectoryImpl) {
