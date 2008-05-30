@@ -62,7 +62,8 @@ public class IntentionManagerImpl extends IntentionManager {
       }
       else {
         if (descriptionDirectoryName != null) {
-          registerIntentionAndMetaData(instance, categories, descriptionDirectoryName);
+          addAction(instance);
+          mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
         }
         else {
           registerIntentionAndMetaData(instance, categories);
@@ -87,14 +88,6 @@ public class IntentionManagerImpl extends IntentionManager {
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull @NonNls String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
-  }
-
-  public void registerIntentionAndMetaData(final IntentionAction action,
-                                           final String[] category,
-                                           final String descriptionDirectoryName,
-                                           final Class metaDataResourcesClass) {
-    addAction(action);
-    mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName, metaDataResourcesClass.getClassLoader());
   }
 
   public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {

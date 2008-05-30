@@ -57,4 +57,8 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
   public IntentionAction instantiate() throws ClassNotFoundException {
     return (IntentionAction)instantiateExtension(className, ApplicationManager.getApplication().getPicoContainer());
   }
+
+  public ClassLoader getMetadataClassLoader() {
+    return myPluginDescriptor.getPluginClassLoader();
+  }
 }
