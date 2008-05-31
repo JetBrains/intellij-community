@@ -35,7 +35,6 @@ public class GenerateEqualsHelper implements Runnable {
   @NonNls private static final String RESULT_VARIABLE = "result";
   @NonNls private static final String TEMP_VARIABLE = "temp";
 
-  private final PsiClass myJavaLangObject;
   private String myClassInstanceName;
 
   @NonNls private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<String, MessageFormat>();
@@ -45,15 +44,12 @@ public class GenerateEqualsHelper implements Runnable {
   private final Project myProject;
   private boolean myCheckParameterWithInstanceof;
 
-  public static class NoObjectClassException extends Exception {
-  }
-
   public GenerateEqualsHelper(Project project,
                               PsiClass aClass,
                               PsiField[] equalsFields,
                               PsiField[] hashCodeFields,
                               PsiField[] nonNullFields,
-                              boolean useInstanceofToCheckParameterType) throws NoObjectClassException {
+                              boolean useInstanceofToCheckParameterType) {
     myClass = aClass;
     myEqualsFields = equalsFields;
     myHashCodeFields = hashCodeFields;
@@ -65,11 +61,6 @@ public class GenerateEqualsHelper implements Runnable {
     final PsiManager manager = PsiManager.getInstance(project);
 
     myFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    myJavaLangObject =
-      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, aClass.getResolveScope());
-    if (myJavaLangObject == null) {
-      throw new NoObjectClassException();
-    }
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
     myCodeStyleManager = CodeStyleManager.getInstance(manager.getProject());
@@ -152,7 +143,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   private PsiMethod createEquals() throws IncorrectOperationException {
     JavaCodeStyleManager codeStyleManager = myJavaCodeStyleManager;
-    final PsiType objectType = myFactory.createType(myJavaLangObject);
+    final PsiType objectType = PsiType.getJavaLangObject(myClass.getManager(), myClass.getResolveScope());
     String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
     final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : BASE_OBJECT_PARAMETER_NAME;
     myParameterName = getUniqueLocalVarName(objectBaseName, myEqualsFields);

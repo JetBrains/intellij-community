@@ -87,23 +87,12 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
 
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
-    try {
-      Project project = aClass.getProject();
-      final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
+    Project project = aClass.getProject();
+    final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
 
-      GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields,
-                                                             useInstanceofToCheckParameterType);
-      return OverrideImplementUtil.convert2GenerationInfos(helper.generateMembers());
-    }
-    catch (GenerateEqualsHelper.NoObjectClassException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(CodeInsightBundle.message("generate.equals.and.hashcode.error.no.object.class.message"),
-                                     CodeInsightBundle.message("generate.equals.and.hashcode.error.no.object.class.title"));
-          }
-        });
-      return Collections.emptyList();
-    }
+    GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields,
+                                                           useInstanceofToCheckParameterType);
+    return OverrideImplementUtil.convert2GenerationInfos(helper.generateMembers());
   }
 
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
