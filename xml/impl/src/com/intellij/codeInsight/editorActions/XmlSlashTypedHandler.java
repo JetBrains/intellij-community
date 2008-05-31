@@ -20,7 +20,7 @@ import com.intellij.xml.util.XmlUtil;
 
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
-    if (editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage && c == '/') {
+    if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -53,7 +53,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   }
 
   public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile) {
-    if (editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage && c == '/') {
+    if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

@@ -30,7 +30,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      FileViewProvider provider = file.getViewProvider();
+      FileViewProvider provider = editedFile.getViewProvider();
       int offset = editor.getCaretModel().getOffset();
 
       PsiElement element;
@@ -127,7 +127,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
 
       int tagOffset = tag.getTextRange().getStartOffset();
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
-      if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true,true)) return Result.CONTINUE;
+      if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), editedFile.getFileType(), iterator, true,true)) return Result.CONTINUE;
 
       boolean insertedCData = false;
 
