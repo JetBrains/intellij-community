@@ -1265,7 +1265,8 @@ public class CompileDriver {
 
     for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
       final String outputPath = it.next();
-      final String sourceUrl = cache.getSourceUrl(outputPath);
+      final SourceUrlClassNamePair srcUrlNamePair = cache.getUrlClassNamePair(outputPath);
+      final String sourceUrl = srcUrlNamePair != null? srcUrlNamePair.getSourceUrl() : null;
       if (!scope.belongs(sourceUrl)) {
         continue;
       }
@@ -1286,16 +1287,11 @@ public class CompileDriver {
           else {
             final String currentOutputDir = getModuleOutputDirForFile(context, sourceFile);
             if (currentOutputDir != null) {
-              final String className = cache.getClassName(outputPath);
+              final String className = srcUrlNamePair != null? srcUrlNamePair.getClassName() : null;
               //noinspection HardCodedStringLiteral
               if (className == null || isUnderOutputDir(currentOutputDir, outputPath, className)) {
-                if (!compiler.isCompilableFile(sourceFile, context)) {
-                  // the file was compilable but at the moment it is not, so the result of previous compilation should be deleted
-                  shouldDelete = true;
-                }
-                else {
-                  shouldDelete = false;
-                }
+                // the file was compilable but at the moment it is not, so the result of previous compilation should be deleted
+                shouldDelete = !compiler.isCompilableFile(sourceFile, context);
               }
               else {
                 // output for this source has been changed or the output dir was changed, need to recompile to the new output dir

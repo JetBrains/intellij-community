@@ -1,6 +1,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -12,9 +13,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 public abstract class StateCache<T> {
   private PersistentHashMap<String, T> myMap;
+  private Map<String, T> myMemCache = new SoftHashMap<String, T>();
   private final File myBaseFile;
 
   public StateCache(@NonNls File storePath) throws IOException {
@@ -31,11 +34,13 @@ public abstract class StateCache<T> {
   }
   
   public void close() throws IOException {
+    myMemCache.clear();
     myMap.close();
   }
   
   public boolean wipe() {
     try {
+      myMemCache.clear();
       myMap.close();
     }
     catch (IOException ignored) {
@@ -57,6 +62,7 @@ public abstract class StateCache<T> {
 
   public void update(@NonNls String url, T state) throws IOException {
     if (state != null) {
+      myMemCache.put(url, state);
       myMap.put(url, state);
     }
     else {
@@ -65,11 +71,23 @@ public abstract class StateCache<T> {
   }
 
   public void remove(String url) throws IOException {
+    myMemCache.remove(url);
     myMap.remove(url);
   }
 
   public T getState(String url) throws IOException {
-    return myMap.get(url);
+    T state = myMemCache.get(url);
+    if (state != null) {
+      return state;
+    }
+    try {
+      return state = myMap.get(url);
+    }
+    finally {
+      if (state != null) {
+        myMemCache.put(url, state);
+      }
+    }
   }
 
   public Collection<String> getUrls() throws IOException {
