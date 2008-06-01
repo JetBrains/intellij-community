@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,13 +36,14 @@ public class LoggerInitializedWithForeignClassInspection
 
     @NotNull
     public String getDisplayName() {
-        return "Logger initialized with foreign class";
-        //return InspectionGadgetsBundle.message("multiple.loggers.display.name");
+        return InspectionGadgetsBundle.message(
+                "logger.initialized.with.foreign.class.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "Logger initializer with foreign class <code>#ref</code>";
+        return InspectionGadgetsBundle.message(
+                "logger.initialized.with.foreign.class.problem.descriptor");
     }
 
     @Nullable
@@ -60,7 +62,9 @@ public class LoggerInitializedWithForeignClassInspection
 
         @NotNull
         public String getName() {
-            return "replace with'" + newClassName + ".class'";
+            return InspectionGadgetsBundle.message(
+                    "logger.initialized.with.foreign.class.quickfix",
+                    newClassName);
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
