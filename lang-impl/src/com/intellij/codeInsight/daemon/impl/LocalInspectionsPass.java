@@ -376,15 +376,21 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private static void registerQuickFixes(final LocalInspectionTool tool, final ProblemDescriptor descriptor,
                                          final HighlightInfo highlightInfo, final Set<TextRange> emptyActionRegistered) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+    boolean needEmptyAction = true;
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
       for (int k = 0; k < fixes.length; k++) {
         if (fixes[k] != null) { // prevent null fixes from var args
           QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixWrapper.wrap(descriptor, k), key);
+          needEmptyAction = false;
         }
       }
     }
-    else if (emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
+    HintAction hintAction = ((ProblemDescriptorImpl)descriptor).getHintAction();
+    if (hintAction != null) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, hintAction, key);
+    }
+    if (needEmptyAction && emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
       EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());
       QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, key);
     }
