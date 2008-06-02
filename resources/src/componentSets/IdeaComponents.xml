@@ -22,11 +22,6 @@
       <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
     </component>
   </project-components>
-  <module-components>
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ModuleServiceManagerImpl</implementation-class>
-    </component>
-  </module-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/LocalHistory.xml" xpointer="xpointer(/components/*)"/>
