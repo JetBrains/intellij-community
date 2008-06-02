@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<PsiReferenceList> {
-  public static final StubIndexKey<String, PsiReferenceList> KEY = new StubIndexKey<String, PsiReferenceList>("java.class.extlist");
+  public static final StubIndexKey<String, PsiReferenceList> KEY = new StubIndexKey<String, PsiReferenceList>("java.class.extlist", 998976543232165487L);
 
   private static final JavaSuperClassNameOccurenceIndex ourInstance = new JavaSuperClassNameOccurenceIndex();
   public static JavaSuperClassNameOccurenceIndex getInstance() {

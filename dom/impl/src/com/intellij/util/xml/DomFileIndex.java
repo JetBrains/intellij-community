@@ -26,7 +26,7 @@ import java.util.*;
  * @author peter
  */
 public class DomFileIndex extends ScalarIndexExtension<String>{
-  public static final ID<String,Void> NAME = ID.create("DomFileIndex");
+  public static final ID<String,Void> NAME = ID.create("DomFileIndex", 1231231231234446665L);
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileType() == StdFileTypes.XML;

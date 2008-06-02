@@ -16,7 +16,7 @@ import java.util.*;
  * @author yole
  */
 public class FilenameIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final ID<String, Void> NAME = new ID<String, Void>("FilenameIndex");
+  @NonNls public static final ID<String, Void> NAME = new ID<String, Void>("FilenameIndex", 4654873219872565121L);
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();

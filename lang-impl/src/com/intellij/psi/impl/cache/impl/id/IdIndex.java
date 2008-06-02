@@ -23,7 +23,7 @@ import java.util.Map;
  *         Date: Jan 16, 2008
  */
 public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
-  @NonNls public static final ID<IdIndexEntry, Integer> NAME = new ID<IdIndexEntry, Integer>("IdIndex");
+  @NonNls public static final ID<IdIndexEntry, Integer> NAME = new ID<IdIndexEntry, Integer>("IdIndex", 3365659889798415685L);
   
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     private final FileTypeManager myFtManager = FileTypeManager.getInstance();

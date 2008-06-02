@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> {
-  public static final StubIndexKey<String,PsiClass> KEY = new StubIndexKey<String, PsiClass>("java.class.shortname");
+  public static final StubIndexKey<String,PsiClass> KEY = new StubIndexKey<String, PsiClass>("java.class.shortname", 989999657765160321L);
 
   private static final JavaShortClassNameIndex ourInstance = new JavaShortClassNameIndex();
   public static JavaShortClassNameIndex getInstance() {

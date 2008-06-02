@@ -558,7 +558,7 @@ public class FileBasedIndex implements ApplicationComponent {
       indicesToDrop.remove(key.toString());
     }
     for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(new ID(s)));
+      FileUtil.delete(IndexInfrastructure.getIndexRootDir(new ID(s, -1L)));
     }
   }
 
@@ -607,6 +607,8 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
     }
+
+    IndexingStamp.flushCache();
   }
 
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
@@ -714,6 +716,8 @@ public class FileBasedIndex implements ApplicationComponent {
               }
             }
           }
+
+          IndexingStamp.flushCache();
           return true;
         }
       });
@@ -748,7 +752,9 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
-        
+
+        IndexingStamp.flushCache();
+
         if (affectedIndices.size() > 0) {
           if (saveContent) {
             myFileContentAttic.offer(file);
@@ -776,6 +782,7 @@ public class FileBasedIndex implements ApplicationComponent {
                     requestRebuild(indexId);
                   }
                 }
+                IndexingStamp.flushCache();
               }
             });
             myFutureInvalidations.offer(future);
@@ -911,6 +918,7 @@ public class FileBasedIndex implements ApplicationComponent {
               }
             }
           }
+          IndexingStamp.flushCache();
         }
       }
       else {

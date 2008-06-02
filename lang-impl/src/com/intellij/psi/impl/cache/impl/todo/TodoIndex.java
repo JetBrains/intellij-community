@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Integer> {
 
-  @NonNls public static final ID<TodoIndexEntry, Integer> NAME = new ID<TodoIndexEntry, Integer>("TodoIndex");
+  @NonNls public static final ID<TodoIndexEntry, Integer> NAME = new ID<TodoIndexEntry, Integer>("TodoIndex", 4568899884462144567L);
 
   public TodoIndex(TodoConfiguration config) {
     config.addPropertyChangeListener(new PropertyChangeListener() {

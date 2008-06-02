@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
-  public static final StubIndexKey<String,PsiMethod> KEY = new StubIndexKey<String, PsiMethod>("java.method.name");
+  public static final StubIndexKey<String,PsiMethod> KEY = new StubIndexKey<String, PsiMethod>("java.method.name", 998965146213249872L);
 
   private static final JavaMethodNameIndex ourInstance = new JavaMethodNameIndex();
   public static JavaMethodNameIndex getInstance() {

@@ -28,7 +28,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
     FileBasedIndex.getInstance().requestRebuild(NAME);
   }
 
-  private static final ID<String,Void> NAME = ID.create("XmlTagNames");
+  private static final ID<String,Void> NAME = ID.create("XmlTagNames", 8798794651321657789L);
 
   public ID<String, Void> getName() {
     return NAME;

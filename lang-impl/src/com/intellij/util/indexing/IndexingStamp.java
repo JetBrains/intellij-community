@@ -1,80 +1,116 @@
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.TObjectLongHashMap;
+import gnu.trove.TObjectLongProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 25, 2007
  */
 public class IndexingStamp {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerDirectoryTimestamp");
-  
-  private static final Map<ID<?, ?>, FileAttribute> ourAttributes = new HashMap<ID<?, ?>, FileAttribute>();
-
   private IndexingStamp() {
   }
 
-  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
-    try {
-      if (!(file instanceof NewVirtualFile)) return false;
-      if (!file.isValid()) {
-        return false;
+  private static class Timestamps {
+    private static FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 1);
+    private final TObjectLongHashMap<ID<?, ?>> myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(20);
+
+    public void readFromStream(DataInputStream stream) throws IOException {
+      int count = DataInputOutputUtil.readINT(stream);
+      for (int i = 0; i < count; i++) {
+        ID<?, ?> id = ID.findById(stream.readLong());
+        long timestamp = stream.readLong();
+        myIndexStamps.put(id, timestamp);
       }
-      final DataInputStream stream = getAttribute(indexName).readAttribute(file);
-      if (stream == null) {
-        return false;
-      }
+    }
+
+    public void writeToStream(final DataOutputStream stream) throws IOException {
+      DataInputOutputUtil.writeINT(stream, myIndexStamps.size());
+      myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
+        public boolean execute(final ID<?, ?> id, final long timestamp) {
+          try {
+            stream.writeLong(id.getUniqueId());
+            stream.writeLong(timestamp);
+            return true;
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+    }
+
+    public long get(ID<?, ?> id) {
+      return myIndexStamps.get(id);
+    }
+
+    public void set(ID<?, ?> id, long tmst) {
+      myIndexStamps.put(id, tmst);
+    }
+  }
+
+  private static final SLRUCache<VirtualFile, Timestamps> myTimestampsCache = new SLRUCache<VirtualFile, Timestamps>(5, 5) {
+    @NotNull
+    public Timestamps createValue(final VirtualFile key) {
       try {
-        return stream.readLong() == indexCreationStamp;
+        Timestamps result = new Timestamps();
+        final DataInputStream stream = Timestamps.PERSISTENCE.readAttribute(key);
+        if (stream != null) {
+          result.readFromStream(stream);
+        }
+        return result;
       }
-      finally {
-        stream.close();
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
-    catch (IOException e) {
-      LOG.info(e);
-      return false;
+
+    @Override
+    protected void onDropFromCache(final VirtualFile key, final Timestamps value) {
+      try {
+        final DataOutputStream sink = Timestamps.PERSISTENCE.writeAttribute(key);
+        value.writeToStream(sink);
+        sink.close();
+      }
+      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
+  };
+
+  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
+    if (file instanceof NewVirtualFile && file.isValid()) {
+      return myTimestampsCache.get(file).get(indexName) == indexCreationStamp;
+    }
+
+    return false;
   }
 
   public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
     try {
       if (file instanceof NewVirtualFile && file.isValid()) {
-        final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
-        try {
-          stream.writeLong(indexCreationStamp);
-        }
-        finally {
-          stream.close();
-        }
+        myTimestampsCache.get(file).set(indexName, indexCreationStamp);
       }
     }
     catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
     }
-    catch (IOException e) {
-      LOG.info(e);
-    }
   }
 
-  @NotNull
-  private static FileAttribute getAttribute(ID<?, ?> indexName) {
-    FileAttribute attrib = ourAttributes.get(indexName);
-    if (attrib == null) {
-      attrib = new FileAttribute("_indexing_stamp_" + indexName, 2);
-      ourAttributes.put(indexName, attrib);
-    }
-    return attrib;
+  public static void flushCache() {
+    myTimestampsCache.clear();
   }
-  
+
 }

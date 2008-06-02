@@ -34,7 +34,7 @@ public class XmlNamespaceIndex extends XmlIndex<String>{
     FileBasedIndex.getInstance().requestRebuild(NAME);
   }
 
-  private static final ID<String,String> NAME = ID.create("XmlNamespaces");
+  private static final ID<String,String> NAME = ID.create("XmlNamespaces", 995265654213547799L);
 
   public ID<String, String> getName() {
     return NAME;

@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
-  public static final StubIndexKey<String,PsiField> KEY = new StubIndexKey<String, PsiField>("java.field.name");
+  public static final StubIndexKey<String,PsiField> KEY = new StubIndexKey<String, PsiField>("java.field.name", 663536689989794188L);
 
   private static final JavaFieldNameIndex ourInstance = new JavaFieldNameIndex();
   public static JavaFieldNameIndex getInstance() {
