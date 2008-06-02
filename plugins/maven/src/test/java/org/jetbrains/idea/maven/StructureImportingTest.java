@@ -280,7 +280,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
   }
 
-  public void testParentInRepository() throws Exception {
+  public void testParentInLocalRepository() throws Exception {
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
                                          "<artifactId>parent</artifactId>" +
@@ -298,7 +298,6 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>m</artifactId>" +
-                     "<packaging>pom</packaging>" +
                      "<version>1</version>" +
 
                      "<parent>" +
@@ -310,6 +309,21 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("m");
     assertModuleLibDeps("m", "junit:junit:4.0");
+  }
+
+  public void testParentInRemoteRepository() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>junit</groupId>" +
+                     "  <artifactId>junit</artifactId>" +
+                     "  <version>4.0</version>" +
+                     "</parent>");
+
+    importProject();
+    assertModules("project");
   }
 
   public void testCreatingModuleGroups() throws Exception {
@@ -516,8 +530,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
                      "<modules>" +
                      "  <module>m</module>" +
-                     "</modules>"
-    );
+                     "</modules>");
 
     createModulePom("m", "<groupId>test</groupId>" +
                          "<artifactId>m</artifactId>" +

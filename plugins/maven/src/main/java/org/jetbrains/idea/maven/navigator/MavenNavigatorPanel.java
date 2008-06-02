@@ -31,7 +31,6 @@ import java.util.List;
 public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private final Project myProject;
-  private final MavenProjectsManager myProjectsManager;
   private final SimpleTree myTree;
 
   private Map<String, Integer> standardGoalOrder;
@@ -44,7 +43,6 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   public MavenNavigatorPanel(Project project, MavenProjectsManager projectsManager, SimpleTree tree) {
     myProject = project;
-    myProjectsManager = projectsManager;
     myTree = tree;
 
     setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));

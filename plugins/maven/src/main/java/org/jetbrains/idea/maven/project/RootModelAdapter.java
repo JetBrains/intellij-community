@@ -54,18 +54,6 @@ public class RootModelAdapter {
     getCompilerExtension().setExcludeOutput(true);
   }
 
-  public void commit() {
-    if (myLibraryTable != null && myLibraryTable.isChanged()) {
-      myLibraryTable.commit();
-    }
-    if (myRootModel.isChanged()) {
-      myRootModel.commit();
-    }
-    else {
-      myRootModel.dispose();
-    }
-  }
-
   public ModifiableRootModel getRootModel() {
     return myRootModel;
   }

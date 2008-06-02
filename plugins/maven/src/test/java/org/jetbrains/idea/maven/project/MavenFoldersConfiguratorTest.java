@@ -1,10 +1,14 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.ProjectTopics;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 
-public class FoldersConfiguratorTest extends MavenImportingTestCase {
+public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
   @Override
   protected boolean shouldResolve() {
     return true;
@@ -58,7 +62,7 @@ public class FoldersConfiguratorTest extends MavenImportingTestCase {
     assertExcludes("m1", "target/foo");
     assertExcludes("m2", "target/bar");
   }
-  
+
   public void testDoesNotTouchSourceFolders() throws Exception {
     createStdProjectFolders();
     importProject("<groupId>test</groupId>" +
@@ -123,7 +127,7 @@ public class FoldersConfiguratorTest extends MavenImportingTestCase {
 
     assertExcludes("project", "target/foo");
   }
-  
+
   public void testDoesNothingWithNonMavenModules() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -131,6 +135,68 @@ public class FoldersConfiguratorTest extends MavenImportingTestCase {
 
     createModule("userModule");
     updateFolders(); // shouldn't throw exceptions
+  }
+
+  public void testDoNotCommitIfFoldersWasNotChanged() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    final int[] count = new int[] {0};
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(ModuleRootEvent event) {
+        count[0]++;
+      }
+    });
+
+    updateFolders();
+
+    assertEquals(0, count[0]);
+  }
+  
+  public void testCommitOnlyOnceForAllModules() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    VirtualFile m1 = createModulePom("m1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>");
+
+    VirtualFile m2 = createModulePom("m2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>");
+
+    importProject();
+
+    final int[] count = new int[] {0};
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(ModuleRootEvent event) {
+        count[0]++;
+      }
+    });
+
+    new File(myProjectRoot.getPath(), "target/foo").mkdirs();
+    new File(m1.getPath(), "target/bar").mkdirs();
+    new File(m2.getPath(), "target/baz").mkdirs();
+
+    updateFolders();
+
+    assertEquals(1, count[0]);
   }
 
   private void updateFolders() throws MavenException {

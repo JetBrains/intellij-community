@@ -7,7 +7,6 @@ import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
 import org.apache.maven.extension.ExtensionManager;
-import org.apache.maven.project.build.model.ModelLineageBuilder;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
@@ -284,6 +283,8 @@ public class MavenEmbedderFactory {
 
       if (myModelManager != null) {
         c.getContext().put(CustomArtifactResolver.MAVEN_PROJECT_MODEL_MANAGER, myModelManager);
+        c.getContext().put(CustomArtifactResolver.IS_ONLINE, isOnline);
+        
         d = c.getComponentDescriptor(ArtifactResolver.ROLE);
         d.setImplementation(CustomArtifactResolver.class.getName());
       }
@@ -292,9 +293,6 @@ public class MavenEmbedderFactory {
 
       d = c.getComponentDescriptor(WagonManager.ROLE);
       d.setImplementation(CustomWagonManager.class.getName());
-
-      d = c.getComponentDescriptor(ModelLineageBuilder.ROLE);
-      d.setImplementation(CustomLineageBuilder.class.getName());
 
       d = c.getComponentDescriptor(ExtensionManager.class.getName());
       d.setImplementation(CustomExtensionManager.class.getName());

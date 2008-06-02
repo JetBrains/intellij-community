@@ -5,11 +5,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectRootManager;
 import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
+import java.util.List;
+import java.util.ArrayList;
 
 public class MavenFoldersConfigurator {
   private MavenProjectModel myMavenProject;
@@ -17,25 +21,32 @@ public class MavenFoldersConfigurator {
   private RootModelAdapter myModel;
 
   public static void updateProjectExcludedFolders(final Project p) throws MavenException {
+    final MavenProjectsManager manager = MavenProjectsManager.getInstance(p);
+    final MavenImporterSettings settings = manager.getImporterSettings();
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
         for (Module m : ModuleManager.getInstance(p).getModules()) {
-          updateModuleExcludedFolders(m);
+          MavenProjectModel project = manager.findProject(m);
+          if (project == null) return;
+
+          RootModelAdapter a = new RootModelAdapter(m);
+          new MavenFoldersConfigurator(project, settings, a).configFoldersUnderTargetDir();
+          ModifiableRootModel model = a.getRootModel();
+          if (model.isChanged()) {
+            rootModels.add(model);
+          }
+          else {
+            model.dispose();
+          }
+        }
+        if (!rootModels.isEmpty()) {
+          ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+          ProjectRootManager.getInstance(p).multiCommit(modelsArray);
         }
       }
     });
-  }
-
-  private static void updateModuleExcludedFolders(Module m) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(m.getProject());
-    MavenImporterSettings settings = manager.getImporterSettings();
-
-    MavenProjectModel project = manager.findProject(m);
-    if (project == null) return;
-
-    RootModelAdapter a = new RootModelAdapter(m);
-    new MavenFoldersConfigurator(project, settings, a).configFoldersUnderTargetDir();
-    a.commit();
   }
 
   public MavenFoldersConfigurator(MavenProjectModel mavenProject, MavenImporterSettings settings, RootModelAdapter model) {
