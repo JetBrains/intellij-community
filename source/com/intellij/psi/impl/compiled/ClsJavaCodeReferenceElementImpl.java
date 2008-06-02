@@ -21,14 +21,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
-  static final ClsJavaCodeReferenceElementImpl[] EMPTY_ARRAY = new ClsJavaCodeReferenceElementImpl[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl");
 
-  private PsiElement myParent;
+  private final PsiElement myParent;
   private final String myCanonicalText;
   private final String myQualifiedName;
   private final ClsTypeElementImpl[] myTypeParameters;  // in right-to-left order
-  private PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
+  private volatile PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
   @NonNls private static final String EXTENDS_PREFIX = "?extends";
   @NonNls private static final String SUPER_PREFIX = "?super";
 
@@ -58,10 +57,6 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
 
     myQualifiedName = PsiNameHelper.getQualifiedClassName(myCanonicalText, false);
-  }
-
-  void setParent(PsiElement parent) {
-    myParent = parent;
   }
 
   @NotNull
@@ -226,6 +221,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
   }
 
+  @NonNls
   public String toString() {
     return "PsiJavaCodeReferenceElement:" + getText();
   }
@@ -238,21 +234,17 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return this;
   }
 
-  ClsTypeElementImpl[] getTypeElements() {
-    return myTypeParameters;
-  }
-
   @NotNull
   public PsiType[] getTypeParameters() {
-    if (myTypeParametersCachedTypes == null) {
-      PsiType[] types = myTypeParameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[myTypeParameters.length];
-      for (int i = 0; i < types.length; i++) {
-        types[types.length - i - 1] = myTypeParameters[i].getType();
+    PsiType[] cachedTypes = myTypeParametersCachedTypes;
+    if (cachedTypes == null) {
+      cachedTypes = myTypeParameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[myTypeParameters.length];
+      for (int i = 0; i < cachedTypes.length; i++) {
+        cachedTypes[cachedTypes.length - i - 1] = myTypeParameters[i].getType();
       }
-      myTypeParametersCachedTypes = types;
+      myTypeParametersCachedTypes = cachedTypes;
     }
-
-    return myTypeParametersCachedTypes;
+    return cachedTypes;
   }
 
   public boolean isQualified() {
@@ -262,5 +254,4 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   public PsiElement getQualifier() {
     return null;
   }
-
 }

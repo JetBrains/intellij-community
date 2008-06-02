@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub> implements PsiAnnotation, Navigatable {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationImpl");
-  private ClsJavaCodeReferenceElementImpl myReferenceElement;
-  private ClsAnnotationParameterListImpl myParameterList;
+  private ClsJavaCodeReferenceElementImpl myReferenceElement; //protected by lock
+  private ClsAnnotationParameterListImpl myParameterList; //protected by lock
   private final Object lock = new Object();
 
   public ClsAnnotationImpl(final PsiAnnotationStub stub) {
@@ -66,15 +66,7 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
 
         final PsiAnnotationParameterList paramList = (PsiAnnotationParameterList)mirror.findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
 
-        myParameterList = new ClsAnnotationParameterListImpl(this);
-        PsiNameValuePair[] psiAttributes = paramList.getAttributes();
-        ClsNameValuePairImpl[] attributes = new ClsNameValuePairImpl[psiAttributes.length];
-        myParameterList.setAttributes(attributes);
-        for (int i = 0; i < attributes.length; i++) {
-          attributes[i] = new ClsNameValuePairImpl(myParameterList);
-          attributes[i].setNameIdentifier(new ClsIdentifierImpl(attributes[i], psiAttributes[i].getName()));
-          attributes[i].setMemberValue(ClsAnnotationsUtil.getMemberValue(psiAttributes[i].getValue(), attributes[i]));
-        }
+        myParameterList = new ClsAnnotationParameterListImpl(this, paramList.getAttributes());
       }
 
       return myParameterList;

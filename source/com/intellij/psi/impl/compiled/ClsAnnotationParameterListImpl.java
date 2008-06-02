@@ -11,18 +11,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClsAnnotationParameterListImpl extends ClsElementImpl implements PsiAnnotationParameterList {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationParameterListImpl");
-
-  private volatile ClsNameValuePairImpl[] myAttributes;
+  private final ClsNameValuePairImpl[] myAttributes;
   private final PsiAnnotation myParent;
-  private static final ClsNameValuePairImpl[] EMPTY_PARAMS = new ClsNameValuePairImpl[0];
 
-  public ClsAnnotationParameterListImpl(PsiAnnotation parent) {
+  public ClsAnnotationParameterListImpl(PsiAnnotation parent, PsiNameValuePair[] psiAttributes) {
     myParent = parent;
-    myAttributes = EMPTY_PARAMS;
-  }
-
-  void setAttributes(ClsNameValuePairImpl[] attributes) {
-    myAttributes = attributes;
+    myAttributes = new ClsNameValuePairImpl[psiAttributes.length];
+    for (int i = 0; i < myAttributes.length; i++) {
+      myAttributes[i] = new ClsNameValuePairImpl(this);
+      myAttributes[i].setNameIdentifier(new ClsIdentifierImpl(myAttributes[i], psiAttributes[i].getName()));
+      myAttributes[i].setMemberValue(ClsAnnotationsUtil.getMemberValue(psiAttributes[i].getValue(), myAttributes[i]));
+    }
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {

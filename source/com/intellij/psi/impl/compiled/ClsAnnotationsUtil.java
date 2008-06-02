@@ -5,6 +5,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -48,22 +49,18 @@ public class ClsAnnotationsUtil {
 
     }
     else if (element instanceof PsiAnnotation) {
-      PsiAnnotation psiAnnotation = (PsiAnnotation)element;
-      ClsJavaCodeReferenceElementImpl ref = new ClsJavaCodeReferenceElementImpl(null, psiAnnotation.getNameReferenceElement().getCanonicalText());
-      ClsAnnotationValueImpl result = new ClsAnnotationValueImpl(ref, parent);
-      ref.setParent(result);
-      ClsAnnotationParameterListImpl list = new ClsAnnotationParameterListImpl(result);
-      PsiNameValuePair[] psiAttributes = psiAnnotation.getParameterList().getAttributes();
-      ClsNameValuePairImpl[] attributes = new ClsNameValuePairImpl[psiAttributes.length];
-      list.setAttributes(attributes);
-      for (int i = 0; i < attributes.length; i++) {
-        attributes[i] = new ClsNameValuePairImpl(list);
-        attributes[i].setNameIdentifier(new ClsIdentifierImpl(attributes[i], psiAttributes[i].getName()));
-        attributes[i].setMemberValue(getMemberValue(psiAttributes[i].getValue(), attributes[i]));
-      }
+      final PsiAnnotation psiAnnotation = (PsiAnnotation)element;
+      final String canonicalText = psiAnnotation.getNameReferenceElement().getCanonicalText();
+      return new ClsAnnotationValueImpl(parent) {
+        protected ClsJavaCodeReferenceElementImpl createReference() {
+          return new ClsJavaCodeReferenceElementImpl(this, canonicalText);
+        }
 
-      result.setParameterList(list);
-      return result;
+        protected ClsAnnotationParameterListImpl createParameterList() {
+          PsiNameValuePair[] psiAttributes = psiAnnotation.getParameterList().getAttributes();
+          return new ClsAnnotationParameterListImpl(this, psiAttributes);
+        }
+      };
     }
     else if (element instanceof PsiReferenceExpression) {
       return new ClsReferenceExpressionImpl(parent, (PsiReferenceExpression)element);
@@ -76,7 +73,7 @@ public class ClsAnnotationsUtil {
 
   @NotNull public static PsiAnnotationMemberValue createMemberValueFromText(String text, PsiManager manager, ClsElementImpl parent) {
     PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
-    final FileElement holderElement = com.intellij.psi.impl.source.DummyHolderFactory.createHolder(manager, dummyJavaFile).getTreeElement();
+    final FileElement holderElement = DummyHolderFactory.createHolder(manager, dummyJavaFile).getTreeElement();
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(parent);
     JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), languageLevel);
     TreeElement element = context.getDeclarationParsing().parseMemberValueText(manager, text, languageLevel);

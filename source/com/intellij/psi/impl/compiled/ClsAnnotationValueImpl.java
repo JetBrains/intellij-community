@@ -15,21 +15,22 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnotation, Navigatable {
+public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnotation, Navigatable {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationValueImpl");
   public static final ClsAnnotationImpl[] EMPTY_ARRAY = new ClsAnnotationImpl[0];
   private final ClsJavaCodeReferenceElementImpl myReferenceElement;
-  private ClsAnnotationParameterListImpl myParameterList;
+  private final ClsAnnotationParameterListImpl myParameterList;
   private final ClsElementImpl myParent;
 
-  public ClsAnnotationValueImpl(ClsJavaCodeReferenceElementImpl referenceElement, ClsElementImpl parent) {
-    myReferenceElement = referenceElement;
+  public ClsAnnotationValueImpl(ClsElementImpl parent) {
+    myReferenceElement = createReference();
+    myParameterList = createParameterList();
     myParent = parent;
   }
 
-  public void setParameterList(ClsAnnotationParameterListImpl parameterList) {
-    myParameterList = parameterList;
-  }
+  protected abstract ClsAnnotationParameterListImpl createParameterList();
+
+  protected abstract ClsJavaCodeReferenceElementImpl createReference();
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     buffer.append("@").append(myReferenceElement.getCanonicalText());
@@ -96,5 +97,4 @@ public class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnotat
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
-
 }
