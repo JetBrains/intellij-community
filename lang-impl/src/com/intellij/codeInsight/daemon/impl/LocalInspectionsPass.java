@@ -389,6 +389,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     HintAction hintAction = ((ProblemDescriptorImpl)descriptor).getHintAction();
     if (hintAction != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, hintAction, key);
+      needEmptyAction = false;
     }
     if (needEmptyAction && emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
       EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());
