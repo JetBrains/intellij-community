@@ -15,10 +15,7 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -79,16 +76,29 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @Override
   public Object getData(final String dataId) {
     if (DataConstantsEx.PACKAGE_ELEMENT.equals(dataId)) {
-      final DefaultMutableTreeNode selectedNode = getSelectedNode();
-      if (selectedNode != null) {
-        Object o = selectedNode.getUserObject();
-        if (o instanceof AbstractTreeNode) {
-          Object selected = ((AbstractTreeNode)o).getValue();
-          return selected instanceof PackageElement ? selected : null;
-        }
+      final PackageElement packageElement = getSelectedPackageElement();
+    }
+    if (DataConstants.MODULE.equals(dataId)) {
+      final PackageElement packageElement = getSelectedPackageElement();
+      if (packageElement != null) {
+        return packageElement.getModule();
       }
     }
     return super.getData(dataId);
+  }
+
+  @Nullable
+  private PackageElement getSelectedPackageElement() {
+    PackageElement result = null;
+    final DefaultMutableTreeNode selectedNode = getSelectedNode();
+    if (selectedNode != null) {
+      Object o = selectedNode.getUserObject();
+      if (o instanceof AbstractTreeNode) {
+        Object selected = ((AbstractTreeNode)o).getValue();
+        result = selected instanceof PackageElement ? (PackageElement)selected : null;
+      }
+    }
+    return result;
   }
 
   private final class ShowModulesAction extends ToggleAction {
