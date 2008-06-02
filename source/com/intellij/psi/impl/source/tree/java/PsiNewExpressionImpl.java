@@ -2,48 +2,43 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiPolyVariantCachingReference;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.reference.SoftReference;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression, Constants {
+public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
 
-  private volatile SoftReference<JavaResolveResult> myCachedConstructor;
-
   public PsiNewExpressionImpl() {
-    super(NEW_EXPRESSION);
-  }
-
-  @Override
-  public void clearCaches() {
-    super.clearCaches();
-    myCachedConstructor = null;
+    super(JavaElementType.NEW_EXPRESSION);
   }
 
   public PsiType getType(){
     PsiType type = null;
     for(ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()){
-      if (child.getElementType() == JAVA_CODE_REFERENCE){
+      IElementType elementType = child.getElementType();
+      if (elementType == JavaElementType.JAVA_CODE_REFERENCE){
         LOG.assertTrue(type == null);
         type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child));
       }
-      else if (PRIMITIVE_TYPE_BIT_SET.contains(child.getElementType())){
+      else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)){
         LOG.assertTrue(type == null);
         type = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createPrimitiveType(child.getText());
       }
-      else if (child.getElementType() == LBRACKET){
+      else if (elementType == JavaTokenType.LBRACKET){
         LOG.assertTrue(type != null);
         type = type.createArrayType();
       }
-      else if (child.getElementType() == ANONYMOUS_CLASS){
+      else if (elementType == JavaElementType.ANONYMOUS_CLASS){
         PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
         type = factory.createType((PsiClass) SourceTreeToPsiMap.treeElementToPsi(child));
       }
@@ -63,7 +58,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   @NotNull
   public PsiExpression[] getArrayDimensions() {
-    PsiExpression[] expressions = getChildrenAsPsiElements(ARRAY_DIMENSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, Constants.PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
     PsiExpression qualifier = getQualifier();
     if (qualifier == null){
       return expressions;
@@ -84,40 +79,77 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return resolveConstructor();
   }
 
+  private PsiPolyVariantCachingReference getConstructorFakeReference() {
+    return new PsiPolyVariantCachingReference() {
+      @NotNull
+      public JavaResolveResult[] resolveInner(boolean incompleteCode) {
+        ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
+        if (classRef != null) {
+          ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+          if (argumentList != null && argumentList.getElementType() == JavaElementType.EXPRESSION_LIST) {
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+            PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
+            return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
+                                                                      (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                      PsiNewExpressionImpl.this);
+          }
+        }
+        else{
+          ASTNode anonymousClassElement = TreeUtil.findChild(PsiNewExpressionImpl.this, JavaElementType.ANONYMOUS_CLASS);
+          if (anonymousClassElement != null) {
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+            final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
+            PsiType aClass = anonymousClass.getBaseClassType();
+            ASTNode argumentList = TreeUtil.findChild(anonymousClassElement, JavaElementType.EXPRESSION_LIST);
+            return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
+                                                                      (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                      anonymousClass);
+          }
+        }
+        return JavaResolveResult.EMPTY_ARRAY;
+      }
+
+      public PsiElement getElement() {
+        return PsiNewExpressionImpl.this;
+      }
+
+      public TextRange getRangeInElement() {
+        return null;
+      }
+
+      public String getCanonicalText() {
+        return null;
+      }
+
+      public PsiElement handleElementRename(String newElementName) {
+        return null;
+      }
+
+      public PsiElement bindToElement(@NotNull PsiElement element) {
+        return null;
+      }
+
+      public Object[] getVariants() {
+        return new Object[0];
+      }
+
+      @Override
+      public int hashCode() {
+        PsiJavaCodeReferenceElement ref = getClassOrAnonymousClassReference();
+        return ref == null ? 0 : ref.hashCode();
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return obj instanceof PsiPolyVariantCachingReference && getElement() == ((PsiReference)obj).getElement();
+      }
+    };
+  }
+
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
-    SoftReference<JavaResolveResult> ref = myCachedConstructor;
-    if (ref != null) {
-      final JavaResolveResult resolveResult = ref.get();
-      final PsiElement element = resolveResult != null? resolveResult.getElement() : null;
-      if (resolveResult != null && (element == null || element.isValid())) return resolveResult;
-    }
-    JavaResolveResult result = JavaResolveResult.EMPTY;
-
-    ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    if (classRef != null){
-      ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
-      if (argumentList != null && argumentList.getElementType() == EXPRESSION_LIST) {
-        PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
-        result = facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
-                                                                  (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                  this);
-      }
-    }
-    else{
-      ASTNode anonymousClassElement = TreeUtil.findChild(this, ANONYMOUS_CLASS);
-      if (anonymousClassElement != null) {
-        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
-        PsiType aClass = anonymousClass.getBaseClassType();
-        ASTNode argumentList = TreeUtil.findChild(anonymousClassElement, EXPRESSION_LIST);
-        result = facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
-                                                                  (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                  anonymousClass);
-      }
-    }
-    myCachedConstructor = new SoftReference<JavaResolveResult>(result);
-    return result;
+    ResolveResult[] results = getConstructorFakeReference().multiResolve(false);
+    return results.length == 1 ? (JavaResolveResult)results[0] : JavaResolveResult.EMPTY;
   }
 
   public PsiExpression getQualifier() {
@@ -143,22 +175,19 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   public PsiAnonymousClass getAnonymousClass() {
-    ASTNode anonymousClass = TreeUtil.findChild(this, ANONYMOUS_CLASS);
+    ASTNode anonymousClass = TreeUtil.findChild(this, JavaElementType.ANONYMOUS_CLASS);
     if (anonymousClass == null) return null;
     return (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass);
   }
 
+  private static final TokenSet CLASS_REF = TokenSet.create(JavaElementType.JAVA_CODE_REFERENCE, JavaElementType.ANONYMOUS_CLASS);
   @Nullable
   public PsiJavaCodeReferenceElement getClassOrAnonymousClassReference() {
-    PsiJavaCodeReferenceElement classReference = getClassReference();
-    if (classReference != null) {
-      return classReference;
-    }
-    final PsiAnonymousClass anonymousClass = getAnonymousClass();
-    if (anonymousClass != null) {
-      classReference = anonymousClass.getBaseClassReference();
-    }
-    return classReference;
+    ASTNode ref = TreeUtil.findChild(this, CLASS_REF);
+    if (ref == null) return null;
+    if (ref instanceof PsiJavaCodeReferenceElement) return (PsiJavaCodeReferenceElement)ref;
+    PsiAnonymousClass anonymousClass = (PsiAnonymousClass)ref.getPsi();
+    return anonymousClass.getBaseClassReference();
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
@@ -179,43 +208,43 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
-        return TreeUtil.findChild(this, REFERENCE_PARAMETER_LIST);
+        return TreeUtil.findChild(this, JavaElementType.REFERENCE_PARAMETER_LIST);
 
       case ChildRole.QUALIFIER:
         TreeElement firstChild = getFirstChildNode();
-        if (firstChild != null && firstChild.getElementType() != NEW_KEYWORD) {
-          return firstChild.getElementType() != NEW_KEYWORD ? firstChild : null;
+        if (firstChild != null && firstChild.getElementType() != JavaTokenType.NEW_KEYWORD) {
+          return firstChild;
         }
         else {
           return null;
         }
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, DOT);
+        return TreeUtil.findChild(this, JavaTokenType.DOT);
 
       case ChildRole.NEW_KEYWORD:
-        return TreeUtil.findChild(this, NEW_KEYWORD);
+        return TreeUtil.findChild(this, JavaTokenType.NEW_KEYWORD);
 
       case ChildRole.ANONYMOUS_CLASS:
-        return TreeUtil.findChild(this, ANONYMOUS_CLASS);
+        return TreeUtil.findChild(this, JavaElementType.ANONYMOUS_CLASS);
 
       case ChildRole.TYPE_REFERENCE:
-        return TreeUtil.findChild(this, JAVA_CODE_REFERENCE);
+        return TreeUtil.findChild(this, JavaElementType.JAVA_CODE_REFERENCE);
 
       case ChildRole.TYPE_KEYWORD:
-        return TreeUtil.findChild(this, PRIMITIVE_TYPE_BIT_SET);
+        return TreeUtil.findChild(this, ElementType.PRIMITIVE_TYPE_BIT_SET);
 
       case ChildRole.ARGUMENT_LIST:
-        return TreeUtil.findChild(this, EXPRESSION_LIST);
+        return TreeUtil.findChild(this, JavaElementType.EXPRESSION_LIST);
 
       case ChildRole.LBRACKET:
-        return TreeUtil.findChild(this, LBRACKET);
+        return TreeUtil.findChild(this, JavaTokenType.LBRACKET);
 
       case ChildRole.RBRACKET:
-        return TreeUtil.findChild(this, RBRACKET);
+        return TreeUtil.findChild(this, JavaTokenType.RBRACKET);
 
       case ChildRole.ARRAY_INITIALIZER:
-        if (getLastChildNode().getElementType() == ARRAY_INITIALIZER_EXPRESSION){
+        if (getLastChildNode().getElementType() == JavaElementType.ARRAY_INITIALIZER_EXPRESSION){
           return getLastChildNode();
         }
         else{
@@ -227,28 +256,28 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == REFERENCE_PARAMETER_LIST) {
+    if (i == JavaElementType.REFERENCE_PARAMETER_LIST) {
       return ChildRole.REFERENCE_PARAMETER_LIST;
     }
-    else if (i == NEW_KEYWORD) {
+    else if (i == JavaTokenType.NEW_KEYWORD) {
       return ChildRole.NEW_KEYWORD;
     }
-    else if (i == DOT) {
+    else if (i == JavaTokenType.DOT) {
       return ChildRole.DOT;
     }
-    else if (i == JAVA_CODE_REFERENCE) {
+    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       return ChildRole.TYPE_REFERENCE;
     }
-    else if (i == EXPRESSION_LIST) {
+    else if (i == JavaElementType.EXPRESSION_LIST) {
       return ChildRole.ARGUMENT_LIST;
     }
-    else if (i == LBRACKET) {
+    else if (i == JavaTokenType.LBRACKET) {
       return ChildRole.LBRACKET;
     }
-    else if (i == RBRACKET) {
+    else if (i == JavaTokenType.RBRACKET) {
       return ChildRole.RBRACKET;
     }
-    else if (i == ARRAY_INITIALIZER_EXPRESSION) {
+    else if (i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION) {
       if (child == getLastChildNode()) {
         return ChildRole.ARRAY_INITIALIZER;
       }
@@ -259,14 +288,14 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return ChildRole.ARRAY_DIMENSION;
       }
     }
-    else if (i == ANONYMOUS_CLASS) {
+    else if (i == JavaElementType.ANONYMOUS_CLASS) {
       return ChildRole.ANONYMOUS_CLASS;
     }
     else {
-      if (PRIMITIVE_TYPE_BIT_SET.contains(child.getElementType())) {
+      if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(child.getElementType())) {
         return ChildRole.TYPE_KEYWORD;
       }
-      else if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
+      else if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return child == getFirstChildNode() ? ChildRole.QUALIFIER : ChildRole.ARRAY_DIMENSION;
       }
       else {

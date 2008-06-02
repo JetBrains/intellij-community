@@ -15,8 +15,8 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCase {
   protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
@@ -51,36 +51,30 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Document document = getEditor().getDocument();
+    MockProgressIndicator progress = new MockProgressIndicator();
     if (doFolding()) {
       final CodeFoldingPassFactory factory = getProject().getComponent(CodeFoldingPassFactory.class);
       final TextEditorHighlightingPass highlightingPass = factory.createHighlightingPass(myFile, myEditor);
-      highlightingPass.collectInformation(new MockProgressIndicator());
+      highlightingPass.collectInformation(progress);
       highlightingPass.doApplyInformationToEditor();
     }
 
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(getProject(), getFile(), document, 0, getFile().getTextLength(), true);
-    action1.collectInformation(new MockProgressIndicator());
+    action1.collectInformation(progress);
     action1.applyInformationToEditor();
-    Collection<HighlightInfo> highlights1 = action1.getHighlights();
+    Set<HighlightInfo> result = new HashSet<HighlightInfo>(action1.getHighlights());
 
-    Collection<HighlightInfo> highlights2;
     PostHighlightingPassFactory phpFactory = getProject().getComponent(PostHighlightingPassFactory.class);
     if (phpFactory != null) {
       PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength());
-      action2.doCollectInformation(new MockProgressIndicator());
-       highlights2 = action2.getHighlights();
-    }
-    else {
-      highlights2 = Collections.emptyList();
+      action2.doCollectInformation(progress);
+      result.addAll(action2.getHighlights());
     }
 
     LocalInspectionsPass action3 = new LocalInspectionsPass(getFile(), document, 0, getFile().getTextLength());
-    action3.doCollectInformation(new MockProgressIndicator());
-    Collection<HighlightInfo> highlights3 = action3.getHighlights();
+    action3.doCollectInformation(progress);
+    result.addAll(action3.getHighlights());
 
-    HashSet<HighlightInfo> result = new HashSet<HighlightInfo>(highlights1);
-    result.addAll(highlights2);
-    result.addAll(highlights3);
     return result;
   }
 
