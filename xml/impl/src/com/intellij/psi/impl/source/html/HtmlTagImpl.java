@@ -6,9 +6,9 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * @author Maxim.Mossienko
@@ -21,7 +21,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   @NotNull
   public XmlTag[] findSubTags(String name, String namespace) {
     final XmlTag[] subTags = getSubTags();
-    final List<XmlTag> result = new ArrayList<XmlTag>();
+    List<XmlTag> result = null;
 
     for (final XmlTag subTag : subTags) {
       if (namespace == null) {
@@ -29,17 +29,25 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
         tagName = tagName.toLowerCase();
 
         if (name == null || name.equals(tagName)) {
+          if (result == null) {
+            result = new ArrayList<XmlTag>(3);
+          }
+
           result.add(subTag);
         }
       }
       else if (namespace.equals(subTag.getNamespace()) &&
                (name == null || name.equals(subTag.getLocalName()))
         ) {
+        if (result == null) {
+          result = new ArrayList<XmlTag>(3);
+        }
+
         result.add(subTag);
       }
     }
 
-    return result.toArray(new XmlTag[result.size()]);
+    return result == null ? XmlTag.EMPTY : result.toArray(new XmlTag[result.size()]);
   }
 
   protected boolean isCaseSensitive() {
