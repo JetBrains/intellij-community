@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
@@ -47,7 +46,7 @@ public class MavenArtifactDownloader {
       MavenProcess.run(project, ProjectBundle.message("maven.downloading"), new MavenProcess.MavenTask() {
         public void run(MavenProcess p) throws CanceledException {
           new MavenArtifactDownloader(manager.getArtifactSettings(), e, p)
-              .download(project, manager.getExistingProjects(), true);
+              .download(project, manager.getProjects(), true);
         }
       });
     }
@@ -59,7 +58,7 @@ public class MavenArtifactDownloader {
   }
 
   public void download(Project project,
-                       List<MavenProjectModel.Node> mavenProjects,
+                       List<MavenProjectModel> mavenProjects,
                        boolean demand) throws CanceledException {
     Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(mavenProjects);
 
@@ -80,7 +79,7 @@ public class MavenArtifactDownloader {
     if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
-      Map<Plugin, MavenProjectModel.Node> plugins = collectPlugins(mavenProjects);
+      Map<Plugin, MavenProjectModel> plugins = collectPlugins(mavenProjects);
       downloadPlugins(plugins);
       projectsManager.updateAllFiles();
     }
@@ -93,9 +92,9 @@ public class MavenArtifactDownloader {
   }
 
 
-  public static Map<Plugin, MavenProjectModel.Node> collectPlugins(List<MavenProjectModel.Node> mavenProjects) {
-    final Map<Plugin, MavenProjectModel.Node> result = new HashMap<Plugin, MavenProjectModel.Node>();
-    for (MavenProjectModel.Node each : mavenProjects) {
+  public static Map<Plugin, MavenProjectModel> collectPlugins(List<MavenProjectModel> mavenProjects) {
+    final Map<Plugin, MavenProjectModel> result = new HashMap<Plugin, MavenProjectModel>();
+    for (MavenProjectModel each : mavenProjects) {
       for (Plugin eachPlugin : each.getPlugins()) {
         result.put(eachPlugin, each);
       }
@@ -108,10 +107,10 @@ public class MavenArtifactDownloader {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
-  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(List<MavenProjectModel.Node> mavenProjects) {
+  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(List<MavenProjectModel> mavenProjects) {
     Map<MavenId, Set<ArtifactRepository>> result = new TreeMap<MavenId, Set<ArtifactRepository>>();
 
-    for (MavenProjectModel.Node each : mavenProjects) {
+    for (MavenProjectModel each : mavenProjects) {
       Collection<Artifact> artifacts = each.getDependencies();
       List remoteRepositories = each.getMavenProject().getRemoteArtifactRepositories();
 
@@ -134,9 +133,9 @@ public class MavenArtifactDownloader {
     return result;
   }
 
-  private static boolean isExistingProject(Artifact artifact, List<MavenProjectModel.Node> mavenProjects) {
-    for (MavenProjectModel.Node each : mavenProjects) {
-      if (new ProjectId(artifact).equals(each.getProjectId())) return true;
+  private static boolean isExistingProject(Artifact artifact, List<MavenProjectModel> mavenProjects) {
+    for (MavenProjectModel each : mavenProjects) {
+      if (each.getMavenId().equals(new MavenId(artifact))) return true;
     }
     return false;
   }
@@ -171,12 +170,12 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private void downloadPlugins(Map<Plugin, MavenProjectModel.Node> plugins) throws CanceledException {
+  private void downloadPlugins(Map<Plugin, MavenProjectModel> plugins) throws CanceledException {
     myProgress.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
 
     int step = 0;
 
-    for (Map.Entry<Plugin, MavenProjectModel.Node> each : plugins.entrySet()) {
+    for (Map.Entry<Plugin, MavenProjectModel> each : plugins.entrySet()) {
       final Plugin plugin = each.getKey();
 
       myProgress.checkCanceled();
@@ -204,16 +203,16 @@ public class MavenArtifactDownloader {
   @NonNls private final static String[] generateGoals =
       {"clean", "generate-sources", "generate-resources", "generate-test-sources", "generate-test-resources"};
 
-  private static List<MavenRunnerParameters> createGenerateCommand(List<MavenProjectModel.Node> projects) {
+  private static List<MavenRunnerParameters> createGenerateCommand(List<MavenProjectModel> projects) {
     final List<MavenRunnerParameters> commands = new ArrayList<MavenRunnerParameters>();
     final List<String> goals = Arrays.asList(generateGoals);
 
     final LinkedHashSet<String> modulePaths = new LinkedHashSet<String>();
-    for (MavenProjectModel.Node each : projects) {
+    for (MavenProjectModel each : projects) {
       modulePaths.addAll(each.getModulePaths());
     }
 
-    for (MavenProjectModel.Node each : projects) {
+    for (MavenProjectModel each : projects) {
       VirtualFile file = each.getFile();
       // skip modules
       if (modulePaths.contains(file.getPath())) continue;

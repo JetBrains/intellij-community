@@ -5,61 +5,32 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.Resource;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 
 public class MavenFoldersConfigurator {
-  private MavenProjectModel.Node myMavenProject;
+  private MavenProjectModel myMavenProject;
   private MavenImporterSettings myPrefs;
   private RootModelAdapter myModel;
 
   public static void updateProjectExcludedFolders(final Project p) throws MavenException {
-    try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          try {
-            doUpdateProjectsExcludeFolders(p);
-          }
-          catch (MavenException e) {
-            throw new RuntimeException(e);
-          }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (Module m : ModuleManager.getInstance(p).getModules()) {
+          updateModuleExcludedFolders(m);
         }
-      });
-    }
-    catch (RuntimeException e) {
-      if (e.getCause() instanceof MavenException) {
-        throw (MavenException)e.getCause();
       }
-    }
+    });
   }
 
-  private static void doUpdateProjectsExcludeFolders(Project p) throws MavenException {
-    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForRead(MavenCore.getInstance(p).getState());
-    try {
-      MavenProjectReader r = new MavenProjectReader(embedder);
-      for (Module m : ModuleManager.getInstance(p).getModules()) {
-        updateModuleExcludedFolders(m, r);
-      }
-    }
-    finally {
-      MavenEmbedderFactory.releaseEmbedder(embedder);
-    }
-  }
-
-  private static void updateModuleExcludedFolders(Module m, MavenProjectReader r) throws MavenException {
+  private static void updateModuleExcludedFolders(Module m) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(m.getProject());
     MavenImporterSettings settings = manager.getImporterSettings();
 
-    VirtualFile f = manager.findPomForModule(m);
-    if (f == null) return;
-    MavenProjectModel.Node project = manager.getExistingProject(f);
+    MavenProjectModel project = manager.findProject(m);
     if (project == null) return;
 
     RootModelAdapter a = new RootModelAdapter(m);
@@ -67,7 +38,7 @@ public class MavenFoldersConfigurator {
     a.commit();
   }
 
-  public MavenFoldersConfigurator(MavenProjectModel.Node mavenProject, MavenImporterSettings settings, RootModelAdapter model) {
+  public MavenFoldersConfigurator(MavenProjectModel mavenProject, MavenImporterSettings settings, RootModelAdapter model) {
     myMavenProject = mavenProject;
     myPrefs = settings;
     myModel = model;

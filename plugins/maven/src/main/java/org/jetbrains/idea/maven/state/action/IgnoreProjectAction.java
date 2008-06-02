@@ -18,7 +18,7 @@ public class IgnoreProjectAction extends AnAction {
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsManager projectsManager = project != null ? MavenProjectsManager.getInstance(project) : null;
-    final List<MavenProjectModel.Node> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
+    final List<MavenProjectModel> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
 
     final boolean enabled = projectsManager != null && nodes != null && isEnabled(projectsManager, nodes);
     e.getPresentation().setEnabled(enabled);
@@ -32,12 +32,12 @@ public class IgnoreProjectAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsManager projectsManager = project != null ? MavenProjectsManager.getInstance(project) : null;
-    final List<MavenProjectModel.Node> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
+    final List<MavenProjectModel> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
 
     if (projectsManager != null && nodes != null && isEnabled(projectsManager, nodes)) {
       final boolean flag = projectsManager.getIgnoredFlag(nodes.get(0));
       if (flag == projectsManager.isIgnored(nodes.get(0))) {
-        for (MavenProjectModel.Node each : nodes) {
+        for (MavenProjectModel each : nodes) {
           projectsManager.setIgnoredFlag(each, !flag);
         }
       }
@@ -47,11 +47,11 @@ public class IgnoreProjectAction extends AnAction {
     }
   }
 
-  private boolean isEnabled(final MavenProjectsManager projectsManager, final List<MavenProjectModel.Node> nodes) {
+  private boolean isEnabled(final MavenProjectsManager projectsManager, final List<MavenProjectModel> nodes) {
     int ignoredCount = 0;
     int individuallyIgnoredCount = 0;
 
-    for (MavenProjectModel.Node each : nodes) {
+    for (MavenProjectModel each : nodes) {
       if (projectsManager.isIgnored(each)) {
         ignoredCount++;
       }

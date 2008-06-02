@@ -1,7 +1,9 @@
 package org.jetbrains.idea.maven;
 
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
@@ -9,9 +11,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     importProject("");
     assertModules("project");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertFalse(root.isValid());
-    assertProblems(root, "Invalid Maven Model");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, false, "Pom file has syntax errors.");
   }
 
   public void testUndefinedPropertyInHeader() throws Exception {
@@ -20,9 +21,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertModules("project");
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertFalse(root.isValid());
-    assertProblems(root, "Invalid Maven Model", "'artifactId' with value '${undefined}' does not match a valid id pattern.");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, false, "'artifactId' with value '${undefined}' does not match a valid id pattern.");
   }
 
   public void testUnresolvedParent() throws Exception {
@@ -38,13 +38,34 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-
-    assertProblems(root, "Parent 'test:parent:pom:1' not found");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true, "Parent 'test:parent:1' not found.");
   }
 
-  public void testNonExistentModules() throws Exception {
+  public void testUnresolvedParentForInvalidProject() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<parent>" +
+                  "  <groupId>test</groupId>" +
+                  "  <artifactId>parent</artifactId>" +
+                  "  <version>1</version>" +
+                  "</parent>" +
+
+                  // not of the 'pom' type
+                  "<modules>" +
+                  "  <module>foo</module>" +
+                  "</modules>");
+
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, false,
+                   "Parent 'test:parent:1' not found.",
+                   "Packaging 'jar' is invalid. Aggregator projects require 'pom' as packaging.",
+                   "Missing module: 'foo'.");
+  }
+
+  public void testMissingModules() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -56,10 +77,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-
-    assertProblems(root, "Missing module: 'foo'");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true, "Missing module: 'foo'.");
   }
 
   public void testInvalidProjectModel() throws Exception {
@@ -78,9 +97,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "foo");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertFalse(root.isValid());
-    assertProblems(root, "Invalid Maven Model", "Packaging 'jar' is invalid. Aggregator projects require 'pom' as packaging.");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, false, "Packaging 'jar' is invalid. Aggregator projects require 'pom' as packaging.");
   }
 
   public void testInvalidModuleModel() throws Exception {
@@ -100,12 +118,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "foo");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-    assertProblems(root);
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true);
 
-    assertFalse(root.getSubProjects().get(0).isValid());
-    assertProblems(root.getSubProjects().get(0), "Invalid Maven Model");
+    assertProblems(root.getModules().get(0), false, "Pom file has syntax errors.");
   }
 
   public void testSeveratInvalidModulesAndWithSameName() throws Exception {
@@ -187,8 +203,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertFalse(root.isValid());
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, false, "Cannot find ArtifactRepositoryLayout instance for: nothing");
   }
 
   public void testUnresolvedDependencies() throws Exception {
@@ -233,17 +249,14 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
+    MavenProjectModel root = getRootProjects().get(0);
 
-    assertProblems(root);
-
-    assertProblems(root.getSubProjects().get(0),
-                   "Unresolved dependency: xxx:xxx:jar:1:compile",
-                   "Unresolved dependency: yyy:yyy:jar:2:compile");
-
-    assertProblems(root.getSubProjects().get(1),
-                   "Unresolved dependency: zzz:zzz:jar:3:compile");
+    assertProblems(root, true);
+    assertProblems(root.getModules().get(0), true,
+                   "Unresolved dependency: 'xxx:xxx:jar:1:compile'.",
+                   "Unresolved dependency: 'yyy:yyy:jar:2:compile'.");
+    assertProblems(root.getModules().get(1), true,
+                   "Unresolved dependency: 'zzz:zzz:jar:3:compile'.");
   }
 
   public void testUnresolvedPomTypeDependency() throws Exception {
@@ -264,9 +277,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertModuleLibDeps("project");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-    assertProblems(root, "Unresolved dependency: xxx:yyy:pom:4.0:compile");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true, "Unresolved dependency: 'xxx:yyy:pom:4.0:compile'.");
   }
 
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws Exception {
@@ -298,10 +310,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertProblems(root);
-    assertProblems(root.getSubProjects().get(0));
-    assertProblems(root.getSubProjects().get(1));
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true);
+    assertProblems(root.getModules().get(0), true);
+    assertProblems(root.getModules().get(1), true);
   }
 
   public void testCircularDependencies() throws Exception {
@@ -356,12 +368,11 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-    assertProblems(root);
-    assertProblems(root.getSubProjects().get(0));
-    assertProblems(root.getSubProjects().get(1));
-    assertProblems(root.getSubProjects().get(2));
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true);
+    assertProblems(root.getModules().get(0), true);
+    assertProblems(root.getModules().get(1), true);
+    assertProblems(root.getModules().get(2), true);
   }
 
   public void testUnresolvedExtensions() throws Exception {
@@ -379,9 +390,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "  </extensions>" +
                   "</build>");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-    assertProblems(root, "Unresolved build extension: xxx:yyy:jar:1:runtime");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1:runtime'.");
   }
 
   public void testUnresolvedBuildExtensionsInModules() throws Exception {
@@ -432,20 +442,17 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
+    MavenProjectModel root = getRootProjects().get(0);
 
-    assertProblems(root);
-    assertProblems(root.getSubProjects().get(0),
-                   "Unresolved build extension: xxx:xxx:jar:1:runtime");
-    assertProblems(root.getSubProjects().get(1),
-                   "Unresolved build extension: yyy:yyy:jar:1:runtime",
-                   "Unresolved build extension: zzz:zzz:jar:1:runtime");
+    assertProblems(root, true);
+    assertProblems(root.getModules().get(0), true,
+                   "Unresolved build extension: 'xxx:xxx:jar:1:runtime'.");
+    assertProblems(root.getModules().get(1), true,
+                   "Unresolved build extension: 'yyy:yyy:jar:1:runtime'.",
+                   "Unresolved build extension: 'zzz:zzz:jar:1:runtime'.");
   }
 
   public void testUnresolvedPlugins() throws Exception {
-    if (ignore()) return;
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -460,15 +467,11 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-
-    assertProblems(root, "Unresolved plugin: xxx:yyy:maven-plugin:1:runtime");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true, "Unresolved plugin: 'xxx:yyy:1'.");
   }
 
   public void testDoNotReportResolvedPlugins() throws Exception {
-    if (ignore()) return;
-    
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -483,15 +486,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertTrue(root.isValid());
-
-    assertProblems(root);
+    assertProblems(getRootProjects().get(0), true);
   }
 
   public void testUnresolvedPluginsAsExtensions() throws Exception {
-    if (ignore()) return;
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -508,17 +506,22 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertTrue(getRootProjects().get(0).isValid());
 
-    MavenProjectModel.Node root = getRootProjects().get(0);
-    assertProblems(root, "Unresolved plugin: xxx:yyy:maven-plugin:1:runtime");
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true, "Unresolved plugin: 'xxx:yyy:1'.");
   }
 
-  private void assertProblems(MavenProjectModel.Node root, String... problems) {
-    assertOrderedElementsAreEqual(root.getProblems(), problems);
+  private void assertProblems(MavenProjectModel project, boolean isValid, String... expectedProblems) {
+    assertEquals(isValid, project.isValid());
+
+    List<String> actualProblems = new ArrayList<String>();
+    for (MavenProjectModelProblem each : project.getProblems()) {
+      actualProblems.add(each.getDescription());
+    }
+    assertOrderedElementsAreEqual(actualProblems, expectedProblems);
   }
 
-  private List<MavenProjectModel.Node> getRootProjects() {
-    return myMavenProjectsManager.getMavenProjectModel().getRootProjects();
+  private List<MavenProjectModel> getRootProjects() {
+    return myMavenProjectsManager.getMavenProjectModelManager().getRootProjects();
   }
 }

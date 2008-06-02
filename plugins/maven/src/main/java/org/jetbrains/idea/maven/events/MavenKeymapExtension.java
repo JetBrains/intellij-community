@@ -73,7 +73,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
     final List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
 
-    for (MavenProjectModel.Node each : projectsManager.getExistingProjects()) {
+    for (MavenProjectModel each : projectsManager.getProjects()) {
       if (!projectsManager.isIgnored(each)) {
         final String mavenProjectName = each.getMavenProject().getName();
         final String pomPath = each.getPath();
@@ -105,18 +105,18 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static String getMavenProjectName(MavenProjectsManager projectsManager, VirtualFile file) {
-    MavenProjectModel.Node n = projectsManager.getExistingProject(file);
+    MavenProjectModel n = projectsManager.findProject(file);
     if (n != null) {
       return n.getMavenProject().getName();
     }
     return EventsBundle.message("maven.event.unknown.project");
   }
 
-  private static Collection<String> getGoals(MavenProjectModel.Node node, MavenPluginsRepository repository) {
+  private static Collection<String> getGoals(MavenProjectModel node, MavenPluginsRepository repository) {
     Collection<String> result = new HashSet<String>();
     result.addAll(MavenEmbedderFactory.getStandardGoalsList());
 
-    for (MavenId plugin : node.getPluginsIds()) {
+    for (MavenId plugin : node.getPluginIds()) {
       collectGoals(repository, plugin, result);
     }
 

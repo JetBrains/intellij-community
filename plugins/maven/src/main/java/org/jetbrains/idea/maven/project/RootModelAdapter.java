@@ -27,13 +27,13 @@ public class RootModelAdapter {
     myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
-  public void init(MavenProjectModel.Node p) {
+  public void init(MavenProjectModel p) {
     initContentRoots(p);
     initOrderEntries();
     configure();
   }
 
-  public void initContentRoots(MavenProjectModel.Node p) {
+  public void initContentRoots(MavenProjectModel p) {
     for (ContentEntry e : myRootModel.getContentEntries()) {
       myRootModel.removeContentEntry(e);
     }

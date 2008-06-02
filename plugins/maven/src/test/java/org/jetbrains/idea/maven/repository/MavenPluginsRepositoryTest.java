@@ -41,28 +41,4 @@ public class MavenPluginsRepositoryTest extends MavenTestCase {
     assertOrderedElementsAreEqual(goals, "compile", "testCompile");
     assertOrderedElementsAreEqual(qualifiedGoals, "compiler:compile", "compiler:testCompile");
   }
-
-  public void testParameters() throws Exception {
-    MavenPluginInfo.Mojo m = p.findMojo("compile");
-    List<MavenPluginInfo.ParameterInfo> params = m.getParameterInfos();
-    assertFalse(params.isEmpty());
-
-    MavenPluginInfo.ParameterInfo i = m.findParameterInfo("compilerVersion");
-    assertNotNull(i);
-    assertTrue(i.getDescription(), i.getDescription().startsWith("Version of the compiler to use"));
-  }
-
-  public void testDoNotIncludeReadOnlyParameters() throws Exception {
-    assertNull(p.findMojo("compile").findParameterInfo("basedir"));
-  }
-
-  public void testDoNotIncludeOtherMojosParameters() throws Exception {
-    assertNotNull(p.findMojo("testCompile").findParameterInfo("testIncludes"));
-    assertNull(p.findMojo("compile").findParameterInfo("testIncludes"));
-  }
-
-  public void testLoadingPluginsFromStandsrdGroupsIfGroupIsNotSpecified() throws Exception {
-    assertNotNull(new MavenId(null, "maven-compiler-plugin", "2.0.2"));
-    assertNotNull(new MavenId(null, "build-helper-maven-plugin", "1.0"));
-  }
 }

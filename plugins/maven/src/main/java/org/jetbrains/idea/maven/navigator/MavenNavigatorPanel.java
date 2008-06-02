@@ -14,7 +14,6 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
@@ -63,7 +62,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        final String id = getMenuId(getSelectedNodes(PomTreeStructure.CustomNode.class));
+        final String id = getMenuId(getSelectedNodes(MavenTreeStructure.CustomNode.class));
         if (id != null) {
           final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
           if (actionGroup != null) {
@@ -73,9 +72,9 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
       }
 
       @Nullable
-      private String getMenuId(Collection<? extends PomTreeStructure.CustomNode> nodes) {
+      private String getMenuId(Collection<? extends MavenTreeStructure.CustomNode> nodes) {
         String id = null;
-        for (PomTreeStructure.CustomNode node : nodes) {
+        for (MavenTreeStructure.CustomNode node : nodes) {
           String menuId = node.getMenuId();
           if (menuId == null) {
             return null;
@@ -111,16 +110,16 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     return null;
   }
 
-  private List<MavenProjectModel.Node> extractPomNodes() {
-    List<MavenProjectModel.Node> result = new ArrayList<MavenProjectModel.Node>();
-    for (PomTreeStructure.PomNode each : getSelectedPomNodes()) {
-      result.add(each.getProjectNode());
+  private List<MavenProjectModel> extractPomNodes() {
+    List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
+    for (MavenTreeStructure.PomNode each : getSelectedPomNodes()) {
+      result.add(each.getMavenProjectModel());
     }
     return result.isEmpty() ? null : result;
   }
 
   private VirtualFile extractVirtualFile() {
-    final PomTreeStructure.PomNode pomNode = getContextPomNode();
+    final MavenTreeStructure.PomNode pomNode = getContextPomNode();
     if (pomNode == null) return null;
     VirtualFile file = pomNode.getFile();
     if (file == null || !file.isValid()) return null;
@@ -129,7 +128,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private Object extractVirtualFiles() {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
+    for (MavenTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
       VirtualFile file = pomNode.getFile();
       if (file.isValid()) {
         files.add(file);
@@ -148,7 +147,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private Object extractNavigatables() {
     final List<Navigatable> navigatables = new ArrayList<Navigatable>();
-    for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
+    for (MavenTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
       final Navigatable navigatable = pomNode.getNavigatable();
       if (navigatable != null) {
         navigatables.add(navigatable);
@@ -158,23 +157,21 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   }
 
   private List<String> extractGoals() {
-    final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
+    final MavenTreeStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
-      final Model mavenProject = myProjectsManager.getModel(pomNode.getFile());
-      if (mavenProject != null && mavenProject.getBuild() != null) {
-        final String goal = mavenProject.getBuild().getDefaultGoal();
-        if (!StringUtil.isEmptyOrSpaces(goal)) {
-          return Collections.singletonList(goal);
-        }
+      MavenProjectModel project = pomNode.getMavenProjectModel();
+      String goal = project.getDefaultGoal();
+      if (!StringUtil.isEmptyOrSpaces(goal)) {
+        return Collections.singletonList(goal);
       }
     }
     else {
-      final List<PomTreeStructure.GoalNode> nodes = getSelectedNodes(PomTreeStructure.GoalNode.class);
-      if (PomTreeStructure.getCommonParent(nodes) == null) {
+      final List<MavenTreeStructure.GoalNode> nodes = getSelectedNodes(MavenTreeStructure.GoalNode.class);
+      if (MavenTreeStructure.getCommonParent(nodes) == null) {
         return null;
       }
       final List<String> goals = new ArrayList<String>();
-      for (PomTreeStructure.GoalNode node : nodes) {
+      for (MavenTreeStructure.GoalNode node : nodes) {
         goals.add(node.getGoal());
       }
       Collections.sort(goals, myGoalOrderComparator);
@@ -184,39 +181,39 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   }
 
   private Object extractProfiles() {
-    final List<PomTreeStructure.ProfileNode> nodes = getSelectedNodes(PomTreeStructure.ProfileNode.class);
-    if (PomTreeStructure.getCommonParent(nodes) == null) {
+    final List<MavenTreeStructure.ProfileNode> nodes = getSelectedNodes(MavenTreeStructure.ProfileNode.class);
+    if (MavenTreeStructure.getCommonParent(nodes) == null) {
       return null;
     }
     final List<String> profiles = new ArrayList<String>();
-    for (PomTreeStructure.ProfileNode node : nodes) {
+    for (MavenTreeStructure.ProfileNode node : nodes) {
       profiles.add(node.getProfile());
     }
     return profiles;
   }
 
   private <T extends SimpleNode> List<T> getSelectedNodes(final Class<T> aClass) {
-    return PomTreeStructure.getSelectedNodes(myTree, aClass);
+    return MavenTreeStructure.getSelectedNodes(myTree, aClass);
   }
 
-  private List<PomTreeStructure.PomNode> getSelectedPomNodes() {
-    return getSelectedNodes(PomTreeStructure.PomNode.class);
+  private List<MavenTreeStructure.PomNode> getSelectedPomNodes() {
+    return getSelectedNodes(MavenTreeStructure.PomNode.class);
   }
 
   @Nullable
-  private PomTreeStructure.PomNode getSelectedPomNode() {
-    final List<PomTreeStructure.PomNode> pomNodes = getSelectedPomNodes();
+  private MavenTreeStructure.PomNode getSelectedPomNode() {
+    final List<MavenTreeStructure.PomNode> pomNodes = getSelectedPomNodes();
     return pomNodes.size() == 1 ? pomNodes.get(0) : null;
   }
 
   @Nullable
-  private PomTreeStructure.PomNode getContextPomNode() {
-    final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
+  private MavenTreeStructure.PomNode getContextPomNode() {
+    final MavenTreeStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
       return pomNode;
     }
     else {
-      return PomTreeStructure.getCommonParent(getSelectedNodes(PomTreeStructure.CustomNode.class));
+      return MavenTreeStructure.getCommonParent(getSelectedNodes(MavenTreeStructure.CustomNode.class));
     }
   }
 

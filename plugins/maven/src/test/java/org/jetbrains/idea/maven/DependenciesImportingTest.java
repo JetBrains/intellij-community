@@ -668,6 +668,23 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m", "group:id:1");
   }
 
+  public void testPomTypeDependency() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "    <type>pom</type>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProject(); // shouldn't throw any exception
+  }
+
   public void testPropertyInTheManagedModuleDependencyVersionOfPomType() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -717,27 +734,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     if (ignore()) return;
 
-    MavenProjectModel.Node root = myMavenProjectsManager.getMavenProjectModel().getRootProjects().get(0);
+    MavenProjectModel root = myMavenProjectsManager.getMavenProjectModelManager().getRootProjects().get(0);
     assertOrderedElementsAreEqual(root.getProblems());
 
-    assertOrderedElementsAreEqual(root.getSubProjects().get(0).getProblems(),
+    assertOrderedElementsAreEqual(root.getModules().get(0).getProblems(),
                                   "Unresolved dependency: xxx:yyy:pom:1:compile");
-  }
-
-  public void testPomTypeDependency() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "    <type>pom</type>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    importProject(); // shouldn't throw any exception
   }
 }

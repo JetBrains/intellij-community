@@ -21,7 +21,7 @@ public class PropertyResolver {
 
   public static String resolve(String text, VirtualFile file, DomFileElement<MavenModel> dom) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(dom.getFile().getProject());
-    MavenProjectModel.Node mavenProject = manager.getExistingProject(file);
+    MavenProjectModel mavenProject = manager.findProject(file);
     if (mavenProject == null) return text;
 
     Properties dynamicProperties = new Properties();
@@ -34,7 +34,7 @@ public class PropertyResolver {
     return resolve(text, mavenProject, dynamicProperties);
   }
 
-  private static String resolve(String text, MavenProjectModel.Node n, Properties additionalProperties) {
+  private static String resolve(String text, MavenProjectModel n, Properties additionalProperties) {
     Matcher matcher = PATTERN.matcher(text);
 
     StringBuffer buff = new StringBuffer();
@@ -49,7 +49,7 @@ public class PropertyResolver {
     return buff.toString();
   }
 
-  private static String resolveProperty(String propName, MavenProjectModel.Node n, Properties additionalProperties) {
+  private static String resolveProperty(String propName, MavenProjectModel n, Properties additionalProperties) {
     String result;
 
     result = MavenEmbedderFactory.collectSystemProperties().getProperty(propName);

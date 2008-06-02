@@ -25,7 +25,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     }
     final MavenImportBuilder importBuilder = getBuilder();
     if (importBuilder != null) {
-      return !importBuilder.getAllProfiles().isEmpty();
+      return !importBuilder.getProfiles().isEmpty();
     }
     return false;
   }
@@ -43,7 +43,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
   }
 
   public void updateStep() {
-    profileChooser.setElements(getBuilder().getAllProfiles(), false);
+    profileChooser.setElements(getBuilder().getProfiles(), false);
   }
 
   public boolean validate() throws ConfigurationException {

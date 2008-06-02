@@ -21,19 +21,19 @@ import java.util.*;
 public class MavenProjectConfigurator {
   private Project myProject;
   private ModifiableModuleModel myModuleModel;
-  private MavenProjectModel myProjectModel;
+  private MavenProjectModelManager myProjectModel;
   private MavenImporterSettings mySettings;
   private List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
 
   public static void config(Project p,
-                            MavenProjectModel projectModel,
+                            MavenProjectModelManager projectModel,
                             MavenImporterSettings settings) {
     MavenProjectConfigurator c = new MavenProjectConfigurator(p, projectModel, settings);
     c.config();
   }
 
   private MavenProjectConfigurator(Project p,
-                              MavenProjectModel projectModel,
+                              MavenProjectModelManager projectModel,
                               MavenImporterSettings settings) {
     myProject = p;
     myProjectModel = projectModel;
@@ -58,7 +58,7 @@ public class MavenProjectConfigurator {
     List<Module> obsolete = collectObsoleteModules();
     if (obsolete.isEmpty()) return;
 
-    MavenProjectsManager.getInstance(myProject).setUserModules(obsolete);
+    MavenProjectsManager.getInstance(myProject).setRegularModules(obsolete);
 
     String formatted = StringUtil.join(obsolete, new Function<Module, String>() {
       public String fun(Module m) {
@@ -79,9 +79,9 @@ public class MavenProjectConfigurator {
 
   private List<Module> collectObsoleteModules() {
     final List<Module> linkedModules = new ArrayList<Module>();
-    myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
-      public void visit(MavenProjectModel.Node node) {
-        Module m = node.getModule();
+    myProjectModel.visit(new MavenProjectModelManager.SimpleVisitor() {
+      public void visit(MavenProjectModel node) {
+        Module m = node.getIdeaModule();
         if (m != null) linkedModules.add(m);
       }
     });
@@ -92,7 +92,7 @@ public class MavenProjectConfigurator {
 
     List<Module> obsolete = new ArrayList<Module>();
     for (Module each : remainingModules) {
-      if (MavenProjectsManager.getInstance(myProject).isImportedModule(each)) {
+      if (MavenProjectsManager.getInstance(myProject).isMavenizedModule(each)) {
         obsolete.add(each);
       }
     }
@@ -101,49 +101,49 @@ public class MavenProjectConfigurator {
 
   private void configModules() {
     // we must preserve the natural order.
-    final LinkedHashMap<MavenProjectModel.Node, Module> modules = new LinkedHashMap<MavenProjectModel.Node, Module>();
+    final LinkedHashMap<MavenProjectModel, Module> modules = new LinkedHashMap<MavenProjectModel, Module>();
 
-    myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
-      public void visit(MavenProjectModel.Node node) {
+    myProjectModel.visit(new MavenProjectModelManager.SimpleVisitor() {
+      public void visit(MavenProjectModel node) {
         Module m = createModule(node);
         modules.put(node, m);
       }
     });
 
     LinkedHashMap<Module, ModifiableRootModel> rootModels = new LinkedHashMap<Module, ModifiableRootModel>();
-    for (Map.Entry<MavenProjectModel.Node, Module> each : modules.entrySet()) {
+    for (Map.Entry<MavenProjectModel, Module> each : modules.entrySet()) {
       ModifiableRootModel model = createModuleConfigurator(each.getValue(), each.getKey()).config();
       rootModels.put(each.getValue(), model);
     }
 
 
-    for (Map.Entry<MavenProjectModel.Node, Module> each : modules.entrySet()) {
+    for (Map.Entry<MavenProjectModel, Module> each : modules.entrySet()) {
       createModuleConfigurator(each.getValue(), each.getKey()).preConfigFacets(rootModels.get(each.getValue()));
     }
 
-    for (Map.Entry<MavenProjectModel.Node, Module> each : modules.entrySet()) {
+    for (Map.Entry<MavenProjectModel, Module> each : modules.entrySet()) {
       createModuleConfigurator(each.getValue(), each.getKey()).configFacets(rootModels.get(each.getValue()));
     }
 
     myRootModelsToCommit.addAll(rootModels.values());
 
-    MavenProjectsManager.getInstance(myProject).setImportedModules(new ArrayList<Module>(modules.values()));
+    MavenProjectsManager.getInstance(myProject).setMavenizedModules(new ArrayList<Module>(modules.values()));
   }
 
-  private Module createModule(MavenProjectModel.Node node) {
-    Module module = node.getModule();
+  private Module createModule(MavenProjectModel node) {
+    Module module = node.getIdeaModule();
     if (module == null) {
       String path = node.getModuleFilePath();
       // for some reason newModule opens the existing iml file, so we
       // have to remove it beforehand.
       removeExistingIml(path);
       module = myModuleModel.newModule(path, StdModuleTypes.JAVA);
-      node.setModule(module);
+      node.setIdeaModule(module);
     }
     return module;
   }
 
-  private MavenModuleConfigurator createModuleConfigurator(Module module, MavenProjectModel.Node mavenProject) {
+  private MavenModuleConfigurator createModuleConfigurator(Module module, MavenProjectModel mavenProject) {
     return new MavenModuleConfigurator(myModuleModel, myProjectModel, mySettings, module, mavenProject);
   }
 
@@ -164,10 +164,10 @@ public class MavenProjectConfigurator {
 
     final boolean createTopLevelGroup = myProjectModel.getRootProjects().size() > 1;
 
-    myProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
+    myProjectModel.visit(new MavenProjectModelManager.SimpleVisitor() {
       int depth = 0;
 
-      public void visit(MavenProjectModel.Node node) {
+      public void visit(MavenProjectModel node) {
         depth++;
 
         String name = node.getModuleName();
@@ -180,15 +180,15 @@ public class MavenProjectConfigurator {
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
       }
 
-      public void leave(MavenProjectModel.Node node) {
+      public void leave(MavenProjectModel node) {
         if (shouldCreateGroup(node)) {
           groups.pop();
         }
         depth--;
       }
 
-      private boolean shouldCreateGroup(MavenProjectModel.Node node) {
-        return !node.getSubProjects().isEmpty() && (createTopLevelGroup || depth > 1);
+      private boolean shouldCreateGroup(MavenProjectModel node) {
+        return !node.getModules().isEmpty() && (createTopLevelGroup || depth > 1);
       }
     });
   }

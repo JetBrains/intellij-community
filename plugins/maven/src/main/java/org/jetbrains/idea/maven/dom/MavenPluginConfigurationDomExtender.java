@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
 import org.jetbrains.idea.maven.dom.plugin.Mojo;
 import org.jetbrains.idea.maven.dom.plugin.Parameter;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
+import org.jetbrains.idea.maven.repository.MavenPluginInfoReader;
 
 import java.util.*;
 
@@ -69,7 +70,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     if (pluginFile == null) return null;
 
     VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);
-    return pluginJarRoot.findFileByRelativePath(MavenPluginsRepository.MAVEN_PLUGIN_DESCRIPTOR);
+    return pluginJarRoot.findFileByRelativePath(MavenPluginInfoReader.MAVEN_PLUGIN_DESCRIPTOR);
   }
 
   private MavenPluginModel getMavenPluginElement(Project p, VirtualFile pluginXml) {

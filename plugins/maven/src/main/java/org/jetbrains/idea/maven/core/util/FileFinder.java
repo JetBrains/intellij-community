@@ -7,16 +7,16 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.Constants;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
  */
 public class FileFinder {
-  public static Collection<VirtualFile> findPomFiles(VirtualFile[] roots,
-                                                     boolean lookForNested,
-                                                     ProgressIndicator indicator,
-                                                     Collection<VirtualFile> result) {
+  public static List<VirtualFile> findPomFiles(VirtualFile[] roots,
+                                               boolean lookForNested,
+                                               ProgressIndicator indicator,
+                                               List<VirtualFile> result) {
     for (VirtualFile f : roots) {
       if (indicator.isCanceled()) break;
       indicator.setText2(f.getPath());
@@ -25,7 +25,8 @@ public class FileFinder {
         if (lookForNested) {
           findPomFiles(f.getChildren(), lookForNested, indicator, result);
         }
-      } else {
+      }
+      else {
         if (f.getName().equalsIgnoreCase(Constants.POM_XML)) {
           result.add(f);
         }
@@ -40,7 +41,7 @@ public class FileFinder {
       @SuppressWarnings({"ConstantConditions"})
       public VirtualFile compute() {
         final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-        if (dir != null ) {
+        if (dir != null) {
           dir.refresh(false, true);
         }
         return dir;

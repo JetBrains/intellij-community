@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.repository;
 
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
 
@@ -33,26 +34,7 @@ public class MavenPluginInfo {
 
     for (Element mojoElement : r.getChildren(mojosElement, "mojo")) {
       String goal = r.getChildText(mojoElement, "goal");
-      List<ParameterInfo> params = readParameterInfos(r, mojoElement);
-
-      result.put(goal, new Mojo(goal, params));
-    }
-
-    return result;
-  }
-
-  private List<ParameterInfo> readParameterInfos(JDOMReader r, Element mojoElement) {
-    Element paramsElement = r.getChild(mojoElement, "parameters");
-    if (paramsElement == null) return Collections.emptyList();
-
-    List<ParameterInfo> result = new ArrayList<ParameterInfo>();
-    for (Element paramElement : r.getChildren(paramsElement, "parameter")) {
-      String required = r.getChildText(paramElement, "required");
-      if (required.equals("true")) continue;
-
-      String name = r.getChildText(paramElement, "name");
-      String desc = r.getChildText(paramElement, "description");
-      result.add(new ParameterInfo(name, desc));
+      result.put(goal, new Mojo(goal));
     }
 
     return result;
@@ -86,9 +68,8 @@ public class MavenPluginInfo {
     private String myGoal;
     private List<ParameterInfo> myParameterInfos;
 
-    private Mojo(String goal, List<ParameterInfo> parameterInfos) {
+    private Mojo(String goal) {
       myGoal = goal;
-      myParameterInfos = parameterInfos;
     }
 
     public String getGoal() {
@@ -97,35 +78,6 @@ public class MavenPluginInfo {
 
     public String getQualifiedGoal() {
       return myGoalPrefix + ":" + myGoal;
-    }
-
-    public List<ParameterInfo> getParameterInfos() {
-      return myParameterInfos;
-    }
-
-    public ParameterInfo findParameterInfo(String name) {
-      for (ParameterInfo i : myParameterInfos) {
-        if (i.getName().equals(name)) return i;
-      }
-      return null;
-    }
-  }
-
-  public static class ParameterInfo {
-    private String myName;
-    private String myDescription;
-
-    public ParameterInfo(String name, String description) {
-      myName = name;
-      myDescription = description;
-    }
-
-    public String getDescription() {
-      return myDescription;
-    }
-
-    public String getName() {
-      return myName;
     }
   }
 }

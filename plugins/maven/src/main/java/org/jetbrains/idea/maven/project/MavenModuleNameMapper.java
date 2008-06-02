@@ -10,16 +10,16 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleNameMapper {
-  public static void map(MavenProjectModel mavenProjectModel, String moduleDir) {
+  public static void map(MavenProjectModelManager mavenProjectModel, String moduleDir) {
     resolveModuleNames(mavenProjectModel);
     resolveModulePaths(mavenProjectModel, moduleDir);
   }
 
-  private static void resolveModuleNames(final MavenProjectModel model) {
-    for (MavenProjectModel.Node each : model.getProjects()) {
+  private static void resolveModuleNames(final MavenProjectModelManager model) {
+    for (MavenProjectModel each : model.getProjects()) {
       String name;
-      if (each.getModule() != null) {
-        name = each.getModule().getName();
+      if (each.getIdeaModule() != null) {
+        name = each.getIdeaModule().getName();
       }
       else if (each.isValid()) {
         name = each.getMavenId().artifactId;
@@ -32,7 +32,7 @@ public class MavenModuleNameMapper {
 
     Map<String, Integer> counts = collectNamesCounts(model);
 
-    for (MavenProjectModel.Node each : model.getProjects()) {
+    for (MavenProjectModel each : model.getProjects()) {
       if (!each.isValid()) continue;
 
       String name = each.getModuleName();
@@ -41,11 +41,11 @@ public class MavenModuleNameMapper {
       }
     }
 
-    for (MavenProjectModel.Node each : model.getProjects()) {
-      List<MavenProjectModel.Node> withSameName = getProjectsWithName(model, each.getModuleName());
+    for (MavenProjectModel each : model.getProjects()) {
+      List<MavenProjectModel> withSameName = getProjectsWithName(model, each.getModuleName());
       if (withSameName.size() > 1) {
         int i = 1;
-        for (MavenProjectModel.Node eachWithSameName : withSameName) {
+        for (MavenProjectModel eachWithSameName : withSameName) {
           String name = eachWithSameName.getModuleName();
           eachWithSameName.setModuleName(name + " (" + i + ")");
           i++;
@@ -54,10 +54,10 @@ public class MavenModuleNameMapper {
     }
   }
 
-  private static Map<String, Integer> collectNamesCounts(MavenProjectModel model) {
+  private static Map<String, Integer> collectNamesCounts(MavenProjectModelManager model) {
     Map<String, Integer> result = new HashMap<String, Integer>();
 
-    for (MavenProjectModel.Node each : model.getProjects()) {
+    for (MavenProjectModel each : model.getProjects()) {
       String name = each.getModuleName();
       Integer count = result.get(name);
       if (count == null) count = 0;
@@ -68,25 +68,25 @@ public class MavenModuleNameMapper {
     return result;
   }
 
-  private static List<MavenProjectModel.Node> getProjectsWithName(MavenProjectModel model, String name) {
-    List<MavenProjectModel.Node> result = new ArrayList<MavenProjectModel.Node>();
-    for (MavenProjectModel.Node each : model.getProjects()) {
+  private static List<MavenProjectModel> getProjectsWithName(MavenProjectModelManager model, String name) {
+    List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
+    for (MavenProjectModel each : model.getProjects()) {
       if (each.getModuleName().equals(name)) result.add(each);
     }
     return result;
   }
 
 
-  private static void resolveModulePaths(final MavenProjectModel mavenProjectModel, final String dedicatedModuleDir) {
-    mavenProjectModel.visit(new MavenProjectModel.PlainNodeVisitor() {
-      public void visit(final MavenProjectModel.Node node) {
-        final Module module = node.getModule();
+  private static void resolveModulePaths(final MavenProjectModelManager mavenProjectModel, final String dedicatedModuleDir) {
+    mavenProjectModel.visit(new MavenProjectModelManager.SimpleVisitor() {
+      public void visit(final MavenProjectModel node) {
+        final Module module = node.getIdeaModule();
         node.setModuleFilePath(module != null ? module.getModuleFilePath() : generateModulePath(node, dedicatedModuleDir));
       }
     });
   }
 
-  private static String generateModulePath(MavenProjectModel.Node node, String dedicatedModuleDir) {
+  private static String generateModulePath(MavenProjectModel node, String dedicatedModuleDir) {
     return new File(StringUtil.isEmptyOrSpaces(dedicatedModuleDir) ? node.getDirectory() : dedicatedModuleDir,
                     node.getModuleName() + Constants.IML_EXT).getPath();
   }

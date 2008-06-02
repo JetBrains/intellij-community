@@ -38,13 +38,13 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     tree.setShowsRootHandles(true);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    final PopupPomTreeStructure treeStructure = new PopupPomTreeStructure(project);
+    final PopupMavenTreeStructure treeStructure = new PopupMavenTreeStructure(project);
 
     final SimpleTreeBuilder treeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), treeStructure, null);
     treeBuilder.initRoot();
     Disposer.register(project, treeBuilder);
 
-    final PomTreeStructure.GoalNode goalNode = treeStructure.init(pomPath, goal);
+    final MavenTreeStructure.GoalNode goalNode = treeStructure.init(pomPath, goal);
 
     treeBuilder.updateFromRoot(true);
     tree.expandPath(new TreePath(tree.getModel().getRoot()));
@@ -68,9 +68,9 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     super.doOKAction();
 
     SimpleNode node = tree.getNodeFor(tree.getSelectionPath());
-    if (node instanceof PomTreeStructure.GoalNode) {
-      final PomTreeStructure.GoalNode goalNode = (PomTreeStructure.GoalNode)node;
-      pomPath = goalNode.getParent(PomTreeStructure.PomNode.class).getProjectNode().getPath();
+    if (node instanceof MavenTreeStructure.GoalNode) {
+      final MavenTreeStructure.GoalNode goalNode = (MavenTreeStructure.GoalNode)node;
+      pomPath = goalNode.getParent(MavenTreeStructure.PomNode.class).getMavenProjectModel().getPath();
       goal = goalNode.getGoal();
     }
   }
@@ -83,11 +83,11 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     return goal;
   }
 
-  private class PopupPomTreeStructure extends PomTreeStructure {
+  private class PopupMavenTreeStructure extends MavenTreeStructure {
 
     private PomTreeViewSettings myTreeViewSettings;
 
-    public PopupPomTreeStructure(final Project project) {
+    public PopupMavenTreeStructure(final Project project) {
       super(project,
             MavenProjectsManager.getInstance(project),
             MavenPluginsRepository.getInstance(project),
@@ -109,7 +109,7 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     @Nullable
     GoalNode init(final String pomPath, final String goalName) {
       GoalNode goalNode = null;
-      for (MavenProjectModel.Node each : myProjectsManager.getExistingProjects()) {
+      for (MavenProjectModel each : myProjectsManager.getProjects()) {
         final PomNode pomNode = new PomNode(each);
         root.addToStructure(pomNode);
 

@@ -12,7 +12,6 @@ import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
 import org.jetbrains.idea.maven.web.FacetImporter;
@@ -22,18 +21,18 @@ import java.util.regex.Pattern;
 
 public class MavenModuleConfigurator {
   private ModifiableModuleModel myModuleModel;
-  private MavenProjectModel myMavenModel;
+  private MavenProjectModelManager myMavenModel;
   private MavenImporterSettings mySettings;
   private Pattern myIgnorePatternCache;
   private Module myModule;
-  private MavenProjectModel.Node myMavenProject;
+  private MavenProjectModel myMavenProject;
   private RootModelAdapter myModel;
 
   public MavenModuleConfigurator(ModifiableModuleModel moduleModel,
-                                 MavenProjectModel mavenModel,
+                                 MavenProjectModelManager mavenModel,
                                  MavenImporterSettings settings,
                                  Module module,
-                                 MavenProjectModel.Node mavenProject) {
+                                 MavenProjectModel mavenProject) {
     myModuleModel = moduleModel;
     myMavenModel = mavenModel;
     mySettings = settings;
@@ -80,7 +79,7 @@ public class MavenModuleConfigurator {
       if (isIgnored(id)) continue;
 
       boolean isExportable = myMavenProject.isExportableDependency(artifact);
-      MavenProjectModel.Node p = myMavenModel.findProject(new ProjectId(artifact));
+      MavenProjectModel p = myMavenModel.findProject(artifact);
       if (p != null) {
         myModel.createModuleDependency(p.getModuleName(), isExportable);
       }

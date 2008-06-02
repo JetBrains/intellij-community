@@ -15,12 +15,9 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.navigator.PomTreeStructure;
+import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
-import org.jetbrains.idea.maven.project.CanceledException;
-import org.jetbrains.idea.maven.project.MavenException;
-import org.jetbrains.idea.maven.project.MavenImporterSettings;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
@@ -35,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenProjectModel myProjectModel;
+  protected MavenProjectModelManager myProjectModel;
   protected MavenProjectsManager myMavenProjectsManager;
   private List<String> myProfilesList;
 
@@ -56,14 +53,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return myMavenProjectsManager.getImporterSettings();
   }
 
-  protected PomTreeStructure.RootNode createMavenTree() {
-    PomTreeStructure s = new PomTreeStructure(myProject,
+  protected MavenTreeStructure.RootNode createMavenTree() {
+    MavenTreeStructure s = new MavenTreeStructure(myProject,
                                               myMavenProjectsManager,
                                               MavenPluginsRepository.getInstance(myProject),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
-        for (MavenProjectModel.Node each : myMavenProjectsManager.getExistingProjects()) {
-          this.root.addUnder(new PomTreeStructure.PomNode(each));
+        for (MavenProjectModel each : myMavenProjectsManager.getProjects()) {
+          this.root.addUnder(new MavenTreeStructure.PomNode(each));
         }
       }
 
@@ -74,7 +71,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       protected void updateTreeFrom(@Nullable SimpleNode node) {
       }
     };
-    return (PomTreeStructure.RootNode)s.getRootElement();
+    return (MavenTreeStructure.RootNode)s.getRootElement();
   }
 
   protected void assertModules(String... expectedNames) {
@@ -314,10 +311,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       myProfilesList = Arrays.asList(profiles);
 
-      myMavenProjectsManager.setOriginalFiles(files);
-      myMavenProjectsManager.setActiveProfiles(files.get(0), myProfilesList);
+      myMavenProjectsManager.setManagedFiles(files);
+      myMavenProjectsManager.setActiveProfiles(myProfilesList);
       myMavenProjectsManager.reimport();
-      myProjectModel = myMavenProjectsManager.getMavenProjectModel();
+      myProjectModel = myMavenProjectsManager.getMavenProjectModelManager();
 
       if (shouldResolve()) resolveProject();
     }

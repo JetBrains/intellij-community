@@ -5,7 +5,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -17,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
+import com.intellij.util.Function;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectModelManager;
+import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -37,14 +39,13 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.Collection;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenProjectNavigator extends PomTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.navigator.MavenProjectNavigator");
+public class MavenProjectNavigator extends MavenTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
   private boolean isInitialized = false;
 
   public static MavenProjectNavigator getInstance(Project project) {
@@ -63,12 +64,14 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
   private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
 
 
-
-  public MavenProjectNavigator(final Project project, MavenProjectsManager projectsManager, MavenPluginsRepository repository, MavenEventsHandler eventsHandler) {
+  public MavenProjectNavigator(final Project project,
+                               MavenProjectsManager projectsManager,
+                               MavenPluginsRepository repository,
+                               MavenEventsHandler eventsHandler) {
     super(project, projectsManager, repository, eventsHandler);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    isInitialized= true;
+    isInitialized = true;
 
     tree = new SimpleTree() {
       private JLabel myLabel = new JLabel(ProjectBundle.message("maven.please.reimport"));
@@ -77,7 +80,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        if (MavenProjectsManager.getInstance(project).isMavenProject()) return;
+        if (MavenProjectsManager.getInstance(project).isMavenizedProject()) return;
 
         myLabel.setFont(getFont());
         myLabel.setBackground(getBackground());
@@ -111,13 +114,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
           Object object = ((DefaultMutableTreeNode)last).getUserObject();
           if (object instanceof PomNode) {
             PomNode pomNode = (PomNode)object;
-            List<String> problems = pomNode.getProjectNode().getProblems();
-            if (problems.isEmpty()) {
-              tree.setToolTipText(null);
-            } else {
-              String s = StringUtil.join(problems, "<br>");
-              tree.setToolTipText("<html>" + s + "</html>");
-            }
+            showProblemsToolTip(pomNode);
           }
         }
       }
@@ -129,7 +126,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
 
     myProjectsManager.addListener(new MavenProjectsManager.Listener() {
       public void activate() {
-        for (MavenProjectModel.Node each : myProjectsManager.getExistingProjects()) {
+        for (MavenProjectModel each : myProjectsManager.getProjects()) {
           fileToNode.put(each.getFile(), new PomNode(each));
         }
 
@@ -143,16 +140,16 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
         }
       }
 
-      public void setProfiles(VirtualFile file, @NotNull Collection<String> profiles) {
-        final PomNode pomNode = fileToNode.get(file);
-        if (pomNode != null) {
-          pomNode.setProfiles(profiles);
+      public void profilesChanged(List<String> profiles) {
+        for (PomNode each : fileToNode.values()) {
+          each.setActiveProfiles(profiles);
         }
+        tree.repaint();
       }
     });
 
-    myProjectsManager.getMavenProjectModel().addListener(new MavenProjectModel.Listener() {
-      public void projectAdded(final MavenProjectModel.Node n) {
+    myProjectsManager.getMavenProjectModelManager().addListener(new MavenProjectModelManager.Listener() {
+      public void projectAdded(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final PomNode newNode = new PomNode(n);
@@ -165,7 +162,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
         });
       }
 
-      public void projectUpdated(final MavenProjectModel.Node n) {
+      public void projectUpdated(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final PomNode pomNode = fileToNode.get(n.getFile());
@@ -180,7 +177,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
         });
       }
 
-      public void projectRemoved(final MavenProjectModel.Node n) {
+      public void projectRemoved(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final PomNode pomNode = fileToNode.get(n.getFile());
@@ -194,7 +191,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
       }
     });
 
-    myEventsHandler.addListener( new MavenEventsHandler.Listener() {
+    myEventsHandler.addListener(new MavenEventsHandler.Listener() {
       public void updateShortcuts(@Nullable String actionId) {
         for (PomNode pomNode : fileToNode.values()) {
           pomNode.updateShortcuts(actionId);
@@ -206,7 +203,10 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
 
       SelectMavenGoalDialog dialog;
 
-      public boolean select(final Project project, @Nullable final String pomPath, @Nullable final String goal, @NotNull final String title) {
+      public boolean select(final Project project,
+                            @Nullable final String pomPath,
+                            @Nullable final String goal,
+                            @NotNull final String title) {
         dialog = new SelectMavenGoalDialog(project, pomPath, goal, title);
         dialog.show();
         return dialog.isOK();
@@ -237,6 +237,24 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
         return ((ProfileNode)userObject).isActive();
       }
     });
+  }
+
+  private void showProblemsToolTip(PomNode pomNode) {
+    List<MavenProjectModelProblem> problems = pomNode.getMavenProjectModel().getProblems();
+    if (problems.isEmpty()) {
+      tree.setToolTipText(null);
+      return;
+    }
+
+    String s = StringUtil.join(problems, new Function<MavenProjectModelProblem, String>() {
+      public String fun(MavenProjectModelProblem each) {
+        URL imageUrl = each.isCritical()
+                        ? getClass().getResource("/images/error.png")
+                        : getClass().getResource("/images/warning.png");
+        return "<img src=\"" + imageUrl + "\"> " + each.getDescription();
+      }
+    }, "<br>");
+    tree.setToolTipText("<html>" + s + "</html>");
   }
 
   public PomTreeViewSettings getTreeViewSettings() {
@@ -275,10 +293,10 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
   public void projectOpened() {
     if (!isInitialized) return;
 
-    final JPanel navigatorPanel = new MavenNavigatorPanel(project, myProjectsManager, tree);
+    final JPanel navigatorPanel = new MavenNavigatorPanel(myProject, myProjectsManager, tree);
 
-    ToolWindow pomToolWindow = ToolWindowManager.getInstance(project)
-      .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, project);
+    ToolWindow pomToolWindow = ToolWindowManager.getInstance(myProject)
+      .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
     pomToolWindow.setIcon(myIcon);
   }
 

@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.repository.MavenPluginInfo;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -34,28 +35,29 @@ import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
 
-public abstract class PomTreeStructure extends SimpleTreeStructure {
-  private static final Icon iconProjectRoot = IconLoader.getIcon("/general/ijLogo.png");
-  private static final Icon iconPom = IconLoader.getIcon("/images/mavenProject.png");
-  private static final Icon iconInvalidPom = IconLoader.getIcon("/images/mavenProjectInvalid.png");
+public abstract class MavenTreeStructure extends SimpleTreeStructure {
+  private static final Icon PROJECT_ROOT_ICON = IconLoader.getIcon("/general/ijLogo.png");
+  private static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
+  private static final Icon MAVEN_PROJECT_WITH_ERRORS_ICON = IconLoader.getIcon("/images/mavenProjectWithErrors.png");
+  private static final Icon MAVEN_PROJECT_WITH_WARNINGS_ICON = IconLoader.getIcon("/images/mavenProjectWithWarnings.png");
 
-  private static final Icon iconProfilesOpen = IconLoader.getIcon("/images/profilesOpen.png");
-  private static final Icon iconProfilesClosed = IconLoader.getIcon("/images/profilesClosed.png");
+  private static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
+  private static final Icon CLOSED_PROFILES_ICON = IconLoader.getIcon("/images/profilesClosed.png");
 
-  private static final Icon iconPhase = IconLoader.getIcon("/images/phase.png");
-  private static final Icon iconPhasesOpen = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon iconPhasesClosed = IconLoader.getIcon("/images/phasesClosed.png");
+  private static final Icon OPEN_PHASES_ICON = IconLoader.getIcon("/images/phasesOpen.png");
+  private static final Icon CLOSED_PHASES_ICON = IconLoader.getIcon("/images/phasesClosed.png");
+  private static final Icon PHASE_ICON = IconLoader.getIcon("/images/phase.png");
 
-  private static final Icon iconPluginsOpen = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon iconPluginsClosed = IconLoader.getIcon("/images/phasesClosed.png");
-  private static final Icon iconPlugin = IconLoader.getIcon("/images/mavenPlugin.png");
-  private static final Icon iconPluginGoal = IconLoader.getIcon("/images/pluginGoal.png");
+  private static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/images/phasesOpen.png");
+  private static final Icon CLOSED_PLUGINS_ICON = IconLoader.getIcon("/images/phasesClosed.png");
+  private static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
+  private static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
 
-  private static final Icon iconModulesOpen = IconLoader.getIcon("/images/nestedPomsOpen.png");
-  private static final Icon iconModulesClosed = IconLoader.getIcon("/images/nestedPomsClosed.png");
+  private static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
+  private static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
 
   final ProjectFileIndex myFileIndex;
-  final Project project;
+  final Project myProject;
 
   protected MavenProjectsManager myProjectsManager;
 
@@ -68,12 +70,12 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   final Collection<String> standardGoals = MavenEmbedderFactory.getStandardGoalsList();
 
   // TODO : update tree after local repository location change
-  public PomTreeStructure(Project project,
-                          MavenProjectsManager cache,
-                          MavenPluginsRepository repository,
-                          final MavenEventsHandler eventsHandler) {
-    this.project = project;
-    myProjectsManager = cache;
+  public MavenTreeStructure(Project project,
+                            MavenProjectsManager projectsManager,
+                            MavenPluginsRepository repository,
+                            MavenEventsHandler eventsHandler) {
+    myProject = project;
+    myProjectsManager = projectsManager;
     myRepository = repository;
     myEventsHandler = eventsHandler;
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -154,7 +156,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     private CustomNode structuralParent;
 
     public CustomNode(CustomNode parent) {
-      super(project);
+      super(parent);
       setStructuralParent(parent);
     }
 
@@ -291,11 +293,11 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     void addToStructure(PomNode pomNode) {
-      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.project)) {
+      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.mavenProjectModel)) {
         return;
       }
       if (getTreeViewSettings().groupByModule) {
-        findModuleNode(myFileIndex.getModuleForFile(pomNode.getProjectNode().getFile())).addUnder(pomNode);
+        findModuleNode(myFileIndex.getModuleForFile(pomNode.getFile())).addUnder(pomNode);
       }
       else {
         addUnder(pomNode);
@@ -443,7 +445,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       else {
         addPlainText(NavigatorBundle.message("node.project.root"));
         addColoredFragment(" " + NavigatorBundle.message("node.project.root.descr"), SimpleTextAttributes.GRAY_ATTRIBUTES);
-        setUniformIcon(iconProjectRoot);
+        setUniformIcon(PROJECT_ROOT_ICON);
       }
     }
 
@@ -470,19 +472,19 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   }
 
   public class PomNode extends ListNode {
-    final private MavenProjectModel.Node project;
+    final private MavenProjectModel mavenProjectModel;
     private String savedPath = "";
     private String actionIdPrefix = "";
 
     private LifecycleNode lifecycleNode;
     private ProfilesNode profilesNode;
-    private PluginsNode  pluginsNode;
+    private PluginsNode pluginsNode;
     public NestedPomsNode modulePomsNode;
     public NestedPomsNode nonModulePomsNode;
 
-    public PomNode(MavenProjectModel.Node project) {
+    public PomNode(MavenProjectModel mavenProjectModel) {
       super(null);
-      this.project = project;
+      this.mavenProjectModel = mavenProjectModel;
 
       lifecycleNode = new LifecycleNode(this);
       profilesNode = new ProfilesNode(this);
@@ -498,7 +500,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public VirtualFile getFile() {
-      return project.getFile();
+      return mavenProjectModel.getFile();
     }
 
     protected void display(DisplayList displayList) {
@@ -532,12 +534,12 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public String getId() {
-      final String name = project.getProjectName();
+      final String name = mavenProjectModel.getProjectName();
       if (!StringUtil.isEmptyOrSpaces(name)) {
         return name;
       }
 
-      final String artifactId = project.getMavenProject().getArtifactId();
+      final String artifactId = mavenProjectModel.getMavenProject().getArtifactId();
       if (!StringUtil.isEmptyOrSpaces(artifactId)) {
         return artifactId;
       }
@@ -545,13 +547,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       return NavigatorBundle.message("node.pom.unnamed");
     }
 
-    public MavenProjectModel.Node getProjectNode() {
-      return project;
+    public MavenProjectModel getMavenProjectModel() {
+      return mavenProjectModel;
     }
 
     private VirtualFile getDirectory() {
       //noinspection ConstantConditions
-      return project.getDirectoryFile();
+      return mavenProjectModel.getDirectoryFile();
     }
 
     public boolean isAncestor(PomNode that) {
@@ -560,12 +562,12 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     @Nullable
     public Navigatable getNavigatable() {
-      return PsiManager.getInstance(PomTreeStructure.this.project).findFile(project.getFile());
+      return PsiManager.getInstance(MavenTreeStructure.this.myProject).findFile(mavenProjectModel.getFile());
     }
 
     private void updateNode() {
       updateText();
-      setUniformIcon(project.getProblems().isEmpty() ? iconPom : iconInvalidPom);
+      setUniformIcon(getProjectIcon());
 
       lifecycleNode.updateGoals();
       createProfileNodes();
@@ -573,9 +575,18 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       regroupNested();
     }
 
+    private Icon getProjectIcon() {
+      List<MavenProjectModelProblem> problems = mavenProjectModel.getProblems();
+      if (problems.isEmpty()) return MAVEN_PROJECT_ICON;
+      for (MavenProjectModelProblem each : problems) {
+        if (each.isCritical()) return MAVEN_PROJECT_WITH_ERRORS_ICON;
+      }
+      return MAVEN_PROJECT_WITH_WARNINGS_ICON;
+    }
+
     private void createPluginsNode() {
       pluginsNode.clear();
-      for (MavenId mavenId : project.getPluginsIds()) {
+      for (MavenId mavenId : mavenProjectModel.getPluginIds()) {
         if (!hasPlugin(mavenId)) {
           pluginsNode.add(new PluginNode(this, mavenId));
         }
@@ -593,13 +604,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void updateText() {
       clearColoredText();
-      if (myProjectsManager.isIgnored(project)) {
+      if (myProjectsManager.isIgnored(mavenProjectModel)) {
         addColoredFragment(getId(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, Color.GRAY));
       }
       else {
         addPlainText(getId());
       }
-      savedPath = project.getFile().getPath();
+      savedPath = mavenProjectModel.getFile().getPath();
       actionIdPrefix = myEventsHandler.getActionId(savedPath, null);
       addColoredFragment(" (" + getDirectory().getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
@@ -649,8 +660,8 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public boolean containsAsModule(PomNode node) {
-      MavenProjectsManager m = MavenProjectsManager.getInstance(PomTreeStructure.this.project);
-      return m.isModuleOf(project, node.project);
+      MavenProjectsManager m = MavenProjectsManager.getInstance(MavenTreeStructure.this.myProject);
+      return m.isModuleOf(mavenProjectModel, node.mavenProjectModel);
     }
 
     public void setIgnored(boolean on) {
@@ -670,13 +681,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void createProfileNodes() {
       profilesNode.clear();
-      for (String id : project.getAllProfiles()) {
+      for (String id : mavenProjectModel.getAllProfiles()) {
         profilesNode.add(id);
       }
-      profilesNode.updateActive(myProjectsManager.getActiveProfiles(project.getFile()), true);
+      profilesNode.updateActive(myProjectsManager.getActiveProfiles(), true);
     }
 
-    public void setProfiles(final Collection<String> profiles) {
+    public void setActiveProfiles(List<String> profiles) {
       profilesNode.updateActive(profiles, false);
       regroupNested();
       createPluginsNode();
@@ -746,7 +757,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     public NestedPomsNode(PomNode parent) {
       super(parent);
-      setIcons(iconModulesClosed, iconModulesOpen);
+      setIcons(CLOSED_MODULES_ICON, OPEN_MODULES_ICON);
     }
 
     boolean isVisible() {
@@ -833,7 +844,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       super(parent);
       this.goal = goal;
       pomNode = parent.pomNode;
-      setUniformIcon(iconPhase);
+      setUniformIcon(PHASE_ICON);
       updateText();
     }
 
@@ -880,7 +891,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public LifecycleNode(PomNode parent) {
       super(parent);
       addPlainText(NavigatorBundle.message("node.lifecycle"));
-      setIcons(iconPhasesClosed, iconPhasesOpen);
+      setIcons(CLOSED_PHASES_ICON, OPEN_PHASES_ICON);
     }
 
     public void updateGoals() {
@@ -908,7 +919,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public ProfilesNode(final PomNode parent) {
       super(parent);
       addPlainText(NavigatorBundle.message("node.profiles"));
-      setIcons(iconProfilesClosed, iconProfilesOpen);
+      setIcons(CLOSED_PROFILES_ICON, OPEN_PROFILES_ICON);
     }
 
     boolean isVisible() {
@@ -978,7 +989,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public PluginsNode(final PomNode parent) {
       super(parent);
       addPlainText(NavigatorBundle.message("node.plugins"));
-      setIcons(iconPluginsClosed, iconPluginsOpen);
+      setIcons(CLOSED_PLUGINS_ICON, OPEN_PLUGINS_ICON);
     }
 
     boolean isVisible() {
@@ -1004,7 +1015,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public PluginNode(PomNode parent, final MavenId id) {
       super(parent);
       myId = id;
-      setUniformIcon(iconPlugin);
+      setUniformIcon(PLUGIN_ICON);
 
       MavenPluginInfo plugin = getRepository().loadPluginInfo(id);
       if (plugin == null) {
@@ -1027,7 +1038,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   class PluginGoalNode extends GoalNode {
     public PluginGoalNode(PluginNode parent, String goal) {
       super(parent, goal);
-      setUniformIcon(iconPluginGoal);
+      setUniformIcon(PLUGIN_GOAL_ICON);
     }
   }
 }

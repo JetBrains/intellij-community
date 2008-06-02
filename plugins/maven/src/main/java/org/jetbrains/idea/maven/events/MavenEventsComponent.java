@@ -19,21 +19,18 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectModelManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -238,11 +235,11 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     if (mavenTask != null) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mavenTask.pomPath);
       if (file != null) {
-        Model model = myProjectsManager.getModel(file);
-        if (model != null) {
+        MavenProjectModel project = myProjectsManager.findProject(file);
+        if (project != null) {
           StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append("'");
-          stringBuilder.append(model.getArtifactId());
+          stringBuilder.append(project.getMavenId().artifactId);
           stringBuilder.append(" ");
           stringBuilder.append(mavenTask.goal);
           stringBuilder.append("'");
@@ -290,7 +287,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   }
 
   private class MyProjectStateListener implements MavenProjectsManager.Listener,
-                                                  MavenProjectModel.Listener {
+                                                  MavenProjectModelManager.Listener {
 
     boolean updateScheduled;
     private final Project myProject;
@@ -304,15 +301,15 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
       requestKeymapUpdate();
     }
 
-    public void projectAdded(MavenProjectModel.Node file) {
+    public void projectAdded(MavenProjectModel file) {
       requestKeymapUpdate();
     }
 
-    public void projectRemoved(MavenProjectModel.Node file) {
+    public void projectRemoved(MavenProjectModel file) {
       requestKeymapUpdate();
     }
 
-    public void projectUpdated(MavenProjectModel.Node file) {
+    public void projectUpdated(MavenProjectModel file) {
       requestKeymapUpdate();
     }
 
@@ -320,7 +317,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
       requestKeymapUpdate();
     }
 
-    public void setProfiles(VirtualFile file, @NotNull Collection<String> profiles) {
+    public void profilesChanged(List<String> profiles) {
       requestKeymapUpdate();
     }
 

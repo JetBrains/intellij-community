@@ -35,7 +35,7 @@ public class MavenIgnoreConfigurable implements Configurable {
     myManager = manager;
 
     myOriginalFiles = new HashSet<VirtualFile>();
-    for (MavenProjectModel.Node each : myManager.getExistingProjects()) {
+    for (MavenProjectModel each : myManager.getProjects()) {
       if (myManager.getIgnoredFlag(each)) {
         myOriginalFiles.add(each.getFile());
       }
@@ -79,7 +79,7 @@ public class MavenIgnoreConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     final List<VirtualFile> marked = myFileChooser.getMarkedElements();
-    for (MavenProjectModel.Node each : myManager.getExistingProjects()) {
+    for (MavenProjectModel each : myManager.getProjects()) {
       myManager.setIgnoredFlag(each, marked.contains(each.getFile()));
     }
 

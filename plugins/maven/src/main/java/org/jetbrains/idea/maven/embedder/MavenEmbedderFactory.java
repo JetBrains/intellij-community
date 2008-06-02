@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
-import org.jetbrains.idea.maven.core.util.ProjectId;
+import org.jetbrains.idea.maven.project.MavenProjectModelManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,9 +46,9 @@ public class MavenEmbedderFactory {
 
   @NonNls private static final String[] standardPhases = {"clean", "compile", "test", "package", "install", "site"};
   @NonNls private static final String[] standardGoals = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
-      "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
-      "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
-      "verify", "install", "site", "deploy"};
+    "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
+    "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
+    "verify", "install", "site", "deploy"};
 
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable final String override) {
@@ -170,13 +169,13 @@ public class MavenEmbedderFactory {
   }
 
   public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings,
-                                                    Map<ProjectId, VirtualFile> projectMapping) {
-    return createEmbedder(settings, new MyCustomizer(projectMapping, false));
+                                                    MavenProjectModelManager modelManager) {
+    return createEmbedder(settings, new MyCustomizer(modelManager, false));
   }
 
   public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings,
-                                                       Map<ProjectId, VirtualFile> projectMapping) {
-    return createEmbedder(settings, new MyCustomizer(projectMapping, true));
+                                                       MavenProjectModelManager modelManager) {
+    return createEmbedder(settings, new MyCustomizer(modelManager, true));
   }
 
   public static MavenEmbedder createEmbedderForExecute(MavenCoreSettings settings) {
@@ -269,24 +268,25 @@ public class MavenEmbedderFactory {
   }
 
   public static class MyCustomizer implements ContainerCustomizer {
-    private Map<ProjectId, VirtualFile> myMapping;
+    private MavenProjectModelManager myModelManager;
     private boolean isOnline;
 
-    public MyCustomizer(Map<ProjectId, VirtualFile> projectMapping, boolean online) {
-      myMapping = projectMapping;
+    public MyCustomizer(MavenProjectModelManager projectMapping, boolean online) {
+      myModelManager = projectMapping;
       isOnline = online;
     }
 
     public void customize(PlexusContainer c) {
-      c.getContext().put(CustomArtifactResolver.MAVEN_PROJECTS_MAPPING_KEY, myMapping);
-
       ComponentDescriptor d;
 
       d = c.getComponentDescriptor(ArtifactFactory.ROLE);
       d.setImplementation(CustomArtifactFactory.class.getName());
 
-      d = c.getComponentDescriptor(ArtifactResolver.ROLE);
-      d.setImplementation(CustomArtifactResolver.class.getName());
+      if (myModelManager != null) {
+        c.getContext().put(CustomArtifactResolver.MAVEN_PROJECT_MODEL_MANAGER, myModelManager);
+        d = c.getComponentDescriptor(ArtifactResolver.ROLE);
+        d.setImplementation(CustomArtifactResolver.class.getName());
+      }
 
       if (isOnline) return;
 

@@ -12,6 +12,6 @@ public class MavenProjectsManagerTest extends MavenTestCase {
                      "<version>1</version>");
 
     // shouldn't throw
-    assertNull(MavenProjectsManager.getInstance(myProject).getModel(myProjectPom));
+    assertNull(MavenProjectsManager.getInstance(myProject).findProject(myProjectPom));
   }
 }

@@ -18,8 +18,8 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.sonatype.nexus.index.ArtifactContext;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -280,8 +280,8 @@ public class MavenIndices {
     Map<String, List<String>> versions = new HashMap<String, List<String>>();
 
     if (index.getKind() == MavenIndex.Kind.PROJECT) {
-      List<MavenProjectModel.Node> projects = MavenProjectsManager.getInstance(project).getExistingProjects();
-      for (MavenProjectModel.Node each : projects) {
+      List<MavenProjectModel> projects = MavenProjectsManager.getInstance(project).getProjects();
+      for (MavenProjectModel each : projects) {
         MavenId id = each.getMavenId();
 
         groupIds.add(id.groupId);

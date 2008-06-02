@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.Constants;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +37,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
     try {
       if (!getBuilder().setSelectedProfiles(new ArrayList<String>())) return false;
 
-      List<MavenProjectModel.Node> projects = getBuilder().getList();
+      List<MavenProjectModel> projects = getBuilder().getList();
       getBuilder().setList(projects);
 
       if (projects.size() != 1) return false;

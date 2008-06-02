@@ -30,6 +30,10 @@ public class MavenProcess {
     if (myIndicator != null) myIndicator.setFraction(value);
   }
 
+  public boolean isCanceled() throws CanceledException {
+    return myIndicator != null && myIndicator.isCanceled();
+  }
+
   public void checkCanceled() throws CanceledException {
     if (myIndicator != null && myIndicator.isCanceled()) throw new CanceledException();
   }
@@ -105,8 +109,8 @@ public class MavenProcess {
       myFinishSemaphore.waitFor();
     }
 
-    public void waitFor() {
-      myFinishSemaphore.waitFor();
+    public boolean waitFor(long timeout) {
+      return myFinishSemaphore.waitFor(timeout);
     }
   }
 

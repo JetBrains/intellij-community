@@ -12,7 +12,8 @@ public class MavenProjectsManagerState {
   public boolean isMavenProject = false;
 
   public List<String> originalFiles = new ArrayList<String>();
-  public List<String> ignoredPathMasks = new ArrayList<String>();
+  public List<String> activeProfiles = new ArrayList<String>();
+
   public Set<String> ignoredFiles = new TreeSet<String>();
-  public Map<String, Collection<String>> activeProfiles = new HashMap<String, Collection<String>>();
+  public List<String> ignoredPathMasks = new ArrayList<String>();
 }

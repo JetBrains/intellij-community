@@ -4,7 +4,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.navigator.PomTreeStructure;
+import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 
 import java.io.File;
 
@@ -49,7 +49,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    PomTreeStructure.RootNode r = createMavenTree();
+    MavenTreeStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
     assertEquals("project", r.pomNodes.get(0).getId());
@@ -198,7 +198,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    PomTreeStructure.RootNode r = createMavenTree();
+    MavenTreeStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
     assertEquals("project", r.pomNodes.get(0).getId());
@@ -235,7 +235,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1");
 
-    PomTreeStructure.RootNode r = createMavenTree();
+    MavenTreeStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
     assertEquals("project", r.pomNodes.get(0).getId());
@@ -271,7 +271,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1");
 
-    PomTreeStructure.RootNode r = createMavenTree();
+    MavenTreeStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
     assertEquals("project", r.pomNodes.get(0).getId());
