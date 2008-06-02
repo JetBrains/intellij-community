@@ -54,6 +54,11 @@ public class LoggerInitializedWithForeignClassInspection
                 "logger.initialized.with.foreign.class.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new Form().getContentPanel();
+    }
+
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new LoggerInitializedWithForeignClassFix((String)infos[0]);
@@ -199,6 +204,10 @@ public class LoggerInitializedWithForeignClassInspection
             final Document factoryDocument =
                     loggerFactoryMethodNameTextField.getDocument();
             factoryDocument.addDocumentListener(factoryListener);
+        }
+
+        public JComponent getContentPanel() {
+            return contentPanel;
         }
     }
 }
