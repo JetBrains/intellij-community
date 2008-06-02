@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.PyClass;
  * @author yole
  */
 public class PySuperClassIndex extends StringStubIndexExtension<PyClass> {
-  public static final StubIndexKey<String, PyClass> KEY = new StubIndexKey<String, PyClass>("Py.class.super");
+  public static final StubIndexKey<String, PyClass> KEY = new StubIndexKey<String, PyClass>("Py.class.super", 8798765461231657889L);
 
   public StubIndexKey<String, PyClass> getKey() {
     return KEY;
