@@ -536,10 +536,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   public void closePopup() {
-    if (myPopupShown) {
-      myPopup.cancel();
-      myPopupShown = false;
-    }
+    myPopup.cancel();
+    myPopupShown = false;
   }
 
   private void showPopup() {
