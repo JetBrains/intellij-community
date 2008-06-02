@@ -1,16 +1,15 @@
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameValuePair;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -147,12 +145,16 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile(problemDescriptor.getPsiElement());
       //correct save settings
       ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
+      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      //TODO lesya
+      /*
       try {
         inspectionProfile.save();
       }
       catch (IOException e) {
         Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
       }
+      */
     }
   }
 }
