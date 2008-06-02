@@ -13,7 +13,6 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Computable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,16 +101,10 @@ public class EncodingManagerImpl extends EncodingManager {
     Charset result = CharsetToolkit.getDefaultSystemCharset();
     Application application = ApplicationManager.getApplication();
     if (application != null) {
-      final ProjectManager projectManager = ProjectManager.getInstance();
-      if (projectManager != null) {
-        EncodingProjectManager encodingManager = ApplicationManager.getApplication().runReadAction(new Computable<EncodingProjectManager>() {
-          public EncodingProjectManager compute() {
-            return EncodingProjectManager.getInstance(projectManager.getDefaultProject());
-          }
-        });
-        if (encodingManager != null) {
-          result = encodingManager.getDefaultCharset();
-        }
+      ProjectManager projectManager = ProjectManager.getInstance();
+      EncodingProjectManager encodingManager = projectManager == null ? null : EncodingProjectManager.getInstance(projectManager.getDefaultProject());
+      if (encodingManager != null) {
+        result = encodingManager.getDefaultCharset();
       }
     }
 

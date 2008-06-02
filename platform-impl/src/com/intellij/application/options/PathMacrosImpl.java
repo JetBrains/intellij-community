@@ -9,9 +9,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -26,6 +29,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
   private final Map<String,String> myMacrosDescriptions = new HashMap<String, String>();
+  private JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
 
   @NonNls
   public static final String MACRO_ELEMENT = "macro";
@@ -70,13 +74,23 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public Set<String> getUserMacroNames() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myMacros.keySet();
+    myLock.readLock().lock();
+    try {
+      return myMacros.keySet();
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
   }
 
   public Set<String> getSystemMacroNames() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return ourSystemMacroNames;
+    try {
+      myLock.readLock().lock();
+      return ourSystemMacroNames;
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
   }
 
   public Set<String> getAllMacroNames() {
@@ -89,8 +103,13 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public String getValue(String name) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myMacros.get(name);
+    try {
+      myLock.readLock().lock();
+      return myMacros.get(name);
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
   }
 
   @Nullable
@@ -99,24 +118,37 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public void removeAllMacros() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myMacros.clear();
-    myMacrosDescriptions.clear();
+    try {
+      myLock.writeLock().lock();
+      myMacros.clear();
+      myMacrosDescriptions.clear();
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
   }
 
-  public void setMacro(String name, String value, @Nullable String description) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    LOG.assertTrue(name != null);
-    LOG.assertTrue(value != null);
-    myMacros.put(name, value);
-    myMacrosDescriptions.put(name, description);
+  public void setMacro(@NotNull String name, @NotNull String value, @Nullable String description) {
+    try {
+      myLock.writeLock().lock();
+      myMacros.put(name, value);
+      myMacrosDescriptions.put(name, description);
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
   }
 
   public void removeMacro(String name) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final String value = myMacros.remove(name);
-    myMacrosDescriptions.remove(name);
-    LOG.assertTrue(value != null);
+    try {
+      myLock.writeLock().lock();
+      final String value = myMacros.remove(name);
+      myMacrosDescriptions.remove(name);
+      LOG.assertTrue(value != null);
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
