@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -219,9 +220,8 @@ public class SingleInspectionProfilePanel extends JPanel {
                                InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
       return null;
     }
-    try {
-      InspectionProfileImpl inspectionProfile =
-        new InspectionProfileImpl(profileName, profileManager.createUniqueProfileFile(profileName), InspectionToolRegistrar.getInstance(), profileManager);
+    InspectionProfileImpl inspectionProfile =
+        new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
       final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
       if (selectedProfile != null) { //can be null for default or empty profile
         profileModifiableModel.copyFrom(selectedProfile);
@@ -238,11 +238,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       profileModifiableModel.setName(profileName);
       profileModifiableModel.setLocal(isLocal);
       return profileModifiableModel;
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
   }
 
   public void filterTree(String filter) {
@@ -805,12 +800,16 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile != null && getSavedProfile() != null) {
       ModifiableModel profile = mySelectedProfile.getParentProfile().getModifiableModel();
       ((InspectionProfileImpl)profile).getExpandedNodes().saveVisibleState(myTree);
+      //TODO lesya
+      InspectionProfileManager.getInstance().fireProfileChanged(profile);
+      /*
       try {
         profile.save();
       }
       catch (IOException e) {
         LOG.error(e);
       }
+      */
       profile.getProfileManager().updateProfile(profile);
     }
     myAlarm.cancelAllRequests();
@@ -819,7 +818,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private InspectionProfile getSavedProfile() {
-    return (InspectionProfile)mySelectedProfile.getProfileManager().getProfiles().get(mySelectedProfile.getName());
+    return (InspectionProfile)mySelectedProfile.getProfileManager().getProfile(mySelectedProfile.getName(), false);
   }
 
   private JPanel createInspectionProfileSettingsPanel() {

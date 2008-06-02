@@ -1,6 +1,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.LafManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -34,11 +36,8 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class KeymapPanel extends JPanel {
   private QuickListsPanel myQuickListsPanel;
@@ -66,6 +65,7 @@ public class KeymapPanel extends JPanel {
   private TreeExpansionMonitor myTreeExpansionMonitor;
 
   private boolean myQuickListsModified = false;
+  private JButton myExportButton;
 
   public KeymapPanel() {
     setLayout(new BorderLayout());
@@ -120,6 +120,9 @@ public class KeymapPanel extends JPanel {
     myAddKeyboardShortcutButton.setEnabled(false);
     myAddMouseShortcutButton.setEnabled(false);
     myRemoveShortcutButton.setEnabled(false);
+    if (myExportButton != null) {
+      myExportButton.setEnabled(false);
+    }
 
     KeymapImpl selectedKeymap = getSelectedKeymap();
     mySelectedKeymap = selectedKeymap;
@@ -140,11 +143,14 @@ public class KeymapPanel extends JPanel {
     }
     myDisableMnemonicsCheckbox.setSelected(!mySelectedKeymap.areMnemonicsEnabled());
     myDisableMnemonicsCheckbox.setEnabled(mySelectedKeymap.canModify());
-    if(mySelectedKeymap.canModify()) {
+    if(mySelectedKeymap.canModify() && !getSchemesManager().isShared(mySelectedKeymap)) {
       myDeleteButton.setEnabled(true);
       myAddKeyboardShortcutButton.setEnabled(true);
       myAddMouseShortcutButton.setEnabled(true);
       myRemoveShortcutButton.setEnabled(true);
+      if (myExportButton != null) {
+        myExportButton.setEnabled(true);
+      }
     }
 
     myActionsTree.reset(mySelectedKeymap, myQuickListsPanel.getCurrentQuickListIds());
@@ -196,20 +202,68 @@ public class KeymapPanel extends JPanel {
   }
 
   private JPanel createKeymapButtonsPanel() {
-    JPanel panel = new JPanel();
+    final JPanel panel = new JPanel();
     panel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
     panel.setLayout(new GridBagLayout());
     myCopyButton = new JButton(KeyMapBundle.message("copy.keymap.button"));
-    myCopyButton.setMargin(new Insets(2,2,2,2));
+    Insets insets = new Insets(2, 2, 2, 2);
+    myCopyButton.setMargin(insets);
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0);
     panel.add(myCopyButton, gc);
     myResetToDefault = new JButton(CommonBundle.message("button.reset"));
-    myResetToDefault.setMargin(new Insets(2,2,2,2));
+    myResetToDefault.setMargin(insets);
     panel.add(myResetToDefault, gc);
     myDeleteButton = new JButton(KeyMapBundle.message("delete.keymap.button"));
-    myDeleteButton.setMargin(new Insets(2,2,2,2));
+    myDeleteButton.setMargin(insets);
     gc.weightx = 1;
     panel.add(myDeleteButton, gc);
+
+    final SchemesManager<Keymap> schemesManager = getSchemesManager();
+    if (schemesManager.isImportExportAvailable()) {
+      myExportButton = new JButton("Export");
+      myExportButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          Keymap selected = getSelectedKeymap();
+          if (selected != null) {
+            try {
+              schemesManager.exportScheme(selected);
+            }
+            catch (com.intellij.openapi.util.WriteExternalException e1) {
+              //ignore
+            }
+          }
+        }
+      });
+      myExportButton.setMargin(insets);
+
+
+      panel.add(myExportButton, gc);
+
+
+      JButton importButton = new JButton("Import");
+      importButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          SchemesToImportPopup<Keymap> popup = new SchemesToImportPopup<Keymap>(panel){
+            protected void onSchemeSelected(final Keymap scheme) {
+              if (scheme != null) {
+                ((KeymapImpl)scheme).setCanModify(false);
+                myKeymapListModel.addElement(scheme);
+                myKeymapList.setSelectedItem(scheme);
+                processCurrentKeymapChanged();
+
+              }
+
+            }
+          };
+          popup.show(schemesManager, collectKeymapNames(myKeymapListModel));
+
+        }
+      });
+
+      importButton.setMargin(insets);
+      panel.add(importButton,gc);
+    }
+
 
     myCopyButton.addActionListener(
       new ActionListener() {
@@ -235,6 +289,19 @@ public class KeymapPanel extends JPanel {
     );
 
     return panel;
+  }
+
+  private static Collection<String> collectKeymapNames(final DefaultComboBoxModel list) {
+    HashSet<String> names = new HashSet<String>();
+    for (int i = 0; i < list.getSize(); i++) {
+      names.add(((Keymap)list.getElementAt(i)).getName());
+
+    }
+    return names;
+  }
+
+  private SchemesManager<Keymap> getSchemesManager() {
+    return ((KeymapManagerEx)KeymapManager.getInstance()).getSchemesManager();
   }
 
   private JPanel createKeymapSettingsPanel() {
@@ -813,13 +880,6 @@ public class KeymapPanel extends JPanel {
       }
     }
     keymapManager.setActiveKeymap(mySelectedKeymap);
-    try {
-      keymapManager.save();
-    }
-    catch (IOException e) {
-      throw new ConfigurationException(e.getMessage());
-    }
-
     myQuickListsPanel.apply();
   }
 

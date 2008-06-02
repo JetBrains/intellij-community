@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ import java.util.List;
  * Manages the relationship between filenames and {@link FileType} instances.
  */
 
-public abstract class FileTypeManager implements SettingsSavingComponent {
+public abstract class FileTypeManager{
   /**
    * Returns the singleton instance of the FileTypeManager component.
    *

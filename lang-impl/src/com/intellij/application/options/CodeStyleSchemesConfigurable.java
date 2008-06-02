@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.GlassPanel;
@@ -20,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +44,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
   private JPanel myRootPanel;
   private GlassPanel myGlassPanel;
   private String myOption = null;
+  private JButton myExportButton;
 
   private static class SettingsStack extends JPanel {
     private CardLayout myLayout;
@@ -78,8 +81,8 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
 
     public void addScheme(CodeStyleScheme scheme) {
       CodeStyleSettings settings = scheme.getCodeStyleSettings();
-      if (scheme.isDefault()) {
-        settings = (CodeStyleSettings)settings.clone();
+      if (cannotBeModified(scheme)) {
+        settings = settings.clone();
       }
       final CodeStyleSettingsPanel settingsPanel = new CodeStyleSettingsPanel(settings);
       add(scheme.getName(), settingsPanel);
@@ -177,6 +180,10 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     public CodeStyleSettingsPanel getSettingsPanel(CodeStyleScheme defaultScheme) {
       return mySchemes.get(defaultScheme.getName());
     }
+
+    public Collection<String> getSchemeNames() {
+      return mySchemes.keySet();
+    }
   }
 
   public boolean isModified() {
@@ -223,13 +230,59 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
                 new GridBagConstraints(3, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                        stdInsets, 0, 0));
 
+    final SchemesManager schemesManager = getSchemesManager();
+    if (schemesManager.isImportExportAvailable()) {
+      myExportButton = new JButton("Export");
+      myExportButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          CodeStyleScheme selected = getSelectedScheme();
+          if (selected != null) {
+            try {
+              schemesManager.exportScheme(selected);
+            }
+            catch (com.intellij.openapi.util.WriteExternalException e1) {
+              //ignore
+            }
+          }
+        }
+      });
+
+
+      myPanel.add(myExportButton,
+                  new GridBagConstraints(4, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                         stdInsets, 0, 0));
+
+
+      JButton importButton = new JButton("Import");
+      importButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          SchemesToImportPopup<CodeStyleScheme> popup = new SchemesToImportPopup<CodeStyleScheme>(myPanel){
+            protected void onSchemeSelected(final CodeStyleScheme scheme) {
+              if (scheme != null) {
+                mySettingsStack.addScheme(scheme);
+                ((DefaultComboBoxModel)myCombo.getModel()).addElement(scheme);
+                myCombo.setSelectedItem(scheme);
+              }
+
+            }
+          };
+          popup.show(schemesManager, mySettingsStack.getSchemeNames());
+
+        }
+      });
+
+      myPanel.add(importButton,
+                  new GridBagConstraints(5, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                         stdInsets, 0, 0));
+    }
+
     myPanel.add(new JPanel(),
-                new GridBagConstraints(4, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                new GridBagConstraints(6, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                        stdInsets, 0, 0));
     // next row
     row++;
     myPanel.add(mySettingsStack,
-                new GridBagConstraints(0, row, 5, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new GridBagConstraints(0, row, 7, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                        stdInsets, 0, 0));
 
     myCombo.addActionListener(new ActionListener() {
@@ -291,6 +344,10 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     return myRootPanel;
   }
 
+  private static SchemesManager getSchemesManager() {
+    return ((CodeStyleSchemesImpl) CodeStyleSchemes.getInstance()).getSchemesManager();
+  }
+
   public String getDisplayName() {
     return ApplicationBundle.message("title.global.code.style");
   }
@@ -330,7 +387,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     }
 
     CodeStyleScheme currentScheme = getSelectedScheme();
-    final boolean isDefaultModified = currentScheme.isDefault() && mySettingsStack.isSchemeModified(currentScheme);
+    final boolean isDefaultModified = cannotBeModified(currentScheme) && mySettingsStack.isSchemeModified(currentScheme);
     mySettingsStack.apply();
     if (isDefaultModified) {
       final CodeStyleScheme defaultScheme = currentScheme;
@@ -343,6 +400,10 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       initCombobox();
     }
     EditorFactory.getInstance().refreshAllEditors();
+  }
+
+  private static boolean cannotBeModified(final CodeStyleScheme currentScheme) {
+    return currentScheme.isDefault() || getSchemesManager().isShared(currentScheme);
   }
 
   private List<CodeStyleScheme> getCurrentSchemes() {
@@ -412,9 +473,12 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     boolean saveAsEnabled = true;
     CodeStyleScheme selected = getSelectedScheme();
     if (selected != null) {
-      deleteEnabled = !selected.isDefault();
+      deleteEnabled = !cannotBeModified(selected);
     }
     myDeleteButton.setEnabled(deleteEnabled);
+    if (myExportButton != null) {
+      myExportButton.setEnabled(deleteEnabled);
+    }
     mySaveAsButton.setEnabled(saveAsEnabled);
   }
 

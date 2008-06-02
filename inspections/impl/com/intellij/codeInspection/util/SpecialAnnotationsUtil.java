@@ -4,7 +4,6 @@
 
 package com.intellij.codeInspection.util;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
@@ -21,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
@@ -34,7 +34,6 @@ import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -153,12 +152,18 @@ public class SpecialAnnotationsUtil {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
     //correct save settings
     ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
+
+    //TODO lesya
+    InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+    /*
     try {
       inspectionProfile.save();
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
     }
+
+    */
   }
 
   public static void createAddToSpecialAnnotationFixes(final PsiModifierListOwner owner, final Processor<String> processor) {

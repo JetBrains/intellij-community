@@ -4,10 +4,10 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -31,11 +30,8 @@ import java.util.Collection;
  * @author MYakovlev
  *         Date: Jul 16, 2002
  */
-public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableApplicationComponent,JDOMExternalizable,
-                                                                      SettingsSavingComponent {
+public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableApplicationComponent,JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl");
-  private HashMap<String, CodeStyleScheme> mySchemes = new HashMap<String, CodeStyleScheme>();   // name -> scheme
-  private CodeStyleScheme myCurrentScheme;
 
   @NonNls private static final String DEFAULT_SCHEME_NAME = "Default";
 
@@ -43,14 +39,14 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   private boolean myIsInitialized = false;
   @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
 
-  private final SchemesManager mySchemesManager;
+  private final SchemesManager<CodeStyleScheme> mySchemesManager;
   private final SchemeProcessor<CodeStyleScheme> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
 
-  public CodeStyleSchemesImpl(SchemesManager schemesManager) {
-    mySchemesManager = schemesManager;
+  public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
+
     myProcessor = new SchemeProcessor<CodeStyleScheme>() {
-      public CodeStyleScheme readScheme(final Document schemeContent, final File file) throws IOException, JDOMException, InvalidDataException {
+      public CodeStyleScheme readScheme(final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
         return CodeStyleSchemeImpl.readScheme(schemeContent);
       }
 
@@ -70,7 +66,17 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
       public boolean shouldBeSaved(final CodeStyleScheme scheme) {
         return !scheme.isDefault();
       }
+
+      public void renameScheme(final String name, final CodeStyleScheme scheme) {
+        ((CodeStyleSchemeImpl)scheme).setName(name);
+      }
+
+      public void initScheme(final CodeStyleScheme scheme) {
+        ((CodeStyleSchemeImpl)scheme).init(CodeStyleSchemesImpl.this);
+      }
     };
+
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, myProcessor, RoamingType.PER_USER);
   }
 
   public String getComponentName() {
@@ -89,16 +95,16 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   public CodeStyleScheme[] getSchemes() {
-    final Collection<CodeStyleScheme> schemes = mySchemes.values();
+    final Collection<CodeStyleScheme> schemes = mySchemesManager.getAllSchemes();
     return schemes.toArray(new CodeStyleScheme[schemes.size()]);
   }
 
   public CodeStyleScheme getCurrentScheme() {
-    return myCurrentScheme;
+    return mySchemesManager.getCurrentScheme();
   }
 
   public void setCurrentScheme(CodeStyleScheme scheme) {
-    myCurrentScheme = scheme;
+    mySchemesManager.setCurrentScheme(scheme);
     CURRENT_SCHEME_NAME = scheme.getName();
   }
 
@@ -138,7 +144,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
       }
       setCurrentScheme(newCurrentScheme);
     }
-    mySchemes.remove(scheme.getName());
+    mySchemesManager.removeScheme(scheme);
   }
 
   public CodeStyleScheme getDefaultScheme() {
@@ -146,19 +152,15 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   public CodeStyleScheme findSchemeByName(String name) {
-    return mySchemes.get(name);
+    return mySchemesManager.findSchemeByName(name);
   }
 
   public void addScheme(CodeStyleScheme scheme) {
-    String name = scheme.getName();
-    if (mySchemes.containsKey(name)) {
-      LOG.error("Not unique scheme name: " + name);
-    }
-    mySchemes.put(name, scheme);
+    mySchemesManager.addNewScheme(scheme, true);
   }
 
   protected void removeScheme(CodeStyleScheme scheme) {
-    mySchemes.remove(scheme.getName());
+    mySchemesManager.removeScheme(scheme);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -169,32 +171,12 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   private void init() {
     if (myIsInitialized) return;
     myIsInitialized = true;
-    mySchemes.clear();
-
-    final Collection<CodeStyleScheme> readSchemes = mySchemesManager.loadSchemes(FILE_SPEC, myProcessor, RoamingType.PER_USER);
-
-    for (CodeStyleScheme scheme : readSchemes) {
-      addScheme(scheme);
-    }
-
-    final CodeStyleScheme[] schemes = getSchemes();
-    for (CodeStyleScheme scheme : schemes) {
-      ((CodeStyleSchemeImpl)scheme).init(this);
-    }
+    mySchemesManager.clearAllSchemes();
+    mySchemesManager.loadSchemes();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public void save() {
-    try {
-      mySchemesManager.saveSchemes(mySchemes.values(), FILE_SPEC, myProcessor,
-                                   RoamingType.PER_USER);
-    }
-    catch (WriteExternalException e) {
-      LOG.debug(e);
-    }
   }
 
   @NotNull
@@ -219,5 +201,9 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
       }
     }
     return directory;
+  }
+
+  public SchemesManager<CodeStyleScheme> getSchemesManager() {
+    return mySchemesManager;
   }
 }

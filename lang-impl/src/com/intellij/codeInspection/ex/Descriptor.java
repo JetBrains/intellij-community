@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public class Descriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
 
 
-  public Descriptor(HighlightDisplayKey key,
+  public Descriptor(@NotNull HighlightDisplayKey key,
                     ModifiableModel inspectionProfile) {
     myText = HighlightDisplayKey.getDisplayNameByKey(key);
     myGroup = InspectionProfileEntry.GENERAL_GROUP_NAME;

@@ -756,4 +756,15 @@ public class FileUtil {
     catch (InterruptedException e) {
     }
   }
+
+  public static void writeToFile(final File file, final byte[] text) throws IOException {
+    OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
+    try {
+      stream.write(text);
+    }
+    finally {
+      stream.close();
+    }
+
+  }
 }

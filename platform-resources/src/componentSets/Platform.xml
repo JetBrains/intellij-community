@@ -115,8 +115,8 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.options.SchemesManager</interface-class>
-      <implementation-class>com.intellij.openapi.options.SchemesManagerImpl</implementation-class>
+      <interface-class>com.intellij.openapi.options.SchemesManagerFactory</interface-class>
+      <implementation-class>com.intellij.openapi.options.SchemesManagerFactoryImpl</implementation-class>
     </component>
   </application-components>
 

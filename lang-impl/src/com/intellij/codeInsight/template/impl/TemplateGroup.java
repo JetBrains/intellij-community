@@ -4,9 +4,10 @@ import com.intellij.openapi.options.Scheme;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 public class TemplateGroup implements Scheme {
-  private final String myName;
+  private String myName;
   private final Collection<TemplateImpl> myTemplates = new ArrayList<TemplateImpl>();
 
   public TemplateGroup(final String name) {
@@ -23,5 +24,22 @@ public class TemplateGroup implements Scheme {
 
   public String getName() {
     return myName;
+  }
+
+  public void setName(final String name) {
+    myName = name;
+  }
+
+  public void removeTemplate(final TemplateImpl template) {
+    for (Iterator templateIterator = myTemplates.iterator(); templateIterator.hasNext();) {
+      TemplateImpl t = (TemplateImpl)templateIterator.next();
+      if (t.getId() != null && t.getKey() != null && t.getId().equals(template.getId()) && t.getKey().equals(template.getKey())) {
+        templateIterator.remove();
+      }
+    }
+  }
+
+  public boolean isEmpty() {
+    return myTemplates.isEmpty();
   }
 }

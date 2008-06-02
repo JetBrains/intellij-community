@@ -2,6 +2,8 @@ package com.intellij.openapi.actionSystem.ex;
 
 
 
+import com.intellij.openapi.options.Scheme;
+
 import org.jdom.Element;
 
 import org.jetbrains.annotations.NonNls;
@@ -16,7 +18,7 @@ import java.util.List;
 
 
 
-public class QuickList {
+public class QuickList implements Scheme {
 
   @NonNls public static final String QUICK_LIST_PREFIX = "QuickList.";
 
@@ -77,6 +79,14 @@ public class QuickList {
   public String getDisplayName() {
 
     return myDisplayName;
+
+  }
+
+
+
+  public String getName() {
+
+    return getDisplayName();
 
   }
 
@@ -193,6 +203,14 @@ public class QuickList {
     }
 
     myActionIds = ids.toArray(new String[ids.size()]);
+
+  }
+
+
+
+  public void setDisplayName(final String name) {
+
+    myDisplayName = name;
 
   }
 

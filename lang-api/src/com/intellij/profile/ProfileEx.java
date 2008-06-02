@@ -21,9 +21,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 /**
  * User: anna
@@ -31,27 +28,21 @@ import java.io.File;
  */
 public class ProfileEx implements Profile {
   public String myName;
-  public File myFile;
   private static final Logger LOG = Logger.getInstance("com.intellij.profile.ProfileEx");
   public boolean myLocal = true;
   protected ProfileManager myProfileMananger;
+
 
   public ProfileEx(String name) {
     myName = name;
   }
 
-  public ProfileEx(final String name, final File file) {
+  public ProfileEx(final String name, final Element element) {
     myName = name;
-    myFile = file;
   }
 
   public String getName() {
     return myName;
-  }
-
-  @Nullable
-  public File getFile() {
-    return myFile;
   }
 
   public void copyFrom(Profile profile) {

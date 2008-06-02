@@ -110,7 +110,7 @@ public class InspectionApplication {
       });
 
       //fetch profile by name from project file (project profiles can be disabled)
-      Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfiles().get(myProfileName);
+      Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myProfileName, false);
 
       //otherwise look for profile file or use default
       if (inspectionProfile == null) {

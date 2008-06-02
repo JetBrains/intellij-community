@@ -122,7 +122,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (myExternalProfile != null) return myExternalProfile;
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-    Profile profile = inspectionProfileManager.getProfiles().get(managerEx.getCurrentProfile());
+    Profile profile = inspectionProfileManager.getProfile(managerEx.getCurrentProfile(), false);
     if (profile == null) {
       profile = InspectionProfileManager.getInstance().getProfile(managerEx.getCurrentProfile());
       if (profile != null) return (InspectionProfile)profile;

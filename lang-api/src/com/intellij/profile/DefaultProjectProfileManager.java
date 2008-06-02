@@ -30,15 +30,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
  * User: anna
  * Date: 30-Nov-2005
  */
-public class DefaultProjectProfileManager extends ProjectProfileManager {
+public abstract class DefaultProjectProfileManager extends ProjectProfileManager {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
 
   @NonNls private static final String PROFILES = "profiles";
@@ -91,8 +89,8 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     return myApplicationProfileManager.getRootProfile().getName();
   }
 
-  public Profile getProfile(@NotNull String name) {
-    return USE_PROJECT_LEVEL_SETTINGS ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name);
+  public Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
+    return USE_PROJECT_LEVEL_SETTINGS ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent);
   }
 
   public void updateProfile(Profile profile) {
@@ -189,9 +187,9 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     return myProfileType;
   }
 
-  public Map<String,Profile> getProfiles() {
+  public Collection<Profile> getProfiles() {
     getProjectProfileImpl();
-    return myProfiles;
+    return myProfiles.values();
   }
 
   public void clearProfileScopeAssignments() {
@@ -228,10 +226,6 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     else {
       myApplicationProfileManager.deleteProfile(name);
     }
-  }
-
-  public File createUniqueProfileFile(final String profileName) throws IOException {
-    return null;
   }
 
   public String getProjectProfile() {
@@ -316,4 +310,5 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       }
     }
   }
+
 }

@@ -16,11 +16,8 @@
 package com.intellij.profile;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * User: anna
@@ -29,7 +26,9 @@ import java.util.Map;
 public interface ProfileManager {
   String getProfileType();
 
-  Map<String,Profile> getProfiles();
+  Collection<Profile> getProfiles();
+
+  Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
 
   Profile getProfile(@NotNull String name);
 
@@ -39,6 +38,4 @@ public interface ProfileManager {
 
   void deleteProfile(String name);
 
-  @Nullable
-  File createUniqueProfileFile(final String profileName) throws IOException;
 }

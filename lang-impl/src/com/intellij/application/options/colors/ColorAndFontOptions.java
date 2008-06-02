@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -143,38 +142,31 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
   }
 
   public void apply() throws ConfigurationException {
-    try {
-      EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
+    EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
-      myColorsManager.removeAllSchemes();
-      for (MyColorScheme scheme : mySchemes.values()) {
-        if (!scheme.isDefault()) {
-          scheme.apply();
-          myColorsManager.addColorsScheme(scheme.getOriginalScheme());
-        }
+    myColorsManager.removeAllSchemes();
+    for (MyColorScheme scheme : mySchemes.values()) {
+      if (!scheme.isDefault()) {
+        scheme.apply();
+        myColorsManager.addColorsScheme(scheme.getOriginalScheme());
       }
-
-      EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
-      myColorsManager.setGlobalScheme(originalScheme);
-
-      myColorsManager.saveAllSchemes();
-
-      EditorFactory.getInstance().refreshAllEditors();
-
-      initAll();
-      myPanel.resetSchemesCombo();
-
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      for (Project openProject : openProjects) {
-        FileStatusManager.getInstance(openProject).fileStatusesChanged();
-        DaemonCodeAnalyzer.getInstance(openProject).restart();
-      }
-
-      myPanel.apply();
     }
-    catch (IOException e) {
-      throw new ConfigurationException(e.getMessage());
+
+    EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
+    myColorsManager.setGlobalScheme(originalScheme);
+
+    EditorFactory.getInstance().refreshAllEditors();
+
+    initAll();
+    myPanel.resetSchemesCombo();
+
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project openProject : openProjects) {
+      FileStatusManager.getInstance(openProject).fileStatusesChanged();
+      DaemonCodeAnalyzer.getInstance(openProject).restart();
     }
+
+    myPanel.apply();
   }
 
   public JComponent createComponent() {

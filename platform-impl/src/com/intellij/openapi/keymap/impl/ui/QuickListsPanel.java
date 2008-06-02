@@ -71,7 +71,7 @@ public class QuickListsPanel extends JPanel {
     QuickListsManager.getInstance().removeAllQuickLists();
     final QuickList[] currentQuickLists = getCurrentQuickListIds();
     for (QuickList quickList : currentQuickLists) {
-      QuickListsManager.getInstance().registerQuickList(quickList, false);
+      QuickListsManager.getInstance().registerQuickList(quickList);
     }
     QuickListsManager.getInstance().registerActions();
   }

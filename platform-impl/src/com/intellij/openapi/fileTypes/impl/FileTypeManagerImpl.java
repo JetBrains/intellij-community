@@ -11,9 +11,8 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PatternUtil;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -44,7 +42,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static final int VERSION = 3;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
-  private SetWithArray myFileTypes = new SetWithArray(new THashSet<FileType>());
   private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
   private final ArrayList<Pattern> myIgnorePatterns = new ArrayList<Pattern>();
 
@@ -72,11 +69,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_EXTENSIONS = "extensions";
   @NonNls private static final String ATTRIBUTE_BINARY = "binary";
   @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
-  @NonNls private static final String XML_EXTENSION = ".xml";
   private final MessageBus myMessageBus;
   private static final Map<String,Pair<FileType,String>> ourStandardFileTypes = new THashMap<String, Pair<FileType, String>>();
   @NonNls private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
-  private final SchemesManager mySchemesManager;
+  private final SchemesManager<FileType> mySchemesManager;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
 
   static {
@@ -94,8 +90,54 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Constructor
   // -------------------------------------------------------------------------
 
-  public FileTypeManagerImpl(MessageBus bus, SchemesManager schemesManager) {
-    mySchemesManager = schemesManager;
+  public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new SchemeProcessor<FileType>() {
+      public FileType readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
+        if (document == null) {
+          throw new InvalidDataException();
+        }
+        Element root = document.getRootElement();
+        if (root == null || !ELEMENT_FILETYPE.equals(root.getName())) {
+          throw new InvalidDataException();
+        }
+        return loadFileType(root, false);
+
+      }
+
+      public boolean shouldBeSaved(final FileType fileType) {
+        if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) return false;
+        if (myDefaultTypes.contains(fileType) && !isDefaultModified(fileType)) return false;
+        return true;
+
+      }
+
+      public void renameScheme(final String name, final FileType scheme) {
+        throw new RuntimeException("Not implemented yet");
+      }
+
+      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        LOG.debug(e);
+      }
+
+      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
+        LOG.debug(e);
+      }
+
+      public Document writeScheme(final FileType fileType) throws WriteExternalException {
+        Element root = new Element(ELEMENT_FILETYPE);
+
+        writeHeader(root, fileType);
+
+        ((JDOMExternalizable)fileType).writeExternal(root);
+
+        return new Document(root);
+
+      }
+
+      public void initScheme(final FileType scheme) {
+
+      }
+    }, RoamingType.PER_USER);
     for (final Pair<FileType, String> pair : ourStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.first, parse(pair.second));
     }
@@ -128,16 +170,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void initComponent() {
-  }
-
-  public void save() {
-    try {
-      saveAllFileTypes();
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(FileTypesBundle.message("filetype.settings.cannot.save.error", e.getLocalizedMessage()),
-                               FileTypesBundle.message("filetype.settings.cannot.save.title"));
-    }
   }
 
   // -------------------------------------------------------------------------
@@ -190,7 +222,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private void unregisterFileTypeWithoutNotification(FileType fileType) {
     removeAllAssociations(fileType);
-    myFileTypes.remove(fileType);
+    mySchemesManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
       final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
       mySpecialFileTypes.remove(fakeFileType);
@@ -199,7 +231,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public FileType[] getRegisteredFileTypes() {
-    return myFileTypes.toArray();
+    Collection<FileType> fileTypes = mySchemesManager.getAllSchemes();
+    return fileTypes.toArray(new FileType[fileTypes.size()]);
   }
 
   @NotNull
@@ -323,19 +356,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       connection.disconnect();
     }
   }
-
-  private void saveAllFileTypes() throws IOException {
-
-    final List<FileType> fileTypes = Arrays.asList(myFileTypes.toArray());
-    try {
-      mySchemesManager.saveSchemes(fileTypes, FILE_SPEC,createSchemeProcessor(new boolean[]{false}), RoamingType.PER_USER);
-    }
-    catch (WriteExternalException e) {
-      LOG.debug(e);
-    }
-
-  }
-
 
 
   @SuppressWarnings({"SimplifiableIfStatement"})
@@ -518,12 +538,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @Nullable
   private FileType getFileTypeByName(String name) {
-    Iterator<FileType> itr = myFileTypes.iterator();
-    while (itr.hasNext()) {
-      FileType fileType = itr.next();
-      if (fileType.getName().equals(name)) return fileType;
-    }
-    return null;
+    return mySchemesManager.findSchemeByName(name);
   }
 
   private static List<FileNameMatcher> parse(@NonNls String semicolonDelimited) {
@@ -540,7 +555,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
    * Registers a standard file type. Doesn't notifyListeners any change events.
    */
   private void registerFileTypeWithoutNotification(FileType fileType, List<FileNameMatcher> matchers) {
-    myFileTypes.add(fileType);
+    mySchemesManager.addNewScheme(fileType, true);
     for (FileNameMatcher matcher : matchers) {
       myPatternsTable.addAssociation(matcher, fileType);
       myInitialAssociations.addAssociation(matcher, fileType);
@@ -560,81 +575,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  private static File[] getFileTypeFiles() {
-    File fileTypesDir = getOrCreateFileTypesDir();
-    if (fileTypesDir == null) return new File[0];
-
-    File[] files = fileTypesDir.listFiles(new FileFilter() {
-      public boolean accept(File file) {
-        return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), XML_EXTENSION);
-      }
-    });
-    if (files == null) {
-      LOG.error("Cannot read directory: " + fileTypesDir.getAbsolutePath());
-      return new File[0];
-    }
-//    return files;
-    ArrayList<File> fileList = new ArrayList<File>();
-    for (File file : files) {
-      if (!file.isDirectory()) {
-        fileList.add(file);
-      }
-    }
-    return fileList.toArray(new File[fileList.size()]);
-  }
-
   // returns true if at least one standard file type has been read
   @SuppressWarnings({"EmptyCatchBlock"})
   private boolean loadAllFileTypes() {
-    final boolean[] standardFileTypeRead = new boolean[] {false};
+    Collection<FileType> collection = mySchemesManager.loadSchemes();
 
-    mySchemesManager.loadSchemes(FILE_SPEC, createSchemeProcessor(standardFileTypeRead), RoamingType.PER_USER);
+    boolean res = false;
+    for (FileType fileType : collection) {
+      res |= myInitialAssociations.hasAssociationsFor(fileType);
+    }
 
-    return standardFileTypeRead[0];
-  }
+    return res;
 
-  private SchemeProcessor<FileType> createSchemeProcessor(final boolean[] standardFileTypeRead) {
-    return new SchemeProcessor<FileType>(){
-      public FileType readScheme(final Document document, final File file) throws InvalidDataException, IOException, JDOMException {
-        if (document == null) {
-          throw new InvalidDataException();
-        }
-        Element root = document.getRootElement();
-        if (root == null || !ELEMENT_FILETYPE.equals(root.getName())) {
-          throw new InvalidDataException();
-        }
-        final FileType fileType = loadFileType(root, false);
-        standardFileTypeRead[0] |= myInitialAssociations.hasAssociationsFor(fileType);
-        return fileType;
-
-      }
-
-      public boolean shouldBeSaved(final FileType fileType) {
-        if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) return false;
-        if (myDefaultTypes.contains(fileType) && !isDefaultModified(fileType)) return false;
-        return true;
-
-      }
-
-      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.debug(e);
-      }
-
-      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.debug(e);
-      }
-
-      public Document writeScheme(final FileType fileType) throws WriteExternalException {
-        Element root = new Element(ELEMENT_FILETYPE);
-
-        writeHeader(root, fileType);
-
-        ((JDOMExternalizable) fileType).writeExternal(root);
-
-        return new Document(root);
-
-      }
-    };
   }
 
   private FileType loadFileType(Element typeElement, boolean isDefaults) {
@@ -737,7 +689,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public void setPatternsTable(Set<FileType> fileTypes, FileTypeAssocTable assocTable) {
     fireBeforeFileTypesChanged();
-    myFileTypes = new SetWithArray(fileTypes);
     myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
   }

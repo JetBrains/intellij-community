@@ -97,12 +97,11 @@ public class InspectionProfileConvertor {
     }
   }
 
-  public static Element convertToNewFormat(File profileFile, InspectionProfile profile) throws IOException, JDOMException {
+  public static Element convertToNewFormat(Element profileFile, InspectionProfile profile) throws IOException, JDOMException {
     Element rootElement = new Element(INSPECTIONS_TAG);
     rootElement.setAttribute(NAME_ATT, profile.getName());
     final InspectionProfileEntry[] tools = profile.getInspectionTools();
-    final Document document = JDOMUtil.loadDocument(profileFile);
-    for (final Object o : document.getRootElement().getChildren(INSP_TOOL_TAG)) {
+    for (final Object o : profileFile.getChildren(INSP_TOOL_TAG)) {
       Element toolElement = (Element)((Element)o).clone();
       String toolClassName = toolElement.getAttributeValue(CLASS_ATT);
       final String shortName = convertToShortName(toolClassName, tools);

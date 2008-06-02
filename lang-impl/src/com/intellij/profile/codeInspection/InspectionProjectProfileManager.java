@@ -174,8 +174,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
       public void run() {
         Set<Profile> profiles = new HashSet<Profile>();
         profiles.add(getProjectProfileImpl());
-        profiles.addAll(getProfiles().values());
-        profiles.addAll(InspectionProfileManager.getInstance().getProfiles().values());
+        profiles.addAll(getProfiles());
+        profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
         for (Profile profile : profiles) {
           initProfileWrapper(profile);
         }
@@ -222,4 +222,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();
   }
 
+  public Profile getProfile(@NotNull final String name) {
+    return getProfile(name, true);
+  }
 }

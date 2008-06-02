@@ -135,7 +135,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   private static void fillModel(final ProfileManager inspectionProfileManager, final DefaultComboBoxModel model) {
-    Collection<Profile> profiles = inspectionProfileManager.getProfiles().values();
+    Collection<Profile> profiles = inspectionProfileManager.getProfiles();
     for (Profile profile : profiles) {
       model.addElement(profile);
     }

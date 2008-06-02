@@ -3,7 +3,6 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -17,9 +16,9 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -47,7 +46,6 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.*;
 
 public class JavaDocLocalInspection extends BaseLocalInspectionTool {
@@ -1093,12 +1091,19 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile(myTag);
       //correct save settings
       ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
+      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      //TODO lesya
+
+      /*
+
       try {
         inspectionProfile.save();
       }
       catch (IOException e) {
         Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
       }
+
+      */
     }
   }
 }

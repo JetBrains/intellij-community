@@ -70,7 +70,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
-        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
+        final LocalInspectionTool localInspectionTool = key == null ? null : myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 

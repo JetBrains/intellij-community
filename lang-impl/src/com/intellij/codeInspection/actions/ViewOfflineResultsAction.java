@@ -132,7 +132,7 @@ public class ViewOfflineResultsAction extends AnAction {
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
       if (profile == null) {
-        profile = InspectionProfileManager.getInstance().getProfiles().get(profileName);
+        profile = InspectionProfileManager.getInstance().getProfile(profileName, false);
       }
     }
     else {

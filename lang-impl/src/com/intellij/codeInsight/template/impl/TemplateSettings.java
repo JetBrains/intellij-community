@@ -2,7 +2,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
@@ -10,11 +9,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -36,7 +35,7 @@ import java.util.*;
       file = "$APP_CONFIG$/other.xml"
     )}
 )
-public class TemplateSettings implements PersistentStateComponent<Element>, ExportableComponent, SettingsSavingComponent {
+public class TemplateSettings implements PersistentStateComponent<Element>, ExportableComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateSettings");
 
@@ -89,18 +88,22 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private String myLastSelectedTemplateKey;
   @NonNls
   public static final String XML_EXTENSION = ".xml";
-  private final SchemesManager mySchemesManager;
+  private final SchemesManager<TemplateGroup> mySchemesManager;
   private final SchemeProcessor<TemplateGroup> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
 
-  public TemplateSettings(SchemesManager schemesManager) {
-    mySchemesManager = schemesManager;
+  public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
+
 
     myProcessor = new SchemeProcessor<TemplateGroup>() {
-      public TemplateGroup readScheme(final Document schemeContent, final File file)
+      public TemplateGroup readScheme(final Document schemeContent)
           throws InvalidDataException, IOException, JDOMException {
-        String defGroupName = FileUtil.getNameWithoutExtension(file);
-        return readTemplateFile(JDOMUtil.loadDocument(file), defGroupName, false);
+        String defGroupName = schemeContent.getRootElement().getAttributeValue("group");
+        return readTemplateFile(schemeContent, defGroupName, false);
+      }
+
+      public void renameScheme(final String name, final TemplateGroup scheme) {
+        scheme.setName(name);
       }
 
 
@@ -133,7 +136,13 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
         LOG.warn(e);
       }
+
+      public void initScheme(final TemplateGroup scheme) {
+        
+      }
     };
+
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, myProcessor, RoamingType.PER_USER);
 
     loadTemplates();
   }
@@ -230,44 +239,54 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return myTemplatesById.get(id);
   }
 
-  public void addTemplateWithId(Template template) {
-    final String id = template.getId();
-    if (id != null) {
-      myTemplatesById.put(id, template);
-    }
-  }
-
   public int getMaxKeyLength() {
     return myMaxKeyLength;
   }
 
-  public void setTemplates(TemplateImpl[] newTemplates) {
-    myTemplates.clear();
-    myMaxKeyLength = 0;
-    for (TemplateImpl template : newTemplates) {
-      myTemplates.put(template.getKey(), template);
-      myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
-      addTemplateWithId(template);
-    }
-
-    saveTemplates(newTemplates);
-  }
-
-  public void save() {
-    saveTemplates(getTemplates());
-  }
-
   public void addTemplate(Template template) {
     myTemplates.put(template.getKey(), template);
-    addTemplateWithId(template);
+
+    final String id = template.getId();
+    if (id != null) {
+      myTemplatesById.put(id, template);
+    }
     myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
-    saveTemplates(getTemplates());
+
+    addTemplateToGroup(template);
+
+  }
+
+  private void addTemplateToGroup(final Template template) {
+    TemplateImpl templImpl = (TemplateImpl)template;
+    String groupName = templImpl.getGroupName();
+    TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
+
+    if (group == null) {
+      group = new TemplateGroup(groupName);
+      mySchemesManager.addNewScheme(group, true);
+
+    }
+    group.addTemplate((TemplateImpl)template);
   }
 
   public void removeTemplate(Template template) {
     myTemplates.remove(template.getKey());
     myTemplatesById.remove(template.getId());
-    saveTemplates(getTemplates());
+
+    TemplateImpl templImpl = (TemplateImpl)template;
+    String groupName = templImpl.getGroupName();
+    TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
+
+    if (group == null) {
+      group = new TemplateGroup(groupName);
+      mySchemesManager.addNewScheme(group, true);
+
+    }
+    group.removeTemplate((TemplateImpl)template);
+
+    if (group.isEmpty()) {
+      mySchemesManager.removeScheme(group);
+    }
   }
 
   private TemplateImpl addTemplate(String key, String string, String group, String description, String shortcut, boolean isDefault,
@@ -288,9 +307,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       myDefaultTemplates.put(key, template);
       if (myTemplates.get(key) != null) return template;
     }
-    myTemplates.put(key, template);
-    myMaxKeyLength = Math.max(myMaxKeyLength, key.length());
-    addTemplateWithId(template);
+    addTemplate(template);
     return template;
   }
 
@@ -314,7 +331,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   private void loadTemplates() {
 
-    mySchemesManager.loadSchemes(FILE_SPEC, myProcessor, RoamingType.PER_USER);
+    mySchemesManager.loadSchemes();
 
 
     try {
@@ -397,46 +414,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   }
 
-  private void saveTemplates(final TemplateImpl[] templates) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        List<String> templateNames = new ArrayList<String>();
-        for (TemplateImpl template1 : templates) {
-          templateNames.add(template1.getKey());
-        }
-        myDeletedTemplates.clear();
-        for (String defTemplateName : myDefaultTemplates.keySet()) {
-          if (!templateNames.contains(defTemplateName)) {
-            myDeletedTemplates.add(defTemplateName);
-          }
-        }
-
-        try {
-          mySchemesManager.saveSchemes(buildGroupList(templates), FILE_SPEC, myProcessor, RoamingType.PER_USER);
-        }
-        catch (WriteExternalException e) {
-          LOG.error(e);
-        }
-
-      }
-    });
-  }
-
-  private Collection<TemplateGroup> buildGroupList(final TemplateImpl[] templates) {
-    Map<String, TemplateGroup> result = new LinkedHashMap<String, TemplateGroup>();
-
-    for (TemplateImpl template : templates) {
-      final String name = template.getGroupName();
-      if (!result.containsKey(name)) {
-        result.put(name, new TemplateGroup(name));
-      }
-
-      result.get(name).addTemplate(template);
-    }
-
-    return result.values();
-  }
-
   private static void saveTemplate(TemplateImpl template, Element templateSetElement) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
@@ -477,6 +454,15 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     } catch (WriteExternalException e) {
     }
     templateSetElement.addContent(element);
+  }
+
+  public void setTemplates(TemplateImpl[] newTemplates) {
+    myTemplates.clear();
+    mySchemesManager.clearAllSchemes();
+    myMaxKeyLength = 0;
+    for (TemplateImpl template : newTemplates) {
+      addTemplate(template);
+    }
   }
 
 }

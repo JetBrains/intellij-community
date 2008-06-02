@@ -151,4 +151,8 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme{
 
     return new Document(newElement);
   }
+
+  public void setName(final String name) {
+    myName = name;
+  }
 }

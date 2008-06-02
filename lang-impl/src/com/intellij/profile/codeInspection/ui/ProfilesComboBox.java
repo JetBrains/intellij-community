@@ -95,7 +95,7 @@ public class ProfilesComboBox extends JComboBox {
   }
 
   private void saveNewProjectProfile(final String newName, final Profile profile, ProfileManager profileManager) {
-    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, null, InspectionToolRegistrar.getInstance(), profileManager);
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, InspectionToolRegistrar.getInstance(), profileManager);
     final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
     profileModifiableModel.copyFrom(profile);
     profileModifiableModel.setLocal(false);

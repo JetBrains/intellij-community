@@ -1,7 +1,6 @@
-package com.intellij.application.options.colors;
+package com.intellij.application.options;
 
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -19,8 +18,8 @@ public abstract class SchemesToImportPopup<T extends Scheme> {
     myParent = parent;
   }
 
-  public void show(SchemesManager schemesManager, String dirSpec, SchemeProcessor<T> schemeProcessor) {
-    Collection<T> schemes = schemesManager.loadScharedSchemes(dirSpec, schemeProcessor);
+  public void show(SchemesManager<T> schemesManager, Collection<String> currentSchemeNames) {
+    Collection<T> schemes = schemesManager.loadScharedSchemes(currentSchemeNames);
     final JList list = new JList(createModel(schemes));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new RecentChangesListCellRenderer());

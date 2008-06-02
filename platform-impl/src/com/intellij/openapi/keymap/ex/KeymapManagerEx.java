@@ -2,7 +2,7 @@ package com.intellij.openapi.keymap.ex;
 
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.options.SchemesManager;
 
 import java.util.Set;
 
@@ -22,4 +22,6 @@ public abstract class KeymapManagerEx extends KeymapManager {
   public abstract void bindShortcuts(String sourceActionId, String targetActionId);
   public abstract Set<String> getBoundActions();
   public abstract String getActionBinding(String actionId);
+
+  public abstract SchemesManager<Keymap> getSchemesManager();
 }

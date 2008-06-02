@@ -47,6 +47,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme {
   public Object clone() {
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(myParentScheme, DefaultColorSchemesManager.getInstance());
     copyTo(newScheme);
+    newScheme.setName(getName());
     return newScheme;
   }
 }

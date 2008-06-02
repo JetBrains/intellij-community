@@ -15,13 +15,12 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.io.File;
 
 /**
  * User: anna
@@ -33,7 +32,7 @@ public interface Profile extends JDOMExternalizable, Comparable, Scheme {
   @NonNls String INSPECTION = "INSPECTION";
   @NonNls String CODE_STYLE = "CODE_STYLE";
   String getName();
-  File getFile();
+
   void copyFrom(Profile profile);
 
   void setLocal(boolean isLocal);

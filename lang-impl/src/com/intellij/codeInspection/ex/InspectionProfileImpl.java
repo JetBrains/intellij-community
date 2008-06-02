@@ -18,14 +18,11 @@ import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,17 +83,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = inspectionProfile.myBaseProfile;
     myLocal = inspectionProfile.myLocal;
     myLockedProfile = inspectionProfile.myLockedProfile;
-    myFile = inspectionProfile.myFile;
     mySource = inspectionProfile;
     setProfileManager(inspectionProfile.getProfileManager());
     copyFrom(inspectionProfile);
   }
 
-  public InspectionProfileImpl(final String inspectionProfile, 
-                               final File file,
-                               final InspectionToolRegistrar registrar,
-                               final ProfileManager profileManager) {
-    super(inspectionProfile, file);
+  public InspectionProfileImpl(final String inspectionProfile, final InspectionToolRegistrar registrar, final ProfileManager profileManager) {
+    super(inspectionProfile);
     myRegistrar = registrar;
     myBaseProfile = getDefaultProfile();
     setProfileManager(profileManager);
@@ -222,14 +215,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    if (myFile == null){ //can't load tools in any other way
-      initInspectionTools();
-    }
+    initInspectionTools();
     myDisplayLevelMap.clear();
     final String version = element.getAttributeValue(VERSION_TAG);
-    if (myFile != null && (version == null || !version.equals(VALID_VERSION))) {
+    if (version == null || !version.equals(VALID_VERSION)) {
       try {
-        element = InspectionProfileConvertor.convertToNewFormat(myFile, this);
+        element = InspectionProfileConvertor.convertToNewFormat(element, this);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -312,28 +303,24 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void save() throws IOException {
+    /*
     if (isLocal()) {
-      if (myName.compareTo("Default") == 0 && myFile == null){
-        myFile = InspectionProfileManager.getInstance().createUniqueProfileFile("Default");
+      if (myName.compareTo("Default") == 0 && myElement == null){
+        myElement = new Element(ROOT_ELEMENT_TAG);
       }
-      if (myFile != null) {
+      if (myElement != null) {
         try {
-          if (!myFile.exists()){
-            if (!myFile.createNewFile()){
-              myFile = File.createTempFile("profile", ".xml", InspectionProfileManager.getInstance().getProfileDirectory());
-            }
-          }
-          Element root = new Element(ROOT_ELEMENT_TAG);
-          root.setAttribute(PROFILE_NAME_TAG, myName);
-          writeExternal(root);
-          myVisibleTreeState.writeExternal(root);
-          JDOMUtil.writeDocument(new Document(root), myFile, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+          myElement = new Element(ROOT_ELEMENT_TAG);
+          myElement.setAttribute(PROFILE_NAME_TAG, myName);
+          writeExternal(myElement);
+          myVisibleTreeState.writeExternal(myElement);
         }
         catch (WriteExternalException e) {
           LOG.error(e);
         }
       }
     }
+    */
     InspectionProfileManager.getInstance().fireProfileChanged(this);
   }
 
@@ -349,22 +336,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myEnabledTool = displayName;
   }
 
-  public void load() {
+  public void load(Element element) {
     try {
-      if (myFile != null) {
-        Document document = JDOMUtil.loadDocument(myFile);
-        final Element root = document.getRootElement();
-        readExternal(root);
-        myVisibleTreeState.readExternal(root);
-      }
-    }
-    catch (FileNotFoundException e) {
-      LOG.debug(e);
+      readExternal(element);
+      myVisibleTreeState.readExternal(element);
     }
     catch (Exception e) {
       ApplicationManager.getApplication().invokeLater(new Runnable(){
         public void run() {
-          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", myFile != null ? 0 : 1,  myFile != null ? myFile.getName() : ""), InspectionsBundle.message("inspection.errors.occured.dialog.title"));
+          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0,  getName()), InspectionsBundle.message("inspection.errors.occured.dialog.title"));
         }
       }, ModalityState.NON_MODAL);
     }
@@ -410,12 +390,20 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
       final InspectionTool[] tools = myRegistrar.createTools();
       for (InspectionTool tool : tools) {
+        final String shortName = tool.getShortName();
+        if (HighlightDisplayKey.find(shortName) == null) {
+          if (tool instanceof LocalInspectionToolWrapper) {
+            HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+          } else {
+            HighlightDisplayKey.register(shortName);
+          }
+        }        
         myTools.put(tool.getShortName(), tool);
       }
       if (mySource != null){
         copyToolsConfigurations(mySource);
       }
-      load();
+      //load();
     }
   }
 
@@ -540,7 +528,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
 
-    save();
+    InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+    //TODO lesya
+    //save();
   }
 
   public static synchronized InspectionProfileImpl getDefaultProfile() {
@@ -549,11 +539,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       final InspectionProfileEntry[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
       for (InspectionProfileEntry tool : inspectionTools) {
         final String shortName = tool.getShortName();
+        /*
+        final String shortName = tool.getShortName();
         if (tool instanceof LocalInspectionToolWrapper) {
           HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
         } else {
           HighlightDisplayKey.register(shortName);
-        }
+        } */
         DEFAULT_PROFILE.myDisplayLevelMap.put(HighlightDisplayKey.find(shortName), new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
       }
     }

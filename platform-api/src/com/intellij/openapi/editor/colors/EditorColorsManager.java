@@ -16,9 +16,6 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
-
-import java.io.IOException;
-
 import org.jetbrains.annotations.NonNls;
 
 public abstract class EditorColorsManager {
@@ -37,8 +34,6 @@ public abstract class EditorColorsManager {
   public abstract EditorColorsScheme getGlobalScheme();
 
   public abstract EditorColorsScheme getScheme(@NonNls String schemeName);
-
-  public abstract void saveAllSchemes() throws IOException;
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 
