@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -84,12 +85,16 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return myEntries.contains(getFileRoot(file));
   }
 
+  @Nullable
   private VirtualFile getFileRoot(VirtualFile file) {
     if (myIndex.isLibraryClassFile(file)) {
       return myIndex.getClassRootForFile(file);
     }
     if (myIndex.isInContent(file)) {
       return myIndex.getSourceRootForFile(file);
+    }
+    if (myIndex.isInLibraryClasses(file)) {
+      return myIndex.getClassRootForFile(file);
     }
     return null;
   }
