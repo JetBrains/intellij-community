@@ -120,6 +120,11 @@ public class FileContentStorage {
       }
     }
   }
-  
-  
+
+  public synchronized boolean containsContent(VirtualFile file) {
+    final int fileId = Math.abs(FileBasedIndex.getFileId(file));
+    synchronized (myLock) {
+      return myFileIds.contains(fileId);
+    }
+  }
 }

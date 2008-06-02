@@ -584,9 +584,10 @@ public class FileBasedIndex implements ApplicationComponent {
     FileContent fc = null;
     FileContent oldContent = null;
     final byte[] oldBytes = myFileContentAttic.remove(file);
- 
+    final boolean forceIndexing = oldBytes != null;
+    
     for (ID<?, ?> indexId : myIndices.keySet()) {
-      if (getInputFilter(indexId).acceptInput(file)) {
+      if (forceIndexing? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
         if (fc == null) {
           byte[] currentBytes;
           try {
@@ -902,7 +903,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (!file.isDirectory()) {
         if (!SingleRootFileViewProvider.isTooLarge(file)) {
           for (ID<?, ?> indexId : myIndexIds) {
-            if (shouldIndexFile(file, indexId)) {
+            if (myFileContentAttic.containsContent(file)? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
               myFiles.add(file);
               break;
             }
