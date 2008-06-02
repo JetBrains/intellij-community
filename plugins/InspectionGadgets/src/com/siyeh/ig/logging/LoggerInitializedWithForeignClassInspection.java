@@ -24,15 +24,23 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.text.Document;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 
 
 public class LoggerInitializedWithForeignClassInspection
         extends BaseInspection {
 
-    Logger log = Logger.getLogger(String.class);
+    @SuppressWarnings({"PublicField"})
+    public String loggerClassName = "org.apache.log4j.Logger";
+
+    @SuppressWarnings({"PublicField"})
+    public String loggerFactoryMethodName = "getLogger";
 
     @NotNull
     public String getDisplayName() {
@@ -84,7 +92,7 @@ public class LoggerInitializedWithForeignClassInspection
         return new LoggerInitializedWithForeignClassVisitor();
     }
 
-    private static class LoggerInitializedWithForeignClassVisitor
+    private class LoggerInitializedWithForeignClassVisitor
             extends BaseInspectionVisitor {
 
         public void visitClassObjectAccessExpression(
@@ -112,7 +120,7 @@ public class LoggerInitializedWithForeignClassInspection
             final PsiReferenceExpression methodExpression =
                     methodCallExpression.getMethodExpression();
             final String referenceName = methodExpression.getReferenceName();
-            if (!"getLogger".equals(referenceName)) {
+            if (!loggerFactoryMethodName.equals(referenceName)) {
                 return;
             }
             final PsiMethod method = methodCallExpression.resolveMethod();
@@ -121,7 +129,7 @@ public class LoggerInitializedWithForeignClassInspection
             }
             final PsiClass aClass = method.getContainingClass();
             final String className = aClass.getQualifiedName();
-            if (!"org.apache.log4j.Logger".equals(className)) {
+            if (!loggerClassName.equals(className)) {
                 return;
             }
             final PsiTypeElement operand = expression.getOperand();
@@ -138,6 +146,59 @@ public class LoggerInitializedWithForeignClassInspection
                 return;
             }
             registerError(expression, containingClassName);
+        }
+    }
+
+    class Form {
+
+        private JPanel contentPanel;
+        private JTextField loggerClassNameTextField;
+        private JTextField loggerFactoryMethodNameTextField;
+
+        Form() {
+            loggerClassNameTextField.setText(loggerClassName);
+            final DocumentListener listener = new DocumentListener() {
+
+                public void changedUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                public void insertUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                public void removeUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                private void textChanged() {
+                    loggerClassName =  loggerClassNameTextField.getText();
+                }
+            };
+            final Document document = loggerClassNameTextField.getDocument();
+            document.addDocumentListener(listener);
+            loggerFactoryMethodNameTextField.setText(loggerFactoryMethodName);
+            final DocumentListener factoryListener = new DocumentListener() {
+
+                public void changedUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                public void insertUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                public void removeUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                private void textChanged() {
+                    loggerClassName =  loggerClassNameTextField.getText();
+                }
+            };
+            final Document factoryDocument =
+                    loggerFactoryMethodNameTextField.getDocument();
+            factoryDocument.addDocumentListener(factoryListener);
         }
     }
 }
