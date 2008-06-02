@@ -857,6 +857,37 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return PsiImplUtil.getOriginalElement(this, getContainingFile());
   }
 
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    if (anchor == null) {
+      add(element);
+      return element;
+    }
+    final GrTypeDefinitionBody body = getBody();
+    assert anchor.getParent() == body;
+
+    final PsiElement nextChild = anchor.getNextSibling();
+    if (nextChild == null) {
+      add(element);
+      return element;
+    }
+
+    body.getNode().addChild(element.getNode(), nextChild.getNode());
+    return element;
+  }
+
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    if (anchor == null) {
+      add(element);
+      return element;
+    }
+
+    final GrTypeDefinitionBody body = getBody();
+    assert anchor.getParent() == body;
+
+    body.getNode().addChild(element.getNode(), anchor.getNode());
+    return element;
+  }
+
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final GrTypeDefinitionBody body = getBody();
 
