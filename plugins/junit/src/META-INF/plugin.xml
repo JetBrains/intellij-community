@@ -29,11 +29,6 @@
     <testFramework implementation="com.intellij.execution.junit.JUnitTestFramework"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
   </extensions>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.execution.junit.JUnitConfigurationType</implementation-class>
-    </component>
-  </application-components>
   <actions>
     <group>
       <action class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
