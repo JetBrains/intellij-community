@@ -10,10 +10,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,7 +36,8 @@ public class SelectInAction extends AnAction {
     if (SelectInContextImpl.createContext(event) == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
-    } else {
+    }
+    else {
       presentation.setEnabled(true);
       presentation.setVisible(true);
     }
@@ -63,6 +66,7 @@ public class SelectInAction extends AnAction {
     private final List<SelectInTarget> myVisibleTargets;
 
     private final FakeProjectViewSelectInTarget PROJECT_VIEW_FAKE_TARGET = new FakeProjectViewSelectInTarget();
+
     private class FakeProjectViewSelectInTarget implements SelectInTarget {
       public boolean canSelect(SelectInContext context) {
         for (SelectInTarget projectViewTarget : myProjectViewTargets) {
@@ -71,7 +75,7 @@ public class SelectInAction extends AnAction {
         return false;
       }
 
-      public void selectIn(SelectInContext context, final boolean requestFocus) {
+      public void selectIn(final SelectInContext context, final boolean requestFocus) {
         ProjectView projectView = ProjectView.getInstance(context.getProject());
         Collection<SelectInTarget> targetsToCheck = new LinkedHashSet<SelectInTarget>();
         String currentId = projectView.getCurrentViewId();
@@ -82,9 +86,19 @@ public class SelectInAction extends AnAction {
           }
         }
         targetsToCheck.addAll(myProjectViewTargets);
-        for (SelectInTarget target : targetsToCheck) {
+        for (final SelectInTarget target : targetsToCheck) {
           if (target.canSelect(context)) {
-            target.selectIn(context, requestFocus);
+            if (requestFocus) {
+              IdeFocusManager.getInstance(context.getProject()).requestFocus(new ActionCallback.Runnable() {
+                public ActionCallback run() {
+                  target.selectIn(context, requestFocus);
+                  return new ActionCallback.Done();
+                }
+              }, true);
+            }
+            else {
+              target.selectIn(context, requestFocus);
+            }
             break;
           }
         }
@@ -121,7 +135,7 @@ public class SelectInAction extends AnAction {
         }
       }
       if (!myProjectViewTargets.isEmpty()) {
-        myVisibleTargets.add(0,PROJECT_VIEW_FAKE_TARGET);
+        myVisibleTargets.add(0, PROJECT_VIEW_FAKE_TARGET);
       }
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, null);
     }
@@ -204,7 +218,7 @@ public class SelectInAction extends AnAction {
         return FINAL_CHOICE;
       }
       if (hasSubstep(target)) {
-        return createSubIdsStep((ProjectViewSelectInTarget)target,myVirtualFile);
+        return createSubIdsStep((ProjectViewSelectInTarget)target, myVirtualFile);
       }
       return FINAL_CHOICE;
     }
@@ -212,6 +226,7 @@ public class SelectInAction extends AnAction {
     private PopupStep createSubIdsStep(final ProjectViewSelectInTarget target, final VirtualFile virtualFile) {
       class SelectSubIdAction extends AnAction {
         private final String mySubId;
+
         public SelectSubIdAction(String subId, String presentableName) {
           super(presentableName);
           mySubId = subId;
@@ -247,9 +262,9 @@ public class SelectInAction extends AnAction {
 
     public boolean isSelectable(final SelectInTarget target) {
       final String activeToolWindowId = ToolWindowManager.getInstance(mySelectInContext.getProject()).getActiveToolWindowId();
-      if (target instanceof ProjectViewSelectInTarget
-          && ToolWindowId.PROJECT_VIEW.equals(activeToolWindowId)
-          && Comparing.strEqual(ProjectView.getInstance(mySelectInContext.getProject()).getCurrentViewId(), target.getMinorViewId())) {
+      if (target instanceof ProjectViewSelectInTarget &&
+          ToolWindowId.PROJECT_VIEW.equals(activeToolWindowId) &&
+          Comparing.strEqual(ProjectView.getInstance(mySelectInContext.getProject()).getCurrentViewId(), target.getMinorViewId())) {
         return false;
       }
 
