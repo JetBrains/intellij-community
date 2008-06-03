@@ -35,7 +35,9 @@ public class ExtractSuperClassUtil {
     final PsiModifierList superClassModifierList = superclass.getModifierList();
     assert superClassModifierList != null;
     superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);
-    copyPsiReferenceList(subclass.getExtendsList(), superclass.getExtendsList());
+    final PsiReferenceList subClassExtends = subclass.getExtendsList();
+    assert subClassExtends != null: subclass;
+    copyPsiReferenceList(subClassExtends, superclass.getExtendsList());
 
     // create constructors if neccesary
     PsiMethod[] constructors = getCalledBaseConstructors(subclass);
