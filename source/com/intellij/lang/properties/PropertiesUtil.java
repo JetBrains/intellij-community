@@ -122,7 +122,7 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static List<Property> findAllProperties(Project project, ResourceBundle resourceBundle, String key) {
+  public static List<Property> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
     List<Property> result = new SmartList<Property>();
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
     for (PropertiesFile propertiesFile : propertiesFiles) {
