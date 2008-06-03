@@ -620,6 +620,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
       PsiType superType = finalSubstitutor.substitute(typeParameter.getSuperTypes()[0]);
       if (superType == null) superType = PsiType.getJavaLangObject(manager, scope);
+      if (superType == null) return null;
       if (forCompletion && !(superType instanceof PsiWildcardType)) {
         result = new Pair<PsiType, ConstraintType>(PsiWildcardType.createExtends(manager, superType), ConstraintType.EQUALS);
       }
@@ -629,7 +630,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
     else {
       PsiType guess = constraint.getFirst();
-      if (forCompletion && !(guess instanceof PsiWildcardType)) {
+      if (forCompletion && guess != null && !(guess instanceof PsiWildcardType)) {
         if (constraint.getSecond() == ConstraintType.SUPERTYPE) guess = PsiWildcardType.createExtends(manager, guess);
         else if (constraint.getSecond() == ConstraintType.SUBTYPE) guess = PsiWildcardType.createSuper(manager, guess);
       }
@@ -640,7 +641,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         PsiSubstitutor newSubstitutor = substitutor.put(typeParameter, guess);
         for (PsiClassType extendsType1 : extendsTypes) {
           PsiType extendsType = newSubstitutor.substitute(extendsType1);
-          if (!extendsType.isAssignableFrom(guess)) {
+          if (guess != null && !extendsType.isAssignableFrom(guess)) {
             if (guess.isAssignableFrom(extendsType)) {
               guess = extendsType;
               newSubstitutor = substitutor.put(typeParameter, guess);
@@ -683,7 +684,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           PsiParameter parameter = null;
           if (parameters.length > i) {
             parameter = parameters[i];
-          } else if (method.isVarArgs()) {
+          }
+          else if (method.isVarArgs()) {
             parameter = parameters[parameters.length - 1];
           }
           if (parameter != null) {
