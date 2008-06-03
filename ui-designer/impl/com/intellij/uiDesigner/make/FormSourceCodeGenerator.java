@@ -766,7 +766,7 @@ public final class FormSourceCodeGenerator {
         startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
         if (borderType.equals(BorderType.LINE)) {
           if (container.getBorderColor() == null) {
-            pushVar("Color.black");
+            pushVar("java.awt.Color.black");
           }
           else {
             pushColor(container.getBorderColor());
