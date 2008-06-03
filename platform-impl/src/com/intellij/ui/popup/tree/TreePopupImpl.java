@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.BasePopup;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.Range;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-public class TreePopupImpl extends BasePopup implements TreePopup {
+public class TreePopupImpl extends WizardPopup implements TreePopup {
   private MyTree myWizardTree;
 
   private MouseMotionListener myMouseMotionListener;

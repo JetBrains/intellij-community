@@ -60,7 +60,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.DottedBorder;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -831,7 +831,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
     else {
       final Container container = focusedWindow != null ? focusedWindow : editor.getContentComponent();
-      final Point p = JBPopupImpl.getCenterOf(container, this);
+      final Point p = AbstractPopup.getCenterOf(container, this);
       p.y = container.getHeight() / 4;
       HintManager.getInstance().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true);
     }

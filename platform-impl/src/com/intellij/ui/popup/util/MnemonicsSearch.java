@@ -5,7 +5,7 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
-import com.intellij.ui.popup.BasePopup;
+import com.intellij.ui.popup.WizardPopup;
 
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
@@ -14,10 +14,10 @@ import java.util.Map;
 
 public abstract class MnemonicsSearch<T> {
 
-  private BasePopup myPopup;
+  private WizardPopup myPopup;
   private Map<String, T> myChar2ValueMap = new HashMap();
 
-  public MnemonicsSearch(BasePopup popup) {
+  public MnemonicsSearch(WizardPopup popup) {
     myPopup = popup;
     if (!myPopup.getStep().isMnemonicsNavigationEnabled()) return;
 

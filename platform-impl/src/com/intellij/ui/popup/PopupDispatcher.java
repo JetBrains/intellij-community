@@ -17,8 +17,8 @@ import java.awt.event.MouseEvent;
 
 public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopupEventDispatcher {
 
-  private static BasePopup ourActiveWizardRoot;
-  private static BasePopup ourShowingStep;
+  private static WizardPopup ourActiveWizardRoot;
+  private static WizardPopup ourShowingStep;
 
   private static PopupDispatcher ourInstance = new PopupDispatcher();
 
@@ -37,7 +37,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     return ourInstance;
   }
 
-  public static void setActiveRoot(BasePopup aRootPopup) {
+  public static void setActiveRoot(WizardPopup aRootPopup) {
     disposeActiveWizard();
     ourActiveWizardRoot = aRootPopup;
     ourShowingStep = aRootPopup;
@@ -46,7 +46,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     }
   }
 
-  public static void clearRootIfNeeded(BasePopup aRootPopup) {
+  public static void clearRootIfNeeded(WizardPopup aRootPopup) {
     if (ourActiveWizardRoot == aRootPopup) {
       ourActiveWizardRoot = null;
       ourShowingStep = null;
@@ -69,7 +69,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
       return false;
     }
 
-    BasePopup eachParent = ourShowingStep;
+    WizardPopup eachParent = ourShowingStep;
     final MouseEvent mouseEvent = ((MouseEvent) event);
 
     Point point = (Point) mouseEvent.getPoint().clone();
@@ -119,15 +119,15 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     return true;
   }
 
-  public static void setShowing(BasePopup aBaseWizardPopup) {
+  public static void setShowing(WizardPopup aBaseWizardPopup) {
     ourShowingStep = aBaseWizardPopup;
   }
 
-  public static void unsetShowing(BasePopup aBaseWizardPopup) {
+  public static void unsetShowing(WizardPopup aBaseWizardPopup) {
     ourShowingStep = aBaseWizardPopup.getParent();
   }
 
-  public static BasePopup getActiveRoot() {
+  public static WizardPopup getActiveRoot() {
     return ourActiveWizardRoot;
   }
 

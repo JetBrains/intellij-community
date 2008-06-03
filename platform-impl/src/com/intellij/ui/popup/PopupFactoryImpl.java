@@ -271,7 +271,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public Point getCenterOf(JComponent container, JComponent content) {
-    return JBPopupImpl.getCenterOf(container, content);
+    return AbstractPopup.getCenterOf(container, content);
   }
 
   private static int fillModel(List<ActionItem> listModel,

@@ -22,7 +22,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.AbstractPopup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +177,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     boolean isPopup = !(component instanceof JFrame) && !(component instanceof JDialog);
     if (isPopup) {
       if (component instanceof JWindow) {
-        JBPopup popup = (JBPopup)((JWindow)component).getRootPane().getClientProperty(JBPopupImpl.KEY);
+        JBPopup popup = (JBPopup)((JWindow)component).getRootPane().getClientProperty(AbstractPopup.KEY);
         if (popup != null) {
           return popup.isModalContext();
         }

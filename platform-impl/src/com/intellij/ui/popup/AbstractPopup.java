@@ -90,10 +90,10 @@ public class AbstractPopup implements JBPopup, Disposable {
   protected Component myOwner;
   private boolean myHeaderAlwaysFocusable;
 
-  protected AbstractPopup() {
+  AbstractPopup() {
   }
 
-  protected void init(final Project project, @NotNull final JComponent content, @Nullable final JComponent preferredFocusedComponent, final boolean requestFocus,
+  AbstractPopup init(final Project project, @NotNull final JComponent content, @Nullable final JComponent preferredFocusedComponent, final boolean requestFocus,
                       final boolean focusable,
                       final boolean forceHeavyweight,
                       final String dimensionServiceKey,
@@ -230,6 +230,8 @@ public class AbstractPopup implements JBPopup, Disposable {
       }
 
     };
+
+    return this;
   }
 
   private void setWindowActive(boolean active) {

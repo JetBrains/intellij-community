@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.AbstractPopup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -119,7 +119,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   public final void setLocation(final int x, final int y) {
     if (myIsRealPopup) {
       if (myPopup == null) return;
-      ((JBPopupImpl)myPopup).setLocation(new RelativePoint(myParentComponent, new Point(x, y)));
+      ((AbstractPopup)myPopup).setLocation(new RelativePoint(myParentComponent, new Point(x, y)));
     }
     else {
       myComponent.setLocation(x, y);

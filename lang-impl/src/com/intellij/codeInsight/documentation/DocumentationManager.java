@@ -30,7 +30,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
@@ -149,7 +149,7 @@ public class DocumentationManager implements ProjectComponent {
       .createPopup();
 
 
-    JBPopupImpl oldHint = (JBPopupImpl)getDocInfoHint();
+    AbstractPopup oldHint = (AbstractPopup)getDocInfoHint();
 
     if (oldHint != null) {
       DocumentationComponent oldComponent = (DocumentationComponent)oldHint.getComponent();
@@ -211,7 +211,7 @@ public class DocumentationManager implements ProjectComponent {
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
-    JBPopupImpl oldHint = (JBPopupImpl)getDocInfoHint();
+    AbstractPopup oldHint = (AbstractPopup)getDocInfoHint();
     if (oldHint != null) {
       DocumentationComponent component = (DocumentationComponent)oldHint.getComponent();
       PsiElement element1 = component.getElement();
@@ -475,7 +475,7 @@ public class DocumentationManager implements ProjectComponent {
               component.setData(element, text);
             }
 
-            final JBPopupImpl jbPopup = (JBPopupImpl)getDocInfoHint();
+            final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
             if(jbPopup==null){
               return;
             }

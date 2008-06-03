@@ -5,7 +5,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.AbstractPopup;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -25,7 +25,7 @@ public class MoveComponentListener extends MouseAdapter implements MouseMotionLi
   }
 
   private void endOperation() {
-    JBPopupImpl.setDefaultCursor(myComponent);
+    AbstractPopup.setDefaultCursor(myComponent);
     myStartPoint = null;
   }
 
@@ -46,18 +46,18 @@ public class MoveComponentListener extends MouseAdapter implements MouseMotionLi
 
   public void mouseMoved(MouseEvent e) {
     if (e.isConsumed()) return;
-    JBPopupImpl.setDefaultCursor(myComponent);
+    AbstractPopup.setDefaultCursor(myComponent);
   }
 
   public void mouseDragged(MouseEvent e) {
     if (e.isConsumed()) return;
-    JBPopupImpl.setDefaultCursor(myComponent);
+    AbstractPopup.setDefaultCursor(myComponent);
     if (myStartPoint != null) {
       final Point draggedTo = new RelativePoint(e).getScreenPoint();
       draggedTo.x -= myStartPoint.x;
       draggedTo.y -= myStartPoint.y;
 
-      JBPopupImpl.moveTo(myComponent, draggedTo, null);
+      AbstractPopup.moveTo(myComponent, draggedTo, null);
 
       e.consume();
     }

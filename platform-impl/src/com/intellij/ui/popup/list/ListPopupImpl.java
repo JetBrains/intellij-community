@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.popup.BasePopup;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.PopupIcons;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
-public class ListPopupImpl extends BasePopup implements ListPopup {
+public class ListPopupImpl extends WizardPopup implements ListPopup {
 
   private MyList myList;
 
@@ -41,12 +41,12 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     super(aStep);
   }
 
-  public ListPopupImpl(BasePopup aParent, ListPopupStep aStep, Object parentValue) {
+  public ListPopupImpl(WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
     super(aParent, aStep);
     setParentValue(parentValue);
   }
 
-  public ListPopupImpl(BasePopup aParent, ListPopupStep aStep, Object parentValue, int maxRowCount) {
+  public ListPopupImpl(WizardPopup aParent, ListPopupStep aStep, Object parentValue, int maxRowCount) {
     super(aParent, aStep);
     setParentValue(parentValue);
     if (maxRowCount != -1){

@@ -15,7 +15,7 @@ public class SpeedSearchPane extends JDialog {
   private static final Color SPEEDSEARCH_BACKGROUND = new Color(244, 249, 181);
   private static final Color SPEEDSEARCH_FOREGROUND = Color.black;
 
-  private BasePopup myPopup;
+  private WizardPopup myPopup;
   private JLabel myLabel = new JLabel();
 
   private JPanel myPanel = new JPanel();
@@ -23,7 +23,7 @@ public class SpeedSearchPane extends JDialog {
   private Dimension myLastLabelSize = new Dimension();
   private static final Icon ICON_PROMPT = IconLoader.getIcon("/icons/ide/speedSearchPrompt.png");
 
-  public SpeedSearchPane(BasePopup popup) throws HeadlessException {
+  public SpeedSearchPane(WizardPopup popup) throws HeadlessException {
     myPopup = popup;
     setUndecorated(true);
     setFocusableWindowState(false);

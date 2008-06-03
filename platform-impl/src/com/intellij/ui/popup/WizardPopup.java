@@ -20,17 +20,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public abstract class BasePopup extends AbstractPopup implements ActionListener, ElementFilter {
+public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
 
   private static final int AUTO_POPUP_DELAY = 750;
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 
   protected static final int STEP_X_PADDING = 2;
 
-  private final BasePopup myParent;
+  private final WizardPopup myParent;
 
   protected final PopupStep<Object> myStep;
-  protected BasePopup myChild;
+  protected WizardPopup myChild;
 
   private JScrollPane myScrollPane;
 
@@ -52,12 +52,12 @@ public abstract class BasePopup extends AbstractPopup implements ActionListener,
   private Window myOwnerWindow;
   private MyComponentAdapter myOwnerListener;
 
-  public BasePopup(PopupStep aStep) {
+  public WizardPopup(PopupStep aStep) {
     this(null, aStep);
   }
 
-  public BasePopup(JBPopup aParent, PopupStep aStep) {
-    myParent = (BasePopup) aParent;
+  public WizardPopup(JBPopup aParent, PopupStep aStep) {
+    myParent = (WizardPopup) aParent;
     myStep = aStep;
 
     if (myStep.isSpeedSearchEnabled() && myStep.isMnemonicsNavigationEnabled()) {
@@ -114,7 +114,7 @@ public abstract class BasePopup extends AbstractPopup implements ActionListener,
   }
 
   private void disposeAll() {
-    BasePopup root = PopupDispatcher.getActiveRoot();
+    WizardPopup root = PopupDispatcher.getActiveRoot();
     disposeAllParents();
     root.getStep().canceled();
   }
@@ -277,7 +277,7 @@ public abstract class BasePopup extends AbstractPopup implements ActionListener,
     }
   }
 
-  public BasePopup getParent() {
+  public WizardPopup getParent() {
     return myParent;
   }
 
@@ -311,7 +311,7 @@ public abstract class BasePopup extends AbstractPopup implements ActionListener,
     return new Rectangle(getContent().getLocationOnScreen(), getContent().getSize());
   }
 
-  protected static BasePopup createPopup(BasePopup parent, PopupStep step, Object parentValue) {
+  protected static WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(parent, (ListPopupStep)step, parentValue);
     }
