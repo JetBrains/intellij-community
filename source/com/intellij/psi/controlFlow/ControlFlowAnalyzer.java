@@ -523,7 +523,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     }
     else {
-      Instruction instruction = new ConditionalGoToInstruction(offset);
+      Instruction instruction = new ConditionalGoToInstruction(offset, statement.getCondition());
       myCurrentFlow.addInstruction(instruction);
     }
 
@@ -599,7 +599,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     else {
-      Instruction instruction = new ConditionalGoToInstruction(0);
+      Instruction instruction = new ConditionalGoToInstruction(0, statement.getCondition());
       myCurrentFlow.addInstruction(instruction);
       addElementOffsetLater(statement, false);
     }
@@ -636,7 +636,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     final int gotoTarget = myCurrentFlow.getSize();
-    Instruction instruction = new ConditionalGoToInstruction(0);
+    Instruction instruction = new ConditionalGoToInstruction(0, statement.getIteratedValue());
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(statement, false);
 
@@ -719,7 +719,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       Instruction instruction = new ConditionalGoToInstruction(0,
                                                                elseBranch == null
                                                                ? ControlFlow.JUMP_ROLE_GOTO_END
-                                                               : ControlFlow.JUMP_ROLE_GOTO_ELSE);
+                                                               : ControlFlow.JUMP_ROLE_GOTO_ELSE, conditionExpression);
       myCurrentFlow.addInstruction(instruction);
       if (elseBranch != null) {
         addElementOffsetLater(elseBranch, true);
@@ -830,7 +830,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           if (((PsiSwitchLabelStatement)aStatement).isDefaultCase()) {
             defaultLabel = (PsiSwitchLabelStatement)aStatement;
           }
-          Instruction instruction = new ConditionalGoToInstruction(0);
+          Instruction instruction = new ConditionalGoToInstruction(0, statement.getExpression());
           myCurrentFlow.addInstruction(instruction);
           addElementOffsetLater(aStatement, true);
         }
@@ -1141,7 +1141,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     else {
-      Instruction instruction = new ConditionalGoToInstruction(0);
+      Instruction instruction = new ConditionalGoToInstruction(0, statement.getCondition());
       myCurrentFlow.addInstruction(instruction);
       addElementOffsetLater(statement, false);
     }
@@ -1259,12 +1259,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           }
         }
         else {
-          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1)));
+          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1), lOperand));
           addElementOffsetLater(myEndStatementStack.peekElement(), myEndStatementStack.peekAtStart());
         }
       }
       else {
-        Instruction instruction = new ConditionalGoToInstruction(0);
+        Instruction instruction = new ConditionalGoToInstruction(0, lOperand);
         myCurrentFlow.addInstruction(instruction);
         addElementOffsetLater(expression, false);
       }
@@ -1282,12 +1282,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           }
         }
         else {
-          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1)));
+          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1), lOperand));
           addElementOffsetLater(myStartStatementStack.peekElement(), myStartStatementStack.peekAtStart());
         }
       }
       else {
-        Instruction instruction = new ConditionalGoToInstruction(0);
+        Instruction instruction = new ConditionalGoToInstruction(0, lOperand);
         myCurrentFlow.addInstruction(instruction);
         addElementOffsetLater(expression, false);
       }

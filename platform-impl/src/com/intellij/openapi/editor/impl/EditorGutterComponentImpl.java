@@ -1081,8 +1081,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             int startY = rect.y;
             int endY = startY + rect.height;
             if (startY == endY) {
-              startY -= 4;
-              endY += 4;
+              endY += myEditor.getLineHeight();
             }
 
             if (startY < e.getY() && e.getY() <= endY) {

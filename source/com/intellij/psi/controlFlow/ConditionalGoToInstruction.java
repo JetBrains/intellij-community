@@ -1,5 +1,6 @@
 package com.intellij.psi.controlFlow;
 
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NonNls;
 
 
@@ -7,17 +8,19 @@ public class ConditionalGoToInstruction extends ConditionalBranchingInstruction 
 
   public final int role;
   public final boolean isReturn; //true if goto has been generated as a result of return statement
+  public final PsiExpression expression;
 
-  public ConditionalGoToInstruction(int offset) {
-    this(offset,ControlFlow.JUMP_ROLE_GOTO_END);
+  public ConditionalGoToInstruction(int offset, final PsiExpression expression) {
+    this(offset,ControlFlow.JUMP_ROLE_GOTO_END, expression);
   }
-  public ConditionalGoToInstruction(int offset, int role) {
-    this(offset,role, false);
+  public ConditionalGoToInstruction(int offset, int role, final PsiExpression expression) {
+    this(offset,role, false, expression);
   }
-  public ConditionalGoToInstruction(int offset, int role, boolean isReturn) {
+  public ConditionalGoToInstruction(int offset, int role, boolean isReturn, final PsiExpression expression) {
     super(offset);
     this.role = role;
     this.isReturn = isReturn;
+    this.expression = expression;
   }
 
   public String toString() {
