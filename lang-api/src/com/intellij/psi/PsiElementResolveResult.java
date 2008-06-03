@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiElementResolveResult implements ResolveResult{
   @NotNull private final PsiElement myElement;
+  private boolean myValidResult = true;
 
   /**
    * Creates a resolve result with the specified resolve target.
@@ -34,12 +35,17 @@ public class PsiElementResolveResult implements ResolveResult{
     myElement = element;
   }
 
+  public PsiElementResolveResult(@NotNull final PsiElement element, final boolean validResult) {
+    myElement = element;
+    myValidResult = validResult;
+  }
+
   @NotNull public PsiElement getElement() {
     return myElement;
   }
 
   public boolean isValidResult() {
-    return true;
+    return myValidResult;
   }
 
   public boolean equals(final Object o) {
