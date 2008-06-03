@@ -320,16 +320,17 @@ public abstract class GroovyRefactoringUtil {
     editor.getSelectionModel().setSelection(start, end);
   }
 
-  public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
+  public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset, boolean strict) {
     if (!(file instanceof GroovyFileBase)) return PsiElement.EMPTY_ARRAY;
     Language language = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
-    if (element1 instanceof PsiWhiteSpace) {
+
+    if (element1 instanceof PsiWhiteSpace || PsiUtil.isNewLine(element1)) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
     }
-    if (element2 instanceof PsiWhiteSpace) {
+    if (element2 instanceof PsiWhiteSpace || PsiUtil.isNewLine(element2)) {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.findElementAt(endOffset - 1);
     }
@@ -354,22 +355,14 @@ public abstract class GroovyRefactoringUtil {
         element1 = element1.getParent();
       }
     }
-    if (PsiUtil.isNewLine(element1) && element1.getTextRange().contains(endOffset)) {
-      endOffset = element1.getTextRange().getStartOffset();
-    }
-
-    if (startOffset != element1.getTextRange().getStartOffset()) return PsiElement.EMPTY_ARRAY;
+    if (startOffset != element1.getTextRange().getStartOffset() && strict) return PsiElement.EMPTY_ARRAY;
 
     if (!parent.equals(element2)) {
       while (!parent.equals(element2.getParent())) {
         element2 = element2.getParent();
       }
     }
-    if (PsiUtil.isNewLine(element2) && element2.getTextRange().contains(endOffset)) {
-      endOffset = element2.getTextRange().getEndOffset();
-    }
-
-    if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
+    if (endOffset != element2.getTextRange().getEndOffset() && strict) return PsiElement.EMPTY_ARRAY;
 
     if (parent instanceof GrCodeBlock && parent.getParent() instanceof GrBlockStatement &&
         element1 == ((GrCodeBlock) parent).getLBrace() && element2 == ((GrCodeBlock) parent).getRBrace()) {
@@ -392,13 +385,13 @@ public abstract class GroovyRefactoringUtil {
     ArrayList<PsiElement> possibleStatements = new ArrayList<PsiElement>();
     boolean flag = false;
     for (PsiElement child : children) {
-      if (child.equals(element1)) {
+      if (child == element1) {
         flag = true;
       }
       if (flag) {
         possibleStatements.add(child);
       }
-      if (child.equals(element2)) {
+      if (child == element2) {
         break;
       }
     }

@@ -16,16 +16,15 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.ResolveTestCase;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.ResolveTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**

@@ -104,14 +104,13 @@ public class DeclarationMover extends LineMover {
     PsiElement sibling = isDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
     try {
       if (sibling == null) throw new IllegalMoveException();
-      sibling = firstNonWhiteElement(sibling, isDown);
+      sibling = firstNonWhiteElement(sibling, isDown, true);
       final boolean areWeMovingClass = range.firstElement instanceof GrTypeDefinition;
       toMove = range;
 
       LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, isDown, areWeMovingClass);
       if (intraClassRange == null) {
         toMove2 = new LineRange(sibling, sibling, document);
-//        if (isDown && sibling.getNextSibling() == null) return false;
       } else {
         toMove2 = intraClassRange;
       }
@@ -186,26 +185,6 @@ public class DeclarationMover extends LineMover {
       if (start == null) throw new IllegalMoveException();
       return new LineRange(start, sibling, editor.getDocument());
     }
-
-    // moving inside class not supported in Groovy
-    /*if (sibling instanceof GrTypeDefinition) {
-      GrTypeDefinition aClass = (GrTypeDefinition) sibling;
-      GrTypeDefinitionBody body = aClass.getBody();
-      if (body != null) {
-        if (isDown && body.getLBrace() != null) {
-          PsiElement child = aClass.getFirstChild();
-          if (child == null) throw new IllegalMoveException();
-          return new LineRange(child, body.getLBrace(), editor.getDocument());
-        } else {
-          PsiElement rBrace = body.getRBrace();
-          if (rBrace == null) throw new IllegalMoveException();
-          return new LineRange(rBrace, rBrace, editor.getDocument());
-        }
-      } else {
-        throw new IllegalMoveException();
-      }
-    }*/
-
     return null;
   }
 

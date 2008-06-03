@@ -78,7 +78,7 @@ public class GroovyMoveStatementHandler extends EditorWriteActionHandler {
 
   private Mover getSuitableMover(final Editor editor, final GroovyFile file) {
     // order is important
-    Mover[] movers = new Mover[]{new DeclarationMover(isDown)};
+    Mover[] movers = new Mover[]{new StatementMover(isDown), new DeclarationMover(isDown)};
     for (final Mover mover : movers) {
       final boolean available = mover.checkAvailable(editor, file);
       if (available) return mover;

@@ -28,13 +28,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -58,10 +63,9 @@ public class StatementMover extends LineMover {
     LineRange range = toMove;
 
     range = expandLineRangeToCoverPsiElements(range, editor, file);
-    if (range == null) return false;
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0));
-    final PsiElement[] statements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset);
+    final PsiElement[] statements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, false);
     if (statements.length == 0) return false;
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length - 1];
@@ -89,7 +93,7 @@ public class StatementMover extends LineMover {
     if (endOffset == document.getTextLength()) {
       endLine = document.getLineCount();
     } else {
-      endLine = editor.offsetToLogicalPosition(endOffset).line;
+      endLine = editor.offsetToLogicalPosition(endOffset).line + 1;
       endLine = Math.min(endLine, document.getLineCount());
     }
     int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line);
@@ -104,11 +108,13 @@ public class StatementMover extends LineMover {
     if (guard == null) return false;
 
     // cannot move in/outside method/class/closure/comment
-    guard = PsiTreeUtil.getParentOfType(guard, GrMethod.class, GrTypeDefinition.class, PsiComment.class, GrClosableBlock.class);
-
+    Class<? extends PsiElement>[] classes = new Class[]{GrMethod.class, GrTypeDefinition.class, PsiComment.class, GroovyFile.class};
+    guard = PsiTreeUtil.getParentOfType(guard, classes);
     if (!calcInsertOffset(file, editor, result)) return false;
-    int insertOffset = isDown ? getLineStartSafeOffset(editor.getDocument(), toMove2.endLine) : editor.getDocument().getLineStartOffset(toMove2.startLine);
-    PsiElement newGuard = PsiTreeUtil.getParentOfType(guard, GrMethod.class, GrTypeDefinition.class, PsiComment.class, GrClosableBlock.class);
+    int insertOffset = isDown ? getLineStartSafeOffset(editor.getDocument(), toMove2.endLine) - 1 : editor.getDocument().getLineStartOffset(toMove2.startLine);
+
+    PsiElement newGuard = file.getViewProvider().findElementAt(insertOffset);
+    newGuard = PsiTreeUtil.getParentOfType(newGuard, classes);
     if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;
 
     return false;
@@ -135,18 +141,17 @@ public class StatementMover extends LineMover {
     int line = isDown ? range.endLine + 1 : range.startLine - 1;
     int startLine = isDown ? range.endLine : range.startLine - 1;
     if (line < 0 || startLine < 0) return false;
+
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
-      PsiElement element = firstNonWhiteElement(offset, file, true);
+      PsiElement element = firstNonWhiteElement(offset, file, true, true);
 
       while (element != null && !(element instanceof PsiFile)) {
         if (!element.getTextRange().grown(-1).shiftRight(1).contains(offset)) {
           boolean found = false;
-          if ((element instanceof GrStatement || element instanceof PsiComment)
+          if ((element instanceof GrTopStatement || element instanceof PsiComment)
               && statementCanBePlacedAlong(element)) {
             found = true;
-            if (!(element.getParent() instanceof GrCodeBlock)) {
-            }
           } else if (element.getNode() != null &&
               element.getNode().getElementType() == GroovyTokenTypes.mRCURLY) {
             // before code block closing brace
@@ -160,6 +165,8 @@ public class StatementMover extends LineMover {
               endLine = startLine;
               startLine = tmp;
             }
+//            startLine--;
+//            endLine--;
             toMove2 = isDown ? new LineRange(startLine, endLine) : new LineRange(startLine, endLine + 1);
             return true;
           }
@@ -177,6 +184,7 @@ public class StatementMover extends LineMover {
     if (element instanceof GrBlockStatement) return false;
     final PsiElement parent = element.getParent();
     if (parent instanceof GrCodeBlock) return true;
+    if (parent instanceof GroovyFile) return true;
     if (parent instanceof GrIfStatement &&
         (element == ((GrIfStatement) parent).getThenBranch() || element == ((GrIfStatement) parent).getElseBranch())) {
       return true;

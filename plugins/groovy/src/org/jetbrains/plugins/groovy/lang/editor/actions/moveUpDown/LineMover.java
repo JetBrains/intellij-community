@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -52,7 +53,7 @@ class LineMover extends Mover {
 
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
     if (range.startLine == 0 && !isDown) return false;
-    if (range.endLine >= maxLine && isDown) return false;
+    if (range.endLine > maxLine && isDown) return false;
 
     toMove = range;
     int nearLine = isDown ? range.endLine : range.startLine - 1;
@@ -62,11 +63,11 @@ class LineMover extends Mover {
 
   protected static Pair<PsiElement, PsiElement> getElementRange(Editor editor, PsiFile file, final LineRange range) {
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
-    PsiElement startingElement = firstNonWhiteElement(startOffset, file, true);
+    PsiElement startingElement = firstNonWhiteElement(startOffset, file, true, true);
     if (startingElement == null) return null;
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0)) - 1;
 
-    PsiElement endingElement = firstNonWhiteElement(endOffset, file, false);
+    PsiElement endingElement = firstNonWhiteElement(endOffset, file, false, true);
     if (endingElement == null) return null;
     if (PsiTreeUtil.isAncestor(startingElement, endingElement, false) ||
         startingElement.getTextRange().getEndOffset() <= endingElement.getTextRange().getStartOffset()) {
@@ -78,13 +79,13 @@ class LineMover extends Mover {
     return null;
   }
 
-  static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight) {
+  static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight, boolean withNewlines) {
     final ASTNode leafElement = file.getNode().findLeafElementAt(offset);
-    return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight);
+    return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight, withNewlines);
   }
 
-  static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight) {
-    if (element instanceof PsiWhiteSpace || PsiUtil.isNewLine(element)) {
+  static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight, boolean withNewlines) {
+    if (element instanceof PsiWhiteSpace || PsiUtil.isNewLine(element) && withNewlines) {
       element = lookRight ? element.getNextSibling() : element.getPrevSibling();
     }
     return element;
@@ -103,10 +104,19 @@ class LineMover extends Mover {
     while (element2 != null && element2.getParent() != parent) {
       element2 = element2.getParent();
     }
+
     if (element1 == null || element2 == null) return null;
+    PsiElement commonParent = element1.getParent();
+    if ((!(element1 instanceof GrTopStatement) || !(element2 instanceof GrTopStatement)) &&
+        commonParent == element2.getParent() &&
+        commonParent instanceof GrTopStatement) {
+      element1 = element2 = element1.getParent();
+    }
+
     if (element1 != element2) {
       assert element1.getTextRange().getEndOffset() <= element2.getTextRange().getStartOffset() : element1.getTextRange() + "-" + element2.getTextRange() + element1 + element2;
     }
+
     return Pair.create(element1, element2);
   }
 }

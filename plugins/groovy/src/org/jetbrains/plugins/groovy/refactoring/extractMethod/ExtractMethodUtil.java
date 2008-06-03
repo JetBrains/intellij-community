@@ -322,7 +322,7 @@ public class ExtractMethodUtil {
       }
       elements = new PsiElement[]{expr};
     } else {
-      elements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset);
+      elements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, true);
     }
     return elements;
   }
