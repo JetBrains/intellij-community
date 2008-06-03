@@ -54,4 +54,11 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
   public int hashCode() {
     return myBaseList.hashCode();
   }
+
+  static CommittedChangeList unwrap(CommittedChangeList changeList) {
+    if (changeList instanceof ReceivedChangeList) {
+      changeList = ((ReceivedChangeList) changeList).getBaseList();
+    }
+    return changeList;
+  }
 }
