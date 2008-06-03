@@ -7,6 +7,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetActionGroup;
+import com.intellij.facet.Facet;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
@@ -626,17 +627,24 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     };
   }
 
+  protected List<Facet> removeFacet(final Facet facet) {
+    List<Facet> removed = super.removeFacet(facet);
+    FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+    return removed;
+  }
+
   protected boolean removeModule(final Module module) {
     ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
     if (!modulesConfigurator.deleteModule(module)) {
       //wait for confirmation
-      return true;
+      return false;
     }
-    modulesConfigurator.getFacetsConfigurator().onModuleRemoved(module);
+    List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
+    FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
     myContext.myValidityCache.remove(module);
     myContext.invalidateModules(myContext.myModulesDependencyCache.get(module));
     myContext.myModulesDependencyCache.remove(module);
-    return false;
+    return true;
   }
 
   @Nullable
@@ -745,7 +753,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     public void update(final AnActionEvent e) {
-      if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
+      TreePath[] selectionPaths = myTree.getSelectionPaths();
+      if (selectionPaths == null || selectionPaths.length != 1) {
         e.getPresentation().setEnabled(false);
       } else {
         e.getPresentation().setEnabled(getSelectedConfugurable() instanceof ModuleConfigurable);

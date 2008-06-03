@@ -595,6 +595,30 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     return myTree;
   }
 
+  protected void removePaths(final TreePath... paths) {
+    MyNode parentNode = null;
+    int idx = -1;
+    for (TreePath path : paths) {
+      final MyNode node = (MyNode)path.getLastPathComponent();
+      final NamedConfigurable namedConfigurable = node.getConfigurable();
+      final Object editableObject = namedConfigurable.getEditableObject();
+      parentNode = (MyNode)node.getParent();
+      idx = parentNode.getIndex(node);
+      parentNode.remove(node);
+      myHasDeletedItems |= wasObjectStored(editableObject);
+      fireItemsChangeListener(editableObject);
+      namedConfigurable.disposeUIResources();
+    }
+    ((DefaultTreeModel)myTree.getModel()).reload();
+    if (parentNode != null && idx != -1) {
+      TreeUtil
+        .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);
+    }
+    else {
+      TreeUtil.selectFirstNode(myTree);
+    }
+  }
+
   protected class MyDeleteAction extends AnAction {
     private final Condition<Object> myCondition;
 
@@ -618,30 +642,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
     public void actionPerformed(AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
-    }
-
-    protected void removePaths(final TreePath[] paths) {
-      MyNode parentNode = null;
-      int idx = -1;
-      for (TreePath path : paths) {
-        final MyNode node = (MyNode)path.getLastPathComponent();
-        final NamedConfigurable namedConfigurable = node.getConfigurable();
-        final Object editableObject = namedConfigurable.getEditableObject();
-        parentNode = (MyNode)node.getParent();
-        idx = parentNode.getIndex(node);
-        parentNode.remove(node);
-        myHasDeletedItems |= wasObjectStored(editableObject);
-        fireItemsChangeListener(editableObject);
-        namedConfigurable.disposeUIResources();
-      }
-      ((DefaultTreeModel)myTree.getModel()).reload();
-      if (parentNode != null && idx != -1) {
-        TreeUtil
-          .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);
-      }
-      else {
-        TreeUtil.selectFirstNode(myTree);
-      }
     }
   }
 

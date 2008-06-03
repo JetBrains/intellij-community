@@ -328,7 +328,10 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(createAddAction());
+    AbstractAddGroup addAction = createAddAction();
+    if (addAction != null) {
+      result.add(addAction);
+    }
     result.add(new MyRemoveAction());
 
     final AnAction copyAction = createCopyAction();
@@ -348,6 +351,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return null;
   }
 
+  @Nullable
   protected abstract AbstractAddGroup createAddAction();
 
   protected class MyRemoveAction extends MyDeleteAction {
@@ -372,6 +376,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     public void actionPerformed(AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null) return;
+
       final Set<TreePath> pathsToRemove = new HashSet<TreePath>();
       for (TreePath path : paths) {
         if (removeFromModel(path)) {
@@ -393,10 +399,10 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         removeJdk((Sdk)editableObject);
       }
       else if (editableObject instanceof Module) {
-        if (removeModule((Module)editableObject)) return false;
+        if (!removeModule((Module)editableObject)) return false;
       }
       else if (editableObject instanceof Facet) {
-        if (removeFacet((Facet)editableObject)) return false;
+        if (removeFacet((Facet)editableObject).isEmpty()) return false;
       }
       else if (editableObject instanceof Library) {
         removeLibrary((Library)editableObject);
@@ -411,16 +417,24 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   }
 
-  private boolean removeFacet(final Facet facet) {
-    if (!ProjectFileVersion.getInstance(myProject).isFacetDeletionEnabled(facet.getTypeId(), true)) {
-      return true;
+  protected void removeFacetNodes(@NotNull List<Facet> facets) {
+    for (Facet facet : facets) {
+      MyNode node = findNodeByObject(myRoot, facet);
+      if (node != null) {
+        removePaths(TreeUtil.getPathFromRoot(node));
+      }
     }
-    myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
-    return false;
+  }
+
+  protected List<Facet> removeFacet(final Facet facet) {
+    if (!ProjectFileVersion.getInstance(myProject).isFacetDeletionEnabled(facet.getTypeId(), true)) {
+      return Collections.emptyList();
+    }
+    return myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
   }
 
   protected boolean removeModule(final Module module) {
-    return false;
+    return true;
   }
 
   protected void removeJdk(final Sdk editableObject) {

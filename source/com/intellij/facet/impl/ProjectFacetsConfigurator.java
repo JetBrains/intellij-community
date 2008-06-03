@@ -52,16 +52,17 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     myModuleStateProvider = moduleStateProvider;
   }
 
-  public void removeFacet(Facet facet) {
+  public List<Facet> removeFacet(Facet facet) {
     FacetTreeModel treeModel = getTreeModel(facet.getModule());
     FacetInfo facetInfo = myFacet2Info.get(facet);
-    if (facetInfo == null) return;
+    if (facetInfo == null) return Collections.emptyList();
 
+    final List<Facet> removed = new ArrayList<Facet>();
     List<FacetInfo> children = treeModel.getChildren(facetInfo);
     for (FacetInfo child : children) {
       Facet childInfo = myInfo2Facet.get(child);
       if (childInfo != null) {
-        removeFacet(childInfo);
+        removed.addAll(removeFacet(childInfo));
       }
     }
 
@@ -77,6 +78,8 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     }
     myFacet2Info.remove(facet);
     myInfo2Facet.remove(facetInfo);
+    removed.add(facet);
+    return removed;
   }
 
   public Facet createAndAddFacet(Module module, FacetType<?, ?> type, String name, final @Nullable FacetInfo underlyingFacet) {
@@ -294,16 +297,18 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     return myProjectData;
   }
 
-  public void onModuleRemoved(final Module module) {
+  public List<Facet> removeAllFacets(final Module module) {
+    List<Facet> facets = new ArrayList<Facet>();
     FacetModel facetModel = getFacetModel(module);
     for (Facet facet : facetModel.getAllFacets()) {
       if (!myCreatedFacets.contains(facet)) {
         myFacetsToDispose.add(facet);
       }
-      removeFacet(facet);
+      facets.addAll(removeFacet(facet));
     }
     mySharedModuleData.remove(module);
     myModels.remove(module);
+    return facets;
   }
 
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {

@@ -58,4 +58,8 @@ public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
 
   public void disposeUIResources() {
   }
+
+  public void updateComponent() {
+    resetOptionsPanel();
+  }
 }

@@ -4,12 +4,14 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
-import com.intellij.facet.ui.MultipleFacetSettingsEditor;
-import com.intellij.facet.ui.FacetEditor;
-import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
+import com.intellij.facet.ui.FacetEditor;
+import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
@@ -18,11 +20,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,8 +129,19 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    if (fromPopup) {
+      actions.add(new MyNavigateAction());
+    }
+    actions.add(new MyRemoveAction());
+    actions.add(Separator.getInstance());
     addCollapseExpandActions(actions);
     return actions;
+  }
+
+  protected List<Facet> removeFacet(final Facet facet) {
+    List<Facet> removed = super.removeFacet(facet);
+    ModuleStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+    return removed;
   }
 
   protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
@@ -170,6 +182,9 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {
     disposeMultipleSettingsEditor();
+    if (configurable instanceof FacetTypeConfigurable) {
+      ((FacetTypeConfigurable)configurable).updateComponent();
+    }
     super.updateSelection(configurable);
   }
 
@@ -180,6 +195,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @Nullable
   protected AbstractAddGroup createAddAction() {
     return null;
   }
@@ -228,6 +244,25 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       FacetConfigurable facetConfigurable = (FacetConfigurable)getConfigurable();
       String moduleName = myContext.getRealName(facetConfigurable.getEditableObject().getModule());
       return facetConfigurable.getDisplayName() + " (" + moduleName + ")";
+    }
+  }
+
+  private class MyNavigateAction extends AnAction {
+    private MyNavigateAction() {
+      super(ProjectBundle.message("action.name.facet.navigate"));
+      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myTree);
+    }
+
+    public void update(final AnActionEvent e) {
+      NamedConfigurable selected = getSelectedConfugurable();
+      e.getPresentation().setEnabled(selected instanceof FacetConfigurable);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      NamedConfigurable selected = getSelectedConfugurable();
+      if (selected instanceof FacetConfigurable) {
+        ProjectStructureConfigurable.getInstance(myProject).select(((FacetConfigurable)selected).getEditableObject(), true);
+      }
     }
   }
 }

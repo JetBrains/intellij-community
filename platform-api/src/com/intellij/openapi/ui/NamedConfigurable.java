@@ -80,6 +80,11 @@ public abstract class NamedConfigurable<T> implements Configurable {
     return myWholePanel;
   }
 
+  protected void resetOptionsPanel() {
+    myOptionsComponent = null;
+    myOptionsPanel.removeAll();
+  }
+
   public void updateName() {
     myNameField.setText(getDisplayName());
   }
