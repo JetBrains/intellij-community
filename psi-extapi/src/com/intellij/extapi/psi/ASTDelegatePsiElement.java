@@ -140,8 +140,8 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     });
   }
 
-  protected PsiElement[] findChildrenByType(TokenSet elementType, Class<? extends PsiElement> arrayClass) {
-    return ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, new Function<ASTNode, PsiElement>() {
+  protected <T extends PsiElement> T[] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
+    return (T[])ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, new Function<ASTNode, PsiElement>() {
       public PsiElement fun(final ASTNode s) {
         return s.getPsi();
       }
