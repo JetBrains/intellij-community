@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 
-import java.lang.ref.SoftReference;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -38,17 +37,19 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final AreaInstance myArea;
   private final String myName;
   private final String myBeanClassName;
-  private final List<T> myExtensions = new ArrayList<T>();
+
+  private final List<T> myExtensions = new CopyOnWriteArrayList<T>();
+  private volatile T[] myExtensionsCache;
+
   private final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
+
   private final Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
 
   private final List<ExtensionPointListener<T>> myEPListeners = new CopyOnWriteArrayList<ExtensionPointListener<T>>();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private final List<ExtensionComponentAdapter> myLoadedAdapters = new CopyOnWriteArrayList<ExtensionComponentAdapter>();
-
-  private SoftReference<T[]> myExtensionsCache;
 
   private Class<T> myExtensionClass;
 
@@ -144,17 +145,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public T[] getExtensions() {
     processAdapters();
 
-    T[] result = null;
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      if (myExtensionsCache != null) {
-        result = myExtensionsCache.get();
-      }
-      if (result == null) {
-        //noinspection unchecked
-        result = myExtensions.toArray((T[])Array.newInstance(getExtensionClass(), myExtensions.size()));
-        myExtensionsCache = new SoftReference<T[]>(result);
-      }
+    T[] result = myExtensionsCache;
+    if (result == null) {
+      //noinspection unchecked
+      myExtensionsCache = result = myExtensions.toArray((T[])Array.newInstance(getExtensionClass(), myExtensions.size()));
     }
     for (int i = 1; i < result.length; i++) {
       assert result[i] != result[i - 1] : "Result: "+ Arrays.asList(result)+"; myExtensions: "+myExtensions+"; getExtensionClass()="+getExtensionClass()+"; size="+myExtensions.size()+";"+result.length;
@@ -168,6 +162,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       allAdapters.addAll(myExtensionAdapters);
       allAdapters.addAll(myLoadedAdapters);
       myExtensions.clear();
+      myExtensionsCache = null;
       ExtensionComponentAdapter[] loadedAdapters = myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()]);
       myLoadedAdapters.clear();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
@@ -191,7 +186,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return extensions[0];
   }
 
-  public synchronized boolean hasExtension(@NotNull T extension) {
+  public boolean hasExtension(@NotNull T extension) {
     processAdapters();
 
     return myExtensions.contains(extension);
@@ -221,19 +216,20 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private synchronized void internalUnregisterExtension(T extension, PluginDescriptor pluginDescriptor) {
-    myExtensionsCache = null;
-
     int index = getExtensionIndex(extension);
+    myExtensionsCache = null;
     myExtensions.remove(index);
+
     myLoadedAdapters.remove(index);
 
     notifyListenersOnRemove(extension, pluginDescriptor);
 
     if (extension instanceof Extension) {
-      Extension o = (Extension) extension;
+      Extension o = (Extension)extension;
       try {
         o.extensionRemoved(this);
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         myLogger.error(e);
       }
     }
