@@ -26,6 +26,7 @@
     <orderEntry type="library" name="Eclipse" level="project" />
     <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="boot" />
+    <orderEntry type="module" module-name="platform-api" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

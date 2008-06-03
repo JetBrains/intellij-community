@@ -12,6 +12,8 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.diagnostic.IdeErrorsDialog;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -20,6 +22,7 @@ import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -350,6 +353,10 @@ public class CompileDriver {
     }
     catch (Throwable ex) {
       wereExceptions = true;
+      PluginId pluginId = IdeErrorsDialog.findPluginId(ex);
+      if (pluginId != null) {
+        throw new PluginException(ex, pluginId);
+      }
       throw new RuntimeException(ex);
     }
     finally {
