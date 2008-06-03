@@ -142,7 +142,8 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     public boolean isValid() {
-      return getPsiClass() != null;
+      PsiClass psiClass = getPsiClass();
+      return psiClass != null && psiClass.isValid();
     }
 
     public int hashCode() {
