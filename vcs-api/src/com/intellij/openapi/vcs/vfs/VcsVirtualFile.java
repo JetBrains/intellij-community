@@ -52,7 +52,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    if (myContentLoadFailed) {
+    if (myContentLoadFailed || myProcessingBeforeContentsChange) {
       return new byte[0];
     }
     if (myContent == null) {
@@ -68,11 +68,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
     try {
       myFileRevision.loadContent();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          vcsFileSystem.fireBeforeContentsChange(this, VcsVirtualFile.this);
-        }
-      });
+      fireBeforeContentsChange();
 
       myModificationStamp++;
       setRevision(myFileRevision.getRevisionNumber().asString());

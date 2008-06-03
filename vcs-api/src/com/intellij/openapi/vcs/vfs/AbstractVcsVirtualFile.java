@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,7 @@ public abstract class AbstractVcsVirtualFile extends DeprecatedVirtualFile {
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
   private final VirtualFileSystem myFileSystem;
+  protected boolean myProcessingBeforeContentsChange;
 
   protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
@@ -120,5 +122,19 @@ public abstract class AbstractVcsVirtualFile extends DeprecatedVirtualFile {
 
   protected void setRevision(String revision) {
     myRevision = revision;
+  }
+
+  protected void fireBeforeContentsChange() {
+    myProcessingBeforeContentsChange = true;
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ((VcsFileSystem)getFileSystem()).fireBeforeContentsChange(this, AbstractVcsVirtualFile.this);
+        }
+      });
+    }
+    finally {
+      myProcessingBeforeContentsChange = false;
+    }
   }
 }
