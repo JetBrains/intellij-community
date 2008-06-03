@@ -93,7 +93,9 @@ public class IndexingStamp {
 
   public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     if (file instanceof NewVirtualFile && file.isValid()) {
-      return myTimestampsCache.get(file).get(indexName) == indexCreationStamp;
+      synchronized (myTimestampsCache) {
+        return myTimestampsCache.get(file).get(indexName) == indexCreationStamp;
+      }
     }
 
     return false;
@@ -102,7 +104,9 @@ public class IndexingStamp {
   public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
     try {
       if (file instanceof NewVirtualFile && file.isValid()) {
-        myTimestampsCache.get(file).set(indexName, indexCreationStamp);
+        synchronized (myTimestampsCache) {
+          myTimestampsCache.get(file).set(indexName, indexCreationStamp);
+        }
       }
     }
     catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
@@ -110,7 +114,9 @@ public class IndexingStamp {
   }
 
   public static void flushCache() {
-    myTimestampsCache.clear();
+    synchronized (myTimestampsCache) {
+      myTimestampsCache.clear();
+    }
   }
 
 }
