@@ -489,6 +489,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
+    if (myIsDisposed) return null;
     ContentManager contentManager = getContentManager();
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
     Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(

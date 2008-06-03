@@ -23,6 +23,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +34,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   private final String myHelpId;
   private final DefaultActionGroup myToolbalGroup = new DefaultActionGroup(null, false);
 
-  public PanelWithActionsAndCloseButton(ContentManager contentManager, @NonNls String helpId) {
+  public PanelWithActionsAndCloseButton(@NotNull ContentManager contentManager, @NonNls String helpId) {
     super(new BorderLayout());
     myContentManager = contentManager;
     myHelpId = helpId;

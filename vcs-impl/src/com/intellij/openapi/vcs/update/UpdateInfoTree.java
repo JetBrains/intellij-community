@@ -97,7 +97,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   private CommittedChangesTreeBrowser myTreeBrowser;
   private final TreeExpander myTreeExpander;
 
-  public UpdateInfoTree(ContentManager contentManager,
+  public UpdateInfoTree(@NotNull ContentManager contentManager,
                         @NotNull Project project,
                         UpdatedFiles updatedFiles,
                         String rootName,

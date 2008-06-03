@@ -210,20 +210,22 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                     final UpdateInfoTree updateInfoTree = projectLevelVcsManager.showUpdateProjectInfo(updatedFiles,
                                                                                                        getTemplatePresentation().getText(),
                                                                                                        myActionInfo);
-                    updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(vcsToVirtualFiles.keySet()));
-                    final MessageBusConnection messageBusConnection = project.getMessageBus().connect();
-                    messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
-                      public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
-                        if (receivedChanges != null) {
-                          ApplicationManager.getApplication().invokeLater(new Runnable() {
-                            public void run() {
-                              updateInfoTree.setChangeLists(receivedChanges);
-                            }
-                          }, myProject.getDisposed());
-                          messageBusConnection.disconnect();
+                    if (updateInfoTree != null) {
+                      updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(vcsToVirtualFiles.keySet()));
+                      final MessageBusConnection messageBusConnection = project.getMessageBus().connect();
+                      messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+                        public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
+                          if (receivedChanges != null) {
+                            ApplicationManager.getApplication().invokeLater(new Runnable() {
+                              public void run() {
+                                updateInfoTree.setChangeLists(receivedChanges);
+                              }
+                            }, myProject.getDisposed());
+                            messageBusConnection.disconnect();
+                          }
                         }
-                      }
-                    });
+                      });
+                    }
                     final CommittedChangesCache cache = CommittedChangesCache.getInstance(project);
                     cache.processUpdatedFiles(updatedFiles);
                   }
