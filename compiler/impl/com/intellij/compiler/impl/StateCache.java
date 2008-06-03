@@ -1,7 +1,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -12,12 +12,13 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 public abstract class StateCache<T> {
   private PersistentHashMap<String, T> myMap;
-  private Map<String, T> myMemCache = new SoftHashMap<String, T>();
+  private SoftReference<Map<String, T>> myMemCache = null;
   private final File myBaseFile;
 
   public StateCache(@NonNls File storePath) throws IOException {
@@ -34,13 +35,13 @@ public abstract class StateCache<T> {
   }
   
   public void close() throws IOException {
-    myMemCache.clear();
+    clearCache();
     myMap.close();
   }
   
   public boolean wipe() {
     try {
-      myMemCache.clear();
+      clearCache();
       myMap.close();
     }
     catch (IOException ignored) {
@@ -62,7 +63,7 @@ public abstract class StateCache<T> {
 
   public void update(@NonNls String url, T state) throws IOException {
     if (state != null) {
-      myMemCache.put(url, state);
+      updateCache(url, state);
       myMap.put(url, state);
     }
     else {
@@ -71,12 +72,12 @@ public abstract class StateCache<T> {
   }
 
   public void remove(String url) throws IOException {
-    myMemCache.remove(url);
+    removeCached(url);
     myMap.remove(url);
   }
 
   public T getState(String url) throws IOException {
-    T state = myMemCache.get(url);
+    T state = getCached(url);
     if (state != null) {
       return state;
     }
@@ -85,7 +86,7 @@ public abstract class StateCache<T> {
     }
     finally {
       if (state != null) {
-        myMemCache.put(url, state);
+        updateCache(url, state);
       }
     }
   }
@@ -111,4 +112,28 @@ public abstract class StateCache<T> {
     });
   }
 
+  private void updateCache(@NonNls String url, T state) {
+    Map<String, T> map = myMemCache != null? myMemCache.get() : null;
+    if (map == null) {
+      map = new HashMap<String,T>();
+      myMemCache = new SoftReference<Map<String,T>>(map);
+    }
+    map.put(url, state);
+  }
+
+  private void removeCached(@NonNls String url) {
+    final Map<String, T> map = myMemCache != null? myMemCache.get() : null;
+    if (map != null) {
+      map.remove(url);
+    }
+  }
+  
+  private T getCached(@NonNls String url) {
+    Map<String, T> map = myMemCache != null? myMemCache.get() : null;
+    return map != null? map.get(url) : null;
+  }
+  
+  private void clearCache() {
+    myMemCache = null;
+  }
 }
