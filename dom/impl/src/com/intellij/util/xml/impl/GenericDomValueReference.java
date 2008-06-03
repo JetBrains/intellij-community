@@ -164,7 +164,8 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
         if (name != null) {
           final Icon presentationIcon = ElementPresentationManager.getIcon(variant);
           final Icon icon = presentationIcon == null && variant instanceof Iconable? ((Iconable)variant).getIcon(Iconable.ICON_FLAG_READ_STATUS) : presentationIcon;
-          result.add(LookupValueFactory.createLookupValue(name, icon));
+          final String hint = ElementPresentationManager.getHintForElement(variant);
+          result.add(hint == null ? LookupValueFactory.createLookupValue(name, icon) : LookupValueFactory.createLookupValueWithHint(name, icon, hint));
         }
       }
       for (final String string : resolvingConverter.getAdditionalVariants(convertContext)) {
