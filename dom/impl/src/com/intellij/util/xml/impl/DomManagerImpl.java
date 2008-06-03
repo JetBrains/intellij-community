@@ -5,10 +5,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -27,8 +27,6 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -381,15 +379,11 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(final XmlFile xmlFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    CachedValue<FileDescriptionCachedValueProvider> provider = (CachedValue<FileDescriptionCachedValueProvider>)myHandlerCache.get(xmlFile);
+    FileDescriptionCachedValueProvider provider = (FileDescriptionCachedValueProvider)myHandlerCache.get(xmlFile);
     if (provider == null) {
-      myHandlerCache.put(xmlFile, provider = xmlFile.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<FileDescriptionCachedValueProvider>() {
-        public Result<FileDescriptionCachedValueProvider> compute() {
-          return Result.create(new FileDescriptionCachedValueProvider(DomManagerImpl.this, xmlFile), PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      }, false));
+      myHandlerCache.put(xmlFile, provider = new FileDescriptionCachedValueProvider(this, xmlFile));
     }
-    return provider.getValue();
+    return provider;
   }
 
   public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
