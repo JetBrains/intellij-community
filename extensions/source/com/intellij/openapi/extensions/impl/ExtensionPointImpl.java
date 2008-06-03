@@ -26,10 +26,7 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -160,7 +157,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       }
     }
     for (int i = 1; i < result.length; i++) {
-      assert result[i] != result[i - 1];
+      assert result[i] != result[i - 1] : "Result: "+ Arrays.asList(result)+"; myExtensions: "+myExtensions+"; getExtensionClass()="+getExtensionClass()+"; size="+myExtensions.size()+";"+result.length;
     }
     return result;
   }
