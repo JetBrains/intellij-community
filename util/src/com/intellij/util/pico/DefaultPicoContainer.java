@@ -94,9 +94,9 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     List found = getComponentAdaptersOfType(componentType);
 
     if (found.size() == 1) {
-      return ((ComponentAdapter)found.get(0));
+      return (ComponentAdapter)found.get(0);
     }
-    else if (found.size() == 0) {
+    else if (found.isEmpty()) {
       if (parent != null) {
         return parent.getComponentAdapterOfType(componentType);
       }
@@ -116,7 +116,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   public List getComponentAdaptersOfType(Class componentType) {
     if (componentType == null) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     List<ComponentAdapter> found = new ArrayList<ComponentAdapter>();
     for (final Object o : getComponentAdapters()) {
@@ -156,9 +156,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   }
 
   private void addOrderedComponentAdapter(ComponentAdapter componentAdapter) {
-    if (!orderedComponentAdapters.contains(componentAdapter)) {
-      orderedComponentAdapters.add(componentAdapter);
-    }
+    orderedComponentAdapters.add(componentAdapter);
   }
 
   public List getComponentInstances() throws PicoException {
@@ -167,7 +165,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   public List getComponentInstancesOfType(Class componentType) {
     if (componentType == null) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     Map<ComponentAdapter, Object> adapterToInstanceMap = new HashMap<ComponentAdapter, Object>();
@@ -182,7 +180,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
       }
     }
 
-    List result = new ArrayList();
+    List<Object> result = new ArrayList<Object>();
     for (ComponentAdapter componentAdapter : orderedComponentAdapters) {
       final Object componentInstance = adapterToInstanceMap.get(componentAdapter);
       if (componentInstance != null) {

@@ -51,9 +51,7 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
       myElements.add(o);
       return true;
     }
-    else{
-      return false;
-    }
+    return false;
   }
 
   public boolean remove(Object o) {
@@ -61,9 +59,7 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
       myElements.remove(o);
       return true;
     }
-    else{
-      return false;
-    }
+    return false;
   }
 
   public void clear() {
