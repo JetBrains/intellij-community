@@ -243,6 +243,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   }
 
 
+  @NotNull
   protected MyContentPanel createContentPanel(final boolean resizable, PopupBorder border, boolean isToDrawMacCorner) {
     return new MyContentPanel(resizable, border, isToDrawMacCorner);
   }

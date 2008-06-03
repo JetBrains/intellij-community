@@ -14,6 +14,7 @@ import com.intellij.ui.popup.util.ElementFilter;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.popup.util.SpeedSearch;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -247,6 +248,7 @@ public abstract class BasePopup extends AbstractPopup implements ActionListener,
     myParentValue = parentValue;
   }
 
+  @NotNull
   protected MyContentPanel createContentPanel(final boolean resizable, final PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(resizable, border, isToDrawMacCorner);
   }

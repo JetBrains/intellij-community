@@ -499,6 +499,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     myComponentHint = new MyComponentHint(this);
     myPopup = JBPopupFactory.getInstance().createListPopup(new IntentionListStep(intentions, errorFixes, inspectionFixes));
+    Disposer.register(this, myPopup);
   }
 
   public void hide() {
