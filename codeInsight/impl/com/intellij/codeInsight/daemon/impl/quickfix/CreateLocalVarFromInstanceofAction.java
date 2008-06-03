@@ -312,7 +312,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       }
     };
     template.addVariable("", expr, expr, true);
-    template.addEndVariable();
 
     return template;
   }
