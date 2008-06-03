@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
@@ -150,7 +151,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
             if (file != null && (scope == null || scope.contains(file))) {
               final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
-              if (psiFile != null) {
+              if (psiFile != null && !(psiFile instanceof PsiPlainTextFile)) {
                 StubTree stubTree = psiFile.getStubTree();
                 if (stubTree == null) {
                   stubTree = StubTree.readFromVFile(file);
