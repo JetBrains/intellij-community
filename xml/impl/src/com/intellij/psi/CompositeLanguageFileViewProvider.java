@@ -56,7 +56,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
     for (Map.Entry<Language, PsiFile> entry : myRoots.entrySet()) {
       final PsiFile root = entry.getValue();
-      if (root != psiFile && root != null) {
+      if (root != psiFile && root != null && root.getLanguage() != getBaseLanguage()) {
         if (root instanceof LightPsiFileImpl) {
           final LightPsiFileImpl lightFile = (LightPsiFileImpl)root;
           final LightPsiFileImpl clone = lightFile.copyLight(viewProvider);
