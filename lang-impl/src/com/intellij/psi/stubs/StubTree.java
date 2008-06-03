@@ -3,8 +3,8 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -24,7 +24,7 @@ public class StubTree {
 
   public StubTree(final PsiFileStub root) {
     myRoot = root;
-    ((PsiFileStubImpl)root).putUserData(HARD_REF_IN_STUB, this);
+    ((UserDataHolder)root).putUserData(HARD_REF_IN_STUB, this);
     enumerateStubs(root, myPlainList);
   }
 
@@ -58,7 +58,7 @@ public class StubTree {
             map = new HashMap<Object, TIntArrayList>();
             result.put(indexKey, map);
           }
-          
+
           TIntArrayList list = map.get(value);
           if (list == null) {
             list = new TIntArrayList();
@@ -73,7 +73,7 @@ public class StubTree {
   }
 
   @Nullable
-  public static StubTree readFromVFile(final VirtualFile vFile, Project project) {
+  public static StubTree readFromVFile(final VirtualFile vFile) {
     final int id = Math.abs(FileBasedIndex.getFileId(vFile));
     if (id > 0) {
       final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, VirtualFileFilter.ALL);

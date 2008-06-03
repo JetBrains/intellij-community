@@ -17,6 +17,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
@@ -26,9 +27,10 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.stubs.PsiFileStubImpl;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +48,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
   private final PsiManagerImpl myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
-  private WeakReference<StubTree> myStub;
+  private volatile WeakReference<StubTree> myStub;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
@@ -171,7 +173,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
   }
 
   private PsiClassStub getClassStub() {
-    return ((PsiClassStub)getStub().getChildrenStubs().get(0));
+    return (PsiClassStub)getStub().getChildrenStubs().get(0);
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -197,7 +199,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
       goNextLine(indentLevel, buffer);
     }
     PsiClass aClass = getClasses()[0];
-    ((ClsClassImpl)aClass).appendMirrorText(0, buffer);
+    ((ClsElementImpl)aClass).appendMirrorText(0, buffer);
   }
 
   public void setMirror(@NotNull TreeElement element) {
@@ -326,7 +328,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
   }
 
   public static String decompile(PsiManager manager, VirtualFile file) {
-    final FileViewProvider provider = ((PsiManagerImpl)manager).getFileManager().findViewProvider(file);
+    final FileViewProvider provider = ((PsiManagerEx)manager).getFileManager().findViewProvider(file);
     ClsFileImpl psiFile = null;
     if (provider != null) {
       psiFile = (ClsFileImpl)provider.getPsi(provider.getBaseLanguage());
@@ -352,15 +354,21 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
     return stubHolder != null ? (PsiJavaFileStub)stubHolder.getRoot() : null;
   }
 
+  private final Object lock = new Object();
   @Nullable
   public StubTree getStubTree() {
-    StubTree stubHolder = myStub != null ? myStub.get() : null;
+    WeakReference<StubTree> stub = myStub;
+    StubTree stubHolder = stub == null ? null : stub.get();
     if (stubHolder == null) {
-      final VirtualFile vFile = getVirtualFile();
-      stubHolder = StubTree.readFromVFile(vFile, getProject());
-      if (stubHolder != null) {
-        myStub = new WeakReference<StubTree>(stubHolder);
-        ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
+      synchronized (lock) {
+        stub = myStub;
+        stubHolder = stub == null ? null : stub.get();
+        if (stubHolder != null) return stubHolder;
+        stubHolder = StubTree.readFromVFile(getVirtualFile());
+        if (stubHolder != null) {
+          myStub = new WeakReference<StubTree>(stubHolder);
+          ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
+        }
       }
     }
     return stubHolder;
@@ -375,9 +383,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
   }
 
   public void onContentReload() {
-    StubTree stubHolder = myStub != null ? myStub.get() : null;
+    WeakReference<StubTree> stub = myStub;
+    StubTree stubHolder = stub == null ? null : stub.get();
     if (stubHolder != null) {
-      ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(null);
+      ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
     }
     myStub = null;
   }

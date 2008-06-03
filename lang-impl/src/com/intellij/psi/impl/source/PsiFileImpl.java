@@ -528,7 +528,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         if (getTreeElementNoLock() == null) {
 
           final VirtualFile vFile = getVirtualFile();
-          stubHolder = StubTree.readFromVFile(vFile, getProject());
+          stubHolder = StubTree.readFromVFile(vFile);
           if (stubHolder != null) {
             myStub = new WeakReference<StubTree>(stubHolder);
             StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();

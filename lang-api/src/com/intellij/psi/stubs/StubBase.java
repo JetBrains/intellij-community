@@ -62,7 +62,6 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
 
     synchronized (PsiLock.LOCK) {
       if (myPsi != null) return myPsi;
-
       //noinspection unchecked
       myPsi = (T)getStubType().createPsi(this);
     }

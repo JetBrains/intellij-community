@@ -40,17 +40,13 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     if (isCompiled(stub)) {
       return new ClsClassImpl(stub);
     }
-    else {
-      if (stub.isEnumConstantInitializer()) {
-        return new PsiEnumConstantInitializerImpl(stub);
-      }
-      else if (stub.isAnonymous()) {
-        return new PsiAnonymousClassImpl(stub);
-      }
-      else {
-        return new PsiClassImpl(stub);
-      }
+    if (stub.isEnumConstantInitializer()) {
+      return new PsiEnumConstantInitializerImpl(stub);
     }
+    if (stub.isAnonymous()) {
+      return new PsiAnonymousClassImpl(stub);
+    }
+    return new PsiClassImpl(stub);
   }
 
   public PsiClass createPsi(final ASTNode node) {

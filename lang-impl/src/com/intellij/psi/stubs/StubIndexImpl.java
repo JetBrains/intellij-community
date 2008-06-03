@@ -67,17 +67,17 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private <K> boolean registerIndexer(final StubIndexExtension<K, ?> extension) throws IOException {
-    boolean needRebuild = false;
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
     myIndexIdToVersionMap.put(indexKey, version);
     final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
     final boolean versionFileExisted = versionFile.exists();
     final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
+    boolean needRebuild = false;
     if (IndexInfrastructure.versionDiffers(versionFile, version)) {
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
-      needRebuild = versionFileExisted || (children != null && children.length > 0);
+      needRebuild = versionFileExisted || children != null && children.length > 0;
       FileUtil.delete(indexRootDir);
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
@@ -129,7 +129,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, final @NotNull Key key, final Project project,
+  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, @NotNull final Key key, final Project project,
                                                            final GlobalSearchScope scope) {
     checkRebuild();
 
@@ -153,7 +153,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
               if (psiFile != null) {
                 StubTree stubTree = psiFile.getStubTree();
                 if (stubTree == null) {
-                  stubTree = StubTree.readFromVFile(file, project);
+                  stubTree = StubTree.readFromVFile(file);
                   if (stubTree != null) {
                     final List<StubElement<?>> plained = stubTree.getPlainList();
                     for (int i = 0; i < value.size(); i++) {
@@ -317,9 +317,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return Collections.<StubIndexKey>unmodifiableCollection(myIndices.keySet());
   }
   
-  public void updateIndex(StubIndexKey key, int fileId, Map<?, TIntArrayList> oldValues, Map<?, TIntArrayList> newValues) {
+  public <K> void updateIndex(StubIndexKey key, int fileId, Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {
     try {
-      final MyIndex index = myIndices.get(key);
+      MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
       index.updateWithMap(fileId, oldValues, newValues);
     }
     catch (StorageException e) {
