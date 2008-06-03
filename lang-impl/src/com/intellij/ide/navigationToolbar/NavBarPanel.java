@@ -216,19 +216,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void focusGained(final FocusEvent e) {}
 
       public void focusLost(final FocusEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) {
-              hideHint();
-              return;
-            }
-            final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-            if (focusedComponent != NavBarPanel.this && !isAncestorOf(focusedComponent)) {
-              hideHint();
-            }
-          }
-        });
+        if (myProject.isDisposed()) {
+          hideHint();
+          return;
+        }
 
+        final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+        if (focusedComponent != NavBarPanel.this && !isAncestorOf(focusedComponent)) {
+          if (myNodePopup == null || !myNodePopup.isVisible() || !myNodePopup.isFocused()) {
+            hideHint();
+          }
+        }
       }
     });
 
@@ -285,7 +283,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void updateList() {
     final DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-    if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent)) {
+    if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent) || (myNodePopup != null && myNodePopup.isFocused())) {
       immediateUpdateList(false);
     }
     else {
