@@ -33,6 +33,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   private final File myFile = new File(PathManager.getSystemPath() + "/index/rep.names");
 
   public SerializationManagerImpl() {
+    myFile.getParentFile().mkdirs();
     try {
       myNameStorage = new PersistentStringEnumerator(myFile);
     }
