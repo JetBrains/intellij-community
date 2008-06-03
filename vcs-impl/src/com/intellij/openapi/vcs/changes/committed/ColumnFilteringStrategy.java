@@ -119,7 +119,7 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
       if (myProviderClass == null || myProviderClass.isInstance(changeList.getVcs().getCommittedChangesProvider())) {
         for(Object value: selection) {
           //noinspection unchecked
-          if (value.toString().equals(myColumn.getValue(changeList).toString())) {
+          if (value.toString().equals(myColumn.getValue(ReceivedChangeList.unwrap(changeList)).toString())) {
             result.add(changeList);
             break;
           }
