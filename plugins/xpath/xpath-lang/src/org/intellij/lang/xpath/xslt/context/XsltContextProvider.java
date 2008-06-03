@@ -15,36 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import gnu.trove.THashSet;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.ContextType;
@@ -65,26 +35,44 @@ import org.intellij.lang.xpath.xslt.refactoring.introduceVariable.XsltIntroduceV
 import org.intellij.lang.xpath.xslt.util.NSDeclTracker;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
 
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import gnu.trove.THashSet;
+
 import javax.xml.namespace.QName;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class XsltContextProvider extends ContextProvider {
     public static final ContextType TYPE = ContextType.lookupOrCreate("XSLT");
 
     private static final Key<CachedValue<ElementNames>> NAMES_KEY = Key.create("NAMES");
 
-    private final XmlElement myContextElement;
+    private final SmartPsiElementPointer<XmlElement> myContextElement;
     private final FileAssociationsManager myFileAssociationsManager;
 
     protected XsltContextProvider(@NotNull XmlElement contextElement) {
-        myFileAssociationsManager = FileAssociationsManager.getInstance(contextElement.getProject());
-        myContextElement = contextElement;
+        final Project project = contextElement.getProject();
+        myFileAssociationsManager = FileAssociationsManager.getInstance(project);
+        myContextElement = SmartPointerManager.getInstance(project).createLazyPointer(contextElement);
         attachTo(contextElement);
     }
 
@@ -120,7 +108,7 @@ public class XsltContextProvider extends ContextProvider {
 
     @Nullable
     public XmlElement getContextElement() {
-        return myContextElement;
+        return myContextElement.getElement();
     }
 
     @NotNull
@@ -218,9 +206,10 @@ public class XsltContextProvider extends ContextProvider {
     }
 
     @Nullable
-    private ElementNames getNames(PsiFile file) {
+    private ElementNames getNames(@Nullable PsiFile file) {
+        if (file == null) return null;
+
         synchronized (file) {
-            if (file == null) return null;
             CachedValue<ElementNames> value = file.getUserData(NAMES_KEY);
             if (value == null) {
                 value = createCachedValue(file);
@@ -231,7 +220,7 @@ public class XsltContextProvider extends ContextProvider {
     }
 
     private CachedValue<ElementNames> createCachedValue(final PsiFile file) {
-        return myContextElement.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<ElementNames>() {
+        return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<ElementNames>() {
             public Result<ElementNames> compute() {
                 final ElementNames names = new ElementNames();
                 final PsiFile[] associations = myFileAssociationsManager.getAssociationsFor(file, FileAssociationsManager.XML_FILES);
@@ -355,8 +344,11 @@ public class XsltContextProvider extends ContextProvider {
 
     @Nullable
     private PsiFile getFile() {
-        final PsiFile file = myContextElement.getContainingFile();
-        assert file != null;
+        final XmlElement element = getContextElement();
+        if (element == null) {
+            return null;
+        }
+        final PsiFile file = element.getContainingFile();
         return file.isPhysical() ? file : file.getOriginalFile();
     }
 
