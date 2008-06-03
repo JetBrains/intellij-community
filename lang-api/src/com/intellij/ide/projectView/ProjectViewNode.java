@@ -178,4 +178,9 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   public boolean shouldDrillDownOnEmptyElement() {
     return false;
   }
+
+  public boolean validate() {
+    update();
+    return getValue() != null;
+  }
 }

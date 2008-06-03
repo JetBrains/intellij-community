@@ -75,21 +75,17 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
 
 
   public void update(PresentationData data) {
-    T value = getValue();
-    if (value == null || !value.isValid()) {
-      setValue(null);
+    if (!validate()) {
+      return;
     }
 
-    value = getValue();
-
-    if (value == null) return;
+    T value = getValue();
+    LOG.assertTrue(value.isValid());
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()) {
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
-
-    LOG.assertTrue(value.isValid());
 
     Icon icon = value.getIcon(flags);
     data.setClosedIcon(icon);
@@ -134,5 +130,17 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   @Nullable
   protected String calcTooltip() {
     return null;
+  }
+
+  @Override
+  public boolean validate() {
+    T value = getValue();
+    if (value == null || !value.isValid()) {
+      setValue(null);
+    }
+
+    value = getValue();
+
+    return value != null;
   }
 }
