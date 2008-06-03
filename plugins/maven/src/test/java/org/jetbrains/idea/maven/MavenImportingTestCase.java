@@ -311,6 +311,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       myProfilesList = Arrays.asList(profiles);
 
+      myMavenProjectsManager.doInitComponent();
       myMavenProjectsManager.setManagedFiles(files);
       myMavenProjectsManager.setActiveProfiles(myProfilesList);
       myMavenProjectsManager.reimport();

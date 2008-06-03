@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.MavenProjectModelManager;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
@@ -46,41 +45,62 @@ import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenProjectNavigator extends MavenTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
-  private boolean isInitialized = false;
+  @NonNls private static final String MAVEN_NAVIGATOR_TOOLWINDOW_ID = "Maven projects";
+  private static final Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
+
+  private PomTreeViewSettings mySettings = new PomTreeViewSettings();
+
+  private SimpleTreeBuilder myTreeBuilder;
+  private SimpleTree myTree;
+
+  private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
 
   public static MavenProjectNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectNavigator.class);
   }
 
-  @NonNls private static final String MAVEN_NAVIGATOR_TOOLWINDOW_ID = "Maven projects";
-
-  private final Icon myIcon = IconLoader.getIcon("/images/mavenEmblem.png");
-
-  private PomTreeViewSettings settings = new PomTreeViewSettings();
-
-  private SimpleTreeBuilder treeBuilder;
-  private SimpleTree tree;
-
-  private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
-
-
-  public MavenProjectNavigator(final Project project,
+  public MavenProjectNavigator(Project project,
                                MavenProjectsManager projectsManager,
                                MavenPluginsRepository repository,
                                MavenEventsHandler eventsHandler) {
     super(project, projectsManager, repository, eventsHandler);
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    isInitialized = true;
+  }
 
-    tree = new SimpleTree() {
+  @NotNull
+  @NonNls
+  public String getComponentName() {
+    return "MavenProjectNavigator";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  public void projectOpened() {
+    if (myProject.isDefault()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+
+    initMavenProjectsTree();
+    initToolWindow();
+    subscribeForChanges();
+  }
+
+  public void projectClosed() {
+  }
+
+  private void initMavenProjectsTree() {
+    myTree = new SimpleTree() {
       private JLabel myLabel = new JLabel(ProjectBundle.message("maven.please.reimport"));
 
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        if (MavenProjectsManager.getInstance(project).isMavenizedProject()) return;
+        if (myProjectsManager.isMavenizedProject()) return;
 
         myLabel.setFont(getFont());
         myLabel.setBackground(getBackground());
@@ -99,16 +119,22 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         }
       }
     };
-    tree.setRootVisible(false);
-    tree.setShowsRootHandles(true);
-    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
-    tree.addMouseMotionListener(new MouseMotionListener() {
+    myTree.setRootVisible(false);
+    myTree.setShowsRootHandles(true);
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+
+    myTreeBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), this, null);
+    myTreeBuilder.initRoot();
+
+    Disposer.register(myProject, myTreeBuilder);
+
+    myTree.addMouseMotionListener(new MouseMotionListener() {
       public void mouseDragged(MouseEvent e) {
       }
 
       public void mouseMoved(MouseEvent e) {
-        TreePath p = tree.getPathForLocation(e.getX(), e.getY());
+        TreePath p = myTree.getPathForLocation(e.getX(), e.getY());
         if (p != null) {
           Object last = p.getLastPathComponent();
           Object object = ((DefaultMutableTreeNode)last).getUserObject();
@@ -120,10 +146,44 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       }
     });
 
-    treeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
-    treeBuilder.initRoot();
-    Disposer.register(project, treeBuilder);
+    IdeaAPIHelper.installCheckboxRenderer(myTree, new IdeaAPIHelper.CheckboxHandler() {
+      public void toggle(final TreePath treePath, final InputEvent e) {
+        final SimpleNode node = myTree.getNodeFor(treePath);
+        if (node != null) {
+          node.handleDoubleClickOrEnter(myTree, e);
+        }
+      }
 
+      public boolean isVisible(final Object userObject) {
+        return userObject instanceof ProfileNode;
+      }
+
+      public boolean isSelected(final Object userObject) {
+        return ((ProfileNode)userObject).isActive();
+      }
+    });
+  }
+
+
+  private void showProblemsToolTip(PomNode pomNode) {
+    List<MavenProjectModelProblem> problems = pomNode.getMavenProjectModel().getProblems();
+    if (problems.isEmpty()) {
+      myTree.setToolTipText(null);
+      return;
+    }
+
+    String s = StringUtil.join(problems, new Function<MavenProjectModelProblem, String>() {
+      public String fun(MavenProjectModelProblem each) {
+        URL imageUrl = each.isCritical()
+                       ? getClass().getResource("/images/error.png")
+                       : getClass().getResource("/images/warning.png");
+        return "<img src=\"" + imageUrl + "\"> " + each.getDescription();
+      }
+    }, "<br>");
+    myTree.setToolTipText("<html>" + s + "</html>");
+  }
+
+  private void subscribeForChanges() {
     myProjectsManager.addListener(new MavenProjectsManager.Listener() {
       public void activate() {
         for (MavenProjectModel each : myProjectsManager.getProjects()) {
@@ -141,23 +201,20 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       }
 
       public void profilesChanged(List<String> profiles) {
-        for (PomNode each : fileToNode.values()) {
-          each.setActiveProfiles(profiles);
-        }
-        tree.repaint();
+        root.setActiveProfiles(profiles);
+        myTree.repaint();
       }
-    });
 
-    myProjectsManager.getMavenProjectModelManager().addListener(new MavenProjectModelManager.Listener() {
       public void projectAdded(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final PomNode newNode = new PomNode(n);
             fileToNode.put(n.getFile(), newNode);
             root.addToStructure(newNode);
+            root.updateProfileNodes();
 
             updateFromRoot(true, true);
-            tree.repaint();
+            myTree.repaint();
           }
         });
       }
@@ -172,7 +229,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
             else {
               projectAdded(n);
             }
-            tree.repaint();
+            root.updateProfileNodes();
+            myTree.repaint();
           }
         });
       }
@@ -184,8 +242,9 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
             if (pomNode != null) {
               fileToNode.remove(n.getFile());
               pomNode.removeFromParent();
-              tree.repaint();
             }
+            root.updateProfileNodes();
+            myTree.repaint();
           }
         });
       }
@@ -200,7 +259,6 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
     });
 
     myEventsHandler.installTaskSelector(new MavenEventsHandler.TaskSelector() {
-
       SelectMavenGoalDialog dialog;
 
       public boolean select(final Project project,
@@ -220,60 +278,33 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         return dialog.getSelectedGoal();
       }
     });
-
-    IdeaAPIHelper.installCheckboxRenderer(tree, new IdeaAPIHelper.CheckboxHandler() {
-      public void toggle(final TreePath treePath, final InputEvent e) {
-        final SimpleNode node = tree.getNodeFor(treePath);
-        if (node != null) {
-          node.handleDoubleClickOrEnter(tree, e);
-        }
-      }
-
-      public boolean isVisible(final Object userObject) {
-        return userObject instanceof ProfileNode;
-      }
-
-      public boolean isSelected(final Object userObject) {
-        return ((ProfileNode)userObject).isActive();
-      }
-    });
   }
 
-  private void showProblemsToolTip(PomNode pomNode) {
-    List<MavenProjectModelProblem> problems = pomNode.getMavenProjectModel().getProblems();
-    if (problems.isEmpty()) {
-      tree.setToolTipText(null);
-      return;
-    }
+  private void initToolWindow() {
+    final JPanel navigatorPanel = new MavenNavigatorPanel(myProject, myProjectsManager, myTree);
 
-    String s = StringUtil.join(problems, new Function<MavenProjectModelProblem, String>() {
-      public String fun(MavenProjectModelProblem each) {
-        URL imageUrl = each.isCritical()
-                        ? getClass().getResource("/images/error.png")
-                        : getClass().getResource("/images/warning.png");
-        return "<img src=\"" + imageUrl + "\"> " + each.getDescription();
-      }
-    }, "<br>");
-    tree.setToolTipText("<html>" + s + "</html>");
+    ToolWindow pomToolWindow = ToolWindowManager.getInstance(myProject)
+        .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
+    pomToolWindow.setIcon(ICON);
   }
 
   public PomTreeViewSettings getTreeViewSettings() {
-    return settings;
+    return mySettings;
   }
 
   public PomTreeViewSettings getState() {
-    return settings;
+    return mySettings;
   }
 
   public void loadState(PomTreeViewSettings state) {
-    settings = state;
+    mySettings = state;
   }
 
   protected void updateTreeFrom(@Nullable SimpleNode node) {
     if (node != null) {
-      final DefaultMutableTreeNode mutableTreeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), node);
+      final DefaultMutableTreeNode mutableTreeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)myTree.getModel().getRoot(), node);
       if (mutableTreeNode != null) {
-        treeBuilder.addSubtreeToUpdate(mutableTreeNode);
+        myTreeBuilder.addSubtreeToUpdate(mutableTreeNode);
         return;
       }
     }
@@ -284,34 +315,9 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
     if (restructure) {
       root.rebuild(fileToNode.values());
     }
-    treeBuilder.updateFromRoot(rebuild);
+    myTreeBuilder.updateFromRoot(rebuild);
     if (rebuild) {
-      tree.expandPath(new TreePath(tree.getModel().getRoot()));
+      myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
     }
-  }
-
-  public void projectOpened() {
-    if (!isInitialized) return;
-
-    final JPanel navigatorPanel = new MavenNavigatorPanel(myProject, myProjectsManager, tree);
-
-    ToolWindow pomToolWindow = ToolWindowManager.getInstance(myProject)
-      .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
-    pomToolWindow.setIcon(myIcon);
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "MavenProjectNavigator";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

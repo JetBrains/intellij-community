@@ -15,6 +15,8 @@ import org.jetbrains.idea.maven.project.MavenProjectModelManager;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class CustomArtifactResolver extends DefaultArtifactResolver implements Contextualizable {
   public static final String MAVEN_PROJECT_MODEL_MANAGER = "MAVEN_PROJECT_MODEL_MANAGER";

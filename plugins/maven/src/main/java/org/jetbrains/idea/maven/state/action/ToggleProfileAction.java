@@ -20,10 +20,9 @@ public class ToggleProfileAction extends AnAction {
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsManager projectsManager = project != null ? project.getComponent(MavenProjectsManager.class) : null;
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
 
-    final boolean enabled = projectsManager != null && file != null && profiles != null && isEnabled(projectsManager, profiles);
+    final boolean enabled = projectsManager != null && profiles != null && isEnabled(projectsManager, profiles);
 
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setText((enabled && projectsManager.getActiveProfiles().contains(profiles.get(0)))
@@ -37,7 +36,7 @@ public class ToggleProfileAction extends AnAction {
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
 
-    if (manager != null && file != null && profiles != null && isEnabled(manager, profiles)) {
+    if (manager != null && profiles != null && isEnabled(manager, profiles)) {
       List<String> activeProfiles = new ArrayList<String>(manager.getActiveProfiles());
       if (activeProfiles.contains(profiles.get(0))) {
         activeProfiles.removeAll(profiles);

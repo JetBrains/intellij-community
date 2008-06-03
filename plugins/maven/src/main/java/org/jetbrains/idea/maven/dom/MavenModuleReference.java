@@ -30,7 +30,7 @@ import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.project.Constants;
+import org.jetbrains.idea.maven.project.MavenConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
 
   public PsiElement resolve() {
     VirtualFile baseDir = myPsiFile.getVirtualFile().getParent();
-    String relPath = FileUtil.toSystemIndependentName(myResolvedText + "/" + Constants.POM_XML);
+    String relPath = FileUtil.toSystemIndependentName(myResolvedText + "/" + MavenConstants.POM_XML);
     VirtualFile file = baseDir.findFileByRelativePath(relPath);
 
     if (file == null) return null;
@@ -110,7 +110,7 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
                                              new File(modulePom.getPath()));
 
     result = FileUtil.toSystemIndependentName(result);
-    result = result.substring(0, result.length() - ("/" + Constants.POM_XML).length());
+    result = result.substring(0, result.length() - ("/" + MavenConstants.POM_XML).length());
 
     return result;
   }
@@ -167,12 +167,12 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
       VirtualFile baseDir = myVirtualFile.getParent();
       String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myResolvedText);
       VirtualFile moduleDir = VfsUtil.createDirectories(modulePath);
-      return moduleDir.createChildData(this, Constants.POM_XML);
+      return moduleDir.createChildData(this, MavenConstants.POM_XML);
     }
 
     private TemplateBuilder buildTemplate(Project project, VirtualFile modulePomFile) {
       XmlFile psiFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText(
-          Constants.POM_XML,
+          MavenConstants.POM_XML,
           StdLanguages.XML,
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +

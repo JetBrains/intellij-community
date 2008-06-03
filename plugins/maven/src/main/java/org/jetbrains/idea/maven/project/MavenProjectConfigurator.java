@@ -104,24 +104,29 @@ public class MavenProjectConfigurator {
     final LinkedHashMap<MavenProjectModel, Module> modules = new LinkedHashMap<MavenProjectModel, Module>();
 
     myProjectModel.visit(new MavenProjectModelManager.SimpleVisitor() {
-      public void visit(MavenProjectModel node) {
-        Module m = createModule(node);
-        modules.put(node, m);
+      public void visit(MavenProjectModel each) {
+
+        Module m = createModule(each);
+        modules.put(each, m);
       }
     });
 
     LinkedHashMap<Module, ModifiableRootModel> rootModels = new LinkedHashMap<Module, ModifiableRootModel>();
     for (Map.Entry<MavenProjectModel, Module> each : modules.entrySet()) {
+      if (each.getKey().isAggregator()) continue;
+
       ModifiableRootModel model = createModuleConfigurator(each.getValue(), each.getKey()).config();
       rootModels.put(each.getValue(), model);
     }
 
 
     for (Map.Entry<MavenProjectModel, Module> each : modules.entrySet()) {
+      if (each.getKey().isAggregator()) continue;
       createModuleConfigurator(each.getValue(), each.getKey()).preConfigFacets(rootModels.get(each.getValue()));
     }
 
     for (Map.Entry<MavenProjectModel, Module> each : modules.entrySet()) {
+      if (each.getKey().isAggregator()) continue;
       createModuleConfigurator(each.getValue(), each.getKey()).configFacets(rootModels.get(each.getValue()));
     }
 

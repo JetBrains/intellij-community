@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.open;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;

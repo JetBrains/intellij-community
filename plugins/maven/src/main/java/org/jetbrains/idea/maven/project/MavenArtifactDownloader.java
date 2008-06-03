@@ -65,13 +65,13 @@ public class MavenArtifactDownloader {
     myProgress.checkCanceled();
 
     if (isEnabled(mySettings.getDownloadSources(), demand)) {
-      download(libraryArtifacts, Constants.SOURCES_CLASSIFIER);
+      download(libraryArtifacts, MavenConstants.SOURCES_CLASSIFIER);
     }
 
     myProgress.checkCanceled();
 
     if (isEnabled(mySettings.getDownloadJavadoc(), demand)) {
-      download(libraryArtifacts, Constants.JAVADOC_CLASSIFIER);
+      download(libraryArtifacts, MavenConstants.JAVADOC_CLASSIFIER);
     }
 
     myProgress.checkCanceled();
@@ -115,7 +115,7 @@ public class MavenArtifactDownloader {
       List remoteRepositories = each.getMavenProject().getRemoteArtifactRepositories();
 
       for (Artifact artifact : artifacts) {
-        if (artifact.getType().equalsIgnoreCase(Constants.JAR_TYPE) &&
+        if (artifact.getType().equalsIgnoreCase(MavenConstants.JAR_TYPE) &&
             !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
           MavenId id = new MavenId(artifact);
           if (!isExistingProject(artifact, mavenProjects)) {
@@ -155,7 +155,7 @@ public class MavenArtifactDownloader {
         Artifact a = myEmbedder.createArtifactWithClassifier(id.groupId,
                                                              id.artifactId,
                                                              id.version,
-                                                             Constants.JAR_TYPE,
+                                                             MavenConstants.JAR_TYPE,
                                                              classifier);
         List<ArtifactRepository> remoteRepos = new ArrayList<ArtifactRepository>(entry.getValue());
         myEmbedder.resolve(a, remoteRepos, myEmbedder.getLocalRepository());

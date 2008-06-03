@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.open;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -44,6 +44,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
 
   public void updateStep() {
     profileChooser.setElements(getBuilder().getProfiles(), false);
+    profileChooser.markElements(getBuilder().getSelectedProfiles());
   }
 
   public boolean validate() throws ConfigurationException {

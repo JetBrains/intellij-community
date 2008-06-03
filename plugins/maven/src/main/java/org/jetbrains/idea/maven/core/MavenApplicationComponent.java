@@ -10,7 +10,7 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.Constants;
+import org.jetbrains.idea.maven.project.MavenConstants;
 
 import javax.swing.*;
 
@@ -36,7 +36,7 @@ public class MavenApplicationComponent implements ApplicationComponent, IconProv
 
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), Constants.POM_XML)) {
+    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), MavenConstants.POM_XML)) {
       return mavenIcon;
     }
     return null;

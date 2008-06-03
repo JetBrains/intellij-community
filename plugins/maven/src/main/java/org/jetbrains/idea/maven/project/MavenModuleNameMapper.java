@@ -88,6 +88,6 @@ public class MavenModuleNameMapper {
 
   private static String generateModulePath(MavenProjectModel node, String dedicatedModuleDir) {
     return new File(StringUtil.isEmptyOrSpaces(dedicatedModuleDir) ? node.getDirectory() : dedicatedModuleDir,
-                    node.getModuleName() + Constants.IML_EXT).getPath();
+                    node.getModuleName() + MavenConstants.IML_EXT).getPath();
   }
 }

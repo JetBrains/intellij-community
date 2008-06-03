@@ -18,9 +18,9 @@
   <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenProjectImportProvider"/>
-    <projectOpenProcessor implementation="org.jetbrains.idea.maven.project.action.MavenProjectOpenProcessor"/>
-    <projectImportBuilder implementation="org.jetbrains.idea.maven.project.action.MavenImportBuilder"/>
+    <projectImportProvider implementation="org.jetbrains.idea.maven.project.open.MavenProjectImportProvider"/>
+    <projectOpenProcessor implementation="org.jetbrains.idea.maven.project.open.MavenProjectOpenProcessor"/>
+    <projectImportBuilder implementation="org.jetbrains.idea.maven.project.open.MavenImportBuilder"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
@@ -169,6 +169,14 @@
     </group>
 
     <group id="Maven.Project">
+      <action id="Maven.AddManagedFile" class="org.jetbrains.idea.maven.project.action.AddManageFileAction"
+              text="Add Maven project" description="Add Maven project to managed files"
+              icon="/general/add.png">
+      </action>
+      <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.action.RemoveManagedFilesAction"
+              text="Remove Maven projects" description="Removes selected Maven projects from managed files"
+              icon="/general/remove.png">
+      </action>
       <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.action.ReimportAction"
               text="Re-import Maven projects" description="Re-import Maven projects into Idea project structure"
               icon="/actions/sync.png">
@@ -204,15 +212,16 @@
       <separator/>
       <reference id="Maven.Run"/>
       <separator/>
+      <reference id="Maven.AddManagedFile"/>
+      <reference id="Maven.RemoveManagedFiles"/>
+      <separator/>
+      <reference id="Maven.Reimport"/>
+      <reference id="Maven.DownloadArtifacts"/>
+      <separator/>
       <reference id="Maven.ShowSettings"/>
       <reference id="Maven.ShowDefaultSettings"/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
-      <!--<separator/>-->
-      <!--<reference id="Maven.AddDependency"/>-->
-      <separator/>
-      <reference id="Maven.Reimport"/>
-      <reference id="Maven.DownloadArtifacts"/>
       <separator/>
       <reference id="Maven.Help"/>
     </group>

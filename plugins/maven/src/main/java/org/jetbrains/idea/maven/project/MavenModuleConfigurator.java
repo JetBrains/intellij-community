@@ -87,8 +87,8 @@ public class MavenModuleConfigurator {
         String artifactPath = artifact.getFile().getPath();
         myModel.createModuleLibrary(ProjectUtil.getLibraryName(id),
                                     getUrl(artifactPath, null),
-                                    getUrl(artifactPath, Constants.SOURCES_CLASSIFIER),
-                                    getUrl(artifactPath, Constants.JAVADOC_CLASSIFIER),
+                                    getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER),
+                                    getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER),
                                     isExportable);
       }
     }

@@ -2,7 +2,7 @@
  * User: anna
  * Date: 13-Jul-2007
  */
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.open;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.Constants;
+import org.jetbrains.idea.maven.project.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
 
   @Nullable
   public String[] getSupportedExtensions() {
-    return new String[]{Constants.POM_XML};
+    return new String[]{MavenConstants.POM_XML};
   }
 
   public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {

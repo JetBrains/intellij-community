@@ -2,7 +2,7 @@
  * User: anna
  * Date: 12-Jul-2007
  */
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.open;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;

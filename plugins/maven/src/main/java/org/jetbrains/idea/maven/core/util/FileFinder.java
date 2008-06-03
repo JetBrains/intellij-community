@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.project.Constants;
+import org.jetbrains.idea.maven.project.MavenConstants;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class FileFinder {
         }
       }
       else {
-        if (f.getName().equalsIgnoreCase(Constants.POM_XML)) {
+        if (f.getName().equalsIgnoreCase(MavenConstants.POM_XML)) {
           result.add(f);
         }
       }

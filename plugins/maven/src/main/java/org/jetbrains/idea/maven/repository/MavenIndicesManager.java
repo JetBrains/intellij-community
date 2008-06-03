@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.project.Constants;
+import org.jetbrains.idea.maven.project.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenImportToolWindow;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -97,7 +97,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
       }
       
       private void doUpdate(final VirtualFileEvent event) {
-        if (!event.getFileName().equals(Constants.POM_XML)) return;
+        if (!event.getFileName().equals(MavenConstants.POM_XML)) return;
         startUpdate(findProjectIndex());
       }
     };

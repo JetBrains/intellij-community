@@ -180,9 +180,6 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private Object extractProfiles() {
     final List<MavenTreeStructure.ProfileNode> nodes = getSelectedNodes(MavenTreeStructure.ProfileNode.class);
-    if (MavenTreeStructure.getCommonParent(nodes) == null) {
-      return null;
-    }
     final List<String> profiles = new ArrayList<String>();
     for (MavenTreeStructure.ProfileNode node : nodes) {
       profiles.add(node.getProfile());

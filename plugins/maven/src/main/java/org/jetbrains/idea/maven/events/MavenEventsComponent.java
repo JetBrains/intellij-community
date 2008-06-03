@@ -24,13 +24,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.MavenProjectModelManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -286,8 +288,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     }
   }
 
-  private class MyProjectStateListener implements MavenProjectsManager.Listener,
-                                                  MavenProjectModelManager.Listener {
+  private class MyProjectStateListener implements MavenProjectsManager.Listener  {
 
     boolean updateScheduled;
     private final Project myProject;

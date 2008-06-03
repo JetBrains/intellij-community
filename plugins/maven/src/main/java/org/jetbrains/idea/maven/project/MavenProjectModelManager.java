@@ -9,6 +9,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.Parent;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.Tree;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
@@ -65,19 +66,19 @@ public class MavenProjectModelManager {
   }
 
   private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p, boolean force)
-    throws CanceledException {
+      throws CanceledException {
     MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, this);
 
     try {
-      Set<VirtualFile> updatedFiles = new HashSet<VirtualFile>();
+      Set<VirtualFile> readFiles = new HashSet<VirtualFile>();
 
       for (VirtualFile each : files) {
-        MavenProjectModel n = findProject(each);
-        if (n == null) {
-          doAdd(each, e, updatedFiles, p, force);
+        MavenProjectModel project = findProject(each);
+        if (project == null) {
+          doAdd(each, e, readFiles, p, force);
         }
         else {
-          doUpdate(n, e, false, updatedFiles, p, force);
+          doUpdate(findAggregator(project), project, e, false, readFiles, p, force);
         }
       }
     }
@@ -86,11 +87,11 @@ public class MavenProjectModelManager {
     }
   }
 
-  private void doAdd(final VirtualFile f, MavenEmbedder reader, Set<VirtualFile> updatedFiles, MavenProcess p, boolean force)
-    throws CanceledException {
+  private void doAdd(final VirtualFile f, MavenEmbedder reader, Set<VirtualFile> readFiles, MavenProcess p, boolean force)
+      throws CanceledException {
     MavenProjectModel newProject = new MavenProjectModel(f, null);
 
-    MavenProjectModel parent = visit(new Visitor<MavenProjectModel>() {
+    MavenProjectModel intendedAggregator = visit(new Visitor<MavenProjectModel>() {
       public void visit(MavenProjectModel node) {
         if (node.getExistingModuleFiles().contains(f)) {
           setResult(node);
@@ -98,42 +99,36 @@ public class MavenProjectModelManager {
       }
     });
 
-    if (parent != null) {
-      parent.addModule(newProject);
-    }
-    else {
-      myRootProjects.add(newProject);
-    }
-
-    doUpdate(newProject, reader, true, updatedFiles, p, force);
+    doUpdate(intendedAggregator, newProject, reader, true, readFiles, p, force);
   }
 
-  private void doUpdate(MavenProjectModel project,
-                        MavenEmbedder embedder,
-                        boolean isNew,
-                        Set<VirtualFile> updatedFiles,
-                        MavenProcess p,
-                        boolean force)
-    throws CanceledException {
+  private void doUpdate(MavenProjectModel aggregator,
+                           MavenProjectModel project,
+                           MavenEmbedder embedder,
+                           boolean isNew,
+                           Set<VirtualFile> readFiles,
+                           MavenProcess p,
+                           boolean force)
+      throws CanceledException {
 
     p.checkCanceled();
 
     p.setText(ProjectBundle.message("maven.reading", project.getPath()));
     p.setText2("");
 
-    List<MavenProjectModel> oldModules = project.getModules();
-    List<MavenProjectModel> newModules = new ArrayList<MavenProjectModel>();
+    List<MavenProjectModel> prevModules = project.getModules();
+    Set<MavenProjectModel> prevInheritors = isNew
+                                            ? new HashSet<MavenProjectModel>()
+                                            : findInheritedProjects(project);
 
-    Set<MavenProjectModel> childrenToUpdate = isNew
-                                              ? new HashSet<MavenProjectModel>()
-                                              : findChildProjects(project);
-
-    if (!updatedFiles.contains(project.getFile())) {
+    if (!readFiles.contains(project.getFile())) {
       if (!isNew) myMavenIdToProject.remove(project.getMavenId());
       project.read(embedder, myProfiles);
       myMavenIdToProject.put(project.getMavenId(), project);
-      updatedFiles.add(project.getFile());
+      readFiles.add(project.getFile());
     }
+
+    reconnect(aggregator, project);
 
     if (isNew) {
       fireAdded(project);
@@ -142,33 +137,65 @@ public class MavenProjectModelManager {
       fireUpdated(project);
     }
 
-    for (VirtualFile each : project.getExistingModuleFiles()) {
+    List<VirtualFile> existingModuleFiles = project.getExistingModuleFiles();
+    List<MavenProjectModel> modulesToRemove = new ArrayList<MavenProjectModel>();
+    for (MavenProjectModel each : prevModules) {
+      if (!existingModuleFiles.contains(each.getFile())) {
+        modulesToRemove.add(each);
+      }
+    }
+    for (MavenProjectModel each : modulesToRemove) {
+      project.removeModule(each);
+      List<MavenProjectModel> removedProjects = new ArrayList<MavenProjectModel>();
+      doRemove(project, each, removedProjects);
+      prevInheritors.removeAll(removedProjects);
+    }
+
+    for (VirtualFile each : existingModuleFiles) {
       MavenProjectModel child = findProject(each);
       boolean isNewChildProject = child == null;
       if (isNewChildProject) {
         child = new MavenProjectModel(each, null);
       }
-      if (isNewChildProject || force) {
-        doUpdate(child, embedder, true, updatedFiles, p, force);
+      else {
+        MavenProjectModel currentAggregator = findAggregator(child);
+        if (currentAggregator != null && currentAggregator != project) {
+          MavenLog.LOG.info("Module " + each + " is already included into " + project.getFile());
+          continue;
+        }
       }
-      newModules.add(child);
-      myRootProjects.remove(child);
+
+      if (isNewChildProject || force) {
+        doUpdate(project, child, embedder, true, readFiles, p, force);
+      } else {
+        reconnect(project, child);
+      }
     }
 
-    oldModules.removeAll(newModules);
-    for (MavenProjectModel each : oldModules) {
-      doRemove(each);
-    }
-
-    project.setModules(newModules);
-
-    childrenToUpdate.addAll(findChildProjects(project));
-    for (MavenProjectModel each : childrenToUpdate) {
-      doUpdate(each, embedder, false, updatedFiles, p, force);
+    prevInheritors.addAll(findInheritedProjects(project));
+    for (MavenProjectModel each : prevInheritors) {
+      doUpdate(findAggregator(each), each, embedder, false, readFiles, p, force);
     }
   }
 
-  private Set<MavenProjectModel> findChildProjects(final MavenProjectModel project) {
+  private void reconnect(MavenProjectModel aggregator, MavenProjectModel project) {
+    MavenProjectModel prevAggregator = findAggregator(project);
+    if (prevAggregator != null) {
+      prevAggregator.removeModule(project);
+    }
+    else {
+      myRootProjects.remove(project);
+    }
+
+    if (aggregator != null) {
+      aggregator.addModule(project);
+    }
+    else {
+      myRootProjects.add(project);
+    }
+  }
+
+  private Set<MavenProjectModel> findInheritedProjects(final MavenProjectModel project) {
     final Set<MavenProjectModel> result = new HashSet<MavenProjectModel>();
     final MavenId id = project.getMavenId();
 
@@ -192,29 +219,13 @@ public class MavenProjectModelManager {
     final MavenProjectModel project = findProject(f);
     if (project == null) return;
 
-    List<MavenProjectModel> list;
-    if (myRootProjects.contains(project)) {
-      list = myRootProjects;
-    }
-    else {
-      list = visit(new Visitor<List<MavenProjectModel>>() {
-        public void visit(MavenProjectModel node) {
-          if (node.getModules().contains(project)) {
-            setResult(node.getModules());
-          }
-        }
-      });
-    }
-    if (list == null) return;
-
-    list.remove(project);
-    doRemove(project);
+    doRemove(findAggregator(project), project, new ArrayList<MavenProjectModel>());
 
     MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, this);
     try {
       Set<VirtualFile> updatedFiles = new HashSet<VirtualFile>();
-      for (MavenProjectModel each : findChildProjects(project)) {
-        doUpdate(each, e, false, updatedFiles, p, false);
+      for (MavenProjectModel each : findInheritedProjects(project)) {
+        doUpdate(findAggregator(each), each, e, false, updatedFiles, p, false);
       }
     }
     finally {
@@ -222,12 +233,32 @@ public class MavenProjectModelManager {
     }
   }
 
-  private void doRemove(MavenProjectModel n) {
-    for (MavenProjectModel each : n.getModules()) {
-      doRemove(each);
+  private MavenProjectModel findAggregator(final MavenProjectModel project) {
+    return visit(new Visitor<MavenProjectModel>() {
+      public void visit(MavenProjectModel node) {
+        if (node.getModules().contains(project)) {
+          setResult(node);
+        }
+      }
+    });
+  }
+
+  private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects) {
+    for (MavenProjectModel each : new ArrayList<MavenProjectModel>(project.getModules())) {
+      doRemove(project, each, removedProjects);
     }
-    myMavenIdToProject.remove(n.getMavenId());
-    fireRemoved(n);
+
+    if (aggregator != null) {
+      aggregator.removeModule(project);
+    }
+    else {
+      myRootProjects.remove(project);
+    }
+
+    removedProjects.add(project);
+
+    myMavenIdToProject.remove(project.getMavenId());
+    fireRemoved(project);
   }
 
   public List<MavenProjectModel> getRootProjects() {
@@ -270,7 +301,6 @@ public class MavenProjectModelManager {
                       MavenProcess p,
                       MavenCoreSettings coreSettings,
                       MavenArtifactSettings artifactSettings) throws CanceledException {
-
     MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
 
     try {
@@ -278,6 +308,8 @@ public class MavenProjectModelManager {
       List<Artifact> allArtifacts = new ArrayList<Artifact>();
 
       for (MavenProjectModel each : projects) {
+        if (each.isAggregator()) continue;
+
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");
@@ -285,6 +317,8 @@ public class MavenProjectModelManager {
       }
 
       for (MavenProjectModel each : projects) {
+        if (each.isAggregator()) continue;
+
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");

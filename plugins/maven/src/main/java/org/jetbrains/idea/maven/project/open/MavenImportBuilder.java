@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project.action;
+package org.jetbrains.idea.maven.project.open;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
@@ -155,6 +155,10 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     return myProfiles;
   }
 
+  public List<String> getSelectedProfiles() {
+    return mySelectedProfiles;
+  }
+
   public boolean setSelectedProfiles(List<String> profiles) throws ConfigurationException {
     myMavenProjectModelManager = null;
     mySelectedProfiles = profiles;
@@ -182,7 +186,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     myMavenProjectModelManager = new MavenProjectModelManager();
     myMavenProjectModelManager.read(myFiles,
                              Collections.<VirtualFile, Module>emptyMap(),
-                             getProfiles(),
+                             mySelectedProfiles,
                              getCoreState(),
                              getImporterPreferences(),
                              p);
