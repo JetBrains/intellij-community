@@ -133,6 +133,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Window focusedWindow = focusManager.getFocusedWindow();
     boolean isModalContext = focusedWindow != null && isModalContext(focusedWindow);
 
+    if (processRootPaneActions(e, focusedWindow)) return false;
+
+
     final DataManager dataManager = DataManager.getInstance();
     if (dataManager == null) return false;
 
@@ -149,6 +152,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
     } else {
       throw new IllegalStateException("state = " + myState);
     }
+  }
+
+  private boolean processRootPaneActions(final KeyEvent e, final Window focusedWindow) {
+    if (focusedWindow instanceof JDialog) {
+      final JDialog dialog = (JDialog)focusedWindow;
+      if (dialog.isModal() && dialog.getRootPane() != null) {
+        final InputMap inputMap = dialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        if (inputMap != null) {
+          final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
+          if (inputMap.get(stroke) != null) return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
