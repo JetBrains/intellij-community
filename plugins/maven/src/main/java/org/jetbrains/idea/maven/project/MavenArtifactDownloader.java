@@ -79,8 +79,7 @@ public class MavenArtifactDownloader {
     if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
-      Map<Plugin, MavenProjectModel> plugins = collectPlugins(mavenProjects);
-      downloadPlugins(plugins);
+      downloadPlugins(mavenProjects);
       projectsManager.updateAllFiles();
     }
 
@@ -90,18 +89,6 @@ public class MavenArtifactDownloader {
       generateSources(project, createGenerateCommand(mavenProjects));
     }
   }
-
-
-  public static Map<Plugin, MavenProjectModel> collectPlugins(List<MavenProjectModel> mavenProjects) {
-    final Map<Plugin, MavenProjectModel> result = new HashMap<Plugin, MavenProjectModel>();
-    for (MavenProjectModel each : mavenProjects) {
-      for (Plugin eachPlugin : each.getPlugins()) {
-        result.put(eachPlugin, each);
-      }
-    }
-    return result;
-  }
-
 
   private boolean isEnabled(MavenArtifactSettings.UPDATE_MODE level, boolean demand) {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
@@ -170,19 +157,22 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private void downloadPlugins(Map<Plugin, MavenProjectModel> plugins) throws CanceledException {
+  private void downloadPlugins(List<MavenProjectModel> projects) throws CanceledException {
     myProgress.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
 
+    int pluginsCount = 0;
+    for (MavenProjectModel each : projects) {
+      pluginsCount += each.getPlugins().size();
+    }
+
     int step = 0;
-
-    for (Map.Entry<Plugin, MavenProjectModel> each : plugins.entrySet()) {
-      final Plugin plugin = each.getKey();
-
-      myProgress.checkCanceled();
-      myProgress.setFraction(((double)step++) / plugins.size());
-      myProgress.setText2(plugin.getKey());
-
-      MavenEmbedderAdapter.verifyPlugin(plugin, each.getValue().getMavenProject(), myEmbedder);
+    for (MavenProjectModel eachProject : projects) {
+      for (Plugin eachPlugin : eachProject.getPlugins()) {
+        myProgress.checkCanceled();
+        myProgress.setFraction(((double)step++) / pluginsCount);
+        myProgress.setText2(eachPlugin.getKey());
+        MavenEmbedderAdapter.verifyPlugin(eachPlugin, eachProject.getMavenProject(), myEmbedder);
+      }
     }
   }
 

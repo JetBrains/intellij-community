@@ -61,8 +61,8 @@ public class MavenProjectModelManager {
     });
   }
 
-  public void update(VirtualFile f, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
-    update(Collections.singleton(f), mavenSettings, p, false);
+  public void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
+    update(files, mavenSettings, p, false);
   }
 
   private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p, boolean force)
@@ -119,7 +119,7 @@ public class MavenProjectModelManager {
     List<MavenProjectModel> prevModules = project.getModules();
     Set<MavenProjectModel> prevInheritors = isNew
                                             ? new HashSet<MavenProjectModel>()
-                                            : findInheritedProjects(project);
+                                            : findInheritors(project);
 
     if (!readFiles.contains(project.getFile())) {
       if (!isNew) myMavenIdToProject.remove(project.getMavenId());
@@ -172,7 +172,7 @@ public class MavenProjectModelManager {
       }
     }
 
-    prevInheritors.addAll(findInheritedProjects(project));
+    prevInheritors.addAll(findInheritors(project));
     for (MavenProjectModel each : prevInheritors) {
       doUpdate(findAggregator(each), each, embedder, false, readFiles, p, force);
     }
@@ -195,7 +195,49 @@ public class MavenProjectModelManager {
     }
   }
 
-  private Set<MavenProjectModel> findInheritedProjects(final MavenProjectModel project) {
+  public void delete(List<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
+    List<MavenProjectModel> projectsToUpdate = new ArrayList<MavenProjectModel>();
+    List<MavenProjectModel> removedProjects = new ArrayList<MavenProjectModel>();
+
+    for (VirtualFile each : files) {
+      p.checkCanceled();
+
+      MavenProjectModel project = findProject(each);
+      if (project == null) return;
+
+      projectsToUpdate.addAll(findInheritors(project));
+      doRemove(findAggregator(project), project, removedProjects);
+    }
+
+    projectsToUpdate.removeAll(removedProjects);
+
+    List<VirtualFile> filesToUpdate = new ArrayList<VirtualFile>();
+    for (MavenProjectModel each : projectsToUpdate) {
+      filesToUpdate.add(each.getFile());
+    }
+
+    update(filesToUpdate, mavenSettings, p);
+  }
+
+  private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects) {
+    for (MavenProjectModel each : new ArrayList<MavenProjectModel>(project.getModules())) {
+      doRemove(project, each, removedProjects);
+    }
+
+    if (aggregator != null) {
+      aggregator.removeModule(project);
+    }
+    else {
+      myRootProjects.remove(project);
+    }
+
+    removedProjects.add(project);
+
+    myMavenIdToProject.remove(project.getMavenId());
+    fireRemoved(project);
+  }
+
+  private Set<MavenProjectModel> findInheritors(final MavenProjectModel project) {
     final Set<MavenProjectModel> result = new HashSet<MavenProjectModel>();
     final MavenId id = project.getMavenId();
 
@@ -215,24 +257,6 @@ public class MavenProjectModelManager {
     return new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
   }
 
-  public void delete(VirtualFile f, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
-    final MavenProjectModel project = findProject(f);
-    if (project == null) return;
-
-    doRemove(findAggregator(project), project, new ArrayList<MavenProjectModel>());
-
-    MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, this);
-    try {
-      Set<VirtualFile> updatedFiles = new HashSet<VirtualFile>();
-      for (MavenProjectModel each : findInheritedProjects(project)) {
-        doUpdate(findAggregator(each), each, e, false, updatedFiles, p, false);
-      }
-    }
-    finally {
-      MavenEmbedderFactory.releaseEmbedder(e);
-    }
-  }
-
   private MavenProjectModel findAggregator(final MavenProjectModel project) {
     return visit(new Visitor<MavenProjectModel>() {
       public void visit(MavenProjectModel node) {
@@ -241,24 +265,6 @@ public class MavenProjectModelManager {
         }
       }
     });
-  }
-
-  private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects) {
-    for (MavenProjectModel each : new ArrayList<MavenProjectModel>(project.getModules())) {
-      doRemove(project, each, removedProjects);
-    }
-
-    if (aggregator != null) {
-      aggregator.removeModule(project);
-    }
-    else {
-      myRootProjects.remove(project);
-    }
-
-    removedProjects.add(project);
-
-    myMavenIdToProject.remove(project.getMavenId());
-    fireRemoved(project);
   }
 
   public List<MavenProjectModel> getRootProjects() {
@@ -298,9 +304,10 @@ public class MavenProjectModelManager {
   }
 
   public void resolve(Project project,
-                      MavenProcess p,
                       MavenCoreSettings coreSettings,
-                      MavenArtifactSettings artifactSettings) throws CanceledException {
+                      MavenArtifactSettings artifactSettings,
+                      MavenProcess p
+  ) throws CanceledException {
     MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
 
     try {

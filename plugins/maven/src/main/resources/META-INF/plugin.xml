@@ -27,7 +27,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
 
-    <!--<dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>-->
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>
     <!--<dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenPluginModelDomDescription"/>-->
     <!--<lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="last"/>-->
     <!--<inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>-->
@@ -243,6 +243,11 @@
 
     <group id="Maven.ProfileMenu" popup="true">
       <reference id="Maven.ToggleProfile"/>
+    </group>
+
+    <group id="Maven.GenerateGroup" text="Generate">
+      <action id="GenerateParent" text="Generate Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
     </group>
 
   </actions>

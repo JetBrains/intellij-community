@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
-import java.util.Arrays;
+import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 
@@ -304,7 +304,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>");
 
-    model.update(m, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(m), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     MavenProjectModel n = model.findProject(m);
     assertEquals("m1", n.getMavenProject().getArtifactId());
@@ -341,7 +341,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                      "  <childName>child2</childName>" +
                      "</properties>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("child2", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -389,7 +389,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                      "  <subChildName>subChild2</subChildName>" +
                      "</properties>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("subChild2", model.findProject(subChild).getMavenProject().getArtifactId());
   }
@@ -418,7 +418,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                                          "  <childName>child</childName>" +
                                          "</properties>");
 
-    model.update(parent, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(parent), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("child", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -446,7 +446,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                                         "  <version>1</version>" +
                                         "</parent>");
 
-    model.update(child, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(child), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("child", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -477,7 +477,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                                         "  <version>1</version>" +
                                         "</parent>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("child", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -513,7 +513,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -567,7 +567,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                     "  <version>1</version>" +
                     "</parent>");
 
-    model.update(child, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(child), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("child2", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -604,7 +604,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                      "  <childName>child</childName>" +
                      "</properties>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("${childName}", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -634,7 +634,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
 
     assertEquals("child", model.findProject(child).getMavenProject().getArtifactId());
 
-    model.delete(parent, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.delete(asList(parent), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     assertEquals("${childName}", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -673,7 +673,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     readModel(myProjectPom, child, subChild);
     assertEquals("subChild", model.findProject(subChild).getMavenProject().getArtifactId());
 
-    model.delete(child, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.delete(asList(child), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
     assertEquals("${subChildName}", model.findProject(subChild).getMavenProject().getArtifactId());
   }
 
@@ -704,7 +704,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -737,7 +737,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                     "<artifactId>m2</artifactId>" +
                     "<version>1</version>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     // did not change
     assertEquals("m", model.findProject(m).getMavenProject().getArtifactId());
@@ -764,7 +764,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
 
-    model.update(m, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(m), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -794,7 +794,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -831,7 +831,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
 
-    model.update(m1, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(m1), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(2, roots.size());
@@ -870,7 +870,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(myProjectPom, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -900,7 +900,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(1, roots.size());
     assertEquals(1, roots.get(0).getModules().size());
 
-    model.delete(m, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.delete(asList(m), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -939,7 +939,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(1, roots.get(0).getModules().size());
     assertEquals(1, roots.get(0).getModules().get(0).getModules().size());
 
-    model.delete(m1, getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    model.delete(asList(m1), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -952,7 +952,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
   }
 
   private void readModel(List<String> profiles, VirtualFile... files) throws CanceledException, MavenException {
-    model.read(Arrays.asList(files),
+    model.read(asList(files),
                Collections.<VirtualFile, Module>emptyMap(),
                profiles,
                getMavenCoreSettings(),

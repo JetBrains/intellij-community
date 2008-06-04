@@ -137,6 +137,7 @@
     <orderEntry type="module" module-name="web-impl" />
     <orderEntry type="module" module-name="EJB" />
     <orderEntry type="module" module-name="GwtStudio" />
+    <orderEntry type="module" module-name="dom-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
