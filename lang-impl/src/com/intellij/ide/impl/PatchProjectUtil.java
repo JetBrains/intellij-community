@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -126,7 +127,7 @@ public class PatchProjectUtil {
           idx = excludedPattern.indexOf("]") + 1;
           module = excludedPattern.substring(1, idx - 1);
         }
-        final Pattern modulePattern = module != null ? Pattern.compile(module) : null;
+        final Pattern modulePattern = module != null ? Pattern.compile(StringUtil.replace(module, "*", ".*")) : null;
         final Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern.substring(idx)));
         Set<Pattern> dirPatterns = result.get(modulePattern);
         if (dirPatterns == null) {
