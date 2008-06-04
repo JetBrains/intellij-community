@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -231,11 +230,9 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
       final boolean isStatic1 = isStatic;
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
-        public void templateFinished(Template template) {
+        public void beforeTemplateFinished(final TemplateState state, Template template) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-              if (state == null) return;
               String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
               if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
               String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();

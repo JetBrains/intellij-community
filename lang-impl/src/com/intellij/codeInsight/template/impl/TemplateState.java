@@ -673,6 +673,7 @@ public class TemplateState implements Disposable {
         mySegments.getSegmentStart(selEnd)
       );
     }
+    fireBeforeTemplateFinished();
     final Editor editor = myEditor;
     setCurrentVariableNumber(-1);
     ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).clearTemplateState(editor);
@@ -897,6 +898,13 @@ public class TemplateState implements Disposable {
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
       listener.templateFinished(myTemplate);
+    }
+  }
+
+  private void fireBeforeTemplateFinished() {
+    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
+    for (TemplateEditingListener listener : listeners) {
+      listener.beforeTemplateFinished(this, myTemplate);
     }
   }
 

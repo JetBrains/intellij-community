@@ -7,7 +7,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,8 +29,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
@@ -102,21 +101,18 @@ public class VariableInplaceRenamer {
             assert range != null;
             myEditor.getCaretModel().moveToOffset(range.getStartOffset());
             myHighlighters = new ArrayList<RangeHighlighter>();
-            TemplateManager.getInstance(myProject).startTemplate(myEditor, template, new TemplateEditingListener() {
-              public void templateFinished(Template template) {
+            TemplateManager.getInstance(myProject).startTemplate(myEditor, template, new TemplateEditingAdapter() {
+              public void beforeTemplateFinished(final TemplateState templateState, Template template) {
                 finish();
 
                 if (snapshot != null) {
-                  final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-                  if (templateState != null) {
-                    final String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
-                    if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
-                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                        public void run() {
-                          snapshot.apply(newName);
-                        }
-                      });
-                    }
+                  final String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
+                  if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                      public void run() {
+                        snapshot.apply(newName);
+                      }
+                    });
                   }
                 }
               }

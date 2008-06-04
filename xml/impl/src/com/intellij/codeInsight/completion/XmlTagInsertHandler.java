@@ -1,15 +1,15 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.MacroFactory;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
@@ -221,7 +221,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     }
 
     final boolean weInsertedSomeCodeThatCouldBeInvalidated1 = weInsertedSomeCodeThatCouldBeInvalidated;
-    templateManager.startTemplate(editor, template, new TemplateEditingListener() {
+    templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
       public void templateFinished(final Template template) {
         final int offset = editor.getCaretModel().getOffset();
 

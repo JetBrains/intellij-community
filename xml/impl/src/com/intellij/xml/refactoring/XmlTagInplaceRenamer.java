@@ -81,7 +81,7 @@ public class XmlTagInplaceRenamer {
               myEditor.getCaretModel().moveToOffset(tag.getTextOffset());
 
               final Template t = buildTemplate(tag, pair);
-              TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingListener() {
+              TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
                 public void templateFinished(final Template template) {
                   finish();
                 }
