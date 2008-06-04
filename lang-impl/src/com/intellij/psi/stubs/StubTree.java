@@ -29,6 +29,7 @@ public class StubTree {
   }
 
   private static void enumerateStubs(final StubElement<?> root, final List<StubElement<?>> result) {
+    ((StubBase)root).id = result.size();
     result.add(root);
     for (StubElement child : root.getChildrenStubs()) {
       enumerateStubs(child, result);

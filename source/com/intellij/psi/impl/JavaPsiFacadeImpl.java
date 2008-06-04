@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.JavaChangeUtilSupport;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -111,6 +112,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     JavaChangeUtilSupport.setup();
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
     HelperFactory.setFactory(new JavaHelperFactory());
+    JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
 
     Disposer.register(project, this);
   }

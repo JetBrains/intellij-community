@@ -22,6 +22,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
   private final List<StubElement> myChildren = new SmartList<StubElement>();
   private final IStubElementType myElementType;
   private volatile T myPsi;
+  public int id;
 
   protected StubBase(final StubElement parent, final IStubElementType elementType) {
     myParent = parent;

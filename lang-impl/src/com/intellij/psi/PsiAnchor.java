@@ -2,11 +2,16 @@ package com.intellij.psi;
 
 import com.intellij.extapi.psi.StubPath;
 import com.intellij.extapi.psi.StubPathBuilder;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +45,7 @@ public abstract class PsiAnchor {
     if (element instanceof StubBasedPsiElement && element.isPhysical() && ((PsiFileImpl)file).getContentElementType() instanceof IStubFileElementType) {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
       if (elt.getStub() != null || elt.getElementType().shouldCreateStub(element.getNode())) {
-        return new StubPathReference(file, StubPathBuilder.build((StubBasedPsiElement)element));
+        return new StubIndexReference(file, calcStubIndex((StubBasedPsiElement)element));
       }
     }
 
@@ -62,6 +67,28 @@ public abstract class PsiAnchor {
     if (lang == null) lang = element.getLanguage();
     return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang);
   }
+
+  public static int calcStubIndex(StubBasedPsiElement psi) {
+    if (psi instanceof PsiFile) {
+      return 0;
+    }
+
+    final StubElement liveStub = psi.getStub();
+    if (liveStub != null) {
+      return ((StubBase)liveStub).id;
+    }
+
+    PsiFileImpl file = (PsiFileImpl)psi.getContainingFile();
+    final StubTree stubTree = file.calcStubTree();
+    for (StubElement<?> stb : stubTree.getPlainList()) {
+      if (stb.getPsi() == psi) {
+        return ((StubBase)stb).id;
+      }
+    }
+
+    throw new RuntimeException("Can't find stub index for this psi");
+  }
+
 
   private static class TreeRangeReference extends PsiAnchor {
     private final PsiFile myFile;
@@ -166,6 +193,74 @@ public abstract class PsiAnchor {
 
     public int hashCode() {
       return myElement.hashCode();
+    }
+  }
+
+  public static class StubIndexReference extends PsiAnchor {
+    private final PsiFile myFile;
+    private final int myIndex;
+
+    public StubIndexReference(final PsiFile file, final int index) {
+      myFile = file;
+      myIndex = index;
+    }
+
+    public PsiFile getFile() {
+      return myFile;
+    }
+
+    public PsiElement retrieve() {
+      return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
+        public PsiElement compute() {
+          PsiFileImpl fileImpl = (PsiFileImpl)myFile;
+          StubTree tree = fileImpl.getStubTree();
+
+          boolean foreign = (tree == null);
+          if (foreign) {
+            tree = fileImpl.calcStubTree();
+          }
+
+          StubElement stub = tree.getPlainList().get(myIndex);
+
+          if (foreign) {
+            final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
+            if (cachedPsi != null) return cachedPsi;
+
+            final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
+            return ast != null ? ast.getPsi() : null;
+          }
+          else {
+            return stub != null ? stub.getPsi() : null;
+          }
+        }
+      });
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof StubIndexReference)) return false;
+
+      final StubIndexReference that = (StubIndexReference)o;
+
+      return myIndex == that.myIndex && myFile.equals(that.myFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * myFile.hashCode() + myIndex;
+    }
+
+    public int getStartOffset() {
+      final PsiElement resolved = retrieve();
+      if (resolved == null) throw new PsiInvalidElementAccessException(null);
+      return resolved.getTextRange().getStartOffset();
+    }
+
+    public int getEndOffset() {
+      final PsiElement resolved = retrieve();
+      if (resolved == null) throw new PsiInvalidElementAccessException(null);
+      return resolved.getTextRange().getEndOffset();
     }
   }
 
