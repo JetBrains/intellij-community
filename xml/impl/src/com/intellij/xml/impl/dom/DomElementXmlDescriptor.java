@@ -94,7 +94,8 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context) {
-    assert context != null;
+    if (context == null) return XmlAttributeDescriptor.EMPTY;
+
     DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return XmlAttributeDescriptor.EMPTY;
 
