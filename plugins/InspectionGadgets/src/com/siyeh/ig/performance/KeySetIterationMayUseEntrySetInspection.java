@@ -207,7 +207,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     private static class GetValueFromMapChecker
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private final PsiVariable key;
         private final PsiVariable map;
