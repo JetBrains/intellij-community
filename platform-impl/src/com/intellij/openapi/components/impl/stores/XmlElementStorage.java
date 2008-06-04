@@ -244,6 +244,9 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       }
       else {
         if (hash != null) {
+          if (hash.intValue() == myUpToDateHash.intValue()) {
+            return false;
+          }
           if (!phisicalContentNeedsSave()) {
             myUpToDateHash = hash;
             return false;
