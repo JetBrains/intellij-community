@@ -208,7 +208,6 @@ public class LoggingConditionDisagreesWithLogStatementInspection
                     return;
                 }
             } else if (javaUtilLogging) {
-                System.out.println("here");
                 if (!"isLoggable".equals(methodName)) {
                     return;
                 }
