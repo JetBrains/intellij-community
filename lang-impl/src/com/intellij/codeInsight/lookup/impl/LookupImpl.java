@@ -324,7 +324,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private boolean prefixMatches(final LookupItem item) {
-    if (myAdditionalPrefix.length() == 0) return true;
+    if (myAdditionalPrefix.length() == 0) return item.isPrefixMatched();
 
     return item.getPrefixMatcher().cloneWithPrefix(item.getPrefixMatcher().getPrefix() + myAdditionalPrefix).prefixMatches(item);
   }
@@ -627,9 +627,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (afterCaret.length() == 0) return false;
     }
 
+    int offset = myEditor.getCaretModel().getOffset();
+    final int typedLength = myAdditionalPrefix.length();
+    if (typedLength > 0) {
+      myAdditionalPrefix = "";
+      myEditor.getDocument().deleteString(offset - typedLength, offset);
+    }
     EditorModificationUtil.deleteSelectedText(myEditor);
 
-    int offset = myEditor.getCaretModel().getOffset();
+    offset = myEditor.getCaretModel().getOffset();
     if (beforeCaret != null) { // correct case, expand camel-humps
       final int start = offset - presentPrefix.length();
       myInitialOffset = start + beforeCaret.length();
@@ -643,9 +649,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     while (offset + i < text.length() && i < afterCaret.length() && text.charAt(offset + i) == afterCaret.charAt(i)) i++;
     myEditor.getDocument().insertString(offset + i, afterCaret.substring(i));
 
-    for (final LookupElement item : myItems) {
-      final String newPrefix = presentPrefix + afterCaret;
-      assert item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix)) : newPrefix + "\n" + item;
+    final String newPrefix = presentPrefix + afterCaret;
+    for (Iterator<LookupItem> it = myItems.iterator(); it.hasNext();) {
+      LookupElement item = it.next();
+      if (!item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix))) {
+        it.remove();
+      }
     }
     myAdditionalPrefix = "";
     updateList();

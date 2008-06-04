@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -46,11 +47,12 @@ class TypedHandler implements TypedActionHandler {
 
     if (result == CharFilter.Result.ADD_TO_PREFIX){
       lookup.updateList();
-      Point point=lookup.calculatePosition();
-      Dimension preferredSize = lookup.getComponent().getPreferredSize();
-      lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
-
-      lookup.getList().repaint();
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        Point point = lookup.calculatePosition();
+        Dimension preferredSize = lookup.getComponent().getPreferredSize();
+        lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
+        lookup.getList().repaint();
+      }
     }
     else{
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
