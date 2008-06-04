@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,6 +53,37 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
         return InspectionGadgetsBundle.message(
                 "non.constant.logger.problem.descriptor");
     }
+
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        return new NonStaticFinalLoggerFix();
+    }
+
+    private static class NonStaticFinalLoggerFix extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "non.constant.logger.quickfix");
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiField)) {
+                return;
+            }
+            PsiField field = (PsiField) parent;
+            final PsiModifierList modifierList = field.getModifierList();
+            if (modifierList == null) {
+                return;
+            }
+            modifierList.setModifierProperty(PsiModifier.FINAL, true);
+            modifierList.setModifierProperty(PsiModifier.STATIC, true);
+        }
+    }
+
 
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
