@@ -248,6 +248,6 @@
   <customFileTypeFactory implementation="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFactoryImpl"/>
   <syntaxHighlighter factoryClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeHighlighterProvider"/>
 
-  <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator"/>
+  <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first" id="PlatformProjectConfigurator"/>
   <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectViewOpener"/>
 </extensions>
