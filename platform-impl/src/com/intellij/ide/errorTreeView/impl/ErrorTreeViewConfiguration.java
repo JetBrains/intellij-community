@@ -1,45 +1,27 @@
 package com.intellij.ide.errorTreeView.impl;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
-public class ErrorTreeViewConfiguration implements JDOMExternalizable, ProjectComponent {
+
+@State(
+  name = "ErrorTreeViewConfiguration",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class ErrorTreeViewConfiguration implements PersistentStateComponent<ErrorTreeViewConfiguration> {
   public boolean IS_AUTOSCROLL_TO_SOURCE = false;
   public boolean HIDE_WARNINGS = false;
 
   public static ErrorTreeViewConfiguration getInstance(Project project) {
-    return project.getComponent(ErrorTreeViewConfiguration.class);
-  }
-
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ErrorTreeViewConfiguration";
+    return ServiceManager.getService(project, ErrorTreeViewConfiguration.class);
   }
 
   public boolean isAutoscrollToSource() {
@@ -58,5 +40,11 @@ public class ErrorTreeViewConfiguration implements JDOMExternalizable, ProjectCo
     HIDE_WARNINGS = value;
   }
 
+  public ErrorTreeViewConfiguration getState() {
+    return this;
+  }
 
+  public void loadState(final ErrorTreeViewConfiguration state) {
+    XmlSerializerUtil.copyBean(state, this);
+  }
 }

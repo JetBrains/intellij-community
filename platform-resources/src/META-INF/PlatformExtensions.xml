@@ -74,6 +74,9 @@
                   serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl"/>
   <projectService serviceInterface="com.intellij.ide.SelectInManager" serviceImplementation="com.intellij.ide.SelectInManager"/>
 
+  <projectService serviceInterface="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"
+                  serviceImplementation="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
+
   <!-- General -->
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
 

@@ -1,12 +1,6 @@
 <components>
   <project-components>
     <component>
-      <implementation-class>com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-   
-    <component>
       <implementation-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
