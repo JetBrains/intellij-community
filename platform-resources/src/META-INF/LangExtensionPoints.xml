@@ -301,4 +301,6 @@
 
   <extensionPoint name="moduleType"
                   beanClass="com.intellij.openapi.module.ModuleTypeEP"/>
+  <extensionPoint name="facetType"
+                  interface="com.intellij.facet.FacetType"/>
 </extensionPoints>

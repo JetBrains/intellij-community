@@ -23,6 +23,7 @@ import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,8 @@ import javax.swing.*;
  * @see com.intellij.facet.FacetTypeRegistry#registerFacetType(FacetType)
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
+  public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType"); 
+
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
   private final @NotNull String myPresentableName;
