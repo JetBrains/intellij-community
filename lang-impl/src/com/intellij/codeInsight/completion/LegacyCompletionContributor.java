@@ -12,6 +12,7 @@ import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,8 @@ public class LegacyCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, everywhere, new CompletionProvider<CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final PsiFile file = parameters.getOriginalFile();
-        final int startOffset = parameters.getOffset();
+        final int offsetInFile = parameters.getOffset();
+        final int startOffset = offsetInFile;
         final PsiElement lastElement = file.findElementAt(startOffset - 1);
         final PsiElement insertedElement = parameters.getPosition();
         CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
@@ -53,12 +55,20 @@ public class LegacyCompletionContributor extends CompletionContributor {
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
           public PsiReference compute() {
-            return insertedElement.getContainingFile().findReferenceAt(parameters.getOffset());
+            return insertedElement.getContainingFile().findReferenceAt(offsetInFile);
           }
         });
-        if (ref != null) {
+        if (ref instanceof PsiMultiReference) {
+          for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
+            int offsetInElement = offsetInFile - reference.getElement().getTextRange().getStartOffset();
+            result.setPrefixMatcher(reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
+            completionData.completeReference(reference, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(),
+                                             offsetInFile);
+          }
+        }
+        else if (ref != null) {
           completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(),
-                                           parameters.getOffset());
+                                           offsetInFile);
         }
         for (final LookupItem item : lookupSet) {
           result.addElement(item);

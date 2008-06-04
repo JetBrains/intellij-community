@@ -6,10 +6,10 @@ import com.intellij.codeInsight.lookup.LookupValueWithTail;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.StandardPatterns.character;
 import static com.intellij.patterns.StandardPatterns.not;
@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -165,20 +164,11 @@ public class CompletionData {
 
   @Nullable
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
-    int offsetInElement = offsetInFile - insertedElement.getTextRange().getStartOffset();
-    //final PsiReference ref = insertedElement.findReferenceAt(offsetInElement);
-    final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(insertedElement.getTextRange().getStartOffset() + offsetInElement);
+    final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
     if(ref != null) {
-      offsetInElement = offsetInFile - ref.getElement().getTextRange().getStartOffset();
-
-      String result = ref.getElement().getText().substring(ref.getRangeInElement().getStartOffset(), offsetInElement);
-      if(result.indexOf('(') > 0){
-        result = result.substring(0, result.indexOf('('));
-      }
-
-      return result;
+      final PsiElement element = ref.getElement();
+      return element.getText().substring(ref.getRangeInElement().getStartOffset(), offsetInFile - element.getTextRange().getStartOffset());
     }
-
     return null;
   }
 
@@ -265,7 +255,7 @@ public class CompletionData {
       ret.setAttribute(key, itemProperties.get(key));
     }
 
-    if(matcher.prefixMatches(ret)){
+    if(ret.setPrefixMatcher(matcher)){
       set.add(ret);
       return ret;
     }

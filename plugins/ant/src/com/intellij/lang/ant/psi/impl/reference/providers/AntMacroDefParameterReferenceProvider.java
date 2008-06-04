@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.AntMacroDef;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntMacroDefParameterReference;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
@@ -48,8 +49,8 @@ public class AntMacroDefParameterReferenceProvider extends PsiReferenceProvider 
 
   private static void getXmlElementReferences(final XmlElement element, final List<PsiReference> refs, final AntStructuredElement antElement) {
     if (element == null) return;
-    final String text = element.getText();
-    final int offsetInPosition = element.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
+    final String text = ElementManipulators.getValueText(element);
+    final int offsetInPosition = ElementManipulators.getValueTextRange(element).getStartOffset() + element.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
     int startIndex;
     int endIndex = -1;
     while ((startIndex = text.indexOf("@{", endIndex + 1)) > endIndex) {

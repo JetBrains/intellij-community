@@ -37,7 +37,9 @@ public abstract class CompletionService {
                                                                                                                                     final T from,
                                                                                                                                     final Consumer<LookupElement> consumer) {
     final CompletionResultSet result = createResultSet(parameters, consumer);
+    final PrefixMatcher initialMatcher = result.getPrefixMatcher();
     for (int i = Arrays.asList(contributors).indexOf(from) + 1; i < contributors.length; i++) {
+      result.setPrefixMatcher(initialMatcher);
       if (!contributors[i].fillCompletionVariants(parameters, result)) {
         return false;
       }

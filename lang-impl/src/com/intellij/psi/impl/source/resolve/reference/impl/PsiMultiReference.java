@@ -17,7 +17,7 @@ import java.util.*;
  */
 
 public class PsiMultiReference implements PsiPolyVariantReference {
-  private static final Comparator<PsiReference> COMPARATOR = new Comparator<PsiReference>() {
+  public static final Comparator<PsiReference> COMPARATOR = new Comparator<PsiReference>() {
     public int compare(final PsiReference ref1, final PsiReference ref2) {
       if (ref1.isSoft() && !ref2.isSoft()) return 1;
       if (!ref1.isSoft() && ref2.isSoft()) return -1;
@@ -30,6 +30,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       final TextRange range1 = ref1.getRangeInElement();
       final TextRange range2 = ref2.getRangeInElement();
 
+      if(range1.getStartOffset() == range2.getStartOffset() && range1.getEndOffset() == range2.getEndOffset()) return 0;
       if(range1.getStartOffset() >= range2.getStartOffset() && range1.getEndOffset() <= range2.getEndOffset()) return -1;
       if(range2.getStartOffset() >= range1.getStartOffset() && range2.getEndOffset() <= range1.getEndOffset()) return 1;
 
