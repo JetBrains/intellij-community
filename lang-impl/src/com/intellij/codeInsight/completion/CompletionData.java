@@ -78,7 +78,8 @@ public class CompletionData {
   }
 
   /**
-   * @deprecated {@see com.intellij.codeInsight.completion.CompletionContributor}
+   * @deprecated 
+   * @see com.intellij.codeInsight.completion.CompletionContributor
    */
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
