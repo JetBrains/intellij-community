@@ -33,6 +33,7 @@ import org.intellij.lang.xpath.psi.impl.*;
 @SuppressWarnings({"NullableProblems"})
 public final class XPathParserDefinition implements ParserDefinition {
 
+    @NotNull
     public Lexer createLexer(Project project) {
         return new XPathLexer();
     }
@@ -41,10 +42,12 @@ public final class XPathParserDefinition implements ParserDefinition {
         return XPathElementTypes.FILE;
     }
 
+    @NotNull
     public TokenSet getWhitespaceTokens() {
         return TokenSet.create(XPathTokenTypes.WHITESPACE);
     }
 
+    @NotNull
     public TokenSet getCommentTokens() {
         return TokenSet.EMPTY;
     }
@@ -62,6 +65,7 @@ public final class XPathParserDefinition implements ParserDefinition {
         return SpaceRequirements.MUST_NOT;
     }
 
+    @NotNull
     public PsiElement createElement(ASTNode node) {
         final IElementType type = node.getElementType();
 
