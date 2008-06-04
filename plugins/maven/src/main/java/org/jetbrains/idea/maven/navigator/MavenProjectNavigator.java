@@ -38,7 +38,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +93,9 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
 
   private void initMavenProjectsTree() {
     myTree = new SimpleTree() {
-      private JLabel myLabel = new JLabel(ProjectBundle.message("maven.please.reimport"));
+      private JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
+                                                                formatHtmlImage("/general/add.png"),
+                                                                formatHtmlImage("/actions/sync.png")));
 
       @Override
       protected void paintComponent(Graphics g) {
@@ -174,13 +175,15 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
 
     String s = StringUtil.join(problems, new Function<MavenProjectModelProblem, String>() {
       public String fun(MavenProjectModelProblem each) {
-        URL imageUrl = each.isCritical()
-                       ? getClass().getResource("/images/error.png")
-                       : getClass().getResource("/images/warning.png");
-        return "<img src=\"" + imageUrl + "\"> " + each.getDescription();
+        String image = each.isCritical() ? "/images/error.png" : "/images/warning.png";
+        return formatHtmlImage(image) + each.getDescription();
       }
     }, "<br>");
     myTree.setToolTipText("<html>" + s + "</html>");
+  }
+
+  private String formatHtmlImage(String path) {
+    return "<img src=\"" + getClass().getResource(path) + "\"> ";
   }
 
   private void subscribeForChanges() {

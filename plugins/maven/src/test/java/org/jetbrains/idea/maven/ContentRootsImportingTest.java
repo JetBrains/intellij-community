@@ -579,6 +579,7 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertExcludes("project",
+                   "target/classes", // excluded output directory
                    "target/foo",
                    "target/classes");
 
@@ -606,6 +607,7 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     assertExcludes("project",
+                   "target/classes", // excluded output directory
                    "target/xxx",
                    "target/classes");
   }
@@ -626,6 +628,7 @@ public class ContentRootsImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     assertExcludes("project",
+                   "target/classes", // excluded output directory
                    "target/foo",
                    "target/classes");
 

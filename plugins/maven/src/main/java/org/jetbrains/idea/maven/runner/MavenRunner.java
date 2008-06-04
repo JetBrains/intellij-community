@@ -14,14 +14,14 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.ErrorHandler;
-import org.jetbrains.idea.maven.project.MavenFoldersConfigurator;
 import org.jetbrains.idea.maven.project.MavenException;
+import org.jetbrains.idea.maven.project.MavenFoldersConfigurator;
 import org.jetbrains.idea.maven.project.MavenImportToolWindow;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExecutor;
@@ -31,8 +31,7 @@ import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunner, PersistentStateComponent<MavenRunnerSettings> {
-
+public class MavenRunner extends DummyProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
   @NonNls private static final String OUTPUT_TOOL_WINDOW_ID = "Maven Runner Output";
 
   private final Project project;
@@ -45,7 +44,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
   private MavenRunnerOutputPanel myMavenOutputWindowPanel;
   private MavenExecutor executor;
 
-  public MavenRunnerImpl(final Project project, MavenCore mavenCore) {
+  public MavenRunner(final Project project, MavenCore mavenCore) {
     super("MavenRunner");
 
     this.project = project;
@@ -85,8 +84,8 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
 
     if (!isToolWindowOpen()) {
       ToolWindowManager.getInstance(project)
-        .registerToolWindow(OUTPUT_TOOL_WINDOW_ID, myMavenOutputWindowPanel.getRootComponent(), ToolWindowAnchor.BOTTOM)
-        .show(null);
+          .registerToolWindow(OUTPUT_TOOL_WINDOW_ID, myMavenOutputWindowPanel.getRootComponent(), ToolWindowAnchor.BOTTOM)
+          .show(null);
     }
 
     myMavenOutputWindowPanel.attachConsole(consoleView);
@@ -107,7 +106,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      executor = createTask(myRunnerParameters, mavenCore.getState(), mySettings);
+      executor = createExecutor(myRunnerParameters, mavenCore.getState(), mySettings);
       openToolWindow(executor.createConsole(project));
       ProgressManager.getInstance().run(new Task.Backgroundable(project, executor.getCaption(), true) {
         public void run(@NotNull ProgressIndicator indicator) {
@@ -116,7 +115,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
 
         @Nullable
         public NotificationInfo getNotificationInfo() {
-          return new NotificationInfo("Maven",  "Maven Task Finished", "");
+          return new NotificationInfo("Maven", "Maven Task Finished", "");
         }
 
         public void onSuccess() {
@@ -181,18 +180,18 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
         indicator.setFraction(((double)count++) / commands.size());
       }
 
-      final MavenExecutor task = createTask(command, effectiveCoreSettings, effectiveRunnerSettings);
-      task.setAction(action);
-      if (!task.execute()) {
+      MavenExecutor executor = createExecutor(command, effectiveCoreSettings, effectiveRunnerSettings);
+      executor.setAction(action);
+      if (!executor.execute()) {
         return false;
       }
     }
     return true;
   }
 
-  static MavenExecutor createTask(final MavenRunnerParameters taskParameters,
-                                  final MavenCoreSettings coreSettings,
-                                  final MavenRunnerSettings runnerSettings) {
+  private static MavenExecutor createExecutor(MavenRunnerParameters taskParameters,
+                                              MavenCoreSettings coreSettings,
+                                              MavenRunnerSettings runnerSettings) {
     if (runnerSettings.isUseMavenEmbedder()) {
       return new MavenEmbeddedExecutor(taskParameters, coreSettings, runnerSettings);
     }

@@ -98,10 +98,6 @@ public class RootModelAdapter {
         result.add(fromUrl(f.getUrl()));
       }
     }
-    String output = getCompilerExtension().getCompilerOutputUrl();
-    String testOutput = getCompilerExtension().getCompilerOutputUrlForTests();
-    if (output != null) result.add(fromUrl(output));
-    if (testOutput != null) result.add(fromUrl(testOutput));
     return result;
   }
 

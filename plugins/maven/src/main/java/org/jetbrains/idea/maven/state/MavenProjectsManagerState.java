@@ -9,8 +9,6 @@ package org.jetbrains.idea.maven.state;
 import java.util.*;
 
 public class MavenProjectsManagerState {
-  public boolean isMavenProject = false;
-
   public List<String> originalFiles = new ArrayList<String>();
   public List<String> activeProfiles = new ArrayList<String>();
 
