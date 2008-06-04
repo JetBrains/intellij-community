@@ -54,10 +54,7 @@ import com.siyeh.ig.javabeans.FieldHasSetterButNoGetterInspection;
 import com.siyeh.ig.jdk.*;
 import com.siyeh.ig.jdk15.*;
 import com.siyeh.ig.junit.*;
-import com.siyeh.ig.logging.ClassWithMultipleLoggersInspection;
-import com.siyeh.ig.logging.ClassWithoutLoggerInspection;
-import com.siyeh.ig.logging.NonStaticFinalLoggerInspection;
-import com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection;
+import com.siyeh.ig.logging.*;
 import com.siyeh.ig.maturity.*;
 import com.siyeh.ig.memory.StaticCollectionInspection;
 import com.siyeh.ig.memory.StringBufferFieldInspection;
@@ -359,6 +356,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerLoggingInspections() {
         m_inspectionClasses.add(ClassWithMultipleLoggersInspection.class);
         m_inspectionClasses.add(ClassWithoutLoggerInspection.class);
+        m_inspectionClasses.add(LoggingConditionDisagreesWithLogStatementInspection.class);
         m_inspectionClasses.add(LoggerInitializedWithForeignClassInspection.class);
         m_inspectionClasses.add(NonStaticFinalLoggerInspection.class);
         //m_inspectionClasses.add(PublicMethodWithoutLoggingInspection.class);
