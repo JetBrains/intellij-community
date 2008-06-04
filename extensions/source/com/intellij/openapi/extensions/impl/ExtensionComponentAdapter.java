@@ -62,9 +62,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
     //assert myContainer == container : "Different containers: " + myContainer + " - " + container;
-
     if (myComponentInstance == null) {
-      if (!Element.class.equals(getComponentImplementation())) {
+      if (Element.class.equals(getComponentImplementation())) {
+        myComponentInstance = myExtensionElement;
+      }
+      else {
         Object componentInstance = getDelegate().getComponentInstance(container);
 
         if (myDeserializeInstance) {
@@ -76,16 +78,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
           }
         }
 
-        ExtensionInitializer  initializer = (ExtensionInitializer)container.getComponentInstance(ExtensionInitializer.class);
+        ExtensionInitializer initializer = (ExtensionInitializer)container.getComponentInstance(ExtensionInitializer.class);
         if (initializer != null) {
           initializer.initExtension(componentInstance);
         }
-
-
         myComponentInstance = componentInstance;
-      }
-      else {
-        myComponentInstance = myExtensionElement;
       }
       if (myComponentInstance instanceof PluginAware) {
         PluginAware pluginAware = (PluginAware) myComponentInstance;
@@ -133,28 +130,24 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   private Class loadClass(final String className) {
-    if (myImplementationClass != null) return myImplementationClass;
-
-    try {
-      ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-      if (classLoader == null) {
-        classLoader = getClass().getClassLoader();
+    if (myImplementationClass == null) {
+      try {
+        ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+        if (classLoader == null) {
+          classLoader = getClass().getClassLoader();
+        }
+        myImplementationClass = Class.forName(className, true, classLoader);
       }
-
-
-      myImplementationClass = Class.forName(className, true, classLoader);
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
     }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-
     return myImplementationClass;
   }
 
   private synchronized ComponentAdapter getDelegate() {
     if (myDelegate == null) {
-      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(
-        myImplementationClassName), null, true));
+      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myImplementationClassName), null, true));
     }
 
     return myDelegate;

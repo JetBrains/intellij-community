@@ -14,11 +14,11 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.parsing.FileTextParsing;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubSerializer;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -29,7 +29,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> implements StubSerializer<PsiJavaFileStub> {
+public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
     SerializationManager.getInstance().registerSerializer(this);
@@ -43,9 +43,8 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> i
     final CharSequence seq = ((LeafElement)chameleon).getInternedText();
 
     final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-    final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi()));
-    return FileTextParsing.parseFileText(manager, lexer,
-                                         seq, 0, seq.length(), SharedImplUtil.findCharTableByTree(chameleon));
+    final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(TreeUtil.getFileElement((TreeElement)chameleon).getPsi()));
+    return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), SharedImplUtil.findCharTableByTree(chameleon));
   }
   public boolean isParsable(CharSequence buffer, final Project project) {return true;}
 
