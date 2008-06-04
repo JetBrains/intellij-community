@@ -100,11 +100,14 @@ public class LoggingConditionDisagreesWithLogStatementInspection
             final String qualifiedName = containingClass.getQualifiedName();
             boolean log4j = false;
             boolean javaUtilLogging = false;
+            boolean commonsLogging = false;
             if ("org.apache.log4j.Logger".equals(qualifiedName) ||
                     "org.apache.log4j.Category".equals(qualifiedName)) {
                 log4j = true;
             } else if ("java.util.logging.Logger".equals(qualifiedName)) {
                 javaUtilLogging = true;
+            } else if ("org.apache.commons.logging.Log".equals(qualifiedName)) {
+                commonsLogging = true;
             } else {
                 return;
             }
@@ -162,97 +165,135 @@ public class LoggingConditionDisagreesWithLogStatementInspection
             if (!target.equals(conditionTarget)) {
                 return;
             }
-            final String methodName =
-                    conditionMethodExpression.getReferenceName();
-            if (log4j) {
-                Log4jPriority enabledFor = null;
-                if ("isDebugEnabled".equals(methodName)) {
-                    enabledFor = Log4jPriority.DEBUG;
-                } else if ("isInfoEnabled".equals(methodName)) {
-                    enabledFor = Log4jPriority.INFO;
-                } else if ("isTraceEnabled".equals(methodName)) {
-                    enabledFor = Log4jPriority.TRACE;
-                } else if ("isEnabledFor".equals(methodName)) {
-                    final PsiExpressionList argumentList =
-                            methodCallExpression.getArgumentList();
-                    final PsiExpression[] arguments = argumentList.getExpressions();
-                    for (PsiExpression argument : arguments) {
-                        if (!(argument instanceof PsiReferenceExpression)) {
-                            continue;
-                        }
-                        final PsiReferenceExpression argumentReference =
-                                (PsiReferenceExpression) argument;
-                        final PsiType type = argument.getType();
-                        if (!(type instanceof PsiClassType)) {
-                            continue;
-                        }
-                        final PsiClassType classType = (PsiClassType) type;
-                        final PsiClass aClass = classType.resolve();
-                        if (aClass == null) {
-                            continue;
-                        }
-                        final String qName = aClass.getQualifiedName();
-                        if (!"org.apache.log4j.Priority".equals(qName)) {
-                            continue;
-                        }
-                        final PsiElement argumentTarget =
-                                argumentReference.resolve();
-                        if (!(argumentTarget instanceof PsiField)) {
-                            continue;
-                        }
-                        final PsiField field = (PsiField) argumentTarget;
-                        final String name = field.getName();
-                        enabledFor = Log4jPriority.valueOf(name);
-                    }
-                } else {
-                    return;
-                }
-                if (enabledFor == priority) {
-                    return;
-                }
-            } else if (javaUtilLogging) {
-                if (!"isLoggable".equals(methodName)) {
-                    return;
-                }
+            if (commonsLogging &&
+                    !hasCommonsLoggingProblem(priority, methodCallExpression)) {
+                return;
+            } else if (log4j &&
+                    !hasLog4jProblem(priority, methodCallExpression)) {
+                return;
+            } else if (javaUtilLogging &&
+                    !hasUtilLoggingProblem(level, methodCallExpression)) {
+                return;
+            }
+            registerMethodCallError(methodCallExpression, referenceName);
+        }
+
+        private static boolean hasUtilLoggingProblem(
+                UtilLoggingLevel level,
+                PsiMethodCallExpression methodCallExpression) {
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!"isLoggable".equals(methodName)) {
+                return false;
+            }
+            final PsiExpressionList argumentList =
+                    methodCallExpression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
+                return false;
+            }
+            final PsiExpression argument = arguments[0];
+            if (!(argument instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression argumentReference =
+                    (PsiReferenceExpression) argument;
+            final PsiType type = argument.getType();
+            if (!(type instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClassType classType = (PsiClassType) type;
+            final PsiClass aClass = classType.resolve();
+            if (aClass == null) {
+                return false;
+            }
+            final String qName = aClass.getQualifiedName();
+            if (!"java.util.logging.Level".equals(qName)) {
+                return false;
+            }
+            final PsiElement argumentTarget =
+                    argumentReference.resolve();
+            if (!(argumentTarget instanceof PsiField)) {
+                return false;
+            }
+            final PsiField field = (PsiField) argumentTarget;
+            final String name = field.getName();
+            UtilLoggingLevel enabledFor =
+                    UtilLoggingLevel.valueOf(name);
+            return enabledFor != level;
+        }
+
+        private static boolean hasCommonsLoggingProblem(
+                Log4jPriority priority,
+                PsiMethodCallExpression methodCallExpression) {
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            Log4jPriority enabledFor = null;
+            if ("isTraceEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.TRACE;
+            } else if ("isDebugEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.DEBUG;
+            } else if ("isInfoEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.INFO;
+            } else if ("isWarnEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.WARN;
+            } else if ("isErrorEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.ERROR;
+            } else if ("isFatalEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.FATAL;
+            }
+            return enabledFor != priority;
+        }
+
+        private static boolean hasLog4jProblem(
+                Log4jPriority priority,
+                PsiMethodCallExpression methodCallExpression) {
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            Log4jPriority enabledFor = null;
+            if ("isDebugEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.DEBUG;
+            } else if ("isInfoEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.INFO;
+            } else if ("isTraceEnabled".equals(methodName)) {
+                enabledFor = Log4jPriority.TRACE;
+            } else if ("isEnabledFor".equals(methodName)) {
                 final PsiExpressionList argumentList =
                         methodCallExpression.getArgumentList();
                 final PsiExpression[] arguments = argumentList.getExpressions();
-                if (arguments.length != 1) {
-                    return;
-                }
-                final PsiExpression argument = arguments[0];
-                if (!(argument instanceof PsiReferenceExpression)) {
-                    return;
-                }
-                final PsiReferenceExpression argumentReference =
-                        (PsiReferenceExpression) argument;
-                final PsiType type = argument.getType();
-                if (!(type instanceof PsiClassType)) {
-                    return;
-                }
-                final PsiClassType classType = (PsiClassType) type;
-                final PsiClass aClass = classType.resolve();
-                if (aClass == null) {
-                    return;
-                }
-                final String qName = aClass.getQualifiedName();
-                if (!"java.util.logging.Level".equals(qName)) {
-                    return;
-                }
-                final PsiElement argumentTarget =
-                        argumentReference.resolve();
-                if (!(argumentTarget instanceof PsiField)) {
-                    return;
-                }
-                final PsiField field = (PsiField) argumentTarget;
-                final String name = field.getName();
-                UtilLoggingLevel enabledFor =
-                        UtilLoggingLevel.valueOf(name);
-                if (enabledFor == level) {
-                    return;
+                for (PsiExpression argument : arguments) {
+                    if (!(argument instanceof PsiReferenceExpression)) {
+                        continue;
+                    }
+                    final PsiReferenceExpression argumentReference =
+                            (PsiReferenceExpression) argument;
+                    final PsiType type = argument.getType();
+                    if (!(type instanceof PsiClassType)) {
+                        continue;
+                    }
+                    final PsiClassType classType = (PsiClassType) type;
+                    final PsiClass aClass = classType.resolve();
+                    if (aClass == null) {
+                        continue;
+                    }
+                    final String qName = aClass.getQualifiedName();
+                    if (!"org.apache.log4j.Priority".equals(qName)) {
+                        continue;
+                    }
+                    final PsiElement argumentTarget =
+                            argumentReference.resolve();
+                    if (!(argumentTarget instanceof PsiField)) {
+                        continue;
+                    }
+                    final PsiField field = (PsiField) argumentTarget;
+                    final String name = field.getName();
+                    enabledFor = Log4jPriority.valueOf(name);
                 }
             }
-            registerMethodCallError(methodCallExpression, referenceName);
+            return enabledFor != priority;
         }
     }
 }
