@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,15 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class InstanceOfUtils {
 
+    private InstanceOfUtils() {}
+
     public static boolean hasConflictingInstanceof(
             @NotNull PsiTypeCastExpression expression) {
-        PsiType castType = expression.getType();
-        PsiExpression operand = expression.getOperand();
+        final PsiType castType = expression.getType();
+        final PsiExpression operand = expression.getOperand();
         if (!(operand instanceof PsiReferenceExpression)) {
             return false;
         }
@@ -52,8 +53,8 @@ public class InstanceOfUtils {
 
     public static boolean hasAgreeingInstanceof(
             @NotNull PsiTypeCastExpression expression) {
-        PsiType castType = expression.getType();
-        PsiExpression operand = expression.getOperand();
+        final PsiType castType = expression.getType();
+        final PsiExpression operand = expression.getOperand();
         if (!(operand instanceof PsiReferenceExpression)) {
             return false;
         }
@@ -76,7 +77,7 @@ public class InstanceOfUtils {
         return false;
     }
 
-    public static class InstanceofChecker extends JavaElementVisitor {
+    private static class InstanceofChecker extends JavaElementVisitor {
 
         private final PsiReferenceExpression referenceExpression;
         private final PsiType castType;
@@ -124,7 +125,8 @@ public class InstanceOfUtils {
                 if (branch instanceof PsiBlockStatement) {
                     final PsiBlockStatement blockStatement =
                             (PsiBlockStatement)branch;
-                    if (isVariableAssignedBeforeReference(blockStatement)) {
+                    if (VariableAccessUtils.variableIsAssignedBeforeReference(
+                            referenceExpression, blockStatement)) {
                         return;
                     }
                 }
@@ -133,7 +135,8 @@ public class InstanceOfUtils {
                 if (thenBranch instanceof PsiBlockStatement) {
                     final PsiBlockStatement blockStatement =
                             (PsiBlockStatement)thenBranch;
-                    if (isVariableAssignedBeforeReference(blockStatement)) {
+                    if (VariableAccessUtils.variableIsAssignedBeforeReference(
+                            referenceExpression, blockStatement)) {
                         return;
                     }
                 }
@@ -165,61 +168,6 @@ public class InstanceOfUtils {
             } else {
                 checkExpression(condition);
             }
-        }
-
-        private boolean isVariableAssignedBeforeReference(
-                @Nullable PsiElement element) {
-            final PsiElement target = referenceExpression.resolve();
-            if (!(target instanceof PsiVariable)) {
-                return false;
-            }
-            final PsiVariable variable = (PsiVariable)target;
-            return isVariableAssignedAtPoint(variable, element,
-                    referenceExpression);
-        }
-
-        private static boolean isVariableAssignedAtPoint(
-                @NotNull PsiVariable variable, @Nullable PsiElement context,
-                PsiElement point) {
-            if (context == null) {
-                return false;
-            }
-            final PsiElement directChild =
-                    getDirectChildWhichContainsElement(context, point);
-            if (directChild == null) {
-                return false;
-            }
-            final PsiElement[] children = context.getChildren();
-            for (PsiElement child : children) {
-                if (child == directChild) {
-                    return isVariableAssignedAtPoint(variable, directChild,
-                            point);
-                }
-                if (VariableAccessUtils.variableIsAssigned(variable,
-                        child)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Nullable
-        public static PsiElement getDirectChildWhichContainsElement(
-                @NotNull PsiElement ancestor,
-                @NotNull PsiElement descendant) {
-            if (ancestor == descendant) {
-                return null;
-            }
-            PsiElement child = descendant;
-            PsiElement parent = child.getParent();
-            while (!parent.equals(ancestor)) {
-                child = parent;
-                parent = child.getParent();
-                if (parent == null) {
-                    return null;
-                }
-            }
-            return child;
         }
 
         private void checkExpression(PsiExpression expression) {

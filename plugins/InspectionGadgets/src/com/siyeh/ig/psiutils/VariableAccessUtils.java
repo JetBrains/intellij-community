@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class VariableAccessUtils{
 
-    private VariableAccessUtils(){
-        super();
-    }
+    private VariableAccessUtils(){}
 
     public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
                                                  @NotNull PsiElement context){
@@ -251,5 +249,61 @@ public class VariableAccessUtils{
             }
         }
         return false;
+    }
+
+    public static boolean variableIsAssignedBeforeReference(
+            @NotNull PsiReferenceExpression referenceExpression,
+            @NotNull PsiElement context) {
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiVariable)) {
+            return false;
+        }
+        final PsiVariable variable = (PsiVariable)target;
+        return variableIsAssignedAtPoint(variable, context,
+                referenceExpression);
+    }
+
+    public static boolean variableIsAssignedAtPoint(
+            @NotNull PsiVariable variable, @Nullable PsiElement context,
+            @NotNull PsiElement point) {
+        if (context == null) {
+            return false;
+        }
+        final PsiElement directChild =
+                getDirectChildWhichContainsElement(context, point);
+        if (directChild == null) {
+            return false;
+        }
+        final PsiElement[] children = context.getChildren();
+        for (PsiElement child : children) {
+            if (child == directChild) {
+                return variableIsAssignedAtPoint(variable, directChild,
+                        point);
+            }
+            if (variableIsAssigned(variable,
+                    child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private static PsiElement getDirectChildWhichContainsElement(
+            @NotNull PsiElement ancestor,
+            @NotNull PsiElement descendant) {
+        if (ancestor == descendant) {
+            return null;
+        }
+        PsiElement child = descendant;
+        PsiElement parent = child.getParent();
+        while (!parent.equals(ancestor)) {
+            child = parent;
+            parent = child.getParent();
+            if (parent == null) {
+                return null;
+            }
+        }
+        return child;
     }
 }
