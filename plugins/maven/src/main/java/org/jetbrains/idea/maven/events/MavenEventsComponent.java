@@ -67,7 +67,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     myProjectsManager = projectsManager;
     myRunner = runner;
 
-    myProjectsManager.addListener(new MyProjectStateListener(project));
+    //myProjectsManager.addListener(new MyProjectStateListener(project));
   }
 
   public void addListener(Listener listener) {

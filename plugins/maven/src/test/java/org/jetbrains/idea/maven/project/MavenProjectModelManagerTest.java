@@ -70,8 +70,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
 
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m, model.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testSameProjectAsModuleOfSeveralProjects() throws Exception {
@@ -107,10 +107,10 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(p1, roots.get(0).getFile());
     assertEquals(p2, roots.get(1).getFile());
 
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m, model.getModules(roots.get(0)).get(0).getFile());
 
-    assertEquals(0, roots.get(1).getModules().size());
+    assertEquals(0, model.getModules(roots.get(1)).size());
   }
 
   public void testSameProjectAsModuleOfSeveralProjectsInHierarchy() throws Exception {
@@ -143,11 +143,11 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     List<MavenProjectModel> roots = model.getRootProjects();
 
     assertEquals(1, roots.size());
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m1, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m1, model.getModules(roots.get(0)).get(0).getFile());
 
-    assertEquals(1, roots.get(0).getModules().get(0).getModules().size());
-    assertEquals(m2, roots.get(0).getModules().get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(model.getModules(roots.get(0)).get(0)).size());
+    assertEquals(m2, model.getModules(model.getModules(roots.get(0)).get(0)).get(0).getFile());
   }
 
   public void testRemovingChildProjectFromRootProjects() throws Exception {
@@ -174,8 +174,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
 
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m, model.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testUpdatingWholeModel() throws Exception {
@@ -198,7 +198,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     List<MavenProjectModel> roots = model.getRootProjects();
 
     MavenProjectModel parentNode = roots.get(0);
-    MavenProjectModel childNode = roots.get(0).getModules().get(0);
+    MavenProjectModel childNode = model.getModules(roots.get(0)).get(0);
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project1</artifactId>" +
@@ -219,10 +219,10 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     roots = model.getRootProjects();
 
     assertEquals(1, roots.size());
-    assertEquals(1, roots.get(0).getModules().size());
+    assertEquals(1, model.getModules(roots.get(0)).size());
 
     MavenProjectModel parentNode1 = roots.get(0);
-    MavenProjectModel childNode1 = roots.get(0).getModules().get(0);
+    MavenProjectModel childNode1 = model.getModules(roots.get(0)).get(0);
 
     assertSame(parentNode, parentNode1);
     assertSame(childNode, childNode1);
@@ -268,8 +268,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
 
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m1, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m1, model.getModules(roots.get(0)).get(0).getFile());
 
     readModel(Collections.singletonList("two"), myProjectPom);
 
@@ -277,8 +277,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
 
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m2, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m2, model.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testUpdatingParticularProject() throws Exception {
@@ -505,8 +505,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     List<MavenProjectModel> roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(child, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(child, model.getModules(roots.get(0)).get(0).getFile());
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -517,7 +517,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
   }
 
   public void testChangingInheritance() throws Exception {
@@ -692,7 +692,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     List<MavenProjectModel> roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -708,8 +708,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m, model.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testUpdatingDoesNotUpdateModules() throws Exception {
@@ -756,7 +756,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
 
     List<MavenProjectModel> roots = model.getRootProjects();
     assertEquals(1, roots.size());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
 
     VirtualFile m = createModulePom("m",
                                     "<groupId>test</groupId>" +
@@ -767,8 +767,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m, model.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testAddingProjectAsAggregatorForExistingOne() throws Exception {
@@ -782,7 +782,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     List<MavenProjectModel> roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(m, roots.get(0).getFile());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -798,8 +798,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m, model.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testAddingProjectWithModules() throws Exception {
@@ -812,7 +812,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
 
     List<MavenProjectModel> roots = model.getRootProjects();
     assertEquals(1, roots.size());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
 
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -836,8 +836,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(2, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
     assertEquals(m1, roots.get(1).getFile());
-    assertEquals(1, roots.get(1).getModules().size());
-    assertEquals(m2, roots.get(1).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(1)).size());
+    assertEquals(m2, model.getModules(roots.get(1)).get(0).getFile());
   }
 
   public void testUpdatingAddsModulesFromRootProjects() throws Exception {
@@ -858,7 +858,7 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     assertEquals(myProjectPom, roots.get(0).getFile());
     assertEquals(m, roots.get(1).getFile());
     assertEquals("m", roots.get(1).getMavenProject().getArtifactId());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -874,8 +874,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(m, roots.get(0).getModules().get(0).getFile());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(m, model.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testDeletingProject() throws Exception {
@@ -897,13 +897,13 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
 
     List<MavenProjectModel> roots = model.getRootProjects();
     assertEquals(1, roots.size());
-    assertEquals(1, roots.get(0).getModules().size());
+    assertEquals(1, model.getModules(roots.get(0)).size());
 
     model.delete(asList(m), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
   }
 
   public void testDeletingProjectWithModules() throws Exception {
@@ -935,15 +935,15 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
 
     List<MavenProjectModel> roots = model.getRootProjects();
     assertEquals(1, roots.size());
-    assertEquals(1, roots.get(0).getModules().size());
-    assertEquals(1, roots.get(0).getModules().get(0).getModules().size());
+    assertEquals(1, model.getModules(roots.get(0)).size());
+    assertEquals(1, model.getModules(model.getModules(roots.get(0)).get(0)).size());
 
     model.delete(asList(m1), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
-    assertEquals(0, roots.get(0).getModules().size());
+    assertEquals(0, model.getModules(roots.get(0)).size());
   }
 
   private void readModel(VirtualFile... files) throws CanceledException, MavenException {

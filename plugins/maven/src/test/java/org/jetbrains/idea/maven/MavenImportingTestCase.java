@@ -315,7 +315,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myMavenProjectsManager.setManagedFiles(files);
       myMavenProjectsManager.setActiveProfiles(myProfilesList);
       myMavenProjectsManager.reimport();
-      myProjectModel = myMavenProjectsManager.getMavenProjectModelManager();
+      myProjectModel = myMavenProjectsManager.getMavenProjectTree();
 
       if (shouldResolve()) resolveProject();
     }

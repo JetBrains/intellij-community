@@ -1,7 +1,5 @@
 package org.jetbrains.idea.maven;
 
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
-
 import java.io.File;
 
 public class ArtifactsDownloadingTest extends MavenImportingTestCase {
@@ -33,6 +31,6 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
   }
 
   private void download() throws Exception {
-    MavenArtifactDownloader.download(myProject);
+    myMavenProjectsManager.downloadArtifacts();
   }
 }

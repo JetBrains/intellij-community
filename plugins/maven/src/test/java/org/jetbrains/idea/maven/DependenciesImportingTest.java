@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 
+import java.util.List;
+
 public class DependenciesImportingTest extends MavenImportingTestCase {
   public void testLibraryDependency() throws Exception {
     importProject("<groupId>test</groupId>" +
@@ -734,10 +736,11 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     if (ignore()) return;
 
-    MavenProjectModel root = myMavenProjectsManager.getMavenProjectModelManager().getRootProjects().get(0);
-    assertOrderedElementsAreEqual(root.getProblems());
+    MavenProjectModel root = myMavenProjectsManager.getMavenProjectTree().getRootProjects().get(0);
+    List<MavenProjectModel> modules = myMavenProjectsManager.getMavenProjectTree().getModules(root);
 
-    assertOrderedElementsAreEqual(root.getModules().get(0).getProblems(),
+    assertOrderedElementsAreEqual(root.getProblems());
+    assertOrderedElementsAreEqual(modules.get(0).getProblems(),
                                   "Unresolved dependency: xxx:yyy:pom:1:compile");
   }
 }

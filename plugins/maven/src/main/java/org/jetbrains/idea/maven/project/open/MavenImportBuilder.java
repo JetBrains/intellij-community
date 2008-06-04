@@ -140,11 +140,11 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     try {
       MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(getCoreState());
       for (VirtualFile f : myFiles) {
-        MavenProjectHolder holder = MavenReader.readProject(e, f.getPath(), new ArrayList<String>());
-        if (!holder.isValid()) continue;
+        MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>());
+        if (!holder.isValid) continue;
 
         Set<String> profiles = new LinkedHashSet<String>();
-        ProjectUtil.collectProfileIds(holder.getMavenProject().getModel(), profiles);
+        ProjectUtil.collectProfileIds(holder.mavenProject.getModel(), profiles);
         if (!profiles.isEmpty()) myProfiles.addAll(profiles);
       }
       MavenEmbedderFactory.releaseEmbedder(e);

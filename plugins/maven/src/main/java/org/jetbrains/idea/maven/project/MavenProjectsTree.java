@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,7 +9,6 @@ import org.apache.maven.model.Parent;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.Tree;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
@@ -22,6 +20,8 @@ public class MavenProjectsTree {
   private HashMap<MavenId, MavenProjectModel> myMavenIdToProject = new HashMap<MavenId, MavenProjectModel>();
   private List<Listener> myListeners = new ArrayList<Listener>();
 
+  private Map<MavenProjectModel, List<MavenProjectModel>> myModuleMapping = new HashMap<MavenProjectModel, List<MavenProjectModel>>();
+
   public void read(Collection<VirtualFile> filesToImport,
                    List<String> activeProfiles,
                    MavenCoreSettings mavenSettings,
@@ -32,17 +32,15 @@ public class MavenProjectsTree {
   }
 
   private void resolveIntermoduleDependencies() {
-    visit(new SimpleVisitor() {
-      public void visit(MavenProjectModel eachNode) {
-        for (Artifact eachDependency : eachNode.getDependencies()) {
-          MavenProjectModel project = myMavenIdToProject.get(new MavenId(eachDependency));
-          if (project != null) {
-            eachDependency.setFile(new File(project.getPath()));
-            eachDependency.setResolved(true);
-          }
+    for (MavenProjectModel eachProject : getProjects()) {
+      for (Artifact eachDependency : eachProject.getDependencies()) {
+        MavenProjectModel project = myMavenIdToProject.get(new MavenId(eachDependency));
+        if (project != null) {
+          eachDependency.setFile(new File(project.getPath()));
+          eachDependency.setResolved(true);
         }
       }
-    });
+    }
   }
 
   public void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
@@ -100,7 +98,7 @@ public class MavenProjectsTree {
     p.setText(ProjectBundle.message("maven.reading", project.getPath()));
     p.setText2("");
 
-    List<MavenProjectModel> prevModules = project.getModules();
+    List<MavenProjectModel> prevModules = getModules(project);
     Set<MavenProjectModel> prevInheritors = isNew
                                             ? new HashSet<MavenProjectModel>()
                                             : findInheritors(project);
@@ -129,7 +127,7 @@ public class MavenProjectsTree {
       }
     }
     for (MavenProjectModel each : modulesToRemove) {
-      project.removeModule(each);
+      removeModule(project, each);
       List<MavenProjectModel> removedProjects = new ArrayList<MavenProjectModel>();
       doRemove(project, each, removedProjects);
       prevInheritors.removeAll(removedProjects);
@@ -166,14 +164,14 @@ public class MavenProjectsTree {
   private void reconnect(MavenProjectModel aggregator, MavenProjectModel project) {
     MavenProjectModel prevAggregator = findAggregator(project);
     if (prevAggregator != null) {
-      prevAggregator.removeModule(project);
+      removeModule(prevAggregator, project);
     }
     else {
       myRootProjects.remove(project);
     }
 
     if (aggregator != null) {
-      aggregator.addModule(project);
+      addModule(aggregator, project);
     }
     else {
       myRootProjects.add(project);
@@ -205,12 +203,12 @@ public class MavenProjectsTree {
   }
 
   private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects) {
-    for (MavenProjectModel each : new ArrayList<MavenProjectModel>(project.getModules())) {
+    for (MavenProjectModel each : new ArrayList<MavenProjectModel>(getModules(project))) {
       doRemove(project, each, removedProjects);
     }
 
     if (aggregator != null) {
-      aggregator.removeModule(project);
+      removeModule(aggregator, project);
     }
     else {
       myRootProjects.remove(project);
@@ -219,6 +217,7 @@ public class MavenProjectsTree {
     removedProjects.add(project);
 
     myMavenIdToProject.remove(project.getMavenId());
+    myModuleMapping.remove(project);
     fireRemoved(project);
   }
 
@@ -226,7 +225,7 @@ public class MavenProjectsTree {
     final Set<MavenProjectModel> result = new HashSet<MavenProjectModel>();
     final MavenId id = project.getMavenId();
 
-    visit(new Visitor<Object>() {
+    visit(new SimpleVisitor() {
       public void visit(MavenProjectModel each) {
         if (each == project) return;
         MavenId parentId = getParentId(each);
@@ -245,7 +244,7 @@ public class MavenProjectsTree {
   private MavenProjectModel findAggregator(final MavenProjectModel project) {
     return visit(new Visitor<MavenProjectModel>() {
       public void visit(MavenProjectModel node) {
-        if (node.getModules().contains(project)) {
+        if (getModules(node).contains(project)) {
           setResult(node);
         }
       }
@@ -267,19 +266,11 @@ public class MavenProjectsTree {
   }
 
   public MavenProjectModel findProject(final VirtualFile f) {
-    return findProject(f, false);
-  }
-
-  private MavenProjectModel findProject(final VirtualFile f, final boolean rootsOnly) {
     return visit(new Visitor<MavenProjectModel>() {
       public void visit(final MavenProjectModel node) {
         if (node.getFile() == f) {
           setResult(node);
         }
-      }
-
-      public Iterable<MavenProjectModel> getChildren(final MavenProjectModel node) {
-        return rootsOnly ? null : super.getChildren(node);
       }
     });
   }
@@ -288,15 +279,38 @@ public class MavenProjectsTree {
     return myMavenIdToProject.get(new MavenId(artifact));
   }
 
-  public void resolve(Project project,
-                      MavenCoreSettings coreSettings,
+  public boolean isModuleOf(MavenProjectModel aggregator, MavenProjectModel module) {
+    return getModules(aggregator).contains(module);
+  }
+
+  public List<MavenProjectModel> getModules(MavenProjectModel aggregator) {
+    List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
+    return modules == null ? Collections.<MavenProjectModel>emptyList() : modules;
+  }
+
+  private void addModule(MavenProjectModel aggregator, MavenProjectModel module) {
+    List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
+    if (modules == null) {
+      modules = new ArrayList<MavenProjectModel>();
+      myModuleMapping.put(aggregator, modules);
+    }
+    modules.add(module);
+  }
+
+  private void removeModule(MavenProjectModel aggregator, MavenProjectModel module) {
+    List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
+    if (modules == null) return;
+    modules.remove(module);
+  }
+
+  public void resolve(MavenCoreSettings coreSettings,
                       MavenArtifactSettings artifactSettings,
-                      MavenProcess p
-  ) throws CanceledException {
+                      MavenProcess p) throws CanceledException {
     MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
 
     try {
       List<MavenProjectModel> projects = getProjects();
+
       List<Artifact> allArtifacts = new ArrayList<Artifact>();
 
       for (MavenProjectModel each : projects) {
@@ -322,29 +336,63 @@ public class MavenProjectsTree {
       // and FileWatcher differs from real-life execution.
       refreshResolvedArtifacts(allArtifacts);
 
-      MavenArtifactDownloader d = new MavenArtifactDownloader(artifactSettings, embedder, p);
-      d.download(project, projects, false);
+      doDownload(artifactSettings, p, embedder, projects, false);
     }
     finally {
       MavenEmbedderFactory.releaseEmbedder(embedder);
     }
   }
 
-  private void refreshResolvedArtifacts(List<Artifact> artifacts) {
-    for (Artifact a : artifacts) {
-      if (!a.isResolved()) continue;
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(a.getFile());
+  public void download(MavenCoreSettings coreSettings,
+                       MavenArtifactSettings artifactSettings,
+                       MavenProcess p) throws CanceledException {
+    MavenEmbedder e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings);
+    try {
+      doDownload(artifactSettings, p, e, getProjects(), true);
+    }
+    finally {
+      MavenEmbedderFactory.releaseEmbedder(e);
     }
   }
 
+  private void doDownload(MavenArtifactSettings artifactSettings,
+                          MavenProcess p,
+                          MavenEmbedder embedder,
+                          List<MavenProjectModel> projects, boolean demand) throws CanceledException {
+    new MavenArtifactDownloader(artifactSettings, embedder, p).download(projects, demand);
+  }
+
+  private void refreshResolvedArtifacts(List<Artifact> artifacts) {
+    List<File> files = new ArrayList<File>();
+    for (Artifact a : artifacts) {
+      if (!a.isResolved() || a.getFile() == null) continue;
+      files.add(a.getFile());
+    }
+    LocalFileSystem.getInstance().refreshIoFiles(files);
+  }
+
   public <Result> Result visit(Visitor<Result> visitor) {
-    return Tree.visit(myRootProjects, visitor);
+    for (MavenProjectModel each : getRootProjects()) {
+      if (visitor.isDone()) break;
+      doVisit(each, visitor);
+    }
+    return visitor.getResult();
+  }
+
+  private <Result> void doVisit(MavenProjectModel project, Visitor<Result> visitor) {
+    if (!visitor.isDone() && visitor.shouldVisit(project)) {
+      visitor.visit(project);
+      for (MavenProjectModel each : getModules(project)) {
+        if (visitor.isDone()) break;
+        doVisit(each, visitor);
+      }
+      visitor.leave(project);
+    }
   }
 
   public void addListener(Listener l) {
     myListeners.add(l);
   }
-
 
   private void fireAdded(MavenProjectModel n) {
     for (Listener each : myListeners) {
@@ -364,13 +412,28 @@ public class MavenProjectsTree {
     }
   }
 
-  public static abstract class Visitor<Result> extends Tree.VisitorAdapter<MavenProjectModel, Result> {
+  public static abstract class Visitor<Result> {
+    private Result result;
+
     public boolean shouldVisit(MavenProjectModel node) {
       return node.isIncluded();
     }
 
-    public Iterable<MavenProjectModel> getChildren(MavenProjectModel node) {
-      return node.getModules();
+    public abstract void visit(MavenProjectModel node);
+
+    public void leave(MavenProjectModel node) {
+    }
+
+    public void setResult(Result result) {
+      this.result = result;
+    }
+
+    public Result getResult() {
+      return result;
+    }
+
+    public boolean isDone() {
+      return result != null;
     }
   }
 

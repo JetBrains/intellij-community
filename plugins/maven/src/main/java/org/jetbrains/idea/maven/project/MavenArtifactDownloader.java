@@ -2,8 +2,8 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
@@ -16,12 +16,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
+import java.io.File;
 import java.util.*;
 
 public class MavenArtifactDownloader {
@@ -37,54 +36,32 @@ public class MavenArtifactDownloader {
     myProgress = p;
   }
 
-
-  public static void download(final Project project) throws CanceledException {
-    final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    final MavenEmbedder e = MavenEmbedderFactory.createEmbedderForExecute(MavenCore.getInstance(project).getState());
-    try {
-      MavenProcess.run(project, ProjectBundle.message("maven.downloading"), new MavenProcess.MavenTask() {
-        public void run(MavenProcess p) throws CanceledException {
-          new MavenArtifactDownloader(manager.getArtifactSettings(), e, p)
-              .download(project, manager.getProjects(), true);
-        }
-      });
-    }
-    finally {
-      MavenEmbedderFactory.releaseEmbedder(e);
-    }
-
-    VirtualFileManager.getInstance().refresh(false);
-  }
-
-  public void download(Project project,
-                       List<MavenProjectModel> mavenProjects,
+  public void download(List<MavenProjectModel> mavenProjects,
                        boolean demand) throws CanceledException {
     Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(mavenProjects);
+    List<File> downloadedFiles = new ArrayList<File>();
 
-    myProgress.checkCanceled();
+    try {
+      if (isEnabled(mySettings.getDownloadSources(), demand)) {
+        download(libraryArtifacts, MavenConstants.SOURCES_CLASSIFIER, downloadedFiles);
+      }
 
-    if (isEnabled(mySettings.getDownloadSources(), demand)) {
-      download(libraryArtifacts, MavenConstants.SOURCES_CLASSIFIER);
+      if (isEnabled(mySettings.getDownloadJavadoc(), demand)) {
+        download(libraryArtifacts, MavenConstants.JAVADOC_CLASSIFIER, downloadedFiles);
+      }
+
+      if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
+        downloadPlugins(mavenProjects);
+      }
     }
-
-    myProgress.checkCanceled();
-
-    if (isEnabled(mySettings.getDownloadJavadoc(), demand)) {
-      download(libraryArtifacts, MavenConstants.JAVADOC_CLASSIFIER);
+    catch (CanceledException e) {
+      LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
+      throw e;
     }
+    LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
+  }
 
-    myProgress.checkCanceled();
-
-    if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-
-      downloadPlugins(mavenProjects);
-      projectsManager.updateAllFiles();
-    }
-
-    myProgress.checkCanceled();
-
+  private void generateSources(Project project, List<MavenProjectModel> mavenProjects, boolean demand) {
     if (isEnabled(mySettings.getGenerateSources(), demand)) {
       generateSources(project, createGenerateCommand(mavenProjects));
     }
@@ -127,8 +104,9 @@ public class MavenArtifactDownloader {
     return false;
   }
 
-  private void download(Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, String classifier) throws CanceledException {
-    myProgress.setText(ProjectBundle.message("maven.progress.downloading", classifier));
+  private void download(Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, String classifier, List<File> downloadedFiles)
+      throws CanceledException {
+    myProgress.setText(ProjectBundle.message("maven.downloading.artifact", classifier));
     int step = 0;
     for (Map.Entry<MavenId, Set<ArtifactRepository>> entry : libraryArtifacts.entrySet()) {
       myProgress.checkCanceled();
@@ -146,6 +124,7 @@ public class MavenArtifactDownloader {
                                                              classifier);
         List<ArtifactRepository> remoteRepos = new ArrayList<ArtifactRepository>(entry.getValue());
         myEmbedder.resolve(a, remoteRepos, myEmbedder.getLocalRepository());
+        if (a.isResolved()) downloadedFiles.add(a.getFile());
       }
       catch (ArtifactResolutionException ignore) {
       }
@@ -158,7 +137,7 @@ public class MavenArtifactDownloader {
   }
 
   private void downloadPlugins(List<MavenProjectModel> projects) throws CanceledException {
-    myProgress.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
+    myProgress.setText(ProjectBundle.message("maven.downloading.artifact", "plugins"));
 
     int pluginsCount = 0;
     for (MavenProjectModel each : projects) {

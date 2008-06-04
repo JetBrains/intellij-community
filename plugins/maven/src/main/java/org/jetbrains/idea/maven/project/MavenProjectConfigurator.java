@@ -52,11 +52,9 @@ public class MavenProjectConfigurator {
   }
 
   private void mapModulesToMavenProjects() {
-    myMavenTree.visit(new MavenProjectsTree.SimpleVisitor() {
-      public void visit(MavenProjectModel each) {
-        myMavenProjectToModule.put(each, myFileToModuleMapping.get(each.getFile()));
-      }
-    });
+    for (MavenProjectModel each : myMavenTree.getProjects()) {
+      myMavenProjectToModule.put(each, myFileToModuleMapping.get(each.getFile()));
+    }
     MavenModuleNameMapper.map(myMavenTree,
                               myMavenProjectToModule,
                               myMavenProjectToModuleName,
@@ -194,7 +192,8 @@ public class MavenProjectConfigurator {
       }
 
       private boolean shouldCreateGroup(MavenProjectModel node) {
-        return !node.getModules().isEmpty() && (createTopLevelGroup || depth > 1);
+        return !myMavenTree.getModules(node).isEmpty()
+               && (createTopLevelGroup || depth > 1);
       }
     });
   }

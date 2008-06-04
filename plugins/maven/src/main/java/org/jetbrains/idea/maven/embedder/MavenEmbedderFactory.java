@@ -139,7 +139,7 @@ public class MavenEmbedderFactory {
     return null;
   }
 
-  public static String getRepositoryFromSettings(File file) {
+  private static String getRepositoryFromSettings(File file) {
     try {
       FileInputStream is = new FileInputStream(file);
       try {

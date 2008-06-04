@@ -121,7 +121,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel root = getRootProjects().get(0);
     assertProblems(root, true);
 
-    assertProblems(root.getModules().get(0), false, "Pom file has syntax errors.");
+    assertProblems(getModules(root).get(0), false, "Pom file has syntax errors.");
   }
 
   public void testSeveratInvalidModulesAndWithSameName() throws Exception {
@@ -252,10 +252,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel root = getRootProjects().get(0);
 
     assertProblems(root, true);
-    assertProblems(root.getModules().get(0), true,
+    assertProblems(getModules(root).get(0), true,
                    "Unresolved dependency: 'xxx:xxx:jar:1:compile'.",
                    "Unresolved dependency: 'yyy:yyy:jar:2:compile'.");
-    assertProblems(root.getModules().get(1), true,
+    assertProblems(getModules(root).get(1), true,
                    "Unresolved dependency: 'zzz:zzz:jar:3:compile'.");
   }
 
@@ -312,8 +312,8 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProjectModel root = getRootProjects().get(0);
     assertProblems(root, true);
-    assertProblems(root.getModules().get(0), true);
-    assertProblems(root.getModules().get(1), true);
+    assertProblems(getModules(root).get(0), true);
+    assertProblems(getModules(root).get(1), true);
   }
 
   public void testCircularDependencies() throws Exception {
@@ -370,9 +370,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProjectModel root = getRootProjects().get(0);
     assertProblems(root, true);
-    assertProblems(root.getModules().get(0), true);
-    assertProblems(root.getModules().get(1), true);
-    assertProblems(root.getModules().get(2), true);
+    assertProblems(getModules(root).get(0), true);
+    assertProblems(getModules(root).get(1), true);
+    assertProblems(getModules(root).get(2), true);
   }
 
   public void testUnresolvedExtensions() throws Exception {
@@ -445,9 +445,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel root = getRootProjects().get(0);
 
     assertProblems(root, true);
-    assertProblems(root.getModules().get(0), true,
+    assertProblems(getModules(root).get(0), true,
                    "Unresolved build extension: 'xxx:xxx:jar:1:runtime'.");
-    assertProblems(root.getModules().get(1), true,
+    assertProblems(getModules(root).get(1), true,
                    "Unresolved build extension: 'yyy:yyy:jar:1:runtime'.",
                    "Unresolved build extension: 'zzz:zzz:jar:1:runtime'.");
   }
@@ -522,6 +522,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   private List<MavenProjectModel> getRootProjects() {
-    return myMavenProjectsManager.getMavenProjectModelManager().getRootProjects();
+    return myMavenProjectsManager.getMavenProjectTree().getRootProjects();
+  }
+
+  private List<MavenProjectModel> getModules(MavenProjectModel p) {
+    return myMavenProjectsManager.getMavenProjectTree().getModules(p);
   }
 }

@@ -38,56 +38,54 @@ public class MavenProcess {
     if (myIndicator != null && myIndicator.isCanceled()) throw new CanceledException();
   }
 
-  public static void run(Project project, String title, MavenTask p) throws CanceledException {
-    run(project, title, false, p);
+  public static void run(Project project, String title, final MavenTask task) throws CanceledException {
+    final CanceledException[] canceledEx = new CanceledException[1];
+
+    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+      public void run(@NotNull ProgressIndicator i) {
+        try {
+          task.run(new MavenProcess(i));
+        }
+        catch (CanceledException e) {
+          canceledEx[0] = e;
+        }
+      }
+    });
+    if (canceledEx[0] != null) throw canceledEx[0];
   }
 
-  public static MavenTaskHandler run(Project project,
-                                     String title,
-                                     boolean inBackground,
-                                     final MavenTask t) throws CanceledException {
-    if (inBackground) {
-      final Semaphore startSemaphore = new Semaphore();
-      final Semaphore finishSemaphore = new Semaphore();
-      final ProgressIndicator[] indicator = new ProgressIndicator[1];
+  public static MavenTaskHandler runInBackground(Project project,
+                                                 String title,
+                                                 final boolean canBeCancelled,
+                                                 final MavenTask t) throws CanceledException {
+    final Semaphore startSemaphore = new Semaphore();
+    final Semaphore finishSemaphore = new Semaphore();
+    final ProgressIndicator[] indicator = new ProgressIndicator[1];
 
-      startSemaphore.up();
-      finishSemaphore.up();
+    startSemaphore.up();
+    finishSemaphore.up();
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true) {
-        public void run(@NotNull ProgressIndicator i) {
-          try {
-            indicator[0] = i;
-            startSemaphore.down();
-            t.run(new MavenProcess(i));
-          }
-          catch (CanceledException ignore) {
-          }
-          finally {
-            finishSemaphore.down();
-          }
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
+      public void run(@NotNull ProgressIndicator i) {
+        try {
+          indicator[0] = i;
+          startSemaphore.down();
+          t.run(new MavenProcess(i));
         }
-      });
-
-      return new MavenTaskHandler(startSemaphore, finishSemaphore, indicator);
-    }
-    else {
-      final CanceledException[] canceledEx = new CanceledException[1];
-
-      ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
-        public void run(@NotNull ProgressIndicator i) {
-          try {
-            t.run(new MavenProcess(i));
-          }
-          catch (CanceledException e) {
-            canceledEx[0] = e;
-          }
+        catch (CanceledException ignore) {
         }
-      });
-      if (canceledEx[0] != null) throw canceledEx[0];
+        finally {
+          finishSemaphore.down();
+        }
+      }
 
-      return null;
-    }
+      @Override
+      public boolean shouldStartInBackground() {
+        return !canBeCancelled;
+      }
+    });
+
+    return new MavenTaskHandler(startSemaphore, finishSemaphore, indicator);
   }
 
   public static class MavenTaskHandler {
