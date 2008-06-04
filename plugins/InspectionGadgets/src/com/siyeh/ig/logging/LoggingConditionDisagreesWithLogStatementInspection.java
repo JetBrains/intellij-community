@@ -17,7 +17,8 @@ package com.siyeh.ig.logging;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -84,8 +85,10 @@ public class LoggingConditionDisagreesWithLogStatementInspection
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String referenceName = methodExpression.getReferenceName();
-            Log4jPriority priority = log4jLogMethodNames.get(referenceName);
-            UtilLoggingLevel level = utilLogMethodNames.get(referenceName);
+            final Log4jPriority priority =
+                    log4jLogMethodNames.get(referenceName);
+            final UtilLoggingLevel level =
+                    utilLogMethodNames.get(referenceName);
             if (priority == null && level == null) {
                 return;
             }
