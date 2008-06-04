@@ -50,7 +50,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   private JPanel myNorthPanel;
 
-  private static boolean ourTextFieldShown = true;
+  private static boolean ourToShowTextField = true;
   private FileChooserDialogImpl.TextFieldAction myTextFieldAction;
 
   private FileTextFieldImpl myPathTextField;
@@ -196,7 +196,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
   public JComponent getPreferredFocusedComponent() {
-    if (ourTextFieldShown) {
+    if (ourToShowTextField) {
       return myPathTextField != null ? myPathTextField.getField() : null;
     } else {
       return myFileSystemTree != null ? myFileSystemTree.getTree() : null;
@@ -213,12 +213,16 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     super.dispose();
   }
 
+  private boolean isTextFieldActive() {
+    return myPathTextField.getField().getRootPane() != null;
+  }
+
   protected void doOKAction() {
     if (!isOKActionEnabled()) {
       return;
     }
 
-    if (ourTextFieldShown) {
+    if (isTextFieldActive()) {
       final String text = myPathTextField.getTextFieldText();
       if (text == null || myPathTextField.getFile() == null || !myPathTextField.getFile().exists()) {
         setErrorText("Specified path cannot be found");
@@ -367,7 +371,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   public void toggleShowTextField() {
-    ourTextFieldShown =! ourTextFieldShown;
+    ourToShowTextField =!ourToShowTextField;
     updateTextFieldShowing();
   }
 
@@ -375,7 +379,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myTextFieldAction.update();
     myNorthPanel.remove(myPathTextFieldWrapper);
     if (!myChooserDescriptor.isChooseMultiple()) {
-      if (ourTextFieldShown) {
+      if (ourToShowTextField) {
         if (myFileSystemTree.getSelectedFile() != null) {
           final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
           selection.add(myFileSystemTree.getSelectedFile());
@@ -417,7 +421,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         setVisible(false);
       } else {
         setVisible(true);
-        setText(ourTextFieldShown ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
+        setText(ourToShowTextField ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
       }
     }
 
@@ -427,9 +431,19 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void updatePathFromTree(final List<VirtualFile> selection, boolean now) {
-    if (!ourTextFieldShown || myTreeIsUpdating) return;
+    if (!ourToShowTextField || myTreeIsUpdating) return;
 
-    myPathTextField.setText(selection.size() == 0 ? "" : selection.get(0).getPresentableUrl(), now, new Runnable() {
+    String text = "";
+    if (selection.size() > 0) {
+      final VirtualFile vFile = selection.get(0);
+      if (vFile.isInLocalFileSystem()) {
+        text = vFile.getPresentableUrl();
+      } else {
+        text = vFile.getUrl();
+      }
+    }
+
+    myPathTextField.setText(text, now, new Runnable() {
       public void run() {
         myPathTextField.getField().selectAll();
         setErrorText(null);
@@ -438,7 +452,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void updateTreeFromPath(final String text) {
-    if (!ourTextFieldShown) return;
+    if (!ourToShowTextField) return;
     if (myPathTextField.isPathUpdating()) return;
     if (text == null) return;
 

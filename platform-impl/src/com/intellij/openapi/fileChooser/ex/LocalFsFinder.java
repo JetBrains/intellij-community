@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.ex;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -13,6 +14,9 @@ import java.util.List;
 public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
   public LookupFile find(@NotNull final String path) {
+    final VirtualFile byUrl = VirtualFileManager.getInstance().findFileByUrl(path);
+    if (byUrl != null) return getLookupFile(path, byUrl);
+
     String toFind = normalize(path);
     if (toFind.length() == 0) {
       File[] roots = File.listRoots();
