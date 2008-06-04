@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.LightweightHint;
 import com.intellij.codeInsight.lookup.LookupManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,6 +58,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     return myParameterListStart;
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }

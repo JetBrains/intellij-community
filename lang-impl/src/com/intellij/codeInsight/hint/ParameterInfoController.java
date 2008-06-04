@@ -82,6 +82,7 @@ public class ParameterInfoController {
         return myEditor.getCaretModel().getOffset();
       }
 
+      @NotNull
       public Editor getEditor() {
         return myEditor;
       }
@@ -356,6 +357,7 @@ public class ParameterInfoController {
       return myFile;
     }
 
+    @NotNull
     public Editor getEditor() {
       return myEditor;
     }

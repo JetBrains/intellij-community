@@ -19,6 +19,7 @@ package com.intellij.lang.parameterInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public interface ParameterInfoContext {
   Project getProject();
@@ -26,5 +27,5 @@ public interface ParameterInfoContext {
   PsiFile getFile();
   int getOffset();
 
-  Editor getEditor();
+  @NotNull Editor getEditor();
 }
