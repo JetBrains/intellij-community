@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.RuntimeInterruptedException;
+import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.Parent;
@@ -15,6 +17,8 @@ import java.io.File;
 import java.util.*;
 
 public class MavenProjectsTree {
+  private ReentrantWriterPreferenceReadWriteLock lock = new ReentrantWriterPreferenceReadWriteLock();
+
   private List<String> myProfiles = new ArrayList<String>();
   private List<MavenProjectModel> myRootProjects = new ArrayList<MavenProjectModel>();
   private HashMap<MavenId, MavenProjectModel> myMavenIdToProject = new HashMap<MavenId, MavenProjectModel>();
@@ -90,9 +94,7 @@ public class MavenProjectsTree {
                         boolean isNew,
                         Set<VirtualFile> readFiles,
                         MavenProcess p,
-                        boolean force)
-      throws CanceledException {
-
+                        boolean force) throws CanceledException {
     p.checkCanceled();
 
     p.setText(ProjectBundle.message("maven.reading", project.getPath()));
@@ -104,10 +106,22 @@ public class MavenProjectsTree {
                                             : findInheritors(project);
 
     if (!readFiles.contains(project.getFile())) {
-      if (!isNew) myMavenIdToProject.remove(project.getMavenId());
+      writeLock();
+      try {
+        if (!isNew) myMavenIdToProject.remove(project.getMavenId());
+      } finally {
+        writeUnlock();
+
+      }
       project.read(embedder, myProfiles);
-      myMavenIdToProject.put(project.getMavenId(), project);
       readFiles.add(project.getFile());
+
+      writeLock();
+      try {
+        myMavenIdToProject.put(project.getMavenId(), project);
+      } finally {
+        writeUnlock();
+      }
     }
 
     reconnect(aggregator, project);
@@ -163,18 +177,24 @@ public class MavenProjectsTree {
 
   private void reconnect(MavenProjectModel aggregator, MavenProjectModel project) {
     MavenProjectModel prevAggregator = findAggregator(project);
-    if (prevAggregator != null) {
-      removeModule(prevAggregator, project);
-    }
-    else {
-      myRootProjects.remove(project);
-    }
 
-    if (aggregator != null) {
-      addModule(aggregator, project);
-    }
-    else {
-      myRootProjects.add(project);
+    writeLock();
+    try {
+      if (prevAggregator != null) {
+        removeModule(prevAggregator, project);
+      }
+      else {
+        myRootProjects.remove(project);
+      }
+
+      if (aggregator != null) {
+        addModule(aggregator, project);
+      }
+      else {
+        myRootProjects.add(project);
+      }
+    } finally {
+      writeUnlock();
     }
   }
 
@@ -202,22 +222,27 @@ public class MavenProjectsTree {
     update(filesToUpdate, mavenSettings, p);
   }
 
-  private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects) {
-    for (MavenProjectModel each : new ArrayList<MavenProjectModel>(getModules(project))) {
+  private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects)
+      throws CanceledException {
+    for (MavenProjectModel each : getModules(project)) {
       doRemove(project, each, removedProjects);
     }
 
-    if (aggregator != null) {
-      removeModule(aggregator, project);
-    }
-    else {
-      myRootProjects.remove(project);
+    writeLock();
+    try {
+      if (aggregator != null) {
+        removeModule(aggregator, project);
+      }
+      else {
+        myRootProjects.remove(project);
+      }
+      myMavenIdToProject.remove(project.getMavenId());
+      myModuleMapping.remove(project);
+    } finally {
+      writeUnlock();
     }
 
     removedProjects.add(project);
-
-    myMavenIdToProject.remove(project.getMavenId());
-    myModuleMapping.remove(project);
     fireRemoved(project);
   }
 
@@ -252,7 +277,12 @@ public class MavenProjectsTree {
   }
 
   public List<MavenProjectModel> getRootProjects() {
-    return myRootProjects;
+    readLock();
+    try {
+      return new ArrayList<MavenProjectModel>(myRootProjects);
+    } finally {
+      readUnlock();
+    }
   }
 
   public List<MavenProjectModel> getProjects() {
@@ -276,7 +306,12 @@ public class MavenProjectsTree {
   }
 
   public MavenProjectModel findProject(Artifact artifact) {
-    return myMavenIdToProject.get(new MavenId(artifact));
+    readLock();
+    try {
+      return myMavenIdToProject.get(new MavenId(artifact));
+    } finally {
+      readUnlock();
+    }
   }
 
   public boolean isModuleOf(MavenProjectModel aggregator, MavenProjectModel module) {
@@ -284,23 +319,40 @@ public class MavenProjectsTree {
   }
 
   public List<MavenProjectModel> getModules(MavenProjectModel aggregator) {
-    List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
-    return modules == null ? Collections.<MavenProjectModel>emptyList() : modules;
+    readLock();
+    try {
+      List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
+      return modules == null
+             ? Collections.<MavenProjectModel>emptyList()
+             : new ArrayList<MavenProjectModel>(modules);
+    } finally {
+      readUnlock();
+    }
   }
 
   private void addModule(MavenProjectModel aggregator, MavenProjectModel module) {
-    List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
-    if (modules == null) {
-      modules = new ArrayList<MavenProjectModel>();
-      myModuleMapping.put(aggregator, modules);
+    writeLock();
+    try {
+      List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
+      if (modules == null) {
+        modules = new ArrayList<MavenProjectModel>();
+        myModuleMapping.put(aggregator, modules);
+      }
+      modules.add(module);
+    } finally {
+      writeUnlock();
     }
-    modules.add(module);
   }
 
   private void removeModule(MavenProjectModel aggregator, MavenProjectModel module) {
-    List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
-    if (modules == null) return;
-    modules.remove(module);
+    writeLock();
+    try {
+      List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
+      if (modules == null) return;
+      modules.remove(module);
+    } finally {
+      writeUnlock();
+    }
   }
 
   public void resolve(MavenCoreSettings coreSettings,
@@ -390,6 +442,32 @@ public class MavenProjectsTree {
     }
   }
 
+  private void writeLock() {
+    try {
+      lock.writeLock().acquire();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeInterruptedException(e);
+    }
+  }
+
+  private void writeUnlock() {
+    lock.writeLock().release();
+  }
+
+  private void readLock() {
+    try {
+      lock.readLock().acquire();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeInterruptedException(e);
+    }
+  }
+
+  private void readUnlock() {
+    lock.readLock().release();
+  }
+
   public void addListener(Listener l) {
     myListeners.add(l);
   }
@@ -410,6 +488,14 @@ public class MavenProjectsTree {
     for (Listener each : myListeners) {
       each.projectRemoved(n);
     }
+  }
+
+  public static interface Listener {
+    void projectAdded(MavenProjectModel n);
+
+    void projectUpdated(MavenProjectModel n);
+
+    void projectRemoved(MavenProjectModel n);
   }
 
   public static abstract class Visitor<Result> {
@@ -438,13 +524,5 @@ public class MavenProjectsTree {
   }
 
   public static abstract class SimpleVisitor extends Visitor<Object> {
-  }
-
-  public static interface Listener {
-    void projectAdded(MavenProjectModel n);
-
-    void projectUpdated(MavenProjectModel n);
-
-    void projectRemoved(MavenProjectModel n);
   }
 }
