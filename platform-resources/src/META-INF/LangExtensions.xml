@@ -59,6 +59,9 @@
                       serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
   <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
   
+  <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
+                      serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

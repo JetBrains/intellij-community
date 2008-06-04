@@ -285,6 +285,13 @@
       <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
       <skipForDummyProject/>
     </component>
+
+    <component>
+      <interface-class>com.intellij.facet.ProjectFacetManager</interface-class>
+      <implementation-class>com.intellij.facet.impl.ProjectFacetManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
   </project-components>
 
   <module-components>
@@ -295,6 +302,11 @@
     
     <component>
       <implementation-class>com.intellij.openapi.components.impl.ModuleServiceManagerImpl</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.facet.FacetManager</interface-class>
+      <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
     </component>
   </module-components>
 </components>
