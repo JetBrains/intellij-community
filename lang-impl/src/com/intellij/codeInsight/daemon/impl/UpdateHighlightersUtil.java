@@ -273,9 +273,9 @@ public class UpdateHighlightersUtil {
     for (LineMarkerInfo info : markers) {
       if (startOffset > info.startOffset || info.startOffset > endOffset) continue;
       RangeHighlighter marker = document.getMarkupModel(project).addRangeHighlighter(info.startOffset,
-                                                                                     info.startOffset,
+                                                                                     info.endOffset,
                                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                                     null,
+                                                                                     info.textAttributes,
                                                                                      HighlighterTargetArea.EXACT_RANGE);
       marker.setGutterIconRenderer(info.createGutterRenderer());
       marker.setLineSeparatorColor(info.separatorColor);

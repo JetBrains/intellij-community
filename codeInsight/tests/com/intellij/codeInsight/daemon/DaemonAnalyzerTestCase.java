@@ -269,10 +269,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     for(LineMarkerInfo lineMarkerInfo:infoCollection) {
       GutterIconRenderer gutterIconRenderer = lineMarkerInfo.createGutterRenderer();
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.INFO, lineMarkerInfo.startOffset,
-                                                                            lineMarkerInfo.startOffset, gutterIconRenderer != null
+                                                                            lineMarkerInfo.endOffset, gutterIconRenderer != null
                                                                                                         ? gutterIconRenderer
           .getTooltipText()
-                                                                                                        : lineMarkerInfo.toString());
+                                                                                                        : lineMarkerInfo.getLineMarkerTooltip());
       result.add(highlightInfo);
       highlightInfo.setGutterIconRenderer(gutterIconRenderer);
     }

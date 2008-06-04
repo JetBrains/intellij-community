@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,8 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable private final Function<? super T, String> myTooltipProvider;
   private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
+  public TextAttributes textAttributes;
+  public int endOffset;
 
 
   public LineMarkerInfo(T element,
@@ -43,6 +46,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     myNavigationHandler = navHandler;
     this.startOffset = startOffset;
     this.updatePass = updatePass;
+    endOffset = startOffset;
   }
 
   public LineMarkerInfo(T element,
@@ -82,7 +86,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   }
 
   @Nullable
-  private String getLineMarkerTooltip() {
+  public String getLineMarkerTooltip() {
     T element = elementRef.get();
     if (element == null || !element.isValid()) return null;
     if (myTooltipProvider != null) return myTooltipProvider.fun(element);
