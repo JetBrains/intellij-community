@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,6 +20,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -33,7 +36,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     final GenerateAntBuildDialog dialog = new GenerateAntBuildDialog(project);
     dialog.show();
     if (dialog.isOK()) {
-      String[] names = dialog.getRepresentativeModuleNames();
+      final String[] names = dialog.getRepresentativeModuleNames();
       final GenerationOptions genOptions = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(), dialog.isForceTargetJdk(), names);
       generate(project, genOptions);
     }
@@ -48,35 +51,85 @@ public class GenerateAntBuildAction extends CompileActionBase {
   private void generate(final Project project, final GenerationOptions genOptions) {
     ApplicationManager.getApplication().saveAll();
     final List<File> filesToRefresh = new ArrayList<File>();
+    final IOException[] _ex = new IOException[] {null};
+    final List<File> _generated = new ArrayList<File>();
+
     try {
-      final File[] generated;
       if (genOptions.generateSingleFile) {
-        generated = generateSingleFileBuild(project, genOptions, filesToRefresh);
+        final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
+        final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
+        final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
+  
+        ensureFilesWritable(project, new File[] {destFile, propertiesFile});
       }
       else {
-        generated = generateMultipleFileBuild(project, genOptions, filesToRefresh);
-      }
-      if (generated != null) {
-        StringBuffer filesString = new StringBuffer();
-        for (int idx = 0; idx < generated.length; idx++) {
-          final File file = generated[idx];
-          if (idx > 0) {
-            filesString.append(",\n");
-          }
-          filesString.append(file.getPath());
+        final List<File> allFiles = new ArrayList<File>();
+        
+        final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
+        allFiles.add(new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION));
+        allFiles.add(new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project)));
+        
+        final ModuleChunk[] chunks = genOptions.getModuleChunks();
+        for (final ModuleChunk chunk : chunks) {
+          final File chunkBaseDir = BuildProperties.getModuleChunkBaseDir(chunk);
+          allFiles.add(new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + XML_EXTENSION));
         }
-        Messages.showInfoMessage(project, CompilerBundle.message("message.ant.files.generated.ok", filesString.toString()),
-                                 CompilerBundle.message("generate.ant.build.title"));
+
+        ensureFilesWritable(project, allFiles.toArray(new File[allFiles.size()]));
       }
+
+      new Task.Modal(project, CompilerBundle.message("generate.ant.build.title"), false) {
+        public void run(@NotNull final ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
+          indicator.setText(CompilerBundle.message("generate.ant.build.progress.message"));
+          try {
+            final File[] generated;
+            if (genOptions.generateSingleFile) {
+              generated = generateSingleFileBuild(project, genOptions, filesToRefresh);
+            }
+            else {
+              generated = generateMultipleFileBuild(project, genOptions, filesToRefresh);
+            }
+            if (generated != null) {
+              _generated.addAll(Arrays.asList(generated));
+            }
+          }
+          catch (IOException e) {
+            _ex[0] = e;
+          }
+        }
+      }.queue();
+      
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.generate.failed", e.getMessage()),
-                               CompilerBundle.message("generate.ant.build.title"));
+      _ex[0] = e;
     }
-    finally {
-      if (filesToRefresh.size() > 0) {
-        CompilerUtil.refreshIOFiles(filesToRefresh);
+
+    if (_ex[0] != null) {
+      Messages.showErrorDialog(
+          project, 
+          CompilerBundle.message("error.ant.files.generate.failed", _ex[0].getMessage()), 
+          CompilerBundle.message("generate.ant.build.title")
+      );
+    }
+    else {
+      StringBuffer filesString = new StringBuffer();
+      for (int idx = 0; idx < _generated.size(); idx++) {
+        final File file = _generated.get(idx);
+        if (idx > 0) {
+          filesString.append(",\n");
+        }
+        filesString.append(file.getPath());
       }
+      Messages.showInfoMessage(
+          project, 
+          CompilerBundle.message("message.ant.files.generated.ok", filesString.toString()),
+          CompilerBundle.message("generate.ant.build.title")
+      );
+    }
+    
+    if (filesToRefresh.size() > 0) {
+      CompilerUtil.refreshIOFiles(filesToRefresh);
     }
   }
 
@@ -104,13 +157,11 @@ public class GenerateAntBuildAction extends CompileActionBase {
     return ok;
   }
 
-  public File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
+  private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
     final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
-
-    ensureFilesWritable(project, new File[] {destFile, propertiesFile});
 
     if (!backup(destFile, project, genOptions, filesToRefresh)) {
       return null;
@@ -178,12 +229,6 @@ public class GenerateAntBuildAction extends CompileActionBase {
       chunkFiles[idx] = new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + XML_EXTENSION);
     }
 
-    final List<File> allFiles = new ArrayList<File>(2 + chunkFiles.length);
-    allFiles.add(projectBuildFile);
-    allFiles.add(propertiesFile);
-    allFiles.addAll(Arrays.asList(chunkFiles));
-    ensureFilesWritable(project, allFiles.toArray(new File[allFiles.size()]));
-
     if (!backup(projectBuildFile, project, genOptions, filesToRefresh)) {
       return null;
     }
@@ -194,7 +239,6 @@ public class GenerateAntBuildAction extends CompileActionBase {
     projectBuildFile.createNewFile();
     final DataOutputStream mainDataOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(projectBuildFile)));
     try {
-
       final MultipleFileProjectBuild build = new MultipleFileProjectBuild(project, genOptions);
       build.generate(mainDataOutput);
       generated.add(projectBuildFile);

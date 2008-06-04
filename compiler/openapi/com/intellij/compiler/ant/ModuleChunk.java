@@ -23,6 +23,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,7 +38,12 @@ public class ModuleChunk {
 
   public ModuleChunk(Module[] modules) {
     myModules = modules;
-    myMainModule = myModules[0]; // todo: temporary, let user configure this
+    Arrays.sort(myModules, new Comparator<Module>() {
+      public int compare(final Module o1, final Module o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
+    myMainModule = myModules[0]; 
   }
 
   public String getName() {
@@ -95,5 +102,14 @@ public class ModuleChunk {
 
   public Project getProject() {
     return myMainModule.getProject();
+  }
+
+  public boolean contains(final Module module) {
+    for (Module chunkModule : myModules) {
+      if (chunkModule.equals(module)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

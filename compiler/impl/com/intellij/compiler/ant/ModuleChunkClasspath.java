@@ -15,6 +15,7 @@ import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -23,57 +24,81 @@ import java.util.Set;
  */
 public class ModuleChunkClasspath extends Path{
 
-  public ModuleChunkClasspath(ModuleChunk chunk, final GenerationOptions genOptions, final boolean generateRuntimeClasspath) {
+  public ModuleChunkClasspath(final ModuleChunk chunk, final GenerationOptions genOptions, final boolean generateRuntimeClasspath) {
     super(generateRuntimeClasspath? BuildProperties.getRuntimeClasspathProperty(chunk.getName()) : BuildProperties.getClasspathProperty(chunk.getName()));
 
     final OrderedSet<ClasspathItem> pathItems = new OrderedSet<ClasspathItem>((TObjectHashingStrategy<ClasspathItem>)TObjectHashingStrategy.CANONICAL);
-    final String compilerOutputPathUrl = chunk.getOutputDirUrl();
-    final String compilerOutputPathForTestsUrl = chunk.getTestsOutputDirUrl();
     final String moduleChunkBasedirProperty = BuildProperties.getModuleChunkBasedirProperty(chunk);
     final Module[] modules = chunk.getModules();
     for (final Module module : modules) {
-      for (final OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-        if (!orderEntry.isValid()) {
-          continue;
-        }
-        if (orderEntry instanceof JdkOrderEntry) {
-          if (genOptions.forceTargetJdk) {
-            pathItems.add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
+      new Object() {
+        final Set<Module> processed = new HashSet<Module>();
+        public void processModule(final Module module, final int dependencyLevel, final boolean isModuleExported) {
+          if (processed.contains(module)) {
+            return;
           }
-        }
-        else if (orderEntry instanceof LibraryOrderEntry && !((LibraryOrderEntry)orderEntry).isModuleLevel()) {
-          final String libraryName = ((LibraryOrderEntry)orderEntry).getLibraryName();
-          pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
-        }
-        else {
-          for (String url : getCompilationClasses(orderEntry, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath)) {
-            if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-              url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
+          processed.add(module);
+          for (final OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+            if (!orderEntry.isValid()) {
+              continue;
             }
+            
             if (!generateRuntimeClasspath) {
-              if (compilerOutputPathUrl != null) {
-                if (url.equals(compilerOutputPathUrl)) {
+              // needed for compilation classpath only
+              if ((orderEntry instanceof ModuleSourceOrderEntry)) {
+                if (dependencyLevel == 0 || chunk.contains(module)) {
+                  continue;
+                }
+                if (dependencyLevel > 1 && !isModuleExported) {
                   continue;
                 }
               }
-              if (compilerOutputPathForTestsUrl != null) {
-                if (url.equals(compilerOutputPathForTestsUrl)) {
-                  continue;
+              else {
+                final boolean isExported = (orderEntry instanceof ExportableOrderEntry) && ((ExportableOrderEntry)orderEntry).isExported();
+                if (dependencyLevel > 0 && !isExported) {
+                  if (!(orderEntry instanceof ModuleOrderEntry)) {
+                    continue;
+                  }
                 }
               }
             }
-            final String propertyRef = genOptions.getPropertyRefForUrl(url);
-            if (propertyRef != null) {
-              pathItems.add(new PathElementItem(propertyRef));
+            
+            if (orderEntry instanceof JdkOrderEntry) {
+              if (genOptions.forceTargetJdk) {
+                pathItems.add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
+              }
+            }
+            else if (orderEntry instanceof ModuleOrderEntry) {
+              final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+              final Module dependentModule = moduleOrderEntry.getModule();
+              if (!chunk.contains(dependentModule)) {
+                processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
+              }
+            }
+            else if (orderEntry instanceof LibraryOrderEntry && !((LibraryOrderEntry)orderEntry).isModuleLevel()) {
+              final String libraryName = ((LibraryOrderEntry)orderEntry).getLibraryName();
+              pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
             }
             else {
-              final String path = VirtualFileManager.extractPath(url);
-              pathItems.add(new PathElementItem(GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty,
-                                                                               genOptions, !chunk.isSavePathsRelative())));
+              for (String url : getCompilationClasses(orderEntry, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath)) {
+                if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
+                  url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
+                }
+                final String propertyRef = genOptions.getPropertyRefForUrl(url);
+                if (propertyRef != null) {
+                  pathItems.add(new PathElementItem(propertyRef));
+                }
+                else {
+                  final String path = VirtualFileManager.extractPath(url);
+                  pathItems.add(new PathElementItem(GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty,
+                                                                                   genOptions, !chunk.isSavePathsRelative())));
+                }
+              }
             }
           }
+          processed.remove(module);
         }
-      }
+      }.processModule(module, 0, false);
     }
     for (final ClasspathItem pathItem : pathItems) {
       add(pathItem.toGenerator());
