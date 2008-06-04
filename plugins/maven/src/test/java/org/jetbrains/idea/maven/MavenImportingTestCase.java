@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenProjectModelManager myProjectModel;
+  protected MavenProjectsTree myProjectModel;
   protected MavenProjectsManager myMavenProjectsManager;
   private List<String> myProfilesList;
 

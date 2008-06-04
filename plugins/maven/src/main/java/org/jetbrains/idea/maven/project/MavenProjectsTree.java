@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -17,34 +16,19 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import java.io.File;
 import java.util.*;
 
-public class MavenProjectModelManager {
+public class MavenProjectsTree {
   private List<String> myProfiles = new ArrayList<String>();
   private List<MavenProjectModel> myRootProjects = new ArrayList<MavenProjectModel>();
   private HashMap<MavenId, MavenProjectModel> myMavenIdToProject = new HashMap<MavenId, MavenProjectModel>();
   private List<Listener> myListeners = new ArrayList<Listener>();
 
   public void read(Collection<VirtualFile> filesToImport,
-                   Map<VirtualFile, Module> fileToModuleMapping,
                    List<String> activeProfiles,
                    MavenCoreSettings mavenSettings,
-                   MavenImporterSettings importerSettings,
                    MavenProcess p) throws CanceledException {
     myProfiles = activeProfiles;
-
     update(filesToImport, mavenSettings, p, true);
-
-    updateModulesMapping(fileToModuleMapping);
     resolveIntermoduleDependencies();
-    MavenModuleNameMapper.map(this, importerSettings.getDedicatedModuleDir());
-  }
-
-  private void updateModulesMapping(final Map<VirtualFile, Module> fileToModuleMapping) {
-    visit(new SimpleVisitor() {
-      public void visit(MavenProjectModel each) {
-        Module module = fileToModuleMapping.get(each.getFile());
-        if (module != null) each.setIdeaModule(module);
-      }
-    });
   }
 
   private void resolveIntermoduleDependencies() {
@@ -89,7 +73,7 @@ public class MavenProjectModelManager {
 
   private void doAdd(final VirtualFile f, MavenEmbedder reader, Set<VirtualFile> readFiles, MavenProcess p, boolean force)
       throws CanceledException {
-    MavenProjectModel newProject = new MavenProjectModel(f, null);
+    MavenProjectModel newProject = new MavenProjectModel(f);
 
     MavenProjectModel intendedAggregator = visit(new Visitor<MavenProjectModel>() {
       public void visit(MavenProjectModel node) {
@@ -103,12 +87,12 @@ public class MavenProjectModelManager {
   }
 
   private void doUpdate(MavenProjectModel aggregator,
-                           MavenProjectModel project,
-                           MavenEmbedder embedder,
-                           boolean isNew,
-                           Set<VirtualFile> readFiles,
-                           MavenProcess p,
-                           boolean force)
+                        MavenProjectModel project,
+                        MavenEmbedder embedder,
+                        boolean isNew,
+                        Set<VirtualFile> readFiles,
+                        MavenProcess p,
+                        boolean force)
       throws CanceledException {
 
     p.checkCanceled();
@@ -155,7 +139,7 @@ public class MavenProjectModelManager {
       MavenProjectModel child = findProject(each);
       boolean isNewChildProject = child == null;
       if (isNewChildProject) {
-        child = new MavenProjectModel(each, null);
+        child = new MavenProjectModel(each);
       }
       else {
         MavenProjectModel currentAggregator = findAggregator(child);
@@ -167,7 +151,8 @@ public class MavenProjectModelManager {
 
       if (isNewChildProject || force) {
         doUpdate(project, child, embedder, true, readFiles, p, force);
-      } else {
+      }
+      else {
         reconnect(project, child);
       }
     }
@@ -315,8 +300,6 @@ public class MavenProjectModelManager {
       List<Artifact> allArtifacts = new ArrayList<Artifact>();
 
       for (MavenProjectModel each : projects) {
-        if (each.isAggregator()) continue;
-
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");
@@ -324,8 +307,6 @@ public class MavenProjectModelManager {
       }
 
       for (MavenProjectModel each : projects) {
-        if (each.isAggregator()) continue;
-
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");

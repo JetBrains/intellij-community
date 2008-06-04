@@ -155,8 +155,8 @@ public class RootModelAdapter {
 
   @Nullable
   private Module findModuleByName(String moduleName) {
-    ModuleManager mm = ModuleManager.getInstance(myRootModel.getModule().getProject());
-    return mm.findModuleByName(moduleName);
+    ModuleManager manager = ModuleManager.getInstance(myRootModel.getModule().getProject());
+    return manager.findModuleByName(moduleName);
   }
 
   public void createModuleLibrary(String libraryName,

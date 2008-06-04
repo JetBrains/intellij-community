@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.project.open;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -21,7 +20,10 @@ import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -40,8 +42,8 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   private List<String> myProfiles = new ArrayList<String>();
   private List<String> mySelectedProfiles = new ArrayList<String>();
 
-  private MavenProjectModelManager myMavenProjectModelManager;
-  
+  private MavenProjectsTree myMavenProjectModelManager;
+
   private boolean myOpenModulesConfigurator;
 
   public String getName() {
@@ -183,13 +185,11 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   }
 
   private void createMavenProjectModel(MavenProcess p) throws CanceledException {
-    myMavenProjectModelManager = new MavenProjectModelManager();
+    myMavenProjectModelManager = new MavenProjectsTree();
     myMavenProjectModelManager.read(myFiles,
-                             Collections.<VirtualFile, Module>emptyMap(),
-                             mySelectedProfiles,
-                             getCoreState(),
-                             getImporterPreferences(),
-                             p);
+                                    mySelectedProfiles,
+                                    getCoreState(),
+                                    p);
   }
 
   public List<MavenProjectModel> getList() {

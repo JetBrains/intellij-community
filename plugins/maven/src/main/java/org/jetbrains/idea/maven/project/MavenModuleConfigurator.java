@@ -17,39 +17,43 @@ import org.jetbrains.idea.maven.core.util.Strings;
 import org.jetbrains.idea.maven.web.FacetImporter;
 
 import java.text.MessageFormat;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class MavenModuleConfigurator {
+  private Module myModule;
   private ModifiableModuleModel myModuleModel;
-  private MavenProjectModelManager myMavenModel;
+  private MavenProjectsTree myMavenTree;
+  private MavenProjectModel myMavenProject;
+  private Map<MavenProjectModel, String> myMavenProjectToModuleName;
   private MavenImporterSettings mySettings;
   private Pattern myIgnorePatternCache;
-  private Module myModule;
-  private MavenProjectModel myMavenProject;
-  private RootModelAdapter myModel;
+  private RootModelAdapter myRootModelAdapter;
 
-  public MavenModuleConfigurator(ModifiableModuleModel moduleModel,
-                                 MavenProjectModelManager mavenModel,
-                                 MavenImporterSettings settings,
-                                 Module module,
-                                 MavenProjectModel mavenProject) {
+  public MavenModuleConfigurator(Module module,
+                                 ModifiableModuleModel moduleModel,
+                                 MavenProjectsTree mavenTree,
+                                 MavenProjectModel mavenProject,
+                                 Map<MavenProjectModel, String> mavenProjectToModuleName,
+                                 MavenImporterSettings settings) {
+    myModule = module;
     myModuleModel = moduleModel;
-    myMavenModel = mavenModel;
+    myMavenTree = mavenTree;
+    myMavenProject = mavenProject;
+    myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
     myIgnorePatternCache = Pattern.compile(Strings.translateMasks(settings.getIgnoredDependencies()));
-    myModule = module;
-    myMavenProject = mavenProject;
   }
 
   public ModifiableRootModel config() {
-    myModel = new RootModelAdapter(myModule);
-    myModel.init(myMavenProject);
+    myRootModelAdapter = new RootModelAdapter(myModule);
+    myRootModelAdapter.init(myMavenProject);
 
     configFolders();
     configDependencies();
     configLanguageLevel();
 
-    return myModel.getRootModel();
+    return myRootModelAdapter.getRootModel();
   }
 
   public void preConfigFacets(ModuleRootModel rootModel) {
@@ -63,13 +67,18 @@ public class MavenModuleConfigurator {
   public void configFacets(ModuleRootModel rootModel) {
     for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
       if (importer.isApplicable(myMavenProject)) {
-        importer.process(myModule, rootModel, myMavenProject, myMavenModel, myModuleModel);
+        importer.process(myModuleModel,
+                         myModule,
+                         rootModel,
+                         myMavenTree,
+                         myMavenProject,
+                         myMavenProjectToModuleName);
       }
     }
   }
 
   private void configFolders() {
-    new MavenFoldersConfigurator(myMavenProject, mySettings, myModel).config();
+    new MavenFoldersConfigurator(myMavenProject, mySettings, myRootModelAdapter).config();
   }
 
   private void configDependencies() {
@@ -79,17 +88,18 @@ public class MavenModuleConfigurator {
       if (isIgnored(id)) continue;
 
       boolean isExportable = myMavenProject.isExportableDependency(artifact);
-      MavenProjectModel p = myMavenModel.findProject(artifact);
+      MavenProjectModel p = myMavenTree.findProject(artifact);
       if (p != null) {
-        myModel.createModuleDependency(p.getModuleName(), isExportable);
+        myRootModelAdapter.createModuleDependency(myMavenProjectToModuleName.get(p),
+                                                  isExportable);
       }
       else {
         String artifactPath = artifact.getFile().getPath();
-        myModel.createModuleLibrary(ProjectUtil.getLibraryName(id),
-                                    getUrl(artifactPath, null),
-                                    getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER),
-                                    getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER),
-                                    isExportable);
+        myRootModelAdapter.createModuleLibrary(ProjectUtil.getLibraryName(id),
+                                               getUrl(artifactPath, null),
+                                               getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER),
+                                               getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER),
+                                               isExportable);
       }
     }
   }
@@ -113,7 +123,7 @@ public class MavenModuleConfigurator {
     String mavenLevel = extractLanguageLevel();
     LanguageLevel ideaLevel = translateLanguageLevel(mavenLevel);
 
-    myModel.setLanguageLevel(ideaLevel);
+    myRootModelAdapter.setLanguageLevel(ideaLevel);
   }
 
   @Nullable

@@ -10,16 +10,29 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleNameMapper {
-  public static void map(MavenProjectModelManager mavenProjectModel, String moduleDir) {
-    resolveModuleNames(mavenProjectModel);
-    resolveModulePaths(mavenProjectModel, moduleDir);
+  public static void map(MavenProjectsTree mavenTree,
+                         Map<MavenProjectModel, Module> mavenProjectToModule,
+                         Map<MavenProjectModel, String> mavenProjectToModuleName,
+                         Map<MavenProjectModel, String> mavenProjectToModulePath,
+                         String dedicatedModuleDir) {
+    resolveModuleNames(mavenTree,
+                       mavenProjectToModule,
+                       mavenProjectToModuleName);
+    resolveModulePaths(mavenTree,
+                       mavenProjectToModule,
+                       mavenProjectToModuleName,
+                       mavenProjectToModulePath,
+                       dedicatedModuleDir);
   }
 
-  private static void resolveModuleNames(final MavenProjectModelManager model) {
-    for (MavenProjectModel each : model.getProjects()) {
+  private static void resolveModuleNames(MavenProjectsTree mavenTree,
+                                         Map<MavenProjectModel, Module> mavenProjectToModule,
+                                         Map<MavenProjectModel, String> mavenProjectToModuleName) {
+    for (MavenProjectModel each : mavenTree.getProjects()) {
       String name;
-      if (each.getIdeaModule() != null) {
-        name = each.getIdeaModule().getName();
+      Module module = mavenProjectToModule.get(each);
+      if (module != null) {
+        name = module.getName();
       }
       else if (each.isValid()) {
         name = each.getMavenId().artifactId;
@@ -27,38 +40,42 @@ public class MavenModuleNameMapper {
       else {
         name = each.getDirectoryFile().getName();
       }
-      each.setModuleName(name);
+      mavenProjectToModuleName.put(each, name);
     }
 
-    Map<String, Integer> counts = collectNamesCounts(model);
+    Map<String, Integer> counts = collectNamesCounts(mavenTree,
+                                                     mavenProjectToModuleName);
 
-    for (MavenProjectModel each : model.getProjects()) {
+    for (MavenProjectModel each : mavenTree.getProjects()) {
       if (!each.isValid()) continue;
 
-      String name = each.getModuleName();
+      String name = mavenProjectToModuleName.get(each);
       if (counts.get(name) > 1) {
-        each.setModuleName(name + " (" + each.getMavenId().groupId + ")");
+        mavenProjectToModuleName.put(each, name + " (" + each.getMavenId().groupId + ")");
       }
     }
 
-    for (MavenProjectModel each : model.getProjects()) {
-      List<MavenProjectModel> withSameName = getProjectsWithName(model, each.getModuleName());
+    for (MavenProjectModel each : mavenTree.getProjects()) {
+      String name = mavenProjectToModuleName.get(each);
+      List<MavenProjectModel> withSameName = getProjectsWithName(mavenTree,
+                                                                 name,
+                                                                 mavenProjectToModuleName);
       if (withSameName.size() > 1) {
         int i = 1;
         for (MavenProjectModel eachWithSameName : withSameName) {
-          String name = eachWithSameName.getModuleName();
-          eachWithSameName.setModuleName(name + " (" + i + ")");
+          mavenProjectToModuleName.put(eachWithSameName, name + " (" + i + ")");
           i++;
         }
       }
     }
   }
 
-  private static Map<String, Integer> collectNamesCounts(MavenProjectModelManager model) {
+  private static Map<String, Integer> collectNamesCounts(MavenProjectsTree mavenTree,
+                                                         Map<MavenProjectModel, String> mavenProjectToModuleName) {
     Map<String, Integer> result = new HashMap<String, Integer>();
 
-    for (MavenProjectModel each : model.getProjects()) {
-      String name = each.getModuleName();
+    for (MavenProjectModel each : mavenTree.getProjects()) {
+      String name = mavenProjectToModuleName.get(each);
       Integer count = result.get(name);
       if (count == null) count = 0;
       count++;
@@ -68,26 +85,40 @@ public class MavenModuleNameMapper {
     return result;
   }
 
-  private static List<MavenProjectModel> getProjectsWithName(MavenProjectModelManager model, String name) {
+  private static List<MavenProjectModel> getProjectsWithName(MavenProjectsTree mavenTree,
+                                                             String name,
+                                                             Map<MavenProjectModel, String> mavenProjectToModuleName) {
     List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
-    for (MavenProjectModel each : model.getProjects()) {
-      if (each.getModuleName().equals(name)) result.add(each);
+    for (MavenProjectModel each : mavenTree.getProjects()) {
+      if (name.equals(mavenProjectToModuleName.get(each))) result.add(each);
     }
     return result;
   }
 
 
-  private static void resolveModulePaths(final MavenProjectModelManager mavenProjectModel, final String dedicatedModuleDir) {
-    mavenProjectModel.visit(new MavenProjectModelManager.SimpleVisitor() {
-      public void visit(final MavenProjectModel node) {
-        final Module module = node.getIdeaModule();
-        node.setModuleFilePath(module != null ? module.getModuleFilePath() : generateModulePath(node, dedicatedModuleDir));
-      }
-    });
+  private static void resolveModulePaths(MavenProjectsTree mavenTree,
+                                         Map<MavenProjectModel, Module> mavenProjectToModule,
+                                         Map<MavenProjectModel, String> mavenProjectToModuleName,
+                                         Map<MavenProjectModel, String> mavenProjectToModulePath,
+                                         String dedicatedModuleDir) {
+    for (MavenProjectModel each : mavenTree.getProjects()) {
+      Module module = mavenProjectToModule.get(each);
+      String path = module != null
+                    ? module.getModuleFilePath()
+                    : generateModulePath(each,
+                                         mavenProjectToModuleName,
+                                         dedicatedModuleDir);
+      mavenProjectToModulePath.put(each, path);
+    }
   }
 
-  private static String generateModulePath(MavenProjectModel node, String dedicatedModuleDir) {
-    return new File(StringUtil.isEmptyOrSpaces(dedicatedModuleDir) ? node.getDirectory() : dedicatedModuleDir,
-                    node.getModuleName() + MavenConstants.IML_EXT).getPath();
+  private static String generateModulePath(MavenProjectModel project,
+                                           Map<MavenProjectModel, String> mavenProjectToModuleName,
+                                           String dedicatedModuleDir) {
+    String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
+                 ? project.getDirectory()
+                 : dedicatedModuleDir;
+    String fileName = mavenProjectToModuleName.get(project) + MavenConstants.IML_EXT;
+    return new File(dir, fileName).getPath();
   }
 }

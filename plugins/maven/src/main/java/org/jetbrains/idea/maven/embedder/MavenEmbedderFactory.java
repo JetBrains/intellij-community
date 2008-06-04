@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
-import org.jetbrains.idea.maven.project.MavenProjectModelManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -168,12 +168,12 @@ public class MavenEmbedderFactory {
   }
 
   public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings,
-                                                    MavenProjectModelManager modelManager) {
+                                                    MavenProjectsTree modelManager) {
     return createEmbedder(settings, new MyCustomizer(modelManager, false));
   }
 
   public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings,
-                                                       MavenProjectModelManager modelManager) {
+                                                       MavenProjectsTree modelManager) {
     return createEmbedder(settings, new MyCustomizer(modelManager, true));
   }
 
@@ -267,10 +267,10 @@ public class MavenEmbedderFactory {
   }
 
   public static class MyCustomizer implements ContainerCustomizer {
-    private MavenProjectModelManager myModelManager;
+    private MavenProjectsTree myModelManager;
     private boolean isOnline;
 
-    public MyCustomizer(MavenProjectModelManager projectMapping, boolean online) {
+    public MyCustomizer(MavenProjectsTree projectMapping, boolean online) {
       myModelManager = projectMapping;
       isOnline = online;
     }

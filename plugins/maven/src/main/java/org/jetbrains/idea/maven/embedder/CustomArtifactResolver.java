@@ -10,24 +10,22 @@ import org.codehaus.plexus.context.Context;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.MavenProjectModelManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 public class CustomArtifactResolver extends DefaultArtifactResolver implements Contextualizable {
   public static final String MAVEN_PROJECT_MODEL_MANAGER = "MAVEN_PROJECT_MODEL_MANAGER";
   public static final String IS_ONLINE = "IS_ONLINE";
 
-  private MavenProjectModelManager myModelManager;
+  private MavenProjectsTree myModelManager;
   private boolean isOnline;
   private CustomWagonManager myWagonManagerCache;
 
   public void contextualize(Context context) throws ContextException {
-    myModelManager = (MavenProjectModelManager)context.get(MAVEN_PROJECT_MODEL_MANAGER);
+    myModelManager = (MavenProjectsTree)context.get(MAVEN_PROJECT_MODEL_MANAGER);
     isOnline = (Boolean)context.get(IS_ONLINE);
   }
 

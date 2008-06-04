@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -10,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectModelManagerTest extends MavenImportingTestCase {
-  MavenProjectModelManager model = new MavenProjectModelManager();
+  MavenProjectsTree model = new MavenProjectsTree();
 
   public void testTwoRootProjects() throws Exception {
     VirtualFile m1 = createModulePom("m1",
@@ -953,10 +952,8 @@ public class MavenProjectModelManagerTest extends MavenImportingTestCase {
 
   private void readModel(List<String> profiles, VirtualFile... files) throws CanceledException, MavenException {
     model.read(asList(files),
-               Collections.<VirtualFile, Module>emptyMap(),
                profiles,
                getMavenCoreSettings(),
-               getMavenImporterSettings(),
                new MavenProcess(new EmptyProgressIndicator()));
   }
 }
