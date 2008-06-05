@@ -17,7 +17,6 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -32,7 +31,6 @@ import java.io.IOException;
 public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
-    SerializationManager.getInstance().registerSerializer(this);
   }
 
   public StubBuilder getBuilder() {

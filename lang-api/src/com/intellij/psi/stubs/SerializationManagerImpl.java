@@ -7,8 +7,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -31,6 +34,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   private final List<StubSerializer<? extends StubElement>> myAllSerializers = new ArrayList<StubSerializer<? extends StubElement>>();
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile = new File(PathManager.getSystemPath() + "/index/rep.names");
+  private boolean mySerializersLoaded = false;
 
   public SerializationManagerImpl() {
     myFile.getParentFile().mkdirs();
@@ -80,7 +84,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     }
   }
 
-  public void registerSerializer(StubSerializer<? extends StubElement> serializer) {
+  public void registerSerializer(@NotNull StubSerializer<? extends StubElement> serializer) {
     myAllSerializers.add(serializer);
     try {
       assignId(serializer);
@@ -91,7 +95,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     }
   }
 
-  private void assignId(final StubSerializer<? extends StubElement> serializer) throws IOException {
+  private void assignId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
     final int id = persistentId(serializer);
     final StubSerializer old = myIdToSerializer.put(id, serializer);
     assert old == null : "ID: " + serializer.getExternalId() + " is not unique";
@@ -100,11 +104,35 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     assert oldId == null : "Serializer " + serializer + " is already registered";
   }
 
-  private int persistentId(final StubSerializer<? extends StubElement> serializer) throws IOException {
+  private int persistentId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
     return myNameStorage.enumerate(serializer.getExternalId());
   }
 
+  private synchronized void initSerializers() {
+    if (mySerializersLoaded) return;
+    mySerializersLoaded = true;
+    for(StubElementTypeHolderEP holderEP: Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
+      holderEP.initialize();
+    }
+    final IElementType[] stubElementTypes = IElementType.enumerate(new IElementType.Predicate() {
+      public boolean matches(final IElementType type) {
+        return type instanceof StubSerializer;
+      }
+    });
+    for(IElementType type: stubElementTypes) {
+      if (type instanceof IStubFileElementType && ((IStubFileElementType) type).getExternalId().equals(PsiFileStubImpl.TYPE.getExternalId())) {
+        continue;
+      }
+      StubSerializer stubSerializer = (StubSerializer) type;
+
+      if (!myAllSerializers.contains(stubSerializer)) {
+        registerSerializer(stubSerializer);
+      }
+    }
+  }
+
   public void serialize(StubElement rootStub, DataOutputStream stream) {
+    initSerializers();
     try {
       final StubSerializer serializer = getSerializer(rootStub);
 
@@ -133,6 +161,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   public StubElement deserialize(DataInputStream stream) {
+    initSerializers();
     try {
       return deserialize(stream, null);
     }
@@ -158,7 +187,9 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   private int getClassId(final StubSerializer serializer) {
-    return mySerializerToId.get(serializer).intValue();
+    final Integer idValue = mySerializerToId.get(serializer);
+    assert idValue != null: "No ID found for serializer " + serializer;
+    return idValue.intValue();
   }
 
   private StubSerializer getClassById(int id) {
