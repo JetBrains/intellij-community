@@ -4,7 +4,10 @@
  */
 package com.intellij.ui.popup;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
@@ -80,7 +83,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     myScrollPane.setBorder(null);
 
-    init(null, myScrollPane, getPreferredFocusableComponent(), true, true, true, null,
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    init(project, myScrollPane, getPreferredFocusableComponent(), true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, true);
 

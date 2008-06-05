@@ -60,6 +60,8 @@ public interface JBPopup extends Disposable {
    */
   void showInBestPositionFor(@NotNull DataContext dataContext);
 
+
+
   /**
    * Shows the popup near the cursor location in the specified editor.
    *
@@ -71,10 +73,15 @@ public interface JBPopup extends Disposable {
   /**
    * Shows the popup in the center of the specified component.
    *
-   * @param focusOwner the component at which the popup should be centered.
+   * @param component the component at which the popup should be centered.
    */
-  void showInCenterOf(@NotNull Component focusOwner);
+  void showInCenterOf(@NotNull Component component);
 
+
+  /**
+   * Shows the popups in the center of currently focused component
+   */
+  void showInFocusCenter();
 
   /**
    * Shows in best position with a given owner

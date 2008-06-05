@@ -338,6 +338,16 @@ public class AbstractPopup implements JBPopup, Disposable {
     }
   }
 
+  public void showInFocusCenter() {
+    final Component focused = getWndManager().getFocusedComponent(myProject);
+    if (focused != null) {
+      showInCenterOf(focused);
+    } else {
+      final JFrame frame = WindowManagerEx.getInstance().getFrame(myProject);
+      showInCenterOf(frame.getRootPane());
+    }
+  }
+
   private RelativePoint relativePointByQuickSearch(final DataContext dataContext) {
     Rectangle dominantArea = (Rectangle)dataContext.getData(DataConstants.DOMINANT_HINT_AREA_RECTANGLE);
 

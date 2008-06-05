@@ -19,7 +19,7 @@ public class GenerateAction extends AnAction {
                                                           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                           false);
 
-    popup.showInBestPositionFor(dataContext);
+    popup.showInFocusCenter();
   }
 
   public void update(AnActionEvent event){
