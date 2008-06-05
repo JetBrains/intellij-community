@@ -125,21 +125,16 @@ public class JdkChooserPanel extends JPanel {
     myListModel.clear();
     final Sdk[] jdks;
     if (myProject == null) {
-      jdks = ProjectJdkTable.getInstance().getAllJdks();
+      final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
+      jdks = getCompatibleJdks(type, Arrays.asList(allJdks));
     }
     else {
       final ProjectJdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
       if (!projectJdksModel.isInitialized()){ //should be initialized
         projectJdksModel.reset(myProject);
       }
-      final Set<Sdk> compatibleJdks = new HashSet<Sdk>();
       final Collection<Sdk> collection = projectJdksModel.getProjectJdks().values();
-      for (Sdk projectJdk : collection) {
-        if (isCompatibleJdk(projectJdk, type)) {
-          compatibleJdks.add(projectJdk);
-        }
-      }
-      jdks = compatibleJdks.toArray(new Sdk[compatibleJdks.size()]);
+      jdks = getCompatibleJdks(type, collection);
     }
     Arrays.sort(jdks, new Comparator<Sdk>() {
       public int compare(final Sdk o1, final Sdk o2) {
@@ -149,6 +144,16 @@ public class JdkChooserPanel extends JPanel {
     for (Sdk jdk : jdks) {
       myListModel.addElement(jdk);
     }
+  }
+
+  private Sdk[] getCompatibleJdks(final SdkType type, final Collection<Sdk> collection) {
+    final Set<Sdk> compatibleJdks = new HashSet<Sdk>();
+    for (Sdk projectJdk : collection) {
+      if (isCompatibleJdk(projectJdk, type)) {
+        compatibleJdks.add(projectJdk);
+      }
+    }
+    return compatibleJdks.toArray(new Sdk[compatibleJdks.size()]);
   }
 
   private boolean isCompatibleJdk(final Sdk projectJdk, final SdkType type) {
