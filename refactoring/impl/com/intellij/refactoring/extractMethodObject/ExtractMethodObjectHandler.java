@@ -19,6 +19,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -45,6 +46,13 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     }
     else {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
+    }
+
+    if (elements.length == 0) {
+        String message = RefactoringBundle
+          .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
+        CommonRefactoringUtil.showErrorMessage(ExtractMethodObjectProcessor.REFACTORING_NAME, message, HelpID.EXTRACT_METHOD_OBJECT, project);
+      return;
     }
 
     final ExtractMethodObjectProcessor processor = new ExtractMethodObjectProcessor(project, editor, elements, "");
