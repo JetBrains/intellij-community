@@ -258,6 +258,8 @@ public class ClsStubBuilder {
     }
 
     public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
+      if (!isCorrectName(innerName)) return;
+
       if (innerName != null && outerName != null && getClassName(outerName).equals(myResult.getQualifiedName())) {
         final String basename = myVFile.getNameWithoutExtension();
         final VirtualFile dir = myVFile.getParent();
@@ -275,7 +277,13 @@ public class ClsStubBuilder {
       }
     }
 
+    private static boolean isCorrectName(String name) {
+      return name != null && StringUtil.isJavaIdentifier(name);
+    }
+
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
+      if (!isCorrectName(name)) return null;
+
       final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
       PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
       final PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packModlistFlags(access));
@@ -324,6 +332,8 @@ public class ClsStubBuilder {
       boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
       boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
       boolean isAnnotationMethod = myResult.isAnnotationType();
+
+      if (!isConstructor && !isCorrectName(name)) return null;
 
       final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
 
