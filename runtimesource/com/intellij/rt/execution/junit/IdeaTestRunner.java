@@ -1,6 +1,6 @@
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.coverage.data.ProjectData;
+import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
