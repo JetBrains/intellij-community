@@ -15,6 +15,25 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleFieldCache;
+import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import gnu.trove.THashSet;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.ContextType;
@@ -34,29 +53,8 @@ import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
 import org.intellij.lang.xpath.xslt.refactoring.introduceVariable.XsltIntroduceVariableAction;
 import org.intellij.lang.xpath.xslt.util.NSDeclTracker;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
-
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import gnu.trove.THashSet;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -64,7 +62,21 @@ import java.util.*;
 public class XsltContextProvider extends ContextProvider {
     public static final ContextType TYPE = ContextType.lookupOrCreate("XSLT");
 
-    private static final Key<CachedValue<ElementNames>> NAMES_KEY = Key.create("NAMES");
+    private CachedValue<ElementNames> myNames;
+
+    private static final SimpleFieldCache<CachedValue<ElementNames>, XsltContextProvider> myNamesCache = new SimpleFieldCache<CachedValue<ElementNames>, XsltContextProvider>() {
+      protected CachedValue<ElementNames> compute(final XsltContextProvider xsltContextProvider) {
+        return xsltContextProvider.createCachedValue(xsltContextProvider.getFile());
+      }
+
+      protected CachedValue<ElementNames> getValue(final XsltContextProvider xsltContextProvider) {
+        return xsltContextProvider.myNames;
+      }
+
+      protected void putValue(final CachedValue<ElementNames> elementNamesCachedValue, final XsltContextProvider xsltContextProvider) {
+        xsltContextProvider.myNames = elementNamesCachedValue;
+      }
+    };
 
     private final SmartPsiElementPointer<XmlElement> myContextElement;
     private final FileAssociationsManager myFileAssociationsManager;
@@ -209,14 +221,7 @@ public class XsltContextProvider extends ContextProvider {
     private ElementNames getNames(@Nullable PsiFile file) {
         if (file == null) return null;
 
-        synchronized (file) {
-            CachedValue<ElementNames> value = file.getUserData(NAMES_KEY);
-            if (value == null) {
-                value = createCachedValue(file);
-                file.putUserData(NAMES_KEY, value);
-            }
-            return value.getValue();
-        }
+        return myNamesCache.get(this).getValue();
     }
 
     private CachedValue<ElementNames> createCachedValue(final PsiFile file) {
