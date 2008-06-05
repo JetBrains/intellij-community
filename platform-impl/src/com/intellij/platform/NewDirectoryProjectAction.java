@@ -23,17 +23,21 @@ public class NewDirectoryProjectAction extends AnAction {
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
+    final DirectoryProjectGenerator generator = dlg.getProjectGenerator();
     final File location = new File(dlg.getNewProjectLocation());
     if (!location.exists() && !location.mkdirs()) {
       Messages.showErrorDialog(project, "Cannot create directory '" + location + "'", "Create Project");
       return;
     }
     GeneralSettings.getInstance().setLastProjectLocation(location.getParent());
-    VirtualFile f = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
       }
     });
-    PlatformProjectOpenProcessor.getInstance().doOpenProject(f, null, false);
+    Project newProject = PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
+    if (generator != null) {
+      generator.generateProject(newProject, baseDir);
+    }
   }
 }
