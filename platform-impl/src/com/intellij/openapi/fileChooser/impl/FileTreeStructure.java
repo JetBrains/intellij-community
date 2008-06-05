@@ -16,13 +16,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class FileTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileTreeStructure");
@@ -71,7 +70,9 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   private Object[] getFileChildren(FileElement element) {
-    if (element.getFile() == null) {
+    VirtualFile file = element.getFile();
+
+    if (file == null || !file.isValid()) {
       if (element == myRootElement) {
         return myRootElement.getChildren();
       }
@@ -81,7 +82,6 @@ public class FileTreeStructure extends AbstractTreeStructure {
     VirtualFile[] children = null;
 
     if (element.isArchive() && myChooserDescriptor.isChooseJarContents()) {
-      VirtualFile file = element.getFile();
       String path = file.getPath();
       if (!(file.getFileSystem() instanceof JarFileSystem)) {
         file = JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
@@ -89,7 +89,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
       if (file != null) children = file.getChildren();
     }
     else {
-      children = element.getFile().getChildren();
+      children = file.getChildren();
     }
 
     if (children == null) {
