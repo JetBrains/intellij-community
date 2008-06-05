@@ -92,7 +92,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
   
   public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
-    if (!new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(collection))) {
+    if (collection.size() != expected.length || !new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(collection))) {
       assertEquals(toString(expected, "\n"), toString(collection, "\n"));
       assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
     }
