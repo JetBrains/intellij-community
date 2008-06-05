@@ -72,6 +72,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public static final Change[] ALL_CHANGES = new Change[0];
   private MyRefreshRunnable myRefresnRunnable;
 
+  private final Map<String, Pair<Long, List<CommittedChangeList>>> myExternallyLoadedChangeLists;
+
   public static class State {
     private int myInitialCount = 500;
     private int myInitialDays = 90;
@@ -128,6 +130,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         cancelRefreshTimer();
       }
     });
+    myExternallyLoadedChangeLists = new ConcurrentHashMap<String, Pair<Long, List<CommittedChangeList>>>();
   }
 
   public MessageBus getMessageBus() {
@@ -323,6 +326,20 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return result;
   }
 
+  @Nullable
+  public Iterator<ChangesBunch> getBackBunchedIterator(final AbstractVcs vcs, final VirtualFile root, final RepositoryLocation location, final int bunchSize) {
+    final ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
+    try {
+      if (! cacheFile.isEmpty()) {
+        return cacheFile.getBackBunchedIterator(bunchSize);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
   private List<CommittedChangeList> getChangesWithCaching(final AbstractVcs vcs,
                                                           final ChangeBrowserSettings settings,
                                                           final VirtualFile root,
@@ -388,8 +405,18 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+    final List<CommittedChangeList> newLists = new ArrayList<CommittedChangeList>();
+
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
+
+    final Pair<Long, List<CommittedChangeList>> externalLists = myExternallyLoadedChangeLists.get(location.toPresentableString());
+    final long latestChangeList = getLatestListForFile(cacheFile);
+    if ((externalLists != null) && (latestChangeList == externalLists.first.longValue())) {
+      newLists.addAll(appendLoadedChanges(cacheFile, location, externalLists.second));
+      myExternallyLoadedChangeLists.clear();
+    }
+
     final ChangeBrowserSettings defaultSettings = provider.createDefaultSettings();
     int maxCount = 0;
     if (provider.refreshCacheByNumber()) {
@@ -411,6 +438,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
     final List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, maxCount);
     LOG.info("Loaded " + newChanges.size() + " new changelists");
+    newLists.addAll(appendLoadedChanges(cacheFile, location, newChanges));
+
+    return newLists;
+  }
+
+  private List<CommittedChangeList> appendLoadedChanges(final ChangesCacheFile cacheFile, final RepositoryLocation location,
+                                                        final List<CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
     if (savedChanges.size() > 0) {
       myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, savedChanges);
@@ -759,6 +793,22 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
     }
     return null;
+  }
+
+  private long getLatestListForFile(final ChangesCacheFile file) {
+    try {
+      if ((file == null) || (file.isEmpty())) {
+        return -1;
+      }
+      return file.getLastCachedChangelist();
+    }
+    catch (IOException e) {
+      return -1;
+    }
+  }
+
+  public void submitExternallyLoaded(final RepositoryLocation location, final long myLastCl, final List<CommittedChangeList> lists) {
+    myExternallyLoadedChangeLists.put(location.toPresentableString(), new Pair<Long, List<CommittedChangeList>>(myLastCl, lists));
   }
 
   private interface RefreshResultConsumer {

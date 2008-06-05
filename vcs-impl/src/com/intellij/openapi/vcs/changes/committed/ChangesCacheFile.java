@@ -195,6 +195,27 @@ public class ChangesCacheFile {
              ", last cached number=" + myLastCachedChangelist + ", incoming count=" + myIncomingCount);
   }
 
+  private IndexEntry[] readIndexEntriesByOffset(final long offsetFromStart, int count) throws IOException {
+    if (!myIndexPath.exists()) {
+      return NO_ENTRIES;
+    }
+    long totalCount = myIndexStream.length() / INDEX_ENTRY_SIZE;
+    if (count > (totalCount - offsetFromStart)) {
+      count = (int) (totalCount - offsetFromStart);
+    }
+    if (count == 0) {
+      return NO_ENTRIES;
+    }
+    // offset from start
+    myIndexStream.seek(INDEX_ENTRY_SIZE * offsetFromStart);
+    IndexEntry[] result = new IndexEntry[count];
+    for(int i = (count - 1); i >= 0; --i) {
+      result [i] = new IndexEntry();
+      readIndexEntry(result [i]);
+    }
+    return result;
+  }
+
   private IndexEntry[] readLastIndexEntries(int offset, int count) throws IOException {
     if (!myIndexPath.exists()) {
       return NO_ENTRIES;
@@ -266,6 +287,77 @@ public class ChangesCacheFile {
         stream.close();
       }
       myHeaderLoaded = true;
+    }
+  }
+
+  public Iterator<ChangesBunch> getBackBunchedIterator(final int bunchSize) {
+    return new BackIterator(bunchSize);
+  }
+
+  private class BackIterator implements Iterator<ChangesBunch> {
+    private final int bunchSize;
+    private long myOffset;
+
+    private BackIterator(final int bunchSize) {
+      this.bunchSize = bunchSize;
+      try {
+        try {
+          openStreams();
+          myOffset = (myIndexStream.length() / INDEX_ENTRY_SIZE);
+        } finally {
+          closeStreams();
+        }
+      }
+      catch (IOException e) {
+        myOffset = -1;
+      }
+    }
+
+    public boolean hasNext() {
+      return myOffset > 0;
+    }
+
+    @Nullable
+    public ChangesBunch next() {
+      try {
+        final int size;
+        if (myOffset < bunchSize) {
+          size = (int) myOffset;
+          myOffset = 0;
+        } else {
+          myOffset -= bunchSize;
+          size = bunchSize;
+        }
+        return new ChangesBunch(readChangesInterval(myOffset, size), true);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  private List<CommittedChangeList> readChangesInterval(final long indexOffset, final int number) throws IOException {
+    openStreams();
+
+    try {
+      IndexEntry[] entries = readIndexEntriesByOffset(indexOffset, number);
+      if (entries.length == 0) {
+        return Collections.emptyList();
+      }
+
+      final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+      for (IndexEntry entry : entries) {
+        final CommittedChangeList changeList = loadChangeListAt(entry.offset);
+        result.add(changeList);
+      }
+      return result;
+    } finally {
+      closeStreams();
     }
   }
 

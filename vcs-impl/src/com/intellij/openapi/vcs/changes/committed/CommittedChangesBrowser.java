@@ -8,15 +8,18 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.UIUtil;
@@ -25,6 +28,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -70,9 +75,43 @@ public class CommittedChangesBrowser extends JPanel {
     final JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
     commitPanel.add(separator, BorderLayout.NORTH);
 
-    myLeftPanel = new JPanel(new BorderLayout());
-    myLeftPanel.add(new JScrollPane(myChangeListsView), BorderLayout.CENTER);
-    
+    myLeftPanel = new JPanel(new GridBagLayout());
+    myLeftPanel.add(new JScrollPane(myChangeListsView), new GridBagConstraints(0, 0, 2, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(2,2,2,2), 0, 0));
+    if (tableModel instanceof CommittedChangesNavigation) {
+      final CommittedChangesNavigation navigation = (CommittedChangesNavigation) tableModel;
+
+      final JButton backButton = new JButton("<");
+      final JButton forwardButton = new JButton(">");
+
+      backButton.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          try {
+            navigation.goBack();
+            backButton.setEnabled(navigation.canGoBack());
+          }
+          catch (VcsException e1) {
+            Messages.showErrorDialog(e1.getMessage(), "");
+            backButton.setEnabled(false);
+          }
+          forwardButton.setEnabled(navigation.canGoForward());
+          selectFirstIfAny();
+        }
+      });
+      forwardButton.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          navigation.goForward();
+          backButton.setEnabled(navigation.canGoBack());
+          forwardButton.setEnabled(navigation.canGoForward());
+          selectFirstIfAny();
+        }
+      });
+      backButton.setEnabled(navigation.canGoBack());
+      forwardButton.setEnabled(navigation.canGoForward());
+
+      myLeftPanel.add(backButton, new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2,2,2,2), 0, 0));
+      myLeftPanel.add(forwardButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2,2,2,2), 0, 0));
+    }
+
     JSplitPane leftSplitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
     leftSplitter.setTopComponent(myLeftPanel);
     leftSplitter.setBottomComponent(commitPanel);
@@ -85,8 +124,12 @@ public class CommittedChangesBrowser extends JPanel {
 
     add(splitter, BorderLayout.CENTER);
 
+    selectFirstIfAny();
+  }
+
+  private void selectFirstIfAny() {
     if (myTableModel.getRowCount() > 0) {
-      myChangeListsView.getSelectionModel().setSelectionInterval(0, 0);
+      TableUtil.selectRows(myChangeListsView, new int[]{0});
     }
   }
 
