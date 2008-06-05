@@ -68,15 +68,16 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
 
     myDeletedNames.addAll(readDeletedSchemeNames(providers));
 
+    Collection<T> read = new ArrayList<T>();
 
-    readSchemesFromFileSystem();
+    read.addAll(readSchemesFromFileSystem());
 
 
-    readSchemesFromProviders(providers);
+    read.addAll(readSchemesFromProviders(providers));
 
-    initLoadedSchemes();
+    initLoadedSchemes(read);
 
-    return getAllSchemes();
+    return read;
   }
 
   private Collection<String> readDeletedSchemeNames(final StreamProvider[] providers) {
@@ -102,13 +103,14 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
 
   }
 
-  private void initLoadedSchemes() {
-    for (T scheme : mySchemes) {
+  private void initLoadedSchemes(final Collection<T> read) {
+    for (T scheme : read) {
       myProcessor.initScheme(scheme);
     }
   }
 
-  private void readSchemesFromProviders(final StreamProvider[] providers) {
+  private Collection<T> readSchemesFromProviders(final StreamProvider[] providers) {
+    Collection<T> result = new ArrayList<T>();
     if (providers != null) {
       for (StreamProvider provider : providers) {
         String[] paths = provider.listSubFiles(myFileSpec);
@@ -120,7 +122,9 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
                 checkFileNameIsFree(subpath);
                 final File file = new File(myBaseDir, subpath);
                 JDOMUtil.writeDocument(subDocument, file, "\n");
-                loadScheme(file, readScheme(subDocument));
+                T scheme = readScheme(subDocument);
+                loadScheme(file, scheme);
+                result.add(scheme);
 
               }
             }
@@ -131,6 +135,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
         }
       }
     }
+    return result;
   }
 
   private void checkFileNameIsFree(final String subpath) throws IOException {
@@ -169,7 +174,8 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
 
   }
 
-  private void readSchemesFromFileSystem() {
+  private Collection<T> readSchemesFromFileSystem() {
+    Collection<T> result = new ArrayList<T>();
     final File[] files = myBaseDir.listFiles();
     if (files != null) {
       for (File file : files) {
@@ -187,6 +193,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
             final T scheme = readScheme(document);
             if (scheme != null) {
               loadScheme(file, scheme);
+              result.add(scheme);
             }
           }
           catch (Exception e) {
@@ -198,6 +205,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     else {
       LOG.error("Cannot read directory: " + myBaseDir.getAbsolutePath());
     }
+    return result;
   }
 
   @Nullable
@@ -308,7 +316,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
             }
           }
           catch (Exception e) {
-            LOG.info("Cannot load data from IDEAServer: " + e.getLocalizedMessage());
+            LOG.debug("Cannot load data from IDEAServer: " + e.getLocalizedMessage());
           }
         }
       }

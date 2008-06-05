@@ -158,7 +158,8 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
       mySchemesManager.clearAllSchemes();
-      final Collection<Profile> profiles = mySchemesManager.loadSchemes();
+      mySchemesManager.loadSchemes();
+      final Collection<Profile> profiles = mySchemesManager.getAllSchemes();
 
 
       if (profiles.isEmpty()) {
@@ -354,5 +355,9 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public Profile getProfile(@NotNull final String name) {
     return getProfile(name, true);
+  }
+
+  public SchemesManager<Profile> getSchemesManager() {
+    return mySchemesManager;
   }
 }

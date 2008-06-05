@@ -465,4 +465,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
   }
 
+  public SchemesManager<TemplateGroup> getSchemesManager() {
+    return mySchemesManager;
+  }
 }

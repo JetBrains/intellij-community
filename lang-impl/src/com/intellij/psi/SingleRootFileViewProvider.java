@@ -3,7 +3,7 @@
  */
 package com.intellij.psi;
 
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -88,7 +88,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (fileType instanceof LanguageFileType) {
       return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
     }
-    else if (fileType instanceof CustomFileType ||
+    else if (fileType instanceof AbstractFileType ||
              fileType == StdFileTypes.GUI_DESIGNER_FORM ||
              fileType == StdFileTypes.IDEA_MODULE ||
              fileType == StdFileTypes.IDEA_PROJECT ||

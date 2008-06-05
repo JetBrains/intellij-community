@@ -5,7 +5,7 @@
  */
 package com.intellij.internal.psiView;
 
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -124,7 +124,7 @@ public class PsiViewerDialog extends DialogWrapper {
     for (FileType fileType : fileTypes) {
       if (fileType != StdFileTypes.GUI_DESIGNER_FORM && fileType != StdFileTypes.IDEA_MODULE && fileType != StdFileTypes.IDEA_PROJECT &&
           fileType != StdFileTypes.IDEA_WORKSPACE && fileType != FileTypes.ARCHIVE && fileType != FileTypes.UNKNOWN &&
-          fileType != FileTypes.PLAIN_TEXT && !(fileType instanceof CustomFileType) && !fileType.isBinary() && !fileType.isReadOnly()) {
+          fileType != FileTypes.PLAIN_TEXT && !(fileType instanceof AbstractFileType) && !fileType.isBinary() && !fileType.isReadOnly()) {
         customFileTypes.add(fileType);
       }
     }

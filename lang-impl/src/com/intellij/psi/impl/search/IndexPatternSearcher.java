@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -86,7 +86,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     if (file instanceof PsiPlainTextFile) {
       FileType fType = file.getFileType();
       synchronized (PsiLock.LOCK) {
-        if (fType instanceof CustomFileType) {
+        if (fType instanceof AbstractFileType) {
           TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
           Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
           findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds, null);

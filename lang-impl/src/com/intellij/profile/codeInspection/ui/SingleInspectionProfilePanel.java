@@ -178,7 +178,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile == null) return;
     myDescriptors.clear();
     InspectionProfileEntry[] tools = mySelectedProfile.getInspectionTools();
-    final InspectionProfile profile = getSavedProfile();
+    final InspectionProfile profile = (InspectionProfile)mySelectedProfile;
     for (InspectionProfileEntry tool : tools) {
       myDescriptors.add(new Descriptor(tool, profile != null
                                              ? profile
@@ -234,6 +234,30 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       else if (initValue == 1) {
         profileModifiableModel.resetToBase();
+      }
+      profileModifiableModel.setName(profileName);
+      profileModifiableModel.setLocal(isLocal);
+      return profileModifiableModel;
+  }
+
+  @Nullable
+  public static ModifiableModel createNewLocalProfileWithSpecifiedName(ModifiableModel selectedProfile,
+                                                 Project project,
+                                                 ProfileManager ideProfileManager,
+                                                 ProfileManager currentProfileManager,
+                                                 String profileName, boolean isLocal) {
+    ProfileManager profileManager = isLocal && ideProfileManager != null ? ideProfileManager : currentProfileManager;
+    if (ArrayUtil.find(currentProfileManager.getAvailableProfileNames(), profileName) != -1 ||
+        ideProfileManager != null && ArrayUtil.find(ideProfileManager.getAvailableProfileNames(), profileName) != -1) {
+      Messages.showErrorDialog(InspectionsBundle.message("inspection.unable.to.create.profile.message", profileName),
+                               InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
+      return null;
+    }
+    InspectionProfileImpl inspectionProfile =
+        new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
+      final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
+      if (selectedProfile != null) { //can be null for default or empty profile
+        profileModifiableModel.copyFrom(selectedProfile);
       }
       profileModifiableModel.setName(profileName);
       profileModifiableModel.setLocal(isLocal);
@@ -891,6 +915,14 @@ public class SingleInspectionProfilePanel extends JPanel {
   public void apply() throws ConfigurationException {
     final ModifiableModel selectedProfile = getSelectedProfile();
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
+
+    if (InspectionProfileManager.getInstance().getSchemesManager().isShared(selectedProfile)) {
+      if (descriptorsAreChanged()) {
+        throw new ConfigurationException("Shared profile cannot be modified. Please do \"Save As...\" first.");
+      }
+
+    }
+
     try {
       selectedProfile.commit();
     }
@@ -900,6 +932,20 @@ public class SingleInspectionProfilePanel extends JPanel {
     setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;
+  }
+
+  private boolean descriptorsAreChanged() {
+    for (Descriptor descriptor : myDescriptors) {
+      if (mySelectedProfile.isToolEnabled(descriptor.getKey()) != descriptor.isEnabled()) {
+        return true;
+      }
+      if (mySelectedProfile.getErrorLevel(descriptor.getKey()) != descriptor.getLevel()) {
+        return true;
+      }
+    }
+
+
+    return false;
   }
 
 

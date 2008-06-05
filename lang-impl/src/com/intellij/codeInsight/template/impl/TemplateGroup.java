@@ -28,6 +28,9 @@ public class TemplateGroup implements Scheme {
 
   public void setName(final String name) {
     myName = name;
+    for (TemplateImpl template : myTemplates) {
+      template.setGroupName(name);
+    }
   }
 
   public void removeTemplate(final TemplateImpl template) {

@@ -2,6 +2,7 @@ package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -154,7 +155,7 @@ public class IdTableBuilding {
       return new WordsScannerFileTypeIdIndexerAdapter(scanner);
     }
 
-    if (fileType instanceof CustomFileType) {
+    if (fileType instanceof AbstractFileType) {
       return new WordsScannerFileTypeIdIndexerAdapter(((CustomFileType)fileType).getWordsScanner());
     }
 
@@ -178,7 +179,7 @@ public class IdTableBuilding {
       }
     }
 
-    if (fileType instanceof CustomFileType) {
+    if (fileType instanceof AbstractFileType) {
       final TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
       return new TokenSetTodoIndexer(commentTokens, virtualFile);
     }

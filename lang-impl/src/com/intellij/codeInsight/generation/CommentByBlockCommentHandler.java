@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -107,8 +107,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private TextRange findCommentedRange(final Commenter commenter) {
     final CharSequence text = myDocument.getCharsSequence();
     final FileType fileType = myFile.getFileType();
-    if (fileType instanceof CustomFileType) {
-      Lexer lexer = new CustomFileTypeLexer(((CustomFileType)fileType).getSyntaxTable());
+    if (fileType instanceof AbstractFileType) {
+      Lexer lexer = new CustomFileTypeLexer(((AbstractFileType)fileType).getSyntaxTable());
       final int caretOffset = myEditor.getCaretModel().getOffset();
       int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), caretOffset);
       if (commentStart == -1) return null;
@@ -148,8 +148,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
   private static Commenter findCommenter(PsiFile file, Editor editor) {
     final FileType fileType = file.getFileType();
-    if (fileType instanceof CustomFileType) {
-      return ((CustomFileType)fileType).getCommenter();
+    if (fileType instanceof AbstractFileType) {
+      return ((AbstractFileType)fileType).getCommenter();
     }
 
     Language lang = PsiUtilBase.getLanguageInEditor(editor, file.getProject());

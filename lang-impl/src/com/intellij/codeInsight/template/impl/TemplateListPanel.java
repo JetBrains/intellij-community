@@ -1,13 +1,16 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -37,6 +40,8 @@ class TemplateListPanel extends JPanel {
   private JButton myCopyButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
+  private JButton myExportButton;
+  private JButton myImportButton;
   private Editor myEditor;
   private SortedMap<TemplateKey,TemplateImpl> myTemplates = new TreeMap<TemplateKey, TemplateImpl>();
   private JComboBox myExpandByCombo;
@@ -138,21 +143,36 @@ class TemplateListPanel extends JPanel {
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.insets = new Insets(0, 0, 4, 0);
 
-    final JButton addButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.add"));
-    addButton.setMargin(new Insets(2, 4, 2, 4));
-    tableButtonsPanel.add(addButton, gbConstraints);
-    myCopyButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.copy"));
-    myCopyButton.setEnabled(false);
-    myCopyButton.setMargin(new Insets(2, 4, 2, 4));
-    tableButtonsPanel.add(myCopyButton, gbConstraints);
-    myEditButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.edit"));
-    myEditButton.setEnabled(false);
-    myEditButton.setMargin(new Insets(2, 4, 2, 4));
-    tableButtonsPanel.add(myEditButton, gbConstraints);
-    myRemoveButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.remove"));
-    myRemoveButton.setEnabled(false);
-    myRemoveButton.setMargin(new Insets(2, 4, 2, 4));
-    tableButtonsPanel.add(myRemoveButton, gbConstraints);
+    final JButton addButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.add"));
+    addButton.setEnabled(true);
+    myCopyButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.copy"));
+    myEditButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.edit"));
+    myRemoveButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.remove"));
+
+    if (getSchemesManager().isImportExportAvailable()) {
+      myExportButton = createButton(tableButtonsPanel, gbConstraints, "Export");
+      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import");
+
+      myExportButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          exportCurrentGroup();
+        }
+      });
+
+      myImportButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          new SchemesToImportPopup<TemplateGroup>(TemplateListPanel.this){
+            protected void onSchemeSelected(final TemplateGroup scheme) {
+              for (TemplateImpl template : scheme.getTemplates()) {
+                addTemplate(template);
+                isModified =  true;
+              }
+            }
+          }.show(getSchemesManager(), collectCurrentGroupNames());
+        }
+      });
+
+    }
 
     gbConstraints.weighty = 1;
     tableButtonsPanel.add(new JPanel(), gbConstraints);
@@ -202,6 +222,50 @@ class TemplateListPanel extends JPanel {
     );
   }
 
+  private void exportCurrentGroup() {
+    int selected = myTreeTable.getSelectedRow();
+    if (selected < 0) return;
+
+    String groupName = getGroupName(selected);
+
+    TemplateGroup group = new TemplateGroup(groupName);
+
+    for (TemplateImpl template1 : myTemplates.values()) {
+      if (template1.getGroupName().equals(groupName)) {
+        group.addTemplate(template1);
+      }
+    }
+
+    try {
+      getSchemesManager().exportScheme(group);
+    }
+    catch (WriteExternalException e) {
+      LOG.debug(e);
+    }
+
+  }
+
+  private Collection<String> collectCurrentGroupNames() {
+    HashSet<String> result = new HashSet<String>();
+    for (TemplateImpl template : myTemplates.values()) {
+      result.add(template.getGroupName());
+    }
+
+    return result;
+  }
+
+  private SchemesManager<TemplateGroup> getSchemesManager() {
+    return (TemplateSettings.getInstance()).getSchemesManager();
+  }
+
+  private static JButton createButton(final JPanel tableButtonsPanel, final GridBagConstraints gbConstraints, final String message) {
+    JButton button = new JButton(message);
+    button.setEnabled(false);
+    button.setMargin(new Insets(2, 4, 2, 4));
+    tableButtonsPanel.add(button, gbConstraints);
+    return button;
+  }
+
   private JPanel createExpandByPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -233,6 +297,19 @@ class TemplateListPanel extends JPanel {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (node.getUserObject() instanceof TemplateImpl) {
         return new TemplateKey((TemplateImpl)node.getUserObject());
+      }
+    }
+
+    return null;
+  }
+
+  private String getGroupName(int row) {
+    JTree tree = myTreeTable.getTree();
+    TreePath path = tree.getPathForRow(row);
+    if (path != null) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (node.getUserObject() instanceof String) {
+        return (String)node.getUserObject();
       }
     }
 
@@ -564,7 +641,10 @@ class TemplateListPanel extends JPanel {
     public void valueChanged(ListSelectionEvent event) {
       super.valueChanged(event);
 
-      boolean enableButtons = false;
+      boolean enableEditButtons = false;
+      boolean enableCopyButton = false;
+      boolean enableExportButtons = false;
+
       int selected = getSelectedRow();
       if (selected >= 0 && selected < myTreeTable.getRowCount()) {
         TemplateSettings templateSettings = TemplateSettings.getInstance();
@@ -578,13 +658,39 @@ class TemplateListPanel extends JPanel {
           templateSettings.setLastSelectedTemplateKey(null);
         }
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTreeTable.getTree().getPathForRow(selected).getLastPathComponent();
-        enableButtons = !(node.getUserObject() instanceof String);
+        enableExportButtons = false;
+        enableEditButtons = false;
+        enableCopyButton = false;
+        if (node.getUserObject() instanceof TemplateImpl) {
+          enableCopyButton = true;
+          TemplateGroup group = getSchemesManager().findSchemeByName(((TemplateImpl)node.getUserObject()).getGroupName());
+          if (group != null && !getSchemesManager().isShared(group)) {
+            enableEditButtons = true;
+          }
+        }
+        if (node.getUserObject() instanceof String) {
+          String groupName = (String)node.getUserObject();
+          TemplateGroup group = getSchemesManager().findSchemeByName(groupName);
+          if (group != null) {
+            enableExportButtons = !getSchemesManager().isShared(group);
+          }
+
+        }
+
       }
       updateTemplateTextArea();
+      myEditor.getComponent().setEnabled(enableEditButtons);
+      myExpandByCombo.setEnabled(enableEditButtons);
+      
       if (myCopyButton != null) {
-        myCopyButton.setEnabled(enableButtons);
-        myEditButton.setEnabled(enableButtons);
-        myRemoveButton.setEnabled(enableButtons);
+        myCopyButton.setEnabled(enableCopyButton);
+        myEditButton.setEnabled(enableEditButtons);
+        myRemoveButton.setEnabled(enableEditButtons);
+      }
+
+      if (myExportButton != null) {
+        myExportButton.setEnabled(enableExportButtons);
+        myImportButton.setEnabled(true);
       }
     }
   }

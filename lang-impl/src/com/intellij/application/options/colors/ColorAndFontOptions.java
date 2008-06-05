@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.List;
 
 public class ColorAndFontOptions extends BaseConfigurable implements SearchableConfigurable {
-  private ColorAndFontPanel myPanel;
+  private  ColorAndFontPanel myPanel;
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
   public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");

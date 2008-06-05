@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -144,9 +144,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       blockSuitableCommenter = LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage());
     }
 
-    if (blockSuitableCommenter == null && myFile.getFileType() instanceof CustomFileType) {
+    if (blockSuitableCommenter == null && myFile.getFileType() instanceof AbstractFileType) {
       blockSuitableCommenter = new Commenter() {
-        final SyntaxTable mySyntaxTable = ((CustomFileType)myFile.getFileType()).getSyntaxTable();
+        final SyntaxTable mySyntaxTable = ((AbstractFileType)myFile.getFileType()).getSyntaxTable();
         @Nullable
         public String getLineCommentPrefix() {
           return mySyntaxTable.getLineComment();
@@ -262,8 +262,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   @Nullable
   private Commenter findCommenter(final int line) {
     final FileType fileType = myFile.getFileType();
-    if (fileType instanceof CustomFileType) {
-      return ((CustomFileType)fileType).getCommenter();
+    if (fileType instanceof AbstractFileType) {
+      return ((AbstractFileType)fileType).getCommenter();
     }
 
     int offset = myDocument.getLineStartOffset(line);

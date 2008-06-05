@@ -4,6 +4,8 @@
 
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.application.options.ExportSchemeAction;
+import com.intellij.application.options.ImportSchemeAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -16,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
@@ -26,6 +29,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -125,8 +130,41 @@ public class QuickListsPanel extends JPanel {
       }
     });
 
+    group.add(new ExportSchemeAction<QuickList>(QuickListsManager.getInstance().getSchemesManager()){
+      protected QuickList getSelectedScheme() {
+        return (QuickList)myQuickListsList.getSelectedValue();
+      }
+    });
+    group.add(new ImportSchemeAction<QuickList>(QuickListsManager.getInstance().getSchemesManager()){
+      protected Collection<String> collectCurrentSchemeNames() {
+        return collectNames();
+      }
+
+      protected Component getPanel() {
+        return myQuickListsList;
+      }
+
+      protected void importScheme(final QuickList scheme) {
+        myQuickListsModel.addElement(scheme);
+        myQuickListsList.clearSelection();
+        ListScrollingUtil.selectItem(myQuickListsList, scheme);
+
+      }
+    });
+
+
+
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
     return panel;
+  }
+
+
+  private Collection<String> collectNames() {
+    HashSet<String> strings = new HashSet<String>();
+    for (int i = 0; i < myQuickListsModel.getSize(); i++) {
+      strings.add(((QuickList)myQuickListsModel.getElementAt(i)).getName());
+    }
+    return strings;
   }
 
   private String createUniqueName() {
@@ -163,15 +201,22 @@ public class QuickListsPanel extends JPanel {
     myCurrentIndex = index;
   }
 
-  private void updateList(int index) {
+  private void updateList(int index)  {
     if (myQuickListPanel == null) return;
+    QuickList newQuickList = createNewQuickListAt();
+
+    myQuickListsModel.setElementAt(newQuickList, index);
+  }
+
+  private QuickList createNewQuickListAt() {
     ListModel model = myQuickListPanel.getActionsList().getModel();
     int size = model.getSize();
     String[] ids = new String[size];
     for (int i = 0; i < size; i++) {
       ids[i] = (String)model.getElementAt(i);
     }
-    myQuickListsModel.setElementAt(new QuickList(myQuickListPanel.getDisplayName(), myQuickListPanel.getDescription(), ids, false), index);
+    QuickList newQuickList = new QuickList(myQuickListPanel.getDisplayName(), myQuickListPanel.getDescription(), ids, false);
+    return newQuickList;
   }
 
 

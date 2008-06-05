@@ -36,7 +36,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
     else {
       return new AbstractSchemesManager<T>(){
         public Collection<T> loadSchemes() {
-          return getAllSchemes();
+          return Collections.emptyList();
         }
 
         public Collection<T> loadScharedSchemes(final Collection<String> currentSchemeNameList) {

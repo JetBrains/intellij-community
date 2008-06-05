@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.cache.impl.todo;
 
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -103,7 +103,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
       }
       
       return IdTableBuilding.isTodoIndexerRegistered(fileType) ||
-             fileType instanceof CustomFileType; 
+             fileType instanceof AbstractFileType;
     }
   };
 

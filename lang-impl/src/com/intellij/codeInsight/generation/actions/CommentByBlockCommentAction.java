@@ -3,7 +3,7 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.CommentByBlockCommentHandler;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
@@ -23,8 +23,8 @@ public class CommentByBlockCommentAction extends BaseCodeInsightAction {
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final FileType fileType = file.getFileType();
-    if (fileType instanceof CustomFileType) {
-      return ((CustomFileType)fileType).getCommenter() != null;
+    if (fileType instanceof AbstractFileType) {
+      return ((AbstractFileType)fileType).getCommenter() != null;
     }
 
     final Language lang = file.getLanguage();

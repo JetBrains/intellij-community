@@ -21,7 +21,7 @@ public class FileTypeRenderer extends DefaultListCellRenderer {
     }
 
     setIcon(layeredIcon);
-    setText(type.getDescription());
+    setText(type.getDescription() + " (" + type.getName() + ")");
     return this;
   }
 

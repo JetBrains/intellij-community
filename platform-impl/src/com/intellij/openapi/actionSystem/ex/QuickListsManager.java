@@ -162,6 +162,10 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     mySchemesManager.addNewScheme(quickList, true);
   }
 
+  public SchemesManager<QuickList> getSchemesManager() {
+    return mySchemesManager;
+  }
+
   private static class InvokeQuickListAction extends QuickSwitchSchemeAction {
     private QuickList myQuickList;
 

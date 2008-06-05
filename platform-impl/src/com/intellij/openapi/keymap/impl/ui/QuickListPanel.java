@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
@@ -38,8 +39,10 @@ public class QuickListPanel {
   private JTextField myDisplayName;
   private JTextField myDescription;
   private JButton myAddSeparatorButton;
+  private final boolean myEditable;
 
   public QuickListPanel(QuickList origin, final QuickList[] allQuickLists, Project project) {
+    myEditable = !QuickListsManager.getInstance().getSchemesManager().isShared(origin);
     Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists);
     DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
@@ -199,11 +202,21 @@ public class QuickListPanel {
   }
 
   private void update() {
-    myIncludeActionButton.setEnabled(getTreeSelectedActionIds().length > 0);
-    myRemoveActionButton.setEnabled(myActionsList.getSelectedValues().length > 0);
-    boolean enableMove = myActionsList.getSelectedValues().length == 1;
-    myMoveActionUpButton.setEnabled(enableMove && myActionsList.getSelectedIndex() > 0);
-    myMoveActionDownButton.setEnabled(enableMove && myActionsList.getSelectedIndex() < myActionsList.getModel().getSize() - 1);
+    if (myEditable) {
+      myIncludeActionButton.setEnabled(getTreeSelectedActionIds().length > 0);
+      myRemoveActionButton.setEnabled(myActionsList.getSelectedValues().length > 0);
+      boolean enableMove = myActionsList.getSelectedValues().length == 1;
+      myMoveActionUpButton.setEnabled(enableMove && myActionsList.getSelectedIndex() > 0);
+      myMoveActionDownButton.setEnabled(enableMove && myActionsList.getSelectedIndex() < myActionsList.getModel().getSize() - 1);
+    }
+    else {
+      myIncludeActionButton.setEnabled(false);
+      myRemoveActionButton.setEnabled(false);
+      myMoveActionUpButton.setEnabled(false);
+      myMoveActionDownButton.setEnabled(false);
+      myAddSeparatorButton.setEnabled(false);
+
+    }
   }
 
   private void includeActionId(String id) {

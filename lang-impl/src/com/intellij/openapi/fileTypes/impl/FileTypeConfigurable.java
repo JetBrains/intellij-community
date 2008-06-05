@@ -1,18 +1,20 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +182,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   private static boolean canBeModified(FileType fileType) {
-    return fileType instanceof CustomFileType; //todo: add API for canBeModified
+    return fileType instanceof AbstractFileType; //todo: add API for canBeModified
   }
 
   private void addFileType() {
@@ -193,7 +195,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       updateFileTypeList();
       updateExtensionList();
       myRecognizedFileType.selectFileType(type);
-      type.initSupport();
     }
   }
 
@@ -265,12 +266,23 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     private JButton myEditButton;
     private JButton myRemoveButton;
     private JPanel myWholePanel;
+    private JButton myExportButton;
+    private JButton myImportButton;
 
     public RecognizedFileTypes() {
       super(new BorderLayout());
       add(myWholePanel, BorderLayout.CENTER);
       myFileTypesList.setCellRenderer(new FileTypeRenderer());
       myFileTypesList.setModel(new DefaultListModel());
+
+      if (getSchemesManager().isImportExportAvailable()) {
+        myImportButton.setVisible(true);
+        myExportButton.setVisible(true);
+      }
+    }
+
+    private SchemesManager<FileType> getSchemesManager() {
+      return ((FileTypeManagerEx)FileTypeManager.getInstance()).getSchemesManager();
     }
 
     public void attachActions(final FileTypeConfigurable controller) {
@@ -302,6 +314,38 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           if (e.getClickCount() == 2) controller.editFileType();
         }
       });
+
+      myImportButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          new SchemesToImportPopup<FileType>(myWholePanel){
+            protected void onSchemeSelected(final FileType scheme) {
+              controller.importFileType(scheme);
+            }
+          }.show(getSchemesManager(), collectRegisteredFileTypeNames());
+        }
+      });
+
+      myExportButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          FileType selected = (FileType)myFileTypesList.getSelectedValue();
+          if (selected instanceof AbstractFileType) {
+            try {
+              getSchemesManager().exportScheme(selected);
+            }
+            catch (WriteExternalException e1) {
+              Messages.showErrorDialog("Cannot export file type: " + e1.getLocalizedMessage(), "Export File Type");
+            }
+          }
+        }
+      });
+    }
+
+    private Collection<String> collectRegisteredFileTypeNames() {
+      HashSet<String> result = new HashSet<String>();
+      for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
+        result.add(((FileType)myFileTypesList.getModel().getElementAt(i)).getName());
+      }
+      return result;
     }
 
     public FileType getSelectedFileType() {
@@ -335,6 +379,23 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       myFileTypesList.setSelectedValue(fileType, true);
       myFileTypesList.requestFocus();
     }
+  }
+
+  private void importFileType(final FileType type) {
+    ReadFileType readFileType = (ReadFileType)type;
+    CustomFileType actualType = new CustomFileType(readFileType.getSyntaxTable());
+    actualType.setDescription(readFileType.getDescription());
+    actualType.setName(readFileType.getName());
+
+    myTempFileTypes.add(type);
+    List<Pair<FileNameMatcher,String>> list = AbstractFileType.readAssociations(readFileType.getElement());
+    for (Pair<FileNameMatcher, String> pair : list) {
+      myTempPatternsTable.addAssociation(pair.getFirst(), type);
+    }
+    updateFileTypeList();
+    updateExtensionList();
+    myRecognizedFileType.selectFileType(type);
+
   }
 
   public static class PatternsPanel extends JPanel {

@@ -28,4 +28,21 @@ public class ExactFileNameMatcher implements FileNameMatcher {
   public String getFileName() {
     return myFileName;
   }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final ExactFileNameMatcher that = (ExactFileNameMatcher)o;
+
+    if (!myFileName.equals(that.myFileName)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myFileName.hashCode();
+  }
 }

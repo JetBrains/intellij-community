@@ -74,6 +74,7 @@ public class DiffColorsForm {
   private final HashMap<String, MyColorAndFontDescription> myDescriptions = new HashMap<String,MyColorAndFontDescription>();
   private EditorColorsScheme myScheme = null;
   private boolean myDefault;
+  private boolean myShared;
 
   private TextDiffType getSelectedOption() {
     return (TextDiffType)myOptionsList.getSelectedValue();
@@ -145,7 +146,7 @@ public class DiffColorsForm {
   }
 
   private boolean checkModifiableScheme() {
-    if (myDefault) ColorAndFontPanel.showReadOnlyMessage(myWholePanel);
+    if (myDefault) ColorAndFontPanel.showReadOnlyMessage(myWholePanel, myShared  );
     return !myDefault;
   }
 
@@ -177,9 +178,10 @@ public class DiffColorsForm {
     return myMergePanelComponent.getMergePanel();
   }
 
-  public void setScheme(EditorColorsScheme scheme, boolean isDefault) {
+  public void setScheme(EditorColorsScheme scheme, boolean isDefault, boolean isShared) {
     myDefault = isDefault;
     myScheme = scheme;
+    myShared = isShared;
     getMergePanel().setColorScheme(scheme);
   }
 
