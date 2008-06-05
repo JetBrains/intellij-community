@@ -8,8 +8,8 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
@@ -559,5 +560,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public SpeedSearchFilter<ActionItem> getSpeedSearchFilter() {
       return this;
     }
+  }
+
+  public JBPopup getChildPopup(@NotNull final Component component) {
+    return FocusTrackback.getChildPopup(component);
   }
 }

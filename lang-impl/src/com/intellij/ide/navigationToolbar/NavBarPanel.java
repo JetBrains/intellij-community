@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -283,7 +284,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void updateList() {
     final DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-    if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent) || (myNodePopup != null && myNodePopup.isFocused())) {
+
+    final JBPopup childPopup = JBPopupFactory.getInstance().getChildPopup(this);
+
+    if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent) || (childPopup != null && childPopup.isPersistent() && childPopup.isFocused())) {
       immediateUpdateList(false);
     }
     else {
