@@ -30,6 +30,7 @@ import org.picocontainer.defaults.NotConcreteRegistrationException;
  * todo: optimize memory print
  */
 public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
+  public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
   private Object myComponentInstance;
   private final String myImplementationClassName;
   private final Element myExtensionElement;
