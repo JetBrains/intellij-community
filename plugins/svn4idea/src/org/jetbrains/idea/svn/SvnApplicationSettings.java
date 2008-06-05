@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jdom.Attribute;
@@ -262,12 +263,26 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     return dst;
   }
 
-  public static File getCredentialsFile() {
+  private static File getCommonPath() {
     File file = new File(PathManager.getSystemPath());
     file = new File(file, "plugins");
     file = new File(file, "svn4idea");
     file.mkdirs();
-    return new File(file, "credentials.xml");
+    return file;
+  }
+
+  public static File getCredentialsFile() {
+    return new File(getCommonPath(), "credentials.xml");
+  }
+
+  private static final String LOADED_REVISIONS_DIR = "loadedRevisions";
+
+  public static File getLoadedRevisionsDir(final Project project) {
+    File file = getCommonPath();
+    file = new File(file, LOADED_REVISIONS_DIR);
+    file = new File(file, project.getLocationHash());
+    file.mkdirs();
+    return file;
   }
 
   public Collection<String> getCheckoutURLs() {

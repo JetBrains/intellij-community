@@ -18,11 +18,10 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -44,6 +43,7 @@ public class SvnRevisionPanel extends JPanel {
   private Project myProject;
   private UrlProvider myUrlProvider;
   private ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
+  private VirtualFile myRoot;
 
   public SvnRevisionPanel() {
     super(new BorderLayout());
@@ -90,8 +90,8 @@ public class SvnRevisionPanel extends JPanel {
   private void chooseRevision() {
     if (myProject != null && myUrlProvider != null) {
       final SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.getUrl());
-      final SvnChangeList version =
-        AbstractVcsHelper.getInstance(myProject).chooseCommittedChangeList(SvnVcs.getInstance(myProject).getCommittedChangesProvider(), location);
+
+      final SvnChangeList version = SvnSelectRevisionUtil.chooseCommittedChangeList(myProject, location, myRoot);
       if (version != null) {
         myRevisionField.setText(String.valueOf(version.getNumber()));
       }
@@ -100,6 +100,10 @@ public class SvnRevisionPanel extends JPanel {
 
   public void setProject(final Project project) {
     myProject = project;
+  }
+
+  public void setRoot(final VirtualFile root) {
+    myRoot = root;
   }
 
   public void setUrlProvider(final UrlProvider urlProvider) {

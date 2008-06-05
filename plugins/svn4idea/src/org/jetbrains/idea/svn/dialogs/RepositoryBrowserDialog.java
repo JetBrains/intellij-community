@@ -47,10 +47,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnProgressCanceller;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
@@ -924,8 +921,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     if (dir == null) {
       return;
     }
+
     Project p = myProject;
-    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir);
+    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir, SvnUtil.getVirtualFile(dir.getAbsolutePath()));
     dialog.show();
     dir = dialog.getTarget();
     if (dialog.isOK()) {

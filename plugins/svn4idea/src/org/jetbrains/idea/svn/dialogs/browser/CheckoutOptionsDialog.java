@@ -2,11 +2,11 @@ package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,13 +29,14 @@ public class CheckoutOptionsDialog extends DialogWrapper implements ActionListen
   private JPanel myTopPanel;
   private SvnSelectRevisionPanel svnSelectRevisionPanel;
 
-  public CheckoutOptionsDialog(Project project, SVNURL url, File target) {
+  public CheckoutOptionsDialog(Project project, SVNURL url, File target, final VirtualFile root) {
     super(project, true);
     final String urlText = url.toString();
     myUrlLabel.setText(urlText);
     myPathField.setText(target.getAbsolutePath());
     myPathField.addActionListener(this);
 
+    svnSelectRevisionPanel.setRoot(root);
     svnSelectRevisionPanel.setProject(project);
     svnSelectRevisionPanel.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
       public String getUrl() {

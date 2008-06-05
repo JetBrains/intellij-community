@@ -62,6 +62,9 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     myRevision1.setProject(vcs.getProject());
     myRevision2.setProject(vcs.getProject());
 
+    myRevision1.setRoot(myRoot.getVirtualFile());
+    myRevision2.setRoot(myRoot.getVirtualFile());
+
     myRevision1.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
       public String getUrl() {
         return myMergeText1.getText();

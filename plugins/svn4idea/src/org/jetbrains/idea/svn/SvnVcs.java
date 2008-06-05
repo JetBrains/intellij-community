@@ -54,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
+import org.jetbrains.idea.svn.history.LoadedRevisionsCacheManager;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
@@ -166,6 +167,8 @@ public class SvnVcs extends AbstractVcs {
     super.activate();
     SvnApplicationSettings.getInstance().svnActivated();
     VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
+    // this will initialize its inner listener for committed changes upload
+    LoadedRevisionsCacheManager.getInstance(myProject);
   }
 
   @Override

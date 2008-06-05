@@ -131,15 +131,17 @@ public class CopyDialog extends DialogWrapper {
         }
       }
     });
+
+    mySrcVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    mySrcVirtualFile = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(mySrcVirtualFile);
+
+    myRevisionPanel.setRoot(mySrcVirtualFile);
     myRevisionPanel.setProject(myProject);
     myRevisionPanel.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
       public String getUrl() {
         return mySrcURL;
       }
     });
-
-    mySrcVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    mySrcVirtualFile = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(mySrcVirtualFile);
     updateBranchTagBases();
 
     myRevisionPanel.addChangeListener(new ChangeListener() {

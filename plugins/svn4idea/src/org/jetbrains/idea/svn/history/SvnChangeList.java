@@ -201,6 +201,10 @@ public class SvnChangeList implements CommittedChangeList {
     return isBeforeRevision ? (myRevision - 1) : myRevision;
   }
 
+  public SvnRepositoryLocation getLocation() {
+    return myLocation;
+  }
+
   /**
    * needed to track in which changes non-local files live
    */

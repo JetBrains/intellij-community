@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -86,8 +85,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       public void actionPerformed(ActionEvent e) {
         final Project project = vcs.getProject();
         final SvnRepositoryLocation location = new SvnRepositoryLocation(myURLText.getText());
-        final SvnChangeList repositoryVersion =
-          AbstractVcsHelper.getInstance(project).chooseCommittedChangeList(SvnVcs.getInstance(project).getCommittedChangesProvider(), location);
+        final SvnChangeList repositoryVersion = SvnSelectRevisionUtil.chooseCommittedChangeList(project, location, myRoot.getVirtualFile());
         if (repositoryVersion != null) {
           myRevisionText.setText(String.valueOf(repositoryVersion.getNumber()));
         }
