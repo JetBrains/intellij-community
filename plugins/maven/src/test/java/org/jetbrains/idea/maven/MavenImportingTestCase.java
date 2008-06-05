@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenProjectsTree myProjectModel;
+  protected MavenProjectsTree myProjectTree;
   protected MavenProjectsManager myMavenProjectsManager;
   private List<String> myProfilesList;
 
@@ -315,7 +315,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myMavenProjectsManager.setManagedFiles(files);
       myMavenProjectsManager.setActiveProfiles(myProfilesList);
       myMavenProjectsManager.reimport();
-      myProjectModel = myMavenProjectsManager.getMavenProjectTree();
+      myProjectTree = myMavenProjectsManager.getMavenProjectTree();
 
       if (shouldResolve()) resolveProject();
     }

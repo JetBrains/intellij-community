@@ -34,7 +34,7 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
       throws ArtifactResolutionException, ArtifactNotFoundException {
     if (resolveAsModule(artifact)) return;
 
-    boolean shouldOpen = !isOnline && isResolvingParent();
+    boolean shouldOpen = !isOnline && isResolvingParent(artifact);
     if (shouldOpen) open();
     try {
       super.resolve(artifact, remoteRepositories, localRepository);
@@ -49,7 +49,7 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
       throws ArtifactResolutionException, ArtifactNotFoundException {
     if (resolveAsModule(artifact)) return;
 
-    boolean shouldOpen = !isOnline && isResolvingParent();
+    boolean shouldOpen = !isOnline && isResolvingParent(artifact);
     if (shouldOpen) open();
     try {
       super.resolveAlways(artifact, remoteRepositories, localRepository);
@@ -59,7 +59,9 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
     }
   }
 
-  private boolean isResolvingParent() {
+  private boolean isResolvingParent(Artifact artifact) {
+    if (!"pom".equals(artifact.getType()) && artifact.getScope() == null) return false;
+
     StackTraceElement[] stack = new Throwable().getStackTrace();
     for (StackTraceElement each : stack) {
       if (each.getClassName().equals(DefaultModelLineageBuilder.class.getName())

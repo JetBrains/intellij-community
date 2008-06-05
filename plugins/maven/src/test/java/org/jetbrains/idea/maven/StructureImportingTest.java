@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
+import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 
@@ -312,6 +313,12 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   public void testParentInRemoteRepository() throws Exception {
+    String pathToJUnit = "junit/junit/4.0";
+    File junitDir = new File(getRepositoryPath(), pathToJUnit);
+
+    removeFromLocalRepository(pathToJUnit);
+    assertFalse(junitDir.exists());
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -324,6 +331,11 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     importProject();
     assertModules("project");
+
+    assertTrue(junitDir.exists());
+
+    MavenProject parent = myProjectTree.getRootProjects().get(0).getMavenProject().getParent();
+    assertEquals(new File(junitDir, "junit-4.0.pom"), parent.getFile());
   }
 
   public void testCreatingModuleGroups() throws Exception {
