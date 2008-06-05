@@ -21,6 +21,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see com.intellij.lang.LanguageDocumentation
+ */
 public interface DocumentationProvider {
 
   ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
