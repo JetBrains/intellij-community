@@ -57,6 +57,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
 
     final ExtractMethodObjectProcessor processor = new ExtractMethodObjectProcessor(project, editor, elements, "");
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) return;
     try {
       if (!extractProcessor.prepare()) return;
     }
