@@ -200,7 +200,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   @Nullable
   protected abstract PsiElement getReferenceNameElement();
 
-  public final TextRange getRangeInElement() {
+  public TextRange getRangeInElement() {
     final PsiElement element = getSeparator();
     final int length = getTextLength();
     return element == null ? TextRange.from(0, length) : new TextRange(element.getStartOffsetInParent() + element.getTextLength(), length);
