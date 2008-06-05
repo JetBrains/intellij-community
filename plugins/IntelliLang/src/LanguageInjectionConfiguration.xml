@@ -126,6 +126,19 @@
         <setting name="ATT_NAMESPACE" value=""/>
       </XmlAttributeInjection>
     </entry>
+    <entry>
+      <XmlAttributeInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="query|update"/>
+        <setting name="TAGNAMESPACE" value="http://java.sun.com/jsp/jstl/sql"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="ATT_NAME" value="sql"/>
+        <setting name="ATT_NAMESPACE" value=""/>
+      </XmlAttributeInjection>
+    </entry>
   </ATTRIBUTES>
   <PARAMETERS>
     <entry>
