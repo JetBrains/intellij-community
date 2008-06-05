@@ -262,7 +262,7 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private static boolean handleRParen(Editor editor, FileType fileType){
+  public static boolean handleRParen(Editor editor, FileType fileType){
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
     int offset = editor.getCaretModel().getOffset();
