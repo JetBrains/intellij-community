@@ -1,6 +1,5 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
@@ -8,18 +7,15 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibrariesAlphaComparator;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-class LibraryTableTreeStructure extends AbstractTreeStructure {
+class LibraryTableTreeStructure extends AbstractLibraryTreeStructure {
   private final Object myRootElement = new Object();
-  private NodeDescriptor myRootElementDescriptor;
-  private final LibraryTableEditor myParentEditor;
 
-  public LibraryTableTreeStructure(LibraryTableEditor result) {
-    myParentEditor = result;
+  public LibraryTableTreeStructure(LibraryTableEditor parentEditor) {
+    super(parentEditor);
     myRootElementDescriptor = new NodeDescriptor(null, null) {
       public boolean update() {
         myName = ProjectBundle.message("library.root.node");
@@ -76,47 +72,8 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private Object[] buildItems(LibraryTableTreeContentElement parent, Library library, OrderRootType orderRootType) {
-    ArrayList<ItemElement> items = new ArrayList<ItemElement>();
-    final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor(library);
-    final String[] urls = libraryEditor.getUrls(orderRootType);
-    Arrays.sort(urls, LibraryTableEditor.ourUrlComparator);
-    for (String url : urls) {
-      items.add(new ItemElement(parent, library, url, orderRootType, libraryEditor.isJarDirectory(url), libraryEditor.isValid(url, orderRootType)));
-    }
-
-    return items.toArray();
-  }
-
   private boolean allPathsValid(Library library, OrderRootType orderRootType) {
     return myParentEditor.getLibraryEditor(library).allPathsValid(orderRootType);
   }
 
-  public Object getParentElement(Object element) {
-    if (element == myRootElement) {
-      return null;
-    }
-    if (element instanceof LibraryTableTreeContentElement) {
-      return ((LibraryTableTreeContentElement)element).getParent();
-    }
-    return myRootElement;
-  }
-
-  @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-    if (element == myRootElement) {
-      return myRootElementDescriptor;
-    }
-    if (element instanceof LibraryTableTreeContentElement) {
-      return ((LibraryTableTreeContentElement)element).createDescriptor(parentDescriptor, myParentEditor);
-    }
-    return null;
-  }
-
-  public void commit() {
-  }
-
-  public boolean hasSomethingToCommit() {
-    return false;
-  }
 }
