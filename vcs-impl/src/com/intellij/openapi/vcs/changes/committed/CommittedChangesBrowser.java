@@ -80,8 +80,8 @@ public class CommittedChangesBrowser extends JPanel {
     if (tableModel instanceof CommittedChangesNavigation) {
       final CommittedChangesNavigation navigation = (CommittedChangesNavigation) tableModel;
 
-      final JButton backButton = new JButton("<");
-      final JButton forwardButton = new JButton(">");
+      final JButton backButton = new JButton("< Older");
+      final JButton forwardButton = new JButton("Newer >");
 
       backButton.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
