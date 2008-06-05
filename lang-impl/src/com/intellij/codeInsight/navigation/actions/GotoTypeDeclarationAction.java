@@ -77,7 +77,10 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
       offset);
 
-    if (targetElement != null) return new PsiElement[] {getSymbolType(targetElement)};
+    if (targetElement != null) {
+      final PsiElement symbolType = getSymbolType(targetElement);
+      return symbolType == null ? PsiElement.EMPTY_ARRAY : new PsiElement[] {symbolType};
+    }
     else {
       final PsiReference psiReference = TargetElementUtilBase.findReference(editor, offset);
       if (psiReference instanceof PsiPolyVariantReference) {
