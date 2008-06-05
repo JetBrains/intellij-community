@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -261,15 +260,12 @@ public class BlockSupportImpl extends BlockSupport {
   static void replaceFileElement(final PsiFileImpl fileImpl, final FileElement fileElement,
                                          final FileElement newFileElement,
                                          final PsiManagerEx manager) {
-    final RepositoryManager repositoryManager = manager.getRepositoryManager();
     final int oldLength = fileElement.getTextLength();
     sendPsiBeforeEvent(fileImpl);
-    if (repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
     if (fileElement.getFirstChildNode() != null) TreeUtil.removeRange(fileElement.getFirstChildNode(), null);
     final ASTNode firstChildNode = newFileElement.getFirstChildNode();
     if (firstChildNode != null) TreeUtil.addChildren(fileElement, (TreeElement)firstChildNode);
     fileImpl.getTreeElement().setCharTable(newFileElement.getCharTable());
-    if (repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
     manager.invalidateFile(fileImpl);
     fileElement.subtreeChanged();
     sendPsiAfterEvent(fileImpl, oldLength);

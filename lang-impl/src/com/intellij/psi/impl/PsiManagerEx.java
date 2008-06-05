@@ -8,7 +8,6 @@ import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,4 @@ public abstract class PsiManagerEx extends PsiManager {
 
   @NotNull
   public abstract List<? extends LanguageInjector> getLanguageInjectors();
-
-  public abstract RepositoryManager getRepositoryManager();
-  public abstract RepositoryElementsManager getRepositoryElementsManager();
 }

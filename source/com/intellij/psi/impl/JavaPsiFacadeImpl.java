@@ -56,14 +56,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final Project myProject;
   private final JavaFileManager myFileManager;
   private final ProgressManager myProgressManager;
-  private boolean myDisposed = false;
 
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManagerImpl psiManager,
                            final ProjectRootManagerEx projectRootManagerEx,
                            StartupManager startupManager,
-                           PsiManagerConfiguration psiManagerConfiguration,
                            MessageBus bus
 
   ) {
@@ -81,7 +79,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
 
     boolean isProjectDefault = project.isDefault();
-    if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
+    if (!isProjectDefault) {
       myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project));
     }
     else {
@@ -123,7 +121,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   public void dispose() {
-    myDisposed = true;
     myFileManager.dispose();
   }
 

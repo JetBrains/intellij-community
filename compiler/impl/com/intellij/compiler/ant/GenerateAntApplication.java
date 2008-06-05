@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerConfiguration;
 
 import javax.swing.*;
 import java.io.File;
@@ -63,8 +62,6 @@ public class GenerateAntApplication {
         logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProjectPath));
         GenerateAntMain.printHelp();
       }
-
-      PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED = false;
 
       logMessage(0, "Loading project...");
       myProject = ProjectManagerEx.getInstanceEx().loadProject(myProjectPath);

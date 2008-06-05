@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -281,21 +280,14 @@ public class ChangeUtil {
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
           final PsiManagerEx psiManager = (PsiManagerEx) manager;
-          RepositoryManager repositoryManager = psiManager.getRepositoryManager();
           final PsiFile file = (PsiFile)changedFile.getPsi();
 
           if (file.isPhysical()) {
             SmartPointerManagerImpl.fastenBelts(file);
           }
 
-          if (repositoryManager != null) {
-            repositoryManager.beforeChildAddedOrRemoved(file, changedElement);
-            action.makeChange(destinationTreeChange);
-            repositoryManager.beforeChildAddedOrRemoved(file, changedElement);
-          }
-          else {
-            action.makeChange(destinationTreeChange);
-          }
+          action.makeChange(destinationTreeChange);
+
           psiManager.invalidateFile(file);
           TreeUtil.clearCaches(changedElement);
           if (changedElement instanceof CompositeElement) {

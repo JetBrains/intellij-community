@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
@@ -49,8 +48,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
     myProjectRootManager = projectRootManager;
     myFileManager = fileManager;
 
-    PsiManagerConfiguration configuration = PsiManagerConfiguration.getInstance();
-    myUseRepository = configuration.REPOSITORY_ENABLED;
+    myUseRepository = true;
 
     myManager.registerRunnableToRunOnChange(new Runnable() {
       public void run() {

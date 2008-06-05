@@ -6,7 +6,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,11 +31,4 @@ public class PsiManagerConfiguration implements ApplicationComponent, JDOMExtern
     throw new WriteExternalException();
   }
 
-  public RepositoryManager createRepositoryManager(PsiManagerImpl manager) {
-    return new EmptyRepositoryManagerImpl();
-  }
-
-  public RepositoryElementsManager createRepositoryElementsManager(PsiManagerImpl manager, RepositoryManager repositoryManager) {
-    return new EmptyRepositoryElementsManager();
-  }
 }

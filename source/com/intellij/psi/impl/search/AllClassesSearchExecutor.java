@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -37,8 +36,6 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
   private static boolean processAllClassesInGlobalScope(final GlobalSearchScope searchScope, final Processor<PsiClass> processor, final Project project) {
     final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-    final RepositoryManager repositoryManager = psiManager.getRepositoryManager();
-    repositoryManager.updateAll();
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
     return fileIndex.iterateContent(new ContentIterator() {
