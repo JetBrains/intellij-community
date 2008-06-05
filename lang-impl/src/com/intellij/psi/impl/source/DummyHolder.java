@@ -13,51 +13,48 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 public class DummyHolder extends PsiFileImpl {
-  protected PsiElement myContext;
-  private CharTable myTable = null;
-  private Boolean myExplicitlyValid = null;
-  private Language myLanguage = FileTypes.PLAIN_TEXT.getLanguage();
-
-  private FileElement myFileElement = null;
+  protected final PsiElement myContext;
+  private final CharTable myTable;
+  private final Boolean myExplicitlyValid;
+  private final Language myLanguage;
+  private volatile FileElement myFileElement = null;
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
   }
 
   public DummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
-    this(manager, null, null, table);
-    myExplicitlyValid = Boolean.valueOf(validity);
+    this(manager, null, null, table, Boolean.valueOf(validity), FileTypes.PLAIN_TEXT.getLanguage());
   }
 
   public DummyHolder(@NotNull PsiManager manager, PsiElement context) {
-    super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
-    ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
-    myContext = context;
-    if (context != null) {
-      myLanguage = context.getLanguage();
-    }
+    this(manager, null, context, null);
   }
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    this(manager, context);
+    this(manager, contentElement, context, table, null, context == null ? FileTypes.PLAIN_TEXT.getLanguage() : context.getLanguage());
+  }
+
+  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table, Boolean validity, Language language) {
+    super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
+    ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
     myTable = table;
     if(contentElement != null) {
       TreeUtil.addChildren(getTreeElement(), contentElement);
       clearCaches();
     }
-  }
-
-  public DummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
-    this(manager, context);
-    myTable = table;
-  }
-
-  public DummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
-    this(manager, null, table);
+    myExplicitlyValid = validity;
     myLanguage = language;
   }
 
+  public DummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
+    this(manager, null, context, table);
+  }
+
+  public DummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
+    this(manager, null, null, table, null, language);
+  }
 
   public PsiElement getContext() {
     return myContext;
@@ -65,14 +62,14 @@ public class DummyHolder extends PsiFileImpl {
 
   public boolean isValid() {
     if(myExplicitlyValid != null) return myExplicitlyValid.booleanValue();
-    if (!super.isValid()) return false;
-    return !(myContext != null && !myContext.isValid());
+    return super.isValid() && !(myContext != null && !myContext.isValid());
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "DummyHolder";
   }
@@ -109,13 +106,9 @@ public class DummyHolder extends PsiFileImpl {
     return myLanguage;
   }
 
-  public void setLanguage(final Language language) {
-    myLanguage = language;
-  }
-
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiFileImpl clone() {
-    final PsiFileImpl psiFile = (PsiFileImpl)cloneImpl(myFileElement);
+    final PsiFileImpl psiFile = cloneImpl(myFileElement);
     final DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());
     myViewProvider = dummyHolderViewProvider;
     dummyHolderViewProvider.setDummyHolder((DummyHolder)psiFile);

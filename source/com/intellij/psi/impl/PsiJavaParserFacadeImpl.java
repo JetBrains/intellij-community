@@ -236,7 +236,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
           throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
         }
         PsiComment comment = (PsiComment)aChildren;
-        com.intellij.psi.impl.source.DummyHolderFactory.createHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), context);
+        DummyHolderFactory.createHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), context);
         return comment;
       }
     }

@@ -381,8 +381,7 @@ public class ChangeUtil {
   }
 
   public static TreeElement copyToElement(PsiElement original) {
-    final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), null);
-    holder.setLanguage(original.getLanguage());
+    final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), null, original.getLanguage());
     final FileElement holderElement = holder.getTreeElement();
     final TreeElement treeElement = generateTreeElement(original, holderElement.getCharTable(), original.getManager());
     //  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater

@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -18,33 +17,27 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
-    super(manager, contentElement, context);
-    setLanguage(StdLanguages.JAVA);
+    super(manager, contentElement, context, null, null, StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
-    super(manager, table, validity);
-    setLanguage(StdLanguages.JAVA);
+    super(manager, null, null, table, Boolean.valueOf(validity), StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context) {
-    super(manager, context);
-    setLanguage(StdLanguages.JAVA);
+    super(manager, null, context, null, null, StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    super(manager, contentElement, context, table);
-    setLanguage(StdLanguages.JAVA);
+    super(manager, contentElement, context, table, null, StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
-    super(manager, context, table);
-    setLanguage(StdLanguages.JAVA);
+    super(manager, null, context, table, null, StdLanguages.JAVA);
   }
 
-  public JavaDummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
-    super(manager, table, language);
-    setLanguage(StdLanguages.JAVA);
+  public JavaDummyHolder(@NotNull PsiManager manager, final CharTable table) {
+    super(manager, null, null, table, null, StdLanguages.JAVA);
   }
 
   public boolean importClass(PsiClass aClass) {
@@ -110,8 +103,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
 
   public boolean isInPackage(PsiPackage aPackage) {
     if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).isInPackage(myContext, aPackage);
-    if (aPackage == null) return true;
-    return "".equals(aPackage.getQualifiedName());
+    return aPackage == null || "".equals(aPackage.getQualifiedName());
   }
 
 

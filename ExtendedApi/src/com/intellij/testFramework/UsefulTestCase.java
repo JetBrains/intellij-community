@@ -151,29 +151,35 @@ public abstract class UsefulTestCase extends TestCase {
     }
     Set<Consumer<T>> checkerSet = new HashSet<Consumer<T>>(Arrays.asList(checkers));
     int i = 0;
+    Throwable lastError = null;
     for (final T actual : collection) {
       boolean flag = true;
       for (final Consumer<T> condition : checkerSet) {
-        if (accepts(condition, actual)) {
+        Throwable error = accepts(condition, actual);
+        if (error == null) {
           checkerSet.remove(condition);
           flag = false;
           break;
         }
+        else {
+          lastError = error;
+        }
       }
       if (flag) {
+        lastError.printStackTrace();
         fail("Incorrect element(" + i + "): " + actual);
       }
       i++;
     }
   }
 
-  private static <T> boolean accepts(final Consumer<T> condition, final T actual) {
+  private static <T> Throwable accepts(final Consumer<T> condition, final T actual) {
     try {
       condition.consume(actual);
-      return true;
+      return null;
     }
     catch (Throwable e) {
-      return false;
+      return e;
     }
   }
 

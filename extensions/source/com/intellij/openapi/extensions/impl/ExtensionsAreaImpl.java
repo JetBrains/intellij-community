@@ -126,16 +126,15 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     final PluginId pluginId = pluginDescriptor.getPluginId();
 
     String epName = extractEPName(extensionElement);
-    ExtensionComponentAdapter adapter;
-    String implClass;
     Class extensionClass = getExtensionPoint(epName).getExtensionClass();
-    implClass = extensionElement.getAttributeValue("implementation");
+    String implClass = extensionElement.getAttributeValue("implementation");
 
     if (extensionClass.isInterface() || Modifier.isAbstract(extensionClass.getModifiers())) {
       if (implClass == null) {
         throw new RuntimeException("Expected implementation for extension declaration (ep = " + epName + ")");
       }
     }
+    ExtensionComponentAdapter adapter;
     if (implClass != null) {
       adapter = new ExtensionComponentAdapter(implClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor, false);
     }
@@ -207,7 +206,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     if (getExtensionPointImpl(epName).unregisterComponentAdapter(adapter)) {
       MutablePicoContainer pluginContainer = internalGetPluginContainer();
       pluginContainer.unregisterComponent(adapter.getComponentKey());
-      if (pluginContainer.getComponentAdapters().size() == 0) {
+      if (pluginContainer.getComponentAdapters().isEmpty()) {
         disposePluginContainer(pluginName);
       }
     }

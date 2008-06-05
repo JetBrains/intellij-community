@@ -29,7 +29,7 @@ public class JavaDummyHolderFactory implements HolderFactory {
   }
 
   public DummyHolder createHolder(@NotNull final PsiManager manager, final CharTable table, final Language language) {
-    return new JavaDummyHolder(manager, table, language);
+    return new JavaDummyHolder(manager, table);
   }
 
   public DummyHolder createHolder(@NotNull final PsiManager manager, final CharTable table, final boolean validity) {

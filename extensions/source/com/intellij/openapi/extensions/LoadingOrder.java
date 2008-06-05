@@ -43,29 +43,34 @@ public class LoadingOrder {
   public static final LoadingOrder LAST = new LoadingOrder(LAST_STR);
 
   @NonNls private final String myName; // for debug only
-  private boolean myFirst;
-  private boolean myLast;
+  private final boolean myFirst;
+  private final boolean myLast;
   private final Set<String> myBefore = new HashSet<String>();
   private final Set<String> myAfter = new HashSet<String>();
 
   private LoadingOrder() {
     myName = "ANY";
+    myFirst = false;
+    myLast = false;
   }
 
   private LoadingOrder(@NonNls @NotNull String text) {
     myName = text;
+    boolean last = false;
+    boolean first = false;
     final String[] strings = text.split(",");
     for (final String string : strings) {
       String trimmed = string.trim();
-      if (trimmed.equalsIgnoreCase(FIRST_STR)) myFirst = true;
-      else if (trimmed.equalsIgnoreCase(LAST_STR)) myLast = true;
+      if (trimmed.equalsIgnoreCase(FIRST_STR)) first = true;
+      else if (trimmed.equalsIgnoreCase(LAST_STR)) last = true;
       else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR)) myBefore.add(trimmed.substring(BEFORE_STR.length()).trim());
       else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR_OLD)) myBefore.add(trimmed.substring(BEFORE_STR_OLD.length()).trim());
       else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR)) myAfter.add(trimmed.substring(AFTER_STR.length()).trim());
       else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR_OLD)) myAfter.add(trimmed.substring(AFTER_STR_OLD.length()).trim());
       else throw new AssertionError("Invalid specification: " + trimmed + "; should be one of FIRST, LAST, BEFORE <id> or AFTER <id>");
     }
-
+    myFirst = first;
+    myLast = last;
   }
 
   public String toString() {
@@ -87,8 +92,7 @@ public class LoadingOrder {
   }
 
   public int hashCode() {
-    int result;
-    result = (myFirst ? 1 : 0);
+    int result = myFirst ? 1 : 0;
     result = 31 * result + (myLast ? 1 : 0);
     result = 31 * result + myBefore.hashCode();
     result = 31 * result + myAfter.hashCode();
