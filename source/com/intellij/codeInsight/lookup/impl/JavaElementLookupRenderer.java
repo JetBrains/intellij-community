@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -19,7 +20,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   public boolean handlesItem(final Object element) {
     return element instanceof PsiClass || element instanceof PsiMember || element instanceof PsiVariable ||
            element instanceof PsiType || element instanceof PsiKeyword || element instanceof PsiExpression ||
-           element instanceof PsiTypeElement;
+           element instanceof PsiTypeElement || element instanceof BeanPropertyElement;
   }
 
   public void renderElement(final LookupItem item, final Object element, final LookupElementPresentation presentation) {
@@ -147,6 +148,9 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
               if (type != null){
                 text = type.getPresentableText();
               }
+            }
+            else if (element instanceof BeanPropertyElement) {
+              return getTypeText(((BeanPropertyElement) element).getMethod(), item);
             }
           }
         }
