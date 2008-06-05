@@ -176,7 +176,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   }
 
   private void updateVarargsEnabled() {
-    final boolean enabled = myVariableData[myVariableData.length - 1].type instanceof PsiArrayType;
+    final boolean enabled = myVariableData.length > 0 && myVariableData[myVariableData.length - 1].type instanceof PsiArrayType;
     if (myCreateInnerClassRb.isSelected()) {
       myCbMakeVarargs.setEnabled(enabled);
     } else {
