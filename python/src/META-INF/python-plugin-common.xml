@@ -8,9 +8,6 @@
 
   <application-components>
     <component>
-      <implementation-class>com.jetbrains.python.psi.impl.PyAppLevelRegistrar</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.jetbrains.python.PyInspectionToolProvider</implementation-class>
     </component>
   </application-components>
@@ -63,6 +60,8 @@
       <category>Python</category>
       <descriptionDirectoryName>PyDemorganIntention</descriptionDirectoryName>
     </intentionAction>
+
+    <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
   </extensions>
 
   <extensionPoints>
