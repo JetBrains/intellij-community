@@ -31,6 +31,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
     myName = name;
   }
 
+  @NotNull
   public PsiMethod getMethod() {
     return myMethod;
   }

@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -79,6 +80,9 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     }
     else if (element instanceof PsiPackage) {
       return generatePackageInfo((PsiPackage)element);
+    }
+    else if (element instanceof BeanPropertyElement) {
+      return generateMethodInfo(((BeanPropertyElement) element).getMethod());
     }
     return super.getQuickNavigateInfo(element);
   }
@@ -291,7 +295,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String generateMethodInfo(PsiMethod method) {
+  public static String generateMethodInfo(PsiMethod method) {
     StringBuffer buffer = new StringBuffer();
 
     PsiClass parentClass = method.getContainingClass();
@@ -518,6 +522,10 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
 
     //external documentation finder
+    return generateExternalJavadoc(element);
+  }
+
+  public static String generateExternalJavadoc(final PsiElement element) {
     final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
     JavaDocExternalFilter docFilter = new JavaDocExternalFilter(element.getProject());
     List<String> docURLs = getExternalJavaDocUrl(element);
