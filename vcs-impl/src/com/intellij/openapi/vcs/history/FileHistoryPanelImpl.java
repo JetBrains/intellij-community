@@ -66,6 +66,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -84,6 +88,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
 
   private final JEditorPane myComments;
+  private String myOriginalComment = "";
   private final DefaultActionGroup myPopupActions;
 
   private final Project myProject;
@@ -220,7 +225,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
-
   public FileHistoryPanelImpl(Project project,
                               FilePath filePath, final String repositoryPath, VcsHistorySession session,
                               VcsHistoryProvider provider,
@@ -242,6 +246,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myComments.setEditable(false);
     myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
     myComments.addHyperlinkListener(new BrowserHyperlinkListener());
+
+    replaceTransferable();
 
     myUpdateAlarm = new Alarm(session.allowAsyncRefresh() ? Alarm.ThreadToUse.SHARED_THREAD : Alarm.ThreadToUse.SWING_THREAD);
 
@@ -302,6 +308,70 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     init();
 
     chooseView();
+  }
+
+  private void replaceTransferable() {
+    final TransferHandler originalTransferHandler = myComments.getTransferHandler();
+
+    final TransferHandler newHandler = new TransferHandler("copy") {
+      @Override
+      public void exportAsDrag(final JComponent comp, final InputEvent e, final int action) {
+        originalTransferHandler.exportAsDrag(comp, e, action);
+      }
+
+      @Override
+      public void exportToClipboard(final JComponent comp, final Clipboard clip, final int action) throws IllegalStateException {
+        if ((action == COPY || action == MOVE)
+                && (getSourceActions(comp) & action) != 0) {
+
+            Transferable t = new TextTransferrable(myComments.getText(), myOriginalComment);
+            if (t != null) {
+                try {
+                    clip.setContents(t, null);
+                    exportDone(comp, t, action);
+                    return;
+                } catch (IllegalStateException ise) {
+                    exportDone(comp, t, NONE);
+                    throw ise;
+                }
+            }
+        }
+
+        exportDone(comp, null, NONE);
+      }
+
+      @Override
+      public boolean importData(final TransferSupport support) {
+        return originalTransferHandler.importData(support);
+      }
+
+      @Override
+      public boolean importData(final JComponent comp, final Transferable t) {
+        return originalTransferHandler.importData(comp, t);
+      }
+
+      @Override
+      public boolean canImport(final TransferSupport support) {
+        return originalTransferHandler.canImport(support);
+      }
+
+      @Override
+      public boolean canImport(final JComponent comp, final DataFlavor[] transferFlavors) {
+        return originalTransferHandler.canImport(comp, transferFlavors);
+      }
+
+      @Override
+      public int getSourceActions(final JComponent c) {
+        return originalTransferHandler.getSourceActions(c);
+      }
+
+      @Override
+      public Icon getVisualRepresentation(final Transferable t) {
+        return originalTransferHandler.getVisualRepresentation(t);
+      }
+    };
+
+    myComments.setTransferHandler(newHandler);
   }
 
   private static DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider) {
@@ -440,9 +510,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     List selection = getSelection();
     if (selection.size() != 1) {
       myComments.setText("");
+      myOriginalComment = "";
     }
     else {
       final String message = getFirstSelectedRevision().getCommitMessage();
+      myOriginalComment = message;
       @NonNls final String text = "<html><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, message) + "</body></html>";
       myComments.setText(text);
       myComments.setCaretPosition(0);
