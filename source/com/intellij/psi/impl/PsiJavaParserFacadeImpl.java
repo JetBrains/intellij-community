@@ -46,8 +46,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   public PsiAnnotation createAnnotationFromText(@NotNull String annotationText, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    CompositeElement annotationElement =
-    getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText, getLanguageLevel(context));
+    CompositeElement annotationElement = getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText, getLanguageLevel(context));
     if (annotationElement == null || annotationElement.getElementType() != JavaElementType.ANNOTATION) {
       throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
     }

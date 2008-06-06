@@ -100,18 +100,20 @@ public class SegmentArray {
     int start = 0;
     int end = mySegmentCount - 1;
 
-    while(start < end) {
-      int i = (start + end)/2;
-      if(offset < myStarts[i]) {
-        end = i-1;
-      } else if(offset >= myEnds[i]) {
-        start = i+1;
-      } else {
+    while (start < end) {
+      int i = (start + end) / 2;
+      if (offset < myStarts[i]) {
+        end = i - 1;
+      }
+      else if (offset >= myEnds[i]) {
+        start = i + 1;
+      }
+      else {
         return i;
       }
     }
 
-    assert offset >= myStarts[start] && offset < myEnds[start] : start;
+    assert myStarts[start] <= offset && offset < myEnds[start] : start;
 
     return start;
   }
