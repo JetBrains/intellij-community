@@ -21,9 +21,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.types.PyModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +61,13 @@ public class AddImportAction implements HintAction, QuestionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (PsiTreeUtil.getParentOfType(myReference.getElement(), PyImportStatement.class) != null) return false;
-    if (PsiTreeUtil.getParentOfType(myReference.getElement(), PyFromImportStatement.class) != null) return false;
+    final PsiElement element = myReference.getElement();
+    if (myReference instanceof PyReferenceExpression) {
+      final PyExpression qual = ((PyReferenceExpression)myReference).getQualifier();
+      if ((qual != null) && (qual.getType() instanceof PyModuleType)) return false; // don't propose to import unknown fields, etc  
+    }
+    if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class) != null) return false;
+    if (PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class) != null) return false;
     final String referenceName = getRefName();
     final PsiFile[] files = getRefFiles(referenceName);
     return files != null && files.length > 0;
