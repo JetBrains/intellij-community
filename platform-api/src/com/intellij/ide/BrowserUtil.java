@@ -163,7 +163,7 @@ public class BrowserUtil {
     }
     catch (NullPointerException e) {
       // todo: fix the possible problem on startup, see SCR #35066
-      command = getDefaultBrowserCommand(null);
+      command = getDefaultBrowserCommand();
       if (command == null) {
         showErrorMessage(IdeBundle.message("error.please.open.url.manually", url, ApplicationNamesInfo.getInstance().getProductName()),
                          IdeBundle.message("title.browser.path.not.found"));
@@ -185,7 +185,7 @@ public class BrowserUtil {
       return;
     }
     if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
-      launchBrowser(url, getDefaultBrowserCommand(name));
+      launchBrowser(url, getDefaultBrowserCommand());
     }
     else {
       launchBrowserUsingStandardWay(url);
@@ -196,7 +196,7 @@ public class BrowserUtil {
     launchBrowser(url, (String)null);
   }
 
-  @NonNls private static String[] getDefaultBrowserCommand(String name) {
+  @NonNls private static String[] getDefaultBrowserCommand() {
     if (SystemInfo.isWindows9x) {
       return new String[]{"command.com", "/c", "start"};
     }

@@ -49,4 +49,7 @@ public abstract class XDebuggerManager {
                                              @Nullable RunContentDescriptor contentToReuse,
                                              @NotNull XDebugProcessStarter processStarter);
 
+  @NotNull
+  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+                                             @NotNull XDebugProcessStarter starter);
 }

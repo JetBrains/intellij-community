@@ -43,8 +43,6 @@ public class XDebugSessionTab implements Disposable {
   private RunnerLayoutUi myUi;
   private RunContentDescriptor myRunContentDescriptor;
   private ExecutionConsole myConsole;
-  private ExecutionEnvironment myEnvironment;
-  private ProgramRunner myRunner;
   private XWatchesView myWatchesView;
 
   public XDebugSessionTab(@NotNull final Project project, @NotNull final String sessionName) {
@@ -128,12 +126,10 @@ public class XDebugSessionTab implements Disposable {
     return mySessionName;
   }
 
-  public RunContentDescriptor attachToSession(final @NotNull XDebugSession session, final @NotNull ProgramRunner runner,
-                                              final @NotNull ExecutionEnvironment env,
+  public RunContentDescriptor attachToSession(final @NotNull XDebugSession session, final @Nullable ProgramRunner runner,
+                                              final @Nullable  ExecutionEnvironment env,
                                               final @NotNull XDebugSessionData sessionData) {
-    myEnvironment = env;
-    myRunner = runner;
-    return initUI(session, sessionData);
+    return initUI(session, sessionData, env, runner);
   }
 
   @NotNull
@@ -152,7 +148,8 @@ public class XDebugSessionTab implements Disposable {
     return myWatchesView;
   }
 
-  private RunContentDescriptor initUI(final @NotNull XDebugSession session, final @NotNull XDebugSessionData sessionData) {
+  private RunContentDescriptor initUI(final @NotNull XDebugSession session, final @NotNull XDebugSessionData sessionData,
+                                      final @Nullable ExecutionEnvironment environment, final @Nullable ProgramRunner runner) {
     ExecutionResult executionResult = createExecutionResult(session);
     myConsole = executionResult.getExecutionConsole();
 
@@ -170,10 +167,12 @@ public class XDebugSessionTab implements Disposable {
 
     DefaultActionGroup group = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
-    RestartAction restarAction = new RestartAction(executor, myRunner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
-                                                   myRunContentDescriptor, myEnvironment);
-    group.add(restarAction);
-    restarAction.registerShortcut(myUi.getComponent());
+    if (runner != null && environment != null) {
+      RestartAction restarAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
+                                                     myRunContentDescriptor, environment);
+      group.add(restarAction);
+      restarAction.registerShortcut(myUi.getComponent());
+    }
 
     addActionToGroup(group, XDebuggerActions.RESUME);
     addActionToGroup(group, XDebuggerActions.PAUSE);

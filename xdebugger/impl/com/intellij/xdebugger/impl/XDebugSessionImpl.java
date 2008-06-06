@@ -52,10 +52,15 @@ public class XDebugSessionImpl implements XDebugSession {
   private ProgramRunner myRunner;
   private boolean myStopped;
 
-  public XDebugSessionImpl(@NotNull final ExecutionEnvironment env, @NotNull final ProgramRunner runner, XDebuggerManagerImpl debuggerManager) {
+  public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner, XDebuggerManagerImpl debuggerManager) {
+    this(env, runner, debuggerManager, env.getRunProfile().getName());
+  }
+
+  public XDebugSessionImpl(final @Nullable ExecutionEnvironment env, final @Nullable ProgramRunner runner, XDebuggerManagerImpl debuggerManager,
+                           final @NotNull String sessionName) {
     myEnvironment = env;
     myRunner = runner;
-    mySessionName = env.getRunProfile().getName();
+    mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
     myProject = debuggerManager.getProject();
   }
@@ -330,8 +335,8 @@ public class XDebugSessionImpl implements XDebugSession {
     String condition = breakpoint.getCondition();
     if (condition != null && evaluator != null) {
       LOG.debug("evaluating condition: " + condition);
-      boolean result = evaluator.evaluateCondition(condition);
-      LOG.debug("condition evaluates to " + result);
+      boolean result = evaluator.evaluateCondition(condition);        
+      LOG.debug("condition evaluates to " + result);                 
       if (!result) {
         return false;
       }

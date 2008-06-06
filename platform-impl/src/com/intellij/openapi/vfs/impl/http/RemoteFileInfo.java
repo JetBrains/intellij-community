@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -252,4 +253,18 @@ public class RemoteFileInfo {
     }
   }
 
+  public void setContent(final String content) {
+    try {
+      synchronized (myLock) {
+        if (myLocalFile == null) {
+          myLocalFile = myManager.getStorage().createLocalFile(myUrl);
+        }
+        FileUtil.writeToFile(myLocalFile, content.getBytes());
+      }
+      updateState(StdFileTypes.HTML);//todo[nik]
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+  }
 }

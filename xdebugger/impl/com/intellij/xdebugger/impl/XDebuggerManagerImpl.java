@@ -1,9 +1,8 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -28,10 +27,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * @author nik
@@ -113,11 +112,24 @@ public class XDebuggerManagerImpl extends XDebuggerManager
                                     @NotNull final ExecutionEnvironment env,
                                     @Nullable final RunContentDescriptor contentToReuse,
                                     @NotNull final XDebugProcessStarter processStarter) {
-    final RunProfile profile = env.getRunProfile();
-    final String sessionName = profile.getName();
+    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(env, runner, this));
+  }
 
-    XDebugSessionImpl session = new XDebugSessionImpl(env, runner, this);
+  @NotNull
+  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+                                    @NotNull XDebugProcessStarter starter) {
+    XDebugSession session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, null, this, sessionName));
+    RunContentDescriptor descriptor = session.getRunContentDescriptor();
+    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+    ProcessHandler handler = descriptor.getProcessHandler();
+    if (handler != null) {
+      handler.startNotify();
+    }
+    return session;
+  }
 
+  private XDebugSession startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
+                                     final XDebugSessionImpl session) {
     XDebugProcess process = processStarter.start(session);
 
     XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.remove(contentToReuse.getProcessHandler()) : null;
