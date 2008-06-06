@@ -180,6 +180,10 @@
               text="Re-import Maven projects" description="Re-import Maven projects into Idea project structure"
               icon="/actions/sync.png">
       </action>
+      <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.action.UpdateFoldersAction"
+              text="Update Folders" description="Generate sources and update project folders"
+              icon="/actions/sync.png">
+      </action>
       <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.action.DownloadArtifactsAction"
               text="Download artifacts" description="Download artifacts (sources, javadoc, plugins)"
               icon="/images/download.png">
@@ -215,6 +219,7 @@
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="Maven.Reimport"/>
+      <reference id="Maven.UpdateFolders"/>
       <reference id="Maven.DownloadArtifacts"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
@@ -228,6 +233,8 @@
     <group id="Maven.PomMenu" popup="true">
       <reference id="Maven.Run"/>
       <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="EditSource"/>
       <reference id="Maven.Ignore"/>

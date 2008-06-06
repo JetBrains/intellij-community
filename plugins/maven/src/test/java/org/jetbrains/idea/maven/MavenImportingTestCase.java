@@ -324,7 +324,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void generateSources() throws MavenException, CanceledException {
-    myMavenProjectsManager.generateSources();
+    myMavenProjectsManager.updateFolders();
   }
 
   protected void executeGoal(String relativePath, String goal) {

@@ -625,6 +625,23 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertExcludes("project", "target/xxx");
   }
 
+  public void testDoesNotExcludeSourcesUnderTargetDirWithProperties() throws Exception {
+    createProjectSubDirs("target/src", "target/xxx");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>${project.build.directory}/src</sourceDirectory>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertSources("project", "target/src");
+    assertExcludes("project", "target/xxx");
+  }
+
   public void testDoesNotExcludeFoldersWithSourcesUnderTargetDir() throws Exception {
     createStdProjectFolders();
     createProjectSubDirs("target/src/main",

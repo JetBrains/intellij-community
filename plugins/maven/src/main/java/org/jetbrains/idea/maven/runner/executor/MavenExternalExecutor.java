@@ -23,14 +23,13 @@ import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
-import org.apache.maven.project.MavenProject;
 
 import java.util.List;
 
@@ -45,14 +44,12 @@ public class MavenExternalExecutor extends MavenExecutor {
     super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"));
   }
 
-  public boolean execute(List<MavenProject> processedProjects, ProgressIndicator indicator) {
+  public boolean execute(List<MavenProject> processedProjects, final ProgressIndicator indicator) {
     displayProgress();
 
     try {
 
       myProcessHandler = new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreSettings, myRunnerSettings)) {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
         public void notifyTextAvailable(String text, Key outputType) {
           if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
             super.notifyTextAvailable(text, outputType);

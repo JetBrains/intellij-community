@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.runner;
 
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -109,7 +110,11 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
 
       myProcessedProjects = new ArrayList<MavenProject>();
       myExecutor = createExecutor(myRunnerParameters, myMavenCore.getState(), mySettings);
-      openToolWindow(myExecutor.createConsole(myProject));
+
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        openToolWindow(myExecutor.createConsole(myProject));
+      }
+      
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myExecutor.getCaption(), true) {
         public void run(@NotNull ProgressIndicator indicator) {
           try {

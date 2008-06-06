@@ -5,12 +5,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
-public class ReimportAction extends AnAction {
+public class UpdateFoldersAction extends AnAction {
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
-    MavenProjectsManager.getInstance(e.getData(PlatformDataKeys.PROJECT)).reimportAndResolve();
+    MavenProjectsManager.getInstance(e.getData(PlatformDataKeys.PROJECT)).updateFolders();
   }
 }
