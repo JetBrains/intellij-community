@@ -341,18 +341,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
 
       @Override
-      public boolean importData(final TransferSupport support) {
-        return originalTransferHandler.importData(support);
-      }
-
-      @Override
       public boolean importData(final JComponent comp, final Transferable t) {
         return originalTransferHandler.importData(comp, t);
-      }
-
-      @Override
-      public boolean canImport(final TransferSupport support) {
-        return originalTransferHandler.canImport(support);
       }
 
       @Override
