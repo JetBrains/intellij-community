@@ -72,19 +72,19 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private VirtualFilePointerFactory myVirtualFilePointerFactory = new VirtualFilePointerFactory() {
     public VirtualFilePointer create(VirtualFile file) {
-      final VirtualFilePointer pointer = myFilePointerManager.create(file, getFileListener());
+      final VirtualFilePointer pointer = myFilePointerManager.create(file, myVirtualFilePointerListener);
       annotatePointer(pointer);
       return pointer;
     }
 
     public VirtualFilePointer create(String url) {
-      final VirtualFilePointer pointer = myFilePointerManager.create(url, getFileListener());
+      final VirtualFilePointer pointer = myFilePointerManager.create(url, myVirtualFilePointerListener);
       annotatePointer(pointer);
       return pointer;
     }
 
     public VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer) {
-      final VirtualFilePointer pointer = myFilePointerManager.duplicate(virtualFilePointer, getFileListener());
+      final VirtualFilePointer pointer = myFilePointerManager.duplicate(virtualFilePointer, myVirtualFilePointerListener);
       annotatePointer(pointer);
       return pointer;
     }
@@ -447,9 +447,7 @@ public class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     assertValidRearrangement(newEntries);
     myOrderEntries.clear();
-    for (OrderEntry newEntry : newEntries) {
-      myOrderEntries.add(newEntry);
-    }
+    myOrderEntries.addAll(Arrays.asList(newEntries));
   }
 
   private void assertValidRearrangement(OrderEntry[] newEntries) {
@@ -692,12 +690,6 @@ public class RootModelImpl implements ModifiableRootModel {
     return myModuleRootManager.getModule();
   }
 
-  private VirtualFilePointerListener getFileListener() {
-    return myVirtualFilePointerListener;
-  }
-
-
-
   public String getExplodedDirectoryUrl() {
     if (myExplodedDirectoryPointer == null) {
       return null;
@@ -816,9 +808,9 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
     if (orderEntry1 instanceof ModuleOrderEntry) {
-      LOG.assertTrue(orderEntry2 instanceof ModuleOrderEntryImpl);
-      final String name1 = ((ModuleOrderEntryImpl)orderEntry1).getModuleName();
-      final String name2 = ((ModuleOrderEntryImpl)orderEntry2).getModuleName();
+      LOG.assertTrue(orderEntry2 instanceof ModuleOrderEntry);
+      final String name1 = ((ModuleOrderEntry)orderEntry1).getModuleName();
+      final String name2 = ((ModuleOrderEntry)orderEntry2).getModuleName();
       return Comparing.equal(name1, name2);
     }
 
@@ -1062,7 +1054,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Nullable
-  protected String getOutputPathValue(Element element, String tag) {
+  private static String getOutputPathValue(Element element, String tag) {
     final Element outputPathChild = element.getChild(tag);
     if (outputPathChild != null) {
       return outputPathChild.getAttributeValue(ATTRIBUTE_URL);

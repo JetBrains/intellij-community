@@ -300,15 +300,12 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       }
     }
 
-    if (myExcludeOutput != mySource.myExcludeOutput) return true;
-
-    return false;
+    return myExcludeOutput != mySource.myExcludeOutput;
   }
 
   private static boolean vptrEqual(VirtualFilePointer p1, VirtualFilePointer p2) {
     if (p1 == null && p2 == null) return true;
-    if (p1 == null || p2 == null) return false;
-    return Comparing.equal(p1.getUrl(), p2.getUrl());
+    return p1 != null && p2 != null && Comparing.equal(p1.getUrl(), p2.getUrl());
   }
 
   public void dispose() {

@@ -7,16 +7,14 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ProjectExtension;
-import com.intellij.openapi.roots.WatchedRootsProvider;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +35,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     myProject = project;
   }
 
-  private void readExternal(final Element element) throws InvalidDataException {
+  private void readExternal(final Element element) {
     final Element outputPathChild = element.getChild(OUTPUT_TAG);
     if (outputPathChild != null) {
       String outputPath = outputPathChild.getAttributeValue(URL);
@@ -45,7 +43,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     }
   }
 
-  private void writeExternal(final Element element) throws WriteExternalException {
+  private void writeExternal(final Element element) {
     if (myCompilerOutput != null) {
       final Element pathElement = new Element(OUTPUT_TAG);
       pathElement.setAttribute(URL, myCompilerOutput.getUrl());
@@ -70,12 +68,17 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   public void setCompilerOutputPointer(VirtualFilePointer pointer) {
+    if (myCompilerOutput != null) {
+      VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject)).getVirtualFilePointerListener();
+      VirtualFilePointerManager.getInstance().kill(myCompilerOutput, listener);
+    }
     myCompilerOutput = pointer;
   }
 
   public void setCompilerOutputUrl(String compilerOutputUrl) {
-    myCompilerOutput = VirtualFilePointerManager.getInstance().create(compilerOutputUrl,
-                                                                      ProjectRootManagerImpl.getInstanceImpl(myProject).getVirtualFilePointerListener());
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance()
+        .create(compilerOutputUrl, ProjectRootManagerImpl.getInstanceImpl(myProject).getVirtualFilePointerListener());
+    setCompilerOutputPointer(pointer);
     final LocalFileSystem.WatchRequest watchRequest =
       LocalFileSystem.getInstance().addRootToWatch(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl), true);
     if (myCompilerOutputWatchRequest != null) {
@@ -108,7 +111,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   private static CompilerProjectExtensionImpl getImpl(final Project project) {
-    return ((CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project));
+    return (CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project);
   }
 
   public static class MyProjectExtension extends ProjectExtension {

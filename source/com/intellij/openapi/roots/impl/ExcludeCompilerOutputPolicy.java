@@ -52,7 +52,8 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
     final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension.isCompilerOutputPathInherited()) {
       result.add(CompilerProjectExtension.getInstance(myProject).getCompilerOutputPointer());
-    } else {
+    }
+    else {
       if (!extension.isExcludeOutput()) return VirtualFilePointer.EMPTY_ARRAY;
       final VirtualFilePointer outputPath = extension.getCompilerOutputPointer();
       if (outputPath != null) result.add(outputPath);
@@ -62,7 +63,7 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
     return result.isEmpty() ? VirtualFilePointer.EMPTY_ARRAY : result.toArray(new VirtualFilePointer[result.size()]);
   }
 
-  private boolean isEqualWithFileOrUrl(VirtualFile f, VirtualFile fileToCompareWith, String url) {
+  private static boolean isEqualWithFileOrUrl(VirtualFile f, VirtualFile fileToCompareWith, String url) {
     if (fileToCompareWith != null) {
       if (fileToCompareWith == f) return true;
     }
