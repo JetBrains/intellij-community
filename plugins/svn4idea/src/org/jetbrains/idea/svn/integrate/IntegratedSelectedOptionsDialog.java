@@ -153,7 +153,10 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   private void onOkToAdd(final File file) {
-    ((DefaultListModel)myWorkingCopiesList.getModel()).addElement(new WorkingCopyInfo(file.getAbsolutePath(), underProject(file)));
+    final WorkingCopyInfo info = new WorkingCopyInfo(file.getAbsolutePath(), underProject(file));
+    final DefaultListModel model = (DefaultListModel) myWorkingCopiesList.getModel();
+    model.addElement(info);
+    myWorkingCopiesList.setSelectedValue(info, true);
     SvnBranchMapperManager.getInstance().put(mySelectedBranchUrl, file.getAbsolutePath());
   }
 

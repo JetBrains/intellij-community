@@ -91,10 +91,6 @@ public class PointMerger extends Merger {
     myCopyClient.doCopy(SVNURL.parseURIEncoded(afterUrl), ((SvnRevisionNumber) after.getRevisionNumber()).getRevision(), afterPath);
   }
 
-  public void addWarnings(final WarningsHolder holder) {
-    // nothing special to add
-  }
-
   private static class ChangesComparator implements Comparator<Change> {
     private final static ChangesComparator ourInstance = new ChangesComparator();
 

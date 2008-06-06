@@ -53,7 +53,10 @@ public class UpdateEventHandler implements ISVNEventHandler {
     if (event.getAction() == SVNEventAction.UPDATE_ADD ||
         event.getAction() == SVNEventAction.ADD) {
       myText2 = SvnBundle.message("progress.text2.added", displayPath);
-      if (myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
+      if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+        addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
+        myText2 = SvnBundle.message("progress.text2.conflicted", displayPath);
+      } else if (myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
         myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().remove(path);
         if (myUpdatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.REPLACED_ID) == null) {
           myUpdatedFiles.registerGroup(createFileGroup(SvnBundle.message("status.group.name.replaced"),

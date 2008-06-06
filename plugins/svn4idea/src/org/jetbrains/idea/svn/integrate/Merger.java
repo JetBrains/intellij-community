@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -72,47 +73,51 @@ public class Merger {
   }
 
   public void mergeNext() throws SVNException {
-    try {
-      doMerge();
-      myCommitMessage.append(myLatestProcessed.getComment()).append('\n');
-    } finally {
-      if (myProgressIndicator != null) {
-        myProgressIndicator.setFraction((double) (myCount + 1) / (double) myChangeLists.size());
-      }
-      ++ myCount;
+    myLatestProcessed = myChangeLists.get(myCount);
+    ++ myCount;
+
+    if (myProgressIndicator != null) {
+      myProgressIndicator.setText2(SvnBundle.message("action.Subversion.integrate.changes.progress.integrating.details.text",
+                                                     myLatestProcessed.getNumber()));
     }
+    doMerge();
+    myCommitMessage.append(myLatestProcessed.getComment()).append('\n');
   }
 
   protected void doMerge() throws SVNException {
-    myLatestProcessed = myChangeLists.get(myCount);
     myDiffClient.doMerge(myCurrentBranchUrl, SVNRevision.UNDEFINED, SVNRevision.create(myLatestProcessed.getNumber() - 1),
                          SVNRevision.create(myLatestProcessed.getNumber()), myTarget, true, true, false, myDryRun);
   }
 
   @NonNls
   private List<CommittedChangeList> getTail() {
-    return ((myCount + 1) < myChangeLists.size()) ?
-           new ArrayList<CommittedChangeList>(myChangeLists.subList(myCount + 1, myChangeLists.size())) :
+    return (myCount < myChangeLists.size()) ?
+           new ArrayList<CommittedChangeList>(myChangeLists.subList(myCount, myChangeLists.size())) :
            Collections.<CommittedChangeList>emptyList();
   }
 
-  public void addWarnings(final WarningsHolder holder) {
-    final List<CommittedChangeList> tail = getTail();
-
-    if (myLatestProcessed != null) {
-      holder.addWarning(SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber()));
+  public void getInfo(final NotNullFunction<String, Boolean> holder, final boolean getLatest) {
+    if (getLatest && (myLatestProcessed != null)) {
+      holder.fun(SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber(),
+                                   myLatestProcessed.getComment().replace('\n', '|')));
     }
 
+    getSkipped(holder);
+  }
+
+  private void getSkipped(final NotNullFunction<String, Boolean> holder) {
+    final List<CommittedChangeList> tail = getTail();
     if (! tail.isEmpty()) {
-      final StringBuilder sb = new StringBuilder(SvnBundle.message("action.Subversion.integrate.changes.warning.skipped.lists.text"));
+      final StringBuilder sb = new StringBuilder();
       for (int i = 0; i < tail.size(); i++) {
         CommittedChangeList list = tail.get(i);
         if (i != 0) {
           sb.append(',');
         }
-        sb.append(list.getNumber());
+        sb.append(list.getNumber()).append(" (").append(list.getComment().replace('\n', '|')).append(')');
       }
-      holder.addWarning(sb.toString());
+
+      holder.fun(SvnBundle.message("action.Subversion.integrate.changes.warning.skipped.lists.text", sb.toString()));
     }
   }
 
