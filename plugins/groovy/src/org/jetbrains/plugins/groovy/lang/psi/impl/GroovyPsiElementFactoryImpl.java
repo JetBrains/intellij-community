@@ -441,9 +441,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     builder.append(name);
     builder.append("(");
 
-    assert paramNames.length == paramTypes.length;
-    for (int i = 0; i < paramTypes.length; i++) {
-      String paramType = paramTypes[i];
+    for (int i = 0; i < paramNames.length; i++) {
+      String paramType = paramTypes == null ? "" : paramTypes[i];
 
       if (i > 0) builder.append(", ");
 
