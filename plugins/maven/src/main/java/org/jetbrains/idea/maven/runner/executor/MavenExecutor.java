@@ -25,8 +25,10 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
+import org.apache.maven.project.MavenProject;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 public abstract class MavenExecutor extends ConsoleAdapter {
 
@@ -106,5 +108,5 @@ public abstract class MavenExecutor extends ConsoleAdapter {
     }
   }
 
-  public abstract boolean execute();
+  public abstract boolean execute(List<MavenProject> processedProjects, ProgressIndicator indicator);
 }

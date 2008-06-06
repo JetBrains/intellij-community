@@ -30,6 +30,9 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
+import org.apache.maven.project.MavenProject;
+
+import java.util.List;
 
 public class MavenExternalExecutor extends MavenExecutor {
 
@@ -42,7 +45,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"));
   }
 
-  public boolean execute() {
+  public boolean execute(List<MavenProject> processedProjects, ProgressIndicator indicator) {
     displayProgress();
 
     try {

@@ -1,24 +1,15 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderAdapter;
-import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Plugin;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 
 import java.io.File;
 import java.util.*;
@@ -61,11 +52,6 @@ public class MavenArtifactDownloader {
     LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
   }
 
-  private void generateSources(Project project, List<MavenProjectModel> mavenProjects, boolean demand) {
-    if (isEnabled(mySettings.getGenerateSources(), demand)) {
-      generateSources(project, createGenerateCommand(mavenProjects));
-    }
-  }
 
   private boolean isEnabled(MavenArtifactSettings.UPDATE_MODE level, boolean demand) {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
@@ -153,41 +139,5 @@ public class MavenArtifactDownloader {
         MavenEmbedderAdapter.verifyPlugin(eachPlugin, eachProject.getMavenProject(), myEmbedder);
       }
     }
-  }
-
-  private static void generateSources(Project project, List<MavenRunnerParameters> commands) {
-    final MavenCore core = project.getComponent(MavenCore.class);
-    final MavenRunner runner = project.getComponent(MavenRunner.class);
-
-    final MavenCoreSettings coreSettings = core.getState().clone();
-    coreSettings.setFailureBehavior(MavenExecutionRequest.REACTOR_FAIL_NEVER);
-    coreSettings.setNonRecursive(false);
-
-    MavenRunnerSettings runnerSettings = runner.getState().clone();
-    runnerSettings.setRunMavenInBackground(false);
-
-    runner.runBatch(commands, coreSettings, runnerSettings, ProjectBundle.message("maven.import.generating.sources"));
-  }
-
-  @NonNls private final static String[] generateGoals =
-      {"clean", "generate-sources", "generate-resources", "generate-test-sources", "generate-test-resources"};
-
-  private static List<MavenRunnerParameters> createGenerateCommand(List<MavenProjectModel> projects) {
-    final List<MavenRunnerParameters> commands = new ArrayList<MavenRunnerParameters>();
-    final List<String> goals = Arrays.asList(generateGoals);
-
-    final LinkedHashSet<String> modulePaths = new LinkedHashSet<String>();
-    for (MavenProjectModel each : projects) {
-      modulePaths.addAll(each.getModulePaths());
-    }
-
-    for (MavenProjectModel each : projects) {
-      VirtualFile file = each.getFile();
-      // skip modules
-      if (modulePaths.contains(file.getPath())) continue;
-
-      commands.add(new MavenRunnerParameters(file.getPath(), goals, each.getActiveProfiles()));
-    }
-    return commands;
   }
 }

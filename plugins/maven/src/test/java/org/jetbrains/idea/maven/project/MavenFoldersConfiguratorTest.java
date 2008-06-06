@@ -4,16 +4,14 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
-  @Override
-  protected boolean shouldResolve() {
-    return true;
-  }
-
   public void testUpdatingExternallyCreatedFolders() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -92,39 +90,21 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
   }
 
   public void testDoesNotExcludeRegisteredSources() throws Exception {
-    new File(myProjectRoot.getPath(), "target/src").mkdirs();
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.mojo</groupId>" +
-                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>someId</id>" +
-                  "          <phase>generate-sources</phase>" +
-                  "          <goals>" +
-                  "            <goal>add-source</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <source>${basedir}/target/src</source>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+                  "<version>1</version>");
 
     new File(myProjectRoot.getPath(), "target/foo").mkdirs();
+    File sourceDir = new File(myProjectRoot.getPath(), "target/src");
+    sourceDir.mkdirs();
+
+    RootModelAdapter adapter = new RootModelAdapter(getModule("project"));
+    adapter.addSourceFolder(sourceDir.getPath(), false);
+    adapter.getRootModel().commit();
 
     updateFolders();
 
+    assertSources("project", "target/src");
     assertExcludes("project", "target/foo");
   }
 
@@ -142,7 +122,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    final int[] count = new int[] {0};
+    final int[] count = new int[]{0};
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
@@ -156,7 +136,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     assertEquals(0, count[0]);
   }
-  
+
   public void testCommitOnlyOnceForAllModules() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -180,7 +160,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     importProject();
 
-    final int[] count = new int[] {0};
+    final int[] count = new int[]{0};
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
@@ -200,6 +180,10 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
   }
 
   private void updateFolders() throws MavenException {
-    MavenFoldersConfigurator.updateProjectExcludedFolders(myProject);
+    List<MavenProject> mavenProjects = new ArrayList<MavenProject>();
+    for (MavenProjectModel each : myMavenTree.getProjects()) {
+      mavenProjects.add(each.getMavenProject());
+    }
+    MavenFoldersConfigurator.updateProjectFolders(myProject, mavenProjects);
   }
 }

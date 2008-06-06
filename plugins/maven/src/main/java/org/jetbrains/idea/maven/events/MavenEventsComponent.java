@@ -19,6 +19,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     myState = state;
   }
 
-  public boolean execute(@NotNull Collection<MavenTask> mavenTasks) {
+  public boolean execute(@NotNull Collection<MavenTask> mavenTasks, ProgressIndicator indicator) {
     final List<MavenRunnerParameters> parametersList = new ArrayList<MavenRunnerParameters>();
     for (MavenTask mavenTask : mavenTasks) {
       final MavenRunnerParameters runnerParameters = mavenTask.createBuildParameters(myProjectsManager);
@@ -96,7 +97,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
       }
       parametersList.add(runnerParameters);
     }
-    return myRunner.runBatch(parametersList, null, null, EventsBundle.message("maven.event.executing"));
+    return myRunner.runBatch(parametersList, null, null, EventsBundle.message("maven.event.executing"), indicator);
   }
 
   public String getActionId(@Nullable String pomPath, @Nullable String goal) {
@@ -212,12 +213,12 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return MavenEventsComponent.this.execute(getState().beforeCompile);
+        return MavenEventsComponent.this.execute(getState().beforeCompile, context.getProgressIndicator());
       }
     });
     compilerManager.addAfterTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return MavenEventsComponent.this.execute(getState().afterCompile);
+        return MavenEventsComponent.this.execute(getState().afterCompile, context.getProgressIndicator());
       }
     });
 

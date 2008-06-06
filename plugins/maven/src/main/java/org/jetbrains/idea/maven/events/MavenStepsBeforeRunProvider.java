@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -17,7 +19,7 @@ import java.util.Arrays;
 public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   private final Project myProject;
 
-  public MavenStepsBeforeRunProvider( Project project) {
+  public MavenStepsBeforeRunProvider(Project project) {
     myProject = project;
   }
 
@@ -34,15 +36,17 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public boolean executeTask(final DataContext context, final RunConfiguration configuration) {
-    final boolean [] result = new boolean[]{false};
+    final boolean[] result = new boolean[]{false};
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
+        new Task.Modal(PlatformDataKeys.PROJECT.getData(context),
+                       EventsBundle.message("execute.before.launch.steps.title"),
+                       true) {
+          public void run(@NotNull ProgressIndicator indicator) {
             final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
-            result [0] = task != null && getEventsHandler().execute(Arrays.asList(task));
+            result[0] = task != null && getEventsHandler().execute(Arrays.asList(task), indicator);
           }
-        }, EventsBundle.message("execute.before.launch.steps.title"), true, PlatformDataKeys.PROJECT.getData(context));
+        };
       }
     }, ModalityState.NON_MODAL);
     return result[0];
@@ -51,7 +55,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
     final MavenTask mavenTask = getState().getAssignedTask(from.getType(), from.getName());
     if (mavenTask != null) {
-      getState().assignTask(to.getType(), to.getName(), mavenTask.clone()); 
+      getState().assignTask(to.getType(), to.getName(), mavenTask.clone());
       // no need to update shortcut description actually, as the presentation of mavenTask should not change
     }
   }

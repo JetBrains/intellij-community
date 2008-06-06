@@ -1,9 +1,9 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -109,7 +109,8 @@ public class MavenProjectsTree {
       writeLock();
       try {
         if (!isNew) myMavenIdToProject.remove(project.getMavenId());
-      } finally {
+      }
+      finally {
         writeUnlock();
 
       }
@@ -119,7 +120,8 @@ public class MavenProjectsTree {
       writeLock();
       try {
         myMavenIdToProject.put(project.getMavenId(), project);
-      } finally {
+      }
+      finally {
         writeUnlock();
       }
     }
@@ -193,7 +195,8 @@ public class MavenProjectsTree {
       else {
         myRootProjects.add(project);
       }
-    } finally {
+    }
+    finally {
       writeUnlock();
     }
   }
@@ -238,7 +241,8 @@ public class MavenProjectsTree {
       }
       myMavenIdToProject.remove(project.getMavenId());
       myModuleMapping.remove(project);
-    } finally {
+    }
+    finally {
       writeUnlock();
     }
 
@@ -280,7 +284,8 @@ public class MavenProjectsTree {
     readLock();
     try {
       return new ArrayList<MavenProjectModel>(myRootProjects);
-    } finally {
+    }
+    finally {
       readUnlock();
     }
   }
@@ -309,7 +314,8 @@ public class MavenProjectsTree {
     readLock();
     try {
       return myMavenIdToProject.get(new MavenId(artifact));
-    } finally {
+    }
+    finally {
       readUnlock();
     }
   }
@@ -325,7 +331,8 @@ public class MavenProjectsTree {
       return modules == null
              ? Collections.<MavenProjectModel>emptyList()
              : new ArrayList<MavenProjectModel>(modules);
-    } finally {
+    }
+    finally {
       readUnlock();
     }
   }
@@ -339,7 +346,8 @@ public class MavenProjectsTree {
         myModuleMapping.put(aggregator, modules);
       }
       modules.add(module);
-    } finally {
+    }
+    finally {
       writeUnlock();
     }
   }
@@ -350,7 +358,8 @@ public class MavenProjectsTree {
       List<MavenProjectModel> modules = myModuleMapping.get(aggregator);
       if (modules == null) return;
       modules.remove(module);
-    } finally {
+    }
+    finally {
       writeUnlock();
     }
   }
@@ -372,13 +381,6 @@ public class MavenProjectsTree {
         each.resolve(embedder);
       }
 
-      for (MavenProjectModel each : projects) {
-        p.checkCanceled();
-        p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
-        p.setText2("");
-        each.generateSources(embedder);
-      }
-
       // We have to refresh all the resolved artifacts manually in order to
       // update all the VirtualFilePointers. It is not enough to call
       // VirtualFileManager.refresh() since the newly created files will be only
@@ -389,6 +391,23 @@ public class MavenProjectsTree {
       refreshResolvedArtifacts(allArtifacts);
 
       doDownload(artifactSettings, p, embedder, projects, false);
+    }
+    finally {
+      MavenEmbedderFactory.releaseEmbedder(embedder);
+    }
+  }
+
+  public void generateSources(MavenCoreSettings coreSettings,
+                              MavenProcess p) throws CanceledException {
+    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
+
+    try {
+      for (MavenProjectModel each : getProjects()) {
+        p.checkCanceled();
+        p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
+        p.setText2("");
+        each.generateSources(embedder);
+      }
     }
     finally {
       MavenEmbedderFactory.releaseEmbedder(embedder);

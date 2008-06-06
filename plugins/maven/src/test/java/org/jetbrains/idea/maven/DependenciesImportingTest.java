@@ -736,8 +736,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     if (ignore()) return;
 
-    MavenProjectModel root = myProjectTree.getRootProjects().get(0);
-    List<MavenProjectModel> modules = myProjectTree.getModules(root);
+    MavenProjectModel root = myMavenTree.getRootProjects().get(0);
+    List<MavenProjectModel> modules = myMavenTree.getModules(root);
 
     assertOrderedElementsAreEqual(root.getProblems());
     assertOrderedElementsAreEqual(modules.get(0).getProblems(),

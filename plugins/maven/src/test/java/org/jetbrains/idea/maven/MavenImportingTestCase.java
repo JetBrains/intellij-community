@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenProjectsTree myProjectTree;
+  protected MavenProjectsTree myMavenTree;
   protected MavenProjectsManager myMavenProjectsManager;
   private List<String> myProfilesList;
 
@@ -308,28 +310,21 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private void doImportProjects(List<VirtualFile> files, String... profiles) throws MavenException {
-    try {
-      myProfilesList = Arrays.asList(profiles);
+    myProfilesList = Arrays.asList(profiles);
 
-      myMavenProjectsManager.doInitComponent(true);
-      myMavenProjectsManager.setManagedFiles(files);
-      myMavenProjectsManager.setActiveProfiles(myProfilesList);
-      myMavenProjectsManager.reimport();
-      myProjectTree = myMavenProjectsManager.getMavenProjectTree();
-
-      if (shouldResolve()) resolveProject();
-    }
-    catch (CanceledException e) {
-      throw new RuntimeException(e);
-    }
+    myMavenProjectsManager.doInitComponent(true);
+    myMavenProjectsManager.setManagedFiles(files);
+    myMavenProjectsManager.setActiveProfiles(myProfilesList);
+    myMavenProjectsManager.reimport();
+    myMavenTree = myMavenProjectsManager.getMavenProjectTree();
   }
 
   protected void resolveProject() throws MavenException, CanceledException {
     myMavenProjectsManager.resolve();
   }
 
-  protected boolean shouldResolve() {
-    return false;
+  protected void generateSources() throws MavenException, CanceledException {
+    myMavenProjectsManager.generateSources();
   }
 
   protected void executeGoal(String relativePath, String goal) {
@@ -339,7 +334,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     MavenRunnerSettings rs = new MavenRunnerSettings();
     MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreSettings(), rs);
 
-    e.execute();
+    e.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator());
   }
 
   protected void removeFromLocalRepository(String relativePath) throws IOException {

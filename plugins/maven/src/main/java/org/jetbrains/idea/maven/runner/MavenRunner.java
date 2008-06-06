@@ -6,13 +6,14 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,35 +21,35 @@ import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.ErrorHandler;
-import org.jetbrains.idea.maven.project.MavenException;
-import org.jetbrains.idea.maven.project.MavenFoldersConfigurator;
-import org.jetbrains.idea.maven.project.MavenImportToolWindow;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExternalExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenRunner extends DummyProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
   @NonNls private static final String OUTPUT_TOOL_WINDOW_ID = "Maven Runner Output";
 
-  private final Project project;
-  private final MavenCore mavenCore;
-
-  private MavenRunnerParameters myRunnerParameters;
+  private final Project myProject;
+  private final MavenCore myMavenCore;
 
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
+  private MavenRunnerParameters myRunnerParameters;
 
+  private MavenExecutor myExecutor;
   private MavenRunnerOutputPanel myMavenOutputWindowPanel;
-  private MavenExecutor executor;
+
+  private ArrayList<MavenProject> myProcessedProjects;
 
   public MavenRunner(final Project project, MavenCore mavenCore) {
     super("MavenRunner");
 
-    this.project = project;
-    this.mavenCore = mavenCore;
+    this.myProject = project;
+    this.myMavenCore = mavenCore;
 
     mavenCore.addConfigurableFactory(new MavenCore.ConfigurableFactory() {
       public Configurable createConfigurable() {
@@ -70,11 +71,11 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   }
 
   public MavenExecutor getExecutor() {
-    return executor;
+    return myExecutor;
   }
 
   public boolean isToolWindowOpen() {
-    return ToolWindowManager.getInstance(project).getToolWindow(OUTPUT_TOOL_WINDOW_ID) != null;
+    return ToolWindowManager.getInstance(myProject).getToolWindow(OUTPUT_TOOL_WINDOW_ID) != null;
   }
 
   void openToolWindow(final ConsoleView consoleView) {
@@ -83,7 +84,7 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     }
 
     if (!isToolWindowOpen()) {
-      ToolWindowManager.getInstance(project)
+      ToolWindowManager.getInstance(myProject)
           .registerToolWindow(OUTPUT_TOOL_WINDOW_ID, myMavenOutputWindowPanel.getRootComponent(), ToolWindowAnchor.BOTTOM)
           .show(null);
     }
@@ -93,12 +94,12 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
 
   public void closeToolWindow() {
     if (isToolWindowOpen()) {
-      ToolWindowManager.getInstance(project).unregisterToolWindow(OUTPUT_TOOL_WINDOW_ID);
+      ToolWindowManager.getInstance(myProject).unregisterToolWindow(OUTPUT_TOOL_WINDOW_ID);
     }
   }
 
   public boolean isRunning() {
-    return executor != null && !executor.isStopped();
+    return myExecutor != null && !myExecutor.isStopped();
   }
 
   public void run(final MavenRunnerParameters parameters) {
@@ -106,24 +107,22 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      executor = createExecutor(myRunnerParameters, mavenCore.getState(), mySettings);
-      openToolWindow(executor.createConsole(project));
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, executor.getCaption(), true) {
+      myProcessedProjects = new ArrayList<MavenProject>();
+      myExecutor = createExecutor(myRunnerParameters, myMavenCore.getState(), mySettings);
+      openToolWindow(myExecutor.createConsole(myProject));
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myExecutor.getCaption(), true) {
         public void run(@NotNull ProgressIndicator indicator) {
-          executor.execute();
+          try {
+            myExecutor.execute(myProcessedProjects, indicator);
+          }
+          catch (ProcessCanceledException e) {
+          }
+          onRunComplete();
         }
 
         @Nullable
         public NotificationInfo getNotificationInfo() {
           return new NotificationInfo("Maven", "Maven Task Finished", "");
-        }
-
-        public void onSuccess() {
-          onRunComplete();
-        }
-
-        public void onCancel() {
-          onRunComplete();
         }
 
         public boolean shouldStartInBackground() {
@@ -140,19 +139,13 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
       });
     }
     catch (Exception e) {
-      ErrorHandler.showError(project, e, false);
+      ErrorHandler.showError(myProject, e, false);
     }
   }
 
   private void onRunComplete() {
-    try {
-      executor = null;
-      MavenFoldersConfigurator.updateProjectExcludedFolders(project);
-      VirtualFileManager.getInstance().refresh(false);
-    }
-    catch (MavenException e) {
-      new MavenImportToolWindow(project, RunnerBundle.message("maven.running")).displayErrors(e);
-    }
+    myExecutor = null;
+    updateProjectFolders(myProcessedProjects);
   }
 
   public MavenRunnerParameters getLatestBuildParameters() {
@@ -160,21 +153,21 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   }
 
   public void cancelRun() {
-    if (executor != null) {
-      executor.cancel();
+    if (myExecutor != null) {
+      myExecutor.cancel();
     }
   }
 
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenCoreSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action) {
-    final MavenCoreSettings effectiveCoreSettings = coreSettings != null ? coreSettings : mavenCore.getState();
+                          @Nullable final String action,
+                          ProgressIndicator indicator) {
+    final MavenCoreSettings effectiveCoreSettings = coreSettings != null ? coreSettings : myMavenCore.getState();
     final MavenRunnerSettings effectiveRunnerSettings = runnerSettings != null ? runnerSettings : getState();
 
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
     int count = 0;
+    ArrayList<MavenProject> processedProjects = new ArrayList<MavenProject>();
     for (MavenRunnerParameters command : commands) {
       if (indicator != null) {
         indicator.setFraction(((double)count++) / commands.size());
@@ -182,10 +175,13 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
 
       MavenExecutor executor = createExecutor(command, effectiveCoreSettings, effectiveRunnerSettings);
       executor.setAction(action);
-      if (!executor.execute()) {
+      if (!executor.execute(processedProjects, indicator)) {
+        updateProjectFolders(processedProjects);
         return false;
       }
     }
+
+    updateProjectFolders(processedProjects);
     return true;
   }
 
@@ -198,5 +194,9 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     else {
       return new MavenExternalExecutor(taskParameters, coreSettings, runnerSettings);
     }
+  }
+
+  private void updateProjectFolders(ArrayList<MavenProject> processedProjects) {
+    MavenProjectsManager.getInstance(myProject).updateProjectFolders(processedProjects);
   }
 }

@@ -1,8 +1,9 @@
-package org.jetbrains.idea.maven.runner.execution;
+package org.jetbrains.idea.maven.runner;
 
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.idea.maven.runner.execution.MavenRunConfiguration;
 
 import java.util.Arrays;
 

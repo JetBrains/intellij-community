@@ -4,35 +4,52 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.model.Resource;
-import org.jetbrains.idea.maven.core.util.Path;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MavenFoldersConfigurator {
   private MavenProjectModel myMavenProject;
   private MavenImporterSettings myPrefs;
   private RootModelAdapter myModel;
 
-  public static void updateProjectExcludedFolders(final Project p) throws MavenException {
-    final MavenProjectsManager manager = MavenProjectsManager.getInstance(p);
+  public static void updateProjectFolders(final Project project, final List<MavenProject> updatedProjects) {
+    final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     final MavenImporterSettings settings = manager.getImporterSettings();
+
+    final Map<VirtualFile, MavenProject> fileToProjectMapping = new HashMap<VirtualFile, MavenProject>();
+
+    for (MavenProject each : updatedProjects) {
+      VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(each.getFile());
+      if (f != null) fileToProjectMapping.put(f, each);
+    }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
-        for (Module m : ModuleManager.getInstance(p).getModules()) {
-          MavenProjectModel project = manager.findProject(m);
-          if (project == null) return;
+        for (Module each : ModuleManager.getInstance(project).getModules()) {
+          MavenProjectModel project = manager.findProject(each);
+          if (project == null) continue;
 
-          RootModelAdapter a = new RootModelAdapter(m);
-          new MavenFoldersConfigurator(project, settings, a).configFoldersUnderTargetDir();
+          MavenProject mavenProject = fileToProjectMapping.get(project.getFile());
+          if (mavenProject != null)  {
+            project.updateFolders(mavenProject);
+          }
+
+          RootModelAdapter a = new RootModelAdapter(each);
+          new MavenFoldersConfigurator(project, settings, a).config();
+
           ModifiableRootModel model = a.getRootModel();
           if (model.isChanged()) {
             rootModels.add(model);
@@ -41,9 +58,10 @@ public class MavenFoldersConfigurator {
             model.dispose();
           }
         }
+
         if (!rootModels.isEmpty()) {
           ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-          ProjectRootManager.getInstance(p).multiCommit(modelsArray);
+          ProjectRootManager.getInstance(project).multiCommit(modelsArray);
         }
       }
     });
@@ -99,8 +117,8 @@ public class MavenFoldersConfigurator {
         addAllSubDirsAsSources(f);
       }
       else {
-        if (hasRegisteredSourceSubfolder(f)) continue;
-        if (isAlreadyExcluded(f)) continue;
+        if (myModel.hasRegisteredSourceSubfolder(f)) continue;
+        if (myModel.isAlreadyExcluded(f)) continue;
         myModel.addExcludedFolder(f.getPath());
       }
     }
@@ -109,25 +127,9 @@ public class MavenFoldersConfigurator {
   private void addAllSubDirsAsSources(File dir) {
     for (File f : getChildren(dir)) {
       if (!f.isDirectory()) continue;
-      if (hasRegisteredSourceSubfolder(f)) continue;
+      if (myModel.hasRegisteredSourceSubfolder(f)) continue;
       myModel.addSourceFolder(f.getPath(), false);
     }
-  }
-
-  private boolean hasRegisteredSourceSubfolder(File f) {
-    String path = new Path(f.getPath()).getPath();
-    for (Path existing : myModel.getSourceFolders()) {
-      if (existing.getPath().startsWith(path)) return true;
-    }
-    return false;
-  }
-
-  private boolean isAlreadyExcluded(File f) {
-    String path = new Path(f.getPath()).getPath();
-    for (Path existing : myModel.getExcludedFolders()) {
-      if (path.startsWith(existing.getPath())) return true;
-    }
-    return false;
   }
 
   private File[] getChildren(File dir) {

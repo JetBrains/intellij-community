@@ -334,7 +334,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     assertTrue(junitDir.exists());
 
-    MavenProject parent = myProjectTree.getRootProjects().get(0).getMavenProject().getParent();
+    MavenProject parent = myMavenTree.getRootProjects().get(0).getMavenProject().getParent();
     assertEquals(new File(junitDir, "junit-4.0.pom"), parent.getFile());
   }
 

@@ -6,9 +6,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.core.util.Url;
@@ -17,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class RootModelAdapter {
   private final ModifiableRootModel myRootModel;
@@ -33,11 +30,7 @@ public class RootModelAdapter {
     configure();
   }
 
-  public void initContentRoots(MavenProjectModel p) {
-    for (ContentEntry e : myRootModel.getContentEntries()) {
-      myRootModel.removeContentEntry(e);
-    }
-
+  private void initContentRoots(MavenProjectModel p) {
     findOrCreateContentRoot(toUrl(p.getFile().getParent().getPath()));
   }
 
@@ -69,40 +62,57 @@ public class RootModelAdapter {
     if (!exists(path)) return;
 
     Url url = toUrl(path);
+    removeRegisteredAncestorFolders(url.getUrl());
     findOrCreateContentRoot(url).addSourceFolder(url.getUrl(), testSource);
+  }
+
+
+  private void removeRegisteredAncestorFolders(String url) {
+    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
+      for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
+        if (isAncestor(eachFolder.getUrl(), url)) {
+          eachEntry.removeSourceFolder(eachFolder);
+        }
+      }
+      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
+        if (isAncestor(eachFolder.getUrl(), url)) {
+          eachEntry.removeExcludeFolder(eachFolder);
+        }
+      }
+    }
+  }
+
+  public boolean hasRegisteredSourceSubfolder(File f) {
+    String url = toUrl(f.getPath()).getUrl();
+    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
+      for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
+        if (isAncestor(url, eachFolder.getUrl())) return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isAlreadyExcluded(File f) {
+    String url = toUrl(f.getPath()).getUrl();
+    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
+      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
+        if (isAncestor(eachFolder.getUrl(), url)) return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isAncestor(String ancestor, String child) {
+    return ancestor.equals(child) || child.startsWith(ancestor + "/");
   }
 
   private boolean exists(String path) {
     return new File(new Path(path).getPath()).exists();
   }
 
-  public Set<Path> getSourceFolders() {
-    Set<Path> result = new HashSet<Path>();
-    for (ContentEntry entry : myRootModel.getContentEntries()) {
-      for (SourceFolder f : entry.getSourceFolders()) {
-        result.add(fromUrl(f.getUrl()));
-      }
-    }
-    return result;
-  }
-
   public void addExcludedFolder(String path) {
     Url url = toUrl(path);
     findOrCreateContentRoot(url).addExcludeFolder(url.getUrl());
-  }
-
-  public Set<Path> getExcludedFolders() {
-    Set<Path> result = new HashSet<Path>();
-    for (ContentEntry entry : myRootModel.getContentEntries()) {
-      for (ExcludeFolder f : entry.getExcludeFolders()) {
-        result.add(fromUrl(f.getUrl()));
-      }
-    }
-    return result;
-  }
-
-  private Path fromUrl(String output) {
-    return new Path(VirtualFileManager.extractPath(output));
   }
 
   public void useProjectOutput() {
