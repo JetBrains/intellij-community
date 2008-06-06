@@ -122,7 +122,9 @@ public class SaveAndSyncHandler implements ApplicationComponent {
       LOG.debug("enter: synchronize()");
     }
 
-    refreshOpenFiles();
+    if (canSyncOrSave()) {
+      refreshOpenFiles();
+    }
 
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       if (LOG.isDebugEnabled()) {
