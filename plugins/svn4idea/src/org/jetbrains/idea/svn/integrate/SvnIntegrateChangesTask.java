@@ -198,7 +198,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
     ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
       public void run() {
-        CommitChangeListDialog.commitPaths(myProject, files, null, null);
+        CommitChangeListDialog.commitPaths(myProject, files, null, null, myMerger.getComment());
         prepareAndShowResults();
       }
     });
@@ -226,7 +226,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     if (! clb.getChanges().isEmpty()) {
       CommitChangeListDialog.commitAlienChanges(myProject, clb.getChanges(), myVcs,
-                                                SvnBundle.message("action.Subversion.integrate.changes.alien.commit.changelist.title"));
+              SvnBundle.message("action.Subversion.integrate.changes.alien.commit.changelist.title"), myMerger.getComment());
     }
   }
 

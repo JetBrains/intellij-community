@@ -31,6 +31,7 @@ public class PointMerger extends Merger {
     myVcs = vcs;
     mySelectedChanges = selectedChanges;
     Collections.sort(mySelectedChanges, ChangesComparator.getInstance());
+    myLatestProcessed = selectedChangeList;
   }
 
   public boolean hasNext() {

@@ -33,6 +33,8 @@ public class Merger {
 
   protected final SVNURL myCurrentBranchUrl;
 
+  private StringBuilder myCommitMessage;
+
   public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target,
                 final boolean dryRun, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
     myCurrentBranchUrl = currentBranchUrl;
@@ -49,6 +51,8 @@ public class Merger {
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
     myDiffClient.setEventHandler(handler);
+
+    myCommitMessage = new StringBuilder();
   }
 
   private static class ByNumberChangeListComparator implements Comparator<CommittedChangeList>{
@@ -70,6 +74,7 @@ public class Merger {
   public void mergeNext() throws SVNException {
     try {
       doMerge();
+      myCommitMessage.append(myLatestProcessed.getComment()).append('\n');
     } finally {
       if (myProgressIndicator != null) {
         myProgressIndicator.setFraction((double) (myCount + 1) / (double) myChangeLists.size());
@@ -109,5 +114,9 @@ public class Merger {
       }
       holder.addWarning(sb.toString());
     }
+  }
+
+  public String getComment() {
+    return myCommitMessage.toString();
   }
 }
