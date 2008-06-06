@@ -88,7 +88,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return (T)findChildByClass(getClass());
   }
 
-  public final PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     final PsiElement firstChildNode = ObjectUtils.assertNotNull(getFirstChild());
     final PsiElement firstInIdentifier = getClass().isInstance(firstChildNode) ? ObjectUtils.assertNotNull(firstChildNode.getNextSibling()).getNextSibling() : firstChildNode;
