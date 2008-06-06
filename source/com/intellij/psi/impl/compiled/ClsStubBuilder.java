@@ -3,10 +3,12 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -75,10 +77,11 @@ public class ClsStubBuilder {
     private final VirtualFile myVFile;
     private PsiModifierListStub myModlist;
     private PsiClassStub myResult;
+    private LanguageLevel myLanguageLevel;
     private static final String[] EMPTY_STRINGS = new String[0];
     @NonNls private static final String SYNTHETIC_CLINIT_METHOD = "<clinit>";
     @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
-
+    private JavaLexer myLexer;
 
     private MyClassVisitor(final VirtualFile vFile, final StubElement parent, final int access) {
       myVFile = vFile;
@@ -111,7 +114,10 @@ public class ClsStubBuilder {
 
       myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
-      ((PsiClassStubImpl)myResult).setLanguageLevel(convertFromVersion(version));
+      myLanguageLevel = convertFromVersion(version);
+      myLexer = new JavaLexer(myLanguageLevel);
+
+      ((PsiClassStubImpl)myResult).setLanguageLevel(myLanguageLevel);
       myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(flags));
 
       CharacterIterator signatureIterator = signature != null ? new StringCharacterIterator(signature) : null;
@@ -145,16 +151,19 @@ public class ClsStubBuilder {
       String[] interfacesArray = convertedInterfaces.toArray(new String[convertedInterfaces.size()]);
       if (isInterface) {
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, EMPTY_STRINGS, PsiReferenceList.Role.IMPLEMENTS_LIST);
+        new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, EMPTY_STRINGS,
+                                          PsiReferenceList.Role.IMPLEMENTS_LIST);
       }
       else {
         if (convertedSuper != null && !"java.lang.Object".equals(convertedSuper)) {
-          new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[] {convertedSuper}, PsiReferenceList.Role.EXTENDS_LIST);
+          new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[]{convertedSuper},
+                                            PsiReferenceList.Role.EXTENDS_LIST);
         }
         else {
           new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, EMPTY_STRINGS, PsiReferenceList.Role.EXTENDS_LIST);
         }
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, interfacesArray, PsiReferenceList.Role.IMPLEMENTS_LIST);
+        new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, interfacesArray,
+                                          PsiReferenceList.Role.IMPLEMENTS_LIST);
       }
     }
 
@@ -258,6 +267,7 @@ public class ClsStubBuilder {
     }
 
     public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
+      if ((access & Opcodes.ACC_SYNTHETIC) != 0) return;
       if (!isCorrectName(innerName)) return;
 
       if (innerName != null && outerName != null && getClassName(outerName).equals(myResult.getQualifiedName())) {
@@ -277,11 +287,17 @@ public class ClsStubBuilder {
       }
     }
 
-    private static boolean isCorrectName(String name) {
-      return name != null && StringUtil.isJavaIdentifier(name);
+    private boolean isCorrectName(String name) {
+      if (name == null) return false;
+
+      myLexer.start(name, 0, name.length(), 0);
+      if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
+      myLexer.advance();
+      return myLexer.getTokenType() == null;
     }
 
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
+      if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
       if (!isCorrectName(name)) return null;
 
       final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
@@ -356,7 +372,8 @@ public class ClsStubBuilder {
       }
       stub.setReturnType(TypeInfo.fromString(returnType));
 
-      boolean nonStaticInnerClassConstructor = isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+      boolean nonStaticInnerClassConstructor =
+          isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
