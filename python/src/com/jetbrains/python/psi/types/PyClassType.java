@@ -6,17 +6,21 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyResolveUtil;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
 
 /**
  * @author yole
  */
 public class PyClassType implements PyType {
-  private PyClass myClass;
 
-  public PyClassType(@NotNull final PyClass aClass) {
-    myClass = aClass;
+  protected PyClass myClass;
+  
+  public PyClassType(final PyClass source) {
+    myClass = source;
   }
 
   public PyClass getPyClass() {
@@ -26,7 +30,10 @@ public class PyClassType implements PyType {
   @Nullable
   public PsiElement resolveMember(final String name) {
     if (myClass == null) return null;
-    final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
+    PyResolveUtil.ResolveProcessor processor = new PyResolveUtil.ResolveProcessor(name);
+    myClass.processDeclarations(processor, ResolveState.initial(), null, myClass); // our members are strictly within us.
+    final PsiElement resolveResult = processor.getResult();
+    //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
     if (resolveResult != null) {
       return resolveResult;
     }
@@ -50,4 +57,16 @@ public class PyClassType implements PyType {
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     return processor.getResult();
   }
+  
+  @NotNull
+  public Set<String> getPossibleInstanceMembers() {
+    Set<String> ret = new HashSet<String>();
+    if (myClass != null) {
+      PyClassType otype = PyBuiltinCache.getInstance(myClass.getProject()).getObjectType();
+      ret.addAll(otype.getPossibleInstanceMembers());
+    }
+    // TODO: add our own ideas here, e.g. from methods other than constructor 
+    return Collections.unmodifiableSet(ret); 
+  }
+  
 }

@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,8 +93,6 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
 
   @Nullable
   public PyType getType() {
-    PyClass the_class = PyBuiltinCache.getInstance(getProject()).getListClass();
-    if (the_class == null) return null;
-    else return new PyClassType(the_class);
+    return PyBuiltinCache.getInstance(getProject()).getListType();
   }
 }

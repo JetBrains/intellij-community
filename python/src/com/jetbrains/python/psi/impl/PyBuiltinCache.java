@@ -8,7 +8,11 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
 
 /**
  * @author yole
@@ -36,15 +40,40 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  public PyClass getListClass() {
+  public PyClass getClass(String name) {
     PyFile builtinsFile = getBuiltinsFile();
     if (builtinsFile != null) {
       for(PsiElement element: builtinsFile.getChildren()) {
-        if (element instanceof PyClass && ((PyClass) element).getName().equals("list")) {
+        if (element instanceof PyClass && ((PyClass) element).getName().equals(name)) {
           return (PyClass) element;
         }
       }
     }
     return null;
   }
+
+  protected Map<String,PyClassType> myTypeCache = new HashMap<String,PyClassType>();
+  
+  /**
+  @return 
+  */
+  @NotNull
+  protected PyClassType _getObjectType(String name) {
+    PyClassType val = myTypeCache.get(name);
+    if (val == null) {
+      PyClass cls = getClass(name);
+      val = new PyObjectType(cls);
+      myTypeCache.put(name, val);
+    }
+    return val;
+  }
+  
+  public PyClassType getObjectType() {
+    return _getObjectType("object");
+  }
+  
+  public PyClassType getListType() {
+    return _getObjectType("list");
+  }
+  
 }

@@ -31,6 +31,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +40,9 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyFileImpl extends PsiFileBase implements PyFile {
+public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
+  protected PyClassType myType;
+
   public PyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PythonLanguage.getInstance());
   }
@@ -213,5 +217,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       });
     }
     return result;
+  }
+
+  public PyType getType() {
+    if (myType == null) {
+      PyClass the_class = PyBuiltinCache.getInstance(getProject()).getClass("object"); // really 'module', but it's nowhere to import from
+      if (the_class != null) myType = new PyClassType(the_class);
+    }
+    return myType;
   }
 }
