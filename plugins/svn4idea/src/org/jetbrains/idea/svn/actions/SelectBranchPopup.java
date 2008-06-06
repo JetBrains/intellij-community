@@ -122,7 +122,7 @@ public class SelectBranchPopup {
       if (CONFIGURE_MESSAGE.equals(selectedValue)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            BranchConfigurationDialog.configureBranches(myProject, myVcsRoot);
+            BranchConfigurationDialog.configureBranches(myProject, myVcsRoot, true);
           }
         });
       }

@@ -141,7 +141,14 @@ public class BranchConfigurationDialog extends DialogWrapper {
   }
 
   public static void configureBranches(final Project project, final VirtualFile file) {
-    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    configureBranches(project, file, false);
+  }
+
+  public static void configureBranches(final Project project, final VirtualFile file, final boolean isRoot) {
+    final VirtualFile vcsRoot = (isRoot) ? file : ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    if (vcsRoot == null) {
+      return;
+    }
     final String rootUrl;
     try {
       rootUrl = SvnVcs.getInstance(project).createWCClient().doInfo(new File(file.getPath()), SVNRevision.WORKING).

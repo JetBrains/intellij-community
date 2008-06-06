@@ -44,6 +44,6 @@ public class ConfigureBranchesAction extends AnAction {
       return;
     }
     final SvnChangeList svnList = (SvnChangeList) cls[0];
-    BranchConfigurationDialog.configureBranches(project, svnList.getVcsRoot());
+    BranchConfigurationDialog.configureBranches(project, svnList.getVcsRoot(), true);
   }
 }
