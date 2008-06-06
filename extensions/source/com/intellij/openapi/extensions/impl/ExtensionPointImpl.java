@@ -140,17 +140,19 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @NotNull
   public T[] getExtensions() {
     T[] result = myExtensionsArray;
+    List<T> extensions = myExtensions;
     if (result == null) {
       synchronized (this) {
         result = myExtensionsArray;
         if (result == null) {
           processAdapters();
-          myExtensionsArray = result = myExtensions.toArray((T[])Array.newInstance(getExtensionClass(), myExtensions.size()));
+          extensions = myExtensions;
+          myExtensionsArray = result = extensions.toArray((T[])Array.newInstance(getExtensionClass(), myExtensions.size()));
         }
       }
     }
     for (int i = 1; i < result.length; i++) {
-      assert result[i] != result[i - 1] : "Result: "+ Arrays.asList(result)+"; myExtensions: "+myExtensions+"; getExtensionClass()="+getExtensionClass()+"; size="+myExtensions.size()+";"+result.length;
+      assert result[i] != result[i - 1] : "Result: "+ Arrays.asList(result)+"; myExtensions: "+extensions+"; getExtensionClass()="+getExtensionClass()+"; size="+extensions.size()+";"+result.length;
     }
     return result;
   }
