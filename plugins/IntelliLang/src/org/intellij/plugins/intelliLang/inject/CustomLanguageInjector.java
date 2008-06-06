@@ -422,36 +422,32 @@ public final class CustomLanguageInjector implements ProjectComponent {
               if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
             }
             registrar.startInjecting(language);
-            try {
-              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-                final PsiLanguageInjectionHost host = trinity.first;
-                final TextRange textRange = trinity.third;
-                final InjectedLanguage injectedLanguage = trinity.second;
-                ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
-                if (injectedLanguage.isDynamic()) {
-                  // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
-                  // useful cases may break. This system is far from perfect still...
-                  final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
-                  final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
-                  adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
+            for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+              final PsiLanguageInjectionHost host = trinity.first;
+              final TextRange textRange = trinity.third;
+              final InjectedLanguage injectedLanguage = trinity.second;
+              ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
+              if (injectedLanguage.isDynamic()) {
+                // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
+                // useful cases may break. This system is far from perfect still...
+                final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
+                final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
+                adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
 
-                  addPlaceSafe(registrar, language, host, textRange, prefix.toString(), suffix.toString());
-                }
-                else {
-                  addPlaceSafe(registrar, language, host, textRange, injectedLanguage.getPrefix(), injectedLanguage.getSuffix());
-                }
+                addPlaceSafe(registrar, language, host, textRange, prefix.toString(), suffix.toString());
+              }
+              else {
+                addPlaceSafe(registrar, language, host, textRange, injectedLanguage.getPrefix(), injectedLanguage.getSuffix());
               }
             }
-            finally {
-              try {
-                registrar.doneInjecting();
-              }
-              catch (AssertionError e) {
-                logError(language, host, null, e);
-              }
-              catch (Exception e) {
-                logError(language, host, null, e);
-              }
+            try {
+              registrar.doneInjecting();
+            }
+            catch (AssertionError e) {
+              logError(language, host, null, e);
+            }
+            catch (Exception e) {
+              logError(language, host, null, e);
             }
           }
           return true;
