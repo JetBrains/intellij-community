@@ -262,8 +262,15 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     public void canceled() {
       if (myPopup.getListStep() == this && !myDisposed) {
         // Root canceled. Create new popup. This one cannot be reused.
-        myPopup = JBPopupFactory.getInstance().createListPopup(this);
+        recreateMyPopup();
       }
+    }
+    
+    private void recreateMyPopup() {
+      if (myPopup != null) {
+        myPopup.dispose();
+      }
+      myPopup = JBPopupFactory.getInstance().createListPopup(this);
     }
 
     public int getDefaultOptionIndex() { return 0; }
@@ -406,7 +413,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       return true;
     }
     if (!myPopupShown) {
-      myPopup = JBPopupFactory.getInstance().createListPopup(step);
+      step.recreateMyPopup();
       return true;
     }
     return false;
@@ -498,7 +505,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     });
 
     myComponentHint = new MyComponentHint(this);
-    myPopup = JBPopupFactory.getInstance().createListPopup(new IntentionListStep(intentions, errorFixes, inspectionFixes));
+    IntentionListStep step = new IntentionListStep(intentions, errorFixes, inspectionFixes);
+    step.recreateMyPopup();
     Disposer.register(this, myPopup);
   }
 

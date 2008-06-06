@@ -35,7 +35,7 @@ public final class CommandProcessor implements Runnable {
    * commands with BlockFocusEventsCmd - UnbockFocusEventsCmd. It's required to
    * prevent focus handling of events which is caused by the commands to be executed.
    */
-  public final void execute(final java.util.List commandList, Condition expired) {
+  public final void execute(final List<FinalizableCommand> commandList, Condition expired) {
     synchronized (myLock) {
       final boolean isBusy = myCommandCount > 0;
 
@@ -57,8 +57,8 @@ public final class CommandProcessor implements Runnable {
 
       final Condition bulkExpire = myCommandToExpire.get(bulk);
 
-      if (bulk.myList.size() > 0) {
-        final FinalizableCommand command = (FinalizableCommand)bulk.myList.remove(0);
+      if (!bulk.myList.isEmpty()) {
+        final FinalizableCommand command = bulk.myList.remove(0);
         myCommandCount--;
 
         final Condition expire = command.getExpired() != null ? command.getExpired() : bulkExpire;
@@ -83,11 +83,12 @@ public final class CommandProcessor implements Runnable {
 
   @Nullable
   private Bulk getNextCommandBulk() {
-    while (myCommandList.size() > 0) {
+    while (!myCommandList.isEmpty()) {
       final Bulk candidate = myCommandList.get(0);
-      if (candidate.myList.size() > 0) {
+      if (!candidate.myList.isEmpty()) {
         return candidate;
-      } else {
+      }
+      else {
         myCommandList.remove(0);
         if (!myCommandList.contains(candidate)) {
           myCommandToExpire.remove(candidate);
@@ -98,10 +99,10 @@ public final class CommandProcessor implements Runnable {
     return null;
   }
 
-  private class Bulk {
-    List myList;
+  private static class Bulk {
+    List<FinalizableCommand> myList;
 
-    private Bulk(final List list) {
+    private Bulk(final List<FinalizableCommand> list) {
       myList = list;
     }
   }
