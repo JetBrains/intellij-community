@@ -138,8 +138,12 @@ public class UpdatedFilesReverseSide {
   }
 
   public boolean containErrors() {
+    return containErrors(myFiles);
+  }
+
+  public static boolean containErrors(final UpdatedFiles files) {
     for (String groupId : ourStoppingGroups) {
-      final FileGroup group = myGroupHolder.get(groupId);
+      final FileGroup group = files.getGroupById(groupId);
       if ((group != null) && (! group.isEmpty())) {
         return true;
       }
