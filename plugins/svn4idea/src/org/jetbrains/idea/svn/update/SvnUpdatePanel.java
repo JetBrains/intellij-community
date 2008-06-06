@@ -30,6 +30,15 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
   public SvnUpdatePanel(SvnVcs vcs, Collection<FilePath> roots) {
     super(vcs);
     init(roots);
+
+    boolean descend = false;
+    for (FilePath root : roots) {
+      if (root.isDirectory()) {
+        descend = true;
+        break;  
+      }
+    }
+    myRecursiveBox.setVisible(descend);
   }
 
   protected JPanel getRootsPanel() {
