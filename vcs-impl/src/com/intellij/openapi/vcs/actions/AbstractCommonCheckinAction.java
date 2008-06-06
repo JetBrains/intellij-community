@@ -76,10 +76,10 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       if (changes != null && changes.length > 0) {
         Collection<Change> changeCollection = new ArrayList<Change>();
         Collections.addAll(changeCollection, changes);
-        CommitChangeListDialog.commitChanges(project, changeCollection, initialSelection, getExecutor(project));
+        CommitChangeListDialog.commitChanges(project, changeCollection, initialSelection, getExecutor(project), null);
       }
       else {
-        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project));
+        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
       }
     }
   }

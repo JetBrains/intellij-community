@@ -50,6 +50,6 @@ public class CommitAction extends AnAction {
     if (list == null) return;
 
     CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), list,
-                                         ChangeListManager.getInstance(project).getRegisteredExecutors(), true);
+                                         ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
   }
 }

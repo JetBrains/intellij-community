@@ -73,70 +73,51 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myIsAlien;
 
   private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
-                             final List<CommitExecutor> executors, boolean showVcsCommit) {
+                             final List<CommitExecutor> executors, boolean showVcsCommit, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final LocalChangeList defaultList = manager.getDefaultChangeList();
     final ArrayList<LocalChangeList> changeLists = new ArrayList<LocalChangeList>(manager.getChangeLists());
-    new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList, changeLists, null, false).show();
+    new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList, changeLists, null, false, comment).show();
   }
 
   public static void commitPaths(final Project project, Collection<FilePath> paths, final ChangeList initialSelection,
-                                 @Nullable final CommitExecutor executor) {
+                                 @Nullable final CommitExecutor executor, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final Collection<Change> changes = new HashSet<Change>();
     for (FilePath path : paths) {
       changes.addAll(manager.getChangesIn(path));
     }
 
-    commitChanges(project, changes, initialSelection, executor);
+    commitChanges(project, changes, initialSelection, executor, comment);
   }
 
   public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
-                                   final CommitExecutor executor) {
+                                   final CommitExecutor executor, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     if (executor == null) {
-      commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true);
+      commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true, comment);
     }
     else {
-      commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false);
+      commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false, comment);
     }
   }
-
-  /*
-  public static void commitChanges(final Project project, final Collection<Change> changes, final CommitExecutor executor) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
-
-    if (changes.isEmpty()) {
-      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
-                                 VcsBundle.message("commit.dialog.no.changes.detected.title"));
-      return;
-    }
-
-    Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
-    for (Change change : changes) {
-      lists.add(manager.getChangeList(change));
-    }
-
-    commit(project, new ArrayList<LocalChangeList>(lists), new ArrayList<Change>(changes), executor);
-  }
-  */
 
   public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
-                                   final List<CommitExecutor> executors, final boolean showVcsCommit) {
+                                   final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
     if (changes.isEmpty()) {
       Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
                                  VcsBundle.message("commit.dialog.no.changes.detected.title"));
       return;
     }
 
-    commit(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit);
+    commit(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit, comment);
   }
 
   public static void commitAlienChanges(final Project project, final List<Change> changes, final AbstractVcs vcs,
-                                        final String changelistName) {
+                                        final String changelistName, final String comment) {
     final LocalChangeList lcl = new AlienLocalChangeList(changes, changelistName);
     new CommitChangeListDialog(project, changes, null, null, true, AlienLocalChangeList.DEFAULT_ALIEN, Collections.singletonList(lcl), vcs,
-                               true).show();
+                               true, comment).show();
   }
 
   private CommitChangeListDialog(final Project project,
@@ -144,7 +125,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  final ChangeList initialSelection,
                                  final List<CommitExecutor> executors,
                                  final boolean showVcsCommit, final LocalChangeList defaultChangeList,
-                                 final List<LocalChangeList> changeLists, final AbstractVcs singleVcs, final boolean isAlien) {
+                                 final List<LocalChangeList> changeLists, final AbstractVcs singleVcs, final boolean isAlien,
+                                 final String comment) {
     super(project, true);
     myProject = project;
     myExecutors = executors;
@@ -188,15 +170,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     });
 
     myCommitMessageArea = new CommitMessage();
-
-    setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
     myCommitMessageArea.init();
 
-    updateComment();
+    setCommitMessage((comment != null) ? comment : VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
+    if (comment == null) {
+      updateComment();
 
-    String messageFromVcs = getInitialMessageFromVcs();
-    if (messageFromVcs != null) {
-      myCommitMessageArea.setText(messageFromVcs);      
+      String messageFromVcs = getInitialMessageFromVcs();
+      if (messageFromVcs != null) {
+        myCommitMessageArea.setText(messageFromVcs);
+      }
     }
 
     myActionName = VcsBundle.message("commit.dialog.title");
