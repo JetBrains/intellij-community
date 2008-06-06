@@ -463,7 +463,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       final List<PsiFile> files = viewProvider.getAllFiles();
       boolean commitNecessary = false;
       for (PsiFile file : files) {
-        if (file == null || (file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null)) continue;
+        if (file == null || file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null) continue;
         final TextBlock textBlock = getTextBlock(document, file);
         if (textBlock.isLocked()) continue;
 
@@ -535,6 +535,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     error += "*********************************************" + "\n";
     error += "Psi Text tail:(" + (fileText.length - i) + ")\n";// + new String(fileText, i, Math.min(i + 300, fileText.length) - i) + "\n";
     error += "*********************************************" + "\n";
+
+    if (document instanceof DocumentWindow) {
+      error += "doc: '" + document.getText() + "'\n";
+      error += "psi: '" +  psiFile.getText() + "'\n";
+    }
     LOG.error(error);
     //document.replaceString(0, documentLength, psiFile.getText());
     return false;
