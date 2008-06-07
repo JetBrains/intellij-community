@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 @SuppressWarnings({"OverlyComplexMethod",
@@ -74,6 +75,7 @@ public class EquivalenceChecker {
   private static final int RANGE_EXPRESSION = 19;
   private static final int LIST_OR_MAP_EXPRESSION = 20;
   private static final int INDEX_EXPRESSION = 21;
+  private static final int PROPERTY_SELECTION_EXPRESSION = 22;
 
   private static final int BLOCK_STATEMENT = 1;
   private static final int BREAK_STATEMENT = 2;
@@ -477,9 +479,18 @@ public class EquivalenceChecker {
       case CLOSABLE_BLOCK_EXPRESSION:
         return closableBlockExpressionsAreEquivalent((GrClosableBlock) expToCompare1,
             (GrClosableBlock) expToCompare2);
+      case PROPERTY_SELECTION_EXPRESSION:
+        return textOfExpressionsIsEquivalent(expToCompare1, expToCompare2); // todo
       default:
         return false;
     }
+  }
+
+  private static boolean textOfExpressionsIsEquivalent(GrExpression expToCompare1,
+                                                       GrExpression expToCompare2) {
+    final String text1 = expToCompare1.getText();
+    final String text2 = expToCompare2.getText();
+    return text1.equals(text2);
   }
 
   private static boolean closableBlockExpressionsAreEquivalent(GrClosableBlock closableBlock1,
@@ -841,6 +852,9 @@ public class EquivalenceChecker {
     }
     if (exp instanceof GrClosableBlock) {
       return CLOSABLE_BLOCK_EXPRESSION;
+    }
+    if (exp instanceof GrPropertySelection) {
+      return PROPERTY_SELECTION_EXPRESSION;
     }
     if (exp == null) {
       return -1;
