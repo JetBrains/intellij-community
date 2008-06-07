@@ -57,7 +57,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     final Iterator<ChangesBunch> visualIterator =
         CommittedChangesCache.getInstance(project).getBackBunchedIterator(vcs, vcsRoot, location, CHUNK_SIZE);
-    final Iterator<ChangesBunch> internalIterator = LoadedRevisionsCacheManager.getInstance(project).iterator(location.getURL());
+    final Iterator<ChangesBunch> internalIterator = LoadedRevisionsCache.getInstance(project).iterator(location.getURL());
 
     myInternallyCached = (internalIterator == null) ? null : new InternallyCachedProvider(internalIterator, myProject);
     myVisuallyCached = (visualIterator == null) ? null : new VisuallyCachedProvider(visualIterator, myProject, location);
@@ -176,13 +176,13 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     public static void initCache(final List<List<Fragment>> fragmentListList, final Project project) {
       final List<CommittedChangeList> lists = getAllBeforeVisuallyCached(fragmentListList);
       if (! lists.isEmpty()) {
-        LoadedRevisionsCacheManager.getInstance(project).put(lists, false, null, null);
+        LoadedRevisionsCache.getInstance(project).put(lists, false, null);
       }
     }
 
     public void doCacheUpdate(final List<List<Fragment>> fragmentsListList) {
       final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
-      Integer bindAddress = null;
+      LoadedRevisionsCache.Bunch bindAddress = null;
       boolean consistent = false;
 
       if (myHolesDetected) {
@@ -193,7 +193,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
             final Fragment fragment = fragmentList.get(j);
             liveMet |= Origin.LIVE.equals(fragment.getOrigin());
             if (Origin.INTERNAL.equals(fragment.getOrigin())) {
-              bindAddress = ((InternallyCachedChangesBunch) fragment.getOriginBunch()).getPreviousAddress();
+              bindAddress = ((LoadedRevisionsCache.Bunch) fragment.getOriginBunch()).getNext();
               // latest element
               if ((i == (fragmentsListList.size() - 1)) && (j == (fragmentList.size() - 1))) {
                 lists.addAll(fragment.getOriginBunch().getList());
@@ -212,7 +212,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
         for (List<Fragment> fragmentList : fragmentsListList) {
           for (Fragment fragment : fragmentList) {
             if (Origin.INTERNAL.equals(fragment.getOrigin())) {
-              bindAddress = ((InternallyCachedChangesBunch) fragment.getOriginBunch()).getSelfAddress();
+              bindAddress = (LoadedRevisionsCache.Bunch) fragment.getOriginBunch();
               consistent = true;
               break;
             }
@@ -221,14 +221,8 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
         }
       }
 
-      if (bindAddress == null) {
-        if (myAlreadyReaded != null) {
-          bindAddress = ((InternallyCachedChangesBunch) myAlreadyReaded).getSelfAddress();
-        }
-      }
-
       if (! lists.isEmpty()) {
-        LoadedRevisionsCacheManager.getInstance(myProject).put(lists, consistent, bindAddress, null);
+        LoadedRevisionsCache.getInstance(myProject).put(lists, consistent, bindAddress);
       }
     }
   }

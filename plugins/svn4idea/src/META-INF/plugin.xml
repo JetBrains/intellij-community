@@ -100,8 +100,8 @@
                         serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.SvnBranchConfigurationManager"
                     serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.history.LoadedRevisionsCacheManager"
-                    serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCacheManager"/>
+    <projectService serviceInterface="org.jetbrains.idea.svn.history.LoadedRevisionsCache"
+                    serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.SvnBranchMapperManager"
       serviceImplementation="org.jetbrains.idea.svn.SvnBranchMapperManager"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"

@@ -14,7 +14,7 @@ import java.util.*;
 
 public class SvnCachingRevisionsTest extends IdeaTestCase {
   private SvnRepositoryLocation myLocation;
-  private LoadedRevisionsCacheManager myInternalManager;
+  private LoadedRevisionsCache myInternalManager;
   private final static String URL = "file:///C:/repo/trunk";
   private final static String ROOT = "file:///C:/repo";
   private final static String AUTHOR = "author";
@@ -24,7 +24,7 @@ public class SvnCachingRevisionsTest extends IdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myLocation = new SvnRepositoryLocation(null, URL);
-    myInternalManager = LoadedRevisionsCacheManager.getInstance(myProject);
+    myInternalManager = LoadedRevisionsCache.getInstance(myProject);
     
     myFilesToDelete.add(SvnApplicationSettings.getLoadedRevisionsDir(myProject));
   }
@@ -135,7 +135,7 @@ public class SvnCachingRevisionsTest extends IdeaTestCase {
 
     // each pair corresponds to interval
     final List<Long> internalRevisions = new ArrayList<Long>();
-    Integer bindTo = null;
+    LoadedRevisionsCache.Bunch bindTo = null;
     for (int i = 0; i < internalBounds.size(); i++) {
       final Pair<Long, Long> bound = internalBounds.get(i);
       final boolean consistent = (i != 0) && (internalBounds.get(i - 1).second + step == bound.first);
@@ -205,10 +205,10 @@ public class SvnCachingRevisionsTest extends IdeaTestCase {
     return lists;
   }
 
-  private Integer putToInternalCache(final List<Long> revisions, final boolean consistent, final Integer bindTo) {
+  private LoadedRevisionsCache.Bunch putToInternalCache(final List<Long> revisions, final boolean consistent, final LoadedRevisionsCache.Bunch bindTo) {
     final List<CommittedChangeList> lists = revisionsToLists(revisions);
     Collections.reverse(lists);
-    return myInternalManager.put(lists, consistent, bindTo, null);
+    return myInternalManager.put(lists, consistent, bindTo);
   }
 
   public void testJustLiveProvider() throws Exception {
