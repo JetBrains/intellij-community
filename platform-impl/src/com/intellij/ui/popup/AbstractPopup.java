@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -26,6 +27,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +42,7 @@ public class AbstractPopup implements JBPopup, Disposable {
 
   private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
 
-  public static final String KEY = "JBPopup";
+  @NonNls public static final String KEY = "JBPopup";
 
   private Popup myPopup;
   private MyContentPanel myContent;
@@ -74,9 +76,6 @@ public class AbstractPopup implements JBPopup, Disposable {
   private float myLastAlpha = 0;
 
   private MaskProvider myMaskProvider;
-
-  private Dimension myLastSize;
-  private Shape myLastSizeMask;
 
   private Window myWindow;
   private boolean myInStack;
@@ -160,7 +159,8 @@ public class AbstractPopup implements JBPopup, Disposable {
           }
         }));
       }
-    } else {
+    }
+    else {
       myCaption = new CaptionPanel();
       myCaption.setBorder(null);
       myCaption.setPreferredSize(new Dimension(0, 0));
@@ -200,9 +200,10 @@ public class AbstractPopup implements JBPopup, Disposable {
       }
     };
     myContent.addMouseListener(mouseAdapter);
+    final MyContentPanel savedContent = myContent;
     Disposer.register(this, new Disposable() {
       public void dispose() {
-        myContent.removeMouseListener(mouseAdapter);
+        savedContent.removeMouseListener(mouseAdapter);
       }
     });
     myContent.registerKeyboardAction(new ActionListener() {
@@ -216,7 +217,8 @@ public class AbstractPopup implements JBPopup, Disposable {
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
       myMouseOutCanceller = new Canceller();
-      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller, MouseEvent.MOUSE_EVENT_MASK | WindowEvent.WINDOW_ACTIVATED | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller, AWTEvent.MOUSE_EVENT_MASK | WindowEvent.WINDOW_ACTIVATED |
+                                                                           AWTEvent.MOUSE_MOTION_EVENT_MASK);
     }
 
 
@@ -235,7 +237,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   }
 
   private void setWindowActive(boolean active) {
-    boolean value = myHeaderAlwaysFocusable ? true : active;
+    boolean value = myHeaderAlwaysFocusable || active;
 
     if (myCaption != null) {
       myCaption.setActive(value);
@@ -250,7 +252,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     return new MyContentPanel(resizable, border, isToDrawMacCorner);
   }
 
-  public boolean isToDrawMacCorner() {
+  public static boolean isToDrawMacCorner() {
     return SystemInfo.isMac;
   }
 
@@ -343,7 +345,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     if (focused != null) {
       showInCenterOf(focused);
     } else {
-      final JFrame frame = WindowManagerEx.getInstance().getFrame(myProject);
+      final JFrame frame = WindowManager.getInstance().getFrame(myProject);
       showInCenterOf(frame.getRootPane());
     }
   }
@@ -397,10 +399,10 @@ public class AbstractPopup implements JBPopup, Disposable {
         preferredSize = dimension;
       }
     }
-    final RelativePoint relativePoint;
     final Point leftTopCorner = new Point(bounds.x + bounds.width, bounds.y);
     final Point leftTopCornerScreen = (Point)leftTopCorner.clone();
     SwingUtilities.convertPointToScreen(leftTopCornerScreen, layeredPane);
+    final RelativePoint relativePoint;
     if (!ScreenUtil.isOutsideOnTheRightOFScreen(
       new Rectangle(leftTopCornerScreen.x, leftTopCornerScreen.y, preferredSize.width, preferredSize.height))) {
       relativePoint = new RelativePoint(layeredPane, leftTopCorner);
@@ -591,10 +593,11 @@ public class AbstractPopup implements JBPopup, Disposable {
       };
       ListenerUtil.addMouseListener(myCaption, moveListener);
       ListenerUtil.addMouseMotionListener(myCaption, moveListener);
+      final MyContentPanel saved = myContent;
       Disposer.register(this, new Disposable() {
         public void dispose() {
-          ListenerUtil.removeMouseListener(myContent, moveListener);
-          ListenerUtil.removeMouseMotionListener(myContent, moveListener);
+          ListenerUtil.removeMouseListener(saved, moveListener);
+          ListenerUtil.removeMouseMotionListener(saved, moveListener);
         }
       });
     }
@@ -656,17 +659,14 @@ public class AbstractPopup implements JBPopup, Disposable {
 
     if (myMaskProvider != null) {
       final Dimension size = window.getSize();
-      Shape mask = myLastSizeMask;
-      if (!size.equals(myLastSize)) {
-        mask = myMaskProvider.getMask(size);
-      }
+      Shape mask = myMaskProvider.getMask(size);
       wndManager.setWindowMask(window, mask);
     }
 
     return window;
   }
 
-  private WindowManagerEx getWndManager() {
+  private static WindowManagerEx getWndManager() {
     return ApplicationManagerEx.getApplicationEx() != null ? WindowManagerEx.getInstanceEx() : null;
   }
 
@@ -676,7 +676,7 @@ public class AbstractPopup implements JBPopup, Disposable {
 
   protected boolean beforeShow() {
     if (ApplicationManagerEx.getApplicationEx() == null) return true;
-    StackingPopupDispatcherImpl.getInstance().onPopupShown(this, myInStack);
+    StackingPopupDispatcher.getInstance().onPopupShown(this, myInStack);
     return true;
   }
 
@@ -962,7 +962,8 @@ public class AbstractPopup implements JBPopup, Disposable {
           window.setSize(myRestoreWindowSize);
           myRestoreWindowSize = null;
         }
-      } else {
+      }
+      else {
         final JWindow window = getPopupWindow();
         if (window != null) {
           myRestoreWindowSize = window.getSize();
