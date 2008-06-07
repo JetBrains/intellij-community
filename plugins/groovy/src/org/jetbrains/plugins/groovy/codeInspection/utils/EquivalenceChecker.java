@@ -61,6 +61,7 @@ public class EquivalenceChecker {
   private static final int CALL_EXPRESSION = 5;
   private static final int NEW_EXPRESSION = 6;
   private static final int ARRAY_LITERAL_EXPRESSION = 7;
+  private static final int CLOSABLE_BLOCK_EXPRESSION = 8;
   private static final int PREFIX_EXPRESSION = 10;
   private static final int POSTFIX_EXPRESSION = 11;
   private static final int BINARY_EXPRESSION = 12;
@@ -473,9 +474,27 @@ public class EquivalenceChecker {
       case LIST_OR_MAP_EXPRESSION:
         return listOrMapExpressionsAreEquivalent((GrListOrMap) expToCompare1,
             (GrListOrMap) expToCompare2);
+      case CLOSABLE_BLOCK_EXPRESSION:
+        return closableBlockExpressionsAreEquivalent((GrClosableBlock) expToCompare1,
+            (GrClosableBlock) expToCompare2);
       default:
         return false;
     }
+  }
+
+  private static boolean closableBlockExpressionsAreEquivalent(GrClosableBlock closableBlock1,
+                                                               GrClosableBlock closableBlock2) {
+    final GrStatement[] statements1 = closableBlock1.getStatements();
+    final GrStatement[] statements2 = closableBlock2.getStatements();
+    if (statements1.length != statements2.length) {
+      return false;
+    }
+    for (int i = 0; i < statements1.length; i++) {
+      if (!statementsAreEquivalent(statements1[i], statements2[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean listOrMapExpressionsAreEquivalent(GrListOrMap expression1, GrListOrMap expression2) {
@@ -740,9 +759,7 @@ public class EquivalenceChecker {
     final GrExpression elseExpression1 = condExp1.getElseBranch();
     final GrExpression elseExpression2 = condExp2.getElseBranch();
     return expressionsAreEquivalent(condition1, condition2)
-        &&
-        expressionsAreEquivalent(elseExpression1,
-            elseExpression2);
+        && expressionsAreEquivalent(elseExpression1, elseExpression2);
   }
 
   private static boolean expressionListsAreEquivalent(@Nullable GrExpression[] expressions1,
@@ -822,7 +839,13 @@ public class EquivalenceChecker {
     if (exp instanceof GrListOrMap) {
       return LIST_OR_MAP_EXPRESSION;
     }
-    throw new AssertionError("Expression has unknown type: " + exp.getClass());
+    if (exp instanceof GrClosableBlock) {
+      return CLOSABLE_BLOCK_EXPRESSION;
+    }
+    if (exp == null) {
+      return -1;
+    }
+    throw new AssertionError("Expression has unknown type: " + exp);
   }
 
   private static int getStatementType(@Nullable GrStatement statement) {
@@ -871,6 +894,9 @@ public class EquivalenceChecker {
     if (statement instanceof GrAssertStatement) {
       return ASSERT_STATEMENT;
     }
-    throw new AssertionError("Statement has unknown type: " + statement.getClass());
+    if (statement == null) {
+      return -1;
+    }
+    throw new AssertionError("Statement has unknown type: " + statement);
   }
 }
