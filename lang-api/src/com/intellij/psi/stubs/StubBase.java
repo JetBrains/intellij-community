@@ -59,15 +59,17 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
   }
 
   public T getPsi() {
-    if (myPsi != null) return myPsi;
+    T psi = myPsi;
+    if (psi != null) return psi;
 
     synchronized (PsiLock.LOCK) {
-      if (myPsi != null) return myPsi;
+      psi = myPsi;
+      if (psi != null) return psi;
       //noinspection unchecked
-      myPsi = (T)getStubType().createPsi(this);
+      myPsi = psi = (T)getStubType().createPsi(this);
     }
 
-    return myPsi;
+    return psi;
   }
 
   public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final E[] array) {
