@@ -163,8 +163,8 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (lastParent instanceof PsiExpressionList) return true;
-    if (lastParent != null/* IMPORTANT: do not call getBaseClassReference() for lastParent == null - loads tree!*/
-        && lastParent == getBaseClassReference()) {
+    if (lastParent != null/* IMPORTANT: do not call getBaseClassReference() for lastParent == null and lastParent which is not under our node - loads tree!*/
+        && lastParent.getParent() == this && lastParent == getBaseClassReference()) {
       return true;
     }
     return super.processDeclarations(processor, state, lastParent, place);
