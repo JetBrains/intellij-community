@@ -39,7 +39,7 @@
   <template name="iten" value="while($ENUM$.hasMoreElements()){&#10;  $TYPE$ $VAR$ = $CAST$ $ENUM$.nextElement();&#10;  $END$&#10;}"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iten" toReformat="true" toShortenFQNames="true">
     <variable name="ENUM" expression="variableOfType(&quot;java.util.Enumeration&quot;)" defaultValue="&quot;enumeration&quot;" alwaysStopAt="true" />
-    <variable name="TYPE" expression="&quot;Object&quot;" defaultValue="" alwaysStopAt="true" />
+    <variable name="TYPE" expression="rightSideType()" defaultValue="&quot;Object&quot;" alwaysStopAt="true" />
     <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
     <variable name="CAST" expression="castToLeftSideType()" defaultValue="" alwaysStopAt="false" />
     <context>
