@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,11 @@ public class MissingReturnInspection extends LocalInspectionTool {
       if (hasValueReturns(block)) {
         Instruction[] flow = block.getControlFlow();
         if (!ControlFlowUtil.alwaysReturns(flow)) {
-          holder.registerProblem(block.getLastChild(), GroovyInspectionBundle.message("no.return.message"));
+          final PsiElement lastChild = block.getLastChild();
+          if (lastChild == null) {
+            return;
+          }
+          holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
         }
       }
     }
