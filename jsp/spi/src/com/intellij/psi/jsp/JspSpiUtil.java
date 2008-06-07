@@ -5,7 +5,7 @@ package com.intellij.psi.jsp;
 
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -47,7 +47,7 @@ public abstract class JspSpiUtil {
 
   @Nullable
   private static JspSpiUtil getJspSpiUtil() {
-    return ApplicationManager.getApplication().getComponent(JspSpiUtil.class);
+    return ServiceManager.getService(JspSpiUtil.class);
   }
 
   @Nullable
