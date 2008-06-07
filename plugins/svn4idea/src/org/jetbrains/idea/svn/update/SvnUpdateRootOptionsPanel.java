@@ -15,16 +15,22 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -32,6 +38,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.update.SvnUpdateRootOptionsPanel.SvnUpdateRootOptionsPanel");
   private TextFieldWithBrowseButton myURLText;
   private JCheckBox myRevisionBox;
   private TextFieldWithBrowseButton myRevisionText;
@@ -40,14 +47,16 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private JPanel myPanel;
   private FilePath myRoot;
   private JCheckBox myUpdateToSpecificUrl;
+  private TextFieldWithBrowseButton myBranchField;
+  private JLabel myBranchLabel;
+  private String mySourceUrl;
+  private SVNURL myBranchUrl;
 
   public SvnUpdateRootOptionsPanel(FilePath root, final SvnVcs vcs) {
-
     myRoot = root;
     myVcs = vcs;
 
     myURLText.setEditable(true);
-
 
     myURLText.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -55,13 +64,23 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
     });
 
+    myBranchField.setEditable(false);
+    myBranchField.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        chooseBranch();
+      }
+    });
+    myBranchLabel.setLabelFor(myBranchField.getButton());
+
     myUpdateToSpecificUrl.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myUpdateToSpecificUrl.isSelected()) {
           myURLText.setEnabled(true);
-          chooseUrl();
+          myBranchField.setEnabled((myBranchUrl != null) && (mySourceUrl != null));
+          chooseBranch();
         } else {
           myURLText.setEnabled(false);
+          myBranchField.setEnabled(false);
         }
       }
     });
@@ -96,6 +115,31 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.getTextField().selectAll();
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
+    myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (myBranchUrl != null) && (mySourceUrl != null));
+  }
+
+  private void chooseBranch() {
+    if ((myBranchUrl == null) || (mySourceUrl == null)) {
+      myBranchField.setEnabled(false);
+      return;
+    }
+    SelectBranchPopup.show(myVcs.getProject(), myRoot.getVirtualFile(), new SelectBranchPopup.BranchSelectedCallback() {
+      public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
+        recalculateUrl(url);
+        myBranchField.setText(SVNPathUtil.tail(url));
+      }
+    }, SvnBundle.message("select.branch.popup.general.title"));
+  }
+
+  private void recalculateUrl(final String url) {
+    // recalculate fields
+    try {
+      final String newText = SVNURL.parseURIEncoded(url).appendPath(mySourceUrl.substring(myBranchUrl.toString().length()), true).toString();
+      myURLText.setText(newText);
+    }
+    catch (SVNException e) {
+      LOG.error(e);
+    }
   }
 
   private void chooseUrl() {
@@ -109,14 +153,28 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     return myPanel;
   }
 
+  @Nullable
+  private SVNURL getBranchForUrl(final String url) {
+    final VirtualFile root = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(myRoot);
+    return SvnUtil.getBranchForUrl(myVcs, root, url);
+  }
+
   public void reset(final SvnConfiguration configuration) {
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
-    myURLText.setText(rootInfo.getUrlAsString());
+
+    mySourceUrl = rootInfo.getUrlAsString();
+    myBranchUrl = getBranchForUrl(mySourceUrl);
+    if (myBranchUrl != null) {
+      myBranchField.setText(SVNPathUtil.tail(myBranchUrl.toString()));
+    }
+
+    myURLText.setText(mySourceUrl);
     myRevisionBox.setSelected(rootInfo.isUpdateToRevision());
     myRevisionText.setText(rootInfo.getRevision().toString());
     myUpdateToSpecificUrl.setSelected(false);
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
+    myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (myBranchUrl != null) && (mySourceUrl != null));
   }
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
@@ -133,4 +191,41 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   public boolean canApply() {
     return true;
   }
+
+/*  private class MyBranchFieldFocusListener implements FocusListener {
+    private SvnBranchConfiguration mySvnBranchConfiguration;
+
+    private MyBranchFieldFocusListener() {
+      final VirtualFile root = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(myRoot);
+      if (root != null) {
+        try {
+          mySvnBranchConfiguration = SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(root);
+        }
+        catch (VcsException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
+    public void focusGained(final FocusEvent e) {
+    }
+
+    public void focusLost(final FocusEvent e) {
+      if (mySvnBranchConfiguration != null) {
+        String text = myBranchField.getText();
+        text = (text == null) ? "" : text.trim();
+        if ((myBranchUrl != null) && (mySourceUrl != null) && (text.length() > 0) && (! text.contains("/"))) {
+          try {
+            final String branch = mySvnBranchConfiguration.getBranchByName(myVcs.getProject(), text);
+            if (branch != null) {
+              recalculateUrl(branch);
+            }
+          }
+          catch (SVNException exc) {
+            LOG.error(exc);
+          }
+        }
+      }
+    }
+  }*/
 }

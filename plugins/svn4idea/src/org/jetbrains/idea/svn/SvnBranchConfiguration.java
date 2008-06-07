@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -137,6 +138,17 @@ public class SvnBranchConfiguration {
   public String getRelativeUrl(String url) {
     String baseUrl = getBaseUrl(url);
     return baseUrl == null ? null : url.substring(baseUrl.length());
+  }
+
+  @Nullable
+  public String getBranchByName(final Project project, final String name) throws SVNException {
+    if (name == null) {
+      return null;
+    }
+    final UrlIterator iterator = new UrlIterator(project);
+    final MyBranchByNameSearcher listener = new MyBranchByNameSearcher(name);
+    iterator.iterateUrls(listener);
+    return listener.getUrl();
   }
 
   @Nullable
@@ -342,5 +354,30 @@ public class SvnBranchConfiguration {
     }
 
     return false;
+  }
+
+  private class MyBranchByNameSearcher implements UrlListener {
+    private final String myName;
+    private String myUrl;
+
+    public MyBranchByNameSearcher(final String name) {
+      myName = name;
+    }
+
+    public boolean accept(final String url) throws SVNException {
+      if (myBranchUrls.contains(url)) {
+        // do not take into account urls of groups
+        return false;
+      }
+      if (myName.equals(SVNPathUtil.tail(url))) {
+        myUrl = url;
+        return true;
+      }
+      return false;
+    }
+
+    public String getUrl() {
+      return myUrl;
+    }
   }
 }

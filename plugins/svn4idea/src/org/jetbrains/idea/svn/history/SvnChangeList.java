@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ExternallyRenamedChange;
@@ -37,9 +36,8 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBranchConfiguration;
-import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -507,7 +505,7 @@ public class SvnChangeList implements CommittedChangeList {
       return;
     }
     
-    myBranchUrl = getBranchForUrl(myVcsRoot, absolutePath);
+    myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myVcsRoot, absolutePath);
   }
 
   public void forceReloadCachedInfo(final boolean reloadRoot) {
@@ -516,21 +514,6 @@ public class SvnChangeList implements CommittedChangeList {
 
     if (reloadRoot) {
       myVcsRoot = null;
-    }
-  }
-
-  @Nullable
-  private SVNURL getBranchForUrl(final VirtualFile vcsRoot, final String urlPath) {
-    final SvnBranchConfiguration configuration;
-    try {
-      final SVNURL url = SVNURL.parseURIEncoded(urlPath);
-      configuration = SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(vcsRoot);
-      return configuration.getWorkingBranch(myVcs.getProject(), url);
-    }
-    catch (SVNException e) {
-      return null;
-    } catch (VcsException e1) {
-      return null;
     }
   }
 }

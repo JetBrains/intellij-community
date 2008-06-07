@@ -362,4 +362,19 @@ public class SvnUtil {
       }
     });
   }
+
+  @Nullable
+  public static SVNURL getBranchForUrl(final SvnVcs vcs, final VirtualFile vcsRoot, final String urlPath) {
+    final SvnBranchConfiguration configuration;
+    try {
+      final SVNURL url = SVNURL.parseURIEncoded(urlPath);
+      configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
+      return configuration.getWorkingBranch(vcs.getProject(), url);
+    }
+    catch (SVNException e) {
+      return null;
+    } catch (VcsException e1) {
+      return null;
+    }
+  }
 }
