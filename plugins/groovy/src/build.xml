@@ -31,8 +31,8 @@
   <property name="resources.file" value="resources_en.jar"/>
 
   <property name="0" value="unknown"/>
-  <property name="build.vcs.number.1" value="unknown"/>
-  <property name="plugin.revision" value="${build.vcs.number.1}"/>
+  <property name="build.vcs.number.groovy_svn_root" value="unknown"/>
+  <property name="plugin.revision" value="${build.vcs.number.groovy_svn_root}"/>
   <property name="plugin.version" value="${groovy.plugin.version}.${plugin.revision}"/>
 
   <property name="output" value="${basedir}/dist"/>
@@ -43,7 +43,7 @@
       <exclude name="boot.jar"/>
     </fileset>
     <fileset dir="${idea.plugins}">
-        <include name="**/JavascriptLanguage.jar"/>
+      <include name="**/JavascriptLanguage.jar"/>
     </fileset>
   </path>
 
@@ -138,7 +138,7 @@
       <pathelement path="${stubsOutput}"/>
     </path>
 
-    <javac2 destdir="${production.dest.groovy}" debug = "on">
+    <javac2 destdir="${production.dest.groovy}" debug="on">
       <src refId="javaToCompile"/>
 
       <classpath refid="idea.lib.path"/>
