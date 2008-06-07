@@ -4,7 +4,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -93,11 +92,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       }
 
       public void after(final List<? extends VFileEvent> events) {
-        if (ourTopDirs != null) {
-          for (VirtualFile dir : ourTopDirs) {
-            if (!dir.exists()) {
-              ourTopDirs = null;
-              break;
+        synchronized (LOCK) {
+          if (ourTopDirs != null) {
+            for (VirtualFile dir : ourTopDirs) {
+              if (!dir.exists()) {
+                ourTopDirs = null;
+                break;
+              }
             }
           }
         }
@@ -717,21 +718,22 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   @NotNull
   private VirtualFile[] getTopTemplatesDir() {
-    if (ourTopDirs != null) {
+    synchronized (LOCK) {
+      if (ourTopDirs != null) {
+        return ourTopDirs;
+      }
+
+      Set<VirtualFile> dirList = new THashSet<VirtualFile>();
+
+      appendDefaultTemplatesFromClassloader(FileTemplateManagerImpl.class.getClassLoader(), dirList);
+      PluginDescriptor[] plugins = ApplicationManager.getApplication().getPlugins();
+      for (PluginDescriptor plugin : plugins) {
+        appendDefaultTemplatesFromClassloader(plugin.getPluginClassLoader(), dirList);
+      }
+
+      ourTopDirs = dirList.toArray(new VirtualFile[dirList.size()]);
       return ourTopDirs;
     }
-
-    Set<VirtualFile> dirList = new THashSet<VirtualFile>();
-
-    appendDefaultTemplatesFromClassloader(FileTemplateManagerImpl.class.getClassLoader(), dirList);
-    final Application app = ApplicationManager.getApplication();
-    PluginDescriptor[] plugins = app.getPlugins();
-    for (PluginDescriptor plugin : plugins) {
-      appendDefaultTemplatesFromClassloader(plugin.getPluginClassLoader(), dirList);
-    }
-
-    ourTopDirs = dirList.toArray(new VirtualFile[dirList.size()]);
-    return ourTopDirs;
   }
 
   private void appendDefaultTemplatesFromClassloader(ClassLoader classLoader, Set<VirtualFile> dirList) {
