@@ -1,6 +1,5 @@
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistryImpl;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
@@ -50,7 +49,7 @@ public class IdeaTestRunner extends TestRunner {
     TestResult testResult = super.createTestResult();
     testResult.addListener(myTestsListener);
     try {
-      final ProjectData data = ProjectData.getProjectData();
+      final Object data = Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", new Class[0]).invoke(null, new Object[0]);
       if (data != null) {
         testResult.addListener(new TestListener() {
           public void addError(final Test test, final Throwable t) {}
@@ -58,19 +57,19 @@ public class IdeaTestRunner extends TestRunner {
 
           public void startTest(final Test test) {
             if (test instanceof TestCase) {
-              data.testStarted(test.getClass().getName() + "." + ((TestCase)test).getName());
+              ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(test.getClass().getName() + "." + ((TestCase)test).getName());
             }
           }
 
           public void endTest(final Test test) {
             if (test instanceof TestCase) {
-              data.testEnded(test.getClass().getName() + "." + ((TestCase)test).getName());
+              ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(test.getClass().getName() + "." + ((TestCase)test).getName());
             }
           }
         });
       }
     }
-    catch (NoClassDefFoundError e) {
+    catch (Throwable e) {
       //coverage was not enabled
     }
 
