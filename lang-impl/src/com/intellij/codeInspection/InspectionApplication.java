@@ -7,8 +7,10 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -65,7 +67,8 @@ public class InspectionApplication {
       public void run() {
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         try {
-          logMessage(1, InspectionsBundle.message("inspection.application.starting.up"));
+          final ApplicationInfoEx applicationInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+          logMessage(1, InspectionsBundle.message("inspection.application.starting.up", applicationInfo.getFullApplicationName() + applicationInfo.getBuildNumber()));
           application.doNotSave();          
           logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
