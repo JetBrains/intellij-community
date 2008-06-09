@@ -3,7 +3,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -21,9 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Calendar;
 
-@Bombed(month = Calendar.JUNE, day = 8, user = "max")
 public class ClsBuilderTest extends LightIdeaTestCase {
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("1.5");

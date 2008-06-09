@@ -224,8 +224,6 @@ PsiJavaFileStub [java.util]
         PsiModifierListStub[mask=26]
       PsiFieldStub[cmp:java.util.Comparator<T>]
         PsiModifierListStub[mask=2]
-      PsiFieldStub[$assertionsDisabled:boolean]
-        PsiModifierListStub[mask=4120]
       PsiMethodStub[cons ReverseComparator2:void]
         PsiModifierListStub[mask=4096]
         PsiTypeParameterListStub
