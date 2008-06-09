@@ -52,9 +52,15 @@ public class XValueHint extends AbstractValueHint {
         result.computePresentation(new XValueNode() {
           public void setPresentation(@NonNls @NotNull final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String value,
                                       final boolean hasChildren) {
+            setPresentation(name, icon, type, XDebuggerUIConstants.EQ_TEXT, value, hasChildren);
+          }
+
+          public void setPresentation(@NonNls @NotNull final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
+                                      @NonNls @NotNull final String value,
+                                      final boolean hasChildren) {
             DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
               public void run() {
-                doShowHint(result, name, value, hasChildren);
+                doShowHint(result, name, separator, value, hasChildren);
               }
             });
           }
@@ -72,12 +78,12 @@ public class XValueHint extends AbstractValueHint {
     });
   }
 
-  private void doShowHint(final XValue xValue, final String name, final String value, final boolean hasChildren) {
+  private void doShowHint(final XValue xValue, final String name, final String separator, final String value, final boolean hasChildren) {
     if (isHintHidden()) return;
 
     SimpleColoredText text = new SimpleColoredText();
     text.append(name, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    text.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     text.append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     
     JComponent component;

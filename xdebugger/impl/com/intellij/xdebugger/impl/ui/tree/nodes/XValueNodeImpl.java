@@ -10,6 +10,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -19,6 +20,7 @@ import javax.swing.*;
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode {
   private String myName;
   private String myValue;
+  private String mySeparator;
   private boolean myChanged;
 
   public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, final XValue value) {
@@ -29,11 +31,18 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   public void setPresentation(@NotNull final String name, @Nullable final Icon icon, @Nullable final String type, @NotNull final String value,
                               final boolean hasChildren) {
+    setPresentation(name, icon, type, XDebuggerUIConstants.EQ_TEXT, value, hasChildren);
+  }
+
+  public void setPresentation(@NonNls @NotNull final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
+                              @NonNls @NotNull final String value,
+                              final boolean hasChildren) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         setIcon(icon);
         myName = name;
         myValue = value;
+        mySeparator = separator;
 
         updateText();
         setLeaf(!hasChildren);
@@ -46,7 +55,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private void updateText() {
     myText.clear();
     myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    myText.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myText.append(mySeparator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myText.append(myValue, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
@@ -76,7 +85,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myValue = null;
     myText.clear();
     myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    myText.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myText.append(mySeparator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myText.append(XDebuggerUIConstants.MODIFYING_VALUE_MESSAGE, XDebuggerUIConstants.MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES);
     setLeaf(true);
     fireNodeChildrenChanged();
