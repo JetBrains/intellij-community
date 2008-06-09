@@ -49,24 +49,29 @@ public class IdeaTestRunner extends TestRunner {
   protected TestResult createTestResult() {
     TestResult testResult = super.createTestResult();
     testResult.addListener(myTestsListener);
-    final ProjectData data = ProjectData.getProjectData();
-    if (data != null) {
-      testResult.addListener(new TestListener() {
-        public void addError(final Test test, final Throwable t) {}
-        public void addFailure(final Test test, final AssertionFailedError t) {}
+    try {
+      final ProjectData data = ProjectData.getProjectData();
+      if (data != null) {
+        testResult.addListener(new TestListener() {
+          public void addError(final Test test, final Throwable t) {}
+          public void addFailure(final Test test, final AssertionFailedError t) {}
 
-        public void startTest(final Test test) {
-          if (test instanceof TestCase) {
-            data.testStarted(test.getClass().getName() + "." + ((TestCase)test).getName());
+          public void startTest(final Test test) {
+            if (test instanceof TestCase) {
+              data.testStarted(test.getClass().getName() + "." + ((TestCase)test).getName());
+            }
           }
-        }
 
-        public void endTest(final Test test) {
-          if (test instanceof TestCase) {
-            data.testEnded(test.getClass().getName() + "." + ((TestCase)test).getName());
+          public void endTest(final Test test) {
+            if (test instanceof TestCase) {
+              data.testEnded(test.getClass().getName() + "." + ((TestCase)test).getName());
+            }
           }
-        }
-      });
+        });
+      }
+    }
+    catch (NoClassDefFoundError e) {
+      //coverage was not enabled
     }
 
     return testResult;
