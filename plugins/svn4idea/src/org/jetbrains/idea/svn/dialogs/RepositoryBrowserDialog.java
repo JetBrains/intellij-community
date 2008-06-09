@@ -39,6 +39,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -435,6 +436,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       final RepositoryTreeNode node = getNotNullSelectedNode();
       MkdirOptionsDialog dialog = new MkdirOptionsDialog(myProject, node.getURL());
       dialog.show();
+      VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
       if (dialog.isOK()) {
         SVNURL url = dialog.getURL();
         String message = dialog.getCommitMessage();
@@ -545,6 +547,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
       CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message(myDialogTitleKey), myProject, rootNode, node);
       dialog.show();
+      VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();
         SVNURL src = dialog.getSourceURL();
@@ -670,6 +673,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       DeleteOptionsDialog dialog = new DeleteOptionsDialog(myProject);
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       dialog.show();
+      VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
       if (dialog.isOK()) {
         SVNURL url = node.getURL();
         String message = dialog.getCommitMessage();
@@ -951,6 +955,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     SVNURL url = getNotNullSelectedNode().getURL();
     ImportOptionsDialog dialog = new ImportOptionsDialog(myProject, url, dir);
     dialog.show();
+    VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
     if (dialog.isOK()) {
       File src = dialog.getTarget();
       boolean recursive = dialog.isRecursive();
