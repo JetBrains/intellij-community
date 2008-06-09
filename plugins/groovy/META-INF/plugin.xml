@@ -164,8 +164,8 @@
             text="equals() and hashCode()" description="Action generates equals and hashCode now">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
-    <action id="org.jetbrains.plugins.groovy.actions.generate.constructor.CostructorGenerateAction"
-            class="org.jetbrains.plugins.groovy.actions.generate.constructor.CostructorGenerateAction"
+    <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
             text="Constructor" description="Generates constructor">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
