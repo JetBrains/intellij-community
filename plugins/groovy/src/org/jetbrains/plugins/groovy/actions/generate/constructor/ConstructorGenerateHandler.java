@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.actions.generate.constructor1;
+package org.jetbrains.plugins.groovy.actions.generate.constructor;
 
 import com.intellij.codeInsight.generation.*;
 import com.intellij.openapi.project.Project;
