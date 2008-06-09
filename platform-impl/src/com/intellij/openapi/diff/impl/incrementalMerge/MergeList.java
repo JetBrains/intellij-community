@@ -46,6 +46,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     String leftText = left.getText();
     String baseText = base.getText();
     String rightText = right.getText();
+    // todo do not copy
     @NonNls final Object[] data = new Object[]{
       "Left\n" + leftText,
       "\nBase\n" + baseText,
@@ -56,14 +57,25 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
     ArrayList<Change> rightChanges = new ArrayList<Change>();
-    for (MergeBuilder.MergeFragment mergeFragment : fragmentList) {
+    final int fragmentsListSize = fragmentList.size();
+    for (int i = 0; i < fragmentsListSize; i++) {
+      final MergeBuilder.MergeFragment mergeFragment = fragmentList.get(i);
       final TextRange[] ranges = mergeFragment.getRanges();
       logger.assertTrue(ranges[1] != null);
       if (ranges[0] == null) {
         if (ranges[2] == null) {
-          LOG.assertTrue(false, "Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
+          if ((i == (fragmentsListSize - 1)) && (ranges[1].getEndOffset() == baseText.length())) {
+            // the very end, both local and remote revisions does not contain latest base fragment
+            final int rightTextLength = rightText.length();
+            final int leftTextLength = leftText.length();
+            rightChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(rightTextLength, rightTextLength), mergeList.myChanges[1]));
+            leftChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(leftTextLength, leftTextLength), mergeList.myChanges[0]));
+          } else {
+            LOG.assertTrue(false, "Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
+          }
+        } else {
+          rightChanges.add(SimpleChange.fromRanges(ranges[1], ranges[2], mergeList.myChanges[1]));
         }
-        rightChanges.add(SimpleChange.fromRanges(ranges[1], ranges[2], mergeList.myChanges[1]));
       }
       else if (ranges[2] == null) {
         if (ranges[0] == null) {
