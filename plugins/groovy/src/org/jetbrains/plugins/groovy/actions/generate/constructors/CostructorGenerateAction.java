@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.actions.generate.constructor;
+package org.jetbrains.plugins.groovy.actions.generate.constructors;
 
 import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
