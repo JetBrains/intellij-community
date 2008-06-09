@@ -35,7 +35,7 @@ public class DefaultPatchBaseVersionProvider {
 
   private final Project myProject;
 
-  @NonNls private static final Pattern ourRevisionPattern = Pattern.compile("\\(revision (\\d+)\\)");
+  @NonNls private static final Pattern ourRevisionPattern = Pattern.compile("\\(revision (\\d+(\\.\\d+)*)\\)");
 
   public DefaultPatchBaseVersionProvider(final Project project) {
     myProject = project;
