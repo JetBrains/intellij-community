@@ -56,7 +56,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -470,23 +473,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      public PsiClass compute() {
-        try {
-          final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
-          final String qName = aClass.getQualifiedName();
-          assert qName != null;
+    final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
+    final String qName = aClass.getQualifiedName();
+    assert qName != null;
 
-          final PsiFile psiFile = addFileToProject(qName.replace('.', '/') + ".java", classText);
+    final PsiFile psiFile = addFileToProject(qName.replace('.', '/') + ".java", classText);
 
-          myAddedClasses.add(psiFile.getVirtualFile());
-          return ((PsiJavaFile)psiFile).getClasses()[0];
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    myAddedClasses.add(psiFile.getVirtualFile());
+    return ((PsiJavaFile)psiFile).getClasses()[0];
   }
 
   public PsiFile addFileToProject(@NonNls final String relativePath, @NonNls final String fileText) throws IOException {
