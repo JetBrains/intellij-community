@@ -5,12 +5,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
-import org.jetbrains.idea.svn.update.UpdateFilesHelper;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -20,7 +20,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.update.RefreshVFsSynchronously;
 import org.jetbrains.idea.svn.update.SvnStatusWorker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.jetbrains.idea.svn.update.UpdateFilesHelper;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
