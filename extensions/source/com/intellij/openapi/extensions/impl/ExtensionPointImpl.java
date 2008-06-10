@@ -38,15 +38,15 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final String myName;
   private final String myBeanClassName;
 
-  private final List<T> myExtensions = new CopyOnWriteArrayList<T>();
-  private volatile T[] myExtensionsArray;
+  private final List<T> myExtensions = new ArrayList<T>();
+  private volatile T[] myExtensionsCache;
 
   private final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
 
   private final Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
   private final List<ExtensionPointListener<T>> myEPListeners = new CopyOnWriteArrayList<ExtensionPointListener<T>>();
-  private final List<ExtensionComponentAdapter> myLoadedAdapters = new CopyOnWriteArrayList<ExtensionComponentAdapter>();
+  private final List<ExtensionComponentAdapter> myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
 
   private Class<T> myExtensionClass;
 
@@ -139,20 +139,23 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @NotNull
   public T[] getExtensions() {
-    T[] result = myExtensionsArray;
-    List<T> extensions = myExtensions;
+    T[] result = myExtensionsCache;
     if (result == null) {
       synchronized (this) {
-        result = myExtensionsArray;
+        result = myExtensionsCache;
         if (result == null) {
           processAdapters();
-          extensions = myExtensions;
-          myExtensionsArray = result = extensions.toArray((T[])Array.newInstance(getExtensionClass(), myExtensions.size()));
+          List<T> extensions = myExtensions;
+          //noinspection unchecked
+          myExtensionsCache = result = extensions.toArray((T[])Array.newInstance(getExtensionClass(), extensions.size()));
+          for (int i = 1; i < result.length; i++) {
+            assert result[i] != result[i - 1] : "Result:      "+ Arrays.asList(result)+";\n" +
+                                                " extensions: "+ extensions+";\n" +
+                                                " getExtensionClass(): "+getExtensionClass()+";\n" +
+                                                " size:"+extensions.size()+";"+result.length;
+          }
         }
       }
-    }
-    for (int i = 1; i < result.length; i++) {
-      assert result[i] != result[i - 1] : "Result: "+ Arrays.asList(result)+"; myExtensions: "+extensions+"; getExtensionClass()="+getExtensionClass()+"; size="+extensions.size()+";"+result.length;
     }
     return result;
   }
@@ -188,10 +191,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return extensions[0];
   }
 
-  public boolean hasExtension(@NotNull T extension) {
-    synchronized (this) {
-      processAdapters();
-    }
+  public synchronized boolean hasExtension(@NotNull T extension) {
+    processAdapters();
     return myExtensions.contains(extension);
   }
 
@@ -247,10 +248,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    synchronized (this) {
-      processAdapters();
-    }
+  public synchronized void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
+    processAdapters();
     if (myEPListeners.add(listener)) {
       for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
         try {
@@ -263,7 +262,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  public void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
+  public synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
     for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
       try {
         //noinspection unchecked
@@ -316,7 +315,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void clearCache() {
-    myExtensionsArray = null;
+    myExtensionsCache = null;
   }
 
   synchronized boolean unregisterComponentAdapter(final ExtensionComponentAdapter componentAdapter) {
@@ -344,7 +343,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @TestOnly
-  final void notifyAreaReplaced(final ExtensionsArea area) {
+  final synchronized void notifyAreaReplaced(final ExtensionsArea area) {
     for (final ExtensionPointListener<T> listener : myEPListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
         ((ExtensionPointAndAreaListener)listener).areaReplaced(area);
