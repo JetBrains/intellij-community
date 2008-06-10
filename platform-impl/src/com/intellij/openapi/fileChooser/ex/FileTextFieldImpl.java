@@ -715,6 +715,19 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     if (!isPopupShowing()) return;
 
+    final InputMap map = myPathTextField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+    if (map != null) {
+      final Object object = map.get(KeyStroke.getKeyStrokeForEvent(e));
+      if (object instanceof Action) {
+        final Action action = (Action)object;
+        if (action.isEnabled()) {
+          action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
+          e.consume();
+          return;
+        }
+      }
+    }
+
     final Object action = getAction(e, myList);
 
     if ("selectNextRow".equals(action)) {

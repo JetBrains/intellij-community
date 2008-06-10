@@ -112,7 +112,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   protected DefaultActionGroup createActionGroup() {
     registerFileChooserShortcut(IdeActions.ACTION_DELETE, "FileChooser.Delete");
-    registerFileChooserShortcut("NewElement", "FileChooser.NewFolder");
     registerFileChooserShortcut(IdeActions.ACTION_SYNCHRONIZE, "FileChooser.Refresh");
 
     return (DefaultActionGroup) ActionManager.getInstance().getAction("FileChooserToolbar");

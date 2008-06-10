@@ -892,6 +892,9 @@
     <action id="FileChooser.GotoModule">
       <keyboard-shortcut first-keystroke="control 3"/>
     </action>
+    <action id="FileChooser.NewFolder">
+      <keyboard-shortcut first-keystroke="control N"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->

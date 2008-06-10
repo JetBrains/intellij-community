@@ -22,6 +22,7 @@ public class NewFolderAction extends FileChooserAction {
     Presentation presentation = e.getPresentation();
     VirtualFile selectedFile = fileSystemTree.getSelectedFile();
     presentation.setEnabled(selectedFile != null && selectedFile.isDirectory());
+    setEnabledInModalContext(true);
   }
 
   protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
