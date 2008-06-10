@@ -145,9 +145,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
     catch (final Exception e) {
       LOG.info(e);
-      Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
+      Messages.showErrorDialog(message(e), ProjectBundle.message("project.load.default.error"));
     }
     return null;
+  }
+
+  private static String message(Throwable e) {
+    String message = e.getMessage();
+    if (message != null) return message;
+    message = e.getLocalizedMessage();
+    if (message != null) return message;
+    message = e.toString();
+    Throwable cause = e.getCause();
+    if (cause != null) {
+      String causeMessage = message(cause);
+      return message + " (cause: " + causeMessage + ")";
+    }
+
+    return message;
   }
 
   private ProjectImpl createAndInitProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
