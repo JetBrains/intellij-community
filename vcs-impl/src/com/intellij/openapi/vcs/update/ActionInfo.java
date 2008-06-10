@@ -54,6 +54,10 @@ public interface ActionInfo {
     public boolean canGroupByChangelist() {
       return true;
     }
+
+    public boolean canChangeFileStatus() {
+      return false;
+    }
   };
 
   ActionInfo STATUS = new ActionInfo() {
@@ -99,6 +103,10 @@ public interface ActionInfo {
     public boolean canGroupByChangelist() {
       return false;
     }
+
+    public boolean canChangeFileStatus() {
+      return true;
+    }
   };
 
   ActionInfo INTEGRATE = new ActionInfo() {
@@ -128,6 +136,10 @@ public interface ActionInfo {
         protected void setToBeShown(boolean value, boolean onOk) {
         }
       };
+    }
+
+    public boolean canChangeFileStatus() {
+      return true;
     }
 
     public String getActionName(String scopeName) {
@@ -162,4 +174,6 @@ public interface ActionInfo {
   String getGroupName(FileGroup fileGroup);
 
   boolean canGroupByChangelist();
+
+  boolean canChangeFileStatus();
 }

@@ -47,19 +47,23 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
@@ -183,6 +187,21 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               }
             }
 
+            projectLevelVcsManager.stopBackgroundVcsOperation();
+
+            if (myActionInfo.canChangeFileStatus()) {
+              final VcsDirtyScopeManager myManager = VcsDirtyScopeManager.getInstance(myProject);
+              UpdateFilesHelper.iterateFileGroupFiles(updatedFiles, new UpdateFilesHelper.Callback() {
+                public void onFile(final String filePath, final String groupId) {
+                  @NonNls final String path = VfsUtil.pathToUrl(filePath.replace(File.separatorChar, '/'));
+                  final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
+                  if (file != null) {
+                    myManager.fileDirty(file);
+                  }
+                }
+              });
+            }
+
             if (!someSessionWasCanceled(updateSessions)) {
 
               ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -234,7 +253,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 }
               });
             }
-            projectLevelVcsManager.stopBackgroundVcsOperation();
           }
 
           public void onCancel() {
