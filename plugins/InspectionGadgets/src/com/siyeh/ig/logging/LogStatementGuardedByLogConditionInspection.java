@@ -139,7 +139,7 @@ public class LogStatementGuardedByLogConditionInspection
                         nextStatement, PsiStatement.class);
             }
             final PsiElementFactory factory =
-                    JavaPsiFacade.getInstance(project);
+                    JavaPsiFacade.getInstance(project).getElementFactory();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             final StringBuilder ifStatementText = new StringBuilder("if (");
