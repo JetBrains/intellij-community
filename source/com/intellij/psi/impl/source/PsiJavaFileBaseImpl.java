@@ -357,7 +357,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       for (PsiJavaCodeReferenceElement aImplicitlyImported : implicitlyImported) {
         PsiElement resolved = aImplicitlyImported.resolve();
         if (resolved != null) {
-          processOnDemandTarget(resolved, processor, state, place);
+          if (!processOnDemandTarget(resolved, processor, state, place)) return false;
         }
       }
     }

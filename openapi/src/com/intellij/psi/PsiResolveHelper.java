@@ -85,35 +85,36 @@ public interface PsiResolveHelper {
   @Nullable
   PsiVariable resolveReferencedVariable(String referenceText, PsiElement context);
 
-  boolean isAccessible(PsiMember member, PsiModifierList modifierList,
-                       PsiElement place, @Nullable PsiClass accessObjectClass, final PsiElement currentFileResolveScope);
+  boolean isAccessible(@NotNull PsiMember member, @Nullable PsiModifierList modifierList,
+                       @NotNull PsiElement place, @Nullable PsiClass accessObjectClass, @Nullable PsiElement currentFileResolveScope);
 
-  boolean isAccessible(PsiMember member, PsiElement place, @Nullable PsiClass accessObjectClass);
+  boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass);
 
   /**
-   * @return PsiType.NULL iff no type could be inferred
+   * @return {@link PsiType#NULL} iff no type could be inferred
    *         null         iff the type inferred is raw
    *         inferred type otherwise
    */
-  PsiType inferTypeForMethodTypeParameter(final PsiTypeParameter typeParameter,
-                                          final PsiParameter[] parameters,
-                                          PsiExpression[] arguments,
-                                          PsiSubstitutor partialSubstitutor,
+  PsiType inferTypeForMethodTypeParameter(@NotNull PsiTypeParameter typeParameter,
+                                          @NotNull PsiParameter[] parameters,
+                                          @NotNull PsiExpression[] arguments,
+                                          @NotNull PsiSubstitutor partialSubstitutor,
                                           @Nullable PsiElement parent,
                                           final boolean forCompletion);
 
-  PsiSubstitutor inferTypeArguments(final PsiTypeParameter[] typeParameters,
-                                    final PsiParameter[] parameters,
-                                    PsiExpression[] arguments,
-                                    PsiSubstitutor partialSubstitutor,
-                                    PsiElement parent,
+  @NotNull
+  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
+                                    @NotNull PsiParameter[] parameters,
+                                    @NotNull PsiExpression[] arguments,
+                                    @NotNull PsiSubstitutor partialSubstitutor,
+                                    @NotNull PsiElement parent,
                                     final boolean forCompletion);
 
   @NotNull  
-  PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters,
-                                    PsiType[] leftTypes,
-                                    PsiType[] rightTypes,
-                                    LanguageLevel languageLevel);
+  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
+                                    @NotNull PsiType[] leftTypes,
+                                    @NotNull PsiType[] rightTypes,
+                                    @NotNull LanguageLevel languageLevel);
 
   PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                           PsiType param,

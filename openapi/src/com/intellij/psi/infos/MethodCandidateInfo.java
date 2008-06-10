@@ -46,10 +46,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public boolean isApplicable(){
-    if(myApplicabilityLevel == 0){
-      myApplicabilityLevel = getApplicabilityLevelInner();
-    }
-    return myApplicabilityLevel != ApplicabilityLevel.NOT_APPLICABLE;
+    return getApplicabilityLevel() != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   private int getApplicabilityLevelInner() {
@@ -74,7 +71,8 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
         myCalcedSubstitutor = inferTypeArguments(false);
-      } else {
+      }
+      else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
         for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
           incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
@@ -118,11 +116,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-    return helper.inferTypeArguments(typeParameters,
-                                                   method.getParameterList().getParameters(),
-                                                   arguments, mySubstitutor,
-                                                   myArgumentList.getParent(),
-                                                   forCompletion);
+    return helper.inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor,
+                                     myArgumentList.getParent(), forCompletion);
   }
 
   private static PsiSubstitutor createRawSubstitutor(PsiSubstitutor substitutor, PsiTypeParameter[] typeParameters) {

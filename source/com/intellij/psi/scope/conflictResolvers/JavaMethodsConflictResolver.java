@@ -313,12 +313,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (isMoreSpecific == null && class1 != class2) {
       if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
         if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
-        isMoreSpecific = Specifics.FALSE;
+          isMoreSpecific = Specifics.FALSE;
         }
       }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
         if (MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
-        isMoreSpecific = Specifics.TRUE;
+          isMoreSpecific = Specifics.TRUE;
         }
       }
     }
@@ -335,8 +335,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                     final PsiType[] types1,
                                                     final PsiType[] types2,
                                                     final PsiResolveHelper resolveHelper) {
-    PsiSubstitutor substitutor =
-      resolveHelper.inferTypeArguments(typeParameters, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
+    PsiSubstitutor substitutor = resolveHelper.inferTypeArguments(typeParameters, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
     for (PsiTypeParameter typeParameter : typeParameters) {
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
         substitutor = substitutor.put(typeParameter, TypeConversionUtil.typeParameterErasure(typeParameter));
