@@ -23,4 +23,8 @@ package com.intellij.openapi.actionSystem;
 public abstract class Shortcut {
   Shortcut(){
   }
+
+  public abstract boolean isKeyboard();
+
+  public abstract boolean startsWith(final Shortcut sc);
 }

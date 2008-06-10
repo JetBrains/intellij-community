@@ -61,6 +61,8 @@ public interface Keymap extends Scheme {
    */
   String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke);
 
+  String[] getActionIds(Shortcut shortcut);
+
   /**
    * @return all actions with specified mouse shortcut.  If there are no
    * such action then the method returns an empty array.

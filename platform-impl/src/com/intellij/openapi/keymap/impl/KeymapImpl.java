@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortuct;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
@@ -409,8 +410,28 @@ public class KeymapImpl implements Keymap {
     return actualBindings.toArray(new String[actualBindings.size()]);
   }
 
+  public String[] getActionIds(final Shortcut shortcut) {
+    if (shortcut instanceof KeyboardShortcut) {
+      final KeyboardShortcut kb = (KeyboardShortcut)shortcut;
+      final KeyStroke first = kb.getFirstKeyStroke();
+      final KeyStroke second = kb.getSecondKeyStroke();
+      return second != null ? getActionIds(first, second) : getActionIds(first);
+    } else if (shortcut instanceof MouseShortcut) {
+      return getActionIds(((MouseShortcut)shortcut));
+    } else if (shortcut instanceof KeyboardModifierGestureShortuct) {
+      return getActionIds(((KeyboardModifierGestureShortuct)shortcut));
+    } else {
+      return new String[0];
+    }
+  }
+
   protected String[] getParentActionIds(MouseShortcut shortcut) {
     return myParent.getActionIds(shortcut);
+  }
+
+
+  private String[] getActionIds(KeyboardModifierGestureShortuct shortuct) {
+    return new String[] {"TestGestureAction"};
   }
 
   public String[] getActionIds(MouseShortcut shortcut){

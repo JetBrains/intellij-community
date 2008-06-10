@@ -24,45 +24,59 @@ import javax.swing.*;
  * A keyboard shortcut, which can consist of one or two invidivual key strokes.
  */
 
-public final class KeyboardShortcut extends Shortcut{
+public final class KeyboardShortcut extends Shortcut {
   private final KeyStroke myFirstKeyStroke;
   private final KeyStroke mySecondKeyStroke;
 
   /**
    * @throws IllegalArgumentException if <code>firstKeyStroke</code> is <code>null</code>
    */
-  public KeyboardShortcut(@NotNull KeyStroke firstKeyStroke, KeyStroke secondKeyStroke){
+  public KeyboardShortcut(@NotNull KeyStroke firstKeyStroke, KeyStroke secondKeyStroke) {
     myFirstKeyStroke = firstKeyStroke;
     mySecondKeyStroke = secondKeyStroke;
   }
 
-  public KeyStroke getFirstKeyStroke(){
+  public KeyStroke getFirstKeyStroke() {
     return myFirstKeyStroke;
   }
 
-  public KeyStroke getSecondKeyStroke(){
+  public KeyStroke getSecondKeyStroke() {
     return mySecondKeyStroke;
   }
 
-  public int hashCode(){
-    int hashCode=myFirstKeyStroke.hashCode();
-    if(mySecondKeyStroke!=null){
-      hashCode+=mySecondKeyStroke.hashCode();
+  public int hashCode() {
+    int hashCode = myFirstKeyStroke.hashCode();
+    if (mySecondKeyStroke != null) {
+      hashCode += mySecondKeyStroke.hashCode();
     }
     return hashCode;
   }
 
-  public boolean equals(Object obj){
-    if (!(obj instanceof KeyboardShortcut)){
+  public boolean equals(Object obj) {
+    if (!(obj instanceof KeyboardShortcut)) {
       return false;
     }
     KeyboardShortcut second = (KeyboardShortcut)obj;
-    if (!Comparing.equal(myFirstKeyStroke, second.myFirstKeyStroke)){
+    if (!Comparing.equal(myFirstKeyStroke, second.myFirstKeyStroke)) {
       return false;
     }
-    if (!Comparing.equal(mySecondKeyStroke, second.mySecondKeyStroke)){
+    if (!Comparing.equal(mySecondKeyStroke, second.mySecondKeyStroke)) {
       return false;
     }
     return true;
+  }
+
+  public boolean isKeyboard() {
+    return true;
+  }
+
+  public boolean startsWith(final Shortcut sc) {
+    if (sc instanceof KeyboardShortcut) {
+      final KeyboardShortcut other = (KeyboardShortcut)sc;
+      return myFirstKeyStroke.equals(other.myFirstKeyStroke) && (other.mySecondKeyStroke == null || other.mySecondKeyStroke.equals(mySecondKeyStroke)); 
+    }
+    else {
+      return false;
+    }
   }
 }

@@ -281,6 +281,8 @@
       <action id="AddTestProcessActionIndefinte" internal="true"
               class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
       <separator/>
+      <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
+      <separator/>
       <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
               text="Mark File Dirty"/>
       <action id="DumpIntentions" internal="true" class="com.intellij.internal.DumpIntentionsAction" text="Dupm Intentions"/>

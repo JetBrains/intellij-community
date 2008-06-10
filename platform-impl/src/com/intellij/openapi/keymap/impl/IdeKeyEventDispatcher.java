@@ -50,6 +50,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static final int STATE_WAIT_FOR_SECOND_KEYSTROKE = 1;
   private static final int STATE_SECOND_STROKE_IN_PROGRESS = 2;
   private static final int STATE_PROCESSED = 3;
+  private static final int STATE_KEY_GESTURE_PROCESSOR = 4;
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -67,6 +68,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private boolean myLeftCtrlPressed = false;
   private boolean myRightAltPressed = false;
 
+  private KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
   public IdeKeyEventDispatcher(){
     Disposer.register(ApplicationManager.getApplication(), this);
@@ -149,6 +151,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return inWaitForSecondStrokeState(e, isModalContext, dataContext);
     } else if (myState == STATE_SECOND_STROKE_IN_PROGRESS) {
       return inSecondStrokeInProgressState(e, isModalContext, dataContext);
+    } else if (myState == STATE_KEY_GESTURE_PROCESSOR) {
+      return myKeyGestureProcessor.process(e, isModalContext, dataContext);
     } else {
       throw new IllegalStateException("state = " + myState);
     }
@@ -259,7 +263,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    fillActionsList(myFoundComponent, myFirstKeyStroke, keyStroke, isModalContext);
+    fillActionsList(myFoundComponent, new KeyboardShortcut(myFirstKeyStroke, keyStroke), isModalContext);
 
     // consume the wrong second stroke and keep on waiting
     if (myActions.isEmpty()) {
@@ -317,7 +321,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    boolean hasSecondStroke = fillActionsList(focusOwner, keyStroke, null, isModalContext);
+    //if (myKeyGestureProcessor.processInitState(focusOwner, e, isModalContext, dataContext)) return true;
+
+    boolean hasSecondStroke = fillActionsList(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
 
     if(myActions.isEmpty()) {
       if (SystemInfo.isMac) {
@@ -445,7 +451,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * This method fills <code>myActions</code> list.
    * @return true if there is a shortcut with second stroke found.
    */
-  private boolean fillActionsList(Component component, KeyStroke firstKeyStroke, KeyStroke secondKeyStroke, boolean isModalContext){
+  public boolean fillActionsList(Component component, Shortcut sc, boolean isModalContext){
     myFoundComponent = null;
     myActions.clear();
 
@@ -466,7 +472,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
           continue;
         }
         AnAction action = (AnAction)listOfAction;
-        hasSecondStroke |= addAction(action, firstKeyStroke, secondKeyStroke);
+        hasSecondStroke |= addAction(action, sc);
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
       if (!myActions.isEmpty()) {
@@ -479,12 +485,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     String[] actionIds;
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    if (secondKeyStroke == null) {
-      actionIds = keymap.getActionIds(firstKeyStroke);
-    }
-    else {
-      actionIds = keymap.getActionIds(firstKeyStroke, secondKeyStroke);
-    }
+    actionIds = keymap.getActionIds(sc);
 
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {
@@ -493,7 +494,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         if (isModalContext && !action.isEnabledInModalContext()) {
           continue;
         }
-        hasSecondStroke |= addAction(action, firstKeyStroke, secondKeyStroke);
+        hasSecondStroke |= addAction(action, sc);
       }
     }
     return hasSecondStroke;
@@ -502,23 +503,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
   /**
    * @return true if action is added and has second stroke
    */
-  private boolean addAction(AnAction action, KeyStroke firstKeyStroke, KeyStroke secondKeyStroke) {
+  private boolean addAction(AnAction action, Shortcut sc) {
     boolean hasSecondStroke = false;
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    for (Shortcut shortcut : shortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut)) {
-        continue;
-      }
-      KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-      if (firstKeyStroke.equals(keyboardShortcut.getFirstKeyStroke()) &&
-          (secondKeyStroke == null || secondKeyStroke.equals(keyboardShortcut.getSecondKeyStroke()))) {
+    for (Shortcut each : shortcuts) {
+      if (!each.isKeyboard()) continue;
+      
+      if (each.startsWith(sc)) {
         if (!myActions.contains(action)) {
           myActions.add(action);
         }
 
-        if (keyboardShortcut.getSecondKeyStroke() != null) {
-          hasSecondStroke = true;
+        if (each instanceof KeyboardShortcut) {
+          hasSecondStroke |= ((KeyboardShortcut)each).getSecondKeyStroke() != null;
         }
       }
     }

@@ -94,4 +94,12 @@ public final class MouseShortcut extends Shortcut {
 
     return modifiers;
   }
+
+  public boolean isKeyboard() {
+    return false;
+  }
+
+  public boolean startsWith(final Shortcut sc) {
+    return equals(sc);
+  }
 }
