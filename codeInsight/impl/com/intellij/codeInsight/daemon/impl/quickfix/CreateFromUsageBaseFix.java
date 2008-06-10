@@ -126,7 +126,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       showInBestPositionFor(editor);
   }
 
-  protected static Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
+  protected static Editor positionCursor(Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
