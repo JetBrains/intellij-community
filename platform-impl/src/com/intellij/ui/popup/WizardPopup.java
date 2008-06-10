@@ -40,13 +40,22 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final Timer myAutoSelectionTimer = new Timer(AUTO_POPUP_DELAY, this);
 
   private final SpeedSearch mySpeedSearch = new SpeedSearch() {
+    boolean searchFieldShown = false;
     protected void update() {
       onSpeedSearchPatternChanged();
-      mySpeedSearchPane.update();
+      mySpeedSearchPatternField.setText(getFilter());
+      if (isHoldingFilter() && !searchFieldShown) {
+        setHeaderComponent(mySpeedSearchPatternField);
+        searchFieldShown = true;
+      }
+      else if (!isHoldingFilter() && searchFieldShown) {
+        setHeaderComponent(null);
+        searchFieldShown = false;
+      }
     }
   };
 
-  private SpeedSearchPane mySpeedSearchPane;
+  private JTextField mySpeedSearchPatternField;
 
   private MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
@@ -69,8 +78,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     mySpeedSearch.setEnabled(myStep.isSpeedSearchEnabled());
 
-    mySpeedSearchPane = new SpeedSearchPane(this);
-
     final JComponent content = createContent();
 
     myScrollPane = new JScrollPane(content);
@@ -87,6 +94,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     init(project, myScrollPane, getPreferredFocusableComponent(), true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, true);
+
+    mySpeedSearchPatternField = new JTextField();
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -143,8 +152,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     super.dispose();
 
     myAutoSelectionTimer.stop();
-
-    mySpeedSearchPane.dispose();
 
     PopupDispatcher.unsetShowing(this);
     PopupDispatcher.clearRootIfNeeded(this);
@@ -231,6 +238,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     getStep().canceled();
   }
 
+  @Override
+  public boolean isCancelKeyEnabled() {
+    return super.isCancelKeyEnabled() && !mySpeedSearch.isHoldingFilter();
+  }
 
   protected void disposeAllParents() {
     dispose();
@@ -302,8 +313,12 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       }
     }
 
-    process(event);
     mySpeedSearch.process(event);
+
+    if (event.isConsumed()) return;
+    process(event);
+
+    if (event.isConsumed()) return;
     myMnemonicsSearch.process(event);
   }
 

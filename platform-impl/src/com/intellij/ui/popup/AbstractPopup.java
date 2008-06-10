@@ -12,7 +12,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -25,9 +28,9 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,6 +55,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   private boolean myForcedHeavyweight = false;
   private boolean myLocateWithinScreen = true;
   private boolean myResizable = false;
+  private JPanel myHeaderPanel;
   private CaptionPanel myCaption = null;
   private JComponent myComponent;
   private String myDimensionServiceKey = null;
@@ -88,6 +92,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   private Dimension myRestoreWindowSize;
   protected Component myOwner;
   private boolean myHeaderAlwaysFocusable;
+  private JComponent myHeaderComponent;
 
   AbstractPopup() {
   }
@@ -144,6 +149,8 @@ public class AbstractPopup implements JBPopup, Disposable {
 
     ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(new EmptyIcon(0)) : titleIcon;
 
+    myHeaderPanel = new JPanel(new BorderLayout());
+
     if (caption != null) {
       if (caption.length() > 0) {
         myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
@@ -168,7 +175,8 @@ public class AbstractPopup implements JBPopup, Disposable {
 
     setWindowActive(myHeaderAlwaysFocusable);
 
-    myContent.add(myCaption, BorderLayout.NORTH);
+    myHeaderPanel.add(myCaption, BorderLayout.NORTH);
+    myContent.add(myHeaderPanel, BorderLayout.NORTH);
 
     myForcedHeavyweight = forceHeavyweight;
     myResizable = resizable;
@@ -547,7 +555,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     }
 
     if (myLocateByContent) {
-      final Dimension captionSize = myCaption.getPreferredSize();
+      final Dimension captionSize = myHeaderPanel.getPreferredSize();
       xy.y -= captionSize.height;
     }
 
@@ -901,7 +909,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     if (myPopup == null) {
       myForcedLocation = screenPoint;
     } else {
-      moveTo(myContent, screenPoint, myLocateByContent ? myCaption.getPreferredSize() : null);
+      moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
     }
   }
 
@@ -1023,4 +1031,36 @@ public class AbstractPopup implements JBPopup, Disposable {
     return myCaption;
   }
 
+  public void setHeaderComponent(JComponent c) {
+    int shift = 0;
+    boolean doRevalidate = false;
+    if (myHeaderComponent != null) {
+      myHeaderPanel.remove(myHeaderComponent);
+      myHeaderPanel.add(myCaption, BorderLayout.NORTH);
+      shift += myHeaderComponent.getPreferredSize().height - myCaption.getPreferredSize().height;
+      myHeaderComponent = null;
+      doRevalidate = true;
+    }
+
+    if (c != null) {
+      myHeaderPanel.remove(myCaption);
+      myHeaderPanel.add(c, BorderLayout.NORTH);
+      myHeaderComponent = c;
+
+      shift -= c.getPreferredSize().height - myCaption.getPreferredSize().height;
+      doRevalidate = true;
+    }
+
+    if (doRevalidate) myContent.revalidate();
+    //if (shift != 0) shift(shift);
+  }
+
+  private void shift(final int shift) {
+    final Window wnd = SwingUtilities.getWindowAncestor(getContent());
+    if (wnd != null) {
+      final Point current = wnd.getLocationOnScreen();
+
+      setLocation(new Point(current.x, current.y + shift));
+    }
+  }
 }

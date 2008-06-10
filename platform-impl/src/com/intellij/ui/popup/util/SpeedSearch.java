@@ -33,9 +33,17 @@ public abstract class SpeedSearch {
 
     if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
       backspace();
+      e.consume();
+    }
+    else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+      if (isHoldingFilter()) {
+        myString = "";
+        e.consume();
+      }
     }
     else if (Character.isLetterOrDigit(e.getKeyChar())) {
       type(Character.toString(e.getKeyChar()));
+      e.consume();
     }
 
     if (!old.equalsIgnoreCase(myString)) {
