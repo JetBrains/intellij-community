@@ -209,6 +209,10 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void dispose() {
+    if (myComponent instanceof Disposable) {
+      Disposer.dispose(((Disposable)myComponent));
+    }
+
     myComponent = null;
     myPreferredFocusableComponent = null;
     myManager = null;
