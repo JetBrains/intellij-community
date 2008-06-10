@@ -38,7 +38,6 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
 
@@ -192,20 +191,20 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         return null;
     }
 
-    protected static void parseString(String string, Collection<String>... outs){
+    protected static void parseString(String string, List<String>... outs){
         final String[] strings = string.split(",");
-        for (Collection<String> out : outs) {
+        for (List<String> out : outs) {
             out.clear();
         }
         for (int i = 0; i < strings.length; i += outs.length) {
             for (int j = 0; j < outs.length; j++) {
-                final Collection<String> out = outs[j];
+                final List<String> out = outs[j];
                 out.add(strings[i + j]);
             }
         }
     }
 
-    protected static String formatString(Collection<String>... strings){
+    protected static String formatString(List<String>... strings){
         final StringBuilder buffer = new StringBuilder();
         final int size = strings[0].size();
         if (size > 0) {
@@ -218,16 +217,12 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         return buffer.toString();
     }
 
-    private static void formatString(Collection<String>[] strings, int index,
+    private static void formatString(List<String>[] strings, int index,
                                      StringBuilder out) {
-        boolean comma = false;
-        for (Collection<String> string : strings) {
-            if (!comma) {
-                comma = true;
-            } else {
-                out.append(',');
-            }
-            out.append(string);
+        out.append(strings[0].get(index));
+        for (int i = 1; i < strings.length; i++) {
+            out.append(',');
+            out.append(strings[i].get(index));
         }
     }
 }

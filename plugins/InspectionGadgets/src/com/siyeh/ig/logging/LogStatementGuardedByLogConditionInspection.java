@@ -72,8 +72,8 @@ public class LogStatementGuardedByLogConditionInspection
                 loggerMethodAndconditionMethodTextMap.keySet();
         final Collection<String> conditionMethodNames =
                 loggerMethodAndconditionMethodTextMap.values();
-        loggerMethodAndconditionMethodNames = formatString(loggerMethodNames,
-                conditionMethodNames);
+        //loggerMethodAndconditionMethodNames = formatString(loggerMethodNames,
+        //        conditionMethodNames);
         super.writeSettings(element);
     }
 
@@ -142,6 +142,9 @@ public class LogStatementGuardedByLogConditionInspection
                     JavaPsiFacade.getInstance(project).getElementFactory();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
             final StringBuilder ifStatementText = new StringBuilder("if (");
             ifStatementText.append(qualifier.getText());
             ifStatementText.append('.');
