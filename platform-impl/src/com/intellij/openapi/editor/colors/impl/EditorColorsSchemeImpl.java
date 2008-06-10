@@ -8,10 +8,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.ExternalInfo;
+import com.intellij.openapi.options.ExternalizableScheme;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class EditorColorsSchemeImpl extends AbstractColorsScheme {
+public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
+  private ExternalInfo myExternalInfo = new ExternalInfo();
 
   public EditorColorsSchemeImpl(EditorColorsScheme parenScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
     super(parenScheme, defaultColorSchemesManager);
@@ -49,5 +53,10 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme {
     copyTo(newScheme);
     newScheme.setName(getName());
     return newScheme;
+  }
+
+  @NotNull
+  public ExternalInfo getExternalInfo() {
+    return myExternalInfo;
   }
 }

@@ -47,7 +47,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
   private String myGlobalSchemeName;
   public boolean USE_ONLY_MONOSPACED_FONTS = true;
   private DefaultColorSchemesManager myDefaultColorSchemesManager;
-  private final SchemesManager<EditorColorsScheme> mySchemesManager;
+  private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
   @NonNls private static final String NAME_ATTR = "name";
   private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";
 
@@ -56,8 +56,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
         mySchemesManager = schemesManagerFactory.createSchemesManager(
         FILE_SPEC,
-        new SchemeProcessor<EditorColorsScheme>() {
-          public EditorColorsScheme readScheme(final Document document)
+        new SchemeProcessor<EditorColorsSchemeImpl>() {
+          public EditorColorsSchemeImpl readScheme(final Document document)
               throws InvalidDataException, IOException, JDOMException {
             Element root = document.getRootElement();
 
@@ -70,7 +70,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
             return scheme;
           }
 
-          public Document writeScheme(final EditorColorsScheme scheme) throws WriteExternalException {
+          public Document writeScheme(final EditorColorsSchemeImpl scheme) throws WriteExternalException {
             Element root = new Element(SCHEME_NODE_NAME);
             try {
               scheme.writeExternal(root);
@@ -97,16 +97,15 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
           }
 
-          public boolean shouldBeSaved(final EditorColorsScheme scheme) {
-            return !(scheme instanceof DefaultColorsScheme);
+          public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
+            return true;
           }
 
-          public void initScheme(final EditorColorsScheme scheme) {
+          public void initScheme(final EditorColorsSchemeImpl scheme) {
             
           }
         }, RoamingType.PER_USER);
 
-    mySchemesManager.clearAllSchemes();
 
     addDefaultSchemes();
     loadAllSchemes();
@@ -167,7 +166,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
   }
 
   public void setGlobalScheme(EditorColorsScheme scheme) {
-    mySchemesManager.setCurrentScheme(scheme == null ? DefaultColorSchemesManager.getInstance().getAllSchemes()[0] : scheme);
+    mySchemesManager.setCurrentSchemeName(scheme == null ? DefaultColorSchemesManager.getInstance().getAllSchemes()[0].getName() : scheme.getName());
     fireChanges(scheme);
   }
 
@@ -281,7 +280,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
     return "EditorColorsManagerImpl";
   }
 
-  public SchemesManager<EditorColorsScheme> getSchemesManager() {
+  public SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> getSchemesManager() {
     return mySchemesManager;
   }
 }

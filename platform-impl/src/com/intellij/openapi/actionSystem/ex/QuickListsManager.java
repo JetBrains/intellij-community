@@ -35,7 +35,7 @@ import java.util.HashSet;
 public class QuickListsManager implements ExportableApplicationComponent, NamedJDOMExternalizable {
   @NonNls private static final String LIST_TAG = "list";
   private ActionManager myActionManager;
-  private SchemesManager<QuickList> mySchemesManager;
+  private SchemesManager<QuickList, QuickList> mySchemesManager;
 
   private final static Logger LOG = Logger.getInstance("#" + QuickListsManager.class.getName());
 
@@ -69,10 +69,6 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
           public boolean shouldBeSaved(final QuickList scheme) {
             return true;
-          }
-
-          public void renameScheme(final String name, final QuickList scheme) {
-            scheme.setDisplayName(name);
           }
 
           public void initScheme(final QuickList scheme) {
@@ -162,7 +158,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     mySchemesManager.addNewScheme(quickList, true);
   }
 
-  public SchemesManager<QuickList> getSchemesManager() {
+  public SchemesManager<QuickList, QuickList> getSchemesManager() {
     return mySchemesManager;
   }
 

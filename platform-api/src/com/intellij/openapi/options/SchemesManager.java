@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public interface SchemesManager <T extends Scheme>{
+public interface SchemesManager <T extends Scheme, E extends ExternalizableScheme>{
   SchemesManager EMPTY = new SchemesManager(){
     public Collection loadSchemes() {
       return Collections.emptySet();
@@ -17,7 +17,7 @@ public interface SchemesManager <T extends Scheme>{
       return Collections.emptySet();
     }
 
-    public void exportScheme(final Scheme scheme) throws WriteExternalException {
+    public void exportScheme(final ExternalizableScheme scheme) throws WriteExternalException {
     }
 
     public boolean isImportExportAvailable() {
@@ -46,7 +46,7 @@ public interface SchemesManager <T extends Scheme>{
     public void save() {
     }
 
-    public void setCurrentScheme(final Scheme scheme) {
+    public void setCurrentSchemeName(final String schemeName) {
 
     }
 
@@ -67,12 +67,12 @@ public interface SchemesManager <T extends Scheme>{
     }
   };
 
-  Collection<T> loadSchemes();
+  Collection<E> loadSchemes();
 
-  Collection<T> loadScharedSchemes();
-  Collection<T> loadScharedSchemes(Collection<String> currentSchemeNameList);
+  Collection<E> loadScharedSchemes();
+  Collection<E> loadScharedSchemes(Collection<String> currentSchemeNameList);
 
-  void exportScheme(final T scheme)
+  void exportScheme(final E scheme)
       throws WriteExternalException;
 
   boolean isImportExportAvailable();
@@ -90,8 +90,9 @@ public interface SchemesManager <T extends Scheme>{
 
   void save() throws WriteExternalException;
 
-  void setCurrentScheme(final T scheme);
+  void setCurrentSchemeName(final String schemeName);
 
+  @Nullable
   T getCurrentScheme();
 
   void removeScheme(final T scheme);

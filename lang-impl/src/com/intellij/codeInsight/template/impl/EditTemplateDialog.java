@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -26,9 +27,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 public class EditTemplateDialog extends DialogWrapper {
-  private TemplateImpl[] myTemplates;
+  private List<TemplateGroup> myTemplateGroups;
   private TemplateImpl myTemplate;
 
   private final JTextField myKeyField;
@@ -50,13 +52,13 @@ public class EditTemplateDialog extends DialogWrapper {
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
 
-  public EditTemplateDialog(Component parent, String title, TemplateImpl template, TemplateImpl[] templates, String defaultShortcut) {
+  public EditTemplateDialog(Component parent, String title, TemplateImpl template, List<TemplateGroup> groups, String defaultShortcut) {
     super(parent, true);
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
 
     myTemplate = template;
-    myTemplates = templates;
+    myTemplateGroups = groups;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
     myKeyField=new JTextField();
@@ -368,8 +370,11 @@ public class EditTemplateDialog extends DialogWrapper {
     );
 
     Set<String> groups = new TreeSet<String>();
-    for (TemplateImpl template : myTemplates) {
-      groups.add(template.getGroupName());
+    SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
+    for (TemplateGroup group : myTemplateGroups) {
+      if (!schemesManager.isShared(group)) {
+        groups.add(group.getName());
+      }
     }
 
     for (final Object group : groups) {
@@ -534,17 +539,20 @@ public class EditTemplateDialog extends DialogWrapper {
       );
       return;
     }
-    
-    for (TemplateImpl template : myTemplates) {
-      if (template.getKey().equals(key) && myTemplate != template) {
-        Messages.showMessageDialog(
-          getContentPane(),
-          CodeInsightBundle.message("dialog.edit.template.error.already.exists", key, template.getGroupName()),
-          CodeInsightBundle.message("dialog.edit.template.error.title"),
-          Messages.getErrorIcon()
-        );
-        return;
+
+    for (TemplateGroup templateGroup : myTemplateGroups) {
+      for (TemplateImpl template : templateGroup.getTemplates()) {
+        if (template.getKey().equals(key) && myTemplate != template) {
+          Messages.showMessageDialog(
+            getContentPane(),
+            CodeInsightBundle.message("dialog.edit.template.error.already.exists", key, template.getGroupName()),
+            CodeInsightBundle.message("dialog.edit.template.error.title"),
+            Messages.getErrorIcon()
+          );
+          return;
+        }
       }
+
     }
 
     if (!TemplateImplUtil.validateTemplateText(myTemplateEditor.getDocument().getText())) {
@@ -555,6 +563,19 @@ public class EditTemplateDialog extends DialogWrapper {
           Messages.getErrorIcon()
       );
       return;
+    }
+
+    SchemesManager<TemplateGroup, TemplateGroup> schemesManager = TemplateSettings.getInstance().getSchemesManager();
+    TemplateGroup group = schemesManager.findSchemeByName((String)myGroupCombo.getSelectedItem());
+    if (group != null && schemesManager.isShared(group)) {
+      Messages.showMessageDialog (
+          getContentPane(),
+          "Group " + group.getName() + " is shared, cannot be modified",
+          CodeInsightBundle.message("dialog.edit.template.error.title"),
+          Messages.getErrorIcon()
+      );
+      return;
+
     }
 
     super.doOKAction();

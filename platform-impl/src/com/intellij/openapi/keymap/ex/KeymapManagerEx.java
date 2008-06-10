@@ -2,6 +2,7 @@ package com.intellij.openapi.keymap.ex;
 
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.options.SchemesManager;
 
 import java.util.Set;
@@ -23,5 +24,5 @@ public abstract class KeymapManagerEx extends KeymapManager {
   public abstract Set<String> getBoundActions();
   public abstract String getActionBinding(String actionId);
 
-  public abstract SchemesManager<Keymap> getSchemesManager();
+  public abstract SchemesManager<Keymap, KeymapImpl> getSchemesManager();
 }

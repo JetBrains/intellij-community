@@ -49,17 +49,17 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
   private static final String NAME_ATTRIBUTE = "name";
   @NonNls
   private static final String XML_FILE_EXT = "xml";
-  private SchemesManager<Keymap> mySchemesManager;
+  private SchemesManager<Keymap, KeymapImpl> mySchemesManager;
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(
         "$ROOT_CONFIG$/keymaps",
-        new SchemeProcessor<Keymap>(){
-          public Keymap readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
+        new SchemeProcessor<KeymapImpl>(){
+          public KeymapImpl readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
             return readKeymap(schemeContent);
           }
 
-          public Document writeScheme(final Keymap scheme) throws WriteExternalException {
+          public Document writeScheme(final KeymapImpl scheme) throws WriteExternalException {
             return new Document(((KeymapImpl)scheme).writeExternal());
           }
 
@@ -69,15 +69,11 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
           public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
           }
 
-          public boolean shouldBeSaved(final Keymap scheme) {
+          public boolean shouldBeSaved(final KeymapImpl scheme) {
             return scheme.canModify();
           }
 
-          public void renameScheme(final String name, final Keymap scheme) {
-            ((KeymapImpl)scheme).setName(name);
-          }
-
-          public void initScheme(final Keymap scheme) {
+          public void initScheme(final KeymapImpl scheme) {
             
           }
         },
@@ -125,7 +121,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
   }
 
   public void setActiveKeymap(Keymap activeKeymap) {
-    mySchemesManager.setCurrentScheme(activeKeymap);
+    mySchemesManager.setCurrentSchemeName(activeKeymap == null ? null : activeKeymap.getName());
     fireActiveKeymapChanged();
   }
 
@@ -141,7 +137,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
     return myBoundShortcuts.get(actionId);
   }
 
-  public SchemesManager<Keymap> getSchemesManager() {
+  public SchemesManager<Keymap, KeymapImpl> getSchemesManager() {
     return mySchemesManager;    
   }
 
@@ -155,11 +151,11 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
         mySchemesManager.removeScheme(keymap);
       }
     }
-    mySchemesManager.setCurrentScheme(null);
+    mySchemesManager.setCurrentSchemeName(null);
 
     Collection<Keymap> keymaps = mySchemesManager.getAllSchemes();
     if (keymaps.size() > 0) {
-      mySchemesManager.setCurrentScheme(keymaps.iterator().next());
+      mySchemesManager.setCurrentSchemeName(keymaps.iterator().next().getName());
     }
   }
 
@@ -193,7 +189,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
     mySchemesManager.loadSchemes();
   }
 
-  private Keymap readKeymap(Document document) throws JDOMException,InvalidDataException, IOException{
+  private KeymapImpl readKeymap(Document document) throws JDOMException,InvalidDataException, IOException{
     if (document == null) throw new InvalidDataException();
     Element root = document.getRootElement();
     if (root == null || !KEYMAP.equals(root.getName())) {

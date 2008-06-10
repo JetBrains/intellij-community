@@ -130,7 +130,7 @@ public class SaveAsTemplateAction extends AnAction {
       editor.getComponent(),
       CodeInsightBundle.message("dialog.edit.live.template.title"),
       template,
-      templateSettings.getTemplates(),
+      templateSettings.getTemplateGroups(),
       defaultShortcut);
     dialog.show();
     if (!dialog.isOK()) {

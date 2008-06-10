@@ -5,7 +5,7 @@ import com.intellij.openapi.components.RoamingType;
 
 public abstract class SchemesManagerFactory {
 
-  public abstract <T extends Scheme> SchemesManager<T> createSchemesManager(String fileSpec, SchemeProcessor<T> processor,
+  public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T,E> createSchemesManager(String fileSpec, SchemeProcessor<E> processor,
                                                                             RoamingType roamingType);
 
   public static SchemesManagerFactory getInstance(){

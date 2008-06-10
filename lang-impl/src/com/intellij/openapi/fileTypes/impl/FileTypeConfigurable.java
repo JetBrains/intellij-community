@@ -3,7 +3,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
@@ -14,7 +13,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.Nullable;
@@ -187,8 +185,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   private void addFileType() {
     //TODO: support adding binary file types...
-    CustomFileType type = new CustomFileType(new SyntaxTable());
-    TypeEditor<CustomFileType> editor = new TypeEditor<CustomFileType>(myRecognizedFileType.myAddButton, type, FileTypesBundle.message("filetype.edit.new.title"));
+    AbstractFileType type = new AbstractFileType(new SyntaxTable());
+    TypeEditor<AbstractFileType> editor = new TypeEditor<AbstractFileType>(myRecognizedFileType.myAddButton, type, FileTypesBundle.message("filetype.edit.new.title"));
     editor.show();
     if (editor.isOK()) {
       myTempFileTypes.add(type);
@@ -281,7 +279,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
     }
 
-    private SchemesManager<FileType> getSchemesManager() {
+    private SchemesManager<FileType, AbstractFileType> getSchemesManager() {
       return ((FileTypeManagerEx)FileTypeManager.getInstance()).getSchemesManager();
     }
 
@@ -317,8 +315,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
       myImportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
-          new SchemesToImportPopup<FileType>(myWholePanel){
-            protected void onSchemeSelected(final FileType scheme) {
+          new SchemesToImportPopup<FileType, AbstractFileType>(myWholePanel){
+            protected void onSchemeSelected(final AbstractFileType scheme) {
               controller.importFileType(scheme);
             }
           }.show(getSchemesManager(), collectRegisteredFileTypeNames());
@@ -330,7 +328,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           FileType selected = (FileType)myFileTypesList.getSelectedValue();
           if (selected instanceof AbstractFileType) {
             try {
-              getSchemesManager().exportScheme(selected);
+              getSchemesManager().exportScheme((AbstractFileType)selected);
             }
             catch (WriteExternalException e1) {
               Messages.showErrorDialog("Cannot export file type: " + e1.getLocalizedMessage(), "Export File Type");
@@ -383,15 +381,14 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   private void importFileType(final FileType type) {
     ReadFileType readFileType = (ReadFileType)type;
-    CustomFileType actualType = new CustomFileType(readFileType.getSyntaxTable());
+    ImportedFileType actualType = new ImportedFileType(readFileType.getSyntaxTable());
     actualType.setDescription(readFileType.getDescription());
     actualType.setName(readFileType.getName());
-
-    myTempFileTypes.add(type);
-    List<Pair<FileNameMatcher,String>> list = AbstractFileType.readAssociations(readFileType.getElement());
-    for (Pair<FileNameMatcher, String> pair : list) {
-      myTempPatternsTable.addAssociation(pair.getFirst(), type);
+    actualType.readOriginalMatchers(readFileType.getElement());
+    for (FileNameMatcher matcher : actualType.getOriginalPatterns()) {
+      myTempPatternsTable.addAssociation(matcher, actualType);
     }
+    myTempFileTypes.add(actualType);
     updateFileTypeList();
     updateExtensionList();
     myRecognizedFileType.selectFileType(type);

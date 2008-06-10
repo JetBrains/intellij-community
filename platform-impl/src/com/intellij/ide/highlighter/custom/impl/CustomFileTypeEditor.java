@@ -1,14 +1,15 @@
 package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.ui.DialogButtonGroup;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +22,7 @@ import java.util.Iterator;
 /**
  * @author Yura Cangea, dsl
  */
-public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
+public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private JTextField myFileTypeName = new JTextField(26);
   private JTextField myFileTypeDescr = new JTextField(26);
   private JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));
@@ -44,7 +45,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
   public CustomFileTypeEditor() {
   }
 
-  public void resetEditorFrom(CustomFileType fileType) {
+  public void resetEditorFrom(AbstractFileType fileType) {
     myFileTypeName.setText(fileType.getName());
     myFileTypeDescr.setText(fileType.getDescription());
 
@@ -78,7 +79,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     }
   }
 
-  public void applyEditorTo(CustomFileType type) throws ConfigurationException {
+  public void applyEditorTo(AbstractFileType type) throws ConfigurationException {
     if (myFileTypeName.getText().trim().length() == 0) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
                                        CommonBundle.getErrorTitle());

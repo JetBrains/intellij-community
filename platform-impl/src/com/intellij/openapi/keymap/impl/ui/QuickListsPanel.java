@@ -130,12 +130,12 @@ public class QuickListsPanel extends JPanel {
       }
     });
 
-    group.add(new ExportSchemeAction<QuickList>(QuickListsManager.getInstance().getSchemesManager()){
+    group.add(new ExportSchemeAction<QuickList, QuickList>(QuickListsManager.getInstance().getSchemesManager()){
       protected QuickList getSelectedScheme() {
         return (QuickList)myQuickListsList.getSelectedValue();
       }
     });
-    group.add(new ImportSchemeAction<QuickList>(QuickListsManager.getInstance().getSchemesManager()){
+    group.add(new ImportSchemeAction<QuickList,QuickList>(QuickListsManager.getInstance().getSchemesManager()){
       protected Collection<String> collectCurrentSchemeNames() {
         return collectNames();
       }

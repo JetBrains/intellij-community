@@ -7,15 +7,13 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -230,7 +228,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
                 new GridBagConstraints(3, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                        stdInsets, 0, 0));
 
-    final SchemesManager schemesManager = getSchemesManager();
+    final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> schemesManager = getSchemesManager();
     if (schemesManager.isImportExportAvailable()) {
       myExportButton = new JButton("Export");
       myExportButton.addActionListener(new ActionListener(){
@@ -238,9 +236,9 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
           CodeStyleScheme selected = getSelectedScheme();
           if (selected != null) {
             try {
-              schemesManager.exportScheme(selected);
+              schemesManager.exportScheme((CodeStyleSchemeImpl)selected);
             }
-            catch (com.intellij.openapi.util.WriteExternalException e1) {
+            catch (WriteExternalException e1) {
               //ignore
             }
           }
@@ -256,8 +254,8 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       JButton importButton = new JButton("Import");
       importButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
-          SchemesToImportPopup<CodeStyleScheme> popup = new SchemesToImportPopup<CodeStyleScheme>(myPanel){
-            protected void onSchemeSelected(final CodeStyleScheme scheme) {
+          SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl> popup = new SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl>(myPanel){
+            protected void onSchemeSelected(final CodeStyleSchemeImpl scheme) {
               if (scheme != null) {
                 mySettingsStack.addScheme(scheme);
                 ((DefaultComboBoxModel)myCombo.getModel()).addElement(scheme);
@@ -344,7 +342,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     return myRootPanel;
   }
 
-  private static SchemesManager getSchemesManager() {
+  private static SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {
     return ((CodeStyleSchemesImpl) CodeStyleSchemes.getInstance()).getSchemesManager();
   }
 

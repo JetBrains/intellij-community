@@ -9,12 +9,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 
-public abstract class AbstractSchemesManager<T extends Scheme> implements SchemesManager<T> {
+public abstract class AbstractSchemesManager<T extends Scheme, E extends ExternalizableScheme> implements SchemesManager<T,E> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.AbstractSchemesManager");
 
   protected final List<T> mySchemes = new ArrayList<T>();
   private T myCurrentScheme;
+  private String myCurrentSchemeName;
 
   public void addNewScheme(final T scheme, final boolean replaceExisting) {
     LOG.assertTrue(scheme.getName() != null, "New scheme name should not be null");
@@ -32,24 +33,31 @@ public abstract class AbstractSchemesManager<T extends Scheme> implements Scheme
       mySchemes.add(scheme);
     }
     else {
-      if (replaceExisting) {
+      if (replaceExisting || !isExternalizable(scheme)) {
         mySchemes.set(toReplace, scheme);
       }
       else {
-        renameScheme(scheme, generateUniqueName(scheme));
+        renameScheme((E)scheme, generateUniqueName(scheme));
         mySchemes.add(scheme);
       }
     }
     onSchemeAdded(scheme);
+    checkCurrentScheme(scheme);
+  }
+
+  protected void checkCurrentScheme(final Scheme scheme) {
+    if (myCurrentScheme == null && myCurrentSchemeName != null && myCurrentSchemeName.equals(scheme.getName())) {
+      myCurrentScheme = (T)scheme;
+    }
   }
 
   private String generateUniqueName(final T scheme) {
-    return UniqueNameGenerator.generateUniqueName(scheme.getName(), "", "", collectExistingNames());
+    return UniqueNameGenerator.generateUniqueName(scheme.getName(), "", "", collectExistingNames(mySchemes));
   }
 
-  private Collection<String> collectExistingNames() {
+  private Collection<String> collectExistingNames(final Collection<T> schemes) {
     HashSet<String> result = new HashSet<String>();
-    for (T scheme : mySchemes) {
+    for (T scheme : schemes) {
       result.add(scheme.getName());
     }
     return result;
@@ -78,15 +86,30 @@ public abstract class AbstractSchemesManager<T extends Scheme> implements Scheme
 
   public abstract void save() throws WriteExternalException;
 
-  public void setCurrentScheme(final T scheme) {
-    if (scheme != null) {
-      addNewScheme(scheme, true);
+  public void setCurrentSchemeName(final String schemeName) {
+    myCurrentSchemeName = schemeName;
+    if (schemeName != null) {
+      T found = findSchemeByName(schemeName);
+      if (found != null) {
+        myCurrentScheme =  found;
+      }
+      else {
+        myCurrentScheme =  null;
+      }
     }
-    myCurrentScheme = scheme;
+    else {
+      myCurrentScheme =  null;
+    }
   }
 
+  @Nullable
   public T getCurrentScheme() {
-    return myCurrentScheme;
+    if (myCurrentScheme == null) {
+      return null;
+    }
+    else  {
+      return findSchemeByName(myCurrentScheme.getName());
+    }
   }
 
   public void removeScheme(final T scheme) {
@@ -123,9 +146,24 @@ public abstract class AbstractSchemesManager<T extends Scheme> implements Scheme
 
   protected abstract void onSchemeAdded(final T scheme);
 
-  protected abstract void renameScheme(final T scheme, String newName);
+  protected void renameScheme(final E scheme, String newName){
+    if (!newName.equals(scheme.getName())) {
+      scheme.setName(newName);
+      LOG.assertTrue(newName.equals(scheme.getName()));
+    }
+  }
 
-  public Collection<T> loadScharedSchemes() {
+  public Collection<E> loadScharedSchemes() {
     return loadScharedSchemes(getAllSchemeNames());
+  }
+
+  protected boolean isExternalizable(final T scheme) {
+    try {
+      E e = ((E)scheme);
+      return true;
+    }
+    catch (ClassCastException e) {
+      return false;
+    }
   }
 }

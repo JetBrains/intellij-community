@@ -99,4 +99,21 @@ public class MultiValuesMap<Key, Value>{
   public boolean containsKey(final Key key) {
     return myBaseMap.containsKey(key);
   }
+
+  public Collection<Value> collectValues() {
+    Collection<Value> result = new HashSet<Value>();
+    for (Key k : myBaseMap.keySet()) {
+      result.addAll(myBaseMap.get(k));
+    }
+
+    return result;
+  }
+
+  @Nullable
+  public Value getFirst(final Key key) {
+    Collection<Value> values = myBaseMap.get(key);
+    return (values == null || values.isEmpty()) ? null : values.iterator().next();
+  }
+
+
 }

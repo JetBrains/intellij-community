@@ -58,7 +58,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
   @NonNls private static final String ELEMENT_IGNOREFILES = "ignoreFiles";
   @NonNls private static final String ATTRIBUTE_LIST = "list";
-  @NonNls private static final String ELEMENT_EXTENSIONMAP = "extensionMap";
 
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -70,7 +69,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final MessageBus myMessageBus;
   private static final Map<String,Pair<FileType,String>> ourStandardFileTypes = new THashMap<String, Pair<FileType, String>>();
   @NonNls private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
-  private final SchemesManager<FileType> mySchemesManager;
+  private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
 
   static {
@@ -89,8 +88,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // -------------------------------------------------------------------------
 
   public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new SchemeProcessor<FileType>() {
-      public FileType readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new SchemeProcessor<AbstractFileType>() {
+      public AbstractFileType readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
         if (document == null) {
           throw new InvalidDataException();
         }
@@ -102,7 +101,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         if (element != null) {
           final SyntaxTable table = AbstractFileType.readSyntaxTable(element);
           if (table != null) {
-            ReadFileType type = new ReadFileType(table, element);
+            ReadFileType type = new ReadFileType(table, root);
             String fileTypeName = root.getAttributeValue(ATTRIBUTE_NAME);
             String fileTypeDescr = root.getAttributeValue(ATTRIBUTE_DESCRIPTION);
             String iconPath = root.getAttributeValue(ATTRIBUTE_ICON);
@@ -117,15 +116,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       }
 
-      public boolean shouldBeSaved(final FileType fileType) {
+      public boolean shouldBeSaved(final AbstractFileType fileType) {
         return shouldBeSavedToFile(fileType);
 
-      }
-
-      public void renameScheme(final String name, final FileType scheme) {
-        if (scheme instanceof UserFileType) {
-          ((UserFileType)scheme).setName(name);
-        }
       }
 
       public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
@@ -136,23 +129,28 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         LOG.debug(e);
       }
 
-      public Document writeScheme(final FileType fileType) throws WriteExternalException {
+      public Document writeScheme(final AbstractFileType fileType) throws WriteExternalException {
         Element root = new Element(ELEMENT_FILETYPE);
 
         writeHeader(root, fileType);
 
         ((JDOMExternalizable)fileType).writeExternal(root);
 
-        Element map = new Element(ELEMENT_EXTENSIONMAP);
+        Element map = new Element(AbstractFileType.ELEMENT_EXTENSIONMAP);
         root.addContent(map);
 
-        writeExtensionsMap(map, fileType, false);
+        if (fileType instanceof ImportedFileType) {
+          writeImportedExtensionsMap(map, (ImportedFileType)fileType);
+        }
+        else {
+          writeExtensionsMap(map, fileType, false);
+        }
 
         return new Document(root);
 
       }
 
-      public void initScheme(final FileType scheme) {
+      public void initScheme(final AbstractFileType scheme) {
 
       }
     }, RoamingType.PER_USER);
@@ -163,6 +161,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       restoreStandardFileExtensions();
     }
     myMessageBus = bus;
+  }
+
+  private void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
+    for (FileNameMatcher matcher : type.getOriginalPatterns()) {
+      Element content = AbstractFileType.writeMapping(type, matcher, false);
+      if (content != null) {
+        map.addContent(content);
+      }
+    }
   }
 
   private boolean shouldBeSavedToFile(final FileType fileType) {
@@ -359,7 +366,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myMessageBus.syncPublisher(AppTopics.FILE_TYPES).beforeFileTypesChanged(event);
   }
 
-  public SchemesManager<FileType> getSchemesManager() {
+  public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
     return mySchemesManager;
   }
 
@@ -410,13 +417,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         List children = e.getChildren(ELEMENT_FILETYPE);
         for (final Object aChildren : children) {
           Element element = (Element)aChildren;
-          loadFileType(element, true);
+          loadFileType(element, true, false);
         }
       }
       else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
         setIgnoredFilesListWithoutNotification(e.getAttributeValue(ATTRIBUTE_LIST));
       }
-      else if (ELEMENT_EXTENSIONMAP.equals(e.getName())) {
+      else if (AbstractFileType.ELEMENT_EXTENSIONMAP.equals(e.getName())) {
         readGlobalMappings(e);
       }
     }
@@ -514,13 +521,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     Element element = new Element(ELEMENT_IGNOREFILES);
     parentNode.addContent(element);
     element.setAttribute(ATTRIBUTE_LIST, getIgnoredFilesList());
-    Element map = new Element(ELEMENT_EXTENSIONMAP);
+    Element map = new Element(AbstractFileType.ELEMENT_EXTENSIONMAP);
     parentNode.addContent(map);
 
     for (FileType type : getRegisteredFileTypes()) {
-      if (!shouldBeSavedToFile(type)) {
-        writeExtensionsMap(map, type, true);
-      }
+      writeExtensionsMap(map, type, true);
     }
   }
 
@@ -533,9 +538,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         defaultAssocs.remove(matcher);
       }
       else if (shouldSave(type)) {
-        Element content = AbstractFileType.writeMapping(type, matcher, specifyTypeName);
-        if (content != null) {
-          map.addContent(content);
+        if (!(type instanceof ImportedFileType) || !((ImportedFileType)type).getOriginalPatterns().contains(matcher)) {
+          Element content = AbstractFileType.writeMapping(type, matcher, specifyTypeName);
+          if (content != null) {
+            map.addContent(content);
+          }
         }
       }
     }
@@ -544,6 +551,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       Element content = AbstractFileType.writeRemovedMapping(type, matcher, specifyTypeName);
       if (content != null) {
         map.addContent(content);
+      }
+    }
+
+    if (type instanceof ImportedFileType) {
+      List<FileNameMatcher> original = ((ImportedFileType)type).getOriginalPatterns();
+      for (FileNameMatcher matcher : original) {
+        if (!assocs.contains(matcher)) {
+          Element content = AbstractFileType.writeRemovedMapping(type, matcher, specifyTypeName);
+          if (content != null) {
+            map.addContent(content);
+          }
+        }
       }
     }
   }
@@ -594,12 +613,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // returns true if at least one standard file type has been read
   @SuppressWarnings({"EmptyCatchBlock"})
   private boolean loadAllFileTypes() {
-    Collection<FileType> collection = mySchemesManager.loadSchemes();
+    Collection<AbstractFileType> collection = mySchemesManager.loadSchemes();
 
     boolean res = false;
-    for (FileType fileType : collection) {
+    for (AbstractFileType fileType : collection) {
       ReadFileType readFileType = (ReadFileType)fileType;
-      FileType loadedFileType = loadFileType(readFileType.getElement(), true);
+      FileType loadedFileType = loadFileType(readFileType.getElement(), true,mySchemesManager.isShared(readFileType));
       res |= myInitialAssociations.hasAssociationsFor(loadedFileType);
     }
 
@@ -608,7 +627,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
 
-  private FileType loadFileType(Element typeElement, boolean isDefaults) {
+  private FileType loadFileType(Element typeElement, boolean isDefaults, final boolean shared) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
     String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue(ATTRIBUTE_ICON);
@@ -636,15 +655,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
     else {
-      for(CustomFileTypeFactory factory: Extensions.getExtensions(CustomFileTypeFactory.EP_NAME)) {
-        type = factory.createFileType(typeElement);
-        if (type != null) {
-          break;
-        }
-      }
-      if (type == null) {
-        type = new UserBinaryFileType();
-      }
+      type = loadCustomFile(typeElement, shared);
       registerFileTypeWithoutNotification(type, exts);
     }
 
@@ -660,12 +671,42 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
     else {
-      Element extensions = typeElement.getChild(ELEMENT_EXTENSIONMAP);
+      Element extensions = typeElement.getChild(AbstractFileType.ELEMENT_EXTENSIONMAP);
       if (extensions != null) {
         readMappingsForFileType(extensions, type);
       }
     }
 
+    return type;
+  }
+
+  private static FileType loadCustomFile(final Element typeElement, final boolean shared) {
+    FileType type = null;
+
+    Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
+    if (element != null) {
+      final SyntaxTable table = AbstractFileType.readSyntaxTable(element);
+      if (table != null) {
+        if (!shared) {
+          type = new AbstractFileType(table);
+        }
+        else {
+          type = new ImportedFileType(table);
+          ((ImportedFileType)type).readOriginalMatchers(typeElement);
+        }
+        ((AbstractFileType)type).initSupport();
+        return type;
+      }
+    }
+    for(CustomFileTypeFactory factory: Extensions.getExtensions(CustomFileTypeFactory.EP_NAME)) {
+      type = factory.createFileType(typeElement);
+      if (type != null) {
+        break;
+      }
+    }
+    if (type == null) {
+      type = new UserBinaryFileType();
+    }
     return type;
   }
 
@@ -718,11 +759,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public void setPatternsTable(Set<FileType> fileTypes, FileTypeAssocTable assocTable) {
     fireBeforeFileTypesChanged();
-    for (FileType fileType : getSchemesManager().getAllSchemes()) {
-      if (fileType instanceof AbstractFileType) {
-        ((AbstractFileType)fileType).disposeSupport();
-      }
-    }
     mySchemesManager.clearAllSchemes();
     for (FileType fileType : fileTypes) {
       mySchemesManager.addNewScheme(fileType, true);

@@ -42,6 +42,7 @@
   <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
                   area="IDEA_PROJECT"/>
   <extensionPoint name="customFileTypeFactory" interface="com.intellij.openapi.fileTypes.ex.CustomFileTypeFactory"/>
+  <extensionPoint name="fileTypeRegistrator" interface="com.intellij.ide.highlighter.FileTypeRegistrator"/>
 
   <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"/>
   <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"

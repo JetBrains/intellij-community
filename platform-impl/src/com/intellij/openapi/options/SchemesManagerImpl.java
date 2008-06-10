@@ -23,24 +23,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager<T> {
+public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme> extends AbstractSchemesManager<T,E> {
   private static final Logger LOG = Logger.getInstance("#" + SchemesManagerFactoryImpl.class.getName());
 
   private static final String EXT = ".xml";
 
-  private final Map<String, String> mySchemeNameToFileName = new HashMap<String, String>();
-  private final Map<String, Long> mySchemeNameToHashValue = new HashMap<String, Long>();
-  private final Map<String, String> mySharedSchemeToOriginalPath = new HashMap<String, String>();
   private final Set<String> myDeletedNames = new LinkedHashSet<String>();
   private final Set<String> myFilesToDelete = new HashSet<String>();
-
-  private final Map<Scheme, String> mySchemeToName = new HashMap<Scheme, String>();
 
   private static final String SHARED_SCHEME = "shared-scheme";
   private static final String NAME = "name";
   private static final String ORIGINAL_SCHEME_PATH = "original-scheme-path";
   private final String myFileSpec;
-  private final SchemeProcessor<T> myProcessor;
+  private final SchemeProcessor<E> myProcessor;
   private final RoamingType myRoamingType;
 
 
@@ -49,7 +44,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
   private final StreamProvider[] myProviders;
   private final File myBaseDir;
 
-  public SchemesManagerImpl(final String fileSpec, final SchemeProcessor<T> processor, final RoamingType roamingType,
+  public SchemesManagerImpl(final String fileSpec, final SchemeProcessor<E> processor, final RoamingType roamingType,
                             StreamProvider[] providers, File baseDir) {
 
     myFileSpec = fileSpec;
@@ -59,7 +54,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     myBaseDir = baseDir;
   }
 
-  public Collection<T> loadSchemes() {
+  public Collection<E> loadSchemes() {
 
     myBaseDir.mkdirs();
 
@@ -68,16 +63,21 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
 
     myDeletedNames.addAll(readDeletedSchemeNames(providers));
 
-    Collection<T> read = new ArrayList<T>();
 
-    read.addAll(readSchemesFromFileSystem());
+    Map<String, E> read = new LinkedHashMap<String, E>();
 
+    for (E e : readSchemesFromFileSystem()) {
+      read.put(e.getName(), e);
+    }
 
-    read.addAll(readSchemesFromProviders(providers));
+    for (E e : readSchemesFromProviders(providers)) {
+      read.put(e.getName(), e);
+    }
 
-    initLoadedSchemes(read);
+    Collection<E> result = read.values();
+    initLoadedSchemes(result);
 
-    return read;
+    return result;
   }
 
   private Collection<String> readDeletedSchemeNames(final StreamProvider[] providers) {
@@ -103,14 +103,15 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
 
   }
 
-  private void initLoadedSchemes(final Collection<T> read) {
-    for (T scheme : read) {
+  private void initLoadedSchemes(final Collection<E> read) {
+    for (E scheme : read) {
       myProcessor.initScheme(scheme);
+      checkCurrentScheme(scheme);
     }
   }
 
-  private Collection<T> readSchemesFromProviders(final StreamProvider[] providers) {
-    Collection<T> result = new ArrayList<T>();
+  private Collection<E> readSchemesFromProviders(final StreamProvider[] providers) {
+    Collection<E> result = new ArrayList<E>();
     if (providers != null) {
       for (StreamProvider provider : providers) {
         String[] paths = provider.listSubFiles(myFileSpec);
@@ -122,7 +123,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
                 checkFileNameIsFree(subpath);
                 final File file = new File(myBaseDir, subpath);
                 JDOMUtil.writeDocument(subDocument, file, "\n");
-                T scheme = readScheme(subDocument);
+                E scheme = readScheme(subDocument);
                 loadScheme(file, scheme);
                 result.add(scheme);
 
@@ -139,34 +140,55 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
   }
 
   private void checkFileNameIsFree(final String subpath) throws IOException {
-    Collection<String> schemeNames = new ArrayList<String>(mySchemeNameToFileName.keySet());
-    for (String schemeName : schemeNames) {
-      String name = mySchemeNameToFileName.get(schemeName);
-      String fileName = name + EXT;
-      if (fileName.equals(subpath)) {
-        String uniqueFileName = createUniqueFileName(mySchemeNameToFileName.values(), schemeName);
-        File newFile = new File(myBaseDir, uniqueFileName + EXT);
-        File oldFile = new File(myBaseDir, subpath + EXT);
-        if (oldFile.isFile()) {
-          FileUtil.copy(oldFile, newFile);
+    for (Scheme scheme : mySchemes) {
+      if (scheme instanceof ExternalizableScheme) {
+        ExternalInfo externalInfo = ((ExternalizableScheme)scheme).getExternalInfo();
+        String name = externalInfo.getCurrentFileName();
+        if (name != null) {
+          String fileName = name + EXT;
+          if (fileName.equals(subpath)) {
+            String uniqueFileName = createUniqueFileName(collectAllFileNames(), scheme.getName());
+            File newFile = new File(myBaseDir, uniqueFileName + EXT);
+            File oldFile = new File(myBaseDir, subpath + EXT);
+            if (oldFile.isFile()) {
+              FileUtil.copy(oldFile, newFile);
+            }
+            externalInfo.setCurrentFileName(uniqueFileName);
+          }
         }
-        mySchemeNameToFileName.put(schemeName,  uniqueFileName);
+      }
+      }
+  }
+
+  private Collection<String> collectAllFileNames() {
+    HashSet<String> result = new HashSet<String>();
+    for (T scheme : mySchemes) {
+      if (scheme instanceof ExternalizableScheme) {
+        ExternalInfo externalInfo = ((ExternalizableScheme)scheme).getExternalInfo();
+        if (externalInfo.getCurrentFileName() != null) {
+          result.add(externalInfo.getCurrentFileName());
+        }
       }
     }
+    return result;
   }
 
   private String createUniqueFileName(final Collection<String> strings, final String schemeName) {
     return UniqueNameGenerator.generateUniqueName(schemeName, "", "", strings);
   }
 
-  private void loadScheme(final File file, final T scheme) throws IOException {
+  private void loadScheme(final File file, final E scheme) throws IOException {
     if (scheme != null && scheme.getName() != null && !myDeletedNames.contains(scheme.getName())) {
-      if (mySchemeNameToFileName.containsKey(scheme.getName())) {
-        FileUtil.delete(new File(myBaseDir, mySchemeNameToFileName.get(scheme.getName()) + EXT));
+      T existing = findSchemeByName(scheme.getName());
+      if (existing != null && existing instanceof ExternalizableScheme) {
+        ExternalInfo info = ((ExternalizableScheme)existing).getExternalInfo();
+        if (info.getCurrentFileName() != null) {
+          FileUtil.delete(new File(myBaseDir, info.getCurrentFileName() + EXT));
+        }
       }
-      addNewScheme(scheme, true);
-      saveFileName(file, scheme.getName());
-      //mySchemeNameToHashValue.put(scheme.getName(), computeHashValue(subDocument));
+      addNewScheme((T)scheme, true);
+      saveFileName(file, scheme);
+      scheme.getExternalInfo().setPreviouslySavedName(scheme.getName());
     }
     else {
       deleteLocalAndServerFiles(file);
@@ -174,8 +196,8 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
 
   }
 
-  private Collection<T> readSchemesFromFileSystem() {
-    Collection<T> result = new ArrayList<T>();
+  private Collection<E> readSchemesFromFileSystem() {
+    Collection<E> result = new ArrayList<E>();
     final File[] files = myBaseDir.listFiles();
     if (files != null) {
       for (File file : files) {
@@ -190,7 +212,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
               LOG.info("Error reading file " + file.getPath() + ": " + e.getLocalizedMessage());
               throw e;
             }
-            final T scheme = readScheme(document);
+            final E scheme = readScheme(document);
             if (scheme != null) {
               loadScheme(file, scheme);
               result.add(scheme);
@@ -209,7 +231,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
   }
 
   @Nullable
-  private T readScheme(final Document subDocument) throws InvalidDataException, IOException, JDOMException {
+  private E readScheme(final Document subDocument) throws InvalidDataException, IOException, JDOMException {
     Element rootElement = subDocument.getRootElement();
     if (rootElement.getName().equals(SHARED_SCHEME)) {
       String schemeName = rootElement.getAttributeValue(NAME);
@@ -218,10 +240,11 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
       Document sharedDocument = loadGlobalScheme(schemePath);
 
       if (sharedDocument != null) {
-        T result = readScheme(sharedDocument);
+        E result = readScheme(sharedDocument);
         if (result != null) {
-          myProcessor.renameScheme(schemeName, result);
-          mySharedSchemeToOriginalPath.put(schemeName, schemePath);
+          renameScheme(result, schemeName);
+          result.getExternalInfo().setOriginalPath(schemePath);
+          result.getExternalInfo().setIsImported(true);
         }
         return result;
       }
@@ -254,12 +277,12 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     return null;
   }
 
-  private void saveFileName(final File file, final String schemeKey) {
+  private void saveFileName(final File file, final E schemeKey) {
     String fileName = file.getName();
     if (StringUtil.endsWithIgnoreCase(fileName, EXT)) {
       fileName = fileName.substring(0, fileName.length() - EXT.length());
     }
-    mySchemeNameToFileName.put(schemeKey, fileName);
+    schemeKey.getExternalInfo().setCurrentFileName(fileName);
   }
 
   private static long computeHashValue(final Document document) throws IOException {
@@ -267,12 +290,12 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
   }
 
   @Nullable
-  private Document writeSchemeToDocument(final T scheme) throws WriteExternalException {
+  private Document writeSchemeToDocument(final E scheme) throws WriteExternalException {
     if (!isShared(scheme)) {
       return myProcessor.writeScheme(scheme);
     }
     else {
-      String originalPath = mySharedSchemeToOriginalPath.get(scheme.getName());
+      String originalPath = scheme.getExternalInfo().getOriginalPath();
       if (originalPath != null) {
         Element root = new Element(SHARED_SCHEME);
         root.setAttribute(NAME, scheme.getName());
@@ -291,12 +314,12 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     }
   }
 
-  public Collection<T> loadScharedSchemes(Collection<String> currentSchemeNameList) {
+  public Collection<E> loadScharedSchemes(Collection<String> currentSchemeNameList) {
     Collection<String> names = new HashSet<String>(currentSchemeNameList);
 
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
-    final HashMap<String, T> result = new HashMap<String, T>();
+    final HashMap<String, E> result = new HashMap<String, E>();
     if (providers != null) {
       for (StreamProvider provider : providers) {
         String[] paths = provider.listSubFiles(myFileSpec);
@@ -304,14 +327,15 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
           try {
             final Document subDocument = provider.loadDocument(getFileFullPath(subpath), RoamingType.GLOBAL);
             if (subDocument != null) {
-              final T scheme = myProcessor.readScheme(subDocument);
+              final E scheme = myProcessor.readScheme(subDocument);
               String schemeName = scheme.getName();
               String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, "", "", names);
               if (!uniqueName.equals(schemeName)) {
                 renameScheme(scheme, uniqueName);
                 schemeName = uniqueName;
               }
-              mySharedSchemeToOriginalPath.put(schemeName, getFileFullPath(subpath));
+              scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
+              scheme.getExternalInfo().setIsImported(true);
               result.put(schemeName, scheme);
             }
           }
@@ -322,7 +346,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
       }
     }
 
-    for (T t : result.values()) {
+    for (E t : result.values()) {
       myProcessor.initScheme(t);
     }
 
@@ -334,7 +358,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     return myFileSpec + "/" + subpath;
   }
 
-  public void exportScheme(final T scheme) throws WriteExternalException {
+  public void exportScheme(final E scheme) throws WriteExternalException {
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
     if (providers != null) {
@@ -359,7 +383,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
   }
 
   public boolean isShared(final Scheme scheme) {
-    return mySharedSchemeToOriginalPath.containsKey(scheme.getName());
+    return scheme instanceof ExternalizableScheme && ((ExternalizableScheme)scheme).getExternalInfo().isIsImported();
   }
 
   public void save() throws WriteExternalException {
@@ -411,23 +435,25 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
   private void saveSchemes(final Collection<T> schemes, final StreamProvider[] providers, final UniqueFileNamesProvider fileNameProvider)
       throws WriteExternalException {
     for (T scheme : schemes) {
-      mySchemeToName.put(scheme, scheme.getName());
-      if (myProcessor.shouldBeSaved(scheme)) {
-        String schemeKey = scheme.getName();
-        final File file = getFileForScheme(myBaseDir, fileNameProvider, scheme);
-        try {
+      if (isExternalizable(scheme)) {
+        E eScheme = (E)scheme;
+        eScheme.getExternalInfo().setPreviouslySavedName(eScheme.getName());
+        if (myProcessor.shouldBeSaved(eScheme)) {
+          final File file = getFileForScheme(myBaseDir, fileNameProvider, eScheme);
+          try {
 
-          final Document document = writeSchemeToDocument(scheme);
+            final Document document = writeSchemeToDocument(eScheme);
 
-          long newHash = computeHashValue(document);
+            long newHash = computeHashValue(document);
 
-          Long oldHash = mySchemeNameToHashValue.get(schemeKey);
+            Long oldHash = eScheme.getExternalInfo().getHash();
 
-          saveIfNeeded(providers, schemeKey, file, document, newHash, oldHash);
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-          myProcessor.showWriteErrorMessage(e, scheme.getName(), file.getPath());
+            saveIfNeeded(providers, eScheme, file, document, newHash, oldHash);
+          }
+          catch (IOException e) {
+            LOG.debug(e);
+            myProcessor.showWriteErrorMessage(e, scheme.getName(), file.getPath());
+          }
         }
 
 
@@ -441,10 +467,10 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     return myProviders;
   }
 
-  private File getFileForScheme(final File baseDir, final UniqueFileNamesProvider fileNameProvider, final T scheme) {
+  private File getFileForScheme(final File baseDir, final UniqueFileNamesProvider fileNameProvider, final E scheme) {
     final String fileName;
-    if (mySchemeNameToFileName.containsKey(scheme.getName())) {
-      fileName = mySchemeNameToFileName.get(scheme.getName());
+    if (scheme.getExternalInfo().getCurrentFileName() != null) {
+      fileName = scheme.getExternalInfo().getCurrentFileName();
       fileNameProvider.reserveFileName(fileName);
     }
     else {
@@ -454,7 +480,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     return new File(baseDir, fileName + EXT);
   }
 
-  private void saveIfNeeded(final StreamProvider[] providers, final String schemeKey, final File file, final Document document,
+  private void saveIfNeeded(final StreamProvider[] providers, final E schemeKey, final File file, final Document document,
                             final long newHash,
                             final Long oldHash) throws IOException {
     if (oldHash == null || newHash != oldHash.longValue() || !file.isFile()) {
@@ -469,7 +495,7 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
       else {
         JDOMUtil.writeDocument(document, file, "\n");
       }
-      mySchemeNameToHashValue.put(schemeKey, newHash);
+      schemeKey.getExternalInfo().setHash(newHash);
       saveFileName(file, schemeKey);
 
       saveOnServer(providers, file, document);
@@ -493,16 +519,19 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
     fileNameProvider.reserveFileName(DELETED_XML);
 
     for (T scheme : schemes) {
-      String schemeKey = mySchemeToName.get(scheme);
-      final String fileName = mySchemeNameToFileName.get(schemeKey);
-      if (fileName != null) {
-        if (schemeKey.equals(scheme.getName())) {
-          fileNameProvider.reserveFileName(fileName);
+      if (scheme instanceof ExternalizableScheme) {
+        ExternalInfo info = ((ExternalizableScheme)scheme).getExternalInfo();
+        final String fileName = info.getCurrentFileName();
+        if (fileName != null) {
+          if (info.getPreviouslySavedName().equals(scheme.getName())) {
+            fileNameProvider.reserveFileName(fileName);
+          }
+          else {
+            myFilesToDelete.add(fileName);
+            info.setCurrentFileName(null);
+          }
         }
-        else {
-          myFilesToDelete.add(fileName);
-          mySchemeNameToFileName.remove(schemeKey);
-        }
+
       }
     }
   }
@@ -520,30 +549,26 @@ public class SchemesManagerImpl<T extends Scheme> extends AbstractSchemesManager
   }
 
   protected void onSchemeDeleted(final Scheme toDelete) {
-    String previouslyUsedName = mySchemeToName.get(toDelete);
+    if (toDelete instanceof ExternalizableScheme) {
+      ExternalInfo info = ((ExternalizableScheme)toDelete).getExternalInfo();
+      String previouslyUsedName = info.getPreviouslySavedName();
 
-    if (previouslyUsedName != null) {
-      mySchemeNameToHashValue.remove(previouslyUsedName);
-      mySharedSchemeToOriginalPath.remove(previouslyUsedName);
-      myDeletedNames.add(previouslyUsedName);
+      if (previouslyUsedName != null) {
+        myDeletedNames.add(previouslyUsedName);
 
-      if (mySchemeNameToFileName.containsKey(previouslyUsedName)) {
-        myFilesToDelete.add(mySchemeNameToFileName.get(previouslyUsedName));
-        mySchemeNameToFileName.remove(previouslyUsedName);
+        if (info.getCurrentFileName() != null) {
+          myFilesToDelete.add(info.getCurrentFileName());
+        }
       }
+
     }
 
-  }
-
-  protected void renameScheme(final T scheme, final String newName) {
-    if (!newName.equals(scheme.getName())) {
-      myProcessor.renameScheme(newName, scheme);
-      LOG.assertTrue(newName.equals(scheme.getName()));
-    }
   }
 
   protected void onSchemeAdded(final T scheme) {
     myDeletedNames.remove(scheme.getName());
-    mySchemeToName.put(scheme, scheme.getName());    
+    if (scheme instanceof ExternalizableScheme) {
+      ((ExternalizableScheme)scheme).getExternalInfo().setPreviouslySavedName(scheme.getName());
+    }
   }
 }

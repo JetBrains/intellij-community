@@ -1,22 +1,29 @@
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.ide.highlighter.FileTypeRegistrator;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.ide.highlighter.custom.impl.CustomFileTypeEditor;
 import com.intellij.lang.Commenter;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
+import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 
-public abstract class AbstractFileType<T extends UserFileType> extends UserFileType<T> implements ExternalizableFileType {
+public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme {
   protected SyntaxTable mySyntaxTable;
   private SyntaxTable myDefaultSyntaxTable;
   protected Commenter myCommenter = null;
@@ -40,13 +47,17 @@ public abstract class AbstractFileType<T extends UserFileType> extends UserFileT
   @NonNls private static final String ELEMENT_KEYWORDS3 = "keywords3";
   @NonNls private static final String ELEMENT_KEYWORDS4 = "keywords4";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls public static final String ELEMENT_EXTENSIONMAP = "extensionMap";
+  private ExternalInfo myExternalInfo = new ExternalInfo();
 
   public AbstractFileType(SyntaxTable syntaxTable) {
     mySyntaxTable = syntaxTable;
   }
 
   public void initSupport() {
-
+    for (FileTypeRegistrator registrator : Extensions.getRootArea().getExtensionPoint(FileTypeRegistrator.EP_NAME).getExtensions()) {
+      registrator.initFileType(this);
+    }
   }
 
   public SyntaxTable getSyntaxTable() {
@@ -67,7 +78,10 @@ public abstract class AbstractFileType<T extends UserFileType> extends UserFileT
 
   public void copyFrom(UserFileType newType) {
     super.copyFrom(newType);
-    mySyntaxTable = ((AbstractFileType)newType).getSyntaxTable();
+    if (newType instanceof AbstractFileType) {
+      mySyntaxTable = ((AbstractFileType)newType).getSyntaxTable();
+      myExternalInfo.copy(((AbstractFileType)newType).myExternalInfo);
+    }
   }
 
   public boolean isBinary() {
@@ -236,10 +250,6 @@ public abstract class AbstractFileType<T extends UserFileType> extends UserFileT
   }
 
 
-  public void disposeSupport() {
-
-  }
-
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_EXT = "ext";
   @NonNls private static final String ATTRIBUTE_PATTERN = "pattern";
@@ -324,5 +334,18 @@ public abstract class AbstractFileType<T extends UserFileType> extends UserFileT
     }
 
     return mapping;
+  }
+
+  public SettingsEditor<AbstractFileType> getEditor() {
+    return new CustomFileTypeEditor();
+  }
+
+  public void setCommenter(final Commenter commenter) {
+    myCommenter = commenter;
+  }
+
+  @NotNull
+  public ExternalInfo getExternalInfo() {
+    return myExternalInfo;
   }
 }

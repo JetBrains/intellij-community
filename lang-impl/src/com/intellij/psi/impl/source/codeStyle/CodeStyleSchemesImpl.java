@@ -39,18 +39,18 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   private boolean myIsInitialized = false;
   @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
 
-  private final SchemesManager<CodeStyleScheme> mySchemesManager;
-  private final SchemeProcessor<CodeStyleScheme> myProcessor;
+  private final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
+  private final SchemeProcessor<CodeStyleSchemeImpl> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
 
-    myProcessor = new SchemeProcessor<CodeStyleScheme>() {
-      public CodeStyleScheme readScheme(final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
+    myProcessor = new SchemeProcessor<CodeStyleSchemeImpl>() {
+      public CodeStyleSchemeImpl readScheme(final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
         return CodeStyleSchemeImpl.readScheme(schemeContent);
       }
 
-      public Document writeScheme(final CodeStyleScheme scheme) throws WriteExternalException {
+      public Document writeScheme(final CodeStyleSchemeImpl scheme) throws WriteExternalException {
         return ((CodeStyleSchemeImpl)scheme).saveToDocument();
       }
 
@@ -63,15 +63,11 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
         Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.scheme.file", filePath, e.getLocalizedMessage()), CommonBundle.getErrorTitle());
       }
 
-      public boolean shouldBeSaved(final CodeStyleScheme scheme) {
+      public boolean shouldBeSaved(final CodeStyleSchemeImpl scheme) {
         return !scheme.isDefault();
       }
 
-      public void renameScheme(final String name, final CodeStyleScheme scheme) {
-        ((CodeStyleSchemeImpl)scheme).setName(name);
-      }
-
-      public void initScheme(final CodeStyleScheme scheme) {
+      public void initScheme(final CodeStyleSchemeImpl scheme) {
         ((CodeStyleSchemeImpl)scheme).init(CodeStyleSchemesImpl.this);
       }
     };
@@ -104,7 +100,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   public void setCurrentScheme(CodeStyleScheme scheme) {
-    mySchemesManager.setCurrentScheme(scheme);
+    mySchemesManager.setCurrentSchemeName(scheme == null ? null : scheme.getName());
     CURRENT_SCHEME_NAME = scheme.getName();
   }
 
@@ -171,7 +167,6 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   private void init() {
     if (myIsInitialized) return;
     myIsInitialized = true;
-    mySchemesManager.clearAllSchemes();
     mySchemesManager.loadSchemes();
   }
 
@@ -203,7 +198,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     return directory;
   }
 
-  public SchemesManager<CodeStyleScheme> getSchemesManager() {
+  public SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {
     return mySchemesManager;
   }
 }

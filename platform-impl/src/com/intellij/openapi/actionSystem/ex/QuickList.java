@@ -2,11 +2,15 @@ package com.intellij.openapi.actionSystem.ex;
 
 
 
-import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.ExternalizableScheme;
+
+import com.intellij.openapi.options.ExternalInfo;
 
 import org.jdom.Element;
 
 import org.jetbrains.annotations.NonNls;
+
+import org.jetbrains.annotations.NotNull;
 
 
 
@@ -18,7 +22,7 @@ import java.util.List;
 
 
 
-public class QuickList implements Scheme {
+public class QuickList implements ExternalizableScheme {
 
   @NonNls public static final String QUICK_LIST_PREFIX = "QuickList.";
 
@@ -47,6 +51,8 @@ public class QuickList implements Scheme {
   private String[] myActionIds;
 
   private boolean myReadonly;
+
+  private ExternalInfo myExternalInfo = new ExternalInfo();
 
 
 
@@ -211,6 +217,24 @@ public class QuickList implements Scheme {
   public void setDisplayName(final String name) {
 
     myDisplayName = name;
+
+  }
+
+
+
+  @NotNull
+
+  public ExternalInfo getExternalInfo() {
+
+    return myExternalInfo;
+
+  }
+
+
+
+  public void setName(final String newName) {
+
+    setDisplayName(newName);
 
   }
 

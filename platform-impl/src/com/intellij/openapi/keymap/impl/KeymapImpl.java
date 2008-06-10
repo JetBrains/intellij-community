@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +19,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -32,7 +35,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class KeymapImpl implements Keymap {
+public class KeymapImpl implements Keymap, ExternalizableScheme {
   @NonNls
   private static final String KEY_MAP = "keymap";
   @NonNls
@@ -109,6 +112,7 @@ public class KeymapImpl implements Keymap {
   private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
   private final ArrayList<Keymap.Listener> myListeners = new ArrayList<Keymap.Listener>();
   private KeymapManagerEx myKeymapManager;
+  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   static {
     ourNamesForKeycodes = new HashMap<Integer, String>();
@@ -151,11 +155,11 @@ public class KeymapImpl implements Keymap {
       return newKeymap;
     }
     else {
-      return copy();
+      return copy(false);
     }
   }
 
-  public KeymapImpl copy() {
+  public KeymapImpl copy(boolean copyExternalInfo) {
     KeymapImpl newKeymap = new KeymapImpl();
     newKeymap.myParent = myParent;
     newKeymap.myName = myName;
@@ -172,6 +176,10 @@ public class KeymapImpl implements Keymap {
     }
 
     newKeymap.myActionId2ListOfShortcuts = actionsIdsToListOfShortcuts;
+
+    if (copyExternalInfo) {
+      newKeymap.myExternalInfo.copy(myExternalInfo);
+    }
 
     return newKeymap;
   }
@@ -840,5 +848,10 @@ public class KeymapImpl implements Keymap {
     for (Listener listener : listeners) {
       listener.onShortcutChanged(actionId);
     }
+  }
+
+  @NotNull
+  public ExternalInfo getExternalInfo() {
+    return myExternalInfo;
   }
 }

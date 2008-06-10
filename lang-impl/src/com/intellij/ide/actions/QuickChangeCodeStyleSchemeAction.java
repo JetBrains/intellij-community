@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 
 import java.util.Collection;
 
@@ -35,7 +36,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
 
     group.add(Separator.getInstance());
 
-    Collection<CodeStyleScheme> sharedSchemes =
+    Collection<CodeStyleSchemeImpl> sharedSchemes =
         ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemesManager().loadScharedSchemes();
 
     for (CodeStyleScheme scheme : sharedSchemes) {

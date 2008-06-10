@@ -19,31 +19,31 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
   private final Collection<SchemesManager> myRegisteredManagers = new ArrayList<SchemesManager>();
 
-  public <T extends Scheme> SchemesManager<T> createSchemesManager(final String fileSpec,
-                                                                   final SchemeProcessor<T> processor, final RoamingType roamingType) {
+  public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(final String fileSpec,
+                                                                   final SchemeProcessor<E> processor, final RoamingType roamingType) {
     final Application application = ApplicationManager.getApplication();
     if (!(application instanceof ApplicationImpl)) return null;
     String baseDirPath = ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacroses(fileSpec);
 
     if (baseDirPath != null) {
 
-      SchemesManagerImpl<T> manager = new SchemesManagerImpl<T>(fileSpec, processor, roamingType,
+      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T,E>(fileSpec, processor, roamingType,
                                                           ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(roamingType),
                                                           new File(baseDirPath));
       myRegisteredManagers.add(manager);
       return manager;
     }
     else {
-      return new AbstractSchemesManager<T>(){
-        public Collection<T> loadSchemes() {
+      return new AbstractSchemesManager<T,E>(){
+        public Collection<E> loadSchemes() {
           return Collections.emptyList();
         }
 
-        public Collection<T> loadScharedSchemes(final Collection<String> currentSchemeNameList) {
+        public Collection<E> loadScharedSchemes(final Collection<String> currentSchemeNameList) {
           return Collections.emptyList();
         }
 
-        public void exportScheme(final T scheme) throws WriteExternalException {
+        public void exportScheme(final E scheme) throws WriteExternalException {
         }
 
         public boolean isImportExportAvailable() {

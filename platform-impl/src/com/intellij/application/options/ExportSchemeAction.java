@@ -3,29 +3,30 @@ package com.intellij.application.options;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
 
-public abstract class ExportSchemeAction<T extends Scheme> extends AnAction {
-  protected final SchemesManager<T> mySchemesManager;
+public abstract class ExportSchemeAction<T extends Scheme, E extends ExternalizableScheme> extends AnAction {
+  protected final SchemesManager<T, E> mySchemesManager;
 
-  public ExportSchemeAction(SchemesManager<T> manager) {
+  public ExportSchemeAction(SchemesManager<T, E> manager) {
     super("Export", "Export", IconLoader.getIcon("/actions/export.png"));
     mySchemesManager = manager;
   }
 
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    T profile = getSelectedScheme();
+    E profile = getSelectedScheme();
     presentation.setEnabled(profile != null && isAvailableFor(profile));
   }
 
-  protected abstract T getSelectedScheme();
+  protected abstract E getSelectedScheme();
 
-  private boolean isAvailableFor(final T selected) {
+  private boolean isAvailableFor(final E selected) {
     return selected != null && !mySchemesManager.isShared(selected);
   }
 

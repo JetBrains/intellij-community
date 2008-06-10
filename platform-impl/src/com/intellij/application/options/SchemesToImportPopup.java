@@ -1,5 +1,6 @@
 package com.intellij.application.options;
 
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -10,7 +11,7 @@ import java.awt.*;
 import java.util.Collection;
 
 
-public abstract class SchemesToImportPopup<T extends Scheme> {
+public abstract class SchemesToImportPopup<T extends Scheme, E extends ExternalizableScheme> {
 
   private final Component myParent;
 
@@ -18,8 +19,8 @@ public abstract class SchemesToImportPopup<T extends Scheme> {
     myParent = parent;
   }
 
-  public void show(SchemesManager<T> schemesManager, Collection<String> currentSchemeNames) {
-    Collection<T> schemes = schemesManager.loadScharedSchemes(currentSchemeNames);
+  public void show(SchemesManager<T, E> schemesManager, Collection<String> currentSchemeNames) {
+    Collection<E> schemes = schemesManager.loadScharedSchemes(currentSchemeNames);
     final JList list = new JList(createModel(schemes));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new RecentChangesListCellRenderer());
@@ -28,14 +29,14 @@ public abstract class SchemesToImportPopup<T extends Scheme> {
 
     Runnable selectAction = new Runnable() {
       public void run() {
-        onSchemeSelected((T)list.getSelectedValue());
+        onSchemeSelected((E)list.getSelectedValue());
       }
     };
 
     showList(list, selectAction);
   }
 
-  private ListModel createModel(Collection<T> cc) {
+  private ListModel createModel(Collection<E> cc) {
     DefaultListModel m = new DefaultListModel();
     for (Scheme c : cc) {
       m.addElement(c);
@@ -86,6 +87,6 @@ public abstract class SchemesToImportPopup<T extends Scheme> {
     }
   }
 
-  abstract protected void onSchemeSelected(T scheme);
+  abstract protected void onSchemeSelected(E scheme);
 
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
@@ -532,6 +533,9 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
       myLineSpacing = parenScheme.getLineSpacing();
       myFontName = parenScheme.getEditorFontName();
       myName = parenScheme.getName();
+      if (parenScheme instanceof ExternalizableScheme) {
+        getExternalInfo().copy(((ExternalizableScheme)parenScheme).getExternalInfo());
+      }
       initFonts();
     }
 

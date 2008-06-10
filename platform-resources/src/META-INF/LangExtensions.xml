@@ -245,8 +245,8 @@
 
   <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner"/>
 
-  <customFileTypeFactory implementation="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFactoryImpl"/>
   <syntaxHighlighter factoryClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeHighlighterProvider"/>
+  <fileTypeRegistrator implementation="com.intellij.ide.highlighter.custom.impl.StandardFileTypeRegistrator"/>
 
   <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first" id="PlatformProjectConfigurator"/>
   <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectViewOpener"/>

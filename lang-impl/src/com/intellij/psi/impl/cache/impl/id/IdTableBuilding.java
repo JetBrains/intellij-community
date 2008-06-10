@@ -1,15 +1,11 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
-import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
-import com.intellij.lang.cacheBuilder.WordOccurrence;
-import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.cacheBuilder.*;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -18,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
@@ -156,10 +153,19 @@ public class IdTableBuilding {
     }
 
     if (fileType instanceof AbstractFileType) {
-      return new WordsScannerFileTypeIdIndexerAdapter(((CustomFileType)fileType).getWordsScanner());
+      return new WordsScannerFileTypeIdIndexerAdapter(createWordScaner(((AbstractFileType)fileType)));
     }
 
     return null;
+  }
+
+  private static WordsScanner createWordScaner(final AbstractFileType abstractFileType) {
+    return new DefaultWordsScanner(new CustomFileTypeLexer(abstractFileType.getSyntaxTable(), true),
+                                   TokenSet.create(CustomHighlighterTokenType.IDENTIFIER),
+                                   TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
+                                                   CustomHighlighterTokenType.MULTI_LINE_COMMENT),
+                                   TokenSet.create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
+
   }
 
   @Nullable

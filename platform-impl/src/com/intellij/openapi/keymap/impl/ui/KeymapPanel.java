@@ -218,12 +218,12 @@ public class KeymapPanel extends JPanel {
     gc.weightx = 1;
     panel.add(myDeleteButton, gc);
 
-    final SchemesManager<Keymap> schemesManager = getSchemesManager();
+    final SchemesManager<Keymap, KeymapImpl> schemesManager = getSchemesManager();
     if (schemesManager.isImportExportAvailable()) {
       myExportButton = new JButton("Export");
       myExportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
-          Keymap selected = getSelectedKeymap();
+          KeymapImpl selected = getSelectedKeymap();
           if (selected != null) {
             try {
               schemesManager.exportScheme(selected);
@@ -243,8 +243,8 @@ public class KeymapPanel extends JPanel {
       JButton importButton = new JButton("Import");
       importButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
-          SchemesToImportPopup<Keymap> popup = new SchemesToImportPopup<Keymap>(panel){
-            protected void onSchemeSelected(final Keymap scheme) {
+          SchemesToImportPopup<Keymap, KeymapImpl> popup = new SchemesToImportPopup<Keymap, KeymapImpl>(panel){
+            protected void onSchemeSelected(final KeymapImpl scheme) {
               if (scheme != null) {
                 ((KeymapImpl)scheme).setCanModify(false);
                 myKeymapListModel.addElement(scheme);
@@ -300,7 +300,7 @@ public class KeymapPanel extends JPanel {
     return names;
   }
 
-  private SchemesManager<Keymap> getSchemesManager() {
+  private SchemesManager<Keymap,KeymapImpl> getSchemesManager() {
     return ((KeymapManagerEx)KeymapManager.getInstance()).getSchemesManager();
   }
 
@@ -849,7 +849,7 @@ public class KeymapPanel extends JPanel {
     for (Keymap keymap1 : keymaps) {
       KeymapImpl keymap = (KeymapImpl)keymap1;
       if (keymap.canModify()) {
-        keymap = keymap.copy();
+        keymap = keymap.copy(true);
       }
       myKeymapListModel.addElement(keymap);
       if (Comparing.equal(keymapManager.getActiveKeymap(), keymap1)) {
@@ -875,7 +875,7 @@ public class KeymapPanel extends JPanel {
     for(int i = 0; i < myKeymapListModel.getSize(); i++){
       final Keymap modelKeymap = (Keymap)myKeymapListModel.getElementAt(i);
       if(modelKeymap.canModify()) {
-        final KeymapImpl keymapToAdd = ((KeymapImpl)modelKeymap).copy();
+        final KeymapImpl keymapToAdd = ((KeymapImpl)modelKeymap).copy(true);
         keymapManager.addKeymap(keymapToAdd);
       }
     }

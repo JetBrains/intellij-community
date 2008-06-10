@@ -62,12 +62,12 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private InspectionToolRegistrar myRegistrar;
-  private final SchemesManager<Profile> mySchemesManager;
+  private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private SeverityRegistrar mySeverityRegistrar;
   private static final String INSPECTION = "inspection";
   private static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION;
-  private final SchemeProcessor<Profile> myProcessor;
+  private final SchemeProcessor<InspectionProfileImpl> myProcessor;
 
 
   private List<ProfileChangeAdapter> myProfileChangeAdapters = new ArrayList<ProfileChangeAdapter>();
@@ -95,19 +95,15 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
-    myProcessor = new SchemeProcessor<Profile>(){
-      public Profile readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
+    myProcessor = new SchemeProcessor<InspectionProfileImpl>(){
+      public InspectionProfileImpl readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
         InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManager.this);
         profile.load(document.getRootElement());
         return profile;
       }
 
-      public boolean shouldBeSaved(final Profile scheme) {
-        return ((InspectionProfileImpl)scheme).wasInitialized();
-      }
-
-      public void renameScheme(final String name, final Profile scheme) {
-        scheme.setName(name);
+      public boolean shouldBeSaved(final InspectionProfileImpl scheme) {
+        return scheme.wasInitialized();
       }
 
 
@@ -115,15 +111,15 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
         LOG.error(e);
       }
 
-      public Document writeScheme(final Profile scheme) throws WriteExternalException {
-        return ((InspectionProfileImpl)scheme).saveToDocument();
+      public Document writeScheme(final InspectionProfileImpl scheme) throws WriteExternalException {
+        return scheme.saveToDocument();
       }
 
       public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
         LOG.error(e);
       }
 
-      public void initScheme(final Profile scheme) {
+      public void initScheme(final InspectionProfileImpl scheme) {
         
       }
     };
@@ -157,7 +153,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     if (!myProfilesAreInitialized.getAndSet(true)) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-      mySchemesManager.clearAllSchemes();
       mySchemesManager.loadSchemes();
       final Collection<Profile> profiles = mySchemesManager.getAllSchemes();
 
@@ -302,7 +297,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     if (current != null && !Comparing.strEqual(rootProfile, current.getName())) {
       fireProfileChanged(current, getProfile(rootProfile), null);
     }
-    mySchemesManager.setCurrentScheme(getProfile(rootProfile));
+    mySchemesManager.setCurrentSchemeName(rootProfile);
   }
 
 
@@ -357,7 +352,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return getProfile(name, true);
   }
 
-  public SchemesManager<Profile> getSchemesManager() {
+  public SchemesManager<Profile, InspectionProfileImpl> getSchemesManager() {
     return mySchemesManager;
   }
 }

@@ -10,6 +10,8 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -22,6 +24,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author max
  */
-public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile {
+public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile, ExternalizableScheme {
   @NonNls private static InspectionProfileImpl DEFAULT_PROFILE;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
@@ -58,6 +61,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private final InspectionToolRegistrar myRegistrar;
   @NonNls private static final String IS_LOCKED = "is_locked";
+  private ExternalInfo myExternalInfo = new ExternalInfo();
 
 //private String myBaseProfileName;
 
@@ -408,7 +412,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public ModifiableModel getModifiableModel() {
-    return new InspectionProfileImpl(this);
+    InspectionProfileImpl modifiableModel = new InspectionProfileImpl(this);
+    modifiableModel.myExternalInfo.copy(myExternalInfo);
+    return modifiableModel;
   }
 
   public void copyFrom(InspectionProfile profile) {
@@ -600,4 +606,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
+  @NotNull
+  public ExternalInfo getExternalInfo() {
+    return myExternalInfo;
+  }
 }
