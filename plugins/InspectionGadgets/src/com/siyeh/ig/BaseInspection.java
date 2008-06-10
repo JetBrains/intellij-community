@@ -199,7 +199,11 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         for (int i = 0; i < strings.length; i += outs.length) {
             for (int j = 0; j < outs.length; j++) {
                 final List<String> out = outs[j];
-                out.add(strings[i + j]);
+                if (i + j >= strings.length) {
+                    out.add("");
+                } else {
+                    out.add(strings[i + j]);
+                }
             }
         }
     }

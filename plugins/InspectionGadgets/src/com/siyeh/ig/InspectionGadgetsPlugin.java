@@ -358,6 +358,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ClassWithoutLoggerInspection.class);
         m_inspectionClasses.add(LoggingConditionDisagreesWithLogStatementInspection.class);
         m_inspectionClasses.add(LoggerInitializedWithForeignClassInspection.class);
+        m_inspectionClasses.add(LogStatementGuardedByLogConditionInspection.class);
         m_inspectionClasses.add(NonStaticFinalLoggerInspection.class);
         //m_inspectionClasses.add(PublicMethodWithoutLoggingInspection.class);
     }
