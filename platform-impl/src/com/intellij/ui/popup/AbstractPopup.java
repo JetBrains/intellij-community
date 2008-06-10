@@ -958,7 +958,7 @@ public class AbstractPopup implements JBPopup, Disposable {
       if (visible) {
         myPopup.show();
         final JWindow window = getPopupWindow();
-        if (window != null) {
+        if (window != null && myRestoreWindowSize != null) {
           window.setSize(myRestoreWindowSize);
           myRestoreWindowSize = null;
         }
