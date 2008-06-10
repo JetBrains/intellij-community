@@ -202,14 +202,14 @@
       </fileset>
     </copy>
 
-    <zip destfile="${project.dir}/Groovy.zip" basedir="${project.dir}/tempzip"/>
+    <zip destfile="${project.dir}/jetgroovy-bin-${plugin.version}.zip" basedir="${project.dir}/tempzip"/>
 
     <delete dir="${project.dir}/tempzip"/>
     <delete dir="${project.dir}/tempjar"/>
   </target>
 
   <target name="zip.sources.groovy" description="zips sources">
-    <zip destfile="${project.dir}/sources.zip"
+    <zip destfile="${project.dir}/jetgroovy-src-${plugin.version}.zip"
          basedir="${project.dir}"
          includes="src/**/*.java,
          src/**/*.properties,
