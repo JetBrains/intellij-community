@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 public class MethodCandidateInfo extends CandidateInfo{
   private int myApplicabilityLevel = 0;
   private final PsiExpressionList myArgumentList;
-  private PsiType[] myTypeArguments;
+  private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor = null;
 
   public MethodCandidateInfo(PsiElement candidate,
@@ -43,6 +43,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     super(element, substitutor, false, false);
     myApplicabilityLevel = ApplicabilityLevel.FIXED_ARITY;
     myArgumentList = null;
+    myTypeArguments = null;
   }
 
   public boolean isApplicable(){
