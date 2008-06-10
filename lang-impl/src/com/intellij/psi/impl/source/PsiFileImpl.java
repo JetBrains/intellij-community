@@ -57,7 +57,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
-  private final Object myStubLock = new Object();
+  private final Object myStubLock = PsiLock.LOCK;
   private WeakReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
