@@ -97,7 +97,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     if (!d.isOK()) return;
 
     try {
-      myManager.add(new MavenIndex(d.getId(), d.getUrl(), MavenIndex.Kind.REMOTE));
+      myManager.add(new RemoteMavenIndex(d.getId(), d.getUrl()));
       reset();
       int lastIndex = myTable.getRowCount() - 1;
       myTable.getSelectionModel().setSelectionInterval(lastIndex, lastIndex);

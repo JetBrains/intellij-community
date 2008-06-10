@@ -4,9 +4,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import org.apache.lucene.search.Query;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +26,12 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenImportToolWindow;
-import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class MavenIndicesManager extends DummyProjectComponent {
   private static final String LOCAL_INDEX = "local";
@@ -157,7 +158,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
 
     MavenIndex index = findLocalIndex();
     if (index == null) {
-      index = new MavenIndex(LOCAL_INDEX, localRepoFile.getPath(), MavenIndex.Kind.LOCAL);
+      index = new LocalMavenIndex(LOCAL_INDEX, localRepoFile.getPath());
       myIndices.add(index);
       startUpdate(index);
       return;
@@ -172,7 +173,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
   private void checkProjectIndex() throws MavenIndexException {
     MavenIndex i = findProjectIndex();
     if (i == null) {
-      i = new MavenIndex(PROJECT_INDEX, myProject.getBaseDir().getPath(), MavenIndex.Kind.PROJECT);
+      i = new ProjectMavenIndex(PROJECT_INDEX, myProject.getBaseDir().getPath());
       myIndices.add(i);
     } else {
       myIndices.change(i, PROJECT_INDEX, myProject.getBaseDir().getPath());
@@ -299,17 +300,5 @@ public class MavenIndicesManager extends DummyProjectComponent {
 
   public boolean hasVersion(String groupId, String artifactId, String version) throws MavenIndexException {
     return myIndices.hasVersion(groupId, artifactId, version);
-  }
-
-  public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenIndexException {
-    return myIndices.findByArtifactId(pattern);
-  }
-
-  public List<ArtifactInfo> findByGroupId(String groupId) throws MavenIndexException {
-    return myIndices.findByGroupId(groupId);
-  }
-
-  public Collection<ArtifactInfo> search(Query q) throws MavenIndexException {
-    return myIndices.search(q);
   }
 }

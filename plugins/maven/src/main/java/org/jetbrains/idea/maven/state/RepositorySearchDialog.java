@@ -7,7 +7,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.repository.MavenIndexException;
 import org.jetbrains.idea.maven.repository.MavenIndicesManager;
 import org.sonatype.nexus.index.ArtifactInfo;
 
@@ -19,6 +18,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RepositorySearchDialog extends DialogWrapper {
@@ -109,9 +109,10 @@ public class RepositorySearchDialog extends DialogWrapper {
   }
 
   private void doSearch() {
-    try {
+    //try {
       MavenIndicesManager m = MavenIndicesManager.getInstance(myProject);
-      final List<ArtifactInfo> result = m.findByArtifactId(mySearchField.getText() + "*");
+      //final List<ArtifactInfo> result = m.findByArtifactId(mySearchField.getText() + "*");
+      final List<ArtifactInfo> result = new ArrayList<ArtifactInfo>();
       final AbstractListModel model = new AbstractListModel() {
         public int getSize() {
           return result.size();
@@ -127,10 +128,10 @@ public class RepositorySearchDialog extends DialogWrapper {
           myResultsList.setModel(model);
         }
       });
-    }
-    catch (MavenIndexException e) {
-      throw new RuntimeException(e);
-    }
+    //}
+    //catch (MavenIndexException e) {
+    //  throw new RuntimeException(e);
+    //}
   }
 
   @Override
