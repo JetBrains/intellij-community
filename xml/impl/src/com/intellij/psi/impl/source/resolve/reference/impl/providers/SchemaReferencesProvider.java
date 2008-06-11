@@ -624,16 +624,16 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       final List<PsiReference> result = new ArrayList<PsiReference>(1);
       final String text = element.getText();
       int lastIndex = 1;
-      int index = text.indexOf(' ');
+      final int testLength = text.length();
 
-      while(index != -1) {
-        if (lastIndex != index) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, index) ) );
-        lastIndex = index + 1;
-        index = text.indexOf(' ',lastIndex);
+      for(int i = 1; i < testLength; ++i) {
+        if (Character.isWhitespace(text.charAt(i))) {
+          if (lastIndex != i) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, i) ) );
+          lastIndex = i + 1;
+        }
       }
 
-      if (lastIndex != text.length() - 1) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, text.length() - 1) ) );
-
+      if (lastIndex != testLength - 1) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, testLength - 1) ) );
       return result.toArray(new PsiReference[result.size()]);
     } else {
       return new PsiReference[] {createTypeOrElementOrAttributeReference(element)};
