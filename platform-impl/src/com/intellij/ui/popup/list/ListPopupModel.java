@@ -85,8 +85,7 @@ class ListPopupModel extends AbstractListModel {
   public void refilter() {
     rebuildLists();
     if (myFilteredList.isEmpty() && !myOriginalList.isEmpty()) {
-      myFilter.getSpeedSearch().backspace();
-      refilter();
+      myFilter.getSpeedSearch().noHits();
     }
     else {
       fireContentsChanged(this, 0, myFilteredList.size());

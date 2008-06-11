@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -42,6 +44,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
     protected void update() {
+      mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
       if (isHoldingFilter() && !searchFieldShown) {
@@ -52,6 +55,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         setHeaderComponent(null);
         searchFieldShown = false;
       }
+    }
+
+    @Override
+    public void noHits() {
+      mySpeedSearchPatternField.setBackground(LightColors.RED);
     }
   };
 
@@ -96,6 +104,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
          null, true, false, new Component[0], null, true);
 
     mySpeedSearchPatternField = new JTextField();
+    if (SystemInfo.isMac) {
+      Font f = mySpeedSearchPatternField.getFont();
+      mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+    }
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {

@@ -164,6 +164,8 @@ public class ListScrollingUtil {
     }
     Rectangle cellBounds = list.getCellBounds(top, bottom);
     if (cellBounds != null) {
+      cellBounds.x = 0;
+      cellBounds.y = 0;
       list.scrollRectToVisible(cellBounds);
     }
   }

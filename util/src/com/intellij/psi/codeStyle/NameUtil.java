@@ -16,15 +16,15 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NameUtil {
   private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
@@ -133,7 +133,7 @@ public class NameUtil {
           buffer.append('(');
 
           if (!firstIdentifierLetter) {
-            buffer.append("[a-z0-9\\$]*");
+            buffer.append("[a-z\\s0-9\\$]*");
           }
 
           buffer.append(c);
@@ -142,7 +142,7 @@ public class NameUtil {
             buffer.append(Character.toLowerCase(c));
           }
           if (!firstIdentifierLetter) {
-            buffer.append("|([A-Za-z0-9\\$]*(_|-)(");
+            buffer.append("|([A-Za-z\\s0-9\\$]*(_|-)(");
             buffer.append(c);
             buffer.append("|");
             buffer.append(Character.toLowerCase(c));
@@ -170,10 +170,19 @@ public class NameUtil {
       }
       else if (c == '.') {
         if (!firstIdentifierLetter) {
-          buffer.append("[a-z0-9\\$]*\\.");
+          buffer.append("[a-z\\s0-9\\$]*\\.");
         }
         else {
           buffer.append("\\.");
+        }
+        firstIdentifierLetter = true;
+      }
+      else if (c == ' ') {
+        if (!firstIdentifierLetter) {
+          buffer.append("[a-z\\s0-9\\$]*\\ ");
+        }
+        else {
+          buffer.append("\\ ");
         }
         firstIdentifierLetter = true;
       }
@@ -193,7 +202,7 @@ public class NameUtil {
       buffer.append(".*");
     }
     else if (lastIsUppercase) {
-      buffer.append("[a-z0-9\\$]*");
+      buffer.append("[a-z\\s0-9\\$]*");
     }
 
     return buffer.toString();

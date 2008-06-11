@@ -66,6 +66,7 @@
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="lvcs-openapi" />
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
+    <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntryProperties />
   </component>
 </module>

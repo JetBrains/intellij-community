@@ -4,26 +4,30 @@
  */
 package com.intellij.ui.popup.util;
 
+import com.intellij.psi.codeStyle.NameUtil;
+import org.apache.oro.text.regex.*;
+
 import java.awt.event.KeyEvent;
 
 public abstract class SpeedSearch {
-
   private String myString = "";
   private boolean myEnabled;
+  private PatternMatcher myMatcher;
+  private Pattern myCompiledPattern;
 
   public void type(String letter) {
-    myString += letter;
+    updatePattern(myString + letter);
   }
 
   public void backspace() {
     if (myString.length() > 0) {
-      myString = myString.substring(0, myString.length() - 1);
+      updatePattern(myString.substring(0, myString.length() - 1));
     }
   }
 
   public boolean shouldBeShowing(String string) {
-    if (string == null) return true;
-    return string.toUpperCase().indexOf(myString.toUpperCase()) >= 0;
+    return string == null ||
+           myString.length() == 0 || (myMatcher != null && myCompiledPattern != null && myMatcher.matches(string, myCompiledPattern));
   }
 
   public void process(KeyEvent e) {
@@ -37,13 +41,16 @@ public abstract class SpeedSearch {
     }
     else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
       if (isHoldingFilter()) {
-        myString = "";
+        updatePattern("");
         e.consume();
       }
     }
-    else if (Character.isLetterOrDigit(e.getKeyChar())) {
-      type(Character.toString(e.getKeyChar()));
-      e.consume();
+    else {
+      final char ch = e.getKeyChar();
+      if (Character.isLetterOrDigit(ch) || ch == ' ' || ch == '*') {
+        type(Character.toString(ch));
+        e.consume();
+      }
     }
 
     if (!old.equalsIgnoreCase(myString)) {
@@ -52,6 +59,9 @@ public abstract class SpeedSearch {
   }
 
   protected abstract void update();
+
+  public void noHits() {
+  }
 
   public boolean isHoldingFilter() {
     return myEnabled && myString.length() > 0;
@@ -63,7 +73,7 @@ public abstract class SpeedSearch {
 
   public void reset() {
     if (isHoldingFilter()) {
-      myString = "";
+      updatePattern("");
     }
 
     if (myEnabled) {
@@ -73,5 +83,18 @@ public abstract class SpeedSearch {
 
   public String getFilter() {
     return myString;
+  }
+
+  public void updatePattern(final String string) {
+    myString = string;
+    Perl5Compiler compiler = new Perl5Compiler();
+    try {
+      myCompiledPattern = compiler.compile(NameUtil.buildRegexp("*" + string, 0, true, false));
+      myMatcher = new Perl5Matcher();
+    }
+    catch (MalformedPatternException e) {
+      myMatcher = null;
+      myCompiledPattern = null;
+    }
   }
 }
