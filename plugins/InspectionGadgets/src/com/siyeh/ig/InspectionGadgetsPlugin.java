@@ -936,6 +936,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(InnerClassMayBeStaticInspection.class);
         m_inspectionClasses.add(InstantiatingObjectToGetClassObjectInspection.class);
         m_inspectionClasses.add(JavaLangReflectInspection.class);
+        m_inspectionClasses.add(KeySetIterationMayUseEntrySetInspection.class);
         m_inspectionClasses.add(LengthOneStringInIndexOfInspection.class);
         m_inspectionClasses.add(LengthOneStringsInConcatenationInspection.class);
         m_inspectionClasses.add(ManualArrayToCollectionCopyInspection.class);
