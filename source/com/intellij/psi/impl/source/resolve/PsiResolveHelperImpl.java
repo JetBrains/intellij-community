@@ -86,13 +86,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return ResolveVariableUtil.resolveVariable(psiRef, null, null);
   }
 
-  public boolean isAccessible(PsiMember member, PsiElement place, @Nullable PsiClass accessObjectClass) {
+  public boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
     return isAccessible(member, member.getModifierList(), place, accessObjectClass, null);
   }
 
-  public boolean isAccessible(PsiMember member,
+  public boolean isAccessible(@NotNull PsiMember member,
                               PsiModifierList modifierList,
-                              PsiElement place,
+                              @NotNull PsiElement place,
                               @Nullable PsiClass accessObjectClass,
                               final PsiElement currentFileResolveScope) {
     return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass, currentFileResolveScope);
@@ -156,11 +156,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           case SUPERTYPE:
             if (lowerBound == PsiType.NULL) {
               lowerBound = type;
-            } else {
-              if (!lowerBound.equals(type)) {
+            }
+            else if (!lowerBound.equals(type)) {
                 lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, type, typeParameter.getManager());
                 if (lowerBound == null) return getFailedInferenceConstraint(typeParameter);
-              }
             }
             break;
           case SUBTYPE:
@@ -175,7 +174,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (lowerBound != PsiType.NULL) {
         if (!wildcardToCapture.isAssignableFrom(lowerBound)) return getFailedInferenceConstraint(typeParameter);
         lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, wildcardToCapture, typeParameter.getManager());
-      } else {
+      }
+      else {
         if (upperBound != PsiType.NULL && !upperBound.isAssignableFrom(wildcardToCapture)) return getFailedInferenceConstraint(typeParameter);
         return new Pair<PsiType, ConstraintType>(wildcardToCapture, ConstraintType.EQUALS);
       }
@@ -207,10 +207,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return new Pair<PsiType, ConstraintType>(JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter), ConstraintType.EQUALS);
   }
 
-  public PsiType inferTypeForMethodTypeParameter(final PsiTypeParameter typeParameter,
-                                                 final PsiParameter[] parameters,
-                                                 PsiExpression[] arguments,
-                                                 PsiSubstitutor partialSubstitutor,
+  public PsiType inferTypeForMethodTypeParameter(@NotNull final PsiTypeParameter typeParameter,
+                                                 @NotNull final PsiParameter[] parameters,
+                                                 @NotNull PsiExpression[] arguments,
+                                                 @NotNull PsiSubstitutor partialSubstitutor,
                                                  PsiElement parent,
                                                  final boolean forCompletion) {
 
@@ -220,11 +220,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return constraint.getFirst();
   }
 
-  public PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters,
-                                           PsiParameter[] parameters,
-                                           PsiExpression[] arguments,
-                                           PsiSubstitutor partialSubstitutor,
-                                           PsiElement parent,
+  @NotNull
+  public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
+                                           @NotNull PsiParameter[] parameters,
+                                           @NotNull PsiExpression[] arguments,
+                                           @NotNull PsiSubstitutor partialSubstitutor,
+                                           @NotNull PsiElement parent,
                                            boolean forCompletion) {
     PsiType[] substitutions = new PsiType[typeParameters.length];
     //noinspection unchecked
@@ -310,8 +311,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @NotNull
-  public PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters, PsiType[] leftTypes, PsiType[] rightTypes,
-                                           final LanguageLevel languageLevel) {
+  public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
+                                           @NotNull PsiType[] leftTypes,
+                                           @NotNull PsiType[] rightTypes,
+                                           @NotNull LanguageLevel languageLevel) {
     if (leftTypes.length != rightTypes.length) throw new IllegalArgumentException("Types must be of the same length");
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     for (PsiTypeParameter typeParameter : typeParameters) {
@@ -321,21 +324,23 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         PsiType leftType = leftTypes[i1];
         PsiType rightType = rightTypes[i1];
         final Pair<PsiType, ConstraintType> constraint =
-          getSubstitutionForTypeParameterConstraint(typeParameter, leftType, rightType, true, languageLevel);
+            getSubstitutionForTypeParameterConstraint(typeParameter, leftType, rightType, true, languageLevel);
         if (constraint != null) {
           final ConstraintType constraintType = constraint.getSecond();
           final PsiType current = constraint.getFirst();
-          if(constraintType == ConstraintType.EQUALS) {
+          if (constraintType == ConstraintType.EQUALS) {
             substitution = current;
             break;
-          } else if (constraintType == ConstraintType.SUBTYPE) {
+          }
+          else if (constraintType == ConstraintType.SUBTYPE) {
             if (substitution == PsiType.NULL) {
               substitution = current;
             }
             else {
               substitution = GenericsUtil.getLeastUpperBound(substitution, current, typeParameter.getManager());
             }
-          } else {
+          }
+          else {
             if (lowerBound == PsiType.NULL) {
               lowerBound = current;
             }
@@ -420,8 +425,17 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       JavaResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
       PsiClass paramClass = (PsiClass)paramResult.getElement();
       if (typeParam == paramClass) {
-        return arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType || arg instanceof PsiIntersectionType ||
-               PsiUtil.resolveClassInType(arg) != null ? new Pair<PsiType, ConstraintType> (arg, ConstraintType.SUPERTYPE) : null;
+        if (arg == null ||
+            arg.getDeepComponentType() instanceof PsiPrimitiveType ||
+            arg instanceof PsiIntersectionType ||
+            PsiUtil.resolveClassInType(arg) != null) {
+          PsiType bound = intersectAllExtends(typeParam, arg);
+          return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
+          //return new Pair<PsiType, ConstraintType>(arg, ConstraintType.SUPERTYPE);
+        }
+        else {
+          return null;
+        }
       }
       if (paramClass == null) return null;
 
@@ -448,6 +462,18 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
 
     return null;
+  }
+
+  private static PsiType intersectAllExtends(PsiTypeParameter typeParam, PsiType arg) {
+    if (arg == null) return null;
+    PsiClassType[] superTypes = typeParam.getSuperTypes();
+    PsiType[] erasureTypes = new PsiType[superTypes.length];
+    for (int i = 0; i < superTypes.length; i++) {
+      PsiClassType superType = superTypes[i];
+      erasureTypes[i] = TypeConversionUtil.erasure(superType);
+    }
+    PsiType[] types = ArrayUtil.append(erasureTypes, arg, PsiType.class);
+    return PsiIntersectionType.createIntersection(types);
   }
 
   private enum ConstraintType {
