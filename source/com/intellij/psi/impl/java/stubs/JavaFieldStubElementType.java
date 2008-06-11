@@ -83,8 +83,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
                                   final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
     StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
 
-    final TypeInfo type = new TypeInfo();
-    RecordUtil.readTYPE(dataStream, type, nameStorage);
+    final TypeInfo type = RecordUtil.readTYPE(dataStream, nameStorage);
 
     StringRef initializerText = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     byte flags = dataStream.readByte();

@@ -16,16 +16,16 @@ import org.jetbrains.annotations.NonNls;
 
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
-  public static final @NonNls StringRef INITIALIZER_TOO_LONG = StringRef.fromString(";INITIALIZER_TOO_LONG;");
+  @NonNls public static final StringRef INITIALIZER_TOO_LONG = StringRef.fromString(";INITIALIZER_TOO_LONG;");
 
   private final StringRef myName;
   private final TypeInfo myType;
   private final StringRef myInitializer;
   private final byte myFlags;
 
-  private final static int ENUM_CONST = 0x01;
-  private final static int DEPRECATED = 0x02;
-  private final static int DEPRECATED_ANNOTATION = 0x04;
+  private static final int ENUM_CONST = 0x01;
+  private static final int DEPRECATED = 0x02;
+  private static final int DEPRECATED_ANNOTATION = 0x04;
 
   public PsiFieldStubImpl(final StubElement parent, final String name, final TypeInfo type, final String initializer, final byte flags) {
     this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);

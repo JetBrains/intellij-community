@@ -32,14 +32,13 @@ import java.util.List;
  * @author max
  */
 public class RecordUtil {
-  private static final @NonNls String DEPRECATED_ANNOTATION_NAME = "Deprecated";
-  private static final @NonNls String DEPRECATED_TAG = "@deprecated";
+  @NonNls private static final String DEPRECATED_ANNOTATION_NAME = "Deprecated";
+  @NonNls private static final String DEPRECATED_TAG = "@deprecated";
 
   private RecordUtil() {}
 
   private static final Ref<ArrayList<PsiClass>> ourList = new Ref<ArrayList<PsiClass>>();
   private static final String[][] ourEmptyStringStringArray = new String[0][];
-  private static final TypeInfo[] ourEmptyTypeArray = new TypeInfo[0];
 
   public static List<PsiClass> getInnerClasses(PsiElement psiElement, final CharSequence fileBuffer) {
     ourList.set(null);
@@ -143,15 +142,6 @@ public class RecordUtil {
   static boolean[] createBooleanArray(int size) {
     if (size == 0) return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
     return new boolean[size];
-  }
-
-  static TypeInfo[] createTypeInfoArray(int size) {
-    if (size == 0) return ourEmptyTypeArray;
-    TypeInfo[] res = new TypeInfo[size];
-    for (int i = 0; i < res.length; i++) {
-      res[i] = new TypeInfo();
-    }
-    return res;
   }
 
   public static int packFlags(PsiElement psiElement) {
@@ -264,18 +254,15 @@ public class RecordUtil {
   }
 
   private static boolean isInterface(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiClass)) return false;
-    return ((PsiClass)psiElement).isInterface();
+    return psiElement instanceof PsiClass && ((PsiClass)psiElement).isInterface();
   }
 
   private static boolean isEnum(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiClass)) return false;
-    return ((PsiClass)psiElement).isEnum();
+    return psiElement instanceof PsiClass && ((PsiClass)psiElement).isEnum();
   }
 
   private static boolean isAnnotationType(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiClass)) return false;
-    return ((PsiClass)psiElement).isAnnotationType();
+    return psiElement instanceof PsiClass && ((PsiClass)psiElement).isAnnotationType();
   }
 
 
@@ -377,8 +364,8 @@ public class RecordUtil {
     if (typeInfo.text == null) return null;
     if (typeInfo.arrayCount == 0) return typeInfo.text.getString();
 
-    StringBuffer buf = new StringBuffer(typeInfo.text.getString());
-    final int arrayCount = !typeInfo.isEllipsis ? typeInfo.arrayCount : typeInfo.arrayCount - 1;
+    StringBuilder buf = new StringBuilder(typeInfo.text.getString());
+    final int arrayCount = typeInfo.isEllipsis ? typeInfo.arrayCount - 1 : typeInfo.arrayCount;
     for (int i = 0; i < arrayCount; i++) buf.append("[]");
     if (typeInfo.isEllipsis) {
       buf.append("...");
@@ -394,28 +381,32 @@ public class RecordUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.repositoryCache");
 
-  public static void readTYPE(DataInput record, TypeInfo view, PersistentStringEnumerator nameStore) throws IOException {
+  public static TypeInfo readTYPE(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
     final int b = 0xFF & record.readByte();
     final int tag = b & 0x3;
     final int index = 0xF & (b >> 2);
     final int flags = 0x3 & (b >> 6);
 
+    byte arrayCount;
+    boolean isEllipsis;
+    StringRef text;
     if (tag == 0x02) {
-      view.arrayCount = 0;
-      view.isEllipsis = false;
-      view.text = null;
-      return;
-    }
-
-    view.arrayCount = (flags & 1) != 0 ? record.readByte() : 0;
-    view.isEllipsis = (flags & 2) != 0;
-    if (tag == 0x00) {
-      view.text = DataInputOutputUtil.readNAME(record, nameStore);
-      //view.text = readSTR(record);
+      arrayCount = 0;
+      isEllipsis = false;
+      text = null;
     }
     else {
-      view.text = StringRef.fromString(ourIndexFrequentType.get(index));
+      arrayCount = (flags & 1) != 0 ? record.readByte() : 0;
+      isEllipsis = (flags & 2) != 0;
+      if (tag == 0x00) {
+        text = DataInputOutputUtil.readNAME(record, nameStore);
+        //view.text = readSTR(record);
+      }
+      else {
+        text = StringRef.fromString(ourIndexFrequentType.get(index));
+      }
     }
+    return new TypeInfo(text, arrayCount, isEllipsis);
   }
 
   public static void writeTYPE(DataOutput record,

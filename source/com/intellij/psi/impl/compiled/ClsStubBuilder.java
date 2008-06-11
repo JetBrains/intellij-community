@@ -13,10 +13,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.PsiFieldStub;
-import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
+import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
@@ -77,7 +74,6 @@ public class ClsStubBuilder {
     private final VirtualFile myVFile;
     private PsiModifierListStub myModlist;
     private PsiClassStub myResult;
-    private LanguageLevel myLanguageLevel;
     private static final String[] EMPTY_STRINGS = new String[0];
     @NonNls private static final String SYNTHETIC_CLINIT_METHOD = "<clinit>";
     @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
@@ -103,7 +99,7 @@ public class ClsStubBuilder {
 
       final String shortName = PsiNameHelper.getShortClassName(fqn);
 
-      final int flags = myAccess != 0 ? myAccess : access;
+      final int flags = myAccess == 0 ? access : myAccess;
 
       boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
       boolean isInterface = (flags & Opcodes.ACC_INTERFACE) != 0;
@@ -114,10 +110,10 @@ public class ClsStubBuilder {
 
       myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
-      myLanguageLevel = convertFromVersion(version);
-      myLexer = new JavaLexer(myLanguageLevel);
+      LanguageLevel languageLevel = convertFromVersion(version);
+      myLexer = new JavaLexer(languageLevel);
 
-      ((PsiClassStubImpl)myResult).setLanguageLevel(myLanguageLevel);
+      ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
       myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(flags));
 
       CharacterIterator signatureIterator = signature != null ? new StringCharacterIterator(signature) : null;
@@ -169,8 +165,7 @@ public class ClsStubBuilder {
 
     @Nullable
     private static String parseClassDescription(final String superName, final String[] interfaces, final List<String> convertedInterfaces) {
-      final String convertedSuper;
-      convertedSuper = superName != null ? getClassName(superName) : null;
+      final String convertedSuper = superName != null ? getClassName(superName) : null;
       for (String anInterface : interfaces) {
         convertedInterfaces.add(getClassName(anInterface));
       }
@@ -180,8 +175,7 @@ public class ClsStubBuilder {
     @Nullable
     private static String parseClassSignature(final CharacterIterator signatureIterator, final List<String> convertedInterfaces)
         throws ClsFormatException {
-      final String convertedSuper;
-      convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
+      final String convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
       while (signatureIterator.current() != CharacterIterator.DONE) {
         final String ifs = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
         if (ifs == null) throw new ClsFormatException();
@@ -326,11 +320,7 @@ public class ClsStubBuilder {
       if (dim > 0) {
         type = type.getElementType();
       }
-      final TypeInfo info = new TypeInfo();
-      info.arrayCount = (byte)dim;
-      info.text = StringRef.fromString(getTypeText(type));
-      info.isEllipsis = false;
-      return info;
+      return new TypeInfo(StringRef.fromString(getTypeText(type)), (byte)dim, false);
     }
 
 
@@ -381,11 +371,8 @@ public class ClsStubBuilder {
         if (nonStaticInnerClassConstructor && i == 0) continue;
 
         String arg = args.get(i);
-        boolean isEllipsisParam = isVarargs && i == (paramCount - 1);
-        final TypeInfo typeInfo = TypeInfo.fromString(arg);
-        if (isEllipsisParam) {
-          typeInfo.isEllipsis = true;
-        }
+        boolean isEllipsisParam = isVarargs && i == paramCount - 1;
+        final TypeInfo typeInfo = TypeInfo.fromString(arg, isEllipsisParam);
 
         PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, "p" + (i + 1), typeInfo, isEllipsisParam);
         new PsiModifierListStubImpl(parameterStub, 0);
@@ -415,8 +402,7 @@ public class ClsStubBuilder {
     }
 
     private static String parseMethodViaDescription(final String desc, final PsiMethodStubImpl stub, final List<String> args) {
-      final String returnType;
-      returnType = getTypeText(Type.getReturnType(desc));
+      final String returnType = getTypeText(Type.getReturnType(desc));
       final Type[] argTypes = Type.getArgumentTypes(desc);
       for (Type argType : argTypes) {
         args.add(getTypeText(argType));
@@ -427,7 +413,6 @@ public class ClsStubBuilder {
 
     private static String parseMethodViaGenericSignature(final String signature, final PsiMethodStubImpl stub, final List<String> args)
         throws ClsFormatException {
-      final String returnType;
       StringCharacterIterator iterator = new StringCharacterIterator(signature);
       SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
 
@@ -445,8 +430,7 @@ public class ClsStubBuilder {
       }
       iterator.next();
 
-      returnType = SignatureParsing.parseTypeString(iterator);
-      return returnType;
+      return SignatureParsing.parseTypeString(iterator);
     }
 
     public void visitEnd() {
@@ -549,7 +533,7 @@ public class ClsStubBuilder {
     public AnnotationVisitor visitParameterAnnotation(final int parameter, final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
         public void callback(final String text) {
-          new PsiAnnotationStubImpl(((PsiMethodStubImpl)myOwner).findParameter(parameter).getModList(), text);
+          new PsiAnnotationStubImpl(((PsiMethodStub)myOwner).findParameter(parameter).getModList(), text);
         }
       });
     }

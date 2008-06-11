@@ -83,8 +83,7 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
   public PsiMethodStub deserialize(final DataInputStream dataStream,
                                    final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
     StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-    final TypeInfo type = new TypeInfo();
-    RecordUtil.readTYPE(dataStream, type, nameStorage);
+    final TypeInfo type = RecordUtil.readTYPE(dataStream, nameStorage);
     byte flags = dataStream.readByte();
     if (PsiMethodStubImpl.isAnnotationMethod(flags)) {
       final StringRef defaultMethodValue = DataInputOutputUtil.readNAME(dataStream, nameStorage);

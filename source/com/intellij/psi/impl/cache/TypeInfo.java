@@ -11,9 +11,16 @@ import com.intellij.util.io.StringRef;
  * @author max
  */
 public class TypeInfo {
-  public StringRef text;
-  public byte arrayCount;
-  public boolean isEllipsis;
+  public final StringRef text;
+  public final byte arrayCount;
+  public final boolean isEllipsis;
+
+
+  public TypeInfo(StringRef text, byte arrayCount, boolean ellipsis) {
+    this.text = text;
+    this.arrayCount = arrayCount;
+    isEllipsis = ellipsis;
+  }
 
   public static TypeInfo create(PsiType type, PsiTypeElement typeElement) {
     if (type == null) return null;
@@ -37,28 +44,37 @@ public class TypeInfo {
       text = type.getInternalCanonicalText();
     }
 
-    TypeInfo result = new TypeInfo();
-    result.text = StringRef.fromString(text);
-    result.arrayCount = (byte)arrayCount;
-    result.isEllipsis = isEllipsis;
-
-    return result;
+    return new TypeInfo(StringRef.fromString(text), (byte)arrayCount, isEllipsis);
   }
 
-  public static TypeInfo fromString(String typeText) {
-    TypeInfo info = new TypeInfo();
-    if (typeText.endsWith("...")) {
-      info.isEllipsis = true;
-      typeText = typeText.substring(0, typeText.length() - 3);
-    }
+  public static TypeInfo fromString(String typeText, boolean isEllipsis) {
+    assert !typeText.endsWith("...") : typeText;
 
+    byte arrayCount = 0;
     while (typeText.endsWith("[]")) {
-      info.arrayCount++;
+      arrayCount++;
       typeText = typeText.substring(0, typeText.length() - 2);
     }
 
-    info.text = StringRef.fromString(typeText);
+    StringRef text = StringRef.fromString(typeText);
 
-    return info;
+    return new TypeInfo(text, arrayCount, isEllipsis);
+  }
+  public static TypeInfo fromString(String typeText) {
+    boolean isEllipsis = false;
+    if (typeText.endsWith("...")) {
+      isEllipsis = true;
+      typeText = typeText.substring(0, typeText.length() - 3);
+    }
+
+    byte arrayCount = 0;
+    while (typeText.endsWith("[]")) {
+      arrayCount++;
+      typeText = typeText.substring(0, typeText.length() - 2);
+    }
+
+    StringRef text = StringRef.fromString(typeText);
+
+    return new TypeInfo(text, arrayCount, isEllipsis);
   }
 }

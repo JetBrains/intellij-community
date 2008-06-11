@@ -27,7 +27,7 @@ import javax.swing.*;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
-  private PatchedSoftReference<PsiType> myCachedType = null;
+  private volatile PatchedSoftReference<PsiType> myCachedType = null;
 
   public PsiParameterImpl(final PsiParameterStub stub) {
     super(stub, JavaStubElementTypes.PARAMETER);
@@ -76,8 +76,9 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public PsiType getType() {
     final PsiParameterStub stub = getStub();
     if (stub != null) {
-      if (myCachedType != null) {
-        PsiType type = myCachedType.get();
+      PatchedSoftReference<PsiType> cachedType = myCachedType;
+      if (cachedType != null) {
+        PsiType type = cachedType.get();
         if (type != null) return type;
       }
 
@@ -174,7 +175,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
 
     myCachedType = null;
-    return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), Constants.ELLIPSIS) != null;
+    return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), JavaTokenType.ELLIPSIS) != null;
   }
 
   @NotNull
