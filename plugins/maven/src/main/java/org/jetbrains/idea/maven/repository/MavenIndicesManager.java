@@ -3,15 +3,15 @@ package org.jetbrains.idea.maven.repository;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -21,103 +21,119 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
-import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
+import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.project.MavenConstants;
-import org.jetbrains.idea.maven.project.MavenException;
-import org.jetbrains.idea.maven.project.MavenImportToolWindow;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class MavenIndicesManager extends DummyProjectComponent {
-  private static final String LOCAL_INDEX = "local";
-  private static final String PROJECT_INDEX = "project";
-
+public class MavenIndicesManager implements ApplicationComponent {
   private boolean isInitialized;
 
   private MavenEmbedder myEmbedder;
   private MavenIndices myIndices;
-  private Project myProject;
-  private VirtualFileAdapter myFileListener;
 
-  public static MavenIndicesManager getInstance(Project p) {
-    return p.getComponent(MavenIndicesManager.class);
+  private Map<Project, MavenIndex> myMavenProjectIndices = new HashMap<Project, MavenIndex>();
+  private Map<Project, MavenProjectsManager.Listener> myMavenProjectListeners = new HashMap<Project, MavenProjectsManager.Listener>();
+
+  public static MavenIndicesManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(MavenIndicesManager.class);
   }
 
-  public MavenIndicesManager(Project p) {
-    myProject = p;
+  @NotNull
+  public String getComponentName() {
+    return getClass().getSimpleName();
   }
 
-  public void doInit() {
+  public void initComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    doInit(new File(PathManager.getSystemPath(), "Maven/Indices"));
+  }
+
+  @TestOnly
+  public void doInit(File indicesDir) {
     isInitialized = true;
 
-    try {
-      initIndices();
-
-      try {
-        checkLocalIndex();
-        checkProjectIndex();
+    initIndices(indicesDir);
+    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+      public void projectOpened(Project project) {
+        initProjectIndices(project);
       }
-      catch (MavenIndexException e) {
-        throw new MavenException(e);
-      }
-    }
-    catch (MavenException e) {
-      showError(e);
-    }
 
-    listenForArtifactChanges();
+      @Override
+      public void projectClosed(Project project) {
+        shutdownProjectIndices(project);
+      }
+    });
   }
 
-  private void initIndices() {
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getSettings());
-    myIndices = new MavenIndices(myEmbedder, getIndicesDir());
+  private void initIndices(File indicesDir) {
+    MavenCoreSettings settings = getSettings(ProjectManager.getInstance().getDefaultProject());
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings);
+    myIndices = new MavenIndices(myEmbedder, indicesDir);
 
     myIndices.load();
   }
 
-  private void listenForArtifactChanges() {
-    myFileListener = new VirtualFileAdapter() {
-      @Override
-      public void fileCreated(VirtualFileEvent event) {
-        doUpdate(event);
+  @TestOnly
+  public void initProjectIndices(Project p) {
+    try {
+      checkLocalIndex(p);
+      checkProjectIndex(p);
+    }
+    catch (MavenIndexException e) {
+      showError(e);
+    }
+
+    listenForChanges(p);
+  }
+
+  private void listenForChanges(final Project p) {
+    MavenProjectsManager.Listener l = new MavenProjectsManager.Listener() {
+      public void activate() {
       }
 
-      @Override
-      public void beforeContentsChange(VirtualFileEvent event) {
-        doUpdate(event);
+      public void profilesChanged(List<String> profiles) {
       }
 
-      @Override
-      public void fileDeleted(VirtualFileEvent event) {
-        doUpdate(event);
+      public void setIgnored(VirtualFile file, boolean on) {
       }
-      
-      private void doUpdate(final VirtualFileEvent event) {
-        if (!event.getFileName().equals(MavenConstants.POM_XML)) return;
-        startUpdate(findProjectIndex());
+
+      public void projectAdded(MavenProjectModel n) {
+        addArtifact(myMavenProjectIndices.get(p), n.getMavenId());
+      }
+
+      public void projectRemoved(MavenProjectModel n) {
+        myMavenProjectIndices.get(p).removeArtifact(n.getMavenId());
+      }
+
+      public void beforeProjectUpdate(MavenProjectModel n) {
+        projectRemoved(n);
+      }
+
+      public void projectUpdated(MavenProjectModel n) {
+        projectAdded(n);
       }
     };
-    VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
+    MavenProjectsManager.getInstance(p).addListener(l);
+    myMavenProjectListeners.put(p, l);
   }
 
-
-  private void showError(final MavenException e) {
-    MavenLog.LOG.warn(e);
-    new MavenImportToolWindow(myProject, RepositoryBundle.message("maven.indices")).displayErrors(e);
+  private void shutdownProjectIndices(Project p) {
+    MavenProjectsManager.Listener l = myMavenProjectListeners.remove(p);
+    MavenProjectsManager.getInstance(p).removeListener(l);
+    myMavenProjectIndices.remove(p);
   }
 
-  private MavenCoreSettings getSettings() {
-    return MavenCore.getInstance(myProject).getState();
+  private void showError(MavenIndexException e) {
+    MavenLog.warn(e);
+    //new MavenErrorWindow(p, RepositoryBundle.message("maven.indices")).displayErrors(e);
   }
 
-  private File getIndicesDir() {
-    File baseDir = new File(PathManager.getSystemPath(), "Maven");
-    return new File(baseDir, myProject.getLocationHash());
+  private MavenCoreSettings getSettings(Project p) {
+    return MavenCore.getInstance(p).getState();
   }
 
   public void disposeComponent() {
@@ -126,10 +142,7 @@ public class MavenIndicesManager extends DummyProjectComponent {
 
   public void doShutdown() {
     if (!isInitialized) return;
-
-    VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
     closeIndex();
-
     isInitialized = false;
   }
 
@@ -148,55 +161,42 @@ public class MavenIndicesManager extends DummyProjectComponent {
     }
   }
 
-  @TestOnly
-  public void clearIndices() {
-    FileUtil.delete(getIndicesDir());
-  }
+  private void checkLocalIndex(Project p) throws MavenIndexException {
+    File localRepoFile = getSettings(p).getEffectiveLocalRepository();
 
-  private void checkLocalIndex() throws MavenIndexException {
-    File localRepoFile = getSettings().getEffectiveLocalRepository();
-
-    MavenIndex index = findLocalIndex();
-    if (index == null) {
-      index = new LocalMavenIndex(LOCAL_INDEX, localRepoFile.getPath());
-      myIndices.add(index);
-      startUpdate(index);
-      return;
-    }
-
-    if (!index.getRepositoryFile().equals(localRepoFile)) {
-      myIndices.change(index, LOCAL_INDEX, localRepoFile.getPath());
-      startUpdate(index);
-    }
-  }
-
-  private void checkProjectIndex() throws MavenIndexException {
-    MavenIndex i = findProjectIndex();
-    if (i == null) {
-      i = new ProjectMavenIndex(PROJECT_INDEX, myProject.getBaseDir().getPath());
-      myIndices.add(i);
-    } else {
-      myIndices.change(i, PROJECT_INDEX, myProject.getBaseDir().getPath());
-    }
-    startUpdate(i);
-  }
-
-  private MavenIndex findLocalIndex() {
     for (MavenIndex i : myIndices.getIndices()) {
-      if (i.getKind() == MavenIndex.Kind.LOCAL) return i;
+      if (localRepoFile.equals(i.getRepositoryFile())) return;
     }
-    return null;
+
+    String repoPath = localRepoFile.getPath();
+    MavenIndex index = new LocalMavenIndex("local (" + Integer.toHexString(repoPath.hashCode()) + ")", repoPath);
+    myIndices.add(index);
+    scheduleUpdate(p, index);
   }
 
-  private MavenIndex findProjectIndex() {
+  private void checkProjectIndex(Project p) throws MavenIndexException {
+    MavenIndex projectIndex = null;
+
+    String indexId = p.getLocationHash();
+
     for (MavenIndex i : myIndices.getIndices()) {
-      if (i.getKind() == MavenIndex.Kind.PROJECT) return i;
+      if (indexId.equals(i.getId())) {
+        projectIndex = i;
+        break;
+      }
     }
-    return null;
+
+    if (projectIndex == null) {
+      projectIndex = new ProjectMavenIndex(indexId, p.getBaseDir().getPath());
+      myIndices.add(projectIndex);
+    }
+
+    myMavenProjectIndices.put(p, projectIndex);
+    scheduleUpdate(p, projectIndex);
   }
 
-  public Configurable createConfigurable() {
-    return new MavenIndicesConfigurable(myProject, this);
+  public Configurable createConfigurable(Project p) {
+    return new MavenIndicesConfigurable(p, this);
   }
 
   public void save() {
@@ -215,24 +215,45 @@ public class MavenIndicesManager extends DummyProjectComponent {
     myIndices.remove(i);
   }
 
-  public void startUpdate(MavenIndex i) {
-    doStartUpdate(i);
+  public void addArtifact(File repository, MavenId artifact) {
+    if (!isInitialized) return;
+    for (MavenIndex each : getIndices()) {
+      if (repository.equals(each.getRepositoryFile())) {
+        addArtifact(each, artifact);
+        return;
+      }
+    }
   }
 
-  public void startUpdateAll() {
-    doStartUpdate(null);
+  private void addArtifact(MavenIndex each, MavenId artifact) {
+    try {
+      each.addArtifact(artifact);
+    }
+    catch (MavenIndexException e) {
+      showError(e);
+    }
   }
 
-  private void doStartUpdate(final MavenIndex info) {
-    new Task.Backgroundable(myProject, RepositoryBundle.message("maven.indices.updating"), true) {
+  public void scheduleUpdate(Project p, MavenIndex i) {
+    doScheduleUpdate(p, i);
+  }
+
+  public void scheduleUpdateAll(Project p) {
+    doScheduleUpdate(p, null);
+  }
+
+  private void doScheduleUpdate(final Project p, final MavenIndex index) {
+    new Task.Backgroundable(null, RepositoryBundle.message("maven.indices.updating"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<MavenIndex> infos = info != null ? Collections.singletonList(info) : myIndices.getIndices();
+          List<MavenIndex> infos = index != null
+                                   ? Collections.singletonList(index)
+                                   : myIndices.getIndices();
 
           try {
             for (MavenIndex each : infos) {
               indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getId()));
-              myIndices.update(each, myProject, indicator);
+              myIndices.update(each, p, indicator);
             }
           }
           catch (ProcessCanceledException ignore) {
@@ -240,42 +261,28 @@ public class MavenIndicesManager extends DummyProjectComponent {
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              rehighlightAllPoms();
+              rehighlightAllPoms(p);
             }
           });
         }
         catch (MavenIndexException e) {
-          showError(new MavenException(e));
+          showError(e);
         }
       }
     }.queue();
   }
 
-  private void rehighlightAllPoms() {
+  private void rehighlightAllPoms(final Project p) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
-        DaemonCodeAnalyzer.getInstance(myProject).restart();
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(p).getModificationTracker()).incCounter();
+        DaemonCodeAnalyzer.getInstance(p).restart();
       }
     });
   }
 
-  public MavenIndex getLocalIndex() {
-    return findLocalIndex();
-  }
-
-  public MavenIndex getProjectIndex() {
-    return findProjectIndex();
-  }
-
-  public List<MavenIndex> getUserIndices() {
-    List<MavenIndex> result = new ArrayList<MavenIndex>();
-    for (MavenIndex each : myIndices.getIndices()) {
-      if (each.getKind() == MavenIndex.Kind.REMOTE)  {
-        result.add(each);
-      }
-    }
-    return result;
+  public List<MavenIndex> getIndices() {
+    return myIndices.getIndices();
   }
 
   public Set<String> getGroupIds() throws MavenIndexException {

@@ -182,8 +182,11 @@ public class MavenEmbedderFactory {
   }
 
   private static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) {
-    return createEmbedder(settings.getMavenHome(), settings.getEffectiveLocalRepository(), settings.getMavenSettingsFile(),
-                          settings.getClass().getClassLoader(), customizer);
+    return createEmbedder(settings.getMavenHome(),
+                          settings.getEffectiveLocalRepository(),
+                          settings.getMavenSettingsFile(),
+                          settings.getClass().getClassLoader(),
+                          customizer);
   }
 
   private static MavenEmbedder createEmbedder(String mavenHome,
@@ -237,7 +240,7 @@ public class MavenEmbedderFactory {
       }
     }
     catch (IOException e) {
-      MavenLog.LOG.warn(e);
+      MavenLog.warn(e);
     }
 
     return result;

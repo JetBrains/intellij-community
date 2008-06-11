@@ -108,7 +108,7 @@ public class CustomArtifact implements Artifact {
       ourCache.put(getId(), f);
     }
     catch (IOException e) {
-      MavenLog.LOG.warn(e);
+      MavenLog.warn(e);
     }
   }
 

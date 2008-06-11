@@ -13,6 +13,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.core.util.MavenId;
 import org.sonatype.nexus.index.ArtifactInfo;
 import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.context.IndexingContext;
@@ -135,7 +136,7 @@ public abstract class MavenIndex {
       doOpen();
     }
     catch (Exception e) {
-      MavenLog.LOG.info(e);
+      MavenLog.info(e);
       try {
         doOpen();
       }
@@ -247,8 +248,8 @@ public abstract class MavenIndex {
     progress.setText2("Updating caches...");
 
     Set<String> groupIds = new HashSet<String>();
-    Map<String, List<String>> artifactIds = new HashMap<String, List<String>>();
-    Map<String, List<String>> versions = new HashMap<String, List<String>>();
+    Map<String, Set<String>> artifactIds = new HashMap<String, Set<String>>();
+    Map<String, Set<String>> versions = new HashMap<String, Set<String>>();
 
     doUpdateIndexData(context, project, groupIds, artifactIds, versions, progress);
 
@@ -268,17 +269,15 @@ public abstract class MavenIndex {
       newData.groupIds.enumerate(each);
     }
 
-    for (Map.Entry<String, List<String>> each : artifactIds.entrySet()) {
+    for (Map.Entry<String, Set<String>> each : artifactIds.entrySet()) {
       newData.artifactIds.put(each.getKey(), each.getValue());
     }
 
-    for (Map.Entry<String, List<String>> each : versions.entrySet()) {
+    for (Map.Entry<String, Set<String>> each : versions.entrySet()) {
       newData.versions.put(each.getKey(), each.getValue());
     }
 
-    newData.groupIds.flush();
-    newData.artifactIds.flush();
-    newData.versions.flush();
+    newData.flush();
 
     synchronized (this) {
       myData = newData;
@@ -291,10 +290,10 @@ public abstract class MavenIndex {
 
   protected void doUpdateIndexData(IndexingContext context,
                                    Project project,
-                                    Set<String> groupIds,
-                                    Map<String, List<String>> artifactIds,
-                                    Map<String, List<String>> versions,
-                                    ProgressIndicator progress) throws IOException {
+                                   Set<String> groupIds,
+                                   Map<String, Set<String>> artifactIds,
+                                   Map<String, Set<String>> versions,
+                                   ProgressIndicator progress) throws IOException {
     IndexReader r = context.getIndexReader();
     int total = r.numDocs();
     for (int i = 0; i < total; i++) {
@@ -340,13 +339,41 @@ public abstract class MavenIndex {
     throw new RuntimeException("No available data dir found");
   }
 
-  protected List<String> getOrCreate(Map<String, List<String>> map, String key) {
-    List<String> result = map.get(key);
+  protected Set<String> getOrCreate(Map<String, Set<String>> map, String key) {
+    Set<String> result = map.get(key);
     if (result == null) {
-      result = new ArrayList<String>();
+      result = new HashSet<String>();
       map.put(key, result);
     }
     return result;
+  }
+
+  public synchronized void addArtifact(MavenId id) throws MavenIndexException {
+    if (id.groupId == null) return;
+
+    try {
+      myData.groupIds.enumerate(id.groupId);
+      if (id.artifactId != null) {
+        addToCache(myData.artifactIds, id.groupId, id.artifactId);
+        if (id.version != null) {
+          addToCache(myData.versions, id.groupId + ":" + id.artifactId, id.version);
+        }
+      }
+      myData.flush();
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
+  }
+
+  private void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
+    Set<String> values = cache.get(key);
+    if (values == null) values = new HashSet<String>();
+    values.add(value);
+    cache.put(key, values);
+  }
+
+  public synchronized void removeArtifact(MavenId id) {
   }
 
   public synchronized <T> T process(DataProcessor<T> processor) throws Exception {
@@ -359,8 +386,8 @@ public abstract class MavenIndex {
 
   public static class IndexData {
     PersistentStringEnumerator groupIds;
-    PersistentHashMap<String, List<String>> artifactIds;
-    PersistentHashMap<String, List<String>> versions;
+    PersistentHashMap<String, Set<String>> artifactIds;
+    PersistentHashMap<String, Set<String>> versions;
 
     public IndexData(File dir) throws IOException {
       groupIds = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
@@ -368,8 +395,8 @@ public abstract class MavenIndex {
       versions = createPersistentMap(new File(dir, VERSIONS_FILE));
     }
 
-    private PersistentHashMap<String, List<String>> createPersistentMap(File f) throws IOException {
-      return new PersistentHashMap<String, List<String>>(f, new EnumeratorStringDescriptor(), new EnumeratorListDescriptor());
+    private PersistentHashMap<String, Set<String>> createPersistentMap(File f) throws IOException {
+      return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new EnumeratorSetDescriptor());
     }
 
     public void close() throws IOException {
@@ -385,18 +412,24 @@ public abstract class MavenIndex {
         }
       }
     }
+
+    public void flush() throws IOException {
+      groupIds.flush();
+      artifactIds.flush();
+      versions.flush();
+    }
   }
 
-  private static class EnumeratorListDescriptor implements DataExternalizer<List<String>> {
-    public void save(DataOutput s, List<String> list) throws IOException {
-      s.writeInt(list.size());
-      for (String each : list) {
+  private static class EnumeratorSetDescriptor implements DataExternalizer<Set<String>> {
+    public void save(DataOutput s, Set<String> set) throws IOException {
+      s.writeInt(set.size());
+      for (String each : set) {
         s.writeUTF(each);
       }
     }
 
-    public List<String> read(DataInput s) throws IOException {
-      List<String> result = new ArrayList<String>();
+    public Set<String> read(DataInput s) throws IOException {
+      Set<String> result = new HashSet<String>();
       int count = s.readInt();
       while (count-- > 0) {
         result.add(s.readUTF());

@@ -24,10 +24,10 @@ public abstract class DependencyConverter extends ResolvingConverter<String> {
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     try {
       Project p = context.getModule().getProject();
-      return isValid(MavenIndicesManager.getInstance(p), getDependencyId(context)) ? s : null;
+      return isValid(MavenIndicesManager.getInstance(), getDependencyId(context)) ? s : null;
     }
     catch (MavenIndexException e) {
-      MavenLog.LOG.info(e);
+      MavenLog.info(e);
       return s;
     }
   }
@@ -42,10 +42,10 @@ public abstract class DependencyConverter extends ResolvingConverter<String> {
   public Collection<String> getVariants(ConvertContext context) {
     try {
       Project p = context.getModule().getProject();
-      return getVariants(MavenIndicesManager.getInstance(p), getDependencyId(context));
+      return getVariants(MavenIndicesManager.getInstance(), getDependencyId(context));
     }
     catch (MavenIndexException e) {
-      MavenLog.LOG.info(e);
+      MavenLog.info(e);
       return Collections.emptyList();
     }
   }

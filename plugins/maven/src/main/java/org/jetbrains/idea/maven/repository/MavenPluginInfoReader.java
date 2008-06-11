@@ -80,7 +80,7 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
       ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
       if (entry == null) {
-        MavenLog.LOG.info(RepositoryBundle.message("repository.plugin.corrupt", path));
+        MavenLog.info(RepositoryBundle.message("repository.plugin.corrupt", path));
         return null;
       }
 
@@ -94,7 +94,7 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
       }
     }
     catch (IOException e) {
-      MavenLog.LOG.info(e);
+      MavenLog.info(e);
       return null;
     }
   }

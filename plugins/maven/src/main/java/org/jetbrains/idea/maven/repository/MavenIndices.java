@@ -57,7 +57,7 @@ public class MavenIndices {
             add(i);
           }
           catch (MavenIndexException e) {
-            MavenLog.LOG.info(e);
+            MavenLog.info(e);
           }
         }
       }
@@ -66,14 +66,14 @@ public class MavenIndices {
       }
     }
     catch (Exception e) {
-      MavenLog.LOG.info(e);
+      MavenLog.info(e);
 
       try {
         try {
           closeOpenIndices();
         }
         catch (IOException e1) {
-          MavenLog.LOG.info(e1);
+          MavenLog.info(e1);
         }
       }
       finally {
@@ -114,7 +114,7 @@ public class MavenIndices {
       closeOpenIndices();
     }
     catch (IOException e) {
-      MavenLog.LOG.info(e);
+      MavenLog.info(e);
     }
   }
 
@@ -206,7 +206,7 @@ public class MavenIndices {
         String key = groupId + ":" + artifactId;
         if (!cache.versions.hasKey(key)) return false;
 
-        List<String> versions = cache.versions.get(key);
+        Set<String> versions = cache.versions.get(key);
         return versions != null && versions.contains(version);
       }
     });

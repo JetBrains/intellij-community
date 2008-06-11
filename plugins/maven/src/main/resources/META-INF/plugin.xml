@@ -28,15 +28,18 @@
     <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
 
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>
-    <!--<dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenPluginModelDomDescription"/>-->
-    <!--<lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="last"/>-->
-    <!--<inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>-->
-    <!--<dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>-->
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenPluginModelDomDescription"/>
+    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="last"/>
+    <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
+    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
   </extensions>
 
   <application-components>
     <component>
       <implementation-class>org.jetbrains.idea.maven.core.MavenApplicationComponent</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.repository.MavenIndicesManager</implementation-class>
     </component>
   </application-components>
 
@@ -48,9 +51,6 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
-    <!--<component>-->
-      <!--<implementation-class>org.jetbrains.idea.maven.repository.MavenIndicesManager</implementation-class>-->
-    <!--</component>-->
     <component>
       <implementation-class>org.jetbrains.idea.maven.repository.MavenPluginsRepository</implementation-class>
     </component>

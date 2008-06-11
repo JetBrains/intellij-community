@@ -105,6 +105,8 @@ public class MavenProjectsTree {
                                             ? new HashSet<MavenProjectModel>()
                                             : findInheritors(project);
 
+    if (!isNew) fireBeforeUpdate(project);
+
     if (!readFiles.contains(project.getFile())) {
       writeLock();
       try {
@@ -158,7 +160,7 @@ public class MavenProjectsTree {
       else {
         MavenProjectModel currentAggregator = findAggregator(child);
         if (currentAggregator != null && currentAggregator != project) {
-          MavenLog.LOG.info("Module " + each + " is already included into " + project.getFile());
+          MavenLog.info("Module " + each + " is already included into " + project.getFile());
           continue;
         }
       }
@@ -497,6 +499,12 @@ public class MavenProjectsTree {
     }
   }
 
+  private void fireBeforeUpdate(MavenProjectModel n) {
+    for (Listener each : myListeners) {
+      each.beforeProjectUpdate(n);
+    }
+  }
+
   private void fireUpdated(MavenProjectModel n) {
     for (Listener each : myListeners) {
       each.projectUpdated(n);
@@ -512,6 +520,7 @@ public class MavenProjectsTree {
   public static interface Listener {
     void projectAdded(MavenProjectModel n);
 
+    void beforeProjectUpdate(MavenProjectModel n);
     void projectUpdated(MavenProjectModel n);
 
     void projectRemoved(MavenProjectModel n);

@@ -4,7 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PsiTestUtil;
 
-public abstract  class NonMavenProjectInspectionsTest extends MavenCompletionAndResolutionTestCase {
+public class NonMavenProjectInspectionsTest extends MavenCompletionAndResolutionTestCase {
   @Override
   protected void setUpCommonFixtures() throws Exception {
     super.setUpCommonFixtures();

@@ -92,7 +92,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   private void doAddRepository() {
-    EditMavenRepositoryDialog d = new EditMavenRepositoryDialog(myProject);
+    EditMavenRepositoryDialog d = new EditMavenRepositoryDialog();
     d.show();
     if (!d.isOK()) return;
 
@@ -112,7 +112,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     if (!canEdit()) return;
 
     MavenIndex i = getSelectedIndexInfo();
-    EditMavenRepositoryDialog d = new EditMavenRepositoryDialog(myProject, i.getId(), i.getRepositoryUrl());
+    EditMavenRepositoryDialog d = new EditMavenRepositoryDialog(i.getId(), i.getRepositoryUrl());
 
     d.show();
     if (!d.isOK()) return;
@@ -141,15 +141,16 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
 
   private void doUpdateRepository() {
     MavenIndex i = getSelectedIndexInfo();
-    myManager.startUpdate(i);
+    myManager.scheduleUpdate(myProject, i);
   }
 
   private void doUpdateAllRepositories() {
-    myManager.startUpdateAll();
+    myManager.scheduleUpdateAll(myProject);
   }
 
   private boolean canEdit() {
-    return myTable.getSelectedRow() >= 2;
+    MavenIndex sel = getSelectedIndexInfo();
+    return sel instanceof RemoteMavenIndex;
   }
 
   private MavenIndex getSelectedIndexInfo() {
@@ -180,9 +181,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   public void reset() {
-    myTable.setModel(new MyTableModel(myManager.getLocalIndex(),
-                                      myManager.getProjectIndex(),
-                                      myManager.getUserIndices()));
+    myTable.setModel(new MyTableModel(myManager.getIndices()));
     myTable.getColumnModel().getColumn(0).setPreferredWidth(100);
     myTable.getColumnModel().getColumn(1).setPreferredWidth(400);
   }
@@ -194,14 +193,10 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     private static final String[] COLUMNS =
         new String[]{RepositoryBundle.message("maven.index.id"), RepositoryBundle.message("maven.index.url")};
 
-    private MavenIndex myLocalIndex;
-    private MavenIndex myProjectIndex;
-    private List<MavenIndex> myUserIndices;
+    private List<MavenIndex> myIndices;
 
-    public MyTableModel(MavenIndex localIndex, MavenIndex projectIndex, List<MavenIndex> userIndices) {
-      myLocalIndex = localIndex;
-      myProjectIndex = projectIndex;
-      myUserIndices = userIndices;
+    public MyTableModel(List<MavenIndex> indices) {
+      myIndices = indices;
     }
 
     public int getColumnCount() {
@@ -214,13 +209,15 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     }
 
     public int getRowCount() {
-      return myUserIndices.size() + 2;
+      return myIndices.size();
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
       MavenIndex i = getIndex(rowIndex);
       switch (columnIndex) {
         case 0:
+          if (i instanceof ProjectMavenIndex) return "Project Index";
+          if (i instanceof LocalMavenIndex) return "Local Index";
           return i.getId();
         case 1:
           return i.getRepositoryPathOrUrl();
@@ -229,9 +226,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     }
 
     public MavenIndex getIndex(int rowIndex) {
-      if (rowIndex == 0) return myLocalIndex;
-      if (rowIndex == 1) return myProjectIndex;
-      return myUserIndices.get(rowIndex - 2);
+      return myIndices.get(rowIndex);
     }
   }
 }

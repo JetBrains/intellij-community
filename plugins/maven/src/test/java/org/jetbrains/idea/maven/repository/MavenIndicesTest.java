@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.repository;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -102,21 +103,21 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testAddingProjectIndex() throws Exception {
-    if (ignore()) return;
-
-    importProject("<groupId>group</groupId>" +
+    createProjectPom("<groupId>group</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>version</version>");
 
-    createModulePom("m1",
-                    "<groupId>group1</groupId>" +
-                    "<artifactId>module1</artifactId>" +
-                    "<version>version1</version>");
+    VirtualFile m1 = createModulePom("m1",
+                                     "<groupId>group1</groupId>" +
+                                     "<artifactId>module1</artifactId>" +
+                                     "<version>version1</version>");
 
-    createModulePom("m2",
-                    "<groupId>group2</groupId>" +
-                    "<artifactId>module2</artifactId>" +
-                    "<version>version2</version>");
+    VirtualFile m2 = createModulePom("m2",
+                                     "<groupId>group2</groupId>" +
+                                     "<artifactId>module2</artifactId>" +
+                                     "<version>version2</version>");
+
+    importSeveralProjects(myProjectPom, m1, m2);
 
     MavenIndex i = new ProjectMavenIndex("project", myProject.getBaseDir().getPath());
     myIndices.add(i);

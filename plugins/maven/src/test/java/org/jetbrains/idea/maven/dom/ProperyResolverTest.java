@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.dom.model.MavenModel;
 
 import java.io.File;
 
-public abstract class ProperyResolverTest extends MavenImportingTestCase {
+public class ProperyResolverTest extends MavenImportingTestCase {
   public void testResolvingProjectAttributes() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

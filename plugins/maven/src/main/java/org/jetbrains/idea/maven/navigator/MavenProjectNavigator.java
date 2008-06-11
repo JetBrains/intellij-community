@@ -53,6 +53,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
   private SimpleTree myTree;
 
   private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
+  private MavenProjectsManager.Listener myMavenProjectsListener;
+  private MavenEventsHandler.Listener myMavenEventsListener;
 
   public static MavenProjectNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectNavigator.class);
@@ -89,6 +91,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
   }
 
   public void projectClosed() {
+    unsubscribe();
   }
 
   private void initMavenProjectsTree() {
@@ -187,7 +190,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
   }
 
   private void subscribeForChanges() {
-    myProjectsManager.addListener(new MavenProjectsManager.Listener() {
+    myMavenProjectsListener = new MavenProjectsManager.Listener() {
       public void activate() {
         for (MavenProjectModel each : myProjectsManager.getProjects()) {
           fileToNode.put(each.getFile(), new PomNode(each));
@@ -222,6 +225,9 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         });
       }
 
+      public void beforeProjectUpdate(MavenProjectModel n) {
+      }
+
       public void projectUpdated(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -251,15 +257,18 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
           }
         });
       }
-    });
+    };
 
-    myEventsHandler.addListener(new MavenEventsHandler.Listener() {
+    myMavenEventsListener = new MavenEventsHandler.Listener() {
       public void updateShortcuts(@Nullable String actionId) {
         for (PomNode pomNode : fileToNode.values()) {
           pomNode.updateShortcuts(actionId);
         }
       }
-    });
+    };
+
+    myProjectsManager.addListener(myMavenProjectsListener);
+    myEventsHandler.addListener(myMavenEventsListener);
 
     myEventsHandler.installTaskSelector(new MavenEventsHandler.TaskSelector() {
       SelectMavenGoalDialog dialog;
@@ -281,6 +290,11 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         return dialog.getSelectedGoal();
       }
     });
+  }
+
+  private void unsubscribe() {
+    myEventsHandler.removeListener(myMavenEventsListener);
+    myProjectsManager.removeListener(myMavenProjectsListener);
   }
 
   private void initToolWindow() {
