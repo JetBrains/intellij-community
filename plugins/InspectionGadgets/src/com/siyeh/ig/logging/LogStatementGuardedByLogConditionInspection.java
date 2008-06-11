@@ -57,9 +57,6 @@ public class LogStatementGuardedByLogConditionInspection
                     "finest,isLoggable(java.util.logging.Level.FINEST)";
     private List<String> logMethodNameList = new ArrayList();
     private List<String> logConditionMethodNameList = new ArrayList();
-    //private Map<String, String> loggerMethodAndconditionMethodTextMap =
-    //       new LinkedHashMap();
-
 
     public LogStatementGuardedByLogConditionInspection() {
         parseString(loggerMethodAndconditionMethodNames, logMethodNameList,
@@ -270,10 +267,8 @@ public class LogStatementGuardedByLogConditionInspection
                 return false;
             }
             final PsiType qualifierType = qualifier.getType();
-            if (qualifierType == null) {
-                return false;
-            }
-            return qualifierType.equalsToText(loggerClassName);
+            return qualifierType != null && qualifierType.equalsToText(
+                    loggerClassName);
         }
 
     }
