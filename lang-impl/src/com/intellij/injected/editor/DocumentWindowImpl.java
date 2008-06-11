@@ -274,6 +274,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     }
   }
 
+  @NotNull
   public RangeMarker[] getHostRanges() {
     return myRelevantRangesInHostDocument;
   }
@@ -351,6 +352,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public void setInBulkUpdate(boolean value) {
   }
 
+  @NotNull
   public DocumentEx getDelegate() {
     return myDelegate;
   }
@@ -398,7 +400,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return myRelevantRangesInHostDocument[myRelevantRangesInHostDocument.length-1].getEndOffset();
   }
 
-  public TextRange injectedToHost(TextRange injected) {
+  @NotNull
+  public TextRange injectedToHost(@NotNull TextRange injected) {
     final int start = injectedToHost(injected.getStartOffset());
     final int endProbe = injectedToHost(injected.getEndOffset(), false);
     final int end = start > endProbe? injectedToHost(injected.getEndOffset()) : endProbe;
@@ -540,7 +543,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     calculateMinEditSequence(hostText, newText, result, i+1, j-1);
   }
 
-  public boolean areRangesEqual(DocumentWindow otherd) {
+  public boolean areRangesEqual(@NotNull DocumentWindow otherd) {
     DocumentWindowImpl window = (DocumentWindowImpl)otherd;
     if (myRelevantRangesInHostDocument.length != window.myRelevantRangesInHostDocument.length) return false;
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {

@@ -33,10 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 //todo listen & notifyListeners readonly events?
 
@@ -539,6 +536,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (document instanceof DocumentWindow) {
       error += "doc: '" + document.getText() + "'\n";
       error += "psi: '" +  psiFile.getText() + "'\n";
+      error += "ast: '" + psiFile.getNode().getText() + "'\n";
+      error += "language: " + psiFile.getLanguage()+"\n";
+      PsiElement context = psiFile.getContext();
+      if (context != null) {
+        error += "context: " + context +"; text: '" + context.getText() + "'\n";
+        error += "context file: " + context.getContainingFile();
+      }
+      error += "document window ranges: " + Arrays.asList(((DocumentWindow)document).getHostRanges());
     }
     LOG.error(error);
     //document.replaceString(0, documentLength, psiFile.getText());

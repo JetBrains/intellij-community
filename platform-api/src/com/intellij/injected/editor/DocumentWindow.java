@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface DocumentWindow extends Document {
-  Document getDelegate();
+  @NotNull Document getDelegate();
   int injectedToHost(int injectedOffset);
-  TextRange injectedToHost(TextRange injectedOffset);
+  @NotNull TextRange injectedToHost(@NotNull TextRange injectedOffset);
   int hostToInjected(int hostOffset);
 
   @Nullable
@@ -23,7 +23,8 @@ public interface DocumentWindow extends Document {
 
   int injectedToHostLine(int line);
 
+  @NotNull
   RangeMarker[] getHostRanges();
 
-  boolean areRangesEqual(final DocumentWindow documentWindow);
+  boolean areRangesEqual(@NotNull DocumentWindow documentWindow);
 }
