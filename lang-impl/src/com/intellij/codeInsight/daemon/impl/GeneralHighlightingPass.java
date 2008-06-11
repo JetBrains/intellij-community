@@ -58,7 +58,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
 
-  private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myUpdateAll;
@@ -75,13 +74,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  int startOffset,
                                  int endOffset,
                                  boolean updateAll) {
-    super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
-    myFile = file;
+    super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;
 
-    LOG.assertTrue(myFile.isValid());
+    LOG.assertTrue(file.isValid());
     setId(Pass.UPDATE_ALL);
     myHasErrorElement = !isWholeFileHighlighting() && Boolean.TRUE.equals(myFile.getUserData(HAS_ERROR_ELEMENT));
     FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();

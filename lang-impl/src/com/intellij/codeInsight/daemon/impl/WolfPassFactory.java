@@ -37,7 +37,7 @@ public class WolfPassFactory extends AbstractProjectComponent implements TextEdi
     if (psiModificationCount == myPsiModificationCount) {
       return null; //optimization
     }
-    return new WolfHighlightingPass(myProject, editor.getDocument()){
+    return new WolfHighlightingPass(myProject, editor.getDocument(), file){
       protected void applyInformationWithProgress() {
         super.applyInformationWithProgress();
         myPsiModificationCount = psiModificationCount;

@@ -140,7 +140,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                                    myHighlights, Pass.POST_UPDATE_ALL);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
+    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
 
     if (timeToOptimizeImports() && myEditor != null) {
       optimizeImportsOnTheFly();

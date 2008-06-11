@@ -25,7 +25,6 @@ import java.util.*;
 public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
-  private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myUpdateAll;
@@ -36,8 +35,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
                          int startOffset,
                          int endOffset,
                          boolean updateAll) {
-    super(project, document, GeneralHighlightingPass.IN_PROGRESS_ICON, GeneralHighlightingPass.PRESENTABLE_NAME);
-    myFile = file;
+    super(project, document, GeneralHighlightingPass.IN_PROGRESS_ICON, GeneralHighlightingPass.PRESENTABLE_NAME, file);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;

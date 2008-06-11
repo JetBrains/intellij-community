@@ -112,7 +112,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
 
         if (pass == null) {
-          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(editor.getDocument(), passId);
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(editor.getDocument(), psiFile, passId);
         }
         else {
           TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);

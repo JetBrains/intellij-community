@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,12 +21,14 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private final AtomicLong myProgressCount = new AtomicLong();
   private final Icon myInProgressIcon;
   private final String myPresentableName;
+  protected final PsiFile myFile;
 
   protected ProgressableTextEditorHighlightingPass(final Project project, @Nullable final Document document, final Icon inProgressIcon,
-                                                   final String presentableName) {
+                                                   final String presentableName, @NotNull PsiFile file) {
     super(project, document);
     myInProgressIcon = inProgressIcon;
     myPresentableName = presentableName;
+    myFile = file;
   }
 
   public final void doCollectInformation(final ProgressIndicator progress) {
@@ -38,7 +42,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myFinished = true;
     applyInformationWithProgress();
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
+    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
   }
 
   protected abstract void applyInformationWithProgress();

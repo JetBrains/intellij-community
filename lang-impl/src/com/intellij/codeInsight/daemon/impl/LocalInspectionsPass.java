@@ -47,7 +47,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
-  private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
   @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
@@ -60,8 +59,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final String myShortcutText;
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
-    super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
-    myFile = file;
+    super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     setId(Pass.LOCAL_INSPECTIONS);

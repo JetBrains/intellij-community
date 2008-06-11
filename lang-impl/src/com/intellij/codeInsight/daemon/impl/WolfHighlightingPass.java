@@ -6,14 +6,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
 */
 class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass {
-  public WolfHighlightingPass(@NotNull Project project, @NotNull Document document) {
-    super(project, document, null, DaemonBundle.message("pass.wolf"));
+  public WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
+    super(project, document, null, DaemonBundle.message("pass.wolf"), file);
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {

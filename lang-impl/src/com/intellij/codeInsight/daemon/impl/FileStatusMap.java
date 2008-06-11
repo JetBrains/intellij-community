@@ -99,10 +99,9 @@ public class FileStatusMap {
     myClearModificationCount.incrementAndGet();
   }
 
-  public void markFileUpToDate(@NotNull Document document, int passId) {
+  public void markFileUpToDate(@NotNull Document document, @NotNull PsiFile file, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (status == null){
         status = new FileStatus(file);
         myDocumentToStatusMap.put(document, status);
