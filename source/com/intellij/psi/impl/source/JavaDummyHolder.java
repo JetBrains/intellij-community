@@ -67,7 +67,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     ElementClassHint classHint = processor.getHint(ElementClassHint.class);
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
       final NameHint nameHint = processor.getHint(NameHint.class);
-      final String name = nameHint != null ? nameHint.getName() : null;
+      final String name = nameHint != null ? nameHint.getName(state) : null;
       //"pseudo-imports"
       if (name != null) {
         PsiClass imported = myPseudoImports.get(name);

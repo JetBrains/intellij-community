@@ -5,8 +5,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
@@ -58,7 +58,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return myResult;
   }
 
-  public String getName() {
+  public String getName(ResolveState state) {
     return myClassName;
   }
 

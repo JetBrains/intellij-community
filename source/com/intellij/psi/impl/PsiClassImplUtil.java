@@ -16,9 +16,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
@@ -339,7 +339,7 @@ public class PsiClassImplUtil {
 
     if (nameHint != null) {
       if (classHint == null || classHint.shouldProcess(PsiField.class)) {
-        final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(), false);
+        final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(state), false);
         if (fieldByName != null) {
           processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
           if (!processor.execute(fieldByName, state)) return false;
@@ -347,7 +347,7 @@ public class PsiClassImplUtil {
         else {
           final Map<String, List<Pair<PsiField, PsiSubstitutor>>> allFieldsMap = getMap(aClass, PsiField.class);
 
-          final List<Pair<PsiField, PsiSubstitutor>> list = allFieldsMap.get(nameHint.getName());
+          final List<Pair<PsiField, PsiSubstitutor>> list = allFieldsMap.get(nameHint.getName(state));
           if (list != null) {
             for (final Pair<PsiField, PsiSubstitutor> candidate : list) {
               PsiField candidateField = candidate.getFirst();
@@ -370,7 +370,7 @@ public class PsiClassImplUtil {
           if (list != null && !list.processDeclarations(processor, state, last, place)) return false;
         }
         if (!(last instanceof PsiReferenceList)) {
-          final PsiClass classByName = aClass.findInnerClassByName(nameHint.getName(), false);
+          final PsiClass classByName = aClass.findInnerClassByName(nameHint.getName(state), false);
           if (classByName != null) {
             processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
             if (!processor.execute(classByName, state)) return false;
@@ -378,7 +378,7 @@ public class PsiClassImplUtil {
           else {
             final Map<String, List<Pair<PsiClass, PsiSubstitutor>>> allClassesMap = getMap(aClass, PsiClass.class);
 
-            final List<Pair<PsiClass, PsiSubstitutor>> list = allClassesMap.get(nameHint.getName());
+            final List<Pair<PsiClass, PsiSubstitutor>> list = allClassesMap.get(nameHint.getName(state));
             if (list != null) {
               for (final Pair<PsiClass, PsiSubstitutor> candidate : list) {
                 final PsiClass inner = candidate.getFirst();
@@ -407,7 +407,7 @@ public class PsiClassImplUtil {
           }
         }
         final Map<String, List<Pair<PsiMethod, PsiSubstitutor>>> allMethodsMap = getMap(aClass, PsiMethod.class);
-        final List<Pair<PsiMethod, PsiSubstitutor>> list = allMethodsMap.get(nameHint.getName());
+        final List<Pair<PsiMethod, PsiSubstitutor>> list = allMethodsMap.get(nameHint.getName(state));
         if (list != null) {
           for (final Pair<PsiMethod, PsiSubstitutor> candidate : list) {
             PsiMethod candidateMethod = candidate.getFirst();
@@ -465,7 +465,7 @@ public class PsiClassImplUtil {
 
     if (classHint == null || classHint.shouldProcess(PsiField.class)) {
       if (nameHint != null) {
-        final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(), false);
+        final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(state), false);
         if (fieldByName != null) {
           if (!processor.execute(fieldByName, state)) return false;
         }
@@ -479,7 +479,7 @@ public class PsiClassImplUtil {
     }
 
     if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
-      final PsiMethod[] methods = nameHint != null ? aClass.findMethodsByName(nameHint.getName(), false) : aClass.getMethods();
+      final PsiMethod[] methods = nameHint != null ? aClass.findMethodsByName(nameHint.getName(state), false) : aClass.getMethods();
       for (final PsiMethod method : methods) {
         if (isRaw && !method.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
           PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
@@ -502,7 +502,7 @@ public class PsiClassImplUtil {
       if (!(last instanceof PsiReferenceList) && !(last instanceof PsiModifierList)) {
         // Inners
         if (nameHint != null) {
-          final PsiClass inner = aClass.findInnerClassByName(nameHint.getName(), false);
+          final PsiClass inner = aClass.findInnerClassByName(nameHint.getName(state), false);
           if (inner != null) {
             if (!processor.execute(inner, state)) return false;
           }

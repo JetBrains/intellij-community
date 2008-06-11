@@ -16,8 +16,8 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -286,7 +286,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     public void handleEvent(Event event, Object associated) {
     }
 
-    public String getName() {
+    public String getName(ResolveState state) {
       return getReferenceName();
     }
   }

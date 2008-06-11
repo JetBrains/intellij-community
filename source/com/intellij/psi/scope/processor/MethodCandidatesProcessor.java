@@ -42,7 +42,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   private boolean isAccepted(final PsiMethod candidate) {
     if (!isConstructor()) {
-      return !candidate.isConstructor() && getName().equals(candidate.getName());
+      return !candidate.isConstructor() && getName(ResolveState.initial()).equals(candidate.getName());
     } else {
       if (!candidate.isConstructor()) return false;
       if (myAccessClass == null) return true;

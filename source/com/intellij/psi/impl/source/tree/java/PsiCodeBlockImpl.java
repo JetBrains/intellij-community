@@ -5,18 +5,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpressionStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -195,7 +195,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     final NameHint hint = processor.getHint(NameHint.class);
     if (hint != null && !conflict) {
       final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.class);
-      final String name = hint.getName();
+      final String name = hint.getName(state);
       if ((elementClassHint == null || elementClassHint.shouldProcess(PsiClass.class)) && classesSet.contains(name)) {
         return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
       }

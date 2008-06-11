@@ -158,7 +158,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
 
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
       final NameHint nameHint = processor.getHint(NameHint.class);
-      final String name = nameHint != null ? nameHint.getName() : null;
+      final String name = nameHint != null ? nameHint.getName(state) : null;
       if (name != null) {
         String qNameImported = myPseudoImports.get(name);
         if (qNameImported != null) {

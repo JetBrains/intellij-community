@@ -239,7 +239,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if(processor instanceof ClassResolverProcessor){
         final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
         if(isPhysical()){
-          setGuess(hint.getName(), hint.getResult());
+          setGuess(hint.getName(state), hint.getResult());
         }
       }
       return false;
@@ -251,7 +251,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
     final NameHint nameHint = processor.getHint(NameHint.class);
-    final String name = nameHint != null ? nameHint.getName() : null;
+    final String name = nameHint != null ? nameHint.getName(state) : null;
     if (classHint == null || classHint.shouldProcess(PsiClass.class)){
       if(processor instanceof ClassResolverProcessor){
         // Some speedup

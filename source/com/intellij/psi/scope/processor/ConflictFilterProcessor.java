@@ -76,7 +76,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     return myCachedResult;
   }
 
-  public String getName(){
+  public String getName(ResolveState state){
     return myName;
   }
 

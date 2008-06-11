@@ -505,12 +505,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
           }
           final NameHint nameHint = processor.getHint(NameHint.class);
           final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
-          if (nameHint == null || VALUES_METHOD.equals(nameHint.getName())) {
+          if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
             if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
               if (!processor.execute(myValuesMethod, ResolveState.initial())) return false;
             }
           }
-          if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName())) {
+          if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
             if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
               if (!processor.execute(myValueOfMethod, ResolveState.initial())) return false;
             }

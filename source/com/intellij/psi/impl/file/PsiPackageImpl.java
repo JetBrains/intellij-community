@@ -413,7 +413,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       boolean isPlacePhysical = place.isPhysical();
       NameHint nameHint = processor.getHint(NameHint.class);
       if (nameHint != null) {
-        final PsiClass aClass = findClassByName(nameHint.getName(), scope);
+        final PsiClass aClass = findClassByName(nameHint.getName(state), scope);
         if (aClass != null &&
             (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null))) {
           if (!processor.execute(aClass, state)) return false;
@@ -443,7 +443,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     if (classHint == null || classHint.shouldProcess(PsiPackage.class)) {
       NameHint nameHint = processor.getHint(NameHint.class);
       if (nameHint != null) {
-        PsiPackage aPackage = findSubPackageByName(nameHint.getName(), scope);
+        PsiPackage aPackage = findSubPackageByName(nameHint.getName(state), scope);
         if (aPackage != null) {
           if (!processor.execute(aPackage, state)) return false;
         }
