@@ -51,7 +51,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
       }
 
       public Document writeScheme(final CodeStyleSchemeImpl scheme) throws WriteExternalException {
-        return ((CodeStyleSchemeImpl)scheme).saveToDocument();
+        return scheme.saveToDocument();
       }
 
       public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {

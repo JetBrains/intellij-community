@@ -38,7 +38,6 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   private String myParentSchemeName;
   private boolean myIsDefault;
   private CodeStyleSettings myCodeStyleSettings;
-  private CodeStyleScheme myParentScheme;
   private ExternalInfo myExternalInfo = new ExternalInfo();
 
   public CodeStyleSchemeImpl(String name, String parentSchemeName, Element rootElement) {
@@ -67,15 +66,12 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
       myCodeStyleSettings = new CodeStyleSettings();
     }
     else{
-      myCodeStyleSettings = (CodeStyleSettings)parentSettings.clone();
+      myCodeStyleSettings = parentSettings.clone();
       while(parentSettings.getParentSettings() != null){
         parentSettings = parentSettings.getParentSettings();
       }
       myCodeStyleSettings.setParentSettings(parentSettings);
     }
-
-    myParentScheme = parentScheme;
-
     if (root != null) {
       try {
         readExternal(root);
@@ -92,10 +88,6 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   public void setCodeStyleSettings(CodeStyleSettings codeStyleSettings){
     LOG.assertTrue(codeStyleSettings != null);
     myCodeStyleSettings = codeStyleSettings;
-  }
-
-  public CodeStyleScheme getParentScheme(){
-    return myParentScheme;
   }
 
   public String getName(){
@@ -151,7 +143,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   public Document saveToDocument() throws WriteExternalException {
     Element newElement = new Element(CODE_SCHEME);
     newElement.setAttribute(NAME, getName());
-    (this).writeExternal(newElement);
+    writeExternal(newElement);
 
     return new Document(newElement);
   }

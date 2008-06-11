@@ -60,7 +60,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
           }
 
           public Document writeScheme(final KeymapImpl scheme) throws WriteExternalException {
-            return new Document(((KeymapImpl)scheme).writeExternal());
+            return new Document(scheme.writeExternal());
           }
 
           public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {

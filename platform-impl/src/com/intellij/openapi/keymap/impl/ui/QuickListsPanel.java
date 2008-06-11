@@ -17,6 +17,7 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
@@ -130,28 +131,30 @@ public class QuickListsPanel extends JPanel {
       }
     });
 
-    group.add(new ExportSchemeAction<QuickList, QuickList>(QuickListsManager.getInstance().getSchemesManager()){
-      protected QuickList getSelectedScheme() {
-        return (QuickList)myQuickListsList.getSelectedValue();
-      }
-    });
-    group.add(new ImportSchemeAction<QuickList,QuickList>(QuickListsManager.getInstance().getSchemesManager()){
-      protected Collection<String> collectCurrentSchemeNames() {
-        return collectNames();
-      }
+    SchemesManager<QuickList,QuickList> schemesManager = QuickListsManager.getInstance().getSchemesManager();
+    if (schemesManager.isImportExportAvailable()) {
+      group.add(new ExportSchemeAction<QuickList, QuickList>(schemesManager){
+        protected QuickList getSelectedScheme() {
+          return (QuickList)myQuickListsList.getSelectedValue();
+        }
+      });
+      group.add(new ImportSchemeAction<QuickList,QuickList>(QuickListsManager.getInstance().getSchemesManager()){
+        protected Collection<QuickList> collectCurrentSchemes() {
+          return collectElements();
+        }
 
-      protected Component getPanel() {
-        return myQuickListsList;
-      }
+        protected Component getPanel() {
+          return myQuickListsList;
+        }
 
-      protected void importScheme(final QuickList scheme) {
-        myQuickListsModel.addElement(scheme);
-        myQuickListsList.clearSelection();
-        ListScrollingUtil.selectItem(myQuickListsList, scheme);
+        protected void importScheme(final QuickList scheme) {
+          myQuickListsModel.addElement(scheme);
+          myQuickListsList.clearSelection();
+          ListScrollingUtil.selectItem(myQuickListsList, scheme);
 
-      }
-    });
-
+        }
+      });
+    }
 
 
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
@@ -159,12 +162,12 @@ public class QuickListsPanel extends JPanel {
   }
 
 
-  private Collection<String> collectNames() {
-    HashSet<String> strings = new HashSet<String>();
+  private Collection<QuickList> collectElements() {
+    HashSet<QuickList> result = new HashSet<QuickList>();
     for (int i = 0; i < myQuickListsModel.getSize(); i++) {
-      strings.add(((QuickList)myQuickListsModel.getElementAt(i)).getName());
+      result.add((QuickList)myQuickListsModel.getElementAt(i));
     }
-    return strings;
+    return result;
   }
 
   private String createUniqueName() {
@@ -203,7 +206,13 @@ public class QuickListsPanel extends JPanel {
 
   private void updateList(int index)  {
     if (myQuickListPanel == null) return;
+    QuickList oldQuickList = (QuickList)myQuickListsModel.getElementAt(index);
+
     QuickList newQuickList = createNewQuickListAt();
+
+    if (oldQuickList != null) {
+      newQuickList.getExternalInfo().copy(oldQuickList.getExternalInfo());
+    }
 
     myQuickListsModel.setElementAt(newQuickList, index);
   }

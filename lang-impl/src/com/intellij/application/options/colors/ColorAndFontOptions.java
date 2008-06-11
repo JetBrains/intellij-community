@@ -106,6 +106,10 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     return names.toArray(new String[names.size()]);
   }
 
+  public Collection<EditorColorsScheme> getSchemes() {
+    return new ArrayList<EditorColorsScheme>(mySchemes.values());
+  }
+
   public void saveSchemeAs(String name) {
     MyColorScheme scheme = mySelectedScheme;
     if (scheme == null) return;

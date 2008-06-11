@@ -3,6 +3,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.util.ui.UIUtil;
 
@@ -19,8 +20,14 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
     myParent = parent;
   }
 
-  public void show(SchemesManager<T, E> schemesManager, Collection<String> currentSchemeNames) {
+  public void show(SchemesManager<T, E> schemesManager, Collection<T> currentSchemeNames) {
     Collection<E> schemes = schemesManager.loadScharedSchemes(currentSchemeNames);
+
+    if (schemes.isEmpty()) {
+      Messages.showMessageDialog("There are no available schemes to import", "Import", Messages.getWarningIcon());
+      return;
+    }
+
     final JList list = new JList(createModel(schemes));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new RecentChangesListCellRenderer());

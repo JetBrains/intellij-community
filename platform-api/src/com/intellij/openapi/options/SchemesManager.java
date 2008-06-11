@@ -62,7 +62,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
       return Collections.emptySet();
     }
 
-    public Collection loadScharedSchemes(final Collection currentSchemeNameList) {
+    public Collection loadScharedSchemes(final Collection currentSchemeList) {
       return loadScharedSchemes();
     }
   };
@@ -70,7 +70,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   Collection<E> loadSchemes();
 
   Collection<E> loadScharedSchemes();
-  Collection<E> loadScharedSchemes(Collection<String> currentSchemeNameList);
+  Collection<E> loadScharedSchemes(Collection<T> currentSchemeList);
 
   void exportScheme(final E scheme)
       throws WriteExternalException;

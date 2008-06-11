@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
@@ -12,7 +13,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +180,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   private static boolean canBeModified(FileType fileType) {
-    return fileType instanceof AbstractFileType; //todo: add API for canBeModified
+    return fileType instanceof AbstractFileType && !(fileType instanceof ImportedFileType); //todo: add API for canBeModified
   }
 
   private void addFileType() {
@@ -300,6 +300,11 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           boolean b = canBeModified(fileType);
           myEditButton.setEnabled(b);
           myRemoveButton.setEnabled(b);
+          boolean shared = getSchemesManager().isShared(fileType);
+          myExportButton.setEnabled(b && !shared);
+          if (shared) {
+            myRemoveButton.setEnabled(true);
+          }
         }
       });
       myRemoveButton.addActionListener(new ActionListener() {
@@ -319,7 +324,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
             protected void onSchemeSelected(final AbstractFileType scheme) {
               controller.importFileType(scheme);
             }
-          }.show(getSchemesManager(), collectRegisteredFileTypeNames());
+          }.show(getSchemesManager(), collectRegisteredFileTypes());
         }
       });
 
@@ -327,21 +332,16 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         public void actionPerformed(final ActionEvent e) {
           FileType selected = (FileType)myFileTypesList.getSelectedValue();
           if (selected instanceof AbstractFileType) {
-            try {
-              getSchemesManager().exportScheme((AbstractFileType)selected);
-            }
-            catch (WriteExternalException e1) {
-              Messages.showErrorDialog("Cannot export file type: " + e1.getLocalizedMessage(), "Export File Type");
-            }
+            ExportSchemeAction.doExport((AbstractFileType)selected, getSchemesManager());
           }
         }
       });
     }
 
-    private Collection<String> collectRegisteredFileTypeNames() {
-      HashSet<String> result = new HashSet<String>();
+    private Collection<FileType> collectRegisteredFileTypes() {
+      HashSet<FileType> result = new HashSet<FileType>();
       for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
-        result.add(((FileType)myFileTypesList.getModel().getElementAt(i)).getName());
+        result.add((FileType)myFileTypesList.getModel().getElementAt(i));
       }
       return result;
     }
@@ -381,7 +381,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   private void importFileType(final FileType type) {
     ReadFileType readFileType = (ReadFileType)type;
-    ImportedFileType actualType = new ImportedFileType(readFileType.getSyntaxTable());
+    ImportedFileType actualType = new ImportedFileType(readFileType.getSyntaxTable(), readFileType.getExternalInfo());
     actualType.setDescription(readFileType.getDescription());
     actualType.setName(readFileType.getName());
     actualType.readOriginalMatchers(readFileType.getElement());

@@ -314,8 +314,8 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     }
   }
 
-  public Collection<E> loadScharedSchemes(Collection<String> currentSchemeNameList) {
-    Collection<String> names = new HashSet<String>(currentSchemeNameList);
+  public Collection<E> loadScharedSchemes(Collection<T> currentSchemeList) {
+    Collection<String> names = new HashSet<String>(getAllSchemeNames(currentSchemeList));
 
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
@@ -328,15 +328,17 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
             final Document subDocument = provider.loadDocument(getFileFullPath(subpath), RoamingType.GLOBAL);
             if (subDocument != null) {
               final E scheme = myProcessor.readScheme(subDocument);
-              String schemeName = scheme.getName();
-              String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, "", "", names);
-              if (!uniqueName.equals(schemeName)) {
-                renameScheme(scheme, uniqueName);
-                schemeName = uniqueName;
+              if (!alreadyExpored(subpath, currentSchemeList)) {
+                String schemeName = scheme.getName();
+                String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, "", "", names);
+                if (!uniqueName.equals(schemeName)) {
+                  renameScheme(scheme, uniqueName);
+                  schemeName = uniqueName;
+                }
+                scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
+                scheme.getExternalInfo().setIsImported(true);
+                result.put(schemeName, scheme);
               }
-              scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
-              scheme.getExternalInfo().setIsImported(true);
-              result.put(schemeName, scheme);
             }
           }
           catch (Exception e) {
@@ -352,6 +354,20 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
 
     return result.values();
 
+  }
+
+  private boolean alreadyExpored(final String subpath, final Collection<T> currentSchemeList) {
+    for (T t : currentSchemeList) {
+      if (t instanceof ExternalizableScheme) {
+        ExternalInfo info = ((ExternalizableScheme)t).getExternalInfo();
+        if (info.isIsImported()) {
+          if (getFileFullPath(subpath).equals(info.getOriginalPath())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private String getFileFullPath(final String subpath) {

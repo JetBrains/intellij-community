@@ -26,12 +26,15 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
       addScheme(group, current, scheme);
     }
 
-    group.add(Separator.getInstance());
 
     Collection<EditorColorsSchemeImpl> sharedSchemes = ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager().loadScharedSchemes();
 
-    for (EditorColorsScheme sharedScheme : sharedSchemes) {
-      addScheme(group, current, sharedScheme);
+    if (!sharedSchemes.isEmpty()) {
+      group.add(Separator.getInstance());
+
+      for (EditorColorsScheme sharedScheme : sharedSchemes) {
+        addScheme(group, current, sharedScheme);
+      }
     }
 
   }

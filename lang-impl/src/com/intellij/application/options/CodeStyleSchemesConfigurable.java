@@ -7,13 +7,15 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -182,6 +184,19 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     public Collection<String> getSchemeNames() {
       return mySchemes.keySet();
     }
+
+
+  }
+
+  public Collection<CodeStyleScheme> getSchemes() {
+    ArrayList<CodeStyleScheme> result = new ArrayList<CodeStyleScheme>();
+    for (int i = 0; i < myCombo.getItemCount(); i++) {
+      Object item = myCombo.getItemAt(i);
+      if (item instanceof CodeStyleScheme) {
+        result.add((CodeStyleScheme)item);
+      }
+    }
+    return result;
   }
 
   public boolean isModified() {
@@ -234,16 +249,10 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       myExportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
           CodeStyleScheme selected = getSelectedScheme();
-          if (selected != null) {
-            try {
-              schemesManager.exportScheme((CodeStyleSchemeImpl)selected);
-            }
-            catch (WriteExternalException e1) {
-              //ignore
-            }
-          }
+          ExportSchemeAction.doExport((CodeStyleSchemeImpl)selected, schemesManager);
         }
       });
+      myExportButton.setMnemonic('E');
 
 
       myPanel.add(myExportButton,
@@ -251,7 +260,8 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
                                          stdInsets, 0, 0));
 
 
-      JButton importButton = new JButton("Import");
+      JButton importButton = new JButton("Import...");
+      importButton.setMnemonic('I');
       importButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
           SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl> popup = new SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl>(myPanel){
@@ -264,7 +274,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
 
             }
           };
-          popup.show(schemesManager, mySettingsStack.getSchemeNames());
+          popup.show(schemesManager, getSchemes());
 
         }
       });
@@ -404,6 +414,10 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     return currentScheme.isDefault() || getSchemesManager().isShared(currentScheme);
   }
 
+  private static boolean cannotBeDeleted(final CodeStyleScheme currentScheme) {
+    return currentScheme.isDefault();
+  }
+
   private List<CodeStyleScheme> getCurrentSchemes() {
     List<CodeStyleScheme> configuredSchemes = new ArrayList<CodeStyleScheme>();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myCombo.getModel();
@@ -471,11 +485,11 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     boolean saveAsEnabled = true;
     CodeStyleScheme selected = getSelectedScheme();
     if (selected != null) {
-      deleteEnabled = !cannotBeModified(selected);
+      deleteEnabled = !cannotBeDeleted(selected);
     }
     myDeleteButton.setEnabled(deleteEnabled);
     if (myExportButton != null) {
-      myExportButton.setEnabled(deleteEnabled);
+      myExportButton.setEnabled(!cannotBeModified(selected));
     }
     mySaveAsButton.setEnabled(saveAsEnabled);
   }

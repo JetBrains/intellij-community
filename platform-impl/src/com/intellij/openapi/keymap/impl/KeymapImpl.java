@@ -1,16 +1,16 @@
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortuct;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortuct;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.ExternalInfo;
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
-
+                                         
 /**
  * @author Eugene Belyaev
  * @author Anton Katilin
@@ -612,6 +612,11 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     if(myParent != null) {
       keymapElement.setAttribute(PARENT_ATTRIBUTE, myParent.getName());
     }
+    writeOwnActionIds(keymapElement);
+    return keymapElement;
+  }
+
+  private void writeOwnActionIds(final Element keymapElement) {
     String[] ownActionIds = getOwnActionIds();
     Arrays.sort(ownActionIds);
     for (String actionId : ownActionIds) {
@@ -641,7 +646,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       }
       keymapElement.addContent(actionElement);
     }
-    return keymapElement;
   }
 
   private static boolean areShortcutsEqual(Shortcut[] shortcuts1, Shortcut[] shortcuts2) {

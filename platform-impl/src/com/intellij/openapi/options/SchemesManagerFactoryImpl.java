@@ -39,7 +39,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
           return Collections.emptyList();
         }
 
-        public Collection<E> loadScharedSchemes(final Collection<String> currentSchemeNameList) {
+        public Collection<E> loadScharedSchemes(final Collection<T> currentSchemeList) {
           return Collections.emptyList();
         }
 

@@ -31,11 +31,20 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
   }
 
   public void actionPerformed(AnActionEvent e) {
-    try {
-      mySchemesManager.exportScheme(getSelectedScheme());
-    }
-    catch (WriteExternalException e1) {
-      Messages.showErrorDialog("Cannot export profile: " + e1.getLocalizedMessage(), "Export Profile");
+
+    doExport(getSelectedScheme(), mySchemesManager);
+  }
+
+  public static <T extends Scheme, E extends ExternalizableScheme> void doExport(final E scheme, SchemesManager<T,E> manager) {
+    if (scheme != null) {
+      try {
+        manager.exportScheme(scheme);
+
+        Messages.showMessageDialog("Scheme '" + scheme.getName() + "' was exported successfully", "Export", Messages.getInformationIcon());
+      }
+      catch (WriteExternalException e1) {
+        Messages.showErrorDialog("Cannot export profile: " + e1.getLocalizedMessage(), "Export Profile");
+      }
     }
   }
 }

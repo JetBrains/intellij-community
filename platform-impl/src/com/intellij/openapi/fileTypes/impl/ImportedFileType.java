@@ -2,6 +2,7 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 
@@ -11,8 +12,11 @@ import java.util.List;
 public class ImportedFileType extends AbstractFileType {
   private final List<FileNameMatcher> myPatterns = new ArrayList<FileNameMatcher>();
 
-  public ImportedFileType(final SyntaxTable syntaxTable) {
+  public ImportedFileType(final SyntaxTable syntaxTable, ExternalInfo copyFrom) {
     super(syntaxTable);
+    if (copyFrom != null) {
+      getExternalInfo().copy(copyFrom);
+    }
   }
 
   public List<FileNameMatcher> getOriginalPatterns() {

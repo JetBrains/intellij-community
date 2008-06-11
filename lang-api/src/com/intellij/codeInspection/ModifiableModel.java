@@ -66,8 +66,6 @@ public interface ModifiableModel extends Profile {
 
   boolean isDefault();
 
-  void initInspectionTools();
-
   boolean isExecutable();
 
   void setEditable(String toolDisplayName);

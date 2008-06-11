@@ -24,12 +24,13 @@ public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
       addKeymapAction(group, manager, current, keymap);
     }
 
-    group.add(Separator.getInstance());
-
     Collection<KeymapImpl> sharedSchemes = ((KeymapManagerEx)KeymapManagerEx.getInstance()).getSchemesManager().loadScharedSchemes();
 
-    for (Keymap sharedScheme : sharedSchemes) {
-      addKeymapAction(group, manager,current, sharedScheme);
+    if (!sharedSchemes.isEmpty()) {
+      group.add(Separator.getInstance());
+      for (Keymap sharedScheme : sharedSchemes) {
+        addKeymapAction(group, manager,current, sharedScheme);
+      }
     }
 
   }

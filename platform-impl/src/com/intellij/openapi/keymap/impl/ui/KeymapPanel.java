@@ -2,6 +2,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.SchemesToImportPopup;
+import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.LafManager;
@@ -143,13 +144,15 @@ public class KeymapPanel extends JPanel {
     }
     myDisableMnemonicsCheckbox.setSelected(!mySelectedKeymap.areMnemonicsEnabled());
     myDisableMnemonicsCheckbox.setEnabled(mySelectedKeymap.canModify());
-    if(mySelectedKeymap.canModify() && !getSchemesManager().isShared(mySelectedKeymap)) {
+    if(mySelectedKeymap.canModify()) {
       myDeleteButton.setEnabled(true);
       myAddKeyboardShortcutButton.setEnabled(true);
       myAddMouseShortcutButton.setEnabled(true);
       myRemoveShortcutButton.setEnabled(true);
-      if (myExportButton != null) {
-        myExportButton.setEnabled(true);
+      if (!getSchemesManager().isShared(mySelectedKeymap)) {
+        if (myExportButton != null) {
+          myExportButton.setEnabled(true);
+        }
       }
     }
 
@@ -221,17 +224,11 @@ public class KeymapPanel extends JPanel {
     final SchemesManager<Keymap, KeymapImpl> schemesManager = getSchemesManager();
     if (schemesManager.isImportExportAvailable()) {
       myExportButton = new JButton("Export");
+      myExportButton.setMnemonic('E');
       myExportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
           KeymapImpl selected = getSelectedKeymap();
-          if (selected != null) {
-            try {
-              schemesManager.exportScheme(selected);
-            }
-            catch (com.intellij.openapi.util.WriteExternalException e1) {
-              //ignore
-            }
-          }
+          ExportSchemeAction.doExport(selected, schemesManager);
         }
       });
       myExportButton.setMargin(insets);
@@ -240,13 +237,14 @@ public class KeymapPanel extends JPanel {
       panel.add(myExportButton, gc);
 
 
-      JButton importButton = new JButton("Import");
+      JButton importButton = new JButton("Import...");
+      importButton.setMnemonic('I');
       importButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
           SchemesToImportPopup<Keymap, KeymapImpl> popup = new SchemesToImportPopup<Keymap, KeymapImpl>(panel){
             protected void onSchemeSelected(final KeymapImpl scheme) {
               if (scheme != null) {
-                ((KeymapImpl)scheme).setCanModify(false);
+                scheme.setCanModify(true);
                 myKeymapListModel.addElement(scheme);
                 myKeymapList.setSelectedItem(scheme);
                 processCurrentKeymapChanged();
@@ -255,7 +253,7 @@ public class KeymapPanel extends JPanel {
 
             }
           };
-          popup.show(schemesManager, collectKeymapNames(myKeymapListModel));
+          popup.show(schemesManager, collectKeymaps(myKeymapListModel));
 
         }
       });
@@ -291,10 +289,10 @@ public class KeymapPanel extends JPanel {
     return panel;
   }
 
-  private static Collection<String> collectKeymapNames(final DefaultComboBoxModel list) {
-    HashSet<String> names = new HashSet<String>();
+  private static Collection<Keymap> collectKeymaps(final DefaultComboBoxModel list) {
+    HashSet<Keymap> names = new HashSet<Keymap>();
     for (int i = 0; i < list.getSize(); i++) {
-      names.add(((Keymap)list.getElementAt(i)).getName());
+      names.add((Keymap)list.getElementAt(i));
 
     }
     return names;

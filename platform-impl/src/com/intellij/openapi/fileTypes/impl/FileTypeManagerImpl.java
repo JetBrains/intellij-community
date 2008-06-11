@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
+import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -417,7 +418,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         List children = e.getChildren(ELEMENT_FILETYPE);
         for (final Object aChildren : children) {
           Element element = (Element)aChildren;
-          loadFileType(element, true, false);
+          loadFileType(element, true, null);
         }
       }
       else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
@@ -618,7 +619,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     boolean res = false;
     for (AbstractFileType fileType : collection) {
       ReadFileType readFileType = (ReadFileType)fileType;
-      FileType loadedFileType = loadFileType(readFileType.getElement(), true,mySchemesManager.isShared(readFileType));
+      FileType loadedFileType = loadFileType(readFileType.getElement(), true, mySchemesManager.isShared(readFileType) ? readFileType.getExternalInfo() : null);
       res |= myInitialAssociations.hasAssociationsFor(loadedFileType);
     }
 
@@ -627,7 +628,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
 
-  private FileType loadFileType(Element typeElement, boolean isDefaults, final boolean shared) {
+  private FileType loadFileType(Element typeElement, boolean isDefaults, final ExternalInfo info) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
     String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue(ATTRIBUTE_ICON);
@@ -655,7 +656,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
     else {
-      type = loadCustomFile(typeElement, shared);
+      type = loadCustomFile(typeElement, info);
       registerFileTypeWithoutNotification(type, exts);
     }
 
@@ -680,18 +681,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return type;
   }
 
-  private static FileType loadCustomFile(final Element typeElement, final boolean shared) {
+  private static FileType loadCustomFile(final Element typeElement, ExternalInfo info) {
     FileType type = null;
 
     Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
     if (element != null) {
       final SyntaxTable table = AbstractFileType.readSyntaxTable(element);
       if (table != null) {
-        if (!shared) {
+        if (info == null) {
           type = new AbstractFileType(table);
         }
         else {
-          type = new ImportedFileType(table);
+          type = new ImportedFileType(table, info);
           ((ImportedFileType)type).readOriginalMatchers(typeElement);
         }
         ((AbstractFileType)type).initSupport();

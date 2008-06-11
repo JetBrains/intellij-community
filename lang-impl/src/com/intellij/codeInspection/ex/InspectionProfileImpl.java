@@ -534,6 +534,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
 
+    myExternalInfo.copy(inspectionProfile.getExternalInfo());
+
     InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
     //TODO lesya
     //save();

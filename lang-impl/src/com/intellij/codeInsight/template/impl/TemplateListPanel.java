@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +11,6 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -152,7 +152,9 @@ class TemplateListPanel extends JPanel {
 
     if (getSchemesManager().isImportExportAvailable()) {
       myExportButton = createButton(tableButtonsPanel, gbConstraints, "Export");
-      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import");
+      myEditButton.setMnemonic('E');
+      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import...");
+      myImportButton.setMnemonic('I');
       myImportButton.setEnabled(true);
 
       myExportButton.addActionListener(new ActionListener(){
@@ -184,7 +186,7 @@ class TemplateListPanel extends JPanel {
                 isModified =  true;
               }
             }
-          }.show(getSchemesManager(), collectCurrentGroupNames());
+          }.show(getSchemesManager(), myTemplateGroups);
         }
       });
 
@@ -250,27 +252,11 @@ class TemplateListPanel extends JPanel {
     int selected = myTreeTable.getSelectedRow();
     if (selected < 0) return;
 
-    TemplateGroup group = getGroup(selected);
-
-    try {
-      getSchemesManager().exportScheme(group);
-    }
-    catch (WriteExternalException e) {
-      LOG.debug(e);
-    }
+    ExportSchemeAction.doExport(getGroup(selected), getSchemesManager());
 
   }
 
-  private Collection<String> collectCurrentGroupNames() {
-    HashSet<String> result = new HashSet<String>();
-    for (TemplateGroup template : myTemplateGroups) {
-      result.add(template.getName());
-    }
-
-    return result;
-  }
-
-  private SchemesManager<TemplateGroup, TemplateGroup> getSchemesManager() {
+  private static SchemesManager<TemplateGroup, TemplateGroup> getSchemesManager() {
     return (TemplateSettings.getInstance()).getSchemesManager();
   }
 

@@ -241,14 +241,12 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   @Nullable
-  public static ModifiableModel createNewLocalProfileWithSpecifiedName(ModifiableModel selectedProfile,
-                                                 Project project,
-                                                 ProfileManager ideProfileManager,
-                                                 ProfileManager currentProfileManager,
-                                                 String profileName, boolean isLocal) {
+  public static ModifiableModel createNewLocalProfileWithSpecifiedName(ModifiableModel selectedProfile, ProfileManager ideProfileManager,
+                                                                       ProfileManager currentProfileManager,
+                                                                       Collection<String> currentlyUsingNames,
+                                                                       String profileName, boolean isLocal) {
     ProfileManager profileManager = isLocal && ideProfileManager != null ? ideProfileManager : currentProfileManager;
-    if (ArrayUtil.find(currentProfileManager.getAvailableProfileNames(), profileName) != -1 ||
-        ideProfileManager != null && ArrayUtil.find(ideProfileManager.getAvailableProfileNames(), profileName) != -1) {
+    if (currentlyUsingNames.contains(profileName)) {
       Messages.showErrorDialog(InspectionsBundle.message("inspection.unable.to.create.profile.message", profileName),
                                InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
       return null;

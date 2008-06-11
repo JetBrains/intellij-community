@@ -36,11 +36,11 @@ public abstract class ImportSchemeAction<T extends Scheme, E extends Externaliza
 
       }
     };
-    popup.show(mySchemesManager, collectCurrentSchemeNames());
+    popup.show(mySchemesManager, collectCurrentSchemes());
 
   }
 
-  protected abstract Collection<String> collectCurrentSchemeNames();
+  protected abstract Collection<T> collectCurrentSchemes();
 
   protected abstract Component getPanel();
 
