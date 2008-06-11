@@ -1,11 +1,12 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CompareWithLastVersion extends AbstractShowDiffAction{
-  protected VcsRevisionNumber getRevisionNumber(DiffProvider diffProvider, VirtualFile file) {
-    return diffProvider.getLastRevision(file);
+  @Override
+  protected DiffActionExecutor getExecutor(final DiffProvider diffProvider, final VirtualFile selectedFile, final Project project) {
+    return new DiffActionExecutor.DeletionAwareExecutor(diffProvider, selectedFile, project);
   }
 }

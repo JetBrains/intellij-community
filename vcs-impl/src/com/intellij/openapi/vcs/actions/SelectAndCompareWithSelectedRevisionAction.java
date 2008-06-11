@@ -1,7 +1,7 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -30,7 +30,7 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
       final VcsRevisionNumber vcsRevisionNumber = selector.selectNumber(file);
 
       if (vcsRevisionNumber != null) {
-        AbstractShowDiffAction.showDiff(diffProvider, vcsRevisionNumber, file, project);
+        DiffActionExecutor.showDiff(diffProvider, vcsRevisionNumber, file, project);
       }
     }
 

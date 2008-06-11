@@ -13,10 +13,10 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.dualView.TreeTableView;
-import com.intellij.ui.table.TableView;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -127,8 +127,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         }
         VcsFileRevision revision = getRevisionAt(treeTable, index);
         if (revision != null) {
-          AbstractShowDiffAction.showDiff(diffProvider, revision.getRevisionNumber(),
-                                          file, project);
+          DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project);
         }
       }
     };
@@ -204,7 +203,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       public void run() {
         VcsFileRevision revision = table.getSelectedObject();
         if (revision != null) {
-          AbstractShowDiffAction.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project);
+          DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project);
         }
       }
     };
