@@ -16,16 +16,19 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 
@@ -52,24 +55,40 @@ public class SvnDiffProvider implements DiffProvider {
     }
   }
 
-  public VcsRevisionNumber getLastRevision(VirtualFile file) {
+  private static Pair<Boolean, VcsRevisionNumber> defaultResult() {
+    return createResult(Boolean.TRUE, SVNRevision.HEAD);
+  }
+
+  private static Pair<Boolean, VcsRevisionNumber> createResult(final Boolean exists, final SVNRevision revision) {
+    return new Pair<Boolean, VcsRevisionNumber>(exists, new SvnRevisionNumber(revision));
+  }
+
+  public Pair<Boolean, VcsRevisionNumber> getLastRevision(VirtualFile file) {
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), true, false);
       if (svnStatus == null) {
         // IDEADEV-21785 (no idea why this can happen)
         LOG.info("No SVN status returned for " + file.getPath());
-        return new SvnRevisionNumber(SVNRevision.HEAD);
+        return defaultResult();
+      }
+      final boolean exists = ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus());
+      if (! exists) {
+        // get really latest revision
+        final LatestExistentSearcher searcher = new LatestExistentSearcher(myVcs, svnStatus.getURL());
+        final long revision = searcher.getDeletionRevision();
+
+        return createResult(exists, SVNRevision.create(revision));
       }
       final SVNRevision remoteRevision = svnStatus.getRemoteRevision();
       if (remoteRevision != null) {
-        return new SvnRevisionNumber(remoteRevision);
+        return createResult(exists, remoteRevision);
       }
-      return new SvnRevisionNumber(svnStatus.getRevision());
+      return createResult(exists, svnStatus.getRevision());
     }
     catch (SVNException e) {
       LOG.debug(e);    // most likely the file is unversioned
-      return new SvnRevisionNumber(SVNRevision.HEAD);
+      return defaultResult();
     }
   }
 

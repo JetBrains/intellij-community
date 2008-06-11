@@ -1,24 +1,29 @@
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
+import java.util.Map;
 
 public class LatestExistentSearcher {
   private long myStartNumber;
-  private final boolean myStartExistsKnown;
+  private boolean myStartExistsKnown;
   private final SVNURL myUrl;
   private final SvnVcs myVcs;
-  private final long myEndNumber;
+  private long myEndNumber;
+
+  public LatestExistentSearcher(final SvnVcs vcs, final SVNURL url) {
+    this(0, -1, false, vcs, url);
+  }
 
   public LatestExistentSearcher(final long startNumber, final long endNumber, final boolean startExistsKnown, final SvnVcs vcs, final SVNURL url) {
     myStartNumber = startNumber;
@@ -28,34 +33,64 @@ public class LatestExistentSearcher {
     myUrl = url;
   }
 
-  public long execute() {
-    if (! myStartExistsKnown) {
-      final SvnFileUrlMapping mapping = myVcs.getSvnFileUrlMapping();
-      final VirtualFile vf = mapping.getVcRootByUrl(myUrl.toString());
-      if (vf == null) {
-        return -1;
-      }
-      final SVNWCClient client = myVcs.createWCClient();
-      try {
-        final SVNInfo info = client.doInfo(new File(vf.getPath()), SVNRevision.WORKING);
-        if ((info == null) || (info.getRevision() == null)) {
-          return -1;
-        }
-        myStartNumber = info.getRevision().getNumber();
-      }
-      catch (SVNException e) {
-        return -1;
-      }
-    }
+  public long getDeletionRevision() {
+    if (! detectStartRevision()) return -1;
 
-    // not frequent case, so there is no need to make it very well optimized.. maybe further should be rewritten
-    long latestOk = myStartNumber;
-
+    final Ref<Long> latest = new Ref<Long>(myStartNumber);
     SVNRepository repository = null;
     try {
       repository = myVcs.createRepository(myUrl.toString());
       final SVNURL repRoot = repository.getRepositoryRoot(true);
       if (repRoot != null) {
+        if (myEndNumber == -1) {
+          myEndNumber = repository.getLatestRevision();
+        }
+
+        final SVNURL existingParent = getExistingParent(myUrl, repository, repRoot.toString().length());
+        if (existingParent == null) {
+          return myStartNumber;
+        }
+
+        final String urlRelativeString = myUrl.toString().substring(repRoot.toString().length());
+        final SVNRevision startRevision = SVNRevision.create(myStartNumber);
+        myVcs.createLogClient().doLog(existingParent, new String[]{""}, startRevision, startRevision, SVNRevision.HEAD, false, true, 0,
+                       new ISVNLogEntryHandler() {
+                         public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
+                           final Map changedPaths = logEntry.getChangedPaths();
+                           for (Object o : changedPaths.values()) {
+                             final SVNLogEntryPath path = (SVNLogEntryPath) o;
+                             if ((path.getType() == 'D') && (urlRelativeString.equals(path.getPath()))) {
+                               latest.set(logEntry.getRevision());
+                               throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
+                             }
+                           }
+                         }
+                       });
+      }
+    }
+    catch (SVNException e) {
+      //
+    } finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
+    }
+
+    return latest.get().longValue();
+  }
+
+  public long getLatestExistent() {
+    if (! detectStartRevision()) return myStartNumber;
+
+    SVNRepository repository = null;
+    long latestOk = myStartNumber;
+    try {
+      repository = myVcs.createRepository(myUrl.toString());
+      final SVNURL repRoot = repository.getRepositoryRoot(true);
+      if (repRoot != null) {
+        if (myEndNumber == -1) {
+          myEndNumber = repository.getLatestRevision();
+        }
         final String urlString = myUrl.toString().substring(repRoot.toString().length());
         for (long i = myStartNumber + 1; i < myEndNumber; i++) {
           final SVNNodeKind kind = repository.checkPath(urlString, i);
@@ -64,18 +99,9 @@ public class LatestExistentSearcher {
           }
         }
       }
-
-      // log does NOT allow to use HEAD if head does not contain url, and we know for sure that it does not contain
-
-      /*myVcs.createLogClient().doLog(myUrl, new String[]{""}, startRevision, startRevision, SVNRevision.HEAD, false, false, 0,
-                     new ISVNLogEntryHandler() {
-                       public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
-                         latestOk.set(logEntry.getRevision());
-                       }
-                     });*/
     }
     catch (SVNException e) {
-      return -1;
+      //
     } finally {
       if (repository != null) {
         repository.closeSession();
@@ -83,5 +109,46 @@ public class LatestExistentSearcher {
     }
 
     return latestOk;
+  }
+
+  private boolean detectStartRevision() {
+    if (! myStartExistsKnown) {
+      final SvnFileUrlMapping mapping = myVcs.getSvnFileUrlMapping();
+      final VirtualFile vf = mapping.getVcRootByUrl(myUrl.toString());
+      if (vf == null) {
+        return true;
+      }
+      final SVNWCClient client = myVcs.createWCClient();
+      try {
+        final SVNInfo info = client.doInfo(new File(vf.getPath()), SVNRevision.WORKING);
+        if ((info == null) || (info.getRevision() == null)) {
+          return false;
+        }
+        myStartNumber = info.getRevision().getNumber();
+        myStartExistsKnown = true;
+      }
+      catch (SVNException e) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Nullable
+  private SVNURL getExistingParent(final SVNURL url, final SVNRepository repository, final int repoRootLen) throws SVNException {
+    final String urlString = url.toString().substring(repoRootLen);
+    if (urlString.length() == 0) {
+      // === repository url
+      return url;
+    }
+    final SVNNodeKind kind = repository.checkPath(urlString, myEndNumber);
+    if (SVNNodeKind.DIR.equals(kind) || SVNNodeKind.FILE.equals(kind)) {
+      return url;
+    }
+    final SVNURL parentUrl = url.removePathTail();
+    if (parentUrl == null) {
+      return null;
+    }
+    return getExistingParent(parentUrl, repository, repoRootLen);
   }
 }

@@ -79,7 +79,7 @@ public class LiveProvider implements BunchProvider {
         // try to find latest existent revision. expensive ...
         final LatestExistentSearcher searcher = new LatestExistentSearcher(oldestRevision, myYoungestRevision, (oldestRevision != 0),
                                                                            myVcs, SVNURL.parseURIEncoded(myLocation.getURL()));
-        final long existent = searcher.execute();
+        final long existent = searcher.getLatestExistent();
         if ((existent == -1) || (existent == earliestRevision)) {
           myEarliestRevisionWasAccessed = true;
           return null;
