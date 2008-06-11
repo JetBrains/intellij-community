@@ -94,4 +94,8 @@ public class SdkConfigurationUtil {
       }
     }
   }
+
+  public static void removeSdk(final Sdk sdk) {
+    //To change body of created methods use File | Settings | File Templates.
+  }
 }
