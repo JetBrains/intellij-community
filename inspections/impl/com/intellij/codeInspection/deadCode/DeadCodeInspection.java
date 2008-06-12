@@ -804,11 +804,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     });
 
 
-    SmartRefElementPointer[] entryPoints = getEntryPointsManager().getEntryPoints();
-    for (SmartRefElementPointer entry : entryPoints) {
-      if (entry.getRefElement() != null) {
-        entry.getRefElement().accept(codeScanner);
-      }
+    for (RefElement entry : getEntryPointsManager().getEntryPoints()) {
+      entry.accept(codeScanner);
     }
 
     while (codeScanner.newlyInstantiatedClassesCount() != 0) {

@@ -78,12 +78,10 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     final Project project = manager.getProject();
-    for (SmartRefElementPointer entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
-      final RefEntity refElement = entryPoint.getRefElement();
-      if (refElement != null) {
-        processor.ignoreElement(refElement);
-      }
+    for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
+      processor.ignoreElement(entryPoint);
     }
+
     final PsiSearchHelper helper = PsiManager.getInstance(project).getSearchHelper();
     final AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {

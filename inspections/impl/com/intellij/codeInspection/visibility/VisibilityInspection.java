@@ -323,12 +323,10 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
-    for (SmartRefElementPointer entryPoint : entryPointsManager.getEntryPoints()) {
-      final RefEntity refElement = entryPoint.getRefElement();
-      if (refElement != null) {
-        ignoreElement(processor, refElement);
-      }
+    for (RefElement entryPoint : entryPointsManager.getEntryPoints()) {
+      ignoreElement(processor, entryPoint);
     }
+
     final Object[] addins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.VISIBLITY_TOOL).getExtensions();
     for (Object addin : addins) {
       ((VisibilityExtension)addin).fillIgnoreList(manager, processor);

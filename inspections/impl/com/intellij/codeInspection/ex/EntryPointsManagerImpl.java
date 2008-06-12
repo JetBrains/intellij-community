@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectComponent, EntryPointsManager {
-  private final Map<String, SmartRefElementPointer> myFQNameToSmartEntryPointRef;
+  private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
+  private final Set<RefElement> myTemporaryEntryPoints;
   private static final String VERSION = "2.0";
   @NonNls private static final String VERSION_ATTR = "version";
   @NonNls private static final String ENTRY_POINT_ATTR = "entry_point";
@@ -35,7 +36,8 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
 
   public EntryPointsManagerImpl(Project project) {
     myProject = project;
-    myFQNameToSmartEntryPointRef =
+    myTemporaryEntryPoints = new HashSet<RefElement>();
+    myPersistentEntryPoints =
         new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
   }
 
@@ -56,7 +58,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
         Element entryElement = (Element)aContent;
         if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {
           SmartRefElementPointerImpl entryPoint = new SmartRefElementPointerImpl(entryElement);
-          myFQNameToSmartEntryPointRef.put(entryPoint.getFQName(), entryPoint);
+          myPersistentEntryPoints.put(entryPoint.getFQName(), entryPoint);
         }
       }
     }
@@ -66,10 +68,9 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   public void writeExternal(Element element) throws WriteExternalException {
     Element entryPointsElement = new Element("entry_points");
     entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
-    for (SmartRefElementPointer entryPoint : myFQNameToSmartEntryPointRef.values()) {
-      if (entryPoint.isPersistent()) {
-        entryPoint.writeExternal(entryPointsElement);
-      }
+    for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
+      assert entryPoint.isPersistent();
+      entryPoint.writeExternal(entryPointsElement);
     }
 
     element.addContent(entryPointsElement);
@@ -82,7 +83,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          for (SmartRefElementPointer entryPoint : myFQNameToSmartEntryPointRef.values()) {
+          for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
             if (entryPoint.resolve(manager)) {
               RefEntity refElement = entryPoint.getRefElement();
               ((RefElementImpl)refElement).setEntry(true);
@@ -95,16 +96,11 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   }
 
   private void purgeTemporaryEntryPoints() {
-    Collection<SmartRefElementPointer> collection = myFQNameToSmartEntryPointRef.values();
-    SmartRefElementPointer[] entries = collection.toArray(new SmartRefElementPointer[collection.size()]);
-    for (SmartRefElementPointer entry : entries) {
-      if (!entry.isPersistent()) {
-        myFQNameToSmartEntryPointRef.remove(entry.getFQName());
-        RefElement refElement = (RefElement)entry.getRefElement();
-        if (refElement != null) ((RefElementImpl)refElement).setEntry(false);
-        entry.freeReference();
-      }
+    for (RefElement entryPoint : myTemporaryEntryPoints) {
+      ((RefElementImpl)entryPoint).setEntry(false);
     }
+
+    myTemporaryEntryPoints.clear();
   }
 
   public void addEntryPoint(RefElement newEntryPoint, boolean isPersistent) {
@@ -132,15 +128,21 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
       }
     }
 
-    if (myFQNameToSmartEntryPointRef.get(newEntryPoint.getExternalName()) == null) {
-      final SmartRefElementPointerImpl entry = new SmartRefElementPointerImpl(newEntryPoint, isPersistent);
-      myFQNameToSmartEntryPointRef.put(entry.getFQName(), entry);
+    if (isPersistent) {
+      myTemporaryEntryPoints.add(newEntryPoint);
       ((RefElementImpl)newEntryPoint).setEntry(true);
-      ((RefElementImpl)newEntryPoint).setPermanentEntry(entry.isPersistent());
-      if (entry.isPersistent()) { //do save entry points
-        final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(newEntryPoint.getElement().getProject());
-        if (this != entryPointsManager) {
-          entryPointsManager.addEntryPoint(newEntryPoint, true);
+    }
+    else {
+      if (myPersistentEntryPoints.get(newEntryPoint.getExternalName()) == null) {
+        final SmartRefElementPointerImpl entry = new SmartRefElementPointerImpl(newEntryPoint, true);
+        myPersistentEntryPoints.put(entry.getFQName(), entry);
+        ((RefElementImpl)newEntryPoint).setEntry(true);
+        ((RefElementImpl)newEntryPoint).setPermanentEntry(true);
+        if (entry.isPersistent()) { //do save entry points
+          final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(newEntryPoint.getElement().getProject());
+          if (this != entryPointsManager) {
+            entryPointsManager.addEntryPoint(newEntryPoint, true);
+          }
         }
       }
     }
@@ -156,7 +158,9 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
 
     if (anEntryPoint == null) return;
 
-    Set<Map.Entry<String, SmartRefElementPointer>> set = myFQNameToSmartEntryPointRef.entrySet();
+    myTemporaryEntryPoints.remove(anEntryPoint);
+
+    Set<Map.Entry<String, SmartRefElementPointer>> set = myPersistentEntryPoints.entrySet();
     String key = null;
     for (Map.Entry<String, SmartRefElementPointer> entry : set) {
       SmartRefElementPointer value = entry.getValue();
@@ -167,7 +171,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
     }
 
     if (key != null) {
-      myFQNameToSmartEntryPointRef.remove(key);
+      myPersistentEntryPoints.remove(key);
       ((RefElementImpl)anEntryPoint).setEntry(false);
     }
 
@@ -180,10 +184,19 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
     }
   }
 
-  public SmartRefElementPointer[] getEntryPoints() {
+  public RefElement[] getEntryPoints() {
     validateEntryPoints();
-    Collection<SmartRefElementPointer> collection = myFQNameToSmartEntryPointRef.values();
-    return collection.toArray(new SmartRefElementPointer[collection.size()]);
+    List<RefElement> entries = new ArrayList<RefElement>();
+    Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();
+    for (SmartRefElementPointer refElementPointer : collection) {
+      final RefEntity elt = refElementPointer.getRefElement();
+      if (elt instanceof RefElement) {
+        entries.add((RefElement)elt);
+      }
+    }
+    entries.addAll(myTemporaryEntryPoints);
+
+    return entries.toArray(new RefElement[entries.size()]);
   }
 
   public void projectOpened() {
@@ -208,12 +221,20 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
     long count = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     if (count != myLastModificationCount) {
       myLastModificationCount = count;
-      Collection<SmartRefElementPointer> collection = myFQNameToSmartEntryPointRef.values();
+      Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();
       SmartRefElementPointer[] entries = collection.toArray(new SmartRefElementPointer[collection.size()]);
       for (SmartRefElementPointer entry : entries) {
         RefElement refElement = (RefElement)entry.getRefElement();
         if (refElement != null && !refElement.isValid()) {
-          myFQNameToSmartEntryPointRef.remove(entry.getFQName());
+          myPersistentEntryPoints.remove(entry.getFQName());
+        }
+      }
+
+      final Iterator<RefElement> it = myTemporaryEntryPoints.iterator();
+      while (it.hasNext()) {
+        RefElement refElement = it.next();
+        if (!refElement.isValid()) {
+          it.remove();
         }
       }
     }
@@ -221,7 +242,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
 
   public void cleanup() {
     purgeTemporaryEntryPoints();
-    Collection<SmartRefElementPointer> entries = myFQNameToSmartEntryPointRef.values();
+    Collection<SmartRefElementPointer> entries = myPersistentEntryPoints.values();
     for (SmartRefElementPointer entry : entries) {
       entry.freeReference();
     }
@@ -232,7 +253,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   }
 
   public void addAllPersistentEntries(EntryPointsManagerImpl manager) {
-    myFQNameToSmartEntryPointRef.putAll(manager.myFQNameToSmartEntryPointRef);
+    myPersistentEntryPoints.putAll(manager.myPersistentEntryPoints);
   }
 
   public void convert(Element element) {
@@ -274,7 +295,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
           }
         }
         SmartRefElementPointerImpl entryPoint = new SmartRefElementPointerImpl(type, fqName);
-        myFQNameToSmartEntryPointRef.put(entryPoint.getFQName(), entryPoint);
+        myPersistentEntryPoints.put(entryPoint.getFQName(), entryPoint);
       }
     }
   }

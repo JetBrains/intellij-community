@@ -154,12 +154,10 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
 
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor problemsProcessor) {
-    for (SmartRefElementPointer entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
-      final RefEntity refElement = entryPoint.getRefElement();
-      if (refElement != null) {
-        problemsProcessor.ignoreElement(refElement);
-      }
+    for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
+      problemsProcessor.ignoreElement(entryPoint);
     }
+
     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
         if (problemsProcessor.getDescriptions(refEntity) == null) return;
