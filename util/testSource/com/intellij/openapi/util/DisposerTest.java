@@ -227,8 +227,6 @@ public class DisposerTest extends TestCase {
     }
 
     public void dispose() {
-      assertFalse(myName, myDisposed);
-
       myDisposed = true;
       myDisposedObjects.add(this);
       myDisposeActions.add("dispose: " + myName);
