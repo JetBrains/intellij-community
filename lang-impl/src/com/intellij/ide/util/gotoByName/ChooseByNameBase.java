@@ -20,6 +20,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
@@ -538,7 +540,7 @@ public abstract class ChooseByNameBase{
                     return;
                   }
 
-                  setElementsToList(pos, elements);
+                  setElementsToList(pos, elements, text);
 
                   myListIsUpToDate = true;
                   choosenElementMightChange();
@@ -575,7 +577,7 @@ public abstract class ChooseByNameBase{
     }
   }
 
-  private void setElementsToList(int pos, Set<?> elements) {
+  private void setElementsToList(int pos, Set<?> elements, final String patternText) {
     myListUpdater.cancelAll();
     if (myDisposedFlag) return;
     if (elements.isEmpty()) {
@@ -618,10 +620,39 @@ public abstract class ChooseByNameBase{
       myListUpdater.appendToModel(commands, pos);
     }
     else {
-      ListScrollingUtil.selectItem(myList, Math.min (pos, myListModel.size () - 1));
+      if (pos == 0) {
+        pos = detectBestStatisticalPosition();
+      }
+
+      ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
     }
+  }
+
+  private int detectBestStatisticalPosition() {
+    int best = -1;
+    int bestPosition = 0;
+    final int count = myListModel.getSize();
+
+    final String statContext = statisticsContext();
+    for (int i = 0; i < count; i++) {
+      final Object modelElement = myListModel.getElementAt(i);
+      String text = EXTRA_ELEM.equals(modelElement) ? null : myModel.getElementName(modelElement);
+      if (text != null) {
+        int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
+        if (stats > best) {
+          best = stats;
+          bestPosition = i;
+        }
+      }
+    }
+
+    return bestPosition;
+  }
+
+  protected String statisticsContext() {
+    return "choose_by_name#"+myModel.getPromptText()+"#"+ myCheckBox.isSelected() + "#" + myTextField.getText();
   }
 
   private String getQualifierPattern(String pattern) {
@@ -708,7 +739,8 @@ public abstract class ChooseByNameBase{
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
           if (myListModel.size() > 0) {
-            ListScrollingUtil.selectItem(myList, Math.min (selectionPos, myListModel.size () - 1));
+            int pos = selectionPos == 0 ? detectBestStatisticalPosition() : selectionPos;
+            ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
           }
           
           if (!myCommands.isEmpty()) {

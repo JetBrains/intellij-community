@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -99,6 +101,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (chosenElements != null) {
         for (Object element : chosenElements) {
           myActionListener.elementChosen(element);
+          String text = myModel.getElementName(element);
+          if (text != null) {
+            StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+          }
         }
       } else {
         return;
