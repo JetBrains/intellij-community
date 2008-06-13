@@ -473,7 +473,7 @@ public class AbstractPopup implements JBPopup, Disposable {
       }
     }
 
-    Disposer.dispose(this);
+    Disposer.dispose(this, false);
   }
 
   private void disposePopup() {
@@ -787,6 +787,8 @@ public class AbstractPopup implements JBPopup, Disposable {
 
 
   public void dispose() {
+    Disposer.dispose(this, false);
+
     assert ApplicationManager.getApplication().isDispatchThread();
 
     if (myPopup != null) {
@@ -818,6 +820,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     }
 
     resetWindow();
+
   }
 
   private void resetWindow() {
@@ -1062,5 +1065,13 @@ public class AbstractPopup implements JBPopup, Disposable {
 
       setLocation(new Point(current.x, current.y + shift));
     }
+  }
+
+  public void addListener(final JBPopupListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(final JBPopupListener listener) {
+    myListeners.remove(listener);
   }
 }

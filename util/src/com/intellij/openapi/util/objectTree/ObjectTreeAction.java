@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.util.objectTree;
 
-public interface ObjectTreeAction {
+public interface ObjectTreeAction<T> {
 
-  void execute(Object each);
+  void execute(T each);
 
-  void beforeTreeExecution(Object parent);
+  void beforeTreeExecution(T parent);
 
 }

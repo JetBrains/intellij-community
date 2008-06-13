@@ -23,4 +23,12 @@ public interface JBPopupListener {
 
   void onClosed(JBPopup popup);
 
+  class Adapter implements JBPopupListener{
+    public void beforeShown(final Project project, final JBPopup popup) {
+    }
+
+    public void onClosed(final JBPopup popup) {
+    }
+  }
+
 }

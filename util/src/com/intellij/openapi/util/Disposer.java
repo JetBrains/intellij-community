@@ -28,19 +28,20 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 public class Disposer {
-  private static final ObjectTree ourTree = new ObjectTree();
+  private static final ObjectTree<Disposable> ourTree = new ObjectTree<Disposable>();
 
-  private static final ObjectTreeAction ourDisposeAction = new ObjectTreeAction() {
-    public void execute(final Object each) {
-      ((Disposable)each).dispose();
+  private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
+    public void execute(final Disposable each) {
+      each.dispose();
     }
 
-    public void beforeTreeExecution(final Object parent) {
+    public void beforeTreeExecution(final Disposable parent) {
       if (parent instanceof Disposable.Parent) {
         ((Disposable.Parent)parent).beforeTreeDispose();
       }
     }
   };
+
   private static boolean ourDebugMode;
 
   private Disposer() {
@@ -79,8 +80,12 @@ public class Disposer {
   }
 
   public static void dispose(Disposable disposable) {
+    dispose(disposable, true);
+  }
+
+  public static void dispose(Disposable disposable, boolean processUnregistered) {
     synchronized (ourTree) {
-      ourTree.executeAll(disposable, true, ourDisposeAction);
+      ourTree.executeAll(disposable, true, ourDisposeAction, processUnregistered);
     }
   }
 
@@ -98,10 +103,10 @@ public class Disposer {
   public static void assertIsEmpty() {
     boolean firstObject = true;
 
-    final Set<Object> objects = ourTree.getRootObjects();
-    for (Object object : objects) {
+    final Set<Disposable> objects = ourTree.getRootObjects();
+    for (Disposable object : objects) {
       if (object == null) continue;
-      final ObjectNode objectNode = ourTree.getObject2NodeMap().get(object);
+      final ObjectNode<Disposable> objectNode = ourTree.getObject2NodeMap().get(object);
       if (objectNode == null) continue;
 
       if (firstObject) {

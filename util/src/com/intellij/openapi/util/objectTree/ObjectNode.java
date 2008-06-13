@@ -22,18 +22,18 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-public final class ObjectNode {
+public final class ObjectNode<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
 
-  private ObjectTree myTree;
+  private ObjectTree<T> myTree;
 
-  private ObjectNode myParent;
-  private Object myObject;
+  private ObjectNode<T> myParent;
+  private T myObject;
 
-  private LinkedHashSet<ObjectNode> myChildren;
+  private LinkedHashSet<ObjectNode<T>> myChildren;
   private Throwable myTrace;
 
-  public ObjectNode(ObjectTree tree, ObjectNode parentNode, Object object) {
+  public ObjectNode(ObjectTree<T> tree, ObjectNode<T> parentNode, T object) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
@@ -43,37 +43,37 @@ public final class ObjectNode {
     }
   }
 
-  public void addChild(Object childObject) {
+  public void addChild(T childObject) {
     ensureChildArray();
 
-    final ObjectNode childNode = new ObjectNode(myTree, this, childObject);
+    final ObjectNode<T> childNode = new ObjectNode<T>(myTree, this, childObject);
     _add(childNode);
   }
 
-  public void addChild(ObjectNode child) {
+  public void addChild(ObjectNode<T> child) {
     ensureChildArray();
     _add(child);
   }
 
-  public void removeChild(ObjectNode child) {
+  public void removeChild(ObjectNode<T> child) {
     _remove(child);
   }
 
-  private void setParent(ObjectNode parent) {
+  private void setParent(ObjectNode<T> parent) {
     myParent = parent;
   }
 
-  public ObjectNode getParent() {
+  public ObjectNode<T> getParent() {
     return myParent;
   }
 
-  private void _add(final ObjectNode child) {
+  private void _add(final ObjectNode<T> child) {
     child.setParent(this);
     myChildren.add(child);
     myTree.getObject2NodeMap().put(child.getObject(), child);
   }
 
-  private void _remove(final ObjectNode child) {
+  private void _remove(final ObjectNode<T> child) {
     assert myChildren != null: "No chindren to remove child: " + this + ' ' + child;
     if (myChildren.remove(child)) {
       child.setParent(null);
@@ -83,22 +83,23 @@ public final class ObjectNode {
 
   private void ensureChildArray() {
     if (myChildren == null) {
-      myChildren = new LinkedHashSet<ObjectNode>();
+      myChildren = new LinkedHashSet<ObjectNode<T>>();
     }
   }
 
-  public void execute(boolean disposeTree, ObjectTreeAction action) {
-    if (myTree.getExecutedObjects().contains(this)) {
-      return;
+  public boolean execute(boolean disposeTree, ObjectTreeAction<T> action) {
+    if (myTree.getNodesInExecution().contains(this)) {
+      return false;
     }
 
 
-    myTree.getExecutedObjects().add(this);
+    myTree.getNodesInExecution().add(this);
 
     action.beforeTreeExecution(myObject);
 
     if (myChildren != null) {
-      final ObjectNode[] children = myChildren.toArray(new ObjectNode[myChildren.size()]);
+//todo: [kirillk] optimize
+      final ObjectNode<T>[] children = myChildren.toArray(new ObjectNode[myChildren.size()]);
       for (int i = children.length - 1; i >= 0; i--) {
         children[i].execute(disposeTree, action);
       }
@@ -125,14 +126,16 @@ public final class ObjectNode {
       }
     }
 
-    myTree.getExecutedObjects().remove(this);
+    myTree.getNodesInExecution().remove(this);
+
+    return true;
   }
 
-  public Object getObject() {
+  public T getObject() {
     return myObject;
   }
 
-  public Collection<ObjectNode> getChildren() {
+  public Collection<ObjectNode<T>> getChildren() {
     return myChildren;
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.PopupBorder;
@@ -178,7 +179,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   public void disposeChildren() {
     if (myChild != null) {
       myChild.disposeChildren();
-      myChild.dispose();
+      Disposer.dispose(myChild);
       myChild = null;
     }
   }
@@ -246,7 +247,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   public void cancel() {
     super.cancel();
     disposeChildren();
-    dispose();
+    Disposer.dispose(this);
     getStep().canceled();
   }
 

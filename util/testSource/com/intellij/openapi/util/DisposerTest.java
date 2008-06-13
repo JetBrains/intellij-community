@@ -96,7 +96,12 @@ public class DisposerTest extends TestCase {
     assertDisposed(myFolder1);
     assertDisposed(myFolder2);
 
-    assertEquals(0, Disposer.getTree().getExecutedObjects().size());
+    assertEquals(0, Disposer.getTree().getNodesInExecution().size());
+  }
+
+  public void testDirectCallOfUnregisteredSelfDisposable() throws Exception {
+    SelDisposable selfDisposable = new SelDisposable("root");
+    selfDisposable.dispose();
   }
 
   public void testDisposeAndReplace() throws Exception {
@@ -222,6 +227,8 @@ public class DisposerTest extends TestCase {
     }
 
     public void dispose() {
+      assertFalse(myName, myDisposed);
+
       myDisposed = true;
       myDisposedObjects.add(this);
       myDisposeActions.add("dispose: " + myName);

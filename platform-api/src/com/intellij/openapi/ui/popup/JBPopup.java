@@ -143,4 +143,7 @@ public interface JBPopup extends Disposable {
   boolean isFocused();
 
   boolean isCancelKeyEnabled();
+
+  void addListener(JBPopupListener listener);
+  void removeListener(JBPopupListener listener);
 }

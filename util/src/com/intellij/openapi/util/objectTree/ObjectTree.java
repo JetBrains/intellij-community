@@ -18,44 +18,46 @@ package com.intellij.openapi.util.objectTree;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class ObjectTree {
+public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
 
-  private Set<Object> myRootObjects = new THashSet<Object>();
-  private Map<Object, ObjectNode> myObject2NodeMap = new THashMap<Object, ObjectNode>();
+  private Set<T> myRootObjects = new THashSet<T>();
+  private Map<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>();
 
-  private List<ObjectNode> myExecutedObjects = new ArrayList<ObjectNode>();
+  private List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
+  private List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
 
-  public final Map<Object, ObjectNode> getObject2NodeMap() {
+  public final Map<T, ObjectNode<T>> getObject2NodeMap() {
     return myObject2NodeMap;
   }
 
-  public final List<ObjectNode> getExecutedObjects() {
-    return myExecutedObjects;
+  public final List<ObjectNode<T>> getNodesInExecution() {
+    return myExecutedNodes;
   }
 
-  public final Set getRootObjects() {
+  public final Set<T> getRootObjects() {
     return myRootObjects;
   }
 
-  public final void register(Object parent, Object child) {
+  public final void register(T parent, T child) {
     checkIfValid(child);
 
-    final ObjectNode parentNode = getNodeFor(parent);
-    final ObjectNode childNode = getNodeFor(child);
+    final ObjectNode<T> parentNode = getNodeFor(parent);
+    final ObjectNode<T> childNode = getNodeFor(child);
 
     if (childNode != null && childNode.getParent() != parentNode && childNode.getParent() != null) {
       childNode.getParent().removeChild(childNode);
       parentNode.addChild(childNode);
     }
     else if (myRootObjects.contains(child)) {
-      final ObjectNode parentless = getNodeFor(child);
+      final ObjectNode<T> parentless = getNodeFor(child);
       parentNode.addChild(parentless);
       myRootObjects.remove(child);
     }
@@ -64,7 +66,7 @@ public final class ObjectTree {
     }
   }
 
-  private void checkIfValid(Object child) {
+  private void checkIfValid(T child) {
     ObjectNode childNode = myObject2NodeMap.get(child);
     boolean childIsInTree = childNode != null && childNode.getParent() != null;
     if (!childIsInTree) return;
@@ -78,52 +80,68 @@ public final class ObjectTree {
     }
   }
 
-  private ObjectNode getNodeFor(Object parentObject) {
-    final ObjectNode parentNode = getObject2NodeMap().get(parentObject);
+  private ObjectNode<T> getNodeFor(T parentObject) {
+    final ObjectNode<T> parentNode = getObject2NodeMap().get(parentObject);
 
     if (parentNode != null) return parentNode;
 
-    final ObjectNode parentless = new ObjectNode(this, null, parentObject);
+    final ObjectNode<T> parentless = new ObjectNode<T>(this, null, parentObject);
     myRootObjects.add(parentObject);
     getObject2NodeMap().put(parentObject, parentless);
     return parentless;
   }
 
-  public final void executeAll(Object object, boolean disposeTree, ObjectTreeAction action) {
+  public final boolean executeAll(T object, boolean disposeTree, ObjectTreeAction<T> action, boolean processUnregistered) {
     assert object != null : "Unable execute action for null object";
 
-    final ObjectNode node = getObject2NodeMap().get(object);
-
-    if (node != null) {
-      node.execute(disposeTree, action);
+    ObjectNode<T> node = getObject2NodeMap().get(object);
+    if (node == null) {
+      if (processUnregistered) {
+        executeUnregistered(object, action);
+        return true;
+      } else {
+        return false;
+      }
     }
     else {
-      action.execute(object);
+      return node.execute(disposeTree, action);
     }
   }
 
-  public final void executeChildAndReplace(Object toExecute, Object toReplace, boolean disposeTree, ObjectTreeAction action) {
-    final ObjectNode toExecuteNode = getObject2NodeMap().get(toExecute);
+  private void executeUnregistered(final T object, final ObjectTreeAction<T> action) {
+    if (myExecutedUnregisteredNodes.contains(object)) return;
+
+    myExecutedUnregisteredNodes.add(object);
+    try {
+      action.execute(object);
+    } finally {
+      myExecutedUnregisteredNodes.remove(object);
+    }
+  }
+
+  public final void executeChildAndReplace(T toExecute, T toReplace, boolean disposeTree, ObjectTreeAction action) {
+    final ObjectNode<T> toExecuteNode = getObject2NodeMap().get(toExecute);
     assert toExecuteNode != null : "Object " + toExecute + " wasn't registered or already disposed";
 
-    final ObjectNode parent = toExecuteNode.getParent();
+    final ObjectNode<T> parent = toExecuteNode.getParent();
     assert parent != null : "Object " + toExecute + " is not connected to the tree - doesn't have parent";
 
     toExecuteNode.execute(disposeTree, action);
     register(parent.getObject(), toReplace);
   }
 
-  public final boolean isRegistered(Object object) {
+  public final boolean isRegistered(T object) {
     return getObject2NodeMap().containsKey(object);
   }
 
-  public final Object getParent(Object object) {
-    ObjectNode parent = getObject2NodeMap().get(object).getParent();
+  @Nullable
+  public final T getParent(T object) {
+    ObjectNode<T> parent = getObject2NodeMap().get(object).getParent();
     if (parent == null) return null;
     return parent.getObject();
   }
 
-  public boolean isRoot(Object object) {
+  public boolean isRoot(T object) {
     return myRootObjects.contains(object);
   }
 }

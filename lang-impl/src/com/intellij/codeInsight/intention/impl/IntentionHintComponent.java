@@ -268,9 +268,16 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     
     private void recreateMyPopup() {
       if (myPopup != null) {
-        myPopup.dispose();
+        Disposer.dispose(myPopup);
       }
       myPopup = JBPopupFactory.getInstance().createListPopup(this);
+      myPopup.addListener(new JBPopupListener.Adapter() {
+        @Override
+        public void onClosed(final JBPopup popup) {
+          myPopupShown = false;
+        }
+      });
+      Disposer.register(IntentionHintComponent.this, myPopup);
     }
 
     public int getDefaultOptionIndex() { return 0; }
@@ -391,7 +398,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   public void dispose() {
     myDisposed = true;
-    closePopup();
     myComponentHint.hide();
     super.hide();
   }
@@ -507,7 +513,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myComponentHint = new MyComponentHint(this);
     IntentionListStep step = new IntentionListStep(intentions, errorFixes, inspectionFixes);
     step.recreateMyPopup();
-    Disposer.register(this, myPopup);
   }
 
   public void hide() {
