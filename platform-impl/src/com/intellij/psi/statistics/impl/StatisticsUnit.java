@@ -1,7 +1,7 @@
 package com.intellij.psi.statistics.impl;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 
 import java.io.*;

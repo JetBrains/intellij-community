@@ -4,8 +4,8 @@
  */
 package com.intellij.psi.statistics;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter

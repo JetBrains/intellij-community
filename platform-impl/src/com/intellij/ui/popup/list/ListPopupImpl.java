@@ -7,9 +7,12 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.PopupIcons;
+import com.intellij.ui.popup.WizardPopup;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -85,6 +88,32 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
         return _handleSelect(handleFinalChoices);
       } else if (isVisible() && hasSingleSelectableItemWithSubmenu()) {
         return _handleSelect(handleFinalChoices);
+      }
+    }
+
+    return false;
+  }
+
+  private boolean autoSelectUsingStatistics() {
+    final String filter = getSpeedSearch().getFilter();
+    if (!StringUtil.isEmpty(filter)) {
+      int maxUseCount = -1;
+      int mostUsedValue = -1;
+      int elementsCount = myListModel.getSize();
+      for (int i = 0; i < elementsCount; i++) {
+        Object value = myListModel.getElementAt(i);
+        final String text = getListStep().getTextFor(value);
+        final int count =
+            StatisticsManager.getInstance().getUseCount(new StatisticsInfo("#list_popup:" + myStep.getTitle() + "#" + filter, text));
+        if (count > maxUseCount) {
+          maxUseCount = count;
+          mostUsedValue = i;
+        }
+      }
+
+      if (mostUsedValue > 0) {
+        ListScrollingUtil.selectItem(myList, mostUsedValue);
+        return true;
       }
     }
 
@@ -225,9 +254,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       return false;
     }
 
-    if (!getListStep().isSelectable(myList.getSelectedValue())) return false;
+    final Object selectedValue = myList.getSelectedValue();
+    if (!getListStep().isSelectable(selectedValue)) return false;
 
-    if (!getListStep().hasSubstep(myList.getSelectedValue()) && !handleFinalChoices) return false;
+    if (!getListStep().hasSubstep(selectedValue) && !handleFinalChoices) return false;
 
     disposeChildren();
 
@@ -237,8 +267,17 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       return true;
     }
 
+    valueSelected(selectedValue);
 
-    return handleNextStep(myStep.onChosen(myList.getSelectedValue(), handleFinalChoices), myList.getSelectedValue());
+    return handleNextStep(myStep.onChosen(selectedValue, handleFinalChoices), selectedValue);
+  }
+
+  private void valueSelected(final Object value) {
+    final String filter = getSpeedSearch().getFilter();
+    if (!StringUtil.isEmpty(filter)) {
+      final String text = getListStep().getTextFor(value);
+      StatisticsManager.getInstance().incUseCount(new StatisticsInfo("#list_popup:" + getListStep().getTitle() + "#" + filter, text));
+    }
   }
 
   private boolean handleNextStep(final PopupStep nextStep, Object parentValue) {
@@ -330,13 +369,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   protected void onSpeedSearchPatternChanged() {
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
-      int fullMatchIndex = myListModel.getClosestMatchIndex();
-      if (fullMatchIndex != -1) {
-        myList.setSelectedIndex(fullMatchIndex);
-      }
+      if (!autoSelectUsingStatistics()) {
+        int fullMatchIndex = myListModel.getClosestMatchIndex();
+        if (fullMatchIndex != -1) {
+          myList.setSelectedIndex(fullMatchIndex);
+        }
 
-      if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
-        myList.setSelectedIndex(0);
+        if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
+          myList.setSelectedIndex(0);
+        }
       }
     }
   }

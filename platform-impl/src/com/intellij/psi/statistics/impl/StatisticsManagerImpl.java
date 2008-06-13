@@ -1,11 +1,10 @@
-
 package com.intellij.psi.statistics.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.reference.SoftReference;
@@ -119,7 +118,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
     }
     catch(IOException e){
       Messages.showMessageDialog(
-        PsiBundle.message("error.saving.statistics", e.getLocalizedMessage()),
+        IdeBundle.message("error.saving.statistics", e.getLocalizedMessage()),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
@@ -135,7 +134,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
     if (!homeFile.exists()){
       if (!homeFile.mkdirs()){
         Messages.showMessageDialog(
-          PsiBundle.message("error.saving.statistic.failed.to.create.folder", STORE_PATH),
+          IdeBundle.message("error.saving.statistic.failed.to.create.folder", STORE_PATH),
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
