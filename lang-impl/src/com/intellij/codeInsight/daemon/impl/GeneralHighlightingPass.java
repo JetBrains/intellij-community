@@ -139,10 +139,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           elements.add(psiRoot);
         }
       }
-      result.addAll(collectHighlights(elements, highlightVisitors, progress));
-      result.addAll(highlightTodos());
+      if (elements != null) {
+        result.addAll(collectHighlights(elements, highlightVisitors, progress));
+        addInjectedPsiHighlights(elements, Extensions.getExtensions(DefaultHighlightVisitor.FILTER_EP_NAME, myProject));
+      }
 
-      addInjectedPsiHighlights(elements, Extensions.getExtensions(DefaultHighlightVisitor.FILTER_EP_NAME, myProject));
+      result.addAll(highlightTodos());
 
       if (myUpdateAll) {
         fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
