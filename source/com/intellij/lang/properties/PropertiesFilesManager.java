@@ -1,15 +1,19 @@
 package com.intellij.lang.properties;
 
+import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +38,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(PropertiesFilesManager.class);
   }
 
-  public PropertiesFilesManager(VirtualFileManager virtualFileManager,FileTypeManager fileTypeManager) {
+  public PropertiesFilesManager(VirtualFileManager virtualFileManager, FileTypeManager fileTypeManager, MessageBus messageBus) {
     myVirtualFileManager = virtualFileManager;
     myFileTypeManager = fileTypeManager;
     myVirtualFileListener = new VirtualFileAdapter() {
@@ -61,6 +65,13 @@ public class PropertiesFilesManager implements ApplicationComponent {
         fileChanged(file, null);
       }
     };
+
+    messageBus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
+      public void fileContentLoaded(VirtualFile file, Document document) {
+        addNewFile(file);
+      }
+    });
     EncodingManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(final PropertyChangeEvent evt) {
         if (EncodingManager.PROP_NATIVE2ASCII_SWITCH.equals(evt.getPropertyName()) ||
@@ -86,8 +97,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
   }
 
   private void addNewFile(final VirtualFileEvent event) {
-    VirtualFile file = event.getFile();
-    addNewFile(file);
+    addNewFile(event.getFile());
   }
 
   // returns true if file is of properties file type

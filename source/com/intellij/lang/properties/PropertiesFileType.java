@@ -1,10 +1,9 @@
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,12 +43,6 @@ public class PropertiesFileType extends LanguageFileType {
   public String getCharset(@NotNull VirtualFile file) {
     Charset charset = EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(file);
     String defaultCharsetName = charset == null ? CharsetToolkit.getDefaultSystemCharset().name() : charset.name();
-    if (EncodingManager.getInstance().isNative2AsciiForPropertiesFiles(file)) {
-      return Native2AsciiCharset.makeNative2AsciiEncodingName(defaultCharsetName);
-    }
-    else {
-      return defaultCharsetName;
-      //return "ISO-8859-1";
-    }
+    return defaultCharsetName;
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.module.Module;
@@ -19,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -61,7 +63,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
       public void fileTypesChanged(FileTypeEvent event) {
         StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable(){
           public void run() {
-             refreshAllPropFilesInProject();
+             refreshAllKnownPropertiesFiles();
           }
         });
       }
@@ -110,21 +112,29 @@ public class PropertiesReferenceManager implements ProjectComponent {
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        refreshAllPropFilesInProject();
+        refreshAllKnownPropertiesFiles();
       }
     });
   }
 
-  private void refreshAllPropFilesInProject() {
-    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
-      public boolean processFile(VirtualFile fileOrDir) {
+  private void refreshAllKnownPropertiesFiles() {
+    final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
+      public boolean process(VirtualFile fileOrDir) {
         boolean isPropertiesFile = myPropertiesFilesManager.addNewFile(fileOrDir);
         if (isPropertiesFile) {
-            myChangedFiles.add(fileOrDir);
+          myChangedFiles.add(fileOrDir);
         }
         return true;
       }
+    };
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
+      public boolean processFile(VirtualFile fileOrDir) {
+        return processor.process(fileOrDir);
+      }
     });
+    for (VirtualFile virtualFile : EditorHistoryManager.getInstance(myProject).getFiles()) {
+      processor.process(virtualFile);
+    }
   }
 
   public void projectClosed() {

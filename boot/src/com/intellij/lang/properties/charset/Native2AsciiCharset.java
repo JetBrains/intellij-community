@@ -56,4 +56,7 @@ public class Native2AsciiCharset extends Charset {
     }
     return null;
   }
+  public static Charset wrap(Charset baseCharset) {
+    return new Native2AsciiCharset(NAME_PREFIX + baseCharset.name());
+  }
 }
