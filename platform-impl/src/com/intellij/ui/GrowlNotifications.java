@@ -21,8 +21,12 @@ class GrowlNotifications {
   private Set<String> myNotifications = new TreeSet<String>();
 
   public GrowlNotifications() {
+    this(ApplicationNamesInfo.getInstance().getFullProductName());
+  }
+
+  GrowlNotifications(String fullProductName) {
     myGrowl = new Growl(
-      ApplicationNamesInfo.getInstance().getFullProductName(),
+      fullProductName,
       NSApplication.sharedApplication().applicationIconImage().TIFFRepresentation(),
         new NSArray(), new NSArray(), false);
     register();

@@ -22,22 +22,32 @@ import java.util.Set;
 )
 public class SystemNotificationsImpl implements SystemNotifications, PersistentStateComponent<SystemNotificationsImpl.State> {
   private State myState = new State();
-  private boolean myCannotInitializeNotifications = false;
+  private boolean myGrowlDisabled = false;
 
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (myCannotInitializeNotifications || !SystemInfo.isMac) return;
+    if (!isGrowlEnabled()) return;
 
     final GrowlNotifications nofications;
     try {
       nofications = GrowlNotifications.getNofications();
     }
     catch (Throwable e) {
-      myCannotInitializeNotifications = true;
+      myGrowlDisabled = true;
       return;
     }
 
     myState.NOTIFICATIONS.add(notificationName);
     nofications.notify(myState.NOTIFICATIONS, notificationName, title, text);
+  }
+
+  private boolean isGrowlEnabled() {
+    if (myGrowlDisabled || !SystemInfo.isMac) return false;
+
+    if ("true".equalsIgnoreCase(System.getProperty("growl.disable")) || System.getProperty("java.version").startsWith("1.6")) {
+      myGrowlDisabled = true;
+    }
+
+    return !myGrowlDisabled;
   }
 
   public State getState() {
