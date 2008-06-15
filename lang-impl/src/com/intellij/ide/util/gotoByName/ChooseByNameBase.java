@@ -631,7 +631,7 @@ public abstract class ChooseByNameBase{
   }
 
   private int detectBestStatisticalPosition() {
-    int best = -1;
+    int best = 0;
     int bestPosition = 0;
     final int count = myListModel.getSize();
 
