@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +29,8 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
     return element.getName();
   }
 
-  protected String getContainerText(PsiElement element, String name) {
-    PsiFile file = (PsiFile)element;
-    final PsiDirectory psiDirectory = file.getContainingDirectory();
+  protected String getContainerText(PsiFile element, String name) {
+    final PsiDirectory psiDirectory = element.getContainingDirectory();
     LOG.assertTrue(psiDirectory != null);
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     final String relativePath = getRelativePath(virtualFile, element.getProject());

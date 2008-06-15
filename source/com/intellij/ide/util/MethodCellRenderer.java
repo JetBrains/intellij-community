@@ -36,8 +36,8 @@ public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
     }
   }
 
-  public String getContainerText(final PsiElement element, final String name) {
-    return myClassListCellRenderer.getContainerText(element, name);
+  public String getContainerText(final PsiMethod element, final String name) {
+    return myClassListCellRenderer.getContainerTextStatic(element);
   }
 
   public int getIconFlags() {

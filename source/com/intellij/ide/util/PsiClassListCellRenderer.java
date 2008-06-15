@@ -11,7 +11,11 @@ public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClas
     return ClassPresentationUtil.getNameForClass(element, false);
   }
 
-  protected String getContainerText(PsiElement element, final String name) {
+  protected String getContainerText(PsiClass element, final String name) {
+    return getContainerTextStatic(element);
+  }
+
+  protected String getContainerTextStatic(final PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiJavaFile) {
       PsiJavaFile javaFile = (PsiJavaFile)file;

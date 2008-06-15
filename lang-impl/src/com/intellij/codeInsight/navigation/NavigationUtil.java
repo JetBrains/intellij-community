@@ -36,7 +36,9 @@ public final class NavigationUtil {
       }
     });
   }
-  public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer renderer, final String title, final PsiElementProcessor<PsiElement> processor) {
+
+  public static <T extends PsiElement> JBPopup getPsiElementPopup(final T[] elements, final PsiElementListCellRenderer<T> renderer,
+                                                                  final String title, final PsiElementProcessor<T> processor) {
     final JList list = new JList(elements);
     list.setCellRenderer(renderer);
     renderer.installSpeedSearch(list);
@@ -46,7 +48,7 @@ public final class NavigationUtil {
         int[] ids = list.getSelectedIndices();
         if (ids == null || ids.length == 0) return;
         for (Object element : list.getSelectedValues()) {
-          processor.execute((PsiElement)element);
+          processor.execute((T)element);
         }
       }
     };

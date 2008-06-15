@@ -44,7 +44,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       boolean hasFocus
       ) {
       if (value instanceof PsiElement) {
-        PsiElement element = (PsiElement)value;
+        T element = (T)value;
         String name = getElementText((T)element);
         Color color = list.getForeground();
         PsiFile psiFile = element.getContainingFile();
@@ -135,7 +135,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   public abstract String getElementText(T element);
 
   @Nullable
-  protected abstract String getContainerText(PsiElement element, final String name);
+  protected abstract String getContainerText(T element, final String name);
 
   protected abstract int getIconFlags();
 
