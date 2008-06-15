@@ -448,11 +448,17 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       public void treeCollapsed(TreeExpansionEvent event) {
-        ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().collapseNode(getExpandedString(event.getPath()));
+        InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
+        String nodeTitle = getExpandedString(event.getPath());
+        ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().expandNode(nodeTitle);
+        selected.getExpandedNodes().collapseNode(nodeTitle);
       }
 
       public void treeExpanded(TreeExpansionEvent event) {
-        ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().expandNode(getExpandedString(event.getPath()));
+        InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
+        String nodeTitle = getExpandedString(event.getPath());
+        ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().expandNode(nodeTitle);
+        selected.getExpandedNodes().expandNode(nodeTitle);
       }
     });
 
@@ -819,28 +825,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void disposeUI() {
-    if (mySelectedProfile != null && getSavedProfile() != null) {
-      ModifiableModel profile = mySelectedProfile.getParentProfile().getModifiableModel();
-      ((InspectionProfileImpl)profile).getExpandedNodes().saveVisibleState(myTree);
-      //TODO lesya
-      InspectionProfileManager.getInstance().fireProfileChanged(profile);
-      /*
-      try {
-        profile.save();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      */
-      profile.getProfileManager().updateProfile(profile);
-    }
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
     mySelectedProfile = null;
-  }
-
-  private InspectionProfile getSavedProfile() {
-    return (InspectionProfile)mySelectedProfile.getProfileManager().getProfile(mySelectedProfile.getName(), false);
   }
 
   private JPanel createInspectionProfileSettingsPanel() {

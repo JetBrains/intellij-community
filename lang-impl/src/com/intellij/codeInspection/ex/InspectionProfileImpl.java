@@ -579,6 +579,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   }
 
+  public VisibleTreeState getVisibleTreeState() {
+    return myVisibleTreeState;
+  }
+
+  public void setVisibleTreeState(final VisibleTreeState state) {
+    myVisibleTreeState = state;
+  }
+
   private static class ToolState {
     private final HighlightDisplayLevel myLevel;
     private boolean myEnabled;
