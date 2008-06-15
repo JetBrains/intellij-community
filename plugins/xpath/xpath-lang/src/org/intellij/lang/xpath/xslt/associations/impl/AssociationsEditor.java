@@ -23,25 +23,19 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.Tree;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -52,11 +46,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 class AssociationsEditor {
     private static final String KEY = "#XsltSupport.AssociationsEditor";
@@ -380,9 +371,9 @@ class AssociationsEditor {
             return file.getName();
         }
 
-        protected String getContainerText(PsiElement psiElement, String string) {
+        protected String getContainerText(PsiFile psiElement, String string) {
             //noinspection ConstantConditions
-            return "(" + ((PsiFile)psiElement).getVirtualFile().getParent().getPresentableUrl() + ")";
+            return "(" + psiElement.getVirtualFile().getParent().getPresentableUrl() + ")";
         }
 
         protected int getIconFlags() {
