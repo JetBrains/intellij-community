@@ -61,7 +61,11 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
 
   private static ASTNode transformNewChameleon(final ASTNode oldNode, ASTNode newNode) {
     if (newNode instanceof ChameleonElement) {
-      final FileElement dummyRoot = new DummyHolder(oldNode.getPsi().getManager(), null, SharedImplUtil.findCharTableByTree(oldNode)).getTreeElement();
+      final FileElement dummyRoot = new DummyHolder(
+          oldNode.getPsi().getManager(),
+          oldNode.getPsi().getContainingFile(), 
+          SharedImplUtil.findCharTableByTree(oldNode)
+      ).getTreeElement();
       TreeUtil.addChildren(dummyRoot, (TreeElement)newNode);
       newNode = ChameleonTransforming.transform((ChameleonElement)newNode);
     }
