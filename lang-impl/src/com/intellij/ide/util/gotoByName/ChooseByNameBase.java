@@ -638,7 +638,7 @@ public abstract class ChooseByNameBase{
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
       final Object modelElement = myListModel.getElementAt(i);
-      String text = EXTRA_ELEM.equals(modelElement) ? null : myModel.getElementName(modelElement);
+      String text = EXTRA_ELEM.equals(modelElement) ? null : myModel.getFullName(modelElement);
       if (text != null) {
         int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
         if (stats > best) {
