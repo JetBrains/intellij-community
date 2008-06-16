@@ -36,11 +36,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.NotNullFunction;
@@ -991,8 +992,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     SVNRepository sourceRepository = myVCS.createRepository(sourceURL.toString());
     sourceRepository.setCanceller(new SvnProgressCanceller());
     SvnDiffEditor diffEditor;
+    final long rev = sourceRepository.getLatestRevision();
     try {
-      final long rev = sourceRepository.getLatestRevision();
       // generate Map of path->Change
       diffEditor = new SvnDiffEditor(sourceRepository, myVCS.createRepository(targetURL.toString()), -1, false);
       final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
@@ -1008,10 +1009,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     final String sourceTitle = SVNPathUtil.tail(sourceURL.toString());
     final String targetTitle = SVNPathUtil.tail(targetURL.toString());
-    showDiffEditorResults(diffEditor.getChangesMap(), sourceTitle, targetTitle);
+    showDiffEditorResults(diffEditor.getChangesMap(), sourceTitle, targetTitle, sourceURL, targetURL, rev);
   }
 
-  public void showDiffEditorResults(final Map<String, Change> changes, String sourceTitle, String targetTitle) {
+  private void showDiffEditorResults(final Map<String, Change> changes, String sourceTitle, String targetTitle,
+                                     final SVNURL sourceUrl, final SVNURL targetUrl, final long revision) {
     if (changes.isEmpty()) {
       // display no changes dialog.
       final String text = SvnBundle.message("repository.browser.compare.no.difference.message", sourceTitle, targetTitle);
@@ -1023,11 +1025,34 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
     final Collection<Change> changesList = changes.values();
+    /*final Collection<Change> changesListConverted = new ArrayList<Change>(changesList.size());
+    for (Change change : changesList) {
+      final FilePath path = ChangesUtil.getFilePath(change);
+      final Change newChange = new Change(
+          new UrlContentRevision(change.getBeforeRevision(),
+                                 FilePathImpl.createNonLocal(SVNPathUtil.append(sourceUrl.toString(), path.getName()), path.isDirectory()), revision),
+          new UrlContentRevision(change.getAfterRevision(),
+                                 FilePathImpl.createNonLocal(SVNPathUtil.append(targetUrl.toString(), path.getName()), path.isDirectory()), revision));
+      changesListConverted.add(newChange);
+    }*/
 
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myRepositoryBrowser, changesList, title);
+        final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changesList, true);
+        dlg.setTitle(title);
+        dlg.setConvertor(new NotNullFunction<Change, Change>() {
+          @NotNull
+          public Change fun(final Change change) {
+            final FilePath path = ChangesUtil.getFilePath(change);
+
+            return new Change(new UrlContentRevision(change.getBeforeRevision(),
+                                 FilePathImpl.createNonLocal(SVNPathUtil.append(sourceUrl.toString(), path.getPath()), path.isDirectory()), revision),
+                              new UrlContentRevision(change.getAfterRevision(),
+                                 FilePathImpl.createNonLocal(SVNPathUtil.append(targetUrl.toString(), path.getPath()), path.isDirectory()), revision));
+          }
+        });
+        dlg.show();
       }
     });
   }
@@ -1049,5 +1074,31 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   public void setDefaultExpander(final NotNullFunction<RepositoryBrowserComponent, Expander> expanderFactory) {
     myRepositoryBrowser.setLazyLoadingExpander(expanderFactory);
+  }
+
+  private static class UrlContentRevision implements ContentRevision {
+    private final ContentRevision myContentRevision;
+    private final FilePath myPath;
+    private final SvnRevisionNumber myNumber;
+
+    private UrlContentRevision(final ContentRevision contentRevision, final FilePath path, final long revision) {
+      myContentRevision = contentRevision;
+      myPath = path;
+      myNumber = new SvnRevisionNumber(SVNRevision.create(revision));
+    }
+
+    public String getContent() throws VcsException {
+      return myContentRevision.getContent();
+    }
+
+    @NotNull
+    public FilePath getFile() {
+      return myPath;
+    }
+
+    @NotNull
+    public VcsRevisionNumber getRevisionNumber() {
+      return myNumber;
+    }
   }
 }
