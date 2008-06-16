@@ -22,6 +22,8 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   protected abstract boolean canSelect(PsiFileSystemItem file);
 
   public final boolean canSelect(SelectInContext context) {
+    if (myProject.isDisposed()) return false;
+
     VirtualFile virtualFile = context.getVirtualFile();
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     final PsiFileSystemItem psiFile;
