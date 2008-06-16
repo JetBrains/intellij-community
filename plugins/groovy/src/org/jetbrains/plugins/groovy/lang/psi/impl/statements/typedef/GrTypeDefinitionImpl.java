@@ -226,13 +226,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     throw new IncorrectOperationException("Invalid type definition");
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
       if (!ResolveUtil.processElement(processor, typeParameter)) return false;
     }
 
     NameHint nameHint = processor.getHint(NameHint.class);
-    String name = nameHint == null ? null : nameHint.getName();
+    //todo [DIANA] look more carefully
+    String name = nameHint == null ? null : nameHint.getName(state);
     ClassHint classHint = processor.getHint(ClassHint.class);
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
       Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(this);
@@ -264,7 +265,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)))
+                //todo [DIANA] look more carefully
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY)))
               return false;
           }
         }
@@ -274,7 +276,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)))
+                //todo [DIANA] look more carefully
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY)))
               return false;
           }
         }

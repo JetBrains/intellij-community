@@ -71,7 +71,8 @@ public class ResolveUtil {
 
   public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement) {
     NameHint nameHint = processor.getHint(NameHint.class);
-    String name = nameHint == null ? null : nameHint.getName();
+    //todo [DIANA] look more carefully
+    String name = nameHint == null ? null : nameHint.getName(ResolveState.initial());
     if (name == null || name.equals(namedElement.getName())) {
       return processor.execute(namedElement, ResolveState.initial());
     }

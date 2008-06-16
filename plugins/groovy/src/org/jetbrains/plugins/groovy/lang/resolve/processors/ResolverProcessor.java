@@ -145,4 +145,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
     return CLASS;
   }
+
+  public String getName(ResolveState state) {
+    //todo[DIANA] implement me!
+    return myName;
+  }
 }

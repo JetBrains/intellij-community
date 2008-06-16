@@ -74,7 +74,8 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
         String name = getImportedName();
         if (name != null) {
           NameHint nameHint = processor.getHint(NameHint.class);
-          if (nameHint == null || name.equals(nameHint.getName())) {
+          //todo [DIANA] look more carefully
+          if (nameHint == null || name.equals(nameHint.getName(ResolveState.initial()))) {
             GrCodeReferenceElement ref = getImportReference();
             if (ref != null) {
               String qName = PsiUtil.getQualifiedReferenceText(ref);
