@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -126,8 +127,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
         treeTable.getTree().setSelectionPath(path);
         treeTable.getTree().fireTreeExpanded(path);
 
-// todo [DIANA]  implement me!
-//         ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);
+        ToolWindowManager.getInstance(myProject).getFocusManager().requestFocus(treeTable, true);
         treeTable.revalidate();
         treeTable.repaint();
 

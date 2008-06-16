@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -287,8 +288,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
         treeTable.getTree().setSelectionPath(path);
         treeTable.getTree().fireTreeExpanded(path);
 
-        //todo[DIANA] sind 
-        //ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);
+        ToolWindowManager.getInstance(myProject).getFocusManager().requestFocus(treeTable, true);
         treeTable.revalidate();
         treeTable.repaint();
       }
