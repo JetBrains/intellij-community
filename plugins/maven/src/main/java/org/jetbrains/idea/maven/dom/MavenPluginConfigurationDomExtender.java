@@ -114,16 +114,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
   }
 
   private void registerPluginParameter(DomExtensionsRegistrar r, Parameter each) {
-    DomExtension e;
-    //if (List.class.getName().equals(each.getType().getStringValue())
-    //    || Set.class.getName().equals(each.getType().getStringValue())) {
-    //  e = r.registerCollectionChildrenExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
-    //}
-    //else {
-      e = r.registerFixedNumberChildExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
-
-    //}
-
+    DomExtension e = r.registerFixedNumberChildExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
     e.putUserData(DomExtension.KEY_DECLARATION, each);
     each.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, each);
   }
