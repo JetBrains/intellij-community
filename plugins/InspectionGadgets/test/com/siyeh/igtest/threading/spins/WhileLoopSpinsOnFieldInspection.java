@@ -1,4 +1,4 @@
-package com.siyeh.igtest.threading;
+package com.siyeh.igtest.threading.spins;
 
 public class WhileLoopSpinsOnFieldInspection
 {
