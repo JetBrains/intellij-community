@@ -15,10 +15,10 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -40,11 +40,11 @@ public class CvsDiffProvider implements DiffProvider{
     return new CvsRevisionNumber(entry.getRevision());
   }
 
-  public Pair<Boolean, VcsRevisionNumber> getLastRevision(VirtualFile virtualFile) {
+  public ItemLatestState getLastRevision(VirtualFile virtualFile) {
     final String stickyData = CvsUtil.getStickyDateForDirectory(virtualFile.getParent());
 
     if (stickyData != null) {
-      return new Pair<Boolean, VcsRevisionNumber>(Boolean.TRUE, new CvsRevisionNumber(stickyData));
+      return new ItemLatestState(new CvsRevisionNumber(stickyData), true);
     } else {
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
       final StatusOperation statusOperation = new StatusOperation(Collections.singletonList(new File(virtualFile.getPath())));
@@ -61,11 +61,11 @@ public class CvsDiffProvider implements DiffProvider{
       });
 
       if (Boolean.TRUE.equals(success.get())) {
-        return new Pair<Boolean, VcsRevisionNumber>((statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())),
-                                                    new CvsRevisionNumber(statusOperation.getRepositoryRevision()));
+        return new ItemLatestState(new CvsRevisionNumber(statusOperation.getRepositoryRevision()),
+                                   (statusOperation.getStatus() != null) && (! FileStatus.REMOVED.equals(statusOperation.getStatus())));
       }
 
-      return new Pair<Boolean, VcsRevisionNumber>(Boolean.TRUE, new CvsRevisionNumber("HEAD"));
+      return new ItemLatestState(new CvsRevisionNumber("HEAD"), true);
     }
   }
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -14,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -151,9 +151,12 @@ public abstract class DiffActionExecutor {
     }
 
     protected VcsRevisionNumber getRevisionNumber() {
-      final Pair<Boolean,VcsRevisionNumber> lastRevision = myDiffProvider.getLastRevision(mySelectedFile);
-      myFileStillExists = lastRevision.first.booleanValue();
-      return lastRevision.second;
+      final ItemLatestState itemState = myDiffProvider.getLastRevision(mySelectedFile);
+      if (itemState == null) {
+        return null;
+      }
+      myFileStillExists = itemState.isItemExists();
+      return itemState.getNumber();
     }
 
     @Override
