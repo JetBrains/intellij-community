@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.StringEscapesTokenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -321,6 +322,10 @@ class RegExpParser implements PsiParser {
                 checkMatches(builder, RegExpTT.GROUP_END, "Unclosed options group");
                 marker.done(RegExpElementTypes.SET_OPTIONS);
             }
+        } else if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
+            builder.error("Illegal/unsupported escape sequence");
+            builder.advanceLexer();
+            marker.done(RegExpElementTypes.CHAR);
         } else if (RegExpTT.CHARACTERS.contains(type)) {
             builder.advanceLexer();
             marker.done(RegExpElementTypes.CHAR);

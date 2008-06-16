@@ -88,6 +88,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
                 case UNICODE:
                     myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
                     break;
+                case INVALID:
+                    // produces a parser error. already handled by IDEA and possibly suppressed by IntelliLang
+                    break;
             }
         } else {
             final String text = ch.getUnescapedText();
@@ -158,7 +161,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
             if (max < min) {
                 myHolder.createErrorAnnotation(quantifier, "Illegal repetition range");
             } else if (max == min) {
-                if (max == 1) { // TODO: is this safe when relucant or possesive modifier is present?
+                if (max == 1) { // TODO: is this safe when reluctant or possesive modifier is present?
                     final Annotation a = myHolder.createInformationAnnotation(quantifier, "Single repetition");
                     registerFix(a, new SimplifyQuantifierAction(quantifier, null));
                 } else {

@@ -17,6 +17,7 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,8 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.HEX;
         } else if (UNICODE_CHARS.contains(t)) {
             return Type.UNICODE;
+        } else if (t == TokenType.ERROR_ELEMENT) {
+            return Type.INVALID;
         } else {
             return Type.CHAR;
         }

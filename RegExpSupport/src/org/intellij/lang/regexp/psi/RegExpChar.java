@@ -29,7 +29,7 @@ public interface RegExpChar extends RegExpAtom, RegExpClassElement, RegExpCharRa
      * a unicode escape character ("\u0061")
      */
     enum Type {
-        CHAR, HEX, OCT, UNICODE
+        CHAR, HEX, OCT, UNICODE, INVALID
     }
 
     /**
