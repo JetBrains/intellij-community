@@ -28,6 +28,7 @@ import java.util.Collection;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
+  private InspectionProfile myExternalProfile = null;
 
   public CodeInspectionAction() {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
@@ -37,6 +38,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManager.getInstance(project));
     final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
+    inspectionContext.setExternalProfile(myExternalProfile);
     inspectionContext.setCurrentScope(scope);
     inspectionContext.doInspections(scope, inspectionManagerEx);
     myGlobalInspectionContext = null;
@@ -95,11 +97,11 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     profiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
-        final boolean canExecute = profile != null && profile.isExecutable();
+        myExternalProfile = (InspectionProfile)profiles.getSelectedItem();
+        final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable();
         dialog.setOKActionEnabled(canExecute);
         if (canExecute) {
-          manager.setProfile(profile.getName());
+          manager.setProfile(myExternalProfile.getName());
         }
       }
     });
