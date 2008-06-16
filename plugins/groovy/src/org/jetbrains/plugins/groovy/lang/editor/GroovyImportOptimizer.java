@@ -127,7 +127,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       // Getting aliased imports
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
-      ArrayList<GrImportStatement> aliased  = new ArrayList<GrImportStatement>();
+      ArrayList<GrImportStatement> aliased = new ArrayList<GrImportStatement>();
       for (GrImportStatement oldImport : oldImports) {
         if (oldImport.isAliasedImport() && usedImports.contains(oldImport)) {
           aliased.add(factory.createImportStatementFromText(oldImport.getText()));
@@ -135,7 +135,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       }
       for (GrImportStatement importStatement : oldImports) {
         try {
-            myFile.removeImport(importStatement);
+          myFile.removeImport(importStatement);
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
@@ -153,7 +153,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       } catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      
+
     }
 
     private GrImportStatement[] prepare(Set<String> importedClasses, Set<String> staticallyImportedMembers) {
@@ -185,7 +185,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         public boolean execute(String s, int i) {
           if (i >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND) {
             result.add(factory.createImportStatementFromText(s, false, true, null));
-            final PsiPackage aPackage = manager.findPackage(s);
+            final PsiPackage aPackage = JavaPsiFacade.getInstance(myFile.getProject()).findPackage(s);
             if (aPackage != null) {
               for (PsiClass clazz : aPackage.getClasses()) {
                 onDemandImportedSimpleClassNames.add(clazz.getName());

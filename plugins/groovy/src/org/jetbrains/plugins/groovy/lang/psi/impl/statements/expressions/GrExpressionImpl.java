@@ -6,6 +6,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,6 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
   }
 
   public PsiType getTypeByFQName(String fqName) {
-    return getManager().getElementFactory().createTypeByFQClassName(fqName, getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(fqName, getResolveScope());
   }
 }

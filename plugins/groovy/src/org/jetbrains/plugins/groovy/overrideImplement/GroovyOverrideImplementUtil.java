@@ -4,7 +4,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,7 +81,7 @@ public class GroovyOverrideImplementUtil {
       final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
 //      assert isAbstract == isImplement;
-      String templName = isAbstract ? FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
+      String templName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
 
       final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
       final GrMethod result = createOverrideImplementMethodSignature(project, method, substitutor, aClass);
@@ -269,7 +269,7 @@ public class GroovyOverrideImplementUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
-    FileTemplateUtil.setClassAndMethodNameProperties(properties, method.getContainingClass(), resultMethod);
+    JavaTemplateUtil.setClassAndMethodNameProperties(properties, method.getContainingClass(), resultMethod);
 
     try {
       String bodyText = template.getText(properties);

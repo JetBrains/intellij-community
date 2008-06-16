@@ -18,7 +18,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.light.LightElement;
@@ -34,8 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -58,7 +57,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
   private static final String RUN_METHOD_TEXT = "public java.lang.Object run() {return null;}";
 
   public GroovyScriptClass(GroovyFile file) {
-    super(file.getManager());
+    super(file.getManager(), file.getLanguage());
     myFile = file;
     myMainMethod = new GroovyScriptMethod(this, MAIN_METHOD_TEXT);
     myRunMethod = new GroovyScriptMethod(this, RUN_METHOD_TEXT);
@@ -82,7 +81,9 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitClass(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor) visitor).visitClass(this);
+    }
   }
 
   public PsiElement copy() {
@@ -142,7 +143,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
   }
 
   public PsiClass getSuperClass() {
-    return myManager.findClass(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).findClass(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope());
   }
 
   public PsiClass[] getInterfaces() {
@@ -156,7 +157,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[]{getManager().getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope())};
+    return new PsiClassType[]{JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope())};
   }
 
   public PsiClass getContainingClass() {
@@ -283,10 +284,6 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
-  public PomMemberOwner getPom() {
-    return null;
-  }
-
   public String getName() {
     return myName;
   }
@@ -321,19 +318,19 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     return false;
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (!(lastParent instanceof GroovyPsiElement)) {
       for (PsiMethod method : getMethods()) {
         if (!ResolveUtil.processElement(processor, method)) return false;
       }
 
       for (GrVariableDeclaration variableDeclaration : myFile.getTopLevelVariableDeclarations()) {
-        if (!variableDeclaration.processDeclarations(processor, substitutor, lastParent, place)) return false;
+        if (!variableDeclaration.processDeclarations(processor, state, lastParent, place)) return false;
       }
     }
 
     PsiClass scriptClass = getSuperClass();
-    return scriptClass == null || scriptClass.processDeclarations(processor, substitutor, lastParent, place);
+    return scriptClass == null || scriptClass.processDeclarations(processor, state, lastParent, place);
 
   }
 

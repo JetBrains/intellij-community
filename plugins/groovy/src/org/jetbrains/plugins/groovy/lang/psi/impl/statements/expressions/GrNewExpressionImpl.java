@@ -26,12 +26,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayD
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -88,10 +92,11 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
         final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
         PsiClass clazz = (PsiClass) element;
         String className = clazz.getName();
-        PsiType thisType = getManager().getElementFactory().createType(clazz, classResult.getSubstitutor());
+        PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
         final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
         processor.setCurrentFileResolveContext(context);
-        final boolean toBreak = element.processDeclarations(processor, classResult.getSubstitutor(), null, ref);
+        PsiSubstitutor substitutor = classResult.getSubstitutor();
+        final boolean toBreak = element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, ref);
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;
       }
@@ -125,7 +130,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     if (referenceElement == null) return GroovyResolveResult.EMPTY_ARRAY;
     final GroovyResolveResult[] classResults = referenceElement.multiResolve(false);
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
-    final PsiResolveHelper helper = getManager().getResolveHelper();
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
     for (GroovyResolveResult classResult : classResults) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {

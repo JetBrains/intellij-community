@@ -15,24 +15,24 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
-import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
  */
-public class GrLightIdentifier extends LightElement{
+public class GrLightIdentifier extends LightElement {
 
   private String myText;
 
   public GrLightIdentifier(PsiManager manager, String text) {
-    super(manager);
+    super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myText = text;
   }
 
@@ -40,18 +40,18 @@ public class GrLightIdentifier extends LightElement{
     return GroovyTokenTypes.mIDENT;
   }
 
-  public String getText(){
+  public String getText() {
     return myText;
   }
 
-  public void accept(@NotNull PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor) {
   }
 
-  public PsiElement copy(){
+  public PsiElement copy() {
     return new GrLightIdentifier(getManager(), myText);
   }
 
-  public String toString(){
+  public String toString() {
     return "PsiIdentifier:" + getText();
   }
 

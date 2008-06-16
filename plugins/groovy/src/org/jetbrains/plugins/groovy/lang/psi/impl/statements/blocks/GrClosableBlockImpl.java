@@ -25,14 +25,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
@@ -58,10 +63,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     visitor.visitClosure(this);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setCurrentFileResolveContext(this);
     try {
-      if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
       for (final PsiParameter parameter : getAllParameters()) {
         if (!ResolveUtil.processElement(processor, parameter)) return false;
@@ -69,8 +74,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
       if (!ResolveUtil.processElement(processor, getOwner())) return false;
 
-      final PsiClass closureClass = getManager().findClass(GROOVY_LANG_CLOSURE, getResolveScope());
-      if (closureClass != null && !closureClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GROOVY_LANG_CLOSURE, getResolveScope());
+      if (closureClass != null && !closureClass.processDeclarations(processor, state, lastParent, place)) return false;
 
       return true;
     } finally {
@@ -142,7 +147,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   private GrVariable getOwner() {
     if (myOwner == null) {
       final GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
-      final PsiElementFactory factory = getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
       PsiType type = null;
       if (context instanceof GrTypeDefinition) {
         type = factory.createType((PsiClass) context);
@@ -172,7 +177,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     }
   };
 
-  public @Nullable PsiType getReturnType(){
+  public
+  @Nullable
+  PsiType getReturnType() {
     if (GroovyPsiManager.getInstance(getProject()).isTypeBeingInferred(this)) {
       return null;
     }

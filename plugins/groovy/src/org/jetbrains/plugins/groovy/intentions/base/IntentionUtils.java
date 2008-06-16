@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.intentions.base;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -35,26 +35,20 @@ public class IntentionUtils {
   public static void replaceExpression(@NotNull String newExpression,
                                        @NotNull GrExpression expression)
       throws IncorrectOperationException {
-    final PsiManager mgr = expression.getManager();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
     final GrExpression newCall =
         factory.createExpressionFromText(newExpression);
     final PsiElement insertedElement = expression.replaceWithExpression(newCall, true);
-    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-    // codeStyleManager.reformat(insertedElement);
   }
 
   public static GrStatement replaceStatement(
       @NonNls @NotNull String newStatement,
       @NonNls @NotNull GrStatement statement)
       throws IncorrectOperationException {
-    final PsiManager mgr = statement.getManager();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
     final GrStatement newCall =
         (GrStatement) factory.createTopElementFromText(newStatement);
     return statement.replaceWithStatement(newCall);
-    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-    // codeStyleManager.reformat(insertedElement);
   }
 
   public static void createTemplateForMethod(PsiType[] argTypes,
@@ -86,7 +80,7 @@ public class IntentionUtils {
     assert lbrace != null;
     builder.setEndVariableAfter(lbrace);
 
-    method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
+    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
     Template template = builder.buildTemplate();
 
     Editor newEditor = QuickfixUtil.positionCursor(project, owner.getContainingFile(), method);

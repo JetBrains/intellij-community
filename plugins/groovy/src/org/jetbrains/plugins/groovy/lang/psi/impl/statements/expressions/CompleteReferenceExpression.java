@@ -21,15 +21,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +79,7 @@ public class CompleteReferenceExpression {
   private static List<LookupElement> getPropertyVariants(GrReferenceExpression refExpr, PsiClass clazz) {
     List<LookupElement> props = new ArrayList<LookupElement>();
     final LookupElementFactory factory = LookupElementFactory.getInstance();
-    final PsiClass eventListener = refExpr.getManager().findClass("java.util.EventListener", refExpr.getResolveScope());
+    final PsiClass eventListener = JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.EventListener", refExpr.getResolveScope());
     for (PsiMethod method : clazz.getAllMethods()) {
       if (PsiUtil.isSimplePropertySetter(method)) {
         String prop = PropertyUtil.getPropertyName(method);
@@ -123,7 +122,7 @@ public class CompleteReferenceExpression {
       ResolveUtil.treeWalkUp(refExpr, processor);
       PsiClass contextClass = PsiUtil.getContextClass(refExpr);
       if (contextClass != null) {
-        PsiClassType classType = refExpr.getManager().getElementFactory().createType(contextClass);
+        PsiClassType classType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(contextClass);
         ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject());
       }
       qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
@@ -162,7 +161,7 @@ public class CompleteReferenceExpression {
       PsiClassType.ClassResolveResult result = ((PsiClassType) qualifierType).resolveGenerics();
       PsiClass clazz = result.getElement();
       if (clazz != null) {
-        PsiClass listClass = refExpr.getManager().findClass("java.util.List", refExpr.getResolveScope());
+        PsiClass listClass = JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.List", refExpr.getResolveScope());
         if (listClass != null && listClass.getTypeParameters().length == 1) {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
           if (substitutor != null) {
@@ -207,11 +206,11 @@ public class CompleteReferenceExpression {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
         if (resolved instanceof PsiPackage) {
-          resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+          resolved.processDeclarations(processor, ResolveState.initial(), null, refExpr);
           return;
         }
       }
-      final PsiClassType type = refExpr.getManager().getElementFactory().createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
+      final PsiClassType type = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
       getVariantsFromQualifierType(refExpr, processor, type, project);
     } else {
       if (qualifierType instanceof PsiIntersectionType) {
@@ -231,8 +230,8 @@ public class CompleteReferenceExpression {
               if (typeParameters.length == 1) {
                 substitutor = substitutor.put(typeParameters[0], qualifierType);
               }
-              javaLangClass.processDeclarations(processor, substitutor, null, refExpr);
-              PsiType javaLangClassType = refExpr.getManager().getElementFactory().createType(javaLangClass, substitutor);
+              javaLangClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
+              PsiType javaLangClassType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
               ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject());
             }
           }
@@ -279,12 +278,12 @@ public class CompleteReferenceExpression {
     if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
       if (qualifierClass != null) {
-        qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+        qualifierClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
       }
       if (!ResolveUtil.processCategoryMembers(refExpr, processor, (PsiClassType) qualifierType)) return;
     } else if (qualifierType instanceof PsiArrayType) {
       final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
-      if (!arrayClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
+      if (!arrayClass.processDeclarations(processor, ResolveState.initial(), null, refExpr)) return;
     } else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
         getVariantsFromQualifierType(refExpr, processor, conjunct, project);

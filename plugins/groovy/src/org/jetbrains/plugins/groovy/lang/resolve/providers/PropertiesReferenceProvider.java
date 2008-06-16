@@ -18,9 +18,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.PropertyReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -30,49 +30,39 @@ import java.util.Map;
 /**
  * @author ven
  */
-public class PropertiesReferenceProvider implements PsiReferenceProvider {
-    public PropertiesReferenceProvider() {
-    }
-
-    @NotNull
-    public PsiReference[] getReferencesByElement(PsiElement element) {
-      Object value = null;
-
-      if (element instanceof GrLiteral) {
-        GrLiteral literalExpression = (GrLiteral)element;
-        value = literalExpression.getValue();
-
-        final Map<String, Object> annotationParams = new HashMap<String, Object>();
-        annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-        /*if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
-          soft = false;
-          final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
-          if (resourceBundleName instanceof PsiExpression) {
-            PsiExpression expr = (PsiExpression)resourceBundleName;
-            final Object bundleValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
-            bundleName = bundleValue == null ? null : bundleValue.toString();
-          }
-        }*/
-      }
-
-      if (value instanceof String) {
-        PsiReference reference = new PropertyReference((String)value, element, null, true);
-        return new PsiReference[]{reference};
-      }
-      return PsiReference.EMPTY_ARRAY;
-    }
+public class PropertiesReferenceProvider extends PsiReferenceProvider {
+  public PropertiesReferenceProvider() {
+  }
 
   @NotNull
-    public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-      return getReferencesByElement(element);
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    Object value = null;
+
+    if (element instanceof GrLiteral) {
+      GrLiteral literalExpression = (GrLiteral) element;
+      value = literalExpression.getValue();
+
+      final Map<String, Object> annotationParams = new HashMap<String, Object>();
+      annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
+      /*if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
+        soft = false;
+        final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
+        if (resourceBundleName instanceof PsiExpression) {
+          PsiExpression expr = (PsiExpression)resourceBundleName;
+          final Object bundleValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
+          bundleName = bundleValue == null ? null : bundleValue.toString();
+        }
+      }*/
     }
 
-    @NotNull
-    public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-      return getReferencesByElement(position);
+    if (value instanceof String) {
+      PsiReference reference = new PropertyReference((String) value, element, null, true);
+      return new PsiReference[]{reference};
     }
+    return PsiReference.EMPTY_ARRAY;
+  }
 
-    public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-    }
+  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
+  }
 
 }

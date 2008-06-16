@@ -27,10 +27,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author ven
-*/
+ */
 public class GrClosureType extends PsiClassType {
   private GlobalSearchScope myScope;
-  @Nullable private PsiType myReturnType;
+  @Nullable
+  private PsiType myReturnType;
   private PsiType[] myParameterTypes;
   private boolean[] myOptionals;
   private PsiManager myManager;
@@ -46,7 +47,7 @@ public class GrClosureType extends PsiClassType {
 
   @Nullable
   public PsiClass resolve() {
-    return myManager.findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
+    return JavaPsiFacade.getInstance(myManager.getProject()).findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
   }
 
   public PsiType getClosureReturnType() {
@@ -185,7 +186,7 @@ public class GrClosureType extends PsiClassType {
     return create(closure.getResolveScope(), closure.getReturnType(), closure.getAllParameters(), closure.getManager());
   }
 
-  public static GrClosureType create (GlobalSearchScope scope, PsiType returnType, PsiParameter[] parameters, PsiManager manager) {
+  public static GrClosureType create(GlobalSearchScope scope, PsiType returnType, PsiParameter[] parameters, PsiManager manager) {
     PsiType[] parameterTypes = new PsiType[parameters.length];
     boolean[] optionals = new boolean[parameters.length];
     for (int i = 0; i < optionals.length; i++) {
@@ -197,7 +198,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public static GrClosureType create(PsiType returnType, PsiType[] parameterTypes, boolean[] optionals,
-                                      PsiManager manager, GlobalSearchScope scope) {
+                                     PsiManager manager, GlobalSearchScope scope) {
     return new GrClosureType(scope, returnType, parameterTypes, optionals, manager);
   }
 

@@ -32,10 +32,25 @@
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
     <fileEditorProvider
         implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
-    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
+    <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
-
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
+    <lang.parserDefinition language="Groovy"
+                           implementationClass="org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition"/>
+    <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
+    <lang.foldingBuilder language="Groovy"
+                         implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
+    <lang.formatter language="Groovy"
+                    implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
+    <lang.gotoClassContributor language="Groovy"
+                               implementationClass="org.jetbrains.plugins.scala.gotoclass.ScalaChooseByNameContributor"/>
+    <lang.refactoringSupport language="Groovy"
+                             implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
+    <lang.surroundDescriptor language="Groovy"
+                             implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovySurroundDescriptor"/>
+
+
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
   </extensions>
 
   <extensions xmlns="com.intellij.debugger">

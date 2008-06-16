@@ -15,9 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
@@ -30,7 +31,7 @@ public class GrRegexFindExpressionImpl extends GrRegexExpressionImpl {
   }
 
   public PsiType getType() {
-    return getManager().getElementFactory().createTypeByFQClassName(MATCHER_FQ_NAME, getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(MATCHER_FQ_NAME, getResolveScope());
   }
 
   public String toString() {

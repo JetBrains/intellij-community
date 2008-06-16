@@ -18,10 +18,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.Set;
-import java.util.LinkedHashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -29,12 +30,12 @@ import java.util.Iterator;
 public class LightModifierList extends LightElement implements PsiModifierList {
   private Set<String> myModifiers;
 
-  public LightModifierList(PsiManager manager, LinkedHashSet<String> modifiers){
-    super(manager);
+  public LightModifierList(PsiManager manager, LinkedHashSet<String> modifiers) {
+    super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myModifiers = modifiers;
   }
 
-  public boolean hasModifierProperty(@NotNull String name){
+  public boolean hasModifierProperty(@NotNull String name) {
     return myModifiers.contains(name);
   }
 
@@ -46,7 +47,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     throw new IncorrectOperationException();
   }
 
-  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
+  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -59,7 +60,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     return null;
   }
 
-  public String getText(){
+  public String getText() {
     StringBuffer buffer = new StringBuffer();
     for (Iterator<String> it = myModifiers.iterator(); it.hasNext();) {
       buffer.append(it.next());
@@ -69,15 +70,17 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     return buffer.toString();
   }
 
-  public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitModifierList(this);
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor) visitor).visitModifierList(this);
+    }
   }
 
-  public PsiElement copy(){
+  public PsiElement copy() {
     return null;
   }
 
-  public String toString(){
+  public String toString() {
     return "LightModifierList";
   }
 

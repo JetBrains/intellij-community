@@ -17,35 +17,25 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.references;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 
 /**
  * @author ilyas
  */
-public class GroovyDocReferenceProvider implements PsiReferenceProvider {
+public class GroovyDocReferenceProvider extends PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     return new PsiReference[0];
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-    return new PsiReference[0];
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-    return new PsiReference[0];
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    //todo review
+    return getReferencesByElement(element);
   }
 
   public static class GroovyDocReferenceFilter implements ElementFilter {

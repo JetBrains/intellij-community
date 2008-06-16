@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
-import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -108,7 +107,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   public PsiClassType[] getSuperTypes() {
     final PsiClassType[] extendsTypes = getExtendsListTypes();
     if (extendsTypes.length > 0) return extendsTypes;
-    return new PsiClassType[] {getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", getResolveScope())};
+    return new PsiClassType[]{JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", getResolveScope())};
   }
 
   @NotNull
@@ -211,11 +210,6 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
-  }
-
-  @Nullable
-  public PomMemberOwner getPom() {
-    return null;
   }
 
   @Nullable

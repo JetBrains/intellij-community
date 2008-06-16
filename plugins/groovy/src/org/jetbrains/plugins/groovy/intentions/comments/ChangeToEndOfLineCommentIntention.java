@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.groovy.intentions.comments;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -20,7 +19,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
   public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final PsiComment comment = (PsiComment) element;
-    final PsiManager manager = comment.getManager();
+    final JavaPsiFacade manager = JavaPsiFacade.getInstance(comment.getProject());
     final PsiElement parent = comment.getParent();
     assert parent != null;
     final PsiElementFactory factory = manager.getElementFactory();
@@ -33,11 +32,11 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
           factory.createCommentFromText("//" + lines[i].trim() + '\n',
               parent);
       parent.addAfter(nextComment, comment);
-     /* if (whitespace != null) {
-        final PsiElement newWhiteSpace =
-            factory.createWhiteSpaceFromText(whitespace.getText());
-        parent.addAfter(newWhiteSpace, comment);
-      }  */
+      /* if (whitespace != null) {
+      final PsiElement newWhiteSpace =
+          factory.createWhiteSpaceFromText(whitespace.getText());
+      parent.addAfter(newWhiteSpace, comment);
+    }  */
     }
     final PsiComment newComment =
         factory.createCommentFromText("//" + lines[0], parent);

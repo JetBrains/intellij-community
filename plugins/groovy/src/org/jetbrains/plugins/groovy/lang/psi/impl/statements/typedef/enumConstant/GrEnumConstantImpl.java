@@ -65,7 +65,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   @NotNull
   public PsiType getType() {
-    return getManager().getElementFactory().createType(getContainingClass(), PsiSubstitutor.EMPTY);
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass(), PsiSubstitutor.EMPTY);
   }
 
   @Nullable
@@ -100,9 +100,9 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public GroovyResolveResult[] multiResolveConstructor() {
     PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false, false);
     PsiClass clazz = getContainingClass();
-    PsiType thisType = getManager().getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
+    PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
     MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
-    clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+    clazz.processDeclarations(processor, ResolveState.initial(), null, this);
     return processor.getCandidates();
   }
 

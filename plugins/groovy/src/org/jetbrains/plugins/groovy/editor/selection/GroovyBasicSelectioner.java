@@ -15,19 +15,19 @@
 
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.codeInsight.editorActions.SelectWordUtil;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.text.CharArrayUtil;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ilyas
  */
-public abstract class GroovyBasicSelectioner implements SelectWordUtil.Selectioner {
+public abstract class GroovyBasicSelectioner implements ExtendWordSelectionHandler {
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
 

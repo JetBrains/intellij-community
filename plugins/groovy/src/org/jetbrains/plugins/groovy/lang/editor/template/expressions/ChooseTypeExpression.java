@@ -41,7 +41,7 @@ public class ChooseTypeExpression implements Expression {
 
   public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager) {
     myManager = manager;
-    myTypePointer = SmartPointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints));
+    myTypePointer = SmartTypePointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints));
     myItems = createItems(constraints);
   }
 
@@ -50,9 +50,9 @@ public class ChooseTypeExpression implements Expression {
 
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof TypeEquals) {
-        LookupItemUtil.addLookupItem(result, constraint.getType(), "");
+        LookupItemUtil.addLookupItem(result, constraint.getType());
       } else if (constraint instanceof SubtypeConstraint) {
-        LookupItemUtil.addLookupItem(result, constraint.getDefaultType(), "");
+        LookupItemUtil.addLookupItem(result, constraint.getDefaultType());
       } else if (constraint instanceof SupertypeConstraint) {
         processSupertypes(constraint.getType(), result);
       }
@@ -71,9 +71,9 @@ public class ChooseTypeExpression implements Expression {
     if (unboxed != null && !unboxed.equals(text)) {
       LookupItem item = LookupItemUtil.objectToLookupItem(unboxed);
       item.setBold();
-      LookupItemUtil.addLookupItem(result, item, "");
+      LookupItemUtil.addLookupItem(result, item);
     } else {
-      LookupItemUtil.addLookupItem(result, type, "");
+      LookupItemUtil.addLookupItem(result, type);
     }
     PsiType[] superTypes = type.getSuperTypes();
     for (PsiType superType : superTypes) {
@@ -83,14 +83,14 @@ public class ChooseTypeExpression implements Expression {
 
   private PsiType chooseType(TypeConstraint[] constraints) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
-    return myManager.getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(myManager.getProject()));
+    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(myManager.getProject()));
   }
 
   public Result calculateResult(ExpressionContext context) {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
     if (type != null) {
-      return new PsiTypeResult(type, PsiManager.getInstance(context.getProject()));
+      return new PsiTypeResult(type, context.getProject());
     }
 
     return null;

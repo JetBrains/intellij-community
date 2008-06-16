@@ -23,9 +23,9 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -36,8 +36,8 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
@@ -59,9 +60,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -76,7 +77,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import javax.swing.*;
 import java.util.*;
@@ -241,14 +241,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         if (fieldInfo != null) {
           final PsiElement element = fieldInfo.getElement();
           if (!isSameDeclaration(place, element)) { //the same variable declaration
-            if (!processor.execute(element, fieldInfo.getSubstitutor())) return false;
+            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, fieldInfo.getSubstitutor())))
+              return false;
           }
         }
       } else {
         for (CandidateInfo info : fieldsMap.values()) {
           final PsiElement element = info.getElement();
           if (!isSameDeclaration(place, element)) {  //the same variable declaration
-            if (!processor.execute(element, info.getSubstitutor())) return false;
+            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, info.getSubstitutor())))
+              return false;
           }
         }
       }
@@ -262,7 +264,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, substitutor))
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)))
               return false;
           }
         }
@@ -272,7 +274,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, substitutor))
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)))
               return false;
           }
         }
@@ -287,7 +289,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
             if (info != null) {
               final PsiElement field = info.getElement();
               if (field instanceof GrField && ((GrField) field).isProperty() && isPropertyReference(place, (PsiField) field, isGetter)) {
-                if (!processor.execute(field, info.getSubstitutor())) return false;
+                if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, info.getSubstitutor())))
+                  return false;
               }
             }
           }
@@ -385,7 +388,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     if (!isInterface()) {
       return new PsiClassType[]{
-          getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope())
+          JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope())
       };
     }
 
@@ -736,11 +739,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @Nullable
-  public PomMemberOwner getPom() {
-    return null;
-  }
-
-  @Nullable
   public PsiClass getContainingClass() {
     return null;
   }
@@ -814,9 +812,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public Icon getIcon(int flags) {
     Icon icon = getIconInner();
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !isWritable();
-    RowIcon rowIcon = ElementBase.createLayeredIcon(icon, ElementBase.getFlags(this, isLocked));
+    RowIcon rowIcon = ElementBase.createLayeredIcon(icon, ElementPresentationUtil.getFlags(this, isLocked));
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
-      IconUtil.setVisibilityIcon(getModifierList(), rowIcon);
+      VisibilityIcons.setVisibilityIcon(getModifierList(), rowIcon);
     }
     return rowIcon;
   }

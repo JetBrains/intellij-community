@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.MethodSignature;
@@ -62,7 +63,7 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
       PsiParameter originalParameter = originalParameters[i];
       String baseName;
       final PsiType type = originalParameter.getType();
-      String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
+      String[] nameSuggestions = JavaCodeStyleManager.getInstance(getProject()).suggestVariableName(VariableKind.PARAMETER, null,
           null, type).names;
       if (nameSuggestions.length > 0) {
         baseName = nameSuggestions[0];
@@ -93,7 +94,7 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
       public LightParameter[] compute() {
         LightParameter[] result = new LightParameter[parmNames.length];
         for (int i = 0; i < result.length; i++) {
-          result[i] = new LightParameter(manager, parmNames[i], null, originalParameters[i+1].getType(), GrGdkMethodImpl.this);
+          result[i] = new LightParameter(manager, parmNames[i], null, originalParameters[i + 1].getType(), GrGdkMethodImpl.this);
 
         }
         return result;

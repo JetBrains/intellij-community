@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -346,10 +345,6 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @Nullable
   public PsiMethod findDeepestSuperMethod() {
-    return null;
-  }
-
-  public PomMethod getPom() {
     return null;
   }
 

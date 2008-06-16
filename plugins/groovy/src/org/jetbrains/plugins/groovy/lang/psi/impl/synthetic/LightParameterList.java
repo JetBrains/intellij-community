@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
@@ -29,7 +30,7 @@ public class LightParameterList extends LightElement implements PsiParameterList
 
   protected LightParameterList(PsiManager manager,
                                Computable<LightParameter[]> parametersComputation) {
-    super(manager);
+    super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myParametersComputation = parametersComputation;
   }
 
@@ -39,7 +40,9 @@ public class LightParameterList extends LightElement implements PsiParameterList
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitParameterList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor) visitor).visitParameterList(this);
+    }
   }
 
   public PsiElement copy() {

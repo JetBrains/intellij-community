@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +52,10 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
 
   private static class MyTypesCalculator implements Function<GrBuiltinTypeClassExpressionImpl, PsiType> {
     public PsiType fun(GrBuiltinTypeClassExpressionImpl expression) {
-      PsiManagerEx manager = expression.getManager();
-      PsiClass clazz = manager.findClass("java.lang.Class", expression.getResolveScope());
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
+      PsiClass clazz = facade.findClass("java.lang.Class", expression.getResolveScope());
       if (clazz != null) {
-        PsiElementFactory factory = manager.getElementFactory();
+        PsiElementFactory factory = facade.getElementFactory();
         PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
         if (typeParameters.length == 1) {

@@ -33,11 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -52,7 +50,7 @@ public class ResolveUtil {
     PsiElement lastParent = null;
     PsiElement run = place;
     while (run != null) {
-      if (!run.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
+      if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
       lastParent = run;
       run = run.getContext();
     }
@@ -61,7 +59,7 @@ public class ResolveUtil {
   }
 
   public static boolean processChildren(PsiElement element, PsiScopeProcessor processor,
-                                        PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+                                        ResolveState substitutor, PsiElement lastParent, PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!run.processDeclarations(processor, substitutor, null, place)) return false;
@@ -75,7 +73,7 @@ public class ResolveUtil {
     NameHint nameHint = processor.getHint(NameHint.class);
     String name = nameHint == null ? null : nameHint.getName();
     if (name == null || name.equals(namedElement.getName())) {
-      return processor.execute(namedElement, PsiSubstitutor.EMPTY);
+      return processor.execute(namedElement, ResolveState.initial());
     }
 
     return true;
@@ -106,7 +104,7 @@ public class ResolveUtil {
 
       if (type instanceof PsiArrayType) {
         //implicit super types
-        PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
         if (!processNonCodeMethods(t, processor, project, visited)) return false;
         t = factory.createTypeByFQClassName("java.lang.Comparable", GlobalSearchScope.allScope(project));
@@ -137,7 +135,7 @@ public class ResolveUtil {
       PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
       if (typeParameters.length == 1) {
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(typeParameters[0], componentType);
-        return refExpr.getManager().getElementFactory().createType(clazz, substitutor);
+        return JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(clazz, substitutor);
       }
     }
 
@@ -145,7 +143,7 @@ public class ResolveUtil {
   }
 
   public static PsiClass findListClass(PsiManager manager, GlobalSearchScope resolveScope) {
-    return manager.findClass("java.util.List", resolveScope);
+    return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", resolveScope);
   }
 
   public static GroovyPsiElement resolveProperty(GroovyPsiElement place, String name) {
@@ -209,7 +207,7 @@ public class ResolveUtil {
                   if (resolved instanceof PsiClass) {
                     try {
                       processor.setCurrentFileResolveContext(call);
-                      if (!resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place)) return false;
+                      if (!resolved.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
                     } finally {
                       processor.setCurrentFileResolveContext(null);
                     }
@@ -232,7 +230,7 @@ public class ResolveUtil {
 
     final PsiMethod resolved = call.resolveMethod();
     if (resolved instanceof GrGdkMethod) {
-      final PsiElementFactory factory = call.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(call.getProject()).getElementFactory();
       final GlobalSearchScope scope = call.getResolveScope();
       final PsiType[] parametersType = {
           factory.createTypeByFQClassName("java.lang.Class", scope),

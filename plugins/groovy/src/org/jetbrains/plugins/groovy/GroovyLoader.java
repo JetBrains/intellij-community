@@ -35,26 +35,22 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Function;
-import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
-import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
-import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory;
+import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.editor.selection.*;
-import org.jetbrains.plugins.groovy.findUsages.*;
+import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
+import org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher;
+import org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
@@ -67,7 +63,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -111,7 +106,8 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
 
   private static void loadGroovy() {
     //Register factory for special Groovy elements
-    Factory.addElementFactory(new GspElementFactory());
+//todo[DIANA]
+//    Factory.addElementFactory(new GspElementFactory());
 
     //register editor actions
     GroovyEditorActionsManager.registerGroovyEditorActions();
@@ -123,10 +119,11 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferencesSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new TypeAliasReferenceSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new LateBoundReferencesSearcher());
+    //todo [DIANA] implement me!
+//    ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
+//    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferencesSearcher());
+//    ReferencesSearch.INSTANCE.registerExecutor(new TypeAliasReferenceSearcher());
+//    ReferencesSearch.INSTANCE.registerExecutor(new LateBoundReferencesSearcher());
     AnnotatedMembersSearch.INSTANCE.registerExecutor(new AnnotatedMembersSearcher());
 
     TypedHandler.registerQuoteHandler(GroovyFileType.GROOVY_FILE_TYPE, new GroovyQuoteHandler());
@@ -173,6 +170,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
   }
 
   private static void registerNamevalidators() {
+/* todo [DIANA]
     RenameInputValidatorRegistry.getInstance().registerInputValidator(new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         return element instanceof PsiNamedElement;
@@ -185,6 +183,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
         return !GroovyRefactoringUtil.KEYWORDS.contains(name);
       }
     });
+*/
   }
 
   private static void registerSelectioners() {

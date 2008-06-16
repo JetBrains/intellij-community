@@ -18,13 +18,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ven
  */
 public class LightReferenceList extends LightElement implements PsiReferenceList {
   protected LightReferenceList(PsiManager manager) {
-    super(manager);
+    super(manager, GroovyFileType.GROOVY_LANGUAGE);
   }
 
   @NonNls
@@ -33,7 +34,9 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor) visitor).visitReferenceList(this);
+    }
   }
 
   public PsiElement copy() {
@@ -48,6 +51,10 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     return PsiClassType.EMPTY_ARRAY;
+  }
+
+  public Role getRole() {
+    return Role.THROWS_LIST;
   }
 
   public String toString() {

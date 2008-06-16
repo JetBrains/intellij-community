@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -34,7 +34,7 @@ public abstract class GroovyResolveTestCase extends ResolveTestCase {
 
   protected abstract String getTestDataPath();
 
-  protected ProjectJdk getTestProjectJdk() {
+  protected Sdk getTestProjectJdk() {
     return JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false);
   }
 

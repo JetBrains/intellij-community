@@ -20,8 +20,6 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.codeInsight.completion.DefaultCharFilter;
-import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -29,7 +27,6 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
@@ -44,11 +41,11 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.AnnotationF
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterfaceEnumFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.ParameterTypeFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
-import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
+import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
@@ -90,7 +87,7 @@ public class GroovyCompletionData extends CompletionData {
   private void registerParameterTypeCompletion() {
     CompletionVariant variant = new CompletionVariant(new ParameterTypeFilter());
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.addCompletionFilter(TrueFilter.INSTANCE);
     variant.addCompletion(new ClassesGetter(), TailType.SPACE);
     registerVariant(variant);
   }
@@ -98,7 +95,7 @@ public class GroovyCompletionData extends CompletionData {
   private void registerSuggestVariableNameCompletion() {
     CompletionVariant variant = new CompletionVariant(new ParentElementFilter(new ClassFilter(GrVariable.class)));
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.addCompletionFilter(TrueFilter.INSTANCE);
     variant.addCompletion(new SuggestedVariableNamesGetter(), TailType.NONE);
 
     // register custom variable name suggesters
@@ -137,7 +134,7 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new AndFilter(new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), BUILT_IN_TYPES);
   }
 
-  private void registrBuiltInTypesAsArgumentCompletion(){
+  private void registrBuiltInTypesAsArgumentCompletion() {
     AndFilter filter = new AndFilter(new BuiltInTypeAsArgumentFilter(), new NotFilter(new ThrowsFilter()));
     CompletionVariant variant = setUpFilter(filter);
     for (String completion : BUILT_IN_TYPES) {
@@ -150,7 +147,7 @@ public class GroovyCompletionData extends CompletionData {
     LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.addCompletionFilter(TrueFilter.INSTANCE);
     return variant;
   }
 
@@ -197,27 +194,32 @@ public class GroovyCompletionData extends CompletionData {
 
   static {
     ourReferenceVariant = new CompletionVariant() {
+/* todo [DIANA] implement me!
       public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix) {
-        addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
+        addReferenceCompletions(reference, position, set, prefix);
       }
+*/
     };
 
     ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
     ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
 
+/*
     DefaultCharFilter.registerFilter(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new CharFilter() {
-      public int accept(char c, String prefix) {
-        if (Character.isJavaIdentifierPart(c) || c == '\'') return CharFilter.ADD_TO_PREFIX;
+      public Result accept(char c, String prefix) {
+        if (Character.isJavaIdentifierPart(c) || c == '\'') return CharFilter.Result.ADD_TO_PREFIX;
         else if (c == '\n' || c == '\t') {
-          return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
+          return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
         }
-        return CharFilter.HIDE_LOOKUP;
+        return CharFilter.Result.HIDE_LOOKUP;
       }
     });
+*/
   }
 
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
-    ourReferenceVariant.addReferenceCompletions(reference, position, set, context);
+    //todo[DIANA] WTF is PrefixMatcher?
+//    ourReferenceVariant.addReferenceCompletions(reference, position, set, new CamelHumpMatcher(), position.getContainingFile(), this);
   }
 
   /**
@@ -230,7 +232,7 @@ public class GroovyCompletionData extends CompletionData {
     LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.addCompletionFilter(TrueFilter.INSTANCE);
     ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
     variant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
     addCompletions(variant, keywords);

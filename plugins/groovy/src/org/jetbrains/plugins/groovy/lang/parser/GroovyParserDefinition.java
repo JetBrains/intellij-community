@@ -63,6 +63,11 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   @NotNull
+  public TokenSet getStringLiteralElements() {
+    return TokenSets.STRING_LITERALS;
+  }
+
+  @NotNull
   public PsiElement createElement(ASTNode node) {
     return GroovyPsiCreator.createElement(node);
   }
@@ -72,7 +77,7 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    if (right.getElementType() == kIMPORT && left.getElementType() != mWS){
+    if (right.getElementType() == kIMPORT && left.getElementType() != mWS) {
       return MUST_LINE_BREAK;
     }
     return MAY;

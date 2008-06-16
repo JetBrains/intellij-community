@@ -16,19 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
@@ -66,11 +66,11 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     }
     if (resolved instanceof PsiClass) {
       PsiType[] parameterTypes = getParameterList().getParameterTypes();
-      PsiType thisType = getManager().getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
+      PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
       MethodResolverProcessor processor = new MethodResolverProcessor(name, this, false, thisType, parameterTypes, PsiType.EMPTY_ARRAY);
       MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, true, thisType, parameterTypes, PsiType.EMPTY_ARRAY);
-      resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
-      resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
+      resolved.processDeclarations(processor, ResolveState.initial(), resolved, this);
+      resolved.processDeclarations(constructorProcessor, ResolveState.initial(), resolved, this);
       return ArrayUtil.mergeArrays(processor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);
     }
     return new ResolveResult[0];

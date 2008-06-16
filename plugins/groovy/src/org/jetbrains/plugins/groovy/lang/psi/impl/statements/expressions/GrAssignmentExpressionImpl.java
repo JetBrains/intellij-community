@@ -72,7 +72,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         String refName = processor instanceof ResolverProcessor ? ((ResolverProcessor) processor).getName() : null;
         if (refName == null ||
             (refName.equals(name) && !(lRefExpr.resolve() instanceof PsiVariable))) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
-          if (!processor.execute(lRefExpr, PsiSubstitutor.EMPTY)) return false;
+          if (!processor.execute(lRefExpr, ResolveState.initial())) return false;
         }
       }
     }

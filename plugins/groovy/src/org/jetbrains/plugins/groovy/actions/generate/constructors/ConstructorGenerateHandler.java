@@ -7,8 +7,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public class ConstructorGenerateHandler extends GenerateConstructorHandler {
     if (classMembers == null) return null;
 
     List<ClassMember> res = new ArrayList<ClassMember>();
-    final PsiElementFactory factory = aClass.getManager().getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     String text;
 
     for (ClassMember classMember : classMembers) {

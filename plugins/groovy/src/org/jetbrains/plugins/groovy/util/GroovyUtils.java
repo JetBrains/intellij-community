@@ -20,8 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -109,10 +107,4 @@ public abstract class GroovyUtils {
     return moduleType instanceof JavaModuleType || moduleType.getId().equals(GroovyGrailsFacetLoader.PLUGIN_MODULE_ID);
   }
 
-  public static String getJdkLibDirParent(ProjectJdk jdk) {
-    String rtLibraryPath = jdk.getRtLibraryPath();
-    File parent = new File(rtLibraryPath).getParentFile().getParentFile().getParentFile();
-    if (SystemInfo.isMac) parent = parent.getParentFile(); //hack over nonstandard jdk layout on Macs
-    return parent.getAbsolutePath();  //strip /jre/lib/rt.jar
-  }
 }

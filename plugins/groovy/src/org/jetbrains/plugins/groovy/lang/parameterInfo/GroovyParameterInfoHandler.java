@@ -1,13 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -18,11 +21,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +38,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    final PsiElement[] elements = LookupManager.getInstance(context.getProject()).getAllElementsForItem((LookupItem) item);
+    List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements((LookupItem) item);
 
     if (elements != null) {
       List<PsiMethod> methods = new ArrayList<PsiMethod>();
@@ -82,7 +84,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       offset = CharArrayUtil.shiftBackward(file.getText(), offset, "\n\t ");
       if (offset <= 0) return null;
       element = file.findElementAt(offset);
-      if (element != null && element.getParent() instanceof GrReferenceExpression) return (GroovyPsiElement) element.getParent();
+      if (element != null && element.getParent() instanceof GrReferenceExpression)
+        return (GroovyPsiElement) element.getParent();
     }
     return null;
   }
@@ -141,7 +144,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           for (int j = 0; j < parameters.length; j++) {
             parameterTypes[j] = parameters[j].getType();
           }
-          if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) parameterTypes = ArrayUtil.remove(parameterTypes, 0);
+          if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)
+            parameterTypes = ArrayUtil.remove(parameterTypes, 0);
           argTypes = method.isConstructor() ? constructorTypes : methodTypes;
         } else if (namedElement instanceof GrVariable) {
           final PsiType type = ((GrVariable) namedElement).getTypeGroovy();
@@ -245,7 +249,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       final int currentParameter = context.getCurrentParameterIndex();
 
       PsiParameter[] parms = method.getParameterList().getParameters();
-      if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) parms = ArrayUtil.remove(parms, 0);
+      if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)
+        parms = ArrayUtil.remove(parms, 0);
       int numParams = parms.length;
       if (numParams > 0) {
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();

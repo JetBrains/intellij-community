@@ -19,13 +19,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -58,13 +58,13 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   protected String[] getExtendsNames() {
-    return new String[] {ENUM_SIMPLE_NAME};
+    return new String[]{ENUM_SIMPLE_NAME};
   }
 
   private PsiClassType createEnumType() {
-    PsiManager manager = getManager();
-    PsiClass enumClass = manager.findClass(JAVA_LANG_ENUM, getResolveScope());
-    PsiElementFactory factory = manager.getElementFactory();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    PsiClass enumClass = facade.findClass(JAVA_LANG_ENUM, getResolveScope());
+    PsiElementFactory factory = facade.getElementFactory();
     if (enumClass != null) {
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
       PsiTypeParameter[] typeParameters = enumClass.getTypeParameters();

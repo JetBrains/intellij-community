@@ -14,7 +14,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -25,10 +25,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -81,7 +78,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
+    PsiClassType type = JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
     GrVariableDeclaration decl = GroovyPsiElementFactory.getInstance(project).createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
         null, type, myRefExpression.getReferenceName());
     int offset = myRefExpression.getTextRange().getStartOffset();
@@ -98,7 +95,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
     TemplateBuilder builder = new TemplateBuilder(decl);
     builder.replaceElement(typeElement, expr);
-    decl = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(decl);
+    decl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl);
     Template template = builder.buildTemplate();
 
     Editor newEditor = positionCursor(project, myOwner.getContainingFile(), decl);
@@ -111,7 +108,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
 
   private GrStatement findAnchor(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
-    if (element == null && offset > 0) element = file.findElementAt(offset - 1); 
+    if (element == null && offset > 0) element = file.findElementAt(offset - 1);
     while (element != null) {
       if (myOwner.equals(element.getParent())) return element instanceof GrStatement ? (GrStatement) element : null;
       element = element.getParent();

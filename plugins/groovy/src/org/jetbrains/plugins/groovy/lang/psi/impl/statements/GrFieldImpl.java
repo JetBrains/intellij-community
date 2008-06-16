@@ -15,12 +15,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.pom.java.PomField;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -63,10 +62,6 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
   public void setInitializer(@Nullable PsiExpression psiExpression) throws IncorrectOperationException {
   }
 
-  public PomField getPom() {
-    return null;
-  }
-
   public boolean isDeprecated() {
     return false;
   }
@@ -79,7 +74,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
         return (PsiClass) pparent;
       }
     }
-    
+
     final PsiFile file = getContainingFile();
     if (file instanceof GroovyFileBase) {
       return ((GroovyFileBase) file).getScriptClass();
@@ -143,9 +138,9 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
         }
 
         if (getter1 != null || getter2 != null) {
-          if (getter1 != null && getter2 != null) myGetters = new GrAccessorMethod[] {getter1, getter2};
-          else if (getter1 != null) myGetters = new GrAccessorMethod[] {getter1};
-          else myGetters = new GrAccessorMethod[] {getter2};
+          if (getter1 != null && getter2 != null) myGetters = new GrAccessorMethod[]{getter1, getter2};
+          else if (getter1 != null) myGetters = new GrAccessorMethod[]{getter1};
+          else myGetters = new GrAccessorMethod[]{getter2};
         }
       }
 
@@ -161,7 +156,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
         clazz.findMethodsBySignature(proto, true);
     for (PsiMethod method : methods) {
       if (clazz.equals(method.getContainingClass())) return true;
-      
+
       if (PsiUtil.isAccessible(clazz, method) && method.hasModifierProperty(PsiModifier.FINAL)) return true;
     }
 
@@ -169,7 +164,8 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     PsiClass aSuper = clazz.getSuperClass();
     if (aSuper != null) {
       PsiField field = aSuper.findFieldByName(getName(), true);
-      if (field instanceof GrField && ((GrField) field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL)) return true;
+      if (field instanceof GrField && ((GrField) field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL))
+        return true;
     }
 
     return false;

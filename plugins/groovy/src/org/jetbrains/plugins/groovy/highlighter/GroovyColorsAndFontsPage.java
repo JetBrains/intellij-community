@@ -16,6 +16,7 @@ package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -78,7 +79,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
 
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    return GroovyFileType.GROOVY_FILE_TYPE.getHighlighter(null, null);
+    return SyntaxHighlighterFactory.getSyntaxHighlighter(GroovyFileType.GROOVY_LANGUAGE, null, null);
   }
 
   @NonNls

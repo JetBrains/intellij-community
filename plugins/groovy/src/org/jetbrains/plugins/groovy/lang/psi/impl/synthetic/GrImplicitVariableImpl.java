@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightVariableBase;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,13 +23,17 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
   }
 
   public GrImplicitVariableImpl(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
-    this(manager, null, manager.getElementFactory().createTypeByFQClassName(type, manager.getProject().getAllScope()), false, referenceExpression);
+    this(manager, null,
+        JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().
+            createTypeByFQClassName(type, ProjectScope.getAllScope(manager.getProject())), false, referenceExpression);
     myNameIdentifier = new GrLightIdentifier(myManager, name);
   }
 
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitImplicitVariable(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor) visitor).visitImplicitVariable(this);
+    }
   }
 
   public String toString() {

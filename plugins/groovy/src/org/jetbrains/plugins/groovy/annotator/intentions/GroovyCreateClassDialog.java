@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.CommonBundle;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -14,10 +13,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -89,7 +89,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
 
     myPackageTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        getOKAction().setEnabled(PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(getPackageName()) ||
+        getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isQualifiedName(getPackageName()) ||
             "".equals(getPackageName()));
       }
     });

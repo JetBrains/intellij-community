@@ -15,20 +15,21 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
-import com.intellij.psi.tree.IChameleonElementType;
-import com.intellij.psi.PsiElement;
-import com.intellij.lang.Language;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
-import com.intellij.peer.PeerFactory;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import com.intellij.peer.PeerFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IChameleonElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 
 /**
  * @author ilyas
@@ -47,7 +48,7 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
     public ASTNode parseContents(ASTNode chameleon) {
       final PeerFactory factory = PeerFactory.getInstance();
       final PsiElement parentElement = chameleon.getTreeParent().getPsi();
-      final Project project = parentElement.getManager().getProject();
+      final Project project = JavaPsiFacade.getInstance(parentElement.getProject()).getProject();
 
       final PsiBuilder builder = factory.createBuilder(chameleon, new GroovyDocLexer(), getLanguage(), chameleon.getText(), project);
       final PsiParser parser = new GroovyDocParser();

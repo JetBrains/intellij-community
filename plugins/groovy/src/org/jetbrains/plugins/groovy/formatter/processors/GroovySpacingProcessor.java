@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
@@ -177,7 +176,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
             final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
             if (prev != null && prev.getElementType() == mSL_COMMENT) {
               myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-            } else if (!CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
+            } else if (!SpacingUtil.canStickChildrenTogether(myChild1, myChild2)) {
               myResult = Spacing.createSpacing(1, Integer.MIN_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
             } else if (myChild1.getElementType() == mML_COMMENT) {
               myResult = null;
@@ -530,7 +529,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       if (prev != null && prev.getElementType() == mSL_COMMENT) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       } else {
-        if (!space && !CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
+        if (!space && !SpacingUtil.canStickChildrenTogether(myChild1, myChild2)) {
           space = true;
         }
         myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);

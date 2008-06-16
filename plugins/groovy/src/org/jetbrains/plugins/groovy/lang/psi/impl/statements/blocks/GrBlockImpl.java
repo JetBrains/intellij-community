@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +117,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     return findChildByType(GroovyTokenTypes.mRCURLY);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    return ResolveUtil.processChildren(this, processor, substitutor, lastParent, place);
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    return ResolveUtil.processChildren(this, processor, state, lastParent, place);
   }
 }

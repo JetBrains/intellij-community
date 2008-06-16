@@ -32,7 +32,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -45,8 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
@@ -183,7 +180,7 @@ public class PsiImplUtil {
       PsiElement next = varDecl.getNextSibling();
 
       // remove redundant semicolons
-      while (next != null && next.getNode() != null && next.getNode().getElementType() == mSEMI){
+      while (next != null && next.getNode() != null && next.getNode().getElementType() == mSEMI) {
         PsiElement tmpNext = next.getNextSibling();
         owner.removeChild(next.getNode());
         next = tmpNext;
@@ -283,14 +280,14 @@ public class PsiImplUtil {
 
   public static PsiElement getOriginalElement(PsiClass clazz, PsiFile containingFile) {
     VirtualFile vFile = containingFile.getVirtualFile();
-    final PsiManager manager = clazz.getManager();
-    final ProjectFileIndex idx = ProjectRootManager.getInstance(manager.getProject()).getFileIndex();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(clazz.getProject());
+    final ProjectFileIndex idx = ProjectRootManager.getInstance(facade.getProject()).getFileIndex();
 
     if (vFile == null || !idx.isInLibrarySource(vFile)) return clazz;
     final String qName = clazz.getQualifiedName();
     if (qName == null) return null;
     final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
-    PsiClass original = manager.findClass(qName, new GlobalSearchScope() {
+    PsiClass original = facade.findClass(qName, new GlobalSearchScope() {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
       }

@@ -103,7 +103,7 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
           PsiClassType.ClassResolveResult result = ((PsiClassType) rType).resolveGenerics();
           PsiClass clazz = result.getElement();
           if (clazz != null) {
-            PsiClass listClass = rValue.getManager().findClass("java.util.List", rValue.getResolveScope());
+            PsiClass listClass = JavaPsiFacade.getInstance(rValue.getProject()).findClass("java.util.List", rValue.getResolveScope());
             if (listClass != null && listClass.getTypeParameters().length == 1) {
               PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
               if (substitutor != null) {

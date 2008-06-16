@@ -136,6 +136,8 @@ public abstract class TokenSets implements GroovyTokenTypes {
 
   public static TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
+      mWRONG_GSTRING_LITERAL,
+      mREGEX_LITERAL,
       mGSTRING_LITERAL
   );
 }

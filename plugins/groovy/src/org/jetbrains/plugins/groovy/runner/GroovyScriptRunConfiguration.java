@@ -17,24 +17,25 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +56,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public final String JAVA_LANG_STRING = "java/lang/String.class";
 
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
-    super(name, new RunConfigurationModule(project, true), factory);
+    super(name, new RunConfigurationModule(project), factory);
     this.factory = factory;
   }
 
@@ -112,43 +113,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     return new GroovyRunConfigurationEditor();
   }
 
-  public RunProfileState getState(
-      DataContext context,
-      RunnerInfo runnerInfo,
-      RunnerSettings runnerSettings,
-      ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
-    final Module module = getModule();
-    if (module == null) {
-      throw new ExecutionException("Module is not specified");
-    }
-
-    if (!GroovyConfigUtils.isGroovyConfigured(module)) {
-      throw new ExecutionException("Groovy is not configured");
-    }
-
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final ProjectJdk jdk = rootManager.getJdk();
-    if (jdk == null) {
-      throw CantRunException.noJdkForModule(getModule());
-    }
-
-    final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
-      protected JavaParameters createJavaParameters() throws ExecutionException {
-        JavaParameters params = new JavaParameters();
-
-        configureJavaParams(params, module);
-        configureGroovyStarter(params);
-        configureScript(params);
-
-        return params;
-      }
-    };
-
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    state.setModulesToCompile(getModules());
-    return state;
-  }
-
   private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
 
     params.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
@@ -174,10 +138,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // Clear module libraries from JDK's occurrences
     List<String> list = params.getClassPath().getPathList();
-    ProjectJdk jdk = params.getJdk();
+    Sdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String jdkDir = GroovyUtils.getJdkLibDirParent(jdk);
       for (String libPath : list) {
         JarFile jarFile;
         try {
@@ -186,9 +149,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
           jarFile = null;
         }
         if (jarFile != null && jarFile.getJarEntry(JAVA_LANG_STRING) != null) continue;
-        if (!libPath.startsWith(jdkDir)) {
-          buffer.append(libPath).append(File.pathSeparator);
-        }
       }
     }
 
@@ -208,5 +168,40 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
   public Module getModule() {
     return getConfigurationModule().getModule();
+  }
+
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    final Module module = getModule();
+    if (module == null) {
+      throw new ExecutionException("Module is not specified");
+    }
+
+    if (!GroovyConfigUtils.isGroovyConfigured(module)) {
+      throw new ExecutionException("Groovy is not configured");
+    }
+
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    final Sdk sdk = rootManager.getSdk();
+    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
+      throw CantRunException.noJdkForModule(getModule());
+    }
+
+    final JavaCommandLineState state = new JavaCommandLineState(environment) {
+      protected JavaParameters createJavaParameters() throws ExecutionException {
+        JavaParameters params = new JavaParameters();
+
+        configureJavaParams(params, module);
+        configureGroovyStarter(params);
+        configureScript(params);
+
+        return params;
+      }
+    };
+
+    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
+    //todo[DIANA] as Jeka
+    //state.setModulesToCompile(getModules());
+    return state;
+
   }
 }

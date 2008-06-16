@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  * @author ven
-*/
+ */
 public class GrClassReferenceType extends PsiClassType {
   private GrCodeReferenceElement myReferenceElement;
 
@@ -104,7 +104,7 @@ public class GrClassReferenceType extends PsiClassType {
   public PsiClassType rawType() {
     final PsiClass clazz = resolve();
     if (clazz != null) {
-      final PsiElementFactory factory = clazz.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
       return factory.createType(clazz, factory.createRawSubstitutor(clazz));
     }
 

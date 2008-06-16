@@ -3,20 +3,20 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
-* Date: 20.08.2007
-*/
+ * Date: 20.08.2007
+ */
 class TopLevelDependencyValidityState implements ValidityState {
   private long myTimestamp;
   private List<String> myMembers;  //fields
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.TopLevelDependencyValidityState");
-  
+
   TopLevelDependencyValidityState(long timestamp, List<String> members) {
 //      use signature of method and access modifiers
     this.myMembers = members;
@@ -30,6 +30,10 @@ class TopLevelDependencyValidityState implements ValidityState {
         && myMembers.equals(((TopLevelDependencyValidityState) validityState).myMembers);
   }
 
+  public void save(DataOutput out) throws IOException {
+    //todo[DIANA] implement me!
+  }
+
   public void save(DataOutputStream os) throws IOException {
     os.writeLong(myTimestamp);
     os.writeChar('\n');
@@ -40,7 +44,7 @@ class TopLevelDependencyValidityState implements ValidityState {
     }
   }
 
-  public static TopLevelDependencyValidityState load(DataInputStream is) throws IOException {    
+  public static TopLevelDependencyValidityState load(DataInputStream is) throws IOException {
     long timestamp = -1;
 
     Reader reader = new InputStreamReader(is);

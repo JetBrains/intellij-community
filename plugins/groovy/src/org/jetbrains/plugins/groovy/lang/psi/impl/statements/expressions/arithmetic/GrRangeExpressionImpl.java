@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
  * @author ilyas
@@ -21,7 +22,7 @@ public class GrRangeExpressionImpl extends GrBinaryExpressionImpl implements GrR
   }
 
   public PsiType getType() {
-    PsiElementFactory factory = getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     GrExpression lop = getLeftOperand();
     if (lop != null && lop.getType() != null && INTEGER_FQ_NAME.equals(lop.getType().getCanonicalText())) {
       return factory.createTypeByFQClassName(INT_RANGE_FQ_NAME, getResolveScope());

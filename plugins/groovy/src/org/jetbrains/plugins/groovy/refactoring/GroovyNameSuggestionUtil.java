@@ -114,7 +114,7 @@ public class GroovyNameSuggestionUtil {
     int arrayDim = type.getArrayDimensions();
     if (arrayDim == 0) return;
     PsiType deepType = type.getDeepComponentType();
-    String candidateName =cleanTypeName(deepType.getPresentableText());
+    String candidateName = cleanTypeName(deepType.getPresentableText());
     if (deepType instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType) deepType).resolve();
       if (clazz == null) return;
@@ -124,7 +124,7 @@ public class GroovyNameSuggestionUtil {
     generateCamelNames(possibleNames, validator, candidateName);
 
     ArrayList<String> camelizedName = camelizeString(candidateName);
-    candidateName = camelizedName.get(camelizedName.size()-1);
+    candidateName = camelizedName.get(camelizedName.size() - 1);
     candidateName = "arrayOf" + fromUpperLetter(candidateName);
     possibleNames.add(validator.validateName(candidateName, true));
   }
@@ -150,7 +150,7 @@ public class GroovyNameSuggestionUtil {
     generateCamelNames(possibleNames, validator, candidateName);
 
     ArrayList<String> camelizedName = camelizeString(candidateName);
-    candidateName = camelizedName.get(camelizedName.size()-1);
+    candidateName = camelizedName.get(camelizedName.size() - 1);
     candidateName = collectionName.toLowerCase() + "Of" + fromUpperLetter(candidateName);
     possibleNames.add(validator.validateName(candidateName, true));
   }
@@ -233,8 +233,8 @@ public class GroovyNameSuggestionUtil {
     PsiClassType.ClassResolveResult result = classType.resolveGenerics();
     PsiClass clazz = result.getElement();
     if (clazz == null) return null;
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiClass collectionClass = manager.findClass("java.util.Collection", ((PsiClassType) type).getResolveScope());
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiClass collectionClass = facade.findClass("java.util.Collection", ((PsiClassType) type).getResolveScope());
     if (collectionClass == null || collectionClass.getTypeParameters().length != 1) return null;
     PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, clazz, result.getSubstitutor());
 

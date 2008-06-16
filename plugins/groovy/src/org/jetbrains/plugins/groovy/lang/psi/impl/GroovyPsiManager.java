@@ -18,25 +18,32 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.util.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -73,7 +80,8 @@ public class GroovyPsiManager implements ProjectComponent {
   public void projectOpened() {
   }
 
-  public void projectClosed() {}
+  public void projectClosed() {
+  }
 
   @NonNls
   @NotNull
@@ -88,10 +96,11 @@ public class GroovyPsiManager implements ProjectComponent {
       }
     });
 
-    myTypeInferenceHelper = new  TypeInferenceHelper(myProject);
+    myTypeInferenceHelper = new TypeInferenceHelper(myProject);
 
     ProjectRootManager.getInstance(myProject).addModuleRootListener(new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {}
+      public void beforeRootsChange(ModuleRootEvent event) {
+      }
 
       public void rootsChanged(ModuleRootEvent event) {
         myRebuildGdkPending = true;
@@ -106,7 +115,7 @@ public class GroovyPsiManager implements ProjectComponent {
   private void buildGDK() {
     final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
 
-    PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
+    PsiClass defaultMethodsClass = JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
     if (defaultMethodsClass != null) {
       for (PsiMethod method : defaultMethodsClass.getMethods()) {
         if (method.isConstructor()) continue;
@@ -115,7 +124,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
     }
 
-    PsiClass defaultStaticMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_STATIC_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
+    PsiClass defaultStaticMethodsClass = JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_STATIC_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
     if (defaultStaticMethodsClass != null) {
       for (PsiMethod method : defaultStaticMethodsClass.getMethods()) {
         if (method.isConstructor()) continue;
@@ -230,7 +239,7 @@ public class GroovyPsiManager implements ProjectComponent {
   };
 
   private void addSwingBuilderMethods() {
-    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+    PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
 
     StringBuilder classText = new StringBuilder();
     classText.append("class SwingBuilder {\n");
@@ -313,7 +322,7 @@ public class GroovyPsiManager implements ProjectComponent {
     return myArrayClass;
   }
 
-  ThreadLocal<List<PsiElement>> myElementsWithTypesBeingInferred = new ThreadLocal<List<PsiElement>>(){
+  ThreadLocal<List<PsiElement>> myElementsWithTypesBeingInferred = new ThreadLocal<List<PsiElement>>() {
     protected List<PsiElement> initialValue() {
       return new ArrayList<PsiElement>();
     }
@@ -321,7 +330,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public PsiType inferType(PsiElement element, Computable<PsiType> computable) {
     final List<PsiElement> curr = myElementsWithTypesBeingInferred.get();
-    try{
+    try {
       curr.add(element);
       return computable.compute();
     } finally {

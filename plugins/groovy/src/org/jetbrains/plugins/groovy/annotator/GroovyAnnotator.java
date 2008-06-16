@@ -173,7 +173,7 @@ public class GroovyAnnotator implements Annotator {
 
     PsiDirectory psiDirectory = file.getContainingDirectory();
     if (psiDirectory != null) {
-      PsiPackage aPackage = psiDirectory.getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
       if (aPackage != null) {
         String packageName = aPackage.getQualifiedName();
         if (!packageDefinition.getPackageName().equals(packageName)) {
@@ -520,7 +520,7 @@ public class GroovyAnnotator implements Annotator {
         if (expr != null) {
           final PsiType argType = expr.getType();
           if (argType != null) {
-            final PsiClassType listType = namedArgument.getManager().getElementFactory().createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
+            final PsiClassType listType = JavaPsiFacade.getInstance(namedArgument.getProject()).getElementFactory().createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
             if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
             checkAssignability(holder, expectedType, argType, namedArgument);
           }
@@ -602,7 +602,7 @@ public class GroovyAnnotator implements Annotator {
   private void checkDuplicateClass(GrTypeDefinition typeDefinition, AnnotationHolder holder) {
     final String qName = typeDefinition.getQualifiedName();
     if (qName != null) {
-      final PsiClass[] classes = typeDefinition.getManager().findClasses(qName, typeDefinition.getResolveScope());
+      final PsiClass[] classes = JavaPsiFacade.getInstance(typeDefinition.getProject()).findClasses(qName, typeDefinition.getResolveScope());
       if (classes.length > 1) {
         final PsiFile file = typeDefinition.getContainingFile();
         String packageName = "<default package>";
@@ -798,7 +798,7 @@ public class GroovyAnnotator implements Annotator {
       String message;
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
-        final PsiClassType containingType = method.getManager().getElementFactory().createType(containingClass, methodResolveResult.getSubstitutor());
+        final PsiClassType containingType = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createType(containingClass, methodResolveResult.getSubstitutor());
         message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
       } else {
         message = GroovyBundle.message("cannot.apply.method.or.closure", method.getName(), typesString);

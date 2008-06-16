@@ -58,4 +58,8 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
 
     return result;
   }
+
+  public Role getRole() {
+    return Role.THROWS_LIST;
+  }
 }

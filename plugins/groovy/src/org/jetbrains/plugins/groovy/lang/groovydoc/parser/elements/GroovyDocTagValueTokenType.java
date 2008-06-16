@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 
 import java.util.Arrays;
@@ -108,7 +107,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
   private ASTNode parseImpl(ASTNode chameleon) {
     final PeerFactory factory = PeerFactory.getInstance();
     final PsiElement parentElement = chameleon.getTreeParent().getPsi();
-    final Project project = parentElement.getManager().getProject();
+    final Project project = parentElement.getProject();
     final PsiBuilder builder = factory.createBuilder(chameleon, new GroovyLexer(), getLanguage(), chameleon.getText(), project);
 
     PsiBuilder.Marker rootMarker = builder.mark();

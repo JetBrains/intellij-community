@@ -15,10 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,25 +26,25 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 /**
  * @author ven
-*/
+ */
 public class GrTupleType extends PsiClassType {
   private GlobalSearchScope myScope;
-  private PsiManager myManager;
+  private JavaPsiFacade myFacade;
   private PsiType[] myComponentTypes;
   @NonNls
   private static final String JAVA_UTIL_LIST = "java.util.List";
 
 
-  public GrTupleType(PsiType[] componentTypes, PsiManager manager, GlobalSearchScope scope) {
+  public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope) {
     myComponentTypes = componentTypes;
-    myManager = manager;
+    myFacade = facade;
     myScope = scope;
     myLanguageLevel = LanguageLevel.JDK_1_5;
   }
 
   @Nullable
   public PsiClass resolve() {
-    return myManager.findClass(JAVA_UTIL_LIST, getResolveScope());
+    return myFacade.findClass(JAVA_UTIL_LIST, getResolveScope());
   }
 
   public String getClassName() {
@@ -61,7 +61,7 @@ public class GrTupleType extends PsiClassType {
       if (result == null) result = other;
       if (result.isAssignableFrom(other)) continue;
       if (other.isAssignableFrom(result)) result = other;
-      result = TypesUtil.getLeastUpperBound(result, other, myManager);
+      result = TypesUtil.getLeastUpperBound(result, other, PsiManager.getInstance(myFacade.getProject()));
     }
 
     return new PsiType[]{result};
@@ -109,7 +109,7 @@ public class GrTupleType extends PsiClassType {
 
   @NotNull
   public PsiClassType rawType() {
-    return myManager.getElementFactory().createTypeByFQClassName(JAVA_UTIL_LIST, myScope);
+    return myFacade.getElementFactory().createTypeByFQClassName(JAVA_UTIL_LIST, myScope);
   }
 
   public String getPresentableText() {
@@ -158,7 +158,7 @@ public class GrTupleType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrTupleType copy = new GrTupleType(myComponentTypes, myManager, myScope);
+    GrTupleType copy = new GrTupleType(myComponentTypes, myFacade, myScope);
     copy.myLanguageLevel = languageLevel;
     return copy;
   }
@@ -182,8 +182,7 @@ public class GrTupleType extends PsiClassType {
         PsiType otherComponent = otherComponents[i];
         if (otherComponent == null) {
           if (componentType != null && !componentType.equalsToText("java.lang.Object")) return false;
-        }
-        else if (componentType != null && !componentType.isAssignableFrom(otherComponent)) return false;
+        } else if (componentType != null && !componentType.isAssignableFrom(otherComponent)) return false;
       }
       return true;
     }

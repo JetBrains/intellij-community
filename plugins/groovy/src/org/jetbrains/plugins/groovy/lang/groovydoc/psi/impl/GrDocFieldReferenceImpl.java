@@ -16,20 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
 /**
  * @author ilyas
@@ -88,14 +88,14 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
     }
     if (resolved instanceof PsiClass) {
       PropertyResolverProcessor processor = new PropertyResolverProcessor(name, this);
-      resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
+      resolved.processDeclarations(processor, ResolveState.initial(), resolved, this);
       GroovyResolveResult[] candidates = processor.getCandidates();
       if (candidates.length == 0) {
-        PsiType thisType = getManager().getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
+        PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
         MethodResolverProcessor methodProcessor = new MethodResolverProcessor(name, this, false, thisType, null, PsiType.EMPTY_ARRAY);
         MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, true, thisType, null, PsiType.EMPTY_ARRAY);
-        resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, resolved, this);
-        resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
+        resolved.processDeclarations(methodProcessor, ResolveState.initial(), resolved, this);
+        resolved.processDeclarations(constructorProcessor, ResolveState.initial(), resolved, this);
         candidates = ArrayUtil.mergeArrays(methodProcessor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);
         if (candidates.length > 0) {
           candidates = new GroovyResolveResult[]{candidates[0]};

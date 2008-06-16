@@ -15,14 +15,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -34,7 +37,7 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
   private GrClosableBlock myClosure;
 
   public ClosureSyntheticParameter(PsiManager manager, GrClosableBlock closure) {
-    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null, manager.getElementFactory().createTypeByFQClassName("java.lang.Object", closure.getResolveScope()), closure);
+    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null, JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", closure.getResolveScope()), closure);
     myClosure = closure;
   }
 

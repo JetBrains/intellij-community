@@ -20,9 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -43,10 +43,10 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
   }
 
   private static final PsiType[] PRIMITIVES = new PsiType[]{PsiType.BYTE, PsiType.CHAR,
-                                                            PsiType.DOUBLE, PsiType.FLOAT,
-                                                            PsiType.INT, PsiType.SHORT,
-                                                            PsiType.LONG, PsiType.BOOLEAN,
-                                                            PsiType.VOID
+      PsiType.DOUBLE, PsiType.FLOAT,
+      PsiType.INT, PsiType.SHORT,
+      PsiType.LONG, PsiType.BOOLEAN,
+      PsiType.VOID
   };
 
   @NotNull
@@ -62,7 +62,7 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
 
 //      if (primitive.getCanonicalText().equals(typeText)) {
 //        final String boxedQName = ((PsiPrimitiveType) primitive).getBoxedTypeName();
-//        return getManager().getElementFactory().createTypeByFQClassName(boxedQName, getResolveScope());
+//        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(boxedQName, getResolveScope());
 //      }
     }
 

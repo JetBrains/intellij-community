@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.groovy.intentions.comments;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +37,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
       }
       firstComment = (PsiComment) prevComment;
     }
-    final PsiManager manager = selectedComment.getManager();
+    final JavaPsiFacade manager = JavaPsiFacade.getInstance(selectedComment.getProject());
     final PsiElementFactory factory = manager.getElementFactory();
     String text = getCommentContents(firstComment);
     final List<PsiElement> commentsToDelete = new ArrayList<PsiElement>();
@@ -52,7 +54,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     final PsiComment newComment =
         factory.createCommentFromText("/*" + text + " */", selectedComment.getParent());
     final PsiElement insertedElement = firstComment.replace(newComment);
-    final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(element.getManager());
     for (PsiElement commentToDelete : commentsToDelete) {
       commentToDelete.delete();
     }
@@ -61,19 +63,14 @@ public class ChangeToCStyleCommentIntention extends Intention {
   @Nullable
   private PsiElement getNextNonWhiteSpace(PsiElement nextComment) {
     PsiElement elementToCheck = nextComment;
-    while(true)
-    {
+    while (true) {
       final PsiElement sibling = elementToCheck.getNextSibling();
-      if(sibling == null)
-      {
+      if (sibling == null) {
         return null;
       }
-      if(sibling.getText().trim().replace("\n", "").length() == 0)
-      {
-         elementToCheck = sibling;
-      }
-      else
-      {
+      if (sibling.getText().trim().replace("\n", "").length() == 0) {
+        elementToCheck = sibling;
+      } else {
         return sibling;
       }
     }
@@ -82,19 +79,14 @@ public class ChangeToCStyleCommentIntention extends Intention {
   @Nullable
   private PsiElement getPrevNonWhiteSpace(PsiElement nextComment) {
     PsiElement elementToCheck = nextComment;
-    while(true)
-    {
+    while (true) {
       final PsiElement sibling = elementToCheck.getPrevSibling();
-      if(sibling == null)
-      {
+      if (sibling == null) {
         return null;
       }
-      if(sibling.getText().trim().replace("\n", "").length() == 0)
-      {
-         elementToCheck = sibling;
-      }
-      else
-      {
+      if (sibling.getText().trim().replace("\n", "").length() == 0) {
+        elementToCheck = sibling;
+      } else {
         return sibling;
       }
     }

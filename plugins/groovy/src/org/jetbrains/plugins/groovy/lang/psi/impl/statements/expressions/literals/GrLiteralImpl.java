@@ -17,13 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.litera
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
@@ -61,7 +62,7 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
       return getTypeByFQName("java.math.BigDecimal");
     } else if (elemType == kFALSE || elemType == kTRUE) {
       return getTypeByFQName("java.lang.Boolean");
-    }  else if (elemType == kNULL) {
+    } else if (elemType == kNULL) {
       return PsiType.NULL;
     }
 
@@ -79,27 +80,33 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
     if (elemType == mNUM_INT) {
       try {
         return Integer.parseInt(text);
-      } catch (NumberFormatException e) {}
+      } catch (NumberFormatException e) {
+      }
     } else if (elemType == mNUM_LONG) {
       try {
         return Long.parseLong(text);
-      } catch (NumberFormatException e) {}
+      } catch (NumberFormatException e) {
+      }
     } else if (elemType == mNUM_FLOAT) {
       try {
         return Float.parseFloat(text);
-      } catch (NumberFormatException e) {}
+      } catch (NumberFormatException e) {
+      }
     } else if (elemType == mNUM_DOUBLE) {
       try {
         return Double.parseDouble(text);
-      } catch (NumberFormatException e) {}
+      } catch (NumberFormatException e) {
+      }
     } else if (elemType == mNUM_BIG_INT) {
       try {
         return new BigInteger(text);
-      } catch (NumberFormatException e) {}
+      } catch (NumberFormatException e) {
+      }
     } else if (elemType == mNUM_BIG_DECIMAL) {
       try {
         return new BigDecimal(text);
-      } catch (NumberFormatException e) {}
+      } catch (NumberFormatException e) {
+      }
     } else if (elemType == kFALSE) {
       return Boolean.FALSE;
     } else if (elemType == kTRUE) {
@@ -108,14 +115,14 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
       if (!text.startsWith("'")) return null;
       text = text.substring(1);
       if (text.endsWith("'")) {
-        text = text.substring(0, text.length() -1);
+        text = text.substring(0, text.length() - 1);
       }
       return StringUtil.unescapeStringCharacters(text);
     } else if (elemType == mGSTRING_LITERAL) {
       if (!text.startsWith("\"")) return null;
       text = text.substring(1);
       if (text.endsWith("\"")) {
-        text = text.substring(0, text.length() -1);
+        text = text.substring(0, text.length() - 1);
       }
       return StringUtil.unescapeStringCharacters(text);
     }
@@ -126,6 +133,6 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this, GrLiteral.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, GrLiteral.class);
   }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -23,14 +24,13 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl");
+
   public GrVariableImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -105,7 +106,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
               if (declaredClass == initializerClass) return initializerType;
               final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
               if (superSubstitutor != null) {
-                return getManager().getElementFactory().createType(declaredClass, superSubstitutor);
+                return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(declaredClass, superSubstitutor);
               }
             }
           }
@@ -136,7 +137,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
         LOG.error(e);
         return;
       }
-      
+
       final ASTNode newTypeElementNode = newTypeElement.getNode();
       if (typeElement == null) {
         final PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);

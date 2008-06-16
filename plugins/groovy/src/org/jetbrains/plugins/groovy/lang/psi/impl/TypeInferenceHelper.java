@@ -39,8 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypesSemilattice;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -99,7 +99,7 @@ public class TypeInferenceHelper {
   private ThreadLocal<Map<String, PsiType>> myCurrentEnvironment = new ThreadLocal<Map<String, PsiType>>();
   private ThreadLocal<Set<GroovyPsiElement>> myScopesBeingInferred = new ThreadLocal<Set<GroovyPsiElement>>();
 
-  public PsiType doWithInferenceDisabled (Computable<PsiType> computable) {
+  public PsiType doWithInferenceDisabled(Computable<PsiType> computable) {
     return doInference(computable, Collections.<String, PsiType>emptyMap());
   }
 

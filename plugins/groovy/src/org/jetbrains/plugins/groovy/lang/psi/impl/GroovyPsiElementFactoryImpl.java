@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -177,7 +178,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
 
   @Nullable
   public GrTopStatement createTopElementFromText(String text) {
-    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         text);
     final PsiElement firstChild = dummyFile.getFirstChild();
     if (!(firstChild instanceof GrTopStatement)) return null;
@@ -194,7 +195,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
   private GroovyFileImpl createDummyFile(String s, boolean isPhisical) {
-    return (GroovyFileImpl) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("DUMMY__." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis(), isPhisical);
+    return (GroovyFileImpl) PsiFileFactory.getInstance(myProject).createFileFromText("DUMMY__." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis(), isPhisical);
   }
 
   private GroovyFileImpl createDummyFile(String s) {
@@ -339,7 +340,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
   public PsiElement createWhiteSpace() {
-    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         " ");
     return dummyFile.getFirstChild();
   }
@@ -356,7 +357,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
       text = buffer.toString();
     }
 
-    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         text);
     PsiElement child = dummyFile.getFirstChild();
     assert child != null;
@@ -416,13 +417,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     final String text = "import " + (isStatic ? "static " : "") + qName + (isOnDemand ? ".*" : "") +
         (alias != null && alias.length() > 0 ? " as " + alias : "");
 
-    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         text);
     return ((GrImportStatement) dummyFile.getFirstChild());
   }
 
   public GrImportStatement createImportStatementFromText(@NotNull String text) {
-    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         text);
     return ((GrImportStatement) dummyFile.getFirstChild());
   }
@@ -473,7 +474,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
       try {
         psiType = factory.createTypeElement(paramType).getType();
       } catch (IncorrectOperationException e) {
-        psiType = PsiType.getJavaLangObject(PsiManager.getInstance(myProject), myProject.getAllScope());
+        psiType = PsiType.getJavaLangObject(PsiManager.getInstance(myProject), ProjectScope.getAllScope(myProject));
       }
       res.add(psiType);
     }

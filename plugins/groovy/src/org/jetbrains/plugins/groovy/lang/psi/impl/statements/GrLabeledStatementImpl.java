@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
@@ -53,8 +53,8 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     return findChildByClass(GrStatement.class);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     GrStatement statement = getStatement();
-    return statement == null || statement == lastParent || statement.processDeclarations(processor, substitutor, lastParent, place);
+    return statement == null || statement == lastParent || statement.processDeclarations(processor, state, lastParent, place);
   }
 }

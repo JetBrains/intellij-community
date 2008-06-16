@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
@@ -199,7 +200,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (assertion != null) {
       assertion.accept(this);
       final InstructionImpl assertInstruction = startNode(assertStatement);
-      final PsiType type = assertStatement.getManager().getElementFactory().createTypeByFQClassName("java.lang.AssertionError", assertStatement.getResolveScope());
+      final PsiType type = JavaPsiFacade.getInstance(assertStatement.getProject()).getElementFactory().createTypeByFQClassName("java.lang.AssertionError", assertStatement.getResolveScope());
       ExceptionInfo info = findCatch(type);
       if (info != null) {
         info.myThrowers.add(assertInstruction);
@@ -231,11 +232,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private void flowAbrupted() { myHead = null; }
+  private void flowAbrupted() {
+    myHead = null;
+  }
 
   @Nullable
   private ExceptionInfo findCatch(PsiType thrownType) {
-    for (int i = myCatchedExceptionInfos.size() - 1; i >= 0 ; i--) {
+    for (int i = myCatchedExceptionInfos.size() - 1; i >= 0; i--) {
       final ControlFlowBuilder.ExceptionInfo info = myCatchedExceptionInfos.get(i);
       final GrCatchClause clause = info.myClause;
       final GrParameter parameter = clause.getParameter();
@@ -563,7 +566,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
   }
-  
+
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
     if (variable.getInitializerGroovy() != null) {
@@ -597,7 +600,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return Collections.singletonList(myCallee);
     }
 
-    protected String getElementPresentation() { return ""; }
+    protected String getElementPresentation() {
+      return "";
+    }
 
     CallInstructionImpl(int num, InstructionImpl callee) {
       super(null, num);
@@ -622,7 +627,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return Collections.singletonList(myReturnInsn);
     }
 
-    protected String getElementPresentation() { return "";
+    protected String getElementPresentation() {
+      return "";
     }
 
     PostCallInstructionImpl(int num, CallInstructionImpl call) {
@@ -644,11 +650,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return super.toString() + " RETURN";
     }
 
-    protected String getElementPresentation() { return ""; }
+    protected String getElementPresentation() {
+      return "";
+    }
 
     public Iterable<? extends Instruction> succ(CallEnvironment env) {
       final Stack<CallInstruction> callStack = getStack(env, this);
-      if (callStack.isEmpty()) return Collections.emptyList();     //can be true in case env was not populated (e.g. by DFA)
+      if (callStack.isEmpty())
+        return Collections.emptyList();     //can be true in case env was not populated (e.g. by DFA)
 
       final CallInstruction callInstruction = callStack.peek();
       final List<InstructionImpl> succ = ((CallInstructionImpl) callInstruction).mySucc;
@@ -659,7 +668,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
 
       return succ;
-   }
+    }
   }
 
   private static boolean hasDeclaredVariable(String name, GrClosableBlock scope, PsiElement place) {

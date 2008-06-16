@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.junit.Assert;
@@ -66,7 +66,7 @@ public abstract class TestUtils {
   }
 
   public static PsiFile createPseudoPhysicalGDocFile(final Project project, final String text) throws IncorrectOperationException {
-    return PsiManager.getInstance(project).getElementFactory().createFileFromText(
+    return PsiFileFactory.getInstance(project).createFileFromText(
         GDOC_TEMP_FILE,
         FileTypeManager.getInstance().getFileTypeByFileName(GDOC_TEMP_FILE),
         text,
@@ -80,7 +80,7 @@ public abstract class TestUtils {
 
 
   public static PsiFile createPseudoPhysicalFile(final Project project, final String fileName, final String text) throws IncorrectOperationException {
-    return PsiManager.getInstance(project).getElementFactory().createFileFromText(
+    return PsiFileFactory.getInstance(project).createFileFromText(
         fileName,
         FileTypeManager.getInstance().getFileTypeByFileName(fileName),
         text,

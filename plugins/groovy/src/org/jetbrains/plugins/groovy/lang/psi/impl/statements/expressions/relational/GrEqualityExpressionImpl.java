@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
@@ -34,6 +35,6 @@ public class GrEqualityExpressionImpl extends GrBinaryExpressionImpl {
   }
 
   public PsiType getType() {
-    return getManager().getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
   }
 }

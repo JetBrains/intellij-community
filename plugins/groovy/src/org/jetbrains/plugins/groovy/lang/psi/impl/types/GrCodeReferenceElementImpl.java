@@ -40,14 +40,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -227,7 +227,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         final String refText = PsiUtil.getQualifiedReferenceText(this);
         final int lastDot = refText.lastIndexOf(".");
         String parentPackageFQName = lastDot > 0 ? refText.substring(0, lastDot) : "";
-        final PsiPackage parentPackage = manager.findPackage(parentPackageFQName);
+        final PsiPackage parentPackage = JavaPsiFacade.getInstance(getProject()).findPackage(parentPackageFQName);
         if (parentPackage != null) {
           final GlobalSearchScope scope = getResolveScope();
           if (kind == PACKAGE_FQ) {
@@ -303,9 +303,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         case PACKAGE_FQ:
           String qName = PsiUtil.getQualifiedReferenceText(ref);
 
+          JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
           if (kind == CLASS_OR_PACKAGE_FQ || kind == CLASS_FQ) {
             if (qName.indexOf('.') > 0 || ((GroovyFileBase) ref.getContainingFile()).getPackageName().length() == 0) {
-              PsiClass aClass = manager.findClass(qName, ref.getResolveScope());
+              PsiClass aClass = facade.findClass(qName, ref.getResolveScope());
               if (aClass != null) {
                 boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
                 return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
@@ -314,7 +315,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           }
 
           if (kind == CLASS_OR_PACKAGE_FQ || kind == PACKAGE_FQ) {
-            PsiPackage aPackage = manager.findPackage(qName);
+            PsiPackage aPackage = facade.findPackage(qName);
             if (aPackage != null) {
               return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
             }
@@ -360,7 +361,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             if (candidates.length > 0) return candidates;
 
             if (kind == CLASS_OR_PACKAGE) {
-              PsiPackage defaultPackage = ref.getManager().findPackage("");
+              PsiPackage defaultPackage = JavaPsiFacade.getInstance(ref.getProject()).findPackage("");
               if (defaultPackage != null) {
                 for (final PsiPackage subpackage : defaultPackage.getSubPackages()) {
                   if (refName.equals(subpackage.getName()))
@@ -379,7 +380,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             final PsiElement resolve = qualifier.resolve();
             if (resolve instanceof PsiClass) {
               final PsiClass clazz = (PsiClass) resolve;
-              PsiResolveHelper helper = clazz.getManager().getResolveHelper();
+              PsiResolveHelper helper = JavaPsiFacade.getInstance(clazz.getProject()).getResolveHelper();
               List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
               final PsiField field = clazz.findFieldByName(refName, false);
               if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {

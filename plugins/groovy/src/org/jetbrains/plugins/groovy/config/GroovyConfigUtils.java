@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -249,7 +249,7 @@ public class GroovyConfigUtils {
       Library library;
 
       if (inModuleSettings) {
-        StructureConfigrableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+        StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
         LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL, true);
         modifiableModel = provider.getModifiableModel();
         library = modifiableModel.createLibrary(libName);
@@ -323,7 +323,7 @@ public class GroovyConfigUtils {
   }
 
   public static void removeOldRoots(Library.ModifiableModel model) {
-    for (OrderRootType type : OrderRootType.ALL_TYPES)
+    for (OrderRootType type : OrderRootType.getAllTypes())
       for (String url : model.getUrls(type))
         model.removeRoot(url, type);
   }

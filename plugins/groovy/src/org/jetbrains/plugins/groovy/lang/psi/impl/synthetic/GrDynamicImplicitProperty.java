@@ -17,11 +17,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
@@ -55,7 +56,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
 
   @Nullable
   public PsiClass getContainingClassElement() {
-    final PsiClassType containingClassType = myManager.getElementFactory().createTypeByFQClassName(myContainingClassName, myManager.getProject().getAllScope());
+    final PsiClassType containingClassType = JavaPsiFacade.getInstance(getProject()).getElementFactory().
+        createTypeByFQClassName(myContainingClassName, ProjectScope.getAllScope(getProject()));
 
     return containingClassType.resolve();
   }
@@ -124,7 +126,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
         treeTable.getTree().setSelectionPath(path);
         treeTable.getTree().fireTreeExpanded(path);
 
-        ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);        
+// todo [DIANA]  implement me!
+//         ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);
         treeTable.revalidate();
         treeTable.repaint();
 

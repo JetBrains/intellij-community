@@ -407,7 +407,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         text.append(parameter.getName());
         PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
         if (extendsListTypes.length > 0) {
-          text.append( " extends ");
+          text.append(" extends ");
           for (int j = 0; j < extendsListTypes.length; j++) {
             if (j > 0) text.append(" & ");
             text.append(computeTypeText(extendsListTypes[j]));
@@ -572,7 +572,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     while (i < variables.length) {
       variable = variables[i];
       String name = variable.getName();
-      if (!variable.getManager().getNameHelper().isIdentifier(name)) continue; //does not have a java image
+      if (!JavaPsiFacade.getInstance(variable.getProject()).getNameHelper().isIdentifier(name))
+        continue; //does not have a java image
 
       text.append("\n");
       text.append("  ");
@@ -596,7 +597,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
     if (method == null) return;
     String name = method.getName();
-    if (!method.getManager().getNameHelper().isIdentifier(name)) return; //does not have a java image
+    if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name))
+      return; //does not have a java image
 
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
@@ -614,7 +616,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     PsiType retType;
     if (method instanceof GrMethod) {
       retType = ((GrMethod) method).getDeclaredReturnType();
-      if (retType == null) retType = TypesUtil.getJavaLangObject((GrMethod)method);
+      if (retType == null) retType = TypesUtil.getJavaLangObject((GrMethod) method);
     } else retType = method.getReturnType();
 
     text.append(getTypeText(retType));
@@ -769,14 +771,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return true;
   }
 
-  public ValidityState createValidityState(DataInputStream is) throws IOException {
-    return TimestampValidityState.load(is);
-  }
-
   CharTrie myTrie = new CharTrie();
 
   public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
     myTrie.clear();
+  }
+
+  public ValidityState createValidityState(DataInput in) throws IOException {
+    return TimestampValidityState.load(in);
   }
 
   class GenerationItemImpl implements GenerationItem {

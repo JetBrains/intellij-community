@@ -21,14 +21,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
@@ -69,8 +69,8 @@ public abstract class GroovyFix implements LocalQuickFix {
       return false;
     }
     final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
-    final PsiManager psiManager = problemElement.getManager();
-    final Project project = psiManager.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(problemElement.getProject());
+    final Project project = facade.getProject();
     final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
     final ReadonlyStatusHandler.OperationStatus status =
         handler.ensureFilesWritable(virtualFile);

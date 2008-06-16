@@ -17,8 +17,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaDataBase;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.meta.PsiMetaData;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -78,7 +80,7 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
   }
 
   @Nullable
-  public PsiMetaDataBase getMetaData() {
+  public PsiMetaData getMetaData() {
     return null;
   }
 

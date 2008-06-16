@@ -17,26 +17,25 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -66,15 +65,16 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
         return new PsiEllipsisType(type);
       }
     }
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (isVarArgs()) {
-      PsiClassType type = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+      PsiClassType type = facade.getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
       return new PsiEllipsisType(type);
     }
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
       GrExpression iteratedExpression = ((GrForInClause) parent).getIteratedExpression();
       if (iteratedExpression instanceof GrRangeExpression) {
-        return getManager().getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
+        return facade.getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
       } else if (iteratedExpression != null) {
         PsiType iterType = iteratedExpression.getType();
         if (iterType instanceof PsiArrayType) return ((PsiArrayType) iterType).getComponentType();
@@ -82,8 +82,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
           PsiClassType.ClassResolveResult result = ((PsiClassType) iterType).resolveGenerics();
           PsiClass clazz = result.getElement();
           if (clazz != null) {
-            PsiManagerEx manager = getManager();
-            PsiClass collectionClass = manager.findClass("java.util.Collection", getResolveScope());
+            PsiClass collectionClass = facade.findClass("java.util.Collection", getResolveScope());
             if (collectionClass != null && collectionClass.getTypeParameters().length == 1) {
               PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, clazz, result.getSubstitutor());
               if (substitutor != null) {
@@ -95,7 +94,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
             }
 
             if ("java.lang.String".equals(clazz.getQualifiedName())) {
-              return manager.getElementFactory().createTypeByFQClassName("java.lang.Character", getResolveScope());
+              return facade.getElementFactory().createTypeByFQClassName("java.lang.Character", getResolveScope());
             }
           }
         }
@@ -111,8 +110,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     if (isVarArgs()) {
       return new PsiEllipsisType(type);
     } else if (isMainMethodFirstUntypedParameter()) {
-      PsiManagerEx manager = getManager();
-      PsiClassType stringType = manager.getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
+      PsiClassType stringType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
       return stringType.createArrayType();
     } else {
       return type;

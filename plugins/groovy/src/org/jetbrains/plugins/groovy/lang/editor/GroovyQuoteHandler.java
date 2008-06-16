@@ -15,7 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.editor;
 
-import com.intellij.codeInsight.editorActions.TypedHandler;
+import com.intellij.codeInsight.editorActions.QuoteHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 /**
  * @author ven
  */
-public class GroovyQuoteHandler implements TypedHandler.QuoteHandler {
+public class GroovyQuoteHandler implements QuoteHandler {
 
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();

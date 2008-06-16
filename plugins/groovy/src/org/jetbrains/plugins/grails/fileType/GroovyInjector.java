@@ -17,7 +17,7 @@ package org.jetbrains.plugins.grails.fileType;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
-import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.JavaConcatenationInjectorManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ public class GroovyInjector implements ProjectComponent {
   }
 
   public void initComponent() {
-    InjectedLanguageManager.getInstance(myProject).registerConcatenationInjector(new MyLanguageInjector());
+    JavaConcatenationInjectorManager.getInstance(myProject).registerConcatenationInjector(new MyLanguageInjector());
   }
 
   public void disposeComponent() {
@@ -81,7 +81,7 @@ public class GroovyInjector implements ProjectComponent {
                     final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
                     registrar.startInjecting(groovyLanguage);
                     for (PsiElement operand : operands) {
-                      registrar.addPlace("", "", (PsiLanguageInjectionHost)operand, new TextRange(1, operand.getTextLength() - 1));
+                      registrar.addPlace("", "", (PsiLanguageInjectionHost) operand, new TextRange(1, operand.getTextLength() - 1));
                     }
                     registrar.doneInjecting();
                   }

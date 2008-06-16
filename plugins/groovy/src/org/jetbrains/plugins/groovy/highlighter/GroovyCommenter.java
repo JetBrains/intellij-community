@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -69,5 +70,9 @@ public class GroovyCommenter implements CodeDocumentationAwareCommenter {
   @Nullable
   public String getDocumentationCommentSuffix() {
     return "*/";
+  }
+
+  public boolean isDocumentationComment(PsiComment element) {
+    return element.getText().startsWith(getDocumentationCommentPrefix());
   }
 }

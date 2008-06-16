@@ -26,9 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * User: Dmitry.Krasilschikov
-  * Date: 01.11.2007
-  */
- public class ChangePackageQuickFix implements IntentionAction {
+ * Date: 01.11.2007
+ */
+public class ChangePackageQuickFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.ChangePackageQuickFix");
 
   private final GroovyFile myFile;

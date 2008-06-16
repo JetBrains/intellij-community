@@ -57,11 +57,12 @@ public class MethodResolverProcessor extends ResolverProcessor {
     myTypeArguments = typeArguments;
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+  public boolean execute(PsiElement element, ResolveState state) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       if (method.isConstructor() != myIsConstructor) return true;
-
+      PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+      if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
       substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method);
@@ -75,7 +76,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     } else if (element instanceof PsiVariable) {
       if (element instanceof GrField && ((GrField) element).isProperty() ||
           isClosure((PsiVariable) element)) {
-        return super.execute(element, substitutor);
+        return super.execute(element, state);
       }
     }
 
@@ -153,7 +154,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         argumentTypes[i] = i < argTypes.length ? argTypes[i] : PsiType.NULL;
       }
 
-      final PsiResolveHelper helper = method.getManager().getResolveHelper();
+      final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
       PsiSubstitutor substitutor = helper.inferTypeArguments(typeParameters, parameterTypes, argumentTypes, LanguageLevel.HIGHEST);
       for (PsiTypeParameter typeParameter : typeParameters) {
         if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {

@@ -57,7 +57,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
         "   final java.lang.Object closure = field.get(c.newInstance());\n";
   }
 
-  public PsiCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
+  public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
     String text = textWithImports.getText();
     String imports = textWithImports.getImports();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
@@ -132,8 +132,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     }
     javaText.append("res");
 
-    PsiElementFactory elementFactory = toEval.getManager().getElementFactory();
-    PsiCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
+    JavaCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
     if (contextClass != null) {
       result.setThisType(elementFactory.createType(contextClass));
     }
@@ -149,7 +149,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     return StringUtil.escapeStringCharacters(text);
   }
 
-  public PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
+  public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
     GroovyCodeFragment result = new GroovyCodeFragment(project, item.getText());
     result.setContext(context);
     return result;
@@ -167,7 +167,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   private boolean isStaticContext(PsiElement context) {
     PsiElement parent = context;
     while (parent != null) {
-      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner) parent).hasModifierProperty(PsiModifier.STATIC)) return true;
+      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner) parent).hasModifierProperty(PsiModifier.STATIC))
+        return true;
       if (parent instanceof GrTypeDefinition || parent instanceof GroovyFile) return false;
       parent = parent.getParent();
     }

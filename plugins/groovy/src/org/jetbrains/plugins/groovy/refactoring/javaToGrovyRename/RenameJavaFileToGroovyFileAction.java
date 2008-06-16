@@ -20,11 +20,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -76,6 +76,6 @@ public class RenameJavaFileToGroovyFileAction extends AnAction {
 
   private boolean isEnabled(PsiFile file) {
     return file != null && (file.getLanguage() == StdLanguages.JAVA || file.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) &&
-                                   file.getManager().isInProject(file);
+        file.getManager().isInProject(file);
   }
 }

@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -60,7 +63,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
     if (!GroovyUtils.isSuitableModule(module) ||
         !presentation.isEnabled() ||
         !NewActionBase.isUnderSourceRoots(event) ||
-        !ActionsUtil.isGroovyConfigured(event)){
+        !ActionsUtil.isGroovyConfigured(event)) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     } else {
@@ -82,7 +85,8 @@ public abstract class NewActionBase extends CreateElementActionBase {
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       PsiDirectory[] dirs = view.getDirectories();
       for (PsiDirectory dir : dirs) {
-        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
+        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && aPackage != null) {
           return true;
         }
       }
@@ -114,6 +118,6 @@ public abstract class NewActionBase extends CreateElementActionBase {
   }
 
   protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateClass(newName);
+    JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
   }
 }

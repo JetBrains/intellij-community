@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +30,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -87,54 +84,54 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return mySyntheticArgsParameter;
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     for (final GrTopLevelDefintion definition : getTopLevelDefinitions()) {
       if (!ResolveUtil.processElement(processor, definition)) return false;
     }
 
-    PsiManager manager = getManager();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
 
     if (!(lastParent instanceof GrTypeDefinition)) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
 
       PsiClass scriptClass = getScriptClass();
-      if (scriptClass != null && !scriptClass.processDeclarations(processor, substitutor, lastParent, place))
+      if (scriptClass != null && !scriptClass.processDeclarations(processor, state, lastParent, place))
         return false;
     }
 
-    if (!processChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
+    if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
 
     final GrImportStatement[] imports = getImportStatements();
 
     for (GrImportStatement importStatement : imports) {
-      if (!importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place)) {
+      if (!importStatement.isOnDemand() && !importStatement.processDeclarations(processor, state, lastParent, place)) {
         return false;
       }
     }
 
     String currentPackageName = getPackageName();
-    PsiPackage currentPackage = manager.findPackage(currentPackageName);
-    
-    if (currentPackage != null && !currentPackage.processDeclarations(processor, substitutor, lastParent, place))
+    PsiPackage currentPackage = facade.findPackage(currentPackageName);
+
+    if (currentPackage != null && !currentPackage.processDeclarations(processor, state, lastParent, place))
       return false;
 
     for (GrImportStatement importStatement : imports) {
-      if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place))
+      if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, state, lastParent, place))
         return false;
     }
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
-      PsiPackage aPackage = manager.findPackage(implicitlyImported);
-      if (aPackage != null && !aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      PsiPackage aPackage = facade.findPackage(implicitlyImported);
+      if (aPackage != null && !aPackage.processDeclarations(processor, state, lastParent, place)) return false;
     }
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
-      PsiClass clazz = manager.findClass(implicitlyImportedClass, getResolveScope());
+      PsiClass clazz = facade.findClass(implicitlyImportedClass, getResolveScope());
       if (clazz != null && !ResolveUtil.processElement(processor, clazz)) return false;
     }
 
     if (currentPackageName.length() > 0) { //otherwise already processed default package
-      PsiPackage defaultPackage = manager.findPackage("");
+      PsiPackage defaultPackage = facade.findPackage("");
       if (defaultPackage != null) {
         for (PsiPackage subpackage : defaultPackage.getSubPackages(getResolveScope())) {
           if (!ResolveUtil.processElement(processor, subpackage)) return false;
@@ -146,12 +143,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   private static boolean processChildrenScopes(PsiElement element, PsiScopeProcessor processor,
-                                               PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+                                               ResolveState state, PsiElement lastParent, PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
           !(run instanceof GrImportStatement) &&
-          !run.processDeclarations(processor, substitutor, null, place)) return false;
+          !run.processDeclarations(processor, state, null, place)) return false;
       run = run.getPrevSibling();
     }
 
@@ -210,7 +207,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     GrImportStatement importStatement = (GrImportStatement) result;
     PsiElement next = importStatement.getNextSibling();
-    if (next != null){
+    if (next != null) {
       ASTNode node = next.getNode();
       if (node != null && GroovyTokenTypes.mNLS == node.getElementType()) {
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
@@ -267,7 +264,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore) throws IncorrectOperationException {
     T result = (T) addBefore(decl, anchorBefore);
-    CodeStyleManager styleManager = result.getManager().getCodeStyleManager();
+    CodeStyleManager styleManager = getManager().getCodeStyleManager();
     PsiElement parent = result.getContainingFile();
     TextRange range = result.getTextRange();
     styleManager.reformatRange(parent, range.getEndOffset() - 1, range.getEndOffset() + 1);

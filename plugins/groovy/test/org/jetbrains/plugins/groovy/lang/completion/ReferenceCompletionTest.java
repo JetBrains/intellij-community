@@ -15,17 +15,17 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.util.InvalidDataException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -51,13 +51,16 @@ public class ReferenceCompletionTest extends CompletionTestBase {
 
   protected String processFile(PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean prevSettings = settings.LIST_PACKAGES_IN_CODE;
-    try {
-      settings.LIST_PACKAGES_IN_CODE = false;
-      return super.processFile(file);
-    } finally {
-      settings.LIST_PACKAGES_IN_CODE = prevSettings;
-    }
+
+// todo [DIANA] uncomment me 
+//    boolean prevSettings = settings.LIST_PACKAGES_IN_CODE;
+//    try {
+//      settings.LIST_PACKAGES_IN_CODE = false;
+//      return super.processFile(file);
+//    } finally {
+//      settings.LIST_PACKAGES_IN_CODE = prevSettings;
+//    }
+    return "";
   }
 
   protected LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException {

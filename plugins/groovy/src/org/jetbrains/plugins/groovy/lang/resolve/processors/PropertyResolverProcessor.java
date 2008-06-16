@@ -16,13 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
@@ -38,17 +38,17 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+  public boolean execute(PsiElement element, ResolveState state) {
     if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement) myPlace);
       if (!lValue && PsiUtil.isSimplePropertyGetter(method, myName)) {
         myCandidates.clear();
-        super.execute(element, substitutor);
+        super.execute(element, state);
         return false;
       } else if (lValue && PsiUtil.isSimplePropertySetter(method, myName)) {
         myCandidates.clear();
-        super.execute(element, substitutor);
+        super.execute(element, state);
         return false;
       }
     } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
@@ -56,11 +56,14 @@ public class PropertyResolverProcessor extends ResolverProcessor {
         if (myProperty == null) {
           boolean isAccessible = isAccessible((PsiNamedElement) element);
           boolean isStaticsOK = isStaticsOK((PsiNamedElement) element);
+
+          PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+          substitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
           myProperty = new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK);
         }
         return true;
       }
-      return super.execute(element, substitutor);
+      return super.execute(element, state);
     }
 
     return true;

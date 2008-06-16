@@ -16,13 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author ilyas
@@ -42,7 +43,7 @@ public class GrMultiplicativeExpressionImpl extends GrBinaryExpressionImpl {
   public PsiType getType() {
     GrExpression lop = getLeftOperand();
     if (findChildByType(GroovyElementTypes.mDIV) != null) {
-      PsiElementFactory factory = getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
       if (lop != null) {
         PsiType lType = lop.getType();
         if (lType != null && isDoubleOrFloat(lType)) {

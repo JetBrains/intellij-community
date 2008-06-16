@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,13 +27,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 
-public class GroovyScriptRunConfigurationType implements LocatableConfigurationType {
+public class GroovyScriptRunConfigurationType implements LocatableConfigurationType, ApplicationComponent {
   private GroovyScriptConfigurationFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {
@@ -61,6 +64,12 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     return GroovyIcons.FILE_TYPE;
   }
 
+  @NonNls
+  @NotNull
+  public String getId() {
+    return null;
+  }
+
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myConfigurationFactory};
   }
@@ -70,6 +79,10 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     final PsiClass clazz = getScriptClass(element);
     if (clazz == null) return null;
     return createConfiguration(clazz);
+  }
+
+  public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
+    return false;
   }
 
   private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass) {
@@ -83,8 +96,9 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     final VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
     configuration.scriptPath = vFile.getPath();
-    configuration.setName(ExecutionUtil.getPresentableClassName(aClass.getQualifiedName(), configuration.getConfigurationModule()));
-    configuration.setModule(ExecutionUtil.findModule(aClass));
+    //todo[DIANA] chack unsafe typecast to JavaRunConfigurationModule
+    configuration.setName(JavaExecutionUtil.getPresentableClassName(aClass.getQualifiedName(), ((JavaRunConfigurationModule) configuration.getConfigurationModule())));
+    configuration.setModule(JavaExecutionUtil.findModule(aClass));
     return settings;
   }
 

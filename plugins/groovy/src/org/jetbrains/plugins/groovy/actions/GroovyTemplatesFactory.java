@@ -18,14 +18,9 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +71,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
     final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
 
     Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties());
-    FileTemplateUtil.setPackageNameAttribute(properties, directory);
+    JavaTemplateUtil.setPackageNameAttribute(properties, directory);
     properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
     properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, name.substring(0, 1).toLowerCase() + name.substring(1));
     for (int i = 0; i < parameters.length; i += 2) {
@@ -90,8 +85,8 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
       throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName), e);
     }
 
-    final PsiManager psiManager = PsiManager.getInstance(directory.getProject());
-    final PsiFile file = psiManager.getElementFactory().createFileFromText(fileName, text);
+    final PsiFileFactory factory = PsiFileFactory.getInstance(directory.getProject());
+    final PsiFile file = factory.createFileFromText(fileName, text);
 
     return (PsiFile) directory.add(file);
   }

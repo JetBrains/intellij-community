@@ -14,19 +14,23 @@
  */
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.lang.PsiReferenceAdjuster;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ven
  */
-public class GroovyReferenceAdjuster implements PsiReferenceAdjuster {
-  public static final PsiReferenceAdjuster INSTANCE = new GroovyReferenceAdjuster();
+public class GroovyReferenceAdjuster extends ReferenceAdjuster {
+  public static final ReferenceAdjuster INSTANCE = new GroovyReferenceAdjuster(true, false);
+
+  public GroovyReferenceAdjuster(boolean useFqInJavadoc, boolean useFqInCode) {
+    super(useFqInJavadoc, useFqInCode);
+  }
 
   public void shortenReferences(PsiElement element, int startInElement, int endInElement) {
     List<GrCodeReferenceElement> refs = new ArrayList<GrCodeReferenceElement>();

@@ -76,7 +76,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     GroovyResolveResultImpl that = (GroovyResolveResultImpl) o;
 
     return myIsAccessible == that.myIsAccessible &&
-           myElement.getManager().areElementsEquivalent(myElement, that.myElement);
+        myElement.getManager().areElementsEquivalent(myElement, that.myElement);
 
   }
 

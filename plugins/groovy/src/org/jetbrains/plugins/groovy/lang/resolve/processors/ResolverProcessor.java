@@ -38,7 +38,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   protected String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
   protected PsiElement myPlace;
-  private @NotNull PsiType[] myTypeArguments;
+  private
+  @NotNull
+  PsiType[] myTypeArguments;
 
   protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
 
@@ -61,12 +63,14 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     myTypeArguments = typeArguments;
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+  public boolean execute(PsiElement element, ResolveState state) {
     if (myResolveTargetKinds.contains(getResolveKind(element))) {
       PsiNamedElement namedElement = (PsiNamedElement) element;
+      PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+      if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
 
       if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
-        substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);
+        substitutor = substitutor.putAll((PsiClass) namedElement, myTypeArguments);
       }
 
       boolean isAccessible = isAccessible(namedElement);
@@ -85,7 +89,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected boolean isStaticsOK(PsiNamedElement element) {
     if (myCurrentFileResolveContext instanceof GrImportStatement) return true;
-    
+
     if (element instanceof PsiModifierListOwner) {
       return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace);
     }
@@ -97,20 +101,19 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public <T> T getHint(Class<T> hintClass) {
-    if (NameHint.class == hintClass && myName != null){
+    if (NameHint.class == hintClass && myName != null) {
       return (T) this;
-    }
-    else if (ClassHint.class == hintClass) {
+    } else if (ClassHint.class == hintClass) {
       return (T) this;
-    }
-    else if (ElementClassHint.class == hintClass) {
+    } else if (ElementClassHint.class == hintClass) {
       return (T) this;
     }
 
     return null;
   }
 
-  public void handleEvent(Event event, Object associated) {}
+  public void handleEvent(Event event, Object associated) {
+  }
 
   public String getName() {
     return myName;

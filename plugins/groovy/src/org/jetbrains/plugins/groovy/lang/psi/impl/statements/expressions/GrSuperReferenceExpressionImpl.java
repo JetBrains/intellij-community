@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,10 +39,10 @@ public class GrSuperReferenceExpressionImpl extends GrExpressionImpl implements 
     if (context instanceof GrTypeDefinition) {
       final PsiClass superClass = ((GrTypeDefinition) context).getSuperClass();
       if (superClass != null) {
-        return getManager().getElementFactory().createType(superClass);
+        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(superClass);
       }
     } else if (context instanceof GroovyFileBase) {
-      return getManager().getElementFactory().createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, getResolveScope());
+      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, getResolveScope());
     }
 
     return null;

@@ -133,12 +133,12 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     }
     if (resolved instanceof PsiClass) {
       ResolverProcessor propertyProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
-      resolved.processDeclarations(propertyProcessor, PsiSubstitutor.EMPTY, null, this);
+      resolved.processDeclarations(propertyProcessor, ResolveState.initial(), null, this);
       PsiElement[] propertyCandidates = ResolveUtil.mapToElements(propertyProcessor.getCandidates());
-      PsiType thisType = getManager().getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
+      PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
       ResolverProcessor methodProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
 
-      resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, null, this);
+      resolved.processDeclarations(methodProcessor, ResolveState.initial(), null, this);
 
       PsiElement[] methodCandidates = ResolveUtil.mapToElements(methodProcessor.getCandidates());
 

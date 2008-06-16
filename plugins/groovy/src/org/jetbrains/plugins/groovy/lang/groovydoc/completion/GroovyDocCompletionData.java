@@ -21,8 +21,6 @@ import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyInsertHandlerAdapter;
-import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.filters.InlinedTagNameFilter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.filters.SimpleTagNameFilter;
 
@@ -59,7 +57,7 @@ public class GroovyDocCompletionData extends CompletionData {
     LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.addCompletionFilter(TrueFilter.INSTANCE);
     addCompletions(variant, keywords);
     registerVariant(variant);
   }

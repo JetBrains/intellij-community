@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,15 +33,15 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   private static final BracePair[] PAIRS = {
-      new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
-      new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
-      new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
+      new BracePair(GroovyTokenTypes.mLPAREN, GroovyTokenTypes.mRPAREN, false),
+      new BracePair(GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mRBRACK, false),
+      new BracePair(GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY, true),
 
-      new BracePair('{', GroovyDocTokenTypes.mGDOC_INLINE_TAG_START, '}', GroovyDocTokenTypes.mGDOC_INLINE_TAG_END, true),
-      new BracePair('(', GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN, ')', GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN, false),
+      new BracePair(GroovyDocTokenTypes.mGDOC_INLINE_TAG_START, GroovyDocTokenTypes.mGDOC_INLINE_TAG_END, true),
+      new BracePair(GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN, GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN, false),
 
-      new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
-      new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
+      new BracePair(GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, GroovyTokenTypes.mGSTRING_SINGLE_END, false),
+      new BracePair(GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_END, false)
   };
 
   public BracePair[] getPairs() {
@@ -56,5 +57,9 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
         || tokenType == GroovyTokenTypes.mRPAREN
         || tokenType == GroovyTokenTypes.mRBRACK
         || tokenType == GroovyTokenTypes.mRCURLY;
+  }
+
+  public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
+    return openingBraceOffset;
   }
 }

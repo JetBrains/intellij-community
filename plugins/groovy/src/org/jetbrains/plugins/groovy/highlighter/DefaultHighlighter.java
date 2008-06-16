@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.JavaHighlighterColors;
+import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NonNls;
@@ -75,7 +76,7 @@ public class DefaultHighlighter {
   static final String UNTYPED_ACCESS_ID = "Untyped member access";
 
   public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
-      HighlighterColors.JAVA_LINE_COMMENT.getDefaultAttributes());
+      SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
 
   public static TextAttributesKey ANNOTATION = TextAttributesKey.createTextAttributesKey(ANNOTATION_ID,
       HighlightInfoType.ANNOTATION_NAME.getAttributesKey().getDefaultAttributes());
@@ -93,42 +94,42 @@ public class DefaultHighlighter {
       HighlightInfoType.STATIC_METHOD.getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID,
-      HighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
+      SyntaxHighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
 
   public static TextAttributesKey DOC_COMMENT_CONTENT = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_ID,
-      HighlighterColors.JAVA_DOC_COMMENT.getDefaultAttributes());
+      SyntaxHighlighterColors.DOC_COMMENT.getDefaultAttributes());
 
   public static TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_TAG_ID,
-      HighlighterColors.JAVA_DOC_TAG.getDefaultAttributes());
+      JavaHighlighterColors.JAVA_DOC_TAG.getDefaultAttributes());
 
   public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID,
-      HighlighterColors.JAVA_KEYWORD.getDefaultAttributes());
+      SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
 
   public static TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey(NUMBER_ID,
-      HighlighterColors.JAVA_NUMBER.getDefaultAttributes());
+      SyntaxHighlighterColors.NUMBER.getDefaultAttributes());
 
   public static TextAttributesKey GSTRING = TextAttributesKey.createTextAttributesKey(GSTRING_ID,
-      HighlighterColors.JAVA_STRING.getDefaultAttributes());
+      SyntaxHighlighterColors.STRING.getDefaultAttributes());
 
   public static TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey(STRING_ID,
-      HighlighterColors.JAVA_STRING.getDefaultAttributes());
+      SyntaxHighlighterColors.STRING.getDefaultAttributes());
 
   public static TextAttributesKey REGEXP = TextAttributesKey.createTextAttributesKey(REGEXP_ID,
-      HighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes());
+      JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes());
 
   public static TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(BRACES_ID,
-      HighlighterColors.JAVA_BRACKETS.getDefaultAttributes());
+      SyntaxHighlighterColors.BRACKETS.getDefaultAttributes());
 
   public static TextAttributesKey OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(OPERATION_SIGN_ID,
-      HighlighterColors.JAVA_OPERATION_SIGN.getDefaultAttributes());
+      SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes());
 
   public static TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(BAD_CHARACTER_ID,
       CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES.getDefaultAttributes());
 
   public static TextAttributesKey WRONG_STRING = TextAttributesKey.createTextAttributesKey(WRONG_STRING_ID,
-      HighlighterColors.JAVA_STRING.getDefaultAttributes());
+      SyntaxHighlighterColors.STRING.getDefaultAttributes());
 
   public static TextAttributesKey UNTYPED_ACCESS = TextAttributesKey.createTextAttributesKey(UNTYPED_ACCESS_ID,
       new TextAttributes(null, null,
-                         EditorColors.CARET_COLOR.getDefaultColor(), EffectType.LINE_UNDERSCORE, Font.PLAIN));
+          EditorColors.CARET_COLOR.getDefaultColor(), EffectType.LINE_UNDERSCORE, Font.PLAIN));
 }

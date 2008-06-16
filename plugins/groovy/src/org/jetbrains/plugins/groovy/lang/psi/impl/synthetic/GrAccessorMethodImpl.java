@@ -18,7 +18,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightElement;
@@ -54,7 +53,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
 
 
   public GrAccessorMethodImpl(GrField property, boolean isSetter, String name) {
-    super(property.getManager());
+    super(property.getManager(), GroovyFileType.GROOVY_LANGUAGE);
     myProperty = property;
     myIsSetter = isSetter;
     myThrowsList = new LightReferenceList(property.getManager());
@@ -157,10 +156,6 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
     return new PsiMethod[0];
   }
 
-  public PomMethod getPom() {
-    return null;
-  }
-
   @NotNull
   public PsiModifierList getModifierList() {
     if (myModifierList == null) {
@@ -239,6 +234,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
   public String toString() {
     return "AccessorMethod";
   }
+
   @Nullable
   public PsiDocComment getDocComment() {
     return null;

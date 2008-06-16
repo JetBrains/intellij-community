@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.lang.completion.getters;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.ContextGetter;
@@ -26,7 +26,7 @@ public class SuggestedVariableNamesGetter implements ContextGetter {
         if (context.equals(variable.getNameIdentifierGroovy())) {
           final PsiType type = variable.getTypeGroovy();
           if (type != null) {
-            final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(context.getProject());
+            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.getProject());
             VariableKind kind = variable instanceof GrParameter ? VariableKind.PARAMETER :
                 variable instanceof GrField ? VariableKind.FIELD : VariableKind.LOCAL_VARIABLE;
             SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(kind, null, null, type);

@@ -117,12 +117,11 @@ public class PsiUtil {
     if (parameterTypes.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
     if (parameterTypes.length == 0 && argumentTypes.length > 0) return false;
 
-    final PsiManager manager = method.getManager();
     final GlobalSearchScope scope = method.getResolveScope();
 
     if (parameterTypes.length - 1 == argumentTypes.length) {
       final PsiType firstType = parameterTypes[0];
-      final PsiClassType mapType = getMapType(manager, scope);
+      final PsiClassType mapType = getMapType(method.getManager(), scope);
       if (mapType.isAssignableFrom(firstType)) {
         final PsiType[] trimmed = new PsiType[parameterTypes.length - 1];
         System.arraycopy(parameterTypes, 1, trimmed, 0, trimmed.length);
@@ -146,7 +145,8 @@ public class PsiUtil {
         }
       }
 
-      if (!TypesUtil.isAssignableByMethodCallConversion(parameterTypeToCheck, argType, manager, scope)) return false;
+      if (!TypesUtil.isAssignableByMethodCallConversion(parameterTypeToCheck, argType, method.getManager(), scope))
+        return false;
     }
 
     return true;
@@ -168,7 +168,7 @@ public class PsiUtil {
   }
 
   public static PsiClassType getMapType(PsiManager manager, GlobalSearchScope scope) {
-    return manager.getElementFactory().createTypeByFQClassName("java.util.Map", scope);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.util.Map", scope);
   }
 
   @Nullable
@@ -187,7 +187,7 @@ public class PsiUtil {
   // Returns arguments types not including Map for named arguments
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean forConstructor, boolean nullAsBottom) {
-    PsiElementFactory factory = place.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
       List<PsiType> result = new ArrayList<PsiType>();
@@ -263,7 +263,7 @@ public class PsiUtil {
       final PsiElement resolved = ((GrReferenceExpression) expression).resolve();
       if (resolved instanceof PsiClass) {
         //this argument is passed as java.lang.Class
-        return resolved.getManager().getElementFactory().createTypeByFQClassName("java.lang.Class", expression.getResolveScope());
+        return JavaPsiFacade.getInstance(resolved.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Class", expression.getResolveScope());
       }
     }
 
@@ -283,7 +283,7 @@ public class PsiUtil {
   }
 
   public static PsiClass getJavaLangClass(PsiElement resolved, GlobalSearchScope scope) {
-    return resolved.getManager().findClass("java.lang.Class", scope);
+    return JavaPsiFacade.getInstance(resolved.getProject()).findClass("java.lang.Class", scope);
   }
 
   public static boolean isValidReferenceName(String text) {
@@ -430,7 +430,7 @@ public class PsiUtil {
 
             if (owner instanceof PsiMember) {
               //members from java.lang.Class can be invoked without ".class"
-              PsiClass javaLangClass = place.getManager().findClass("java.lang.Class", place.getResolveScope());
+              PsiClass javaLangClass = JavaPsiFacade.getInstance(place.getProject()).findClass("java.lang.Class", place.getResolveScope());
               if (javaLangClass != null) {
                 PsiClass containingClass = ((PsiMember) owner).getContainingClass();
                 if (containingClass == null || //default groovy method

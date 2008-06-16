@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -47,9 +47,7 @@ public class ClassUtils {
     }
     final Project project = aClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiManager manager = aClass.getManager();
-    final PsiClass ancestorClass =
-        manager.findClass(ancestorName, scope);
+    final PsiClass ancestorClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(ancestorName, scope);
     return InheritanceUtil.isCorrectDescendant(aClass, ancestorClass, true);
   }
 }

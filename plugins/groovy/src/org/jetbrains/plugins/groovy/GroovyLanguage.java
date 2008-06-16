@@ -18,17 +18,18 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.*;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
@@ -40,14 +41,14 @@ import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
+import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
-import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler;
+import org.jetbrains.plugins.groovy.overrideImplement.ImplementMethodsHandler;
+import org.jetbrains.plugins.groovy.overrideImplement.OverrideMethodsHandler;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
-import org.jetbrains.plugins.groovy.overrideImplement.OverrideMethodsHandler;
-import org.jetbrains.plugins.groovy.overrideImplement.ImplementMethodsHandler;
 
 /**
  * All main properties for Groovy language
@@ -94,7 +95,7 @@ public class GroovyLanguage extends Language {
   }
 
   @Nullable
-  public PsiReferenceAdjuster getReferenceAdjuster() {
+  public ReferenceAdjuster getReferenceAdjuster() {
     return GroovyReferenceAdjuster.INSTANCE;
   }
 

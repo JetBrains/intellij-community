@@ -16,7 +16,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -26,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,9 +39,9 @@ public class GroovyScriptMethod extends LightElement implements PsiMethod {
   private GroovyScriptClass myScriptClass;
 
   public GroovyScriptMethod(GroovyScriptClass scriptClass, String codeBehindText) {
-    super(scriptClass.getManager());
+    super(scriptClass.getManager(), GroovyFileType.GROOVY_LANGUAGE);
     myScriptClass = scriptClass;
-    PsiElementFactory factory = scriptClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     try {
       myCodeBehindMethod = factory.createMethodFromText(codeBehindText, null);
     } catch (IncorrectOperationException e) {
@@ -122,10 +122,6 @@ public class GroovyScriptMethod extends LightElement implements PsiMethod {
     return new PsiMethod[0];
   }
 
-  public PomMethod getPom() {
-    return null;
-  }
-
   @NotNull
   public PsiModifierList getModifierList() {
     return myCodeBehindMethod.getModifierList();
@@ -176,6 +172,7 @@ public class GroovyScriptMethod extends LightElement implements PsiMethod {
   public String toString() {
     return "GroovyScriptMethod";
   }
+
   @Nullable
   public PsiDocComment getDocComment() {
     return null;

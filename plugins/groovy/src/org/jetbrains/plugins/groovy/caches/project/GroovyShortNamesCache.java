@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.caches.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.HashSet;
@@ -73,7 +76,7 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllClassNames(boolean searchInLibraries) {
+  public String[] getAllClassNames() {
     ArrayList<String> acc = new ArrayList<String>();
     GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -85,7 +88,7 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   }
 
 
-  public void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> dest) {
+  public void getAllClassNames(@NotNull HashSet<String> dest) {
     ArrayList<String> acc = new ArrayList<String>();
     GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -108,11 +111,11 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllMethodNames(boolean searchInLibraries) {
+  public String[] getAllMethodNames() {
     return new String[0];
   }
 
-  public void getAllMethodNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
+  public void getAllMethodNames(@NotNull HashSet<String> set) {
 
   }
 
@@ -122,11 +125,11 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllFieldNames(boolean searchInLibraries) {
+  public String[] getAllFieldNames() {
     return new String[0];
   }
 
-  public void getAllFieldNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
+  public void getAllFieldNames(@NotNull HashSet<String> set) {
 
   }
 }

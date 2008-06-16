@@ -24,12 +24,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author ven
@@ -57,7 +57,7 @@ public class ParameterNameExpression implements Expression {
     PsiElement elementAt = file.findElementAt(context.getStartOffset());
     GrParameter parameter = PsiTreeUtil.getParentOfType(elementAt, GrParameter.class);
     if (parameter == null) return null;
-    CodeStyleManager manager = CodeStyleManager.getInstance(project);
+    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
     return manager.suggestVariableName(VariableKind.PARAMETER, null, null, parameter.getTypeGroovy());
   }
 

@@ -14,9 +14,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.impl.light.LightVariableBase;
 import com.intellij.psi.*;
-import com.intellij.pom.Navigatable;
+import com.intellij.psi.impl.light.LightVariableBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,7 +31,9 @@ public class LightParameter extends LightVariableBase implements PsiParameter {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitParameter(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor) visitor).visitParameter(this);
+    }
   }
 
   public String toString() {

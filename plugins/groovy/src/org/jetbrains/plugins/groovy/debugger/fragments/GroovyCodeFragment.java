@@ -20,16 +20,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public class GroovyCodeFragment extends GroovyFileImpl implements PsiCodeFragment {
+public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragment {
   private PsiType myThisType;
   private PsiType mySuperType;
   private ExceptionHandler myExceptionChecker;
-  private IntentionActionsFilter myFilter;
+  private IntentionFilterOwner.IntentionActionsFilter myFilter;
   private GlobalSearchScope myResolveScope;
 
   public GroovyCodeFragment(Project project, CharSequence text) {
@@ -38,7 +37,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements PsiCodeFragmen
             "Dummy.groovy",
             GroovyFileType.GROOVY_FILE_TYPE,
             text), true));
-    ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
+    ((SingleRootFileViewProvider) getViewProvider()).forceCachedPsi(this);
   }
 
   public void setThisType(PsiType thisType) {
@@ -60,7 +59,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements PsiCodeFragmen
   public void addImportsFromString(String imports) {
   }
 
-  public void setVisibilityChecker(VisibilityChecker checker) {
+  public void setVisibilityChecker(JavaCodeFragment.VisibilityChecker checker) {
   }
 
   public VisibilityChecker getVisibilityChecker() {

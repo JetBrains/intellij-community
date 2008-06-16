@@ -1,20 +1,20 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * author ven
@@ -35,6 +35,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
 
   protected String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
     String result = "";
+/*  todo [DIANA] uncomment me!
     String fileText = file.getText();
     int offset = fileText.indexOf(CARET_MARKER);
     fileText = removeCaretMarker(fileText);
@@ -56,10 +57,10 @@ public abstract class CompletionTestBase extends ActionTestCase {
       });
 
       offset = myEditor.getCaretModel().getOffset();
-/*
+*//*
       result = myEditor.getDocument().getText();
       result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
-*/
+*//*
 
       if (items.length > 0) {
         Arrays.sort(items);
@@ -73,7 +74,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
     } finally {
       myFileEditorManager.closeFile(myFile.getVirtualFile());
       myEditor = null;
-    }
+    }*/
     return result;
   }
 
@@ -92,48 +93,51 @@ public abstract class CompletionTestBase extends ActionTestCase {
    */
   protected LookupItem[] getAcceptableItemsImpl(CompletionData completionData) throws IncorrectOperationException {
 
-    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
-    final PsiElement elem = myFile.findElementAt(myOffset);
-
-    /**
-     * Create fake file with dummy element
-     */
-    String newFileText = myFile.getText().substring(0, myOffset + 1) + "IntellijIdeaRulezzz" +
-        myFile.getText().substring(myOffset + 1);
-    /**
-     * Hack for IDEA completion
-     */
-    PsiFile newFile = createFile(newFileText);
-    PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
-    final int offset1 =
-        myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
-    final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
-    final CompletionContext context = new CompletionContext(myProject, myEditor, myFile, offset1, offset2);
-    context.setPrefix(insertedElement, context.startOffset, completionData);
-
-    if (lookupSet.size() == 0) {
-      final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
-      if (addKeywords(ref)) {
-        // Do not duplicate reference & keyword variants for Grails tags
-        context.offset = offset1;
-        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-        completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-        CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
-      }
-      if (ref != null && addReferenceVariants(ref)) {
-        context.offset = myOffset + 1;
-        completionData.completeReference(ref, lookupSet, context, insertedElement);
-      }
-    }
-
-    context.setPrefix(insertedElement, context.startOffset, completionData);
+    // todo [DIANA] uncomment me
+//    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
+//    final PsiElement elem = myFile.findElementAt(myOffset);
+//
+//    /**
+//     * Create fake file with dummy element
+//     */
+//    String newFileText = myFile.getText().substring(0, myOffset + 1) + "IntellijIdeaRulezzz" +
+//        myFile.getText().substring(myOffset + 1);
+//    /**
+//     * Hack for IDEA completion
+//     */
+//    PsiFile newFile = createFile(newFileText);
+//    PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
+//    final int offset1 =
+//        myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
+//    final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
+//    final CompletionContext context = new CompletionContext(myProject, myEditor, myFile, offset1, offset2);
+//    context.setPrefix(insertedElement, context.startOffset, completionData);
+//
+//    if (lookupSet.size() == 0) {
+//      final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
+//      if (addKeywords(ref)) {
+//        // Do not duplicate reference & keyword variants for Grails tags
+//        context.offset = offset1;
+//        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+//        completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+//        CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+//      }
+//      if (ref != null && addReferenceVariants(ref)) {
+//        context.offset = myOffset + 1;
+//        completionData.completeReference(ref, lookupSet, context, insertedElement);
+//      }
+//    }
+//
+//    context.setPrefix(insertedElement, context.startOffset, completionData);
     ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
+/*
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
     for (LookupItem item : items) {
       if (CompletionUtil.checkName(item, context, false)) {
         lookupItems.add(item);
       }
     }
+*/
 
     return lookupItems.toArray(new LookupItem[lookupItems.size()]);
 
@@ -151,5 +155,6 @@ public abstract class CompletionTestBase extends ActionTestCase {
   }
 
   protected abstract boolean addKeywords(PsiReference ref);
+
   protected abstract boolean addReferenceVariants(PsiReference ref);
 }

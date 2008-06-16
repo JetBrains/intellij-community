@@ -15,11 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.*;
+import java.util.EnumSet;
 
 /**
  * @author ven
@@ -30,7 +32,7 @@ public class CompletionProcessor extends ResolverProcessor {
     super(name, resolveTargets, place, PsiType.EMPTY_ARRAY);
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+  public boolean execute(PsiElement element, ResolveState substitutor) {
     super.execute(element, substitutor);
     return true;
   }

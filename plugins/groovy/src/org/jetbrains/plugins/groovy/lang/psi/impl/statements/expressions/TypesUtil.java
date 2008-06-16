@@ -10,14 +10,14 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.Map;
 
@@ -41,7 +41,7 @@ public class TypesUtil {
       String qName = RANK_TO_TYPE.get(resultRank);
       GlobalSearchScope scope = binaryExpression.getResolveScope();
       if (qName == null) return null;
-      return binaryExpression.getManager().getElementFactory().createTypeByFQClassName(qName, scope);
+      return JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory().createTypeByFQClassName(qName, scope);
     }
 
     return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
@@ -59,7 +59,7 @@ public class TypesUtil {
       if (thisType instanceof PsiClassType) {
         final PsiClass lClass = ((PsiClassType) thisType).resolve();
         if (lClass != null) {
-          lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place);
+          lClass.processDeclarations(processor, ResolveState.initial(), null, place);
         }
       }
 
@@ -184,7 +184,7 @@ public class TypesUtil {
       PsiPrimitiveType primitive = (PsiPrimitiveType) result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
-        return manager.getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
       }
     }
 
@@ -196,7 +196,7 @@ public class TypesUtil {
       PsiPrimitiveType primitive = (PsiPrimitiveType) result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
-        return manager.getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
       }
     }
 
@@ -222,8 +222,8 @@ public class TypesUtil {
   }
 
   public static PsiClassType createType(String fqName, PsiElement context) {
-    PsiManager manager = context.getManager();
-    return manager.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
+    return facade.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
   }
 
   public static PsiClassType getJavaLangObject(GroovyPsiElement context) {
@@ -246,7 +246,7 @@ public class TypesUtil {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrTupleType(components3, manager, tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
     } else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType) type1;
       GrClosureType clType2 = (GrClosureType) type2;

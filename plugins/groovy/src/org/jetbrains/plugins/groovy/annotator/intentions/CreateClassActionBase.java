@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
  * @author ilyas
-*/
+ */
 abstract class CreateClassActionBase implements IntentionAction {
   protected final GrReferenceElement myRefElement;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");
@@ -45,12 +45,12 @@ abstract class CreateClassActionBase implements IntentionAction {
   }
 
   @NotNull
-    public String getText() {
+  public String getText() {
     return GroovyBundle.message("create.class.text", myRefElement.getReferenceName());
   }
 
   @NotNull
-    public String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("create.class.family.name");
   }
 
@@ -63,9 +63,9 @@ abstract class CreateClassActionBase implements IntentionAction {
   }
 
   static PsiClass createClassByType(final PsiDirectory directory,
-                                            final String name,
-                                            final PsiManager manager,
-                                            final PsiElement contextElement) {
+                                    final String name,
+                                    final PsiManager manager,
+                                    final PsiElement contextElement) {
     return ApplicationManager.getApplication().runWriteAction(
         new Computable<PsiClass>() {
           public PsiClass compute() {
@@ -94,7 +94,7 @@ abstract class CreateClassActionBase implements IntentionAction {
                 return null;
               }
               PsiModifierList modifiers = targetClass.getModifierList();
-              if (!manager.getResolveHelper().isAccessible(targetClass, contextElement, null) &&
+              if (!JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
                   modifiers != null) {
                 modifiers.setModifierProperty(PsiKeyword.PUBLIC, true);
               }

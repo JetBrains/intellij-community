@@ -24,15 +24,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
@@ -77,9 +78,11 @@ public class GroovyCompiler implements TranslatingCompiler {
     for (Map.Entry<Module, Set<VirtualFile>> entry : mapModulesToVirtualFiles.entrySet()) {
 
       commandLine = new GeneralCommandLine();
-      final ProjectJdk jdk = ModuleRootManager.getInstance(entry.getKey()).getJdk();
-      assert jdk != null; //verified before
-      commandLine.setExePath(jdk.getVMExecutablePath());
+      final Sdk sdk = ModuleRootManager.getInstance(entry.getKey()).getSdk();
+      assert sdk != null; //verified before
+      SdkType sdkType = sdk.getSdkType();
+      assert sdkType instanceof JavaSdkType;
+      commandLine.setExePath(((JavaSdkType) sdkType).getVMExecutablePath(sdk));
 
 //      for debug
 //      commandLine.addParameter("-Xdebug");
@@ -98,7 +101,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       String grailsPath = GrailsConfigUtils.getGrailsInstallPath(module);
 
       String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 ||
-                        groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
+          groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
 
       libPath = libPath.replace(File.separatorChar, '/');
       VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
@@ -170,7 +173,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        for (OrderEntry entry: manager.getOrderEntries()) {
+        for (OrderEntry entry : manager.getOrderEntries()) {
           if (entry instanceof LibraryOrderEntry) {
             Library library = ((LibraryOrderEntry) entry).getLibrary();
             if (library == null) continue;
@@ -330,7 +333,8 @@ public class GroovyCompiler implements TranslatingCompiler {
     if (files.length == 0) return true;
     Set<Module> modules = new HashSet<Module>();
     for (VirtualFile file : files) {
-      Module module = VfsUtil.getModuleForFile(myProject, file);
+      ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
+      Module module = rootManager.getFileIndex().getModuleForFile(file);
       if (module != null) {
         modules.add(module);
       }
@@ -348,8 +352,8 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     Set<Module> nojdkModules = new HashSet<Module>();
     for (Module module : compileScope.getAffectedModules()) {
-      final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
-      if (jdk == null) nojdkModules.add(module);
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) nojdkModules.add(module);
     }
 
     if (!nojdkModules.isEmpty()) {

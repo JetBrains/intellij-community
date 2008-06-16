@@ -20,10 +20,12 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.FormattingModelProvider;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspOuterGroovyElement;
 import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 
@@ -41,5 +43,11 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     }
     return FormattingModelProvider.createFormattingModelForPsiFile(containingFile,
         new GroovyBlock(node, null, Indent.getAbsoluteNoneIndent(), null, settings), settings);
+  }
+
+  @Nullable
+  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+    //todo [DIANA] now default range is used
+    return null;
   }
 }

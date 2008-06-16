@@ -4,12 +4,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -19,6 +18,7 @@ import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
@@ -48,7 +48,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   private Project myProject;
 
   public GrDynamicImplicitMethod(PsiManager manager, GrMethod method, String containingClassName) {
-    super(manager);
+    super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myManager = manager;
 
     myMethod = method;
@@ -72,7 +72,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
   @Nullable
   public PsiClass getContainingClassElement() {
-    return myManager.findClass(myContainingClassName, myManager.getProject().getAllScope());
+    return JavaPsiFacade.getInstance(getProject()).findClass(myContainingClassName, ProjectScope.getAllScope(getProject()));
   }
 
   public boolean hasTypeParameters() {
@@ -187,10 +187,6 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
     return myMethod.findDeepestSuperMethods();
   }
 
-  public PomMethod getPom() {
-    return null;
-  }
-
   public String getText() {
     return myMethod.getText();
   }
@@ -253,7 +249,8 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
         DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
         DefaultMutableTreeNode desiredNode;
 
-        final PsiClassType fqClassName = myManager.getElementFactory().createTypeByFQClassName(myContainingClassName, myProject.getAllScope());
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+        final PsiClassType fqClassName = facade.getElementFactory().createTypeByFQClassName(myContainingClassName, ProjectScope.getAllScope(getProject()));
         final PsiClass psiClass = fqClassName.resolve();
         if (psiClass == null) return;
 
@@ -290,7 +287,8 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
         treeTable.getTree().setSelectionPath(path);
         treeTable.getTree().fireTreeExpanded(path);
 
-        ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);
+        //todo[DIANA] sind 
+        //ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);
         treeTable.revalidate();
         treeTable.repaint();
       }
