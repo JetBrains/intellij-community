@@ -81,9 +81,11 @@ public class Browser extends JPanel {
 
   public void dispose(){
     removeAll();
-    myHTMLViewer.removeHyperlinkListener(myHyperLinkListener);
+    if (myHTMLViewer != null) {
+      myHTMLViewer.removeHyperlinkListener(myHyperLinkListener);
+      myHTMLViewer = null;
+    }
     myClickListeners.clear();
-    myHTMLViewer = null;
   }
 
   public interface ClickListener {
