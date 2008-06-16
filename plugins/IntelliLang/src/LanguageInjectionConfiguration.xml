@@ -139,6 +139,19 @@
         <setting name="ATT_NAMESPACE" value=""/>
       </XmlAttributeInjection>
     </entry>
+    <entry>
+      <XmlAttributeInjection>
+        <setting name="LANGUAGE" value="XPath"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="out|if|forEach|set|when"/>
+        <setting name="TAGNAMESPACE" value="http://java.sun.com/jsp/jstl/xml"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="ATT_NAME" value="select"/>
+        <setting name="ATT_NAMESPACE" value=""/>
+      </XmlAttributeInjection>
+    </entry>
   </ATTRIBUTES>
   <PARAMETERS>
     <entry>
