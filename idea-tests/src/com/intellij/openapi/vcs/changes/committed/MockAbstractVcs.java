@@ -83,4 +83,10 @@ public class MockAbstractVcs extends AbstractVcs {
   public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
     return new VcsRevisionNumber.Int(Integer.parseInt(revisionNumberString));
   }
+
+  @Override
+  public String getRevisionPattern() {
+    return ourIntegerPattern;
+  }
+
 }

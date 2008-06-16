@@ -34,37 +34,53 @@ public class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider");
 
   private final Project myProject;
+  private final VirtualFile myFile;
+  private final String myVersionId;
+  private final Pattern myRevisionPattern;
 
-  @NonNls private static final Pattern ourRevisionPattern = Pattern.compile("\\(revision (\\d+(\\.\\d+)*)\\)");
+  @NonNls private static final String ourRevisionStart = "\\(revision (";
+  @NonNls private static final String ourRevisionEnd = ")\\)";
+  private AbstractVcs myVcs;
 
-  public DefaultPatchBaseVersionProvider(final Project project) {
+  public DefaultPatchBaseVersionProvider(final Project project, final VirtualFile file, final String versionId) {
     myProject = project;
+    myFile = file;
+    myVersionId = versionId;
+    myVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(myFile);
+    if (myVcs != null) {
+      final String vcsPattern = myVcs.getRevisionPattern();
+      if (vcsPattern != null) {
+        myRevisionPattern = Pattern.compile(ourRevisionStart + vcsPattern + ourRevisionEnd);
+        return;
+      }
+    }
+    myRevisionPattern = null;
   }
 
-  public void getBaseVersionContent(VirtualFile virtualFile, FilePath filePath, String versionId,
-                                    Processor<CharSequence> processor) throws VcsException {
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(filePath);
-    if (vcs == null) {
+  public void getBaseVersionContent(FilePath filePath, Processor<CharSequence> processor) throws VcsException {
+    if (myVcs == null) {
       return;
     }
 
     VcsRevisionNumber revision = null;
-    final Matcher matcher = ourRevisionPattern.matcher(versionId);
-    if (matcher.find()) {
-      revision = vcs.parseRevisionNumber(matcher.group(1));
+    if (myRevisionPattern != null) {
+      final Matcher matcher = myRevisionPattern.matcher(myVersionId);
+      if (matcher.find()) {
+        revision = myVcs.parseRevisionNumber(matcher.group(1));
+      }
     }
 
     Date versionDate = null;
     if (revision == null) {
       try {
-        versionDate = new Date(versionId);
+        versionDate = new Date(myVersionId);
       }
       catch(IllegalArgumentException ex) {
         return;
       }
     }
     try {
-      final VcsHistorySession session = vcs.getVcsHistoryProvider().createSessionFor(filePath);
+      final VcsHistorySession session = myVcs.getVcsHistoryProvider().createSessionFor(filePath);
       if (session == null) return;
       final List<VcsFileRevision> list = session.getRevisionList();
       for(VcsFileRevision fileRevision: list) {
@@ -78,7 +94,7 @@ public class DefaultPatchBaseVersionProvider {
 
         if (found) {
           fileRevision.loadContent();
-          processor.process(LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), virtualFile, false));
+          processor.process(LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), myFile, false));
           // TODO: try to download more than one version
           break;
         }
@@ -89,15 +105,15 @@ public class DefaultPatchBaseVersionProvider {
     }
   }
 
-  public boolean canProvideContent(VirtualFile virtualFile, String versionId) {
-    if (ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile) == null) {
+  public boolean canProvideContent() {
+    if (myVcs == null) {
       return false;
     }
-    if (ourRevisionPattern.matcher(versionId).matches()) {
+    if ((myRevisionPattern != null) && myRevisionPattern.matcher(myVersionId).matches()) {
       return true;
     }
     try {
-      Date.parse(versionId);
+      Date.parse(myVersionId);
     }
     catch(IllegalArgumentException ex) {
       return false;

@@ -41,6 +41,8 @@ public abstract class AbstractVcs {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
 
+  @NonNls protected static final String ourIntegerPattern = "\\d+";
+
   protected final Project myProject;
   private boolean myIsStarted = false;
   private VcsShowSettingOption myUpdateOption;
@@ -260,6 +262,14 @@ public abstract class AbstractVcs {
 
   @Nullable
   public VcsRevisionNumber parseRevisionNumber(String revisionNumberString) {
+    return null;
+  }
+
+  /**
+   * @return null if does not support revision parsing
+   */
+  @Nullable
+  public String getRevisionPattern() {
     return null;
   }
 

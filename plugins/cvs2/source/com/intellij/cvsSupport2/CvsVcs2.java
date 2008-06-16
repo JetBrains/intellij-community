@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   private final Cvs2Configurable myConfigurable;
 
+  @NonNls private static final String ourRevisionPattern = "\\d+(\\.\\d+)*";
 
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -355,6 +357,11 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   @Override @Nullable
   public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
     return new CvsRevisionNumber(revisionNumberString);
+  }
+
+  @Override
+  public String getRevisionPattern() {
+    return ourRevisionPattern;
   }
 
   @Override
