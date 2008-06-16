@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -49,7 +50,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
     try {
-      final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder);
+      final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
         processFile(path, context, null, true, context.getClient());
       }
@@ -60,9 +61,15 @@ public class SvnChangeProvider implements ChangeProvider {
       }
 
       for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
+        if (context.isCanceled()) {
+          throw new ProcessCanceledException();
+        }
         processCopiedFile(copiedFile, builder, context);
       }
       for(SvnChangedFile deletedFile: context.getDeletedFiles()) {
+        if (context.isCanceled()) {
+          throw new ProcessCanceledException();
+        }
         processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), builder, null);
       }
     }
@@ -72,7 +79,7 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
-    final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder);
+    final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
     processFile(path, context, null, recursive, context.getClient());
   }
 
@@ -140,6 +147,9 @@ public class SvnChangeProvider implements ChangeProvider {
    */
   @Nullable
   private FileStatus getParentStatus(final SvnChangeProviderContext context, final FilePath path) {
+    if (context.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
     final FilePath parentPath = path.getParentPath();
     if (parentPath == null) {
       return null;
@@ -202,10 +212,16 @@ public class SvnChangeProvider implements ChangeProvider {
   private void processFile(FilePath path, final SvnChangeProviderContext context,
                            final FileStatus parentStatus, final boolean recursively,
                            final SVNStatusClient statusClient) throws SVNException {
+    if (context.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
     try {
       if (path.isDirectory()) {
         statusClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
+            if (context.isCanceled()) {
+              throw new ProcessCanceledException();
+            }
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
             final VirtualFile vFile = path.getVirtualFile();
             if (vFile != null && myExcludedFileIndex.isExcludedFile(vFile)) {
@@ -493,9 +509,12 @@ public class SvnChangeProvider implements ChangeProvider {
     private final List<SvnChangedFile> myDeletedFiles = new ArrayList<SvnChangedFile>();
     private Map<FilePath, String> myCopyFromURLs = null;
 
-    public SvnChangeProviderContext(SvnVcs vcs, final ChangelistBuilder changelistBuilder) {
+    private final ProgressIndicator myProgress;
+
+    public SvnChangeProviderContext(SvnVcs vcs, final ChangelistBuilder changelistBuilder, final ProgressIndicator progress) {
       myStatusClient = vcs.createStatusClient();
       myChangelistBuilder = changelistBuilder;
+      myProgress = progress;
     }
 
     public ChangelistBuilder getBuilder() {
@@ -516,6 +535,10 @@ public class SvnChangeProvider implements ChangeProvider {
 
     public List<SvnChangedFile> getDeletedFiles() {
       return myDeletedFiles;
+    }
+
+    public boolean isCanceled() {
+      return (myProgress != null) && myProgress.isCanceled();
     }
 
     /**
