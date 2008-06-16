@@ -146,4 +146,6 @@ public interface JBPopup extends Disposable {
 
   void addListener(JBPopupListener listener);
   void removeListener(JBPopupListener listener);
+
+  boolean isDisposed();
 }

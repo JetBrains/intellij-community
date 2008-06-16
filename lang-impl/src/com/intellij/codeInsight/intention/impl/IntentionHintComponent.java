@@ -409,10 +409,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   //true if success
   public boolean updateActions(List<HighlightInfo.IntentionActionDescriptor> intentions, List<HighlightInfo.IntentionActionDescriptor> errorFixes,
                                final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes) {
-    if (myPopup.getContent() == null) {
-      // already disposed
-      return false;
-    }
+    if (myPopup.isDisposed()) return false;
     if (!myFile.isValid()) return false;
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
     if (step.updateActions(intentions, errorFixes, inspectionFixes)) {
@@ -555,6 +552,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   private void showPopup() {
+    if (myPopup == null || myPopup.isDisposed()) return;
+
     if (isShowing()) {
       myPopup.show(RelativePoint.getSouthWestOf(this));
     }
