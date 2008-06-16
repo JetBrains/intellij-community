@@ -31,16 +31,12 @@ class TopLevelDependencyValidityState implements ValidityState {
   }
 
   public void save(DataOutput out) throws IOException {
-    //todo[DIANA] implement me!
-  }
-
-  public void save(DataOutputStream os) throws IOException {
-    os.writeLong(myTimestamp);
-    os.writeChar('\n');
+    out.writeLong(myTimestamp);
+    out.writeChar('\n');
 
     for (String member : myMembers) {
-      os.writeChar('\n');
-      os.writeUTF(member);
+      out.writeChar('\n');
+      out.writeUTF(member);
     }
   }
 
