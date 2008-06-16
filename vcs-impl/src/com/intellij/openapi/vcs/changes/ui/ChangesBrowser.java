@@ -161,6 +161,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
   }
 
+  protected void showDiffForChanges(Change[] changesArray, final int indexInSelection) {
+    ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, myDiffExtendUIFactory, isInFrame());
+  }
+
   private void showDiff() {
     final Change leadSelection = myViewer.getLeadSelection();
     List<Change> changes = myViewer.getSelectedChanges();
@@ -173,14 +177,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     int indexInSelection = changes.indexOf(leadSelection);
     if (indexInSelection >= 0) {
       Change[] changesArray = changes.toArray(new Change[changes.size()]);
-      ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, myDiffExtendUIFactory, isInFrame());
+      showDiffForChanges(changesArray, indexInSelection);
     }
     else if ((leadSelection == null && changes.size() > 0)) {
       Change[] changesArray = changes.toArray(new Change[changes.size()]);
-      ShowDiffAction.showDiffForChange(changesArray, 0, myProject, myDiffExtendUIFactory, isInFrame());
+      showDiffForChanges(changesArray, 0);
     }
     else if (leadSelection != null) {
-      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, myDiffExtendUIFactory, isInFrame());
+      showDiffForChanges(new Change[]{leadSelection}, 0);
     }
   }
 

@@ -33,6 +33,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
+
     toolBarGroup.add(new ShowDiffWithLocalAction());
     final Icon editSourceIcon = IconLoader.getIcon("/actions/editSource.png");
     toolBarGroup.add(new EditSourceAction() {
@@ -40,6 +41,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
         super.update(event);
         event.getPresentation().setIcon(editSourceIcon);
         event.getPresentation().setText("Edit Source");
+        if (CommittedChangesBrowserUseCase.IN_AIR.equals(event.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) {
+          event.getPresentation().setEnabled(false);
+        }
       }
     });
     OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();

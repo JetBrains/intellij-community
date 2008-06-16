@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -40,7 +41,9 @@ public class OpenRepositoryVersionAction extends AnAction {
   public void update(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    e.getPresentation().setEnabled(project != null && changes != null && hasValidChanges(changes));
+    e.getPresentation().setEnabled(project != null && changes != null &&
+                                   (! CommittedChangesBrowserUseCase.IN_AIR.equals(e.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) &&
+                                   hasValidChanges(changes));
   }
 
   private static boolean hasValidChanges(final Change[] changes) {
