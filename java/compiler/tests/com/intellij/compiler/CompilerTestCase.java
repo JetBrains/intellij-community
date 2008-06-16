@@ -1,5 +1,6 @@
 package com.intellij.compiler;
 
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -334,7 +335,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         }
       }
     });
-
+    // need this to emulate project opening
+    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots()));
     if (ex[0] != null) {
       throw ex[0];
     }

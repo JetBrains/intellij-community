@@ -28,6 +28,7 @@ public class ChangeNameTest extends CompilerTestCase{
     }
     else if (pass == 2){
       final VirtualFile classA = mySourceDir.findChild("A.java");
+      assertNotNull(classA);
       final String path = classA.getPath();
       final boolean deleted = FileUtil.delete(new File(path));
       assertTrue("Cannot delete "+path , deleted);
