@@ -59,7 +59,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     initIndices(indicesDir);
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(Project project) {
-        initProjectIndices(project);
+        initProjectIndicesOnActivation(project);
       }
 
       @Override
@@ -78,21 +78,14 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   @TestOnly
-  public void initProjectIndices(Project p) {
-    try {
-      checkLocalIndex(p);
-      checkProjectIndex(p);
-    }
-    catch (MavenIndexException e) {
-      showError(e);
+  public void initProjectIndicesOnActivation(final Project p) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      doInitProjectIndices(p);
     }
 
-    listenForChanges(p);
-  }
-
-  private void listenForChanges(final Project p) {
     MavenProjectsManager.Listener l = new MavenProjectsManager.Listener() {
       public void activate() {
+        doInitProjectIndices(p);
       }
 
       public void profilesChanged(List<String> profiles) {
@@ -121,13 +114,25 @@ public class MavenIndicesManager implements ApplicationComponent {
     myMavenProjectListeners.put(p, l);
   }
 
+  private void doInitProjectIndices(Project p) {
+    try {
+      checkLocalIndex(p);
+      checkProjectIndex(p);
+    }
+    catch (MavenIndexException e) {
+      logError(e);
+    }
+  }
+
   private void shutdownProjectIndices(Project p) {
     MavenProjectsManager.Listener l = myMavenProjectListeners.remove(p);
+    if (l == null) return; // wan not initialized
+    
     MavenProjectsManager.getInstance(p).removeListener(l);
     myMavenProjectIndices.remove(p);
   }
 
-  private void showError(MavenIndexException e) {
+  private void logError(MavenIndexException e) {
     MavenLog.warn(e);
     //new MavenErrorWindow(p, RepositoryBundle.message("maven.indices")).displayErrors(e);
   }
@@ -230,7 +235,7 @@ public class MavenIndicesManager implements ApplicationComponent {
       each.addArtifact(artifact);
     }
     catch (MavenIndexException e) {
-      showError(e);
+      logError(e);
     }
   }
 
@@ -266,7 +271,7 @@ public class MavenIndicesManager implements ApplicationComponent {
           });
         }
         catch (MavenIndexException e) {
-          showError(e);
+          logError(e);
         }
       }
     }.queue();

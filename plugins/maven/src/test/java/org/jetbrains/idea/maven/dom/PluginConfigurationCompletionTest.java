@@ -181,4 +181,28 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
 
     checkHighlighting();
   }
+
+  public void testDoNotHighlighInnerProperties() throws Throwable {
+    if (ignore()) return;
+    
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <includes>" +
+                     "          <include>*.java</include>" +
+                     "        </includes>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
+  }
 }

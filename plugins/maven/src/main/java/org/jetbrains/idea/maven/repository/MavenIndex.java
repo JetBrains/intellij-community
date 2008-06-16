@@ -168,15 +168,10 @@ public abstract class MavenIndex {
 
   public synchronized void remove() throws MavenIndexException {
     try {
-      try {
-        close();
-      }
-      finally {
-        clear();
-      }
+      close();
     }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
+    finally {
+      clear();
     }
   }
 
@@ -199,8 +194,13 @@ public abstract class MavenIndex {
     return new File(getIndexDir(), CONTEXT_DIR);
   }
 
-  public synchronized void close() throws IOException {
-    if (myData != null) myData.close();
+  public synchronized void close() throws MavenIndexException {
+    try {
+      if (myData != null) myData.close();
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
   }
 
   public synchronized void clear() {

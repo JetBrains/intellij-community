@@ -29,7 +29,7 @@ public class MavenIndicesTestFixture {
 
     myIndicesManager = MavenIndicesManager.getInstance();
     myIndicesManager.doInit(new File(myDir, "MavenIndices"));
-    myIndicesManager.initProjectIndices(myProject);
+    myIndicesManager.initProjectIndicesOnActivation(myProject);
   }
 
   public void tearDown() throws Exception {

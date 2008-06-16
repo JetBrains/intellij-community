@@ -72,7 +72,7 @@ public class MavenIndices {
         try {
           closeOpenIndices();
         }
-        catch (IOException e1) {
+        catch (MavenIndexException e1) {
           MavenLog.info(e1);
         }
       }
@@ -113,12 +113,12 @@ public class MavenIndices {
     try {
       closeOpenIndices();
     }
-    catch (IOException e) {
+    catch (MavenIndexException e) {
       MavenLog.info(e);
     }
   }
 
-  private void closeOpenIndices() throws IOException {
+  private void closeOpenIndices() throws MavenIndexException {
     try {
       for (MavenIndex data : myIndices) {
         data.close();

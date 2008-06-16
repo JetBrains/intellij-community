@@ -9,7 +9,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
@@ -20,8 +23,8 @@ import org.jetbrains.idea.maven.dom.model.PluginExecution;
 import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
 import org.jetbrains.idea.maven.dom.plugin.Mojo;
 import org.jetbrains.idea.maven.dom.plugin.Parameter;
-import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.repository.MavenPluginInfoReader;
+import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 
 import java.util.*;
 
@@ -38,7 +41,8 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     if (parent instanceof PluginExecution) {
       executionElement = (PluginExecution)parent;
       pluginElement = (Plugin)parent.getParent().getParent();
-    } else  {
+    }
+    else {
       pluginElement = (Plugin)parent;
     }
 
@@ -74,7 +78,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
   }
 
   private MavenPluginModel getMavenPluginElement(Project p, VirtualFile pluginXml) {
-    PsiFile psiFile =  PsiManager.getInstance(p).findFile(pluginXml);
+    PsiFile psiFile = PsiManager.getInstance(p).findFile(pluginXml);
     return DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenPluginModel.class).getRootElement();
   }
 
@@ -87,7 +91,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
       }
     }
 
-    Map <String, Parameter> namesWithParameters = new HashMap<String, Parameter>();
+    Map<String, Parameter> namesWithParameters = new HashMap<String, Parameter>();
 
     for (Mojo eachMojo : pluginModel.getMojos().getMojos()) {
       String goal = eachMojo.getGoal().getStringValue();
@@ -110,7 +114,16 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
   }
 
   private void registerPluginParameter(DomExtensionsRegistrar r, Parameter each) {
-    DomExtension e = r.registerFixedNumberChildExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
+    DomExtension e;
+    //if (List.class.getName().equals(each.getType().getStringValue())
+    //    || Set.class.getName().equals(each.getType().getStringValue())) {
+    //  e = r.registerCollectionChildrenExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
+    //}
+    //else {
+      e = r.registerFixedNumberChildExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
+
+    //}
+
     e.putUserData(DomExtension.KEY_DECLARATION, each);
     each.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, each);
   }
