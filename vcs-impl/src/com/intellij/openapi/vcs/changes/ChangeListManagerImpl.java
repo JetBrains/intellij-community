@@ -335,9 +335,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       synchronized (myPendingUpdatesLock) {
         myUpdateInProgress = true;
         updateWaiters.addAll(myWaitingUpdateCompletionQueue);
+        checkIfDisposed();
       }
-
-      if (myDisposed) throw new DisposedException();
 
       final VcsDirtyScopeManagerImpl dirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject));
       final boolean wasEverythingDirty = dirtyScopeManager.isEverythingDirty();
@@ -407,13 +406,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           if (changeProvider != null) {
             final FoldersCutDownWorker foldersCutDownWorker = new FoldersCutDownWorker();
             try {
-              myUpdateChangesProgressIndicator = new EmptyProgressIndicator();
+              myUpdateChangesProgressIndicator = new EmptyProgressIndicator() {
+                @Override
+                public boolean isCanceled() {
+                  checkIfDisposed();
+                  return false;
+                }
+              };
               changeProvider.getChanges(scope, new ChangelistBuilder() {
                 public void processChange(final Change change) {
                   processChangeInList( change, (ChangeList)null );
                 }
 
                 public void processChangeInList(final Change change, final String changeListName) {
+                  checkIfDisposed();
                   LocalChangeList list = null;
                   if (changeListName != null) {
                     list = findChangeList(changeListName);
@@ -425,7 +431,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 }
 
                 public void processChangeInList(final Change change, final ChangeList changeList) {
-                  if (myDisposed) throw new DisposedException();
+                  checkIfDisposed();
 
                   final String fileName = ChangesUtil.getFilePath(change).getName();
                   if (FileTypeManager.getInstance().isFileIgnored(fileName)) return;
@@ -458,7 +464,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
                 public void processUnversionedFile(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
-                  if (myDisposed) throw new DisposedException();
+                  checkIfDisposed();
                   if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(new FilePathImpl(file))) {
                     if (isIgnoredFile(file)) {
@@ -475,7 +481,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
                 public void processLockedFolder(final VirtualFile file) {
                   if (file == null) return;
-                  if (myDisposed) throw new DisposedException();
+                  checkIfDisposed();
                   if (scope.belongsTo(new FilePathImpl(file))) {
                     if (foldersCutDownWorker.addCurrent(file)) {
                       lockedFoldersHolder.addFile(file);
@@ -486,7 +492,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
                 public void processLocallyDeletedFile(FilePath file) {
                   if (!updateUnversionedFiles) return;
-                  if (myDisposed) throw new DisposedException();
+                  checkIfDisposed();
                   if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
                   if (scope.belongsTo(file)) {
                     deletedHolder.addFile(file);
@@ -496,7 +502,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
                 public void processModifiedWithoutCheckout(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
-                  if (myDisposed) throw new DisposedException();
+                  checkIfDisposed();
                   if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(new FilePathImpl(file))) {
                     modifiedWithoutEditingHolder.addFile(file);
@@ -506,7 +512,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
                 public void processIgnoredFile(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
-                  if (myDisposed) throw new DisposedException();
+                  checkIfDisposed();
                   if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(new FilePathImpl(file))) {
                     ignoredHolder.addFile(file);
@@ -516,7 +522,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
                 public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
                   if (file == null || !updateUnversionedFiles) return;
-                  if (myDisposed) throw new DisposedException();
+                  checkIfDisposed();
                   if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(new FilePathImpl(file))) {
                     switchedHolder.addFile(file, branch, recursive);
@@ -593,13 +599,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  private void checkIfDisposed() {
+    synchronized (myPendingUpdatesLock) {
+      if (myDisposed) throw new DisposedException();
+    }
+  }
+
   private void notifyStartProcessingChanges(final VcsDirtyScope scope) {
-    if (myDisposed) throw new DisposedException();
+    checkIfDisposed();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         synchronized (myChangeLists) {
           for (LocalChangeList list : myChangeLists) {
-            if (myDisposed) throw new DisposedException();
+            checkIfDisposed();
             ((LocalChangeListImpl) list).startProcessingChanges(myProject, scope);
           }
         }
