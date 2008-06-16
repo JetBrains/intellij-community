@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -76,12 +77,16 @@ public class CompilerPaths {
    * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)
    */
   public static File getCompilerSystemDirectory(Project project) {
-    String projectDirName;
-    projectDirName = project.getName() + "." + project.getLocationHash();
+    //noinspection HardCodedStringLiteral
+    final File compilerProjectSystemDir = new File(getCompilerSystemDirectory(), project.getName() + "." + project.getLocationHash());
+    compilerProjectSystemDir.mkdirs();
+    return compilerProjectSystemDir;
+  }
 
+  public static File getCompilerSystemDirectory() {
     //noinspection HardCodedStringLiteral
     final String systemPath = ourSystemPath != null? ourSystemPath : (ourSystemPath = PathUtil.getCanonicalPath(PathManager.getSystemPath()));
-    final File compilerSystemDir = new File(systemPath, "/compiler/" + projectDirName);
+    final File compilerSystemDir = new File(systemPath, "compiler");
     compilerSystemDir.mkdirs();
     return compilerSystemDir;
   }
@@ -156,5 +161,13 @@ public class CompilerPaths {
       return VirtualFileManager.extractPath(outPathUrl);
     }
     return null;
+  }
+
+  @NonNls
+  public static String getGenerationOutputPath(IntermediateOutputCompiler compiler, Module module, final boolean forTestSources) {
+    final String generatedCompilerDirectoryPath = getGeneratedDataDirectory(module.getProject(), compiler).getPath();
+    //noinspection HardCodedStringLiteral
+    final String moduleDir = module.getName().replaceAll("\\s+", "_") + "." + Integer.toHexString(module.getModuleFilePath().hashCode());
+    return generatedCompilerDirectoryPath.replace(File.separatorChar, '/') + "/" + moduleDir + "/" + (forTestSources? "test" : "production");
   }
 }

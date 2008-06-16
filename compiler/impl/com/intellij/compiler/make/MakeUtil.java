@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class MakeUtil {
 
@@ -124,8 +125,12 @@ public class MakeUtil {
     return false;
   }
 
+  @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String relativeClassPathToQName(String relativePath, char separator) {
+    if (!relativePath.endsWith(".class")) {
+      return null;
+    }
     int start = 0;
     int end = relativePath.length() - ".class".length();
     if (relativePath.startsWith(String.valueOf(separator))) {

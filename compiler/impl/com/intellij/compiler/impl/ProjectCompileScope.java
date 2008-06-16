@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.io.File;
@@ -32,8 +33,25 @@ public class ProjectCompileScope extends FileIndexCompileScope {
   }
 
   public boolean belongs(String url) {
-    //return !url.startsWith(myTempDirUrl);
-    return !FileUtil.startsWith(url, myTempDirUrl);
+    final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (file != null) {
+      for (FileIndex index : getFileIndices()) {
+        if (index.isInSourceContent(file)) {
+          return true;
+        }
+      }
+    }
+    else {
+      // the file might be deleted
+      for (VirtualFile root : ProjectRootManager.getInstance(myProject).getContentSourceRoots()) {
+        final String rootUrl = root.getUrl();
+        if (FileUtil.startsWith(url, rootUrl.endsWith("/")? rootUrl : rootUrl + "/")) {
+          return true;
+        }
+      }
+    }
+    return false;
+    //return !FileUtil.startsWith(url, myTempDirUrl);
   }
 
   public Module[] getAffectedModules() {

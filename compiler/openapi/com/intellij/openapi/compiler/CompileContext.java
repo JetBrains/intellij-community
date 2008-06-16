@@ -17,6 +17,7 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -145,4 +146,6 @@ public interface CompileContext extends UserDataHolder {
    * @return true if compilation is incremental. 
    */
   boolean isMake();
+
+  Project getProject();
 }

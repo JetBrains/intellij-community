@@ -10,7 +10,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
-import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
@@ -34,7 +33,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
@@ -807,6 +809,7 @@ public class CompileDriver {
     try {
       final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
+      final VirtualFile[] allSources = context.getProjectCompileScope().getFiles(null, true);
       context.getProgressIndicator().setText(CompilerBundle.message("progress.clearing.output"));
       for (final Compiler compiler : allCompilers) {
         if (compiler instanceof GeneratingCompiler) {
@@ -826,27 +829,21 @@ public class CompileDriver {
         else if (compiler instanceof FileProcessingCompiler) {
         }
         else if (compiler instanceof TranslatingCompiler) {
-          try {
-            if (!myShouldClearOutputDirectory) {
-              final TranslatingCompilerStateCache cache = getTranslatingCompilerCache((TranslatingCompiler)compiler);
-              final Iterator<String> urlIterator = cache.getOutputUrlsIterator();
-              while (urlIterator.hasNext()) {
-                final String outputPath = urlIterator.next();
-                final String sourceUrl = cache.getSourceUrl(outputPath);
-                if (sourceUrl == null || !FileUtil.pathsEqual(outputPath, VirtualFileManager.extractPath(sourceUrl))) {
-                  new File(outputPath).delete();
-                  if (isTestMode) {
-                    CompilerManagerImpl.addDeletedPath(outputPath);
-                  }
-                }
+          if (!myShouldClearOutputDirectory) {
+            final ArrayList<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
+            TranslatingCompilerFilesMonitor.getInstance().collectFiles(
+                context, ((TranslatingCompiler)compiler), Arrays.<VirtualFile>asList(allSources).iterator(), true, new ArrayList<VirtualFile>(), toDelete
+            );
+            for (Trinity<File, String, Boolean> trinity : toDelete) {
+              final File file = trinity.getFirst();
+              file.delete();
+              if (isTestMode) {
+                CompilerManagerImpl.addDeletedPath(FileUtil.toSystemIndependentName(file.getPath()));
               }
             }
           }
-          catch (IOException e) {
-            LOG.info(e);
-          }
         }
-      }
+      }                          
       if (myShouldClearOutputDirectory) {
         clearOutputDirectories(outputDirectories);
       }
@@ -922,8 +919,8 @@ public class CompileDriver {
     // do not delete directories themselves, or we'll get rootsChanged() otherwise
     final List<File> outputDirectories = new ArrayList<File>(_outputDirectories);
     for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-      outputDirectories.add(new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)));
-      outputDirectories.add(new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true)));
+      outputDirectories.add(new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)));
+      outputDirectories.add(new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true)));
     }
     Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
     for (File outputDirectory : outputDirectories) {
@@ -949,8 +946,8 @@ public class CompileDriver {
     
     for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
       final File[] outputs = {
-        new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)), 
-        new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true))
+        new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)), 
+        new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true))
       };
       for (File output : outputs) {
         final File[] files = output.listFiles();
@@ -973,13 +970,6 @@ public class CompileDriver {
     return forTestSources? outputs.getSecond() : outputs.getFirst();
   }
 
-  @NonNls
-  private static String getGenerationOutputPath(IntermediateOutputCompiler compiler, Module module, final boolean forTestSources) {
-    final String generatedCompilerDirectoryPath = CompilerPaths.getGeneratedDataDirectory(module.getProject(), compiler).getPath();
-    final String moduleDir = module.getName().replace(' ', '_') + "." + Integer.toHexString(module.getModuleFilePath().hashCode());
-    return generatedCompilerDirectoryPath.replace(File.separatorChar, '/') + "/" + moduleDir + "/" + (forTestSources? "test" : "production");
-  }
-
   private boolean generateOutput(final CompileContextEx context,
                                  final GeneratingCompiler compiler,
                                  final boolean forceGenerate,
@@ -999,7 +989,7 @@ public class CompileDriver {
         public void run() {
           for (final GeneratingCompiler.GenerationItem item : allItems) {
             final Module itemModule = item.getModule();
-            final String outputDirPath = getGenerationOutputPath(compiler, itemModule, item.isTestSource());
+            final String outputDirPath = CompilerPaths.getGenerationOutputPath(compiler, itemModule, item.isTestSource());
             final String outputPath = outputDirPath + "/" + item.getPath();
             itemToOutputPathMap.put(item, outputPath);
 
@@ -1155,49 +1145,34 @@ public class CompileDriver {
                                  final boolean trackDependencies,
                                  final Set<File> outputDirectories,
                                  final boolean onlyCheckStatus) throws ExitException {
-    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
-    context.getProgressIndicator().pushState();
+
     final boolean[] wereFilesDeleted = new boolean[]{false};
     final Set<VirtualFile> toCompile = new HashSet<VirtualFile>();
+    final List<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
+    context.getProgressIndicator().pushState();
+    
     try {
-      final TranslatingCompilerStateCache cache = getTranslatingCompilerCache(compiler);
-      final Set<String> toDelete = new HashSet<String>();
-
-      final Set<String> urlsWithSourceRemoved = new HashSet<String>();
       final IOException[] ex = new IOException[] {null};
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
+      ApplicationManager.getApplication().runReadAction(new Runnable() { // todo: do we really need readAction here?
         public void run() {
-          try {
-            findOutOfDateFiles(compiler, forceCompile, cache, toCompile, context, snapshot);
 
-            if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
-              final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-              final PsiManager psiManager = PsiManager.getInstance(myProject);
-              final VirtualFile[] filesToCompile = toCompile.toArray(new VirtualFile[toCompile.size()]);
-              Set<String> sourcesWithOutputRemoved = getSourcesWithOutputRemoved(cache);
-              for (final VirtualFile file : filesToCompile) {
-                if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
-                  final PsiFile psiFile = psiManager.findFile(file);
-                  if (psiFile != null) {
-                    addDependentFiles(psiFile, toCompile, cache, sourcesWithOutputRemoved, compiler, context);
-                  }
+          TranslatingCompilerFilesMonitor.getInstance().collectFiles(
+              context, compiler, Arrays.asList(snapshot.getFiles()).iterator(), forceCompile, toCompile, toDelete
+          );
+          if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
+            final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+            final PsiManager psiManager = PsiManager.getInstance(myProject);
+            final VirtualFile[] filesToCompile = toCompile.toArray(new VirtualFile[toCompile.size()]);
+            for (final VirtualFile file : filesToCompile) {
+              if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
+                final PsiFile psiFile = psiManager.findFile(file);
+                if (psiFile != null) {
+                  addDependentFiles(psiFile, toCompile, compiler, context);
                 }
               }
             }
-
-            if (!isRebuild) {
-              final ProgressIndicator progressIndicator = context.getProgressIndicator();
-              progressIndicator.pushState();
-              progressIndicator.setText(CompilerBundle.message("progress.searching.for.files.to.delete"));
-  
-              findFilesToDelete(compiler, snapshot, urlsWithSourceRemoved, cache, toCompile, context, toDelete, compilerConfiguration);
-  
-              progressIndicator.popState();
-            }
-          }
-          catch (IOException e) {
-            ex[0] = e;
           }
         }
       });
@@ -1222,7 +1197,7 @@ public class CompileDriver {
 
       if (!toDelete.isEmpty()) {
         try {
-          wereFilesDeleted[0] = syncOutputDir(urlsWithSourceRemoved, context, toDelete, cache, outputDirectories);
+          wereFilesDeleted[0] = syncOutputDir(context, toDelete, outputDirectories);
         }
         catch (CacheCorruptedException e) {
           LOG.info(e);
@@ -1231,12 +1206,16 @@ public class CompileDriver {
       }
 
       if (wereFilesDeleted[0] && !toDelete.isEmpty()) {
-        CompilerUtil.refreshPaths(toDelete.toArray(new String[toDelete.size()]));
+        final List<File> files = new ArrayList<File>(toDelete.size());
+        for (Trinity<File, String, Boolean> trinity : toDelete) {
+          files.add(trinity.getFirst());
+        }
+        CompilerUtil.refreshIOFiles(files);
       }
 
       if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
         final TranslatingCompiler.ExitStatus exitStatus = compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]));
-        updateInternalCaches(cache, context, exitStatus.getSuccessfullyCompiled(), exitStatus.getFilesToRecompile());
+        monitor.update(context, exitStatus.getSuccessfullyCompiled(), exitStatus.getFilesToRecompile());
       }
     }
     catch (IOException e) {
@@ -1244,271 +1223,79 @@ public class CompileDriver {
       context.requestRebuildNextTime(e.getMessage());
       throw new ExitException(ExitStatus.ERRORS);
     }
+    finally {
+      context.getProgressIndicator().popState();
+    }
     return !toCompile.isEmpty() || wereFilesDeleted[0];
   }
 
-  private static Set<String> getSourcesWithOutputRemoved(TranslatingCompilerStateCache cache) throws IOException {
-    final Set<String> set = new HashSet<String>();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
-      String outputPath = it.next();
-      if (lfs.findFileByPath(outputPath) == null/*!myOutputFilesOnDisk.contains(outputPath)*/) {
-        set.add(cache.getSourceUrl(outputPath));
-      }
-    }
-    return set;
-  }
-
-  private void findFilesToDelete(final TranslatingCompiler compiler, VfsSnapshot snapshot,
-                                 final Set<String> urlsWithSourceRemoved,
-                                 final TranslatingCompilerStateCache cache,
-                                 final Set<VirtualFile> toCompile,
-                                 final CompileContext context,
-                                 final Set<String> toDelete,
-                                 final CompilerConfiguration compilerConfiguration) throws IOException {
-    final CompileScope scope = context.getCompileScope();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final boolean outputDirsUpToDate = CompilerDirectoryTimestamp.isUpToDate(Arrays.asList(context.getAllOutputDirectories()));
-
-    for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
-      final String outputPath = it.next();
-      final SourceUrlClassNamePair srcUrlNamePair = cache.getUrlClassNamePair(outputPath);
-      final String sourceUrl = srcUrlNamePair != null? srcUrlNamePair.getSourceUrl() : null;
-      if (!scope.belongs(sourceUrl)) {
-        continue;
-      }
-      final VirtualFile sourceFile = snapshot.getFileByUrl(sourceUrl);
-  
-      boolean needRecompile = false;
-      boolean shouldDelete;
-      if (outputDirsUpToDate || lfs.findFileByPath(outputPath) != null/*myOutputFilesOnDisk.contains(outputPath)*/) {
-        if (sourceFile == null) {
-          shouldDelete = true/*scope.belongs(sourceUrl)*/;
-        }
-        else {
-          if (toCompile.contains(sourceFile)) {
-            // some crazy users store their resources (which is source file for us) directly in the output dir
-            // we should not delete files which are both output and source files
-            shouldDelete = !FileUtil.pathsEqual(outputPath, VirtualFileManager.extractPath(sourceUrl));
-          }
-          else {
-            final String currentOutputDir = getModuleOutputDirForFile(context, sourceFile);
-            if (currentOutputDir != null) {
-              final String className = srcUrlNamePair != null? srcUrlNamePair.getClassName() : null;
-              //noinspection HardCodedStringLiteral
-              if (className == null || isUnderOutputDir(currentOutputDir, outputPath, className)) {
-                // the file was compilable but at the moment it is not, so the result of previous compilation should be deleted
-                shouldDelete = !compiler.isCompilableFile(sourceFile, context);
-              }
-              else {
-                // output for this source has been changed or the output dir was changed, need to recompile to the new output dir
-                shouldDelete = true;
-                needRecompile = true;
-              }
-            }
-            else {
-              shouldDelete = true;
-            }
-          }
-        }
-      }
-      else {
-        // output for this source has been deleted or the output dir was changed, need to recompile
-        needRecompile = true;
-        shouldDelete = true;  // in case the output dir was changed, should delete from the previous location
-      }
-  
-      if (shouldDelete) {
-        toDelete.add(outputPath);
-      }
-  
-      if (needRecompile) {
-        if (sourceFile != null /*&& scope.belongs(sourceUrl)*/) {
-          if (!compilerConfiguration.isExcludedFromCompilation(sourceFile)) {
-            toCompile.add(sourceFile);
-          }
-        }
-      }
-      if (sourceFile == null) {
-        urlsWithSourceRemoved.add(outputPath);
-      }
-    }
-  }
-
-  private static boolean isUnderOutputDir(final String outputDir, final String outputPath, final String className) {
-    final int outputRootLen = outputPath.length() - className.length() - ".class".length() - 1;
-    return outputDir.length() == outputRootLen &&
-           outputDir.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, outputPath, 0, outputRootLen);
-  }
-
-  private static void updateInternalCaches(final TranslatingCompilerStateCache cache,
-                                           final CompileContext context,
-                                           final TranslatingCompiler.OutputItem[] successfullyCompiled,
-                                           final VirtualFile[] filesToRecompile) throws IOException {
-    final IOException[] ex = new IOException[] {null};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          context.getProgressIndicator().setText(CompilerBundle.message("progress.updating.caches"));
-          final FileTypeManager typeManager = FileTypeManager.getInstance();
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Updating internal caches: successfully compiled " + successfullyCompiled.length + " files; toRecompile: " +
-                      filesToRecompile.length + " files");
-          }
-          for (final TranslatingCompiler.OutputItem item : successfullyCompiled) {
-            final String outputPath = item.getOutputPath();
-            final VirtualFile sourceFile = item.getSourceFile();
-            final String className;
-            if (outputPath != null && StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(sourceFile))) {
-              final String outputDir = item.getOutputRootDirectory();
-  
-              if (outputDir != null) {
-                if (!FileUtil.startsWith(outputPath, outputDir)) {
-                  LOG.error(outputPath + " does not start with " + outputDir);
-                }
-                className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputDir.length(), outputPath.length()), '/');
-              }
-              else {
-                // outputDir might be null for package-info.java (package annotation)
-                className = null;
-              }
-            }
-            else {
-              className = null;
-            }
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Putting: [outputPath, className, sourceFile] = [" + outputPath + ";" + className + ";" + sourceFile.getPresentableUrl() + "]");
-            }
-            cache.update(outputPath, className, sourceFile);
-          }
-          for (VirtualFile aFilesToRecompile : filesToRecompile) {
-            cache.markAsModified(aFilesToRecompile);
-          }
-        }
-        catch (IOException e) {
-          ex[0] = e;
-        }
-      }
-    });
-    if (ex[0] != null) {
-      throw ex[0];
-    }
-  }
-
-  private static boolean syncOutputDir(final Set<String> urlsWithSourceRemoved,
-                                       final CompileContextEx context,
-                                       final Set<String> toDelete,
-                                       final TranslatingCompilerStateCache cache,
-                                       final Set<File> outputDirectories) throws CacheCorruptedException, IOException {
-
+  private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete, final Set<File> outputDirectories) throws CacheCorruptedException, IOException {
     DeleteHelper deleteHelper = new DeleteHelper(outputDirectories);
     int total = toDelete.size();
     final DependencyCache dependencyCache = context.getDependencyCache();
     final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     context.getProgressIndicator().pushState();
+    final List<File> filesToRefresh = new ArrayList<File>();
     try {
       context.getProgressIndicator().setText(CompilerBundle.message("progress.synchronizing.output.directory"));
       int current = 0;
       boolean wereFilesDeleted = false;
-      for (final String outputPath : toDelete) {
+      for (final Trinity<File, String, Boolean> trinity : toDelete) {
         context.getProgressIndicator().setFraction(((double)(++current)) / total);
+        final File outputPath = trinity.getFirst();
         if (deleteHelper.delete(outputPath)) {
           wereFilesDeleted = true;
-          final String qName = cache.getClassName(outputPath);
-          if (qName != null) {
-            final int id = dependencyCache.getSymbolTable().getId(qName);
+          filesToRefresh.add(outputPath);
+          final String className = trinity.getSecond();
+          if (className != null) {
+            final int id = dependencyCache.getSymbolTable().getId(className);
             dependencyCache.addTraverseRoot(id);
-            if (urlsWithSourceRemoved.contains(outputPath)) {
+            final boolean sourcePresent = trinity.getThird().booleanValue();
+            if (!sourcePresent) {
               dependencyCache.markSourceRemoved(id);
             }
           }
           if (isTestMode) {
-            CompilerManagerImpl.addDeletedPath(outputPath);
+            CompilerManagerImpl.addDeletedPath(outputPath.getPath());
           }
-          cache.remove(outputPath);
-        }
-        else if (!new File(outputPath).exists()) {
-          cache.remove(outputPath);
         }
       }
       return wereFilesDeleted;
     }
     finally {
       deleteHelper.finish();
+      CompilerUtil.refreshIOFiles(filesToRefresh);
       context.getProgressIndicator().popState();
     }
   }
 
-  private void findOutOfDateFiles(final TranslatingCompiler compiler, final boolean forceCompile,
-                                  final TranslatingCompilerStateCache cache,
-                                  final Set<VirtualFile> toCompile,
-                                  final CompileContext context, final VfsSnapshot snapshot) throws IOException {
-    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
-    for (VirtualFile file : snapshot.getFiles()/*context.getCompileScope().getFiles(null, true)*/) {
-      if (compiler.isCompilableFile(file, context)) {
-        if (!forceCompile && compilerConfiguration.isExcludedFromCompilation(file)) {
-          continue;
-        }
-        final String url = file.getUrl();
-        if (forceCompile || file.getTimeStamp() != cache.getSourceTimestamp(url)) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("File is out-of-date: " + url + "; current timestamp = " + file.getTimeStamp() + "; stored timestamp = " + cache.getSourceTimestamp(url));
-          }
-          toCompile.add(file);
-        }
-      }
-    }
-  }
-
-
-  private void addDependentFiles(final PsiFile psiFile,
-                                 Set<VirtualFile> toCompile,
-                                 final TranslatingCompilerStateCache cache, Set<String> sourcesWithOutputRemoved,
-                                 TranslatingCompiler compiler,
-                                 CompileContext context) {
+  private void addDependentFiles(final PsiFile psiFile, Set<VirtualFile> toCompile, TranslatingCompiler compiler, CompileContext context) {
     final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(psiFile));
     builder.analyze();
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
     final Set<PsiFile> dependentFiles = dependencies.get(psiFile);
-    try {
-      if (dependentFiles != null && !dependentFiles.isEmpty()) {
-        for (final PsiFile dependentFile : dependentFiles) {
-          if (dependentFile instanceof PsiCompiledElement) {
-            continue;
-          }
-          final VirtualFile vFile = dependentFile.getVirtualFile();
-          if (vFile == null || toCompile.contains(vFile)) {
-            continue;
-          }
-          final String url = vFile.getUrl();
-          if (!sourcesWithOutputRemoved.contains(url)) {
-            if (vFile.getTimeStamp() == cache.getSourceTimestamp(url)) {
-              continue;
-            }
-          }
-          if (!compiler.isCompilableFile(vFile, context)) {
-            continue;
-          }
-          toCompile.add(vFile);
-          addDependentFiles(dependentFile, toCompile, cache, sourcesWithOutputRemoved, compiler, context);
+    if (dependentFiles != null && !dependentFiles.isEmpty()) {
+      final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
+      for (final PsiFile dependentFile : dependentFiles) {
+        if (dependentFile instanceof PsiCompiledElement) {
+          continue;
         }
+        final VirtualFile vFile = dependentFile.getVirtualFile();
+        if (vFile == null || toCompile.contains(vFile)) {
+          continue;
+        }
+        if (!compiler.isCompilableFile(vFile, context)) {
+          continue;
+        }
+        if (!monitor.isMarkedForCompilation(myProject, vFile)) {
+          continue; // no need to compile since already compiled
+        }
+        toCompile.add(vFile);
+        addDependentFiles(dependentFile, toCompile, compiler, context);
       }
     }
-    catch (IOException e) {
-      LOG.info(e);
-    }
   }
-
-  private String getModuleOutputDirForFile(CompileContext context, VirtualFile file) {
-    final Module module = context.getModuleByFile(file);
-    if (module == null) {
-      return null; // looks like file invalidated
-    }
-    final ProjectFileIndex fileIndex = myProjectRootManager.getFileIndex();
-    return getModuleOutputPath(module, fileIndex.isInTestSourceContent(file));
-  }
-
 
   // [mike] performance optimization - this method is accessed > 15,000 times in Aurora
   private String getModuleOutputPath(final Module module, boolean inTestSourceContent) {
@@ -1660,10 +1447,6 @@ public class CompileDriver {
       }
     }
     return true;
-  }
-
-  public TranslatingCompilerStateCache getTranslatingCompilerCache(TranslatingCompiler compiler) throws IOException {
-    return CompilerCacheManager.getInstance(myProject).getTranslatingCompilerCache(compiler);
   }
 
   private FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) throws IOException {
@@ -1993,7 +1776,7 @@ public class CompileDriver {
   }
   
   private static VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
-    final String path = getGenerationOutputPath(compiler, module, forTestSources);
+    final String path = CompilerPaths.getGenerationOutputPath(compiler, module, forTestSources);
     final File file = new File(path);
     final VirtualFile vFile;
     if (file.mkdirs()) {

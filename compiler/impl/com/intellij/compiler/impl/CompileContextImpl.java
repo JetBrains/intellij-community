@@ -8,7 +8,10 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -22,15 +25,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -55,6 +57,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Set<VirtualFile> myTestOutputDirectories;
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
+  private Map<Module, VirtualFile> myModuleOutputPaths = new HashMap<Module, VirtualFile>();
+  private Map<Module, VirtualFile> myModuleTestOutputPaths = new HashMap<Module, VirtualFile>();
 
   public CompileContextImpl(Project project,
                             CompilerTask indicator,
@@ -95,6 +99,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     myProjectCompileScope = new ProjectCompileScope(myProject);
     
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   public DependencyCache getDependencyCache() {
@@ -191,32 +199,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
+  @Nullable
   public VirtualFile getSourceFileByOutputFile(VirtualFile outputFile) {
-    if (myCompileDriver == null) {
-      LOG.assertTrue(false, "myCompileDriver should not be null when calling getSourceFileByOutputFile()");
-      return null;
-    }
-    TranslatingCompiler[] compilers = CompilerManager.getInstance(myProject).getCompilers(TranslatingCompiler.class);
-    try {
-      for (TranslatingCompiler compiler : compilers) {
-        final TranslatingCompilerStateCache translatingCompilerCache = myCompileDriver.getTranslatingCompilerCache(compiler);
-        if (translatingCompilerCache == null) {
-          continue;
-        }
-        final String sourceUrl = translatingCompilerCache.getSourceUrl(outputFile.getPath());
-        if (sourceUrl == null) {
-          continue;
-        }
-        final VirtualFile sourceFile = VirtualFileManager.getInstance().findFileByUrl(sourceUrl);
-        if (sourceFile != null) {
-          return sourceFile;
-        }
-      }
-    }
-    catch (IOException ignored) {
-      LOG.info(ignored);
-    }
-    return null;
+    return TranslatingCompilerFilesMonitor.getSourceFileByOutput(outputFile);
   }
 
   public Module getModuleByFile(VirtualFile file) {
@@ -282,10 +267,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public VirtualFile getModuleOutputDirectory(Module module) {
+    // todo: caching?
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 
   public VirtualFile getModuleOutputDirectoryForTests(Module module) {
+    // todo: caching?
     return CompilerPaths.getModuleOutputDirectory(module, true);
   }
 

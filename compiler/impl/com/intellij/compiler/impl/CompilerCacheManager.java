@@ -59,24 +59,6 @@ public class CompilerCacheManager implements ProjectComponent {
     disposeCaches();
   }
   
-  public TranslatingCompilerStateCache getTranslatingCompilerCache(TranslatingCompiler compiler) throws IOException {
-    Object cache = myCompilerToCacheMap.get(compiler);
-    if (cache == null) {
-      final TranslatingCompilerStateCache stateCache = new TranslatingCompilerStateCache(getCompilerRootDir(compiler), getSymTable());
-      myCompilerToCacheMap.put(compiler, stateCache);
-      myCacheDisposables.add(new Disposable() {
-        public void dispose() {
-          stateCache.close();
-        }
-      });
-      cache = stateCache;
-    }
-    else {
-      LOG.assertTrue(cache instanceof TranslatingCompilerStateCache);
-    }
-    return (TranslatingCompilerStateCache)cache;
-  }
-
   private File getCompilerRootDir(final Compiler compiler) {
     final File dir = new File(myCachesRoot, getCompilerIdString(compiler));
     dir.mkdirs();

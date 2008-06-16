@@ -15,10 +15,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -146,7 +145,10 @@ public class DependencyCache {
     final CacheCorruptedException[] exception = new CacheCorruptedException[] {null};
 
     // remove unnecesary dependencies
-    for (final int qName : namesToUpdate) {
+    final TIntHashSet toClean = new TIntHashSet();
+    toClean.addAll(namesToUpdate);
+    toClean.addAll(myClassesWithSourceRemoved.toArray());
+    for (final int qName : toClean.toArray()) {
       final int oldClassId = cache.getClassId(qName);
       if (oldClassId == Cache.UNKNOWN) {
         continue;
@@ -271,22 +273,6 @@ public class DependencyCache {
         }
       });
     }
-
-    Runnable runnable = new Runnable() {
-      public void run() {
-        final int[] classesToRemove = myClassesWithSourceRemoved.toArray();
-        for (final int qName : classesToRemove) {
-          try {
-            cache.removeClass(qName);
-          }
-          catch (CacheCorruptedException e) {
-            exception[0] = e;
-            subclassJob.cancel();
-          }
-        }
-      }
-    };
-    subclassJob.addTask(runnable);
 
     scheduleNow(subclassJob, exception);
 

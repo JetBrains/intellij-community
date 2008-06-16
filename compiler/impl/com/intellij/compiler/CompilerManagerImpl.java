@@ -14,8 +14,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
@@ -24,7 +24,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -293,7 +292,15 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public OutputToSourceMapping getJavaCompilerOutputMapping() {
-    return new OutputToSourceMappingImpl(getCompilers(JavaCompiler.class));
+    return new OutputToSourceMapping() {
+      public String getSourcePath(final String outputPath) {
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final VirtualFile outputFile = lfs.findFileByPath(outputPath);
+
+        final VirtualFile sourceFile = outputFile != null ? TranslatingCompilerFilesMonitor.getSourceFileByOutput(outputFile) : null;
+        return sourceFile != null? sourceFile.getPath() : null;
+      }
+    };
   }
 
   public CompileScope createFilesCompileScope(final VirtualFile[] files) {
@@ -357,29 +364,6 @@ public class CompilerManagerImpl extends CompilerManager {
       if (myDelegate != null) {
         myDelegate.finished(aborted, errors, warnings, compileContext);
       }
-    }
-  }
-
-  private class OutputToSourceMappingImpl implements OutputToSourceMapping {
-    private final TranslatingCompiler[] myCompilers;
-
-    public OutputToSourceMappingImpl(final TranslatingCompiler[] compilers) {
-      myCompilers = compilers;
-    }
-
-    public String getSourcePath(final String outputPath) {
-      for (TranslatingCompiler compiler : myCompilers) {
-        try {
-          final String sourceUrl = CompilerCacheManager.getInstance(myProject).getTranslatingCompilerCache(compiler).getSourceUrl(outputPath);
-          if (sourceUrl != null) {
-            return VirtualFileManager.extractPath(sourceUrl);
-          }
-        }
-        catch (IOException ignored) {
-          LOG.info(ignored);
-        }
-      }
-      return null;
     }
   }
 }

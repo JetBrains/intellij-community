@@ -7,6 +7,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -24,6 +25,10 @@ public class CompileContextExProxy implements CompileContextEx {
 
   public CompileContextExProxy(CompileContextEx delegate) {
     myDelegate = delegate;
+  }
+
+  public Project getProject() {
+    return myDelegate.getProject();
   }
 
   public DependencyCache getDependencyCache() {

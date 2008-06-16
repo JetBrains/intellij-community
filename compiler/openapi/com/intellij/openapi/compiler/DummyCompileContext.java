@@ -18,6 +18,7 @@ package com.intellij.openapi.compiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -33,6 +34,10 @@ public class DummyCompileContext implements CompileContext {
 
   public static DummyCompileContext getInstance() {
     return OUR_INSTANCE;
+  }
+
+  public Project getProject() {
+    return null;
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {

@@ -6,12 +6,14 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public interface CompileContextEx extends CompileContext {
   DependencyCache getDependencyCache();
 
+  @Nullable
   VirtualFile getSourceFileByOutputFile(VirtualFile outputFile);
 
   void addMessage(CompilerMessage message);
