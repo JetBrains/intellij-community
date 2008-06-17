@@ -326,7 +326,17 @@ public class UnscrambleDialog extends DialogWrapper{
     StringBuilder builder = new StringBuilder(text.length());
     String[] lines = text.split("\n");
     boolean first = true;
+    boolean inAuxInfo = false;
     for (String line : lines) {
+      //noinspection HardCodedStringLiteral
+      if (!inAuxInfo && (line.startsWith("JNI global references") || line.trim().equals("Heap"))) {
+        builder.append("\n");
+        inAuxInfo = true;
+      }
+      if (inAuxInfo) {
+        builder.append(line).append("\n");
+        continue;
+      }
       if (!first && mustHaveNewLineBefore(line)) {
         builder.append("\n");
         if (line.startsWith("\"")) builder.append("\n"); // Additional linebreak for thread names
@@ -475,12 +485,13 @@ public class UnscrambleDialog extends DialogWrapper{
           SimpleTextAttributes attrs = getAttributes(threadState);
           append(threadState.getName() + " (", attrs);
           String detail = threadState.getThreadStateDetail();
-          if (detail != null) {
-            append(detail, attrs);
+          if (detail == null) {
+            detail = threadState.getState().trim();
           }
-          else {
-            append(threadState.getState().trim(), attrs);
+          if (detail.length() > 30) {
+            detail = detail.substring(0, 30) + "...";
           }
+          append(detail, attrs);
           append(")", attrs);
           if (threadState.getExtraState() != null) {
             append(" [" + threadState.getExtraState() + "]", attrs);
