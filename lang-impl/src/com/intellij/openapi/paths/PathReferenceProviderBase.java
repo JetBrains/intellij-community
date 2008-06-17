@@ -49,7 +49,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
       final String text = elementText.substring(offset, endOffset);
       return createReferences(psiElement, offset, text, references, soft || dynamicContext);
     } catch (StringIndexOutOfBoundsException e) {
-      LOG.error("Cannot process string: '" + elementText + "'", e);
+      LOG.error("Cannot process string: '" + psiElement.getParent().getParent().getText() + "'", e);
       return false;
     }
   }
