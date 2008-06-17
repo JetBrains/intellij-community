@@ -19,13 +19,7 @@ public class DefaultFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer) {
     consumer.consume(new JavaClassFileType(), "class");
 
-    consumer.consume(new HtmlFileType(), "html;htm;sht;shtm;shtml");
-    consumer.consume(new XHtmlFileType(), "xhtml");
-    consumer.consume(new DTDFileType(), "dtd;ent;mod");
-
     consumer.consume(new JavaFileType(), "java");
-
-    consumer.consume(new XmlFileType(), "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml");
 
     consumer.consume(new GuiFormFileType(), "form");
     consumer.consume(new WorkspaceFileType(), "iws");
