@@ -1,6 +1,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,13 +82,15 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                           boolean forceCompile,
                           Collection<VirtualFile> toCompile,
                           Collection<Trinity<File, String, Boolean>> toDelete) {
-    final String projectId = getProjectId(context.getProject());
+    final Project project = context.getProject();
+    final String projectId = getProjectId(project);
+    final CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     synchronized (mySourcesToRecompile) {
       final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(projectId);
       if (forceCompile || (pathsToRecompile != null && pathsToRecompile.size() > 0)) {
         while (scopeSrcIterator.hasNext()) {
           final VirtualFile file = scopeSrcIterator.next();
-          if (!compiler.isCompilableFile(file, context)) {
+          if (configuration.isExcludedFromCompilation(file) || !compiler.isCompilableFile(file, context)) {
             continue;
           }
           final int fileId = getFileId(file);
