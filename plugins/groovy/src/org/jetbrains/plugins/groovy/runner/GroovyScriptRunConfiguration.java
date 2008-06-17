@@ -199,8 +199,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     };
 
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    //todo[DIANA] as Jeka
-    //state.setModulesToCompile(getModules());
     return state;
 
   }

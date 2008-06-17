@@ -47,7 +47,6 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
 
   @Nullable
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    //todo [DIANA] now default range is used
     return null;
   }
 }

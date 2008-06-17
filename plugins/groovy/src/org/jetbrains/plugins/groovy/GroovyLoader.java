@@ -166,11 +166,19 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     });
 
 
-    registerNamevalidators();
+    registerNameValidators();
   }
 
-  private static void registerNamevalidators() {
-/* todo [DIANA]
+  private static void registerNameValidators() {
+// todo [DIANA]
+/*
+    RenameInputValidatorRegistry.getInstance().registerInputValidator(pattern, new RenameInputValidator(){
+      public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
+        return !GroovyRefactoringUtil.KEYWORDS.contains(newName);
+      }
+    });
+*/
+/*
     RenameInputValidatorRegistry.getInstance().registerInputValidator(new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         return element instanceof PsiNamedElement;

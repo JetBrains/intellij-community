@@ -96,7 +96,6 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     final VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
     configuration.scriptPath = vFile.getPath();
-    //todo[DIANA] chack unsafe typecast to JavaRunConfigurationModule
     configuration.setName(JavaExecutionUtil.getPresentableClassName(aClass.getQualifiedName(), ((JavaRunConfigurationModule) configuration.getConfigurationModule())));
     configuration.setModule(JavaExecutionUtil.findModule(aClass));
     return settings;
