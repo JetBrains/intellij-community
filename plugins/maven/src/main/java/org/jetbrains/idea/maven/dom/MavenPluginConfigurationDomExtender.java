@@ -74,6 +74,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     if (pluginFile == null) return null;
 
     VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);
+    if (pluginJarRoot == null) return null;
     return pluginJarRoot.findFileByRelativePath(MavenPluginInfoReader.MAVEN_PLUGIN_DESCRIPTOR);
   }
 

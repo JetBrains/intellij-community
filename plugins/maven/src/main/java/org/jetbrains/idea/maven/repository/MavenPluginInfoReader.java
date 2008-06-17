@@ -55,7 +55,7 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
                                           String groupId,
                                           String artifactId) {
     String relativePath = StringUtil.replace(groupId, ".", File.separator) + File.separator + artifactId;
-    return LocalFileSystem.getInstance().findFileByPath(repositoryPath + File.separator + relativePath);
+    return LocalFileSystem.getInstance().refreshAndFindFileByPath(repositoryPath + File.separator + relativePath);
   }
 
   private String resolveVersion(VirtualFile pluginDir) {
