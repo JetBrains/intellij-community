@@ -17,16 +17,18 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -56,7 +58,7 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     return findChildByClass(GrStatement.class);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     GrForClause forClause = getClause();
     final GrVariable varScope = PsiTreeUtil.getParentOfType(place, GrVariable.class);
     if (forClause != null && lastParent != null && !(lastParent instanceof GrForInClause)) {
@@ -72,12 +74,12 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
 
   public GrCondition replaceBody(GrCondition newBody) throws IncorrectOperationException {
     if (getBody() == null ||
-        newBody == null) {
+            newBody == null) {
       throw new IncorrectOperationException();
     }
     ASTNode oldBodyNode = getBody().getNode();
     if (oldBodyNode.getTreePrev() != null &&
-        GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
+            GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
       ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
       getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
     }

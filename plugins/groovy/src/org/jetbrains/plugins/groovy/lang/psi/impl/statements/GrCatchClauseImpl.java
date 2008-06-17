@@ -16,7 +16,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,13 +52,13 @@ public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchCl
     return findChildByClass(GrOpenBlock.class);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     GrParameter parameter = getParameter();
     return parameter == null || ResolveUtil.processElement(processor, parameter);
   }
 
   public GrParameter[] getParameters() {
     final GrParameter parameter = getParameter();
-    return parameter != null ? new GrParameter[] {parameter} : GrParameter.EMPTY_ARRAY;
+    return parameter != null ? new GrParameter[]{parameter} : GrParameter.EMPTY_ARRAY;
   }
 }

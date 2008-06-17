@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,7 +66,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     return getLValue().getType();
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     GrExpression lValue = getLValue();
     if (lastParent == null || !PsiTreeUtil.isAncestor(this, lastParent, false)) {
       if (lValue instanceof GrReferenceExpressionImpl) {
@@ -71,7 +74,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         String name = lRefExpr.getName();
         String refName = processor instanceof ResolverProcessor ? ((ResolverProcessor) processor).getName() : null;
         if (refName == null ||
-            (refName.equals(name) && !(lRefExpr.resolve() instanceof PsiVariable))) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
+                (refName.equals(name) && !(lRefExpr.resolve() instanceof PsiVariable))) { //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
           if (!processor.execute(lRefExpr, ResolveState.initial())) return false;
         }
       }
