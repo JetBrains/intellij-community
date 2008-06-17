@@ -1159,7 +1159,7 @@ public class CompileDriver {
         public void run() {
 
           TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-              context, compiler, Arrays.asList(snapshot.getFiles()).iterator(), forceCompile, toCompile, toDelete
+              context, compiler, Arrays.asList(snapshot.getFiles()).iterator(), forceCompile || isRebuild, toCompile, toDelete
           );
           if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
