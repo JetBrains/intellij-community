@@ -63,7 +63,7 @@ public abstract class StateCache<T> {
 
   public void update(@NonNls String url, T state) throws IOException {
     if (state != null) {
-      updateCache(url, state);
+      //updateCache(url, state);
       myMap.put(url, state);
     }
     else {
@@ -72,11 +72,13 @@ public abstract class StateCache<T> {
   }
 
   public void remove(String url) throws IOException {
-    removeCached(url);
+    //removeCached(url);
     myMap.remove(url);
   }
 
   public T getState(String url) throws IOException {
+    return myMap.get(url);
+    /*
     T state = getCached(url);
     if (state != null) {
       return state;
@@ -89,6 +91,7 @@ public abstract class StateCache<T> {
         updateCache(url, state);
       }
     }
+    */
   }
 
   public Collection<String> getUrls() throws IOException {
