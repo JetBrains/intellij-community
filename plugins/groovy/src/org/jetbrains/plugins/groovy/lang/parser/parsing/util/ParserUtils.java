@@ -20,7 +20,6 @@ import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
@@ -89,7 +88,6 @@ public abstract class ParserUtils {
    * @param builder
    * @param tokenSet
    * @return
-   *
    */
   public static boolean getToken(PsiBuilder builder, TokenSet tokenSet, String msg) {
     if (tokenSet.contains(builder.getTokenType())) {
@@ -191,6 +189,17 @@ public abstract class ParserUtils {
     } else {
       em.drop();
     }
+  }
+
+  public static void advance(PsiBuilder builder, int count) {
+    for (int i = 0; i < count; i++) {
+      builder.getTokenText();
+      builder.advanceLexer();
+    }
+  }
+
+  public static void advance(PsiBuilder builder) {
+    advance(builder, 1);
   }
 
 }

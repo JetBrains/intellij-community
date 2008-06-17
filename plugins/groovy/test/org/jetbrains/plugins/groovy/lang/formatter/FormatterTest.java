@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * Test suite for static formatting. Compares two files:
- * befor and after formatting
+ * before and after formatting
  *
  * @author Ilya.Sergey
  */
@@ -44,9 +44,9 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
 
   public FormatterTest(String path) {
     super(path != null ? path :
-        System.getProperty("path") != null ?
-            System.getProperty("path") :
-            DATA_PATH
+            System.getProperty("path") != null ?
+                    System.getProperty("path") :
+                    DATA_PATH
     );
   }
 

@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -82,12 +83,12 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
       if (parentPsi instanceof GrDocTag) {
         String name = ((GrDocTag) parentPsi).getName();
         if (TAGS_WITH_REFERENCES.contains(name) && !(parentPsi instanceof GrDocInlinedTag) ||
-            INLINED_TAGS_WITH_REFERENCES.contains(name) && parentPsi instanceof GrDocInlinedTag) {
+                INLINED_TAGS_WITH_REFERENCES.contains(name) && parentPsi instanceof GrDocInlinedTag) {
           return parent.findChildByType(mGDOC_TAG_VALUE_TOKEN) == child;
         }
       }
       if (parentPsi instanceof GrDocMethodParameter &&
-          parent.findChildByType(mGDOC_TAG_VALUE_TOKEN) == child) return true;
+              parent.findChildByType(mGDOC_TAG_VALUE_TOKEN) == child) return true;
 
       if (parentPsi instanceof GrDocMemberReference) {
         ASTNode prev = child.getTreePrev();
@@ -112,7 +113,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
 
     PsiBuilder.Marker rootMarker = builder.mark();
     if (BUILT_IN_TYPES.contains(chameleon.getText())) {
-      builder.advanceLexer();
+      ParserUtils.advance(builder, 1);
     } else {
       parseBody(builder);
     }

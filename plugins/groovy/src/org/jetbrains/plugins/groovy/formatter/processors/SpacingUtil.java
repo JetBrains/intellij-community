@@ -21,6 +21,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,7 +41,8 @@ public abstract class SpacingUtil {
   }
 
   static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
-    return child1 == null || child2 == null || isWhiteSpace(child1) || isWhiteSpace(child2);
+    if (child1 == null || child2 == null || isWhiteSpace(child1) || isWhiteSpace(child2)) return true;
+    return child1 instanceof LeafPsiElement || child2 instanceof LeafPsiElement;
   }
 
   static boolean shouldKeepSpace(@NotNull final PsiElement parent) {
@@ -52,7 +54,7 @@ public abstract class SpacingUtil {
     }
 
     return type == GroovyTokenTypes.GROOVY_DOC_COMMENT || type == GroovyDocElementTypes.GDOC_TAG
-        || type == GroovyDocElementTypes.GDOC_INLINED_TAG;
+            || type == GroovyDocElementTypes.GDOC_INLINED_TAG;
   }
 
   static ASTNode getLeafNonSpaceBefore(final ASTNode element) {
