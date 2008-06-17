@@ -5,10 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentHashMap;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.*;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -26,9 +23,13 @@ import java.util.*;
 public abstract class MavenIndex {
   protected static final String CONTEXT_DIR = "context";
   protected static final String DATA_DIR_PREFIX = "data";
+
   protected static final String GROUP_IDS_FILE = "groupIds.dat";
   protected static final String ARTIFACT_IDS_FILE = "artifactIds.dat";
   protected static final String VERSIONS_FILE = "versions.dat";
+
+  protected static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
+  protected static final String VERSIONS_MAP_FILE = "versions-map.dat";
 
   public enum Kind {
     LOCAL(0), PROJECT(1), REMOTE(2);
@@ -248,10 +249,12 @@ public abstract class MavenIndex {
     progress.setText2("Updating caches...");
 
     Set<String> groupIds = new HashSet<String>();
-    Map<String, Set<String>> artifactIds = new HashMap<String, Set<String>>();
-    Map<String, Set<String>> versions = new HashMap<String, Set<String>>();
+    Set<String> artifactIds = new HashSet<String>();
+    Set<String> versions = new HashSet<String>();
+    Map<String, Set<String>> artifactIdsMap = new HashMap<String, Set<String>>();
+    Map<String, Set<String>> versionsMap = new HashMap<String, Set<String>>();
 
-    doUpdateIndexData(context, project, groupIds, artifactIds, versions, progress);
+    doUpdateIndexData(context, project, groupIds, artifactIds, versions, artifactIdsMap, versionsMap, progress);
 
     IndexData oldData;
     String oldDataDir;
@@ -265,16 +268,16 @@ public abstract class MavenIndex {
 
     progress.setText2("Saving caches...");
 
-    for (String each : groupIds) {
-      newData.groupIds.enumerate(each);
+    for (String each : groupIds) newData.groupIds.enumerate(each);
+    for (String each : artifactIds) newData.artifactIds.enumerate(each);
+    for (String each : versions) newData.versions.enumerate(each);
+
+    for (Map.Entry<String, Set<String>> each : artifactIdsMap.entrySet()) {
+      newData.artifactIdsMap.put(each.getKey(), each.getValue());
     }
 
-    for (Map.Entry<String, Set<String>> each : artifactIds.entrySet()) {
-      newData.artifactIds.put(each.getKey(), each.getValue());
-    }
-
-    for (Map.Entry<String, Set<String>> each : versions.entrySet()) {
-      newData.versions.put(each.getKey(), each.getValue());
+    for (Map.Entry<String, Set<String>> each : versionsMap.entrySet()) {
+      newData.versionsMap.put(each.getKey(), each.getValue());
     }
 
     newData.flush();
@@ -291,8 +294,10 @@ public abstract class MavenIndex {
   protected void doUpdateIndexData(IndexingContext context,
                                    Project project,
                                    Set<String> groupIds,
-                                   Map<String, Set<String>> artifactIds,
-                                   Map<String, Set<String>> versions,
+                                   Set<String> artifactIds,
+                                   Set<String> versions,
+                                   Map<String, Set<String>> artifactIdsMap,
+                                   Map<String, Set<String>> versionsMap,
                                    ProgressIndicator progress) throws IOException {
     IndexReader r = context.getIndexReader();
     int total = r.numDocs();
@@ -311,8 +316,11 @@ public abstract class MavenIndex {
       String version = parts.get(2);
 
       groupIds.add(groupId);
-      getOrCreate(artifactIds, groupId).add(artifactId);
-      getOrCreate(versions, groupId + ":" + artifactId).add(version);
+      artifactIds.add(groupId + ":" + artifactId);
+      versions.add(groupId + ":" + artifactId + ":" + version);
+
+      getOrCreate(artifactIdsMap, groupId).add(artifactId);
+      getOrCreate(versionsMap, groupId + ":" + artifactId).add(version);
     }
   }
 
@@ -353,10 +361,14 @@ public abstract class MavenIndex {
 
     try {
       myData.groupIds.enumerate(id.groupId);
+
       if (id.artifactId != null) {
-        addToCache(myData.artifactIds, id.groupId, id.artifactId);
+        myData.artifactIds.enumerate(id.groupId + ":" + id.artifactId);
+        addToCache(myData.artifactIdsMap, id.groupId, id.artifactId);
+
         if (id.version != null) {
-          addToCache(myData.versions, id.groupId + ":" + id.artifactId, id.version);
+          myData.versions.enumerate(id.groupId + ":" + id.artifactId + ":" + id.version);
+          addToCache(myData.versionsMap, id.groupId + ":" + id.artifactId, id.version);
         }
       }
       myData.flush();
@@ -386,13 +398,18 @@ public abstract class MavenIndex {
 
   public static class IndexData {
     PersistentStringEnumerator groupIds;
-    PersistentHashMap<String, Set<String>> artifactIds;
-    PersistentHashMap<String, Set<String>> versions;
+    PersistentStringEnumerator artifactIds;
+    PersistentStringEnumerator versions;
+    PersistentHashMap<String, Set<String>> artifactIdsMap;
+    PersistentHashMap<String, Set<String>> versionsMap;
 
     public IndexData(File dir) throws IOException {
       groupIds = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
-      artifactIds = createPersistentMap(new File(dir, ARTIFACT_IDS_FILE));
-      versions = createPersistentMap(new File(dir, VERSIONS_FILE));
+      artifactIds = new PersistentStringEnumerator(new File(dir, ARTIFACT_IDS_FILE));
+      versions = new PersistentStringEnumerator(new File(dir, VERSIONS_FILE));
+
+      artifactIdsMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
+      versionsMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(File f) throws IOException {
@@ -400,23 +417,23 @@ public abstract class MavenIndex {
     }
 
     public void close() throws IOException {
-      try {
-        if (groupIds != null) groupIds.close();
-      }
-      finally {
-        try {
-          if (artifactIds != null) artifactIds.close();
-        }
-        finally {
-          if (versions != null) versions.close();
-        }
-      }
+      safeClose(groupIds);
+      safeClose(artifactIds);
+      safeClose(versions);
+      safeClose(artifactIdsMap);
+      safeClose(versionsMap);
+    }
+
+    private void safeClose(PersistentEnumerator enumerator) throws IOException {
+      if (enumerator != null) enumerator.close();
     }
 
     public void flush() throws IOException {
       groupIds.flush();
       artifactIds.flush();
       versions.flush();
+      artifactIdsMap.flush();
+      versionsMap.flush();
     }
   }
 

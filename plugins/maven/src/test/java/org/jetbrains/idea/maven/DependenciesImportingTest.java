@@ -546,6 +546,40 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1");
   }
 
+  public void testPropertiesInInheritedDependencies() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>group</groupId>" +
+                     "    <artifactId>lib</artifactId>" +
+                     "    <version>${project.version}</version>" +
+                     "  </dependency>" +
+                     "</dependencies>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+                         "<version>2</version>" +
+
+                         "<parent>" +
+                         "  <groupId>test</groupId>" +
+                         "  <artifactId>project</artifactId>" +
+                         "  <version>1</version>" +
+                         "</parent>");
+
+    importProject();
+    
+    assertModuleLibDep("project", "group:lib:1");
+    assertModuleLibDep("m", "group:lib:2");
+  }
+
   public void testPropertyInTheModuleDependency() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
