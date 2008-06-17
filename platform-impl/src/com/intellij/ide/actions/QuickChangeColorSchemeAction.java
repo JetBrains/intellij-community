@@ -52,6 +52,6 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
   }
 
   protected boolean isEnabled() {
-    return EditorColorsManager.getInstance().getAllSchemes().length > 1 || ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager().isImportExportAvailable();
+    return EditorColorsManager.getInstance().getAllSchemes().length > 1 || ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager().isImportAvailable();
   }
 }

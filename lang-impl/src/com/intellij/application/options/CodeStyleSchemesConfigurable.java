@@ -244,7 +244,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
                                        stdInsets, 0, 0));
 
     final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> schemesManager = getSchemesManager();
-    if (schemesManager.isImportExportAvailable()) {
+    if (schemesManager.isExportAvailable()) {
       myExportButton = new JButton("Share...");
       myExportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
@@ -260,6 +260,9 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
                                          stdInsets, 0, 0));
 
 
+    }
+
+    if (schemesManager.isImportAvailable()) {
       JButton importButton = new JButton("Import Shared...");
       importButton.setMnemonic('I');
       importButton.addActionListener(new ActionListener(){
@@ -282,6 +285,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       myPanel.add(importButton,
                   new GridBagConstraints(5, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                          stdInsets, 0, 0));
+      
     }
 
     myPanel.add(new JPanel(),

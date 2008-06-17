@@ -31,7 +31,9 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 class TemplateListPanel extends JPanel {
@@ -150,18 +152,23 @@ class TemplateListPanel extends JPanel {
     myEditButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.edit"));
     myRemoveButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.remove"));
 
-    if (getSchemesManager().isImportExportAvailable()) {
+    if (getSchemesManager().isExportAvailable()) {
       myExportButton = createButton(tableButtonsPanel, gbConstraints, "Share...");
       myEditButton.setMnemonic('S');
-      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import Shared...");
-      myImportButton.setMnemonic('I');
-      myImportButton.setEnabled(true);
 
       myExportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
           exportCurrentGroup();
         }
       });
+
+
+    }
+
+    if (getSchemesManager().isImportAvailable()) {
+      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import Shared...");
+      myImportButton.setMnemonic('I');
+      myImportButton.setEnabled(true);
 
       myImportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
@@ -189,7 +196,7 @@ class TemplateListPanel extends JPanel {
           }.show(getSchemesManager(), myTemplateGroups);
         }
       });
-
+      
     }
 
     gbConstraints.weighty = 1;

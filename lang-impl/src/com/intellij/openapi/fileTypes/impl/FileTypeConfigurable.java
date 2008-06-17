@@ -273,10 +273,14 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       myFileTypesList.setCellRenderer(new FileTypeRenderer());
       myFileTypesList.setModel(new DefaultListModel());
 
-      if (getSchemesManager().isImportExportAvailable()) {
+      if (getSchemesManager().isImportAvailable()) {
         myImportButton.setVisible(true);
+      }
+
+      if (getSchemesManager().isExportAvailable()) {
         myExportButton.setVisible(true);
       }
+
     }
 
     private SchemesManager<FileType, AbstractFileType> getSchemesManager() {

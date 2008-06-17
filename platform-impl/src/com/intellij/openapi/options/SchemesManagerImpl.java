@@ -44,6 +44,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
   private final StreamProvider[] myProviders;
   private final File myBaseDir;
   private static final String DESCRIPTION = "description";
+  private static final boolean EXPORT_IS_AVAILABLE = false;
 
   public SchemesManagerImpl(final String fileSpec, final SchemeProcessor<E> processor, final RoamingType roamingType,
                             StreamProvider[] providers, File baseDir) {
@@ -125,8 +126,10 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
                 final File file = new File(myBaseDir, subpath);
                 JDOMUtil.writeDocument(subDocument, file, "\n");
                 E scheme = readScheme(subDocument);
-                loadScheme(file, scheme);
-                result.add(scheme);
+                if (scheme != null) {
+                  loadScheme(file, scheme);
+                  result.add(scheme);
+                }
 
               }
             }
@@ -424,11 +427,15 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     return new Document(sharedElement);
   }
 
-  public boolean isImportExportAvailable() {
+  public boolean isImportAvailable() {
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
 
     return providers != null && providers.length > 0;
+  }
+
+  public boolean isExportAvailable() {
+    return EXPORT_IS_AVAILABLE;
   }
 
   public boolean isShared(final Scheme scheme) {

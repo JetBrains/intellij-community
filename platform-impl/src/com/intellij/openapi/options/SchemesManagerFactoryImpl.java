@@ -46,7 +46,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
         public void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException {
         }
 
-        public boolean isImportExportAvailable() {
+        public boolean isImportAvailable() {
           return false;
         }
 
@@ -63,7 +63,8 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
         protected void onSchemeAdded(final T scheme) {
         }
 
-        protected void renameScheme(final T scheme, final String newName) {
+        public boolean isExportAvailable() {
+          return false;
         }
       };
     }

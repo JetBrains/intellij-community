@@ -222,7 +222,7 @@ public class KeymapPanel extends JPanel {
     panel.add(myDeleteButton, gc);
 
     final SchemesManager<Keymap, KeymapImpl> schemesManager = getSchemesManager();
-    if (schemesManager.isImportExportAvailable()) {
+    if (schemesManager.isExportAvailable()) {
       myExportButton = new JButton("Share...");
       myExportButton.setMnemonic('S');
       myExportButton.addActionListener(new ActionListener(){
@@ -237,6 +237,9 @@ public class KeymapPanel extends JPanel {
       panel.add(myExportButton, gc);
 
 
+    }
+
+    if (schemesManager.isImportAvailable()) {
       JButton importButton = new JButton("Import Shared...");
       importButton.setMnemonic('I');
       importButton.addActionListener(new ActionListener(){
@@ -260,6 +263,7 @@ public class KeymapPanel extends JPanel {
 
       importButton.setMargin(insets);
       panel.add(importButton,gc);
+      
     }
 
 

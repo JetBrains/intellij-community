@@ -132,12 +132,15 @@ public class QuickListsPanel extends JPanel {
     });
 
     SchemesManager<QuickList,QuickList> schemesManager = QuickListsManager.getInstance().getSchemesManager();
-    if (schemesManager.isImportExportAvailable()) {
+    if (schemesManager.isExportAvailable()) {
       group.add(new ExportSchemeAction<QuickList, QuickList>(schemesManager){
         protected QuickList getSelectedScheme() {
           return (QuickList)myQuickListsList.getSelectedValue();
         }
       });
+    }
+
+    if (schemesManager.isImportAvailable()) {
       group.add(new ImportSchemeAction<QuickList,QuickList>(QuickListsManager.getInstance().getSchemesManager()){
         protected Collection<QuickList> collectCurrentSchemes() {
           return collectElements();
@@ -155,7 +158,6 @@ public class QuickListsPanel extends JPanel {
         }
       });
     }
-
 
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
     return panel;

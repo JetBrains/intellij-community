@@ -20,7 +20,11 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     public void exportScheme(final ExternalizableScheme scheme, final String name, final String description) throws WriteExternalException {
     }
 
-    public boolean isImportExportAvailable() {
+    public boolean isImportAvailable() {
+      return false;
+    }
+
+    public boolean isExportAvailable() {
       return false;
     }
 
@@ -75,7 +79,9 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   void exportScheme(final E scheme, final String name, final String description)
       throws WriteExternalException;
 
-  boolean isImportExportAvailable();
+  boolean isImportAvailable();
+
+  boolean isExportAvailable();
 
   boolean isShared(final Scheme scheme);
 
