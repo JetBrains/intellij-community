@@ -245,8 +245,8 @@
       <implementation-class>org.jetbrains.plugins.grails.fileType.GspLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</implementation-class>
-      <interface-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</interface-class>
+      <implementation-class>org.jetbrains.plugins.groovy.error.GroovyErrorReportConfigurable</implementation-class>
+      <interface-class>org.jetbrains.plugins.groovy.error.GroovyErrorReportConfigurable</interface-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
