@@ -44,17 +44,17 @@ public class TooBroadCatchInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean onlyWarnOnRootExceptions = false;
 
-    @NotNull
+    @Override @NotNull
     public String getID() {
         return "OverlyBroadCatchBlock";
     }
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("too.broad.catch.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         final List<PsiType> typesMasked = (List<PsiType>)infos[0];
         String typesMaskedString = typesMasked.get(0).getPresentableText();
@@ -78,8 +78,8 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     @NotNull
-    protected InspectionGadgetsFix[] buildFixes(PsiElement location,
-                                                Object[] infos) {
+    @Override
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         final List<PsiType> maskedTypes = (List<PsiType>)infos[0];
         final PsiTryStatement tryStatement = (PsiTryStatement)infos[1];
         final PsiCatchSection catchSection = (PsiCatchSection)infos[2];
@@ -90,6 +90,7 @@ public class TooBroadCatchInspection extends BaseInspection {
         return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message("too.broad.catch.option"),
@@ -109,6 +110,7 @@ public class TooBroadCatchInspection extends BaseInspection {
             myBeforeCatchSection = catchSection;
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final JavaCodeStyleManager codeStyleManager =
@@ -174,6 +176,7 @@ public class TooBroadCatchInspection extends BaseInspection {
                 textRange.getEndOffset());
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TooBroadCatchVisitor();
     }
