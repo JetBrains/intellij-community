@@ -67,7 +67,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
 
-    return super.beforeShow() && (!myAutoHandleBeforeShow || !tryToAutoSelect(true));
+    boolean shouldShow = super.beforeShow();
+    if (myAutoHandleBeforeShow) {
+      final boolean toDispose = tryToAutoSelect(true);
+      shouldShow &= !toDispose;
+    }
+
+    return shouldShow;
   }
 
   protected void afterShow() {

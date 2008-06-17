@@ -506,10 +506,16 @@ public class AbstractPopup implements JBPopup, Disposable {
     assert ApplicationManager.getApplication().isDispatchThread();
 
     final boolean shouldShow = beforeShow();
+    if (!shouldShow) {
+      return;
+    }
+
     if (myInStack) {
       myFocusTrackback = new FocusTrackback(this, owner, true);
-      myFocusTrackback.setMustBeShown(shouldShow);
+      myFocusTrackback.setMustBeShown(true);
     }
+
+
 
 
     Dimension sizeToSet = null;
