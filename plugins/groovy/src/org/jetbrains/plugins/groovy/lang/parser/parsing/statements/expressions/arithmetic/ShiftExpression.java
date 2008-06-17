@@ -28,8 +28,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class ShiftExpression implements GroovyElementTypes {
 
   private static TokenSet RANGES = TokenSet.create(
-      mRANGE_EXCLUSIVE,
-      mRANGE_INCLUSIVE
+          mRANGE_EXCLUSIVE,
+          mRANGE_INCLUSIVE
   );
 
   public static boolean parse(PsiBuilder builder) {
@@ -40,7 +40,7 @@ public class ShiftExpression implements GroovyElementTypes {
       GroovyElementType shiftOrRange = isRangeOrShift(builder);
       if (!shiftOrRange.equals(WRONGWAY)) {
         if (ParserUtils.getToken(builder, RANGES) ||
-            getCompositeSign(builder)) {
+                getCompositeSign(builder)) {
           ParserUtils.getToken(builder, mNLS);
           if (!AdditiveExpression.parse(builder)) {
             builder.error(GroovyBundle.message("expression.expected"));
@@ -49,7 +49,7 @@ public class ShiftExpression implements GroovyElementTypes {
           marker.done(shiftOrRange);
           shiftOrRange = isRangeOrShift(builder);
           if (RANGES.contains(builder.getTokenType()) ||
-              getCompositeSign(builder)) {
+                  getCompositeSign(builder)) {
             subParse(builder, newMarker, shiftOrRange);
           } else {
             newMarker.drop();
@@ -74,14 +74,16 @@ public class ShiftExpression implements GroovyElementTypes {
     if (ParserUtils.lookAhead(builder, mGT, mGT, mGT)) {
       PsiBuilder.Marker marker = builder.mark();
       for (int i = 0; i < 3; i++) {
+        builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
       marker.done(COMPOSITE_SHIFT_SIGN);
       return true;
     } else if (ParserUtils.lookAhead(builder, mLT, mLT) ||
-        ParserUtils.lookAhead(builder, mGT, mGT)) {
+            ParserUtils.lookAhead(builder, mGT, mGT)) {
       PsiBuilder.Marker marker = builder.mark();
       for (int i = 0; i < 2; i++) {
+        builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
       marker.done(COMPOSITE_SHIFT_SIGN);
@@ -113,7 +115,7 @@ public class ShiftExpression implements GroovyElementTypes {
     marker.done(shiftOrRange);
     GroovyElementType newShiftOrRange = isRangeOrShift(builder);
     if (RANGES.contains(builder.getTokenType()) ||
-        getCompositeSign(builder)) {
+            getCompositeSign(builder)) {
       subParse(builder, newMarker, newShiftOrRange);
     } else {
       newMarker.drop();

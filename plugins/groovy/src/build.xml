@@ -210,8 +210,8 @@
 
   <target name="zip.sources.groovy" description="zips sources">
     <zip destfile="${project.dir}/jetgroovy-src-${plugin.version}.zip"
-         basedir="${project.dir}"
-         includes="src/**/*.java,
+            basedir="${project.dir}"
+            includes="src/**/*.java,
          src/**/*.properties,
          src/**/*.flex,
          src/**/*.jar,
@@ -219,8 +219,8 @@
          src/**/*.xml,
          resources/**/*.*,
          META-INF/**/*.xml"
-         excludes="src/**/*junit*"
-        />
+            excludes="src/**/*junit*"
+            />
   </target>
 
   <target name="build tests" depends="make.project">
@@ -229,8 +229,8 @@
     <mkdir dir="${test.dest}/Groovy"/>
 
     <javac srcdir="../test"
-           destdir="${test.dest}"
-           debug="on">
+            destdir="${test.dest}"
+            debug="on">
 
       <classpath refid="idea.lib.path"/>
       <classpath refid="groovy.path"/>
@@ -280,11 +280,11 @@
     <echo message="${idea.lib}"/>
 
     <junit fork="yes"
-           dir="${project.dir}"
-           printsummary="yes"
-           haltonerror="no"
-           haltonfailure="no"
-           description="runs junit tests">
+            dir="${project.dir}"
+            printsummary="yes"
+            haltonerror="no"
+            haltonfailure="no"
+            description="runs junit tests">
 
       <classpath>
         <path location="${test.dest}"/>
