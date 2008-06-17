@@ -57,8 +57,8 @@ public class MethodInfo extends MemberInfo {
     super(name, descriptor, genericSignature, flags, runtimeVisibleAnnotations, runtimeInvisibleAnnotations);
     myThrownExceptions = exceptions != null? exceptions : ArrayUtil.EMPTY_INT_ARRAY;
     myIsConstructor = isConstructor;
-    myRuntimeVisibleParameterAnnotations = runtimeVisibleParameterAnnotations; // todo: pass as parameter
-    myRuntimeInvisibleParameterAnnotations = runtimeInvisibleParameterAnnotations;
+    myRuntimeVisibleParameterAnnotations = runtimeVisibleParameterAnnotations == null? AnnotationConstantValue.EMPTY_ARRAY_ARRAY : runtimeVisibleParameterAnnotations; 
+    myRuntimeInvisibleParameterAnnotations = runtimeInvisibleParameterAnnotations == null? AnnotationConstantValue.EMPTY_ARRAY_ARRAY : runtimeInvisibleParameterAnnotations;
     myAnnotationDefault = annotationDefault;
   }
 
