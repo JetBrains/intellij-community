@@ -438,6 +438,8 @@ public class AbstractPopup implements JBPopup, Disposable {
   }
 
   public void cancel() {
+    if (isDisposed()) return;
+
     if (myPopup != null) {
       if (!canClose()) {
         return;
