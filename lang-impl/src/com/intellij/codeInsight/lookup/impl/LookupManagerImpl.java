@@ -95,12 +95,13 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   public Lookup showLookup(final Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
-    final LookupImpl lookup = createLookup(editor, items, itemPreferencePolicy, bottomText);
+    final LookupImpl lookup = createLookup(editor, items, "", itemPreferencePolicy, bottomText);
     lookup.show();
     return lookup;
   }
 
-  public LookupImpl createLookup(final Editor editor, final LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy, final String bottomText) {
+  public LookupImpl createLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
+                                 final String bottomText) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -122,7 +123,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     }
     for (final LookupItem item : items) {
-      item.setPrefixMatcher(new CamelHumpMatcher(""));
+      item.setPrefixMatcher(new CamelHumpMatcher(prefix));
     }
     myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy, bottomText);
     myActiveLookupEditor = editor;

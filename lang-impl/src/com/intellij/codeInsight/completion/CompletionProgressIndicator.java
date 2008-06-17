@@ -49,7 +49,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myEditor = editor;
     myHandler = handler;
 
-    myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], new CompletionPreferencePolicy(
+    myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], "", new CompletionPreferencePolicy(
         parameters), adText);
 
     myLookup.addLookupListener(new LookupAdapter() {

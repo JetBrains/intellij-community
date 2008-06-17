@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Document;
@@ -46,7 +47,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
       return;
     }
 
-    Lookup lookup = LookupManager.getInstance(project).showLookup(editor, items, null);
+    final LookupImpl lookup = (LookupImpl) LookupManager.getInstance(project).createLookup(editor, items, prefix, null, null);
     lookup.addLookupListener(
       new LookupAdapter() {
         public void itemSelected(LookupEvent event) {
@@ -54,6 +55,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
         }
       }
     );
+    lookup.show();
   }
 
   public boolean startInWriteAction() {

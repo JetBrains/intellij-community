@@ -33,5 +33,6 @@ public abstract class LookupManager {
 
   public abstract boolean isDisposed();
 
-  public abstract Lookup createLookup(Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, String bottomText);
+  public abstract Lookup createLookup(Editor editor, LookupItem[] items, final String prefix, LookupItemPreferencePolicy itemPreferencePolicy,
+                                      String bottomText);
 }
