@@ -14,7 +14,7 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
   protected final SchemesManager<T, E> mySchemesManager;
 
   public ExportSchemeAction(SchemesManager<T, E> manager) {
-    super("Export", "Export", IconLoader.getIcon("/actions/export.png"));
+    super("Share", "Share scheme on server", IconLoader.getIcon("/actions/export.png"));
     mySchemesManager = manager;
   }
 
@@ -38,9 +38,18 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
   public static <T extends Scheme, E extends ExternalizableScheme> void doExport(final E scheme, SchemesManager<T,E> manager) {
     if (scheme != null) {
       try {
-        manager.exportScheme(scheme);
+        ShareSchemeDialog dialog = new ShareSchemeDialog();
+        dialog.init(scheme);
 
-        Messages.showMessageDialog("Scheme '" + scheme.getName() + "' was exported successfully", "Export", Messages.getInformationIcon());
+        dialog.show();
+
+        if (dialog.isOK()) {
+          manager.exportScheme(scheme, dialog.getName(), dialog.getDescription());
+
+          Messages.showMessageDialog("Scheme '" + scheme.getName() + "' was shared successfully as '" + dialog.getName() + " '", "Share Scheme",
+                                     Messages.getInformationIcon());
+        }
+
       }
       catch (WriteExternalException e1) {
         Messages.showErrorDialog("Cannot export profile: " + e1.getLocalizedMessage(), "Export Profile");

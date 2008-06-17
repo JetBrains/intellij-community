@@ -151,9 +151,9 @@ class TemplateListPanel extends JPanel {
     myRemoveButton = createButton(tableButtonsPanel, gbConstraints, CodeInsightBundle.message("templates.dialog.table.action.remove"));
 
     if (getSchemesManager().isImportExportAvailable()) {
-      myExportButton = createButton(tableButtonsPanel, gbConstraints, "Export");
-      myEditButton.setMnemonic('E');
-      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import...");
+      myExportButton = createButton(tableButtonsPanel, gbConstraints, "Share...");
+      myEditButton.setMnemonic('S');
+      myImportButton = createButton(tableButtonsPanel, gbConstraints, "Import Shared...");
       myImportButton.setMnemonic('I');
       myImportButton.setEnabled(true);
 

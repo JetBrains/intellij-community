@@ -223,8 +223,8 @@ public class KeymapPanel extends JPanel {
 
     final SchemesManager<Keymap, KeymapImpl> schemesManager = getSchemesManager();
     if (schemesManager.isImportExportAvailable()) {
-      myExportButton = new JButton("Export");
-      myExportButton.setMnemonic('E');
+      myExportButton = new JButton("Share...");
+      myExportButton.setMnemonic('S');
       myExportButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
           KeymapImpl selected = getSelectedKeymap();
@@ -237,7 +237,7 @@ public class KeymapPanel extends JPanel {
       panel.add(myExportButton, gc);
 
 
-      JButton importButton = new JButton("Import...");
+      JButton importButton = new JButton("Import Shared...");
       importButton.setMnemonic('I');
       importButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {

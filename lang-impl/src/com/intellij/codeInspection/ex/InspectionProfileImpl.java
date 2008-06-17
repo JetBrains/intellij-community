@@ -566,7 +566,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         Element root = new Element(ROOT_ELEMENT_TAG);
         root.setAttribute(PROFILE_NAME_TAG, myName);
         writeExternal(root);
-        myVisibleTreeState.writeExternal(root);
+        //myVisibleTreeState.writeExternal(root);
         return new Document(root);
       }
       else {

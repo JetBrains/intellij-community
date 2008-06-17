@@ -43,7 +43,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
           return Collections.emptyList();
         }
 
-        public void exportScheme(final E scheme) throws WriteExternalException {
+        public void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException {
         }
 
         public boolean isImportExportAvailable() {
