@@ -86,10 +86,10 @@ import java.util.*;
 public class GroovyAnnotator implements Annotator {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
 
-  private GroovyAnnotator() {
+  public GroovyAnnotator() {
   }
-
-  public static final GroovyAnnotator INSTANCE = new GroovyAnnotator();
+  //extention should be instaniate
+//  public static final GroovyAnnotator INSTANCE = new GroovyAnnotator();
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (element instanceof GrCodeReferenceElement) {

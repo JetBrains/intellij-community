@@ -36,7 +36,7 @@
 
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
-    <!--<annotator language="Groovy" implementation="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>-->
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
     <lang.parserDefinition language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition"/>
     <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
@@ -140,79 +140,79 @@
 
   <actions>
     <action id="Grails.GenerateViews" class="org.jetbrains.plugins.grails.actions.GenerateViewsAction"
-            text="Grails Views" description="Generate Grails Views">
+        text="Grails Views" description="Generate Grails Views">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
     <action id="Grails.GenerateController" class="org.jetbrains.plugins.grails.actions.GenerateControllerAction"
-            text="Grails Controller" description="Generate Grails Controller">
+        text="Grails Controller" description="Generate Grails Controller">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
     <action id="Grails.GenerateDomainClass" class="org.jetbrains.plugins.grails.actions.GenerateDomainClassAction"
-            text="Grails Domain Class" description="Generate Grails Domain Class">
+        text="Grails Domain Class" description="Generate Grails Domain Class">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
     <action id="Grails.GenerateTests" class="org.jetbrains.plugins.grails.actions.GenerateTestsAction"
-            text="Grails Tests" description="Create Tests">
+        text="Grails Tests" description="Create Tests">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
     <action id="Grails.GenerateControllerTests"
-            class="org.jetbrains.plugins.grails.actions.GenerateControllerTestsAction"
-            text="Grails Controller Tests" description="Create Controller Tests">
+        class="org.jetbrains.plugins.grails.actions.GenerateControllerTestsAction"
+        text="Grails Controller Tests" description="Create Controller Tests">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
 
     <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewClassAction"
-            text="Groovy Class" description="Create new Groovy class">
+        text="Groovy Class" description="Create new Groovy class">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Grails"/>
     </action>
     <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
-            text="Groovy Script" description="Create new Groovy script">
+        text="Groovy Script" description="Create new Groovy script">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
     </action>
     <action id="RenameJavaFileToGroovyFileAction"
-            class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
-            text="Rename To Groovy" description="Rename Java File to Groovy">
+        class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
+        text="Rename To Groovy" description="Rename Java File to Groovy">
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </action>
     <action id="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
-            class="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
-            text="equals() and hashCode()" description="Action generates equals and hashCode now">
+        class="org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateAction"
+        text="equals() and hashCode()" description="Action generates equals and hashCode now">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
     <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
-            class="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
-            text="Constructor" description="Generates constructor">
+        class="org.jetbrains.plugins.groovy.actions.generate.constructors.CostructorGenerateAction"
+        text="Constructor" description="Generates constructor">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
     <group id="Grails" class="org.jetbrains.plugins.grails.actions.GrailsGroup"
-            text="Grails">
+        text="Grails">
       <action id="Grails.NewApp" class="org.jetbrains.plugins.grails.actions.NewGrailsAppAction"
-              text="Grails Application"
-              description="Create new Grails application"/>
+          text="Grails Application"
+          description="Create new Grails application"/>
       <action id="Grails.DomainClass" class="org.jetbrains.plugins.grails.actions.NewGrailsDomainClassAction"
-              text="Grails Domain Class" description="Create new Grails domain class">
+          text="Grails Domain Class" description="Create new Grails domain class">
       </action>
       <action id="Grails.Controller" class="org.jetbrains.plugins.grails.actions.NewGrailsControllerAction"
-              text="Grails Controller" description="Create new Grails controller">
+          text="Grails Controller" description="Create new Grails controller">
       </action>
       <action id="Grails.Service" class="org.jetbrains.plugins.grails.actions.NewGrailsServiceAction"
-              text="Grails Service" description="Create new Grails service">
+          text="Grails Service" description="Create new Grails service">
       </action>
       <action id="Grails.Script" class="org.jetbrains.plugins.grails.actions.NewGrailsScriptAction"
-              text="Grails Script" description="Create new Grails script">
+          text="Grails Script" description="Create new Grails script">
       </action>
       <action id="Grails.TagLib" class="org.jetbrains.plugins.grails.actions.NewGrailsTagLibAction"
-              text="Grails TagLib" description="Create new Grails tagLib">
+          text="Grails TagLib" description="Create new Grails tagLib">
       </action>
       <action id="Grails.GSP" class="org.jetbrains.plugins.grails.actions.NewGspAction"
-              text="GSP" description="Create new Groovy Server Page">
+          text="GSP" description="Create new Groovy Server Page">
       </action>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
     <action id="Grails.WAR" class="org.jetbrains.plugins.grails.actions.GrailsWarAction"
-            text="Grails Make Web Archive" description="Generate Web Archive">
+        text="Grails Make Web Archive" description="Generate Web Archive">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
   </actions>
