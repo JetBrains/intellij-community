@@ -19,10 +19,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.highlighter.GroovyDocSyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 
@@ -32,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 public class GroovyEditorHighlighter extends LayeredLexerEditorHighlighter {
 
   public GroovyEditorHighlighter(EditorColorsScheme scheme, Project project, VirtualFile virtualFile) {
-    super(SyntaxHighlighterFactory.getSyntaxHighlighter(GroovyFileType.GROOVY_LANGUAGE, project, virtualFile), scheme);
+    super(new GroovySyntaxHighlighter(), scheme);
     registerGroovydocHighlighter();
   }
 

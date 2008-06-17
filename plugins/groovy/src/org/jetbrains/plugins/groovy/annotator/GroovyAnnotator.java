@@ -88,8 +88,6 @@ public class GroovyAnnotator implements Annotator {
 
   public GroovyAnnotator() {
   }
-  //extention should be instaniate
-//  public static final GroovyAnnotator INSTANCE = new GroovyAnnotator();
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (element instanceof GrCodeReferenceElement) {
@@ -144,9 +142,9 @@ public class GroovyAnnotator implements Annotator {
     } else {
       final ASTNode node = element.getNode();
       if (node != null && !(element instanceof PsiWhiteSpace) &&
-          !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
-          element.getContainingFile() instanceof GroovyFile &&
-          !isDocCommentElement(element)) {
+              !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
+              element.getContainingFile() instanceof GroovyFile &&
+              !isDocCommentElement(element)) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
       }
     }
@@ -156,7 +154,7 @@ public class GroovyAnnotator implements Annotator {
     if (element == null) return false;
     ASTNode node = element.getNode();
     return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null ||
-        element instanceof GrDocComment;
+            element instanceof GrDocComment;
   }
 
   private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
@@ -311,7 +309,7 @@ public class GroovyAnnotator implements Annotator {
       checkAccessModifiers(holder, modifiersList);
 
       if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)
-          && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
+              && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.volatile.and.final"));
       }
 
@@ -404,7 +402,7 @@ public class GroovyAnnotator implements Annotator {
     }
 
     if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)
-        && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
+            && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
       holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
     }
 
@@ -437,8 +435,8 @@ public class GroovyAnnotator implements Annotator {
     boolean hasProtected = modifierList.hasExplicitModifier(PsiModifier.PROTECTED);
 
     if (hasPrivate && hasPublic
-        || hasPrivate && hasProtected
-        || hasPublic && hasProtected) {
+            || hasPrivate && hasProtected
+            || hasPublic && hasProtected) {
       holder.createErrorAnnotation(modifierList, GroovyBundle.message("illegal.combination.of.modifiers"));
     }
   }
@@ -622,7 +620,7 @@ public class GroovyAnnotator implements Annotator {
 
   private boolean isScriptGeneratedClass(PsiClass[] allClasses) {
     return allClasses.length == 2 &&
-        (allClasses[0] instanceof GroovyScriptClass || allClasses[1] instanceof GroovyScriptClass);
+            (allClasses[0] instanceof GroovyScriptClass || allClasses[1] instanceof GroovyScriptClass);
   }
 
   private void checkForExtendingInterface(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause, GrTypeDefinition myClass) {
@@ -681,8 +679,8 @@ public class GroovyAnnotator implements Annotator {
       }
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         final String key = ((PsiModifierListOwner) resolved).hasModifierProperty(PsiModifier.STATIC) ?
-            "cannot.reference.static" :
-            "cannot.reference.nonstatic";
+                "cannot.reference.static" :
+                "cannot.reference.nonstatic";
         String message = GroovyBundle.message(key, refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
       } else if (refExpr.getParent() instanceof GrCall) {
@@ -765,8 +763,8 @@ public class GroovyAnnotator implements Annotator {
     }
     if (member instanceof PsiMethod) {
       annotation.setTextAttributes(!isStatic ?
-          DefaultHighlighter.METHOD_CALL :
-          DefaultHighlighter.STATIC_METHOD_ACCESS
+              DefaultHighlighter.METHOD_CALL :
+              DefaultHighlighter.STATIC_METHOD_ACCESS
       );
     }
   }
@@ -809,7 +807,7 @@ public class GroovyAnnotator implements Annotator {
 
   private boolean isAssignmentLHS(GrReferenceExpression refExpr) {
     return refExpr.getParent() instanceof GrAssignmentExpression &&
-        refExpr.equals(((GrAssignmentExpression) refExpr.getParent()).getLValue());
+            refExpr.equals(((GrAssignmentExpression) refExpr.getParent()).getLValue());
   }
 
   private void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
@@ -821,8 +819,8 @@ public class GroovyAnnotator implements Annotator {
     if (refElement.getReferenceName() != null) {
 
       if (parent instanceof GrImportStatement &&
-          ((GrImportStatement) parent).isStatic() &&
-          refElement.multiResolve(false).length > 0) {
+              ((GrImportStatement) parent).isStatic() &&
+              refElement.multiResolve(false).length > 0) {
         return;
       }
 
@@ -861,7 +859,7 @@ public class GroovyAnnotator implements Annotator {
       PsiClass clazz = (PsiClass) element;
       if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
         String message = clazz.isInterface() ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName()) :
-            GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
+                GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
         holder.createErrorAnnotation(refElement, message);
         return;
       }
@@ -940,9 +938,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void highlightMember
-      (AnnotationHolder
-          holder, GrMember
-          member) {
+          (AnnotationHolder
+                  holder, GrMember
+                  member) {
     if (member instanceof PsiField) {
       GrField field = (GrField) member;
       PsiElement identifier = field.getNameIdentifierGroovy();
@@ -957,8 +955,8 @@ public class GroovyAnnotator implements Annotator {
     PsiElement element = result.getElement();
     PsiElement parent = refElement.getParent();
     if (element instanceof PsiClass &&
-        ((PsiClass) element).isAnnotationType() &&
-        !(parent instanceof GrImportStatement)) {
+            ((PsiClass) element).isAnnotationType() &&
+            !(parent instanceof GrImportStatement)) {
       Annotation annotation = holder.createInfoAnnotation(parent, null);
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
       GroovyPsiElement context = result.getCurrentFileResolveContext();
