@@ -1205,14 +1205,6 @@ public class CompileDriver {
         }
       }
 
-      if (wereFilesDeleted[0] && !toDelete.isEmpty()) {
-        final List<File> files = new ArrayList<File>(toDelete.size());
-        for (Trinity<File, String, Boolean> trinity : toDelete) {
-          files.add(trinity.getFirst());
-        }
-        CompilerUtil.refreshIOFiles(files);
-      }
-
       if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
         final TranslatingCompiler.ExitStatus exitStatus = compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]));
         monitor.update(context, exitStatus.getSuccessfullyCompiled(), exitStatus.getFilesToRecompile());
@@ -1244,9 +1236,9 @@ public class CompileDriver {
       for (final Trinity<File, String, Boolean> trinity : toDelete) {
         context.getProgressIndicator().setFraction(((double)(++current)) / total);
         final File outputPath = trinity.getFirst();
+        filesToRefresh.add(outputPath);
         if (deleteHelper.delete(outputPath)) {
           wereFilesDeleted = true;
-          filesToRefresh.add(outputPath);
           final String className = trinity.getSecond();
           if (className != null) {
             final int id = dependencyCache.getSymbolTable().getId(className);

@@ -186,12 +186,15 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
       try {
         final int size = is.readInt();
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
         synchronized (myOutputsToDelete) {
           for (int idx = 0; idx < size; idx++) {
             final String outputPath = CompilerIOUtil.readString(is);
             final String srcUrl = CompilerIOUtil.readString(is);
             final String className = CompilerIOUtil.readString(is);
-            myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
+            if (lfs.findFileByPath(outputPath) != null) {
+              myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
+            }
           }
         }
       }
