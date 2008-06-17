@@ -56,7 +56,6 @@
 
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
 
-
     <!-- Grails and GSP -->
     <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
   </extensions>

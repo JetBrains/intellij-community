@@ -33,13 +33,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
-import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -74,8 +70,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     }
 
     if (project == null || !handleEnter(editor, dataContext, project) &&
-        myOriginalHandler != null &&
-        myOriginalHandler.isEnabled(editor, dataContext)) {
+            myOriginalHandler != null &&
+            myOriginalHandler.isEnabled(editor, dataContext)) {
       Document document = editor.getDocument();
       if (project != null) {
         PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -94,99 +90,10 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project)) {
       return true;
     }
-    if (handleDocComment(editor, caretOffset, dataContext)) {
-      return true;
-    }
     if (handleInString(editor, caretOffset, dataContext)) {
       return true;
     }
     return false;
-  }
-
-  private boolean handleDocComment(Editor editor, int caret, DataContext dataContext) {
-    if (caret == 0) return false;
-    Project project = DataKeys.PROJECT.getData(dataContext);
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-
-    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(caret);
-    Document document = editor.getDocument();
-    String text = document.getText();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-
-    IElementType type = iterator.getTokenType();
-    if (highlighter.createIterator(caret-1).getTokenType() != mGDOC_COMMENT_START &&
-        type == mGDOC_COMMENT_START) {
-      return false;
-    }
-    if (type == mGDOC_WHITESPACE && caret == text.length()) return false; 
-    if (GROOVY_DOC_TOKENS.contains(type) &&
-        mGDOC_COMMENT_END != type) {
-      int lineOffset = document.getLineStartOffset(document.getLineNumber(caret));
-      if (lineOffset > caret) return false;
-      String line = text.substring(lineOffset, caret).replaceAll(" ", "").trim();
-      if (!line.startsWith("*") &&
-          !line.startsWith(DOC_COMMENT_START) &&
-          type != mGDOC_COMMENT_START) {
-        return false;
-      }
-      if ((line.equals("/*") || line.equals("/")) && type == mGDOC_COMMENT_START) {
-        return false;
-      }
-      iterator = highlighter.createIterator(caret - 1);
-      if (line.startsWith(DOC_COMMENT_START)) {
-        if (caret == text.length() || isNotCompleteComment(iterator)) {
-          myOriginalHandler.execute(editor, dataContext);
-          if (settings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
-            EditorModificationUtil.insertStringAtCaret(editor, "* ");
-            myOriginalHandler.execute(editor, dataContext);
-            EditorModificationUtil.insertStringAtCaret(editor, "*/");
-            if (caret < text.length() && (text.charAt(caret) != '\n' && text.charAt(caret) != '\r')) {
-              myOriginalHandler.execute(editor, dataContext);
-              editor.getCaretModel().moveCaretRelatively(3, -2, false, false, true);
-            } else {
-              editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
-            }
-          } else {
-            EditorModificationUtil.insertStringAtCaret(editor, "");
-            myOriginalHandler.execute(editor, dataContext);
-            EditorModificationUtil.insertStringAtCaret(editor, "*/");
-            if (caret < text.length() && (text.charAt(caret) != '\n' || text.charAt(caret) != '\r')) {
-              myOriginalHandler.execute(editor, dataContext);
-              editor.getCaretModel().moveCaretRelatively(1, -2, false, false, true);
-            } else {
-              editor.getCaretModel().moveCaretRelatively(-1, -1, false, false, true);
-            }
-          }
-          return true;
-        }
-      }
-
-      if (!settings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
-        myOriginalHandler.execute(editor, dataContext);
-        editor.getCaretModel().moveCaretRelatively(-1, 0, false, false, true);
-        return true;
-      }
-      String ast = "* ";
-      myOriginalHandler.execute(editor, dataContext);
-      if (type == mGDOC_TAG_NAME && text.charAt(caret) == '@') {
-        ast = "*";
-        editor.getCaretModel().moveCaretRelatively(-1, 0, false, false, true);
-        EditorModificationUtil.insertStringAtCaret(editor, ast);
-        editor.getCaretModel().moveCaretRelatively(1, 0, false, false, true);
-      } else {
-        EditorModificationUtil.insertStringAtCaret(editor, ast);
-      }
-      return true;
-    }
-    return false;
-  }
-
-  private static boolean isNotCompleteComment(HighlighterIterator iterator) {
-    while (!iterator.atEnd() && iterator.getTokenType() != mGDOC_COMMENT_END) {
-      iterator.advance();
-    }
-    return iterator.atEnd();
   }
 
   private boolean handleBetweenSquareBraces(Editor editor, int caret, DataContext context, Project project) {
@@ -210,41 +117,41 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   private static TokenSet AFTER_DOLLAR = TokenSet.create(
-      GroovyTokenTypes.mLCURLY,
-      GroovyTokenTypes.mIDENT,
-      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
+          GroovyTokenTypes.mLCURLY,
+          GroovyTokenTypes.mIDENT,
+          GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
   );
 
   private static TokenSet ALL_STRINGS = TokenSet.create(
-      GroovyTokenTypes.mSTRING_LITERAL,
-      GroovyTokenTypes.mGSTRING_LITERAL,
-      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-      GroovyTokenTypes.mGSTRING_SINGLE_END,
-      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
-      GroovyTokenTypes.mRCURLY,
-      GroovyTokenTypes.mIDENT
+          GroovyTokenTypes.mSTRING_LITERAL,
+          GroovyTokenTypes.mGSTRING_LITERAL,
+          GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+          GroovyTokenTypes.mGSTRING_SINGLE_END,
+          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
+          GroovyTokenTypes.mRCURLY,
+          GroovyTokenTypes.mIDENT
   );
 
   private static TokenSet BEFORE_DOLLAR = TokenSet.create(
-      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
+          GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
   );
 
   private static TokenSet EXPR_END = TokenSet.create(
-      GroovyTokenTypes.mRCURLY,
-      GroovyTokenTypes.mIDENT
+          GroovyTokenTypes.mRCURLY,
+          GroovyTokenTypes.mIDENT
   );
 
   private static TokenSet AFTER_EXPR_END = TokenSet.create(
-      GroovyTokenTypes.mGSTRING_SINGLE_END,
-      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
+          GroovyTokenTypes.mGSTRING_SINGLE_END,
+          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
   );
 
   private static TokenSet STRING_END = TokenSet.create(
-      GroovyTokenTypes.mSTRING_LITERAL,
-      GroovyTokenTypes.mGSTRING_LITERAL,
-      GroovyTokenTypes.mGSTRING_SINGLE_END
+          GroovyTokenTypes.mSTRING_LITERAL,
+          GroovyTokenTypes.mGSTRING_LITERAL,
+          GroovyTokenTypes.mGSTRING_SINGLE_END
   );
 
 
@@ -284,7 +191,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
 
     // For expression injection in GString like "abc ${}<caret>  abc"
     if (!GroovyEditorActionUtil.GSTRING_TOKENS.contains(node.getElementType()) &&
-        checkGStringInnerExpression(stringElement)) {
+            checkGStringInnerExpression(stringElement)) {
       stringElement = stringElement.getParent().getNextSibling();
       if (stringElement == null) return false;
       node = stringElement.getNode();
@@ -300,7 +207,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       if (GroovyEditorActionUtil.isPlainGString(parent.getNode())) {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression &&
-            exprSibling.getTextRange().getStartOffset() == caretOffset;
+                exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
         String text = parent.getText();
         String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
@@ -328,15 +235,15 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       return false;
     }
     if (iteratorLeft != null && BEFORE_DOLLAR.contains(iteratorLeft.getTokenType()) &&
-        iteratorRight != null && !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
+            iteratorRight != null && !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
       return false;
     }
     if (iteratorLeft != null && EXPR_END.contains(iteratorLeft.getTokenType()) &&
-        iteratorRight != null && !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
+            iteratorRight != null && !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
       return false;
     }
     if (iteratorLeft != null && STRING_END.contains(iteratorLeft.getTokenType()) &&
-        iteratorRight != null && !STRING_END.contains(iteratorRight.getTokenType())) {
+            iteratorRight != null && !STRING_END.contains(iteratorRight.getTokenType())) {
       return false;
     }
     return true;
@@ -344,7 +251,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
 
   private static boolean checkGStringInnerExpression(PsiElement element) {
     if (element != null &&
-        (element.getParent() instanceof GrReferenceExpression || element.getParent() instanceof GrClosableBlock)) {
+            (element.getParent() instanceof GrReferenceExpression || element.getParent() instanceof GrClosableBlock)) {
       PsiElement nextSibling = element.getParent().getNextSibling();
       if (nextSibling == null) return false;
       return GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(nextSibling.getNode().getElementType());
