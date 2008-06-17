@@ -374,7 +374,6 @@ public class MavenProjectsTree {
     try {
       List<MavenProjectModel> projects = getProjects();
 
-      List<Artifact> allArtifacts = new ArrayList<Artifact>();
 
       for (MavenProjectModel each : projects) {
         p.checkCanceled();
@@ -382,15 +381,6 @@ public class MavenProjectsTree {
         p.setText2("");
         each.resolve(embedder);
       }
-
-      // We have to refresh all the resolved artifacts manually in order to
-      // update all the VirtualFilePointers. It is not enough to call
-      // VirtualFileManager.refresh() since the newly created files will be only
-      // picked by FS when FileWathcer finiches its work. And in the case of import
-      // it doesn't finics in time.
-      // I couldn't manage to write a test for this since behaviour of VirtualFileManager
-      // and FileWatcher differs from real-life execution.
-      refreshResolvedArtifacts(allArtifacts);
 
       doDownload(artifactSettings, p, embedder, projects, false);
     }
@@ -433,15 +423,6 @@ public class MavenProjectsTree {
                           MavenEmbedder embedder,
                           List<MavenProjectModel> projects, boolean demand) throws CanceledException {
     new MavenArtifactDownloader(artifactSettings, embedder, p).download(projects, demand);
-  }
-
-  private void refreshResolvedArtifacts(List<Artifact> artifacts) {
-    List<File> files = new ArrayList<File>();
-    for (Artifact a : artifacts) {
-      if (!a.isResolved() || a.getFile() == null) continue;
-      files.add(a.getFile());
-    }
-    LocalFileSystem.getInstance().refreshIoFiles(files);
   }
 
   public <Result> Result visit(Visitor<Result> visitor) {

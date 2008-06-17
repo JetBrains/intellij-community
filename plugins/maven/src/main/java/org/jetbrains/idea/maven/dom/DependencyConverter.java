@@ -1,8 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.ResolvingConverter;
@@ -23,7 +22,6 @@ import java.util.Set;
 public abstract class DependencyConverter extends ResolvingConverter<String> {
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     try {
-      Project p = context.getModule().getProject();
       return isValid(MavenIndicesManager.getInstance(), getDependencyId(context)) ? s : null;
     }
     catch (MavenIndexException e) {
@@ -41,7 +39,6 @@ public abstract class DependencyConverter extends ResolvingConverter<String> {
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
     try {
-      Project p = context.getModule().getProject();
       return getVariants(MavenIndicesManager.getInstance(), getDependencyId(context));
     }
     catch (MavenIndexException e) {
@@ -53,7 +50,6 @@ public abstract class DependencyConverter extends ResolvingConverter<String> {
   protected abstract Set<String> getVariants(MavenIndicesManager manager, MavenId dependencyId) throws MavenIndexException;
 
   private MavenId getDependencyId(ConvertContext context) {
-    Project p = context.getModule().getProject();
     Dependency dep = (Dependency)context.getInvocationElement().getParent();
 
     MavenId result = new MavenId();

@@ -14,8 +14,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.apache.maven.artifact.Artifact;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.*;
 
 public class MavenProjectConfigurator {
@@ -48,7 +50,31 @@ public class MavenProjectConfigurator {
     deleteObsoleteModules();
     configModules();
     configModuleGroups();
+    refreshResolvedArtifacts();
     commit();
+  }
+
+  private void refreshResolvedArtifacts() {
+    // We have to refresh all the resolved artifacts manually in order to
+    // update all the VirtualFilePointers. It is not enough to call
+    // VirtualFileManager.refresh() since the newly created files will be only
+    // picked by FS when FileWathcer finishes its work. And in the case of import
+    // it doesn't finish in time.
+    // I couldn't manage to write a test for this since behaviour of VirtualFileManager
+    // and FileWatcher differs from real-life execution.
+
+    List<Artifact> artifacts = new ArrayList<Artifact>();
+    for (MavenProjectModel each : myMavenTree.getProjects()) {
+      artifacts.addAll(each.getDependencies());
+    }
+
+    List<File> files = new ArrayList<File>();
+    for (Artifact each : artifacts) {
+      if (!each.isResolved() || each.getFile() == null) continue;
+      files.add(each.getFile());
+    }
+    
+    LocalFileSystem.getInstance().refreshIoFiles(files);
   }
 
   private void mapModulesToMavenProjects() {
