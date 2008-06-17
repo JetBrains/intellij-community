@@ -86,10 +86,6 @@
       <interface-class>com.intellij.psi.stubs.SerializationManager</interface-class>
       <implementation-class>com.intellij.psi.stubs.SerializationManagerImpl</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.compiler.impl.TranslatingCompilerFilesMonitor</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

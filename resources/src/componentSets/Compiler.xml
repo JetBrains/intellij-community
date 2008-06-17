@@ -1,4 +1,10 @@
 <components>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.compiler.impl.TranslatingCompilerFilesMonitor</implementation-class>
+    </component>
+  </application-components>
+  
   <project-components>
     <component>
       <interface-class>com.intellij.compiler.CompilerConfiguration</interface-class>
