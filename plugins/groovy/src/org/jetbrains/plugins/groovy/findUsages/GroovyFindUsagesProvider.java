@@ -25,100 +25,87 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 /**
  * @author ven
  */
-public class GroovyFindUsagesProvider implements FindUsagesProvider
-{
+public class GroovyFindUsagesProvider implements FindUsagesProvider {
 
-  public static final GroovyFindUsagesProvider INSTANCE = new GroovyFindUsagesProvider();
+    public static final GroovyFindUsagesProvider INSTANCE = new GroovyFindUsagesProvider();
 
-  private GroovyFindUsagesProvider()
-  {
-  }
-
-  @Nullable
-  public GroovyWordsScanner getWordsScanner()
-  {
-    return new GroovyWordsScanner();
-  }
-
-  public boolean canFindUsagesFor(@NotNull PsiElement psiElement)
-  {
-    return psiElement instanceof PsiClass ||
-        psiElement instanceof PsiMethod ||
-        psiElement instanceof GrVariable;
-  }
-
-  @Nullable
-  public String getHelpId(@NotNull PsiElement psiElement)
-  {
-    return null;
-  }
-
-  @NotNull
-  public String getType(@NotNull PsiElement element)
-  {
-    if (element instanceof PsiClass) return "class";
-    if (element instanceof PsiMethod) return "method";
-    if (element instanceof PsiField) return "field";
-    if (element instanceof PsiParameter) return "parameter";
-    if (element instanceof PsiVariable || element instanceof GrReferenceExpression) return "variable";
-    return "";
-  }
-
-  @NotNull
-  public String getDescriptiveName(@NotNull PsiElement element)
-  {
-    if (element instanceof PsiClass)
-    {
-      final PsiClass aClass = (PsiClass) element;
-      String qName = aClass.getQualifiedName();
-      return qName == null ? "" : qName;
-    } else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) element;
-      String result = PsiFormatUtil.formatMethod(method,
-                                                    PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                                    PsiFormatUtil.SHOW_TYPE);
-      final PsiClass clazz = method.getContainingClass();
-      if (clazz != null) {
-        result += " of " + getDescriptiveName(clazz);
-      }
-
-      return result;
-    } else if (element instanceof PsiVariable) {
-      final String name = ((PsiVariable) element).getName();
-      if (name != null) {
-        return name;
-      }
+    public GroovyFindUsagesProvider() {
     }
 
-    return "";
-  }
-
-  @NotNull
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName)
-  {
-    if (element instanceof PsiClass)
-    {
-      String name = ((PsiClass) element).getQualifiedName();
-      if (name == null || !useFullName)
-      {
-        name = ((PsiClass) element).getName();
-      }
-      if (name != null) return name;
-    }
-    else if (element instanceof PsiMethod) {
-      return PsiFormatUtil.formatMethod((PsiMethod) element,
-                                        PsiSubstitutor.EMPTY,
-                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                        PsiFormatUtil.SHOW_TYPE);
-
-    }
-    else if (element instanceof PsiVariable) {
-      final String name = ((PsiVariable) element).getName();
-      if (name != null) {
-        return name;
-      }
+    @Nullable
+    public GroovyWordsScanner getWordsScanner() {
+        return new GroovyWordsScanner();
     }
 
-    return "";
-  }
+    public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
+        return psiElement instanceof PsiClass ||
+                psiElement instanceof PsiMethod ||
+                psiElement instanceof GrVariable;
+    }
+
+    @Nullable
+    public String getHelpId(@NotNull PsiElement psiElement) {
+        return null;
+    }
+
+    @NotNull
+    public String getType(@NotNull PsiElement element) {
+        if (element instanceof PsiClass) return "class";
+        if (element instanceof PsiMethod) return "method";
+        if (element instanceof PsiField) return "field";
+        if (element instanceof PsiParameter) return "parameter";
+        if (element instanceof PsiVariable || element instanceof GrReferenceExpression) return "variable";
+        return "";
+    }
+
+    @NotNull
+    public String getDescriptiveName(@NotNull PsiElement element) {
+        if (element instanceof PsiClass) {
+            final PsiClass aClass = (PsiClass) element;
+            String qName = aClass.getQualifiedName();
+            return qName == null ? "" : qName;
+        } else if (element instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod) element;
+            String result = PsiFormatUtil.formatMethod(method,
+                    PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                    PsiFormatUtil.SHOW_TYPE);
+            final PsiClass clazz = method.getContainingClass();
+            if (clazz != null) {
+                result += " of " + getDescriptiveName(clazz);
+            }
+
+            return result;
+        } else if (element instanceof PsiVariable) {
+            final String name = ((PsiVariable) element).getName();
+            if (name != null) {
+                return name;
+            }
+        }
+
+        return "";
+    }
+
+    @NotNull
+    public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+        if (element instanceof PsiClass) {
+            String name = ((PsiClass) element).getQualifiedName();
+            if (name == null || !useFullName) {
+                name = ((PsiClass) element).getName();
+            }
+            if (name != null) return name;
+        } else if (element instanceof PsiMethod) {
+            return PsiFormatUtil.formatMethod((PsiMethod) element,
+                    PsiSubstitutor.EMPTY,
+                    PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                    PsiFormatUtil.SHOW_TYPE);
+
+        } else if (element instanceof PsiVariable) {
+            final String name = ((PsiVariable) element).getName();
+            if (name != null) {
+                return name;
+            }
+        }
+
+        return "";
+    }
 }
