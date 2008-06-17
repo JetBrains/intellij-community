@@ -42,6 +42,7 @@ public abstract class MnemonicsSearch<T> {
       final T toSelect = myChar2ValueMap.get(s);
       if (toSelect != null) {
         select(toSelect);
+        e.consume();
       }
     }
   }

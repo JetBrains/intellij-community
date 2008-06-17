@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.util.SpeedSearch;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ChildFocusWatcher;
@@ -93,6 +94,31 @@ public class AbstractPopup implements JBPopup, Disposable {
   protected Component myOwner;
   private boolean myHeaderAlwaysFocusable;
   private JComponent myHeaderComponent;
+
+  protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
+    boolean searchFieldShown = false;
+    protected void update() {
+      mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
+      onSpeedSearchPatternChanged();
+      mySpeedSearchPatternField.setText(getFilter());
+      if (isHoldingFilter() && !searchFieldShown) {
+        setHeaderComponent(mySpeedSearchPatternField);
+        searchFieldShown = true;
+      }
+      else if (!isHoldingFilter() && searchFieldShown) {
+        setHeaderComponent(null);
+        searchFieldShown = false;
+      }
+    }
+
+    @Override
+    public void noHits() {
+      mySpeedSearchPatternField.setBackground(LightColors.RED);
+    }
+  };
+
+  private JTextField mySpeedSearchPatternField;
+
 
   AbstractPopup() {
   }
@@ -223,6 +249,20 @@ public class AbstractPopup implements JBPopup, Disposable {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
 
+    myContent.addKeyListener(new KeyListener() {
+      public void keyTyped(final KeyEvent e) {
+        mySpeedSearch.process(e);
+      }
+
+      public void keyPressed(final KeyEvent e) {
+        mySpeedSearch.process(e);
+      }
+
+      public void keyReleased(final KeyEvent e) {
+        mySpeedSearch.process(e);
+      }
+    });
+    
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
       myMouseOutCanceller = new Canceller();
       Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller, AWTEvent.MOUSE_EVENT_MASK | WindowEvent.WINDOW_ACTIVATED |
@@ -240,6 +280,12 @@ public class AbstractPopup implements JBPopup, Disposable {
       }
 
     };
+
+    mySpeedSearchPatternField = new JTextField();
+    if (SystemInfo.isMac) {
+      Font f = mySpeedSearchPatternField.getFont();
+      mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+    }
 
     return this;
   }
@@ -1043,12 +1089,10 @@ public class AbstractPopup implements JBPopup, Disposable {
   }
 
   public void setHeaderComponent(JComponent c) {
-    int shift = 0;
     boolean doRevalidate = false;
     if (myHeaderComponent != null) {
       myHeaderPanel.remove(myHeaderComponent);
       myHeaderPanel.add(myCaption, BorderLayout.NORTH);
-      shift += myHeaderComponent.getPreferredSize().height - myCaption.getPreferredSize().height;
       myHeaderComponent = null;
       doRevalidate = true;
     }
@@ -1058,21 +1102,10 @@ public class AbstractPopup implements JBPopup, Disposable {
       myHeaderPanel.add(c, BorderLayout.NORTH);
       myHeaderComponent = c;
 
-      shift -= c.getPreferredSize().height - myCaption.getPreferredSize().height;
       doRevalidate = true;
     }
 
     if (doRevalidate) myContent.revalidate();
-    //if (shift != 0) shift(shift);
-  }
-
-  private void shift(final int shift) {
-    final Window wnd = SwingUtilities.getWindowAncestor(getContent());
-    if (wnd != null) {
-      final Point current = wnd.getLocationOnScreen();
-
-      setLocation(new Point(current.x, current.y + shift));
-    }
   }
 
   public void addListener(final JBPopupListener listener) {
@@ -1081,5 +1114,8 @@ public class AbstractPopup implements JBPopup, Disposable {
 
   public void removeListener(final JBPopupListener listener) {
     myListeners.remove(listener);
+  }
+
+  protected void onSpeedSearchPatternChanged() {
   }
 }

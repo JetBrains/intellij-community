@@ -10,8 +10,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.LightColors;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -42,29 +40,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   private final Timer myAutoSelectionTimer = new Timer(AUTO_POPUP_DELAY, this);
 
-  private final SpeedSearch mySpeedSearch = new SpeedSearch() {
-    boolean searchFieldShown = false;
-    protected void update() {
-      mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
-      onSpeedSearchPatternChanged();
-      mySpeedSearchPatternField.setText(getFilter());
-      if (isHoldingFilter() && !searchFieldShown) {
-        setHeaderComponent(mySpeedSearchPatternField);
-        searchFieldShown = true;
-      }
-      else if (!isHoldingFilter() && searchFieldShown) {
-        setHeaderComponent(null);
-        searchFieldShown = false;
-      }
-    }
-
-    @Override
-    public void noHits() {
-      mySpeedSearchPatternField.setBackground(LightColors.RED);
-    }
-  };
-
-  private JTextField mySpeedSearchPatternField;
 
   private MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
@@ -103,12 +78,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     init(project, myScrollPane, getPreferredFocusableComponent(), true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, true);
-
-    mySpeedSearchPatternField = new JTextField();
-    if (SystemInfo.isMac) {
-      Font f = mySpeedSearchPatternField.getFont();
-      mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
-    }
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -326,13 +295,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       }
     }
 
+    myMnemonicsSearch.process(event);
     mySpeedSearch.process(event);
 
     if (event.isConsumed()) return;
     process(event);
-
-    if (event.isConsumed()) return;
-    myMnemonicsSearch.process(event);
   }
 
   protected void process(KeyEvent aEvent) {
@@ -377,9 +344,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   protected void onAutoSelectionTimer() {
 
-  }
-
-  protected void onSpeedSearchPatternChanged() {
   }
 
   public boolean shouldBeShowing(Object value) {
