@@ -150,7 +150,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       if (outputPath != null) { // can be null for packageinfo
         final String outputRoot = item.getOutputRootDirectory();
         final VirtualFile outputFile = lfs.findFileByPath(outputPath);
-        assert outputFile != null;
+        assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
         if (!sourceFile.equals(outputFile)) {
           srcInfo.addOutputPath(projectId, outputPath);
 
