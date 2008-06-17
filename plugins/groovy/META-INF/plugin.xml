@@ -50,13 +50,24 @@
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
     <lang.documentationProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider"/>
-    <codeInsight.overrideMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
+    <codeInsight.overrideMethod language="Groovy" implementationClass="org.jetbrainGspParserDefinitions.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
 
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
 
     <!-- Grails and GSP -->
+    <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
+    <annotator language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.annotator.GspAnnotator"/>
+    <lang.braceMatcher language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspPairedBraceMatcher"/>
+    <lang.commenter language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspCommenter"/>
+    <lang.foldingBuilder language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.folding.GspFoldingBuilder"/>
+    <lang.formatter language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.formatter.GspFormattingModelBuilder"/>
+    <lang.parserDefinition language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.parsing.gsp.GspParserDefinition"/>
+    <lang.fileViewProviderFactory language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.GspFileviewProviderFactory"/>
+
+    <codeInsight.parameterInfo language="GSP" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
+
     <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
   </extensions>
 
