@@ -14,7 +14,8 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
 
   public ClsPackageStatementImpl(ClsFileImpl file) {
     myFile = file;
-    String className = myFile.getClasses()[0].getQualifiedName();
+    final PsiClass[] psiClasses = myFile.getClasses();
+    String className = psiClasses.length > 0 ? psiClasses[0].getQualifiedName() : "";
     int index = className.lastIndexOf('.');
     if (index < 0){
       myPackageName = null;
