@@ -629,7 +629,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     boolean mustAcquire = !isReadAccessAllowed();
 
     if (mustAcquire) {
-      LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
+      LOG.assertTrue(myTestModeFlag || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
       try {
         myActionsLock.readLock().acquire();
       }

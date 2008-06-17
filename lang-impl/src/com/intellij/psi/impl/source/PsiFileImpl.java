@@ -7,6 +7,7 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -57,7 +58,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
-  private final Object myStubLock = new Object();
+  private final Object myStubLock = PsiLock.LOCK;
   private WeakReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
@@ -522,6 +523,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Nullable
   public StubTree getStubTree() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    
     synchronized (myStubLock) {
       StubTree stubHolder = derefStub();
       if (stubHolder == null) {
