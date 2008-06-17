@@ -34,6 +34,7 @@
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
             serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
 
+    <!-- Groovy language -->
     <treeStructureProvider language="Groovy" implementation="org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider"/>
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
@@ -52,6 +53,12 @@
     <codeInsight.overrideMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
+
+    <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
+
+
+    <!-- Grails and GSP -->
+    <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
   </extensions>
 
   <extensions xmlns="com.intellij.debugger">
@@ -231,9 +238,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.module.GrailsModuleType</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType</implementation-class>

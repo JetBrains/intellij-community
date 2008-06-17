@@ -17,16 +17,13 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -34,22 +31,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 
-public class GroovyScriptRunConfigurationType implements LocatableConfigurationType, ApplicationComponent {
+public class GroovyScriptRunConfigurationType implements LocatableConfigurationType {
   private GroovyScriptConfigurationFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {
     myConfigurationFactory = new GroovyScriptConfigurationFactory(this);
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "GroovyScriptRunConfigurationType";
   }
 
   public String getDisplayName() {
@@ -67,7 +53,7 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
   @NonNls
   @NotNull
   public String getId() {
-    return null;
+    return "GroovyScriptRunConfiguration";
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {
@@ -96,9 +82,31 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     final VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
     configuration.scriptPath = vFile.getPath();
-    configuration.setName(JavaExecutionUtil.getPresentableClassName(aClass.getQualifiedName(), ((JavaRunConfigurationModule) configuration.getConfigurationModule())));
+    RunConfigurationModule module = configuration.getConfigurationModule();
+
+
+    String name = getConfigurationName(aClass, module);
+    configuration.setName(name);
     configuration.setModule(JavaExecutionUtil.findModule(aClass));
     return settings;
+  }
+
+  private static String getConfigurationName(PsiClass aClass, RunConfigurationModule module) {
+    String qualifiedName = aClass.getQualifiedName();
+    Project project = module.getProject();
+    if (qualifiedName != null) {
+      PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.projectScope(project));
+      if (psiClass != null) {
+        return psiClass.getName();
+      } else {
+        int lastDot = qualifiedName.lastIndexOf('.');
+        if (lastDot == -1 || lastDot == qualifiedName.length() - 1) {
+          return qualifiedName;
+        }
+        return qualifiedName.substring(lastDot + 1, qualifiedName.length());
+      }
+    }
+    return module.getModuleName();
   }
 
   public boolean isConfigurationByElement(RunConfiguration configuration, Project project, PsiElement element) {
