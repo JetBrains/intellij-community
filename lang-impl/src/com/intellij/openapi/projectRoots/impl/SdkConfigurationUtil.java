@@ -43,6 +43,15 @@ public class SdkConfigurationUtil {
     return null;
   }
 
+  public static void removeSdk(final Sdk sdk) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ProjectJdkTable.getInstance().removeJdk(sdk);
+      }
+    });
+  }
+
+
   public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Sdk>() {
         public Sdk compute(){
@@ -93,9 +102,5 @@ public class SdkConfigurationUtil {
         }
       }
     }
-  }
-
-  public static void removeSdk(final Sdk sdk) {
-    //To change body of created methods use File | Settings | File Templates.
   }
 }
