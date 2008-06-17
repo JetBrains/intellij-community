@@ -26,7 +26,7 @@
   <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
 
   <extensions xmlns="com.intellij">
-    <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
+    <errorHandler implementation="org.jetbrains.plugins.groovy.error.GroovyErrorReportSubmitter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
@@ -41,7 +41,7 @@
     <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
-    <lang.gotoClassContributor language="Groovy" implementationClass="org.jetbrains.plugins.scala.gotoclass.ScalaChooseByNameContributor"/>
+    <lang.gotoClassContributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.gotoclass.GroovyChooseByNameContributor"/>
     <lang.refactoringSupport language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
     <lang.surroundDescriptor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor"/>
     <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
