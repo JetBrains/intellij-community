@@ -67,6 +67,10 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
                 myEntriesList.add(new HistoryEntry(myProject, e));
               }
               catch (InvalidDataException e1) {
+                // OK here
+              }
+              catch (Exception anyException) {
+                LOG.error(anyException);
               }
             }
             trimToSize();
