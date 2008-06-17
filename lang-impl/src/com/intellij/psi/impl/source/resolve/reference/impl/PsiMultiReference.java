@@ -89,7 +89,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   private boolean cannotChoose() {
-    return COMPARATOR.compare(myReferences[0], myReferences[1]) == 0;
+    return myReferences.length > 1 && COMPARATOR.compare(myReferences[0], myReferences[1]) == 0;
   }
 
   public String getCanonicalText(){
