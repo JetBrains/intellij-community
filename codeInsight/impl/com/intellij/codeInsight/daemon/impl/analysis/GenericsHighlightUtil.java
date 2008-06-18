@@ -362,7 +362,7 @@ public class GenericsHighlightUtil {
     if (type instanceof PsiWildcardType) {
       if (typeElement.getParent() instanceof PsiReferenceParameterList) {
         PsiElement parent = typeElement.getParent().getParent();
-        LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
+        LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement, parent);
         PsiElement refParent = parent.getParent();
         if (refParent instanceof PsiAnonymousClass) refParent = refParent.getParent();
         if (refParent instanceof PsiNewExpression) {
@@ -577,7 +577,8 @@ public class GenericsHighlightUtil {
       return isUncheckedTypeArgumentConversion(((PsiArrayType)rTypeArg).getComponentType(), ((PsiArrayType)lTypeArg).getComponentType());
     }
     if (lTypeArg instanceof PsiArrayType || rTypeArg instanceof PsiArrayType) return false;
-    LOG.assertTrue(lTypeArg instanceof PsiClassType && rTypeArg instanceof PsiClassType);
+    LOG.assertTrue(lTypeArg instanceof PsiClassType, lTypeArg);
+    LOG.assertTrue(rTypeArg instanceof PsiClassType, rTypeArg);
     return ((PsiClassType)lTypeArg).resolve() instanceof PsiTypeParameter ||
            ((PsiClassType)rTypeArg).resolve() instanceof PsiTypeParameter;
   }
