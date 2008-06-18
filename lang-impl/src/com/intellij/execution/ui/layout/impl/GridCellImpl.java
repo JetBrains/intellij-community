@@ -195,13 +195,17 @@ public class GridCellImpl implements GridCell, Disposable {
     return tabInfo != null ? myTabs.select(tabInfo, requestFocus) : new ActionCallback.Done();
   }
 
-  public void alert(final Content content) {
+  public void processAlert(final Content content, final boolean activate) {
     if (myMinimizedContents.contains(content)) return;
 
     TabInfo tab = getTabFor(content);
     if (tab == null) return;
     if (myTabs.getSelectedInfo() != tab) {
-      tab.fireAlert();
+      if (activate) {
+        tab.fireAlert();
+      } else {
+        tab.stopAlerting();
+      }
     }
   }
 

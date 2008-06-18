@@ -225,7 +225,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
 
-  public void bounce(Content content) {
+  public void processBounce(Content content, final boolean activate) {
     final GridImpl grid = getGridFor(content, false);
     if (grid == null) return;
 
@@ -239,9 +239,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     if (getSelectedGrid() != grid) {
       tab.setAlertIcon(content.getAlertIcon());
-      tab.fireAlert();
+      if (activate) {
+        tab.fireAlert();
+      } else {
+        tab.stopAlerting();
+      }
     } else {
-      grid.alert(content);
+      grid.processAlert(content, activate);
     }
   }
 
@@ -718,20 +722,29 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public void attract(final Content content, boolean afterInitialized) {
-    attract(content.getUserData(ViewImpl.ID), myAttractions, new LayoutAttractionPolicy.Bounce(), afterInitialized);
+    processAttraction(content.getUserData(ViewImpl.ID), myAttractions, new LayoutAttractionPolicy.Bounce(), afterInitialized, true);
   }
 
   public void attractByCondition(String condition, boolean afterInitialized) {
-    attract(myLayoutSettings.getToFocus(condition), myConditionAttractions, new LayoutAttractionPolicy.FocusOnce(), afterInitialized);
+    processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, new LayoutAttractionPolicy.FocusOnce(), afterInitialized, true);
   }
 
-  private void attract(final String contentId, final Map<String, LayoutAttractionPolicy> policyMap, final LayoutAttractionPolicy defaultPolicy, boolean afterInitialized) {
+  public void clearAttractionByCondition(String condition, boolean afterInitialized) {
+    processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, new LayoutAttractionPolicy.FocusOnce(), afterInitialized, false);
+  }
+
+  private void processAttraction(final String contentId, final Map<String, LayoutAttractionPolicy> policyMap, final LayoutAttractionPolicy defaultPolicy, boolean afterInitialized, final boolean activate) {
     myInitialized.processOnDone(new Runnable() {
       public void run() {
         Content content = findContent(contentId);
         if (content == null) return;
 
-         getOrCreatePolicyFor(contentId, policyMap, defaultPolicy).attract(content, myRunnerUi);
+        final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
+        if (activate) {
+          policy.attract(content, myRunnerUi);
+        } else {
+          policy.clearAttraction(content, myRunnerUi);
+        }
       }
     }, afterInitialized);
   }

@@ -173,9 +173,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     return getCellFor(content).select(content, requestFocus);
   }
 
-  public void alert(final Content content) {
+  public void processAlert(final Content content, final boolean activate) {
     GridCellImpl cell = getCellFor(content);
-    cell.alert(content);
+    cell.processAlert(content, activate);
   }
 
   @Nullable

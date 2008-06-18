@@ -451,6 +451,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private void attractFramesOnPause(final int event) {
     if (DebuggerSession.EVENT_PAUSE == event) {
       myUi.attractBy(BREAKPOINT_CONDITION);
+    } else if (DebuggerSession.EVENT_RESUME == event) {
+      myUi.clearAttractionBy(BREAKPOINT_CONDITION);
     }
   }
 

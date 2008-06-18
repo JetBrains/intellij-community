@@ -45,8 +45,9 @@ public interface RunnerLayoutUi  {
   void removeListener(@NotNull final ContentManagerListener listener);
 
   void attractBy(@NotNull String condition);
+  void clearAttractionBy(final String condition);
 
-  void bounce(@NotNull Content content);
+  void setBouncing(@NotNull Content content, final boolean activate);
 
   @NotNull
   JComponent getComponent();
@@ -54,6 +55,7 @@ public interface RunnerLayoutUi  {
   boolean isDisposed();
 
   void updateActionsNow();
+
 
   abstract class Factory {
     protected Factory() {

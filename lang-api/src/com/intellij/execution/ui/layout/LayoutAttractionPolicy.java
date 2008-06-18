@@ -7,9 +7,15 @@ public abstract class LayoutAttractionPolicy {
 
   public abstract void attract(Content content, RunnerLayoutUi ui);
 
+  public abstract void clearAttraction(Content content, RunnerLayoutUi ui);
+
   public static class Bounce extends LayoutAttractionPolicy {
     public void attract(final Content content, final RunnerLayoutUi ui) {
-      ui.bounce(content);
+      ui.setBouncing(content, true);
+    }
+
+    public void clearAttraction(final Content content, final RunnerLayoutUi ui) {
+      ui.setBouncing(content, false);
     }
   }
 
@@ -22,14 +28,21 @@ public abstract class LayoutAttractionPolicy {
         myWasAttracted = true;
         ui.selectAndFocus(content, true);
       } else {
-        ui.bounce(content);
+        ui.setBouncing(content, true);
       }
+    }
+
+    public void clearAttraction(final Content content, final RunnerLayoutUi ui) {
+      ui.setBouncing(content, false);
     }
   }
 
   public static class FocusAlways extends LayoutAttractionPolicy {
     public void attract(final Content content, final RunnerLayoutUi ui) {
       ui.selectAndFocus(content, true);
+    }
+
+    public void clearAttraction(final Content content, final RunnerLayoutUi ui) {
     }
   }
 

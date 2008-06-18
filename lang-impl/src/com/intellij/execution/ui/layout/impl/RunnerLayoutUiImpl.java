@@ -165,6 +165,10 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     myContentUI.attractByCondition(condition, true);
   }
 
+  public void clearAttractionBy(final String condition) {
+    myContentUI.clearAttractionByCondition(condition, true);
+  }
+
   public void removeContent(String id, final boolean dispose) {
     final Content content = findContent(id);
     if (content != null) {
@@ -201,8 +205,8 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     getContentManager().removeContentManagerListener(listener);
   }
 
-  public void bounce(@NotNull final Content content) {
-    myContentUI.bounce(content);
+  public void setBouncing(@NotNull final Content content, final boolean activate) {
+    myContentUI.processBounce(content, activate);
   }
 
 
