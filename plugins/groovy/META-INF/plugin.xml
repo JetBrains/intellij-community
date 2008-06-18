@@ -53,6 +53,8 @@
     <codeInsight.overrideMethod language="Groovy" implementationClass="org.jetbrainGspParserDefinitions.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
+    <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
+    <!--<lookup.charFilter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>-->
 
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
 

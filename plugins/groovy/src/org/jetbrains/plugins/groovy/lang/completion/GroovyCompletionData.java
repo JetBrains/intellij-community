@@ -204,17 +204,6 @@ public class GroovyCompletionData extends CompletionData {
     ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
     ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
 
-/*
-    DefaultCharFilter.registerFilter(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new CharFilter() {
-      public Result accept(char c, String prefix) {
-        if (Character.isJavaIdentifierPart(c) || c == '\'') return CharFilter.Result.ADD_TO_PREFIX;
-        else if (c == '\n' || c == '\t') {
-          return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-        }
-        return CharFilter.Result.HIDE_LOOKUP;
-      }
-    });
-*/
   }
 
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
