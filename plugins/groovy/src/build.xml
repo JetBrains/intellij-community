@@ -44,6 +44,7 @@
     </fileset>
     <fileset dir="${idea.plugins}">
       <include name="**/JavascriptLanguage.jar"/>
+      <include name="**/JavaScriptLanguage/lib/resurces_en.jar"/>
     </fileset>
   </path>
 
