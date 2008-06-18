@@ -45,6 +45,7 @@ DIGITS = string_mod.digits
 if version[0] >= 3:
   string = "".__class__
   LETTERS = string_mod.ascii_letters
+  STR_TYPES = (getattr(__builtin__, "bytes"), str)
   
   def str_join(a_list, a_str):
     return string.join(a_str, a_list)
@@ -54,6 +55,8 @@ if version[0] >= 3:
     
 else: # < 3.0
   LETTERS = string_mod.letters
+  STR_TYPES = (getattr(__builtin__, "unicode"), str)
+  
   def str_join(a_list, a_str):
     return string_mod.join(a_list, a_str)
 
@@ -75,7 +78,7 @@ def _searchbases(cls, accum):
       _searchbases(x, accum)
 
 
-def getmro(a_class):
+def getMRO(a_class):
   # logic copied from inspect.py
   "Returns a tuple of MRO classes."
   if hasattr(a_class, "__mro__"):
@@ -99,6 +102,21 @@ def getBases(a_class): # FIXME: test for classes that don't fit this scheme
 def isCallable(x):
   return hasattr(x, '__call__')
 
+
+def sortedNoCase(p_array):
+  def c(x, y):
+    x = x.upper()
+    y = y.upper()
+    if x > y:
+      return 1
+    elif x < y:
+      return -1
+    else:
+      return 0
+  p_array = list(p_array)    
+  p_array.sort(c)
+  return p_array
+
 _prop_types = [type(property())]
 try: _prop_types.append(types.GetSetDescriptorType)
 except: pass
@@ -110,21 +128,30 @@ _prop_types = tuple(_prop_types)
 
 def isProperty(x):
   return isinstance(x, _prop_types)
-  
-def isSaneRValue(x):
-  return isinstance(x, (int, float, str, unicode, dict, tuple, list, types.NoneType))
-  
-SIMPLEST_TYPES = (int, float, str, unicode, types.NoneType)
 
-class Redo(object):
+NUM_TYPES = (int, float)
+SIMPLEST_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType,)
+EASY_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType, dict, tuple, list)
+
+def isSaneRValue(x):
+  return isinstance(x, EASY_TYPES)
   
-  def __init__(self, outfile, indent_size=4):
+
+class ModuleRedeclarator(object):
+  
+  def __init__(self, module, outfile, indent_size=4):
     """
-    Create new instance with given output file. The file must be writable.
+    Create new instance.
+    @param module module to restore.
+    @param outfile output file, must be open and writable.
+    @param indent_size amount of space characters per indent
     """
+    self.module = module
     self.outfile = outfile
     self.indent_size = indent_size
     self._indent_step = " " * indent_size
+    self.imported_modules = {"": __builtin__}
+    self._defined = {} # contains True for every name defined so far
     
     
   def indent(self, level):
@@ -151,7 +178,10 @@ class Redo(object):
   # Dict is keyed by module names, with "*" meaning "any module";
   # values are lists of names of members whose value must be pruned.
   SKIP_VALUE_IN_MODULE = {
-    "sys": ("modules", "path_importer_cache",),
+    "sys": (
+      "modules", "path_importer_cache", "argv", "builtins",
+      "last_traceback", "last_type", "last_value",
+    ),
     "*":   ("__builtins__",)
   }
   
@@ -166,43 +196,94 @@ class Redo(object):
     return False
     
     
-  def fmtValue(self, p_value, indent, prefix="", postfix=""):
+  def findImportedName(self, item):
+    """
+    Finds out how the item is represented in imported modules.
+    @param item what to check
+    @return qualified name (like "sys.stdin") or None
+    """
+    if not isinstance(item, SIMPLEST_TYPES):
+      for mname in self.imported_modules:
+        m = self.imported_modules[mname]
+        for inner_name in m.__dict__:
+          suspect = getattr(m, inner_name)
+          if suspect is item:
+            if mname:
+              mname += "."
+            elif self.module is __builtin__: # don't short-circuit builtins 
+              return None
+            return mname + inner_name
+    return None
+
+
+  def fmtValue(self, p_value, indent, prefix="", postfix="", as_name=None):
+    """
+    Formats and outputs value (it occupies and entire line).
+    @param p_value the value.
+    @param indent indent level.
+    @param prefix text to print before the value
+    @param postfix text to print after the value
+    @param as_name hints which name are we trying to print; helps with circular refs. 
+    """
     if isinstance(p_value, SIMPLEST_TYPES):
       self.out(prefix + repr(p_value) + postfix, indent)
-    elif isinstance(p_value, (list, tuple)):
-      if len(p_value) == 0:
-        self.out(prefix + repr(p_value) + postfix, indent)
+    else:
+      imported_name = self.findImportedName(p_value)
+      if imported_name:
+        self.out(prefix + imported_name + postfix, indent)
       else:
-        if isinstance(p_value, list):
-          lpar, rpar = "[", "]"
-        else:
-          lpar, rpar = "(", ")"
-        self.out(prefix + lpar, indent)
-        for v in p_value:
-          self.fmtValue(v, indent+1, postfix=",")
-        self.out(rpar  + postfix, indent)
-    elif isinstance(p_value, dict):
-      if len(p_value) == 0:
-        self.out(prefix + repr(p_value) + postfix, indent)
-      else:
-        self.out(prefix + "{", indent)
-        for k in p_value:
-          v = p_value[k]
-          if isinstance(k, SIMPLEST_TYPES):
-            self.fmtValue(v, indent+1, prefix=repr(k)+": ", postfix=",")
+        if isinstance(p_value, (list, tuple)):
+          if len(p_value) == 0:
+            self.out(prefix + repr(p_value) + postfix, indent)
           else:
-            # both key and value need fancy formatting
-            self.fmtValue(k, indent+1, postfix=": ")
-            self.fmtValue(v, indent+2)
-            self.out(",", indent+1)
-        self.out("}" + postfix, indent)
-    else: # something else, maybe representable
-      # TODO: handle imported objects somehow
-      s = repr(p_value)
-      if SANE_REPR_RE.match(s):
-        self.out(prefix + s + postfix, indent)
-      else:
-        self.out(prefix + "None" + postfix + " # real value is " + s, indent)        
+            if isinstance(p_value, list):
+              lpar, rpar = "[", "]"
+            else:
+              lpar, rpar = "(", ")"
+            self.out(prefix + lpar, indent)
+            for v in p_value:
+              self.fmtValue(v, indent+1, postfix=",")
+            self.out(rpar  + postfix, indent)
+        elif isinstance(p_value, dict):
+          if len(p_value) == 0:
+            self.out(prefix + repr(p_value) + postfix, indent)
+          else:
+            self.out(prefix + "{", indent)
+            for k in p_value:
+              v = p_value[k]
+              if isinstance(k, SIMPLEST_TYPES):
+                self.fmtValue(v, indent+1, prefix=repr(k)+": ", postfix=",")
+              else:
+                # both key and value need fancy formatting
+                self.fmtValue(k, indent+1, postfix=": ")
+                self.fmtValue(v, indent+2)
+                self.out(",", indent+1)
+            self.out("}" + postfix, indent)
+        else: # something else, maybe representable
+          # look up this value in the module.
+          found_name = ""
+          for inner_name in self.module.__dict__:
+            if self.module.__dict__[inner_name] is p_value:
+              found_name = inner_name
+              break
+          if self._defined.get(found_name, False):
+            self.out(prefix + found_name + postfix, indent)
+          else:
+            # a forward / circular declaration happens
+            notice = ""
+            s = repr(p_value)
+            if found_name:
+              if found_name == as_name:
+                notice = " # (!) real value is " + s
+                s = "None"
+              else:
+                notice = " # (!) forward: " + found_name + ", real value is " + s
+            if SANE_REPR_RE.match(s):
+              self.out(prefix + s + postfix + notice, indent)
+            else:
+              if not found_name:
+                notice = " # (!) real value is " + s
+              self.out(prefix + "None" + postfix + notice, indent)        
         
         
 
@@ -247,7 +328,7 @@ class Redo(object):
           funcdoc = p_class.__doc__
       elif hasattr(p_func, "__doc__"):
         funcdoc = p_func.__doc__
-      if funcdoc:  
+      if isinstance(funcdoc, STR_TYPES):  
         m = DOC_FUNC_RE.search(funcdoc)
         if m:
           matches = m.groups()
@@ -296,101 +377,233 @@ class Redo(object):
     self.out("class " + p_name + base_def + ":", indent);
     self.outDocstring(p_class.__doc__, indent+1)
     # inner parts
-    empty_body = True
     if hasattr(p_class, "__dict__"):
-      # TODO: order item names more naturally. Sort first, output later
+      methods = {}
+      properties = {}
+      others = {}
       for item_name in p_class.__dict__:
         if item_name in ("__dict__", "__doc__", "__module__"):
           continue
         item =  p_class.__dict__[item_name]
         if isCallable(item):
-          self.redoFunction(item, item_name, indent+1, p_class)
-          empty_body = False
+          methods[item_name] = item
         elif isProperty(item):
-          self.out(item_name + " =  property(None, None, None)", indent+1); # TODO: handle docstring
-          empty_body = False
-        elif isSaneRValue(item):
-          self.out(item_name + " = " + repr(item), indent+1);
-          empty_body = False
-        else: # can't handle
-          self.out(item_name + " =  None # XXX can't represent: " + repr(item), indent+1);
-          empty_body = False
+          properties[item_name] = item
+        else:
+          others[item_name] = item
         #  
+      for item_name in sortedNoCase(methods.keys()):
+        item =  methods[item_name]
+        self.redoFunction(item, item_name, indent+1, p_class)
         self.out("", 0) # empty line after each item
-    if empty_body:
+      #  
+      for item_name in sortedNoCase(properties.keys()):
+        item =  properties[item_name]
+        self.out(item_name + " =  property(None, None, None)", indent+1); # TODO: handle docstring
+      if properties:
+        self.out("", 0) # empty line after the block
+      #
+      for item_name in sortedNoCase(others.keys()):
+        item =  others[item_name]
+        self.fmtValue(item, indent+1, prefix = item_name + " = ")
+      if others:
+        self.out("", 0) # empty line after the block
+      #  
+    if not methods and not properties and not others:
       self.out("pass", indent+1);
     
     
-  def _checkInModules(self, item, modules):
-    """
-    Checks if item is represented in modules.
-    @param item what to check
-    @param modules a dict of modules
-    @return a tuple (mod_name, name_in_it), or (None, None)
-    """
-    if not isinstance(item, SIMPLEST_TYPES):
-      for mname in modules:
-        m = modules[mname]
-        for inner_name in m.__dict__:
-          suspect = getattr(m, inner_name)
-          if suspect is item:
-            return (mname, inner_name)
-    return (None, None)
-    
-  def redoModule(self, p_module, p_name):
+  def redo(self, p_name):
     """
     Restores module declarations.
     Intended for built-in modules and thus does not handle import statements. 
     """
     self.out("# encoding: utf-8", 0); # NOTE: maybe encoding must be selectable
-    self.out("# module " + p_name + " calls itself " + p_module.__name__, 0)
-    if hasattr(p_module, "__file__"):
-      self.out("# from file " + p_module.__file__, 0)
-    self.outDocstring(p_module.__doc__, 0)
-    # filter out whatever other modules the module knows
-    modules = {"": __builtin__}
-    for item_name in p_module.__dict__:
-      item = p_module.__dict__[item_name]
+    if hasattr(self.module, "__name__"):
+      mod_name = " calls itself " + self.module.__name__
+    else:
+      mod_name = " does not know its name"
+    self.out("# module " + p_name +  mod_name, 0)
+    if hasattr(self.module, "__file__"):
+      self.out("# from file " + self.module.__file__, 0)
+    self.outDocstring(self.module.__doc__, 0)
+    # find whatever other self.imported_modules the module knows; effectively these are imports
+    for item_name in self.module.__dict__:
+      item = self.module.__dict__[item_name]
       if isinstance(item, type(sys)):
-        modules[item_name] = item
+        self.imported_modules[item_name] = item
         if hasattr(item, "__name__"):
           self.out("import " + item.__name__ + " as " + item_name + " # refers to " + str(item))
         else:
           self.out(item_name + " = None # XXX name unknown, refers to " + str(item))
     self.out("", 0) # empty line after imports
+    # group what else we have into buckets
+    vars_simple = {}
+    vars_complex = {}
+    funcs = {}
+    classes = {}
+    reexports = {} # contains not real objects, but qualified id strings, like "sys.stdout"
     #
-    for item_name in p_module.__dict__:
-      if item_name in ("__dict__", "__doc__", "__module__"):
+    for item_name in self.module.__dict__:
+      if item_name in ("__dict__", "__doc__", "__module__", "__file__", "__name__"):
         continue
-      item =  p_module.__dict__[item_name]
+      try:
+        item = getattr(self.module, item_name) # let getters do the magic
+      except:
+        item = self.module.__dict__[item_name] # have it raw
       # check if it has percolated from an imported module
-      what_mod, what_name = self._checkInModules(item, modules)
-      if what_mod is not None:
-        if what_mod:
-          what_mod += "."
-        self.out(item_name + " = " + what_mod + what_name + " # reexported import", 0);
+      imported_name = self.findImportedName(item)
+      if imported_name is not None:
+        reexports[item_name] = imported_name
       else:
-        # output it
-        if isinstance(item, type): # some classes are callable, so they come first
-          self.redoClass(item, item_name, 0)
+        if isinstance(item, type): # some classes are callable, so check them before functions
+          classes[item_name] = item
         elif isCallable(item):
-          self.redoFunction(item, item_name, 0)
+          funcs[item_name] = item
         elif isinstance(item, type(sys)):
-          continue # handled above already
+          continue # self.imported_modules handled above already
         else:
-          if self.isSkippedInModule(p_name, item_name):
-            self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0);
+          if isinstance(item, SIMPLEST_TYPES):
+            vars_simple[item_name] = item
           else:
-            self.fmtValue(item, 0, prefix = item_name + " = " );
+            vars_complex[item_name] = item
         #  
+    # sort and output every bucket
+    if reexports:
+      self.out("# reexported imports", 0)
+      self.out("", 0)
+      for item_name in sortedNoCase(reexports.keys()):
+        item = reexports[item_name]
+        self.out(item_name + " = " + item, 0)
+        self._defined[item_name] = True
+      self.out("", 0) # empty line after group
+    #
+    if vars_simple:
+      prefix = "" # try to group variables by common prefix
+      PREFIX_LEN = 2 # default prefix length if we can't guess better
+      self.out("# Variables with simple values", 0)
+      for item_name in sortedNoCase(vars_simple.keys()):
+        item = vars_simple[item_name]
+        # track the prefix
+        if len(item_name) >= PREFIX_LEN:
+          prefix_pos = string.rfind(item_name, "_") # most prefixes end in an underscore
+          if prefix_pos < 1:
+            prefix_pos = PREFIX_LEN
+          beg = item_name[0:prefix_pos]
+          if prefix != beg:
+            self.out("", 0) # space out from other prefix
+            prefix = beg
+        else:
+          prefix = ""
+        # output
+        if self.isSkippedInModule(p_name, item_name):
+          self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0)
+        else:
+          self.fmtValue(item, 0, prefix = item_name + " = " )
+        self._defined[item_name] = True
+      self.out("", 0); # empty line after vars
+    #
+    if funcs:
+      self.out("# functions", 0)
+      self.out("", 0)
+      for item_name in sortedNoCase(funcs.keys()):
+        item = funcs[item_name]
+        self.redoFunction(item, item_name, 0)
+        self._defined[item_name] = True
+        self.out("", 0) # empty line after each item
+    else:
+      self.out("# no functions", 0)
+    #
+    if classes:
+      self.out("# classes", 0)
+      self.out("", 0)
+      # sort classes so that inheritance order is preserved
+      cls_list = [] # items are (class_name, mro_tuple)
+      for cls_name in sortedNoCase(classes.keys()):
+        cls = classes[cls_name]
+        ins_index = len(cls_list)
+        for i in range(ins_index):
+          maybe_child_bases = cls_list[i][1]  
+          if cls in maybe_child_bases:
+            ins_index = i # we could not go farther than current ins_index
+            break         # ...and need not go fartehr than first known child
+        cls_list.insert(ins_index, (cls_name, getMRO(cls)))     
+      for item_name in [cls_item[0] for cls_item in cls_list]:
+        item = classes[item_name]
+        self.redoClass(item, item_name, 0)
+        self._defined[item_name] = True
+        self.out("", 0) # empty line after each item
+    else:
+      self.out("# no classes", 0)
+    #
+    if vars_complex:
+      self.out("# variables with complex values", 0)
+      self.out("", 0)
+      for item_name in sortedNoCase(vars_complex.keys()):
+        item = vars_complex[item_name]
+        if self.isSkippedInModule(p_name, item_name):
+          self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0);
+        else:
+          self.fmtValue(item, 0, prefix = item_name + " = " , as_name = item_name);
+        self._defined[item_name] = True
         self.out("", 0) # empty line after each item
     
     
-## simple test cases:
-# import generator3 as g3
-# import sys
-# r = g3.Redo(sys.stdout)
-# r.redoModule(sys, "sys")
-# 
-# from pysqlite2 import dbapi2
-# r.redoModule(dbapi2, "dbapi2")
+## simple use cases:
+"""
+import generator3 as g3
+import sys
+
+
+r = g3.ModuleRedeclarator(sys, sys.stdout)
+r.redo("sys")
+
+
+from pysqlite2 import dbapi2
+r = g3.ModuleRedeclarator(dbapi2, sys.stdout)
+r.redo("dbapi2")
+"""
+
+"""
+class Pseudo(object):
+  def __init__(self, name):
+    self.__name__ = name
+
+pseudomod = Pseudo("pseudomod")
+
+class Foo(object): pass
+
+class Far(Foo):
+  HAR = '123'
+
+pseudomod.Foo = Foo
+pseudomod.Far = Far
+
+pseudomod.syys = sys
+pseudomod.input = sys.stdin
+
+pseudomod.mapping = {Foo: Far}
+
+Foo.out = sys.stdout
+
+import generator3 as g3
+import sys
+r = g3.ModuleRedeclarator(pseudomod, sys.stdout)
+r.redo("pseudomod")
+"""
+
+"""
+import generator3 as g3
+import sys
+try:
+  import io
+  fopen = io.open
+except ImportError:
+  fopen = open
+
+import __builtin__
+f = fopen("b" + hex(sys.hexversion)[2:] + ".py", "w")
+r = g3.ModuleRedeclarator(__builtin__, f)
+r.redo("__builtin__")
+f.close()
+"""
