@@ -64,7 +64,7 @@ public class MavenProjectConfigurator {
     // and FileWatcher differs from real-life execution.
 
     List<Artifact> artifacts = new ArrayList<Artifact>();
-    for (MavenProjectModel each : myMavenTree.getProjects()) {
+    for (MavenProjectModel each : getMavenProjectsToConfigure()) {
       artifacts.addAll(each.getDependencies());
     }
 
@@ -78,7 +78,7 @@ public class MavenProjectConfigurator {
   }
 
   private void mapModulesToMavenProjects() {
-    for (MavenProjectModel each : myMavenTree.getProjects()) {
+    for (MavenProjectModel each : getMavenProjectsToConfigure()) {
       myMavenProjectToModule.put(each, myFileToModuleMapping.get(each.getFile()));
     }
     MavenModuleNameMapper.map(myMavenTree,
@@ -130,7 +130,7 @@ public class MavenProjectConfigurator {
   }
 
   private void configModules() {
-    List<MavenProjectModel> projects = myMavenTree.getProjects();
+    List<MavenProjectModel> projects = getMavenProjectsToConfigure();
 
     for (MavenProjectModel each : projects) {
       ensureModuleCreated(each);
@@ -156,6 +156,15 @@ public class MavenProjectConfigurator {
 
     ArrayList<Module> modules = new ArrayList<Module>(myMavenProjectToModule.values());
     MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules);
+  }
+
+  private List<MavenProjectModel> getMavenProjectsToConfigure() {
+    List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
+    for (MavenProjectModel each : myMavenTree.getProjects()) {
+      if (!myImporterSettings.isCreateModulesForAggregators() && each.isAggregator()) continue;
+      result.add(each);
+    }
+    return result;
   }
 
   private void ensureModuleCreated(MavenProjectModel project) {

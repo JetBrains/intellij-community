@@ -128,6 +128,21 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals(0, questionsCount);
     assertModules("project", "m1", "m2", "userModule");
   }
+  
+  public void testRemovingAndCreatingModulesForAggregativeProjects() throws Exception {
+    assertModules("project", "m1", "m2");
+
+    getMavenImporterSettings().setCreateModulesForAggregators(false);
+
+    configMessagesForYesAnswer();
+    importProject();
+
+    assertModules("m1", "m2");
+
+    getMavenImporterSettings().setCreateModulesForAggregators(true);
+    importProject();
+    assertModules("project", "m1", "m2");
+  }
 
   public void testReimportingWithProfiles() throws Exception {
     updateProjectPom("<groupId>test</groupId>" +

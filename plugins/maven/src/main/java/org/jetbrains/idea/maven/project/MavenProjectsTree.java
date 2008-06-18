@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.apache.maven.artifact.Artifact;
@@ -373,7 +372,6 @@ public class MavenProjectsTree {
 
     try {
       List<MavenProjectModel> projects = getProjects();
-
 
       for (MavenProjectModel each : projects) {
         p.checkCanceled();

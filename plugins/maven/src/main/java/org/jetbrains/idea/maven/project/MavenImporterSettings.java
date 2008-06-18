@@ -12,6 +12,7 @@ public class MavenImporterSettings implements Cloneable {
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
   private boolean autoSync = false;
+  private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
   private List<String> myIgnoredDependencies = new ArrayList<String>();
@@ -49,6 +50,14 @@ public class MavenImporterSettings implements Cloneable {
     this.createModuleGroups = createModuleGroups;
   }
 
+  public boolean isCreateModulesForAggregators() {
+    return createModulesForAggregators;
+  }
+
+  public void setCreateModulesForAggregators(boolean createModulesForAggregators) {
+    this.createModulesForAggregators = createModulesForAggregators;
+  }
+
   public boolean isUseMavenOutput() {
     return useMavenOutput;
   }
@@ -74,6 +83,7 @@ public class MavenImporterSettings implements Cloneable {
     if (createModuleGroups != that.createModuleGroups) return false;
     if (lookForNested != that.lookForNested) return false;
     if (autoSync != that.autoSync) return false;
+    if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (myIgnoredDependencies != null ? !myIgnoredDependencies.equals(that.myIgnoredDependencies) : that.myIgnoredDependencies != null) {
@@ -88,6 +98,7 @@ public class MavenImporterSettings implements Cloneable {
     result = dedicatedModuleDir.hashCode();
     result = 31 * result + (lookForNested ? 1 : 0);
     result = 31 * result + (autoSync ? 1 : 0);
+    result = 31 * result + (createModulesForAggregators ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (myIgnoredDependencies != null ? myIgnoredDependencies.hashCode() : 0);
