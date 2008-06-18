@@ -54,20 +54,23 @@ public final class IdeMouseEventDispatcher{
 
     // search in main keymap
 
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    String[] actionIds=keymap.getActionIds(shortcut);
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager != null) {
+      Keymap keymap = keymapManager.getActiveKeymap();
+      String[] actionIds=keymap.getActionIds(shortcut);
 
-    ActionManager actionManager = ActionManager.getInstance();
-    for (String actionId : actionIds) {
-      AnAction action = actionManager.getAction(actionId);
-      if (action == null) {
-        continue;
-      }
-      if (isModalContext && !action.isEnabledInModalContext()) {
-        continue;
-      }
-      if (!myActions.contains(action)) {
-        myActions.add(action);
+      ActionManager actionManager = ActionManager.getInstance();
+      for (String actionId : actionIds) {
+        AnAction action = actionManager.getAction(actionId);
+        if (action == null) {
+          continue;
+        }
+        if (isModalContext && !action.isEnabledInModalContext()) {
+          continue;
+        }
+        if (!myActions.contains(action)) {
+          myActions.add(action);
+        }
       }
     }
   }
@@ -106,22 +109,24 @@ public final class IdeMouseEventDispatcher{
     MouseShortcut shortcut=new MouseShortcut(e.getButton(),e.getModifiersEx(),e.getClickCount());
     fillActionsList(component,shortcut,IdeKeyEventDispatcher.isModalContext(component));
     ActionManagerEx actionManager=ActionManagerEx.getInstanceEx();
-    for(int i=0;i<myActions.size();i++){
-      AnAction action=myActions.get(i);
-      DataContext dataContext=DataManager.getInstance().getDataContext(component);
-      Presentation presentation=myPresentationFactory.getPresentation(action);
-      AnActionEvent actionEvent=new AnActionEvent(e,dataContext,ActionPlaces.MAIN_MENU,presentation,
-                                                  ActionManager.getInstance(),
-                                                  e.getModifiers());
-      action.beforeActionPerformedUpdate(actionEvent);
-      if(presentation.isEnabled()){
-        actionManager.fireBeforeActionPerformed(action, dataContext);
-        Component c = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
-        if (c != null && !c.isShowing()) {
-          continue;
+    if (actionManager != null) {
+      for(int i=0;i<myActions.size();i++){
+        AnAction action=myActions.get(i);
+        DataContext dataContext=DataManager.getInstance().getDataContext(component);
+        Presentation presentation=myPresentationFactory.getPresentation(action);
+        AnActionEvent actionEvent=new AnActionEvent(e,dataContext,ActionPlaces.MAIN_MENU,presentation,
+                                                    ActionManager.getInstance(),
+                                                    e.getModifiers());
+        action.beforeActionPerformedUpdate(actionEvent);
+        if(presentation.isEnabled()){
+          actionManager.fireBeforeActionPerformed(action, dataContext);
+          Component c = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+          if (c != null && !c.isShowing()) {
+            continue;
+          }
+          action.actionPerformed(actionEvent);
+          e.consume();
         }
-        action.actionPerformed(actionEvent);
-        e.consume();
       }
     }
     return false;

@@ -91,4 +91,12 @@ public class MultiMap<K, V> {
       myMap.remove(key);
     }
   }
+
+  public Collection<? extends V> values() {
+    ArrayList<V> result = new ArrayList<V>();
+    for (Collection<V> vs : myMap.values()) {
+      result.addAll(vs);
+    }
+    return result;
+  }
 }

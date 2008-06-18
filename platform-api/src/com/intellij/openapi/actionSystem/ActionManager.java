@@ -16,8 +16,8 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

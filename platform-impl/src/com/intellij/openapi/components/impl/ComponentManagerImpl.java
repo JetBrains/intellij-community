@@ -142,7 +142,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @SuppressWarnings({"unchecked"})
   @Nullable
-  private synchronized <T> T getComponentFromContainer(Class<T> interfaceClass) {
+  protected synchronized <T> T getComponentFromContainer(Class<T> interfaceClass) {
     final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
     if (initializedComponent != null) return initializedComponent;
 

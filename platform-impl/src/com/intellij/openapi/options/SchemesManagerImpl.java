@@ -431,7 +431,13 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
 
-    return providers != null && providers.length > 0;
+    if (providers == null) return false;
+
+    for (StreamProvider provider : providers) {
+      if (provider.isEnabled()) return true;
+    }
+
+    return false;
   }
 
   public boolean isExportAvailable() {

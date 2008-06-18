@@ -24,6 +24,10 @@ public interface StreamProvider {
     public void deleteFile(final String fileSpec, final RoamingType roamingType) {
 
     }
+
+    public boolean isEnabled() {
+      return false;
+    }
   };
 
   void saveContent(String fileSpec, Document content, final RoamingType roamingType) throws IOException;
@@ -34,4 +38,6 @@ public interface StreamProvider {
   String[] listSubFiles(final String fileSpec);
 
   void deleteFile(final String fileSpec, final RoamingType roamingType);
+
+  boolean isEnabled();
 }

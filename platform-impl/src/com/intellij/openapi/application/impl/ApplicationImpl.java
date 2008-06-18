@@ -113,6 +113,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     }
   );
+  private boolean myIsFiringLoadingEvent = false;
 
 
   protected void boostrapPicoContainer() {
@@ -131,7 +132,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     super(null);
 
     CommonBundle.assertKeyIsFound = isUnitTestMode;
-    
+
     if (isInternal || isUnitTestMode) {
       Disposer.setDebugMode(true);
     }
@@ -336,7 +337,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void load(String path) throws IOException, InvalidDataException {
     getStateStore().setOptionsPath(path);
     getStateStore().setConfigPath(PathManager.getConfigPath());
-    fireBeforeApplicationLoaded();
+    myIsFiringLoadingEvent = true;
+    try {
+      fireBeforeApplicationLoaded();
+    }
+    finally {
+      myIsFiringLoadingEvent = false;
+    }
 
     loadComponentRoamingTypes();
 
@@ -345,6 +352,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
+    }
+
+  }
+
+  @Override
+  protected <T> T getComponentFromContainer(final Class<T> interfaceClass) {
+    if (myIsFiringLoadingEvent) {
+      return null;
+    }
+    else {
+      return super.getComponentFromContainer(interfaceClass);
     }
   }
 

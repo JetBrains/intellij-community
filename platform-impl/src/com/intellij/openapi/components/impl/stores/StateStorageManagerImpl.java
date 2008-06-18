@@ -187,6 +187,12 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     }
   }
 
+  public Collection<StreamProvider> getStreamProviders() {
+    synchronized (myStreamProviders) {
+      return Collections.unmodifiableCollection(myStreamProviders.values());
+    }
+  }
+
   public Document loadDocument(final String fileSpec, final RoamingType roamingType) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
@@ -207,6 +213,13 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   public String[] listSubFiles(final String fileSpec) {
     return new String[0];
+  }
+
+  public boolean isEnabled() {
+    for (StreamProvider provider : getStreamProviders()) {
+      if (provider.isEnabled()) return true;
+    }
+    return false;
   }
 
   protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {

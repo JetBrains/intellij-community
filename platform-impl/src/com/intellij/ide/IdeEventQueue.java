@@ -380,7 +380,10 @@ public class IdeEventQueue extends EventQueue {
 
   private void _dispatchEvent(final AWTEvent e) {
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
-      ((DnDManagerImpl)DnDManager.getInstance()).setLastDropHandler(null);
+      DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
+      if (dndManager != null) {
+        dndManager.setLastDropHandler(null);
+      }
     }
 
 

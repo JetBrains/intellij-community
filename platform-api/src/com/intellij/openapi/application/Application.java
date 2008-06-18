@@ -280,4 +280,5 @@ public interface Application extends ComponentManager {
    * @return
    */
   boolean isDisposeInProgress();
+
 }
