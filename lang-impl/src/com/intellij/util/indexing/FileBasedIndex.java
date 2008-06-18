@@ -523,6 +523,14 @@ public class FileBasedIndex implements ApplicationComponent {
           }
         }
       }
+      catch (StorageException e) {
+        setDataBufferingEnabled(false); // revert to original state
+        throw e;
+      }
+      catch (ProcessCanceledException e) {
+        setDataBufferingEnabled(false); // revert to original state
+        throw e;
+      }
       finally {
         myUnsavedDataIndexingSemaphore.up();
         myUnsavedDataIndexingSemaphore.waitFor(); // may need to wait until another thread is done with indexing 
@@ -544,6 +552,12 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private void setDataBufferingEnabled(final boolean enabled) {
+    if (!enabled) {
+      synchronized (myLastIndexedDocStamps) {
+        myLastIndexedDocStamps.clear();
+        myLastIndexedUnsavedContent.clear();
+      }
+    }
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
       assert index != null;
@@ -616,10 +630,6 @@ public class FileBasedIndex implements ApplicationComponent {
     throws StorageException {
 
     setDataBufferingEnabled(false);
-    synchronized (myLastIndexedDocStamps) {
-      myLastIndexedDocStamps.clear();
-      myLastIndexedUnsavedContent.clear();
-    }
 
     final int inputId = Math.abs(getFileId(file));
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
