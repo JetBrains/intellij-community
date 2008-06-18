@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml-openapi" />
+    <orderEntry type="module" module-name="UsageView" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
