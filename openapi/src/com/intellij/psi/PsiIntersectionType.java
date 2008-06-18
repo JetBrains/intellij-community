@@ -20,8 +20,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author ven
@@ -33,6 +33,7 @@ public class PsiIntersectionType extends PsiType {
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
+    LOG.assertTrue(conjuncts.length != 0);
     LOG.assertTrue(conjuncts.length > 1);
     myConjuncts = conjuncts;
   }
@@ -53,12 +54,19 @@ public class PsiIntersectionType extends PsiType {
       }
     }
     if (types.size() > 1) {
-      // extends Object is unnecessary
+      PsiType[] array = types.toArray(new PsiType[types.size()]);
       for (Iterator<PsiType> iterator = types.iterator(); iterator.hasNext();) {
         PsiType type = iterator.next();
-        if (CommonClassNames.JAVA_LANG_OBJECT.equals(type.getCanonicalText())) {
-          iterator.remove();
+
+        for (PsiType existing : array) {
+          if (type != existing && type.isAssignableFrom(existing)) {
+            iterator.remove();
+            break;
+          }
         }
+      }
+      if (types.isEmpty()) {
+        types.add(array[0]);
       }
     }
     return types;

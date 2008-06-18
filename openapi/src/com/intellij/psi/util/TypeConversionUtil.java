@@ -199,7 +199,7 @@ public class TypeConversionUtil {
       }
       else {
         if (manager.areElementsEquivalent(fromClass, toClass)) {
-          return !areDistinctParameterTypes(fromClassType, toClassType);
+          return areSameParameterTypes(fromClassType, toClassType);
         }
 
         if (toClass.isInheritor(fromClass, true)) {
@@ -223,7 +223,7 @@ public class TypeConversionUtil {
         else {
           if (!toClass.isInheritor(fromClass, true)) return false;
           PsiSubstitutor toSubstitutor = getSuperClassSubstitutor(fromClass, toClass, toResult.getSubstitutor());
-          return !areDistinctArgumentTypes(fromClass, fromResult.getSubstitutor(), toSubstitutor);
+          return areSameArgumentTypes(fromClass, fromResult.getSubstitutor(), toSubstitutor);
         }
       }
       else {
@@ -286,12 +286,12 @@ public class TypeConversionUtil {
     PsiClass[] supers = derived.getSupers();
     if (manager.areElementsEquivalent(base, derived)) {
       derivedSubstitutor = getSuperClassSubstitutor(derived, derived, derivedSubstitutor);
-      return !areDistinctArgumentTypes(derived, baseResult.getSubstitutor(), derivedSubstitutor);
+      return areSameArgumentTypes(derived, baseResult.getSubstitutor(), derivedSubstitutor);
     }
     else if (base.isInheritor(derived, true)) {
       derivedSubstitutor = getSuperClassSubstitutor(derived, derived, derivedSubstitutor);
       PsiSubstitutor baseSubstitutor = getSuperClassSubstitutor(derived, base, baseResult.getSubstitutor());
-      if (areDistinctArgumentTypes(derived, baseSubstitutor, derivedSubstitutor)) return false;
+      if (!areSameArgumentTypes(derived, baseSubstitutor, derivedSubstitutor)) return false;
     }
 
     for (PsiClass aSuper : supers) {
@@ -302,32 +302,33 @@ public class TypeConversionUtil {
     return true;
   }
 
-  private static boolean areDistinctParameterTypes(PsiClassType type1, PsiClassType type2) {
+  private static boolean areSameParameterTypes(PsiClassType type1, PsiClassType type2) {
     PsiClassType.ClassResolveResult resolveResult1 = type1.resolveGenerics();
     PsiClassType.ClassResolveResult resolveResult2 = type2.resolveGenerics();
     final PsiClass aClass = resolveResult1.getElement();
     final PsiClass bClass = resolveResult2.getElement();
-    if (aClass == null || bClass == null) return true;
-    if (!aClass.getManager().areElementsEquivalent(aClass, bClass)) return true;
-    return areDistinctArgumentTypes(aClass, resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor());
+    return aClass != null &&
+           bClass != null &&
+           aClass.getManager().areElementsEquivalent(aClass, bClass) &&
+           areSameArgumentTypes(aClass, resolveResult1.getSubstitutor(), resolveResult2.getSubstitutor());
   }
 
-  private static boolean areDistinctArgumentTypes(PsiClass aClass, PsiSubstitutor substitutor1, PsiSubstitutor substitutor2) {
+  private static boolean areSameArgumentTypes(PsiClass aClass, PsiSubstitutor substitutor1, PsiSubstitutor substitutor2) {
     Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
     while(iterator.hasNext()) {
       PsiTypeParameter typeParam = iterator.next();
       PsiType typeArg1 = substitutor1.substitute(typeParam);
       PsiType typeArg2 = substitutor2.substitute(typeParam);
-      if (typeArg1 == null || typeArg2 == null) return false;
-      if (typeArg1 instanceof PsiWildcardType || typeArg2 instanceof PsiWildcardType) return false;
-      if (typeArg1 instanceof PsiCapturedWildcardType || typeArg2 instanceof PsiCapturedWildcardType) return false;
+      if (typeArg1 == null || typeArg2 == null) return true;
+      if (typeArg1 instanceof PsiWildcardType || typeArg2 instanceof PsiWildcardType) return true;
+      if (typeArg1 instanceof PsiCapturedWildcardType || typeArg2 instanceof PsiCapturedWildcardType) return true;
 
-      if (typeArg1 instanceof PsiClassType && ((PsiClassType)typeArg1).resolve() instanceof PsiTypeParameter) return false;
-      if (typeArg2 instanceof PsiClassType && ((PsiClassType)typeArg2).resolve() instanceof PsiTypeParameter) return false;
-      if (!typeArg1.equals(typeArg2)) return true;
+      if (typeArg1 instanceof PsiClassType && ((PsiClassType)typeArg1).resolve() instanceof PsiTypeParameter) return true;
+      if (typeArg2 instanceof PsiClassType && ((PsiClassType)typeArg2).resolve() instanceof PsiTypeParameter) return true;
+      if (!typeArg1.equals(typeArg2)) return false;
     }
 
-    return false;
+    return true;
   }
 
   public static boolean isPrimitiveAndNotNull(PsiType type) {

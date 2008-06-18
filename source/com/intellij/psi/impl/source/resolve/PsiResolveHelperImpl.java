@@ -431,7 +431,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             PsiUtil.resolveClassInType(arg) != null) {
           PsiType bound = intersectAllExtends(typeParam, arg);
           return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
-          //return new Pair<PsiType, ConstraintType>(arg, ConstraintType.SUPERTYPE);
         }
         else {
           return null;
@@ -473,6 +472,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       erasureTypes[i] = TypeConversionUtil.erasure(superType);
     }
     PsiType[] types = ArrayUtil.append(erasureTypes, arg, PsiType.class);
+    assert types.length != 0;
     return PsiIntersectionType.createIntersection(types);
   }
 

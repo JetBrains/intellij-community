@@ -15,7 +15,6 @@ import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
-import junit.textui.TestRunner;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -776,11 +775,5 @@ public class TypeCookTest extends MultiFileTestCase {
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
     FileDocumentManager.getInstance().saveAllDocuments();
-  }
-
-  public static void main(String[] args) {
-    final TypeCookTest typeCookTest = new TypeCookTest();
-    typeCookTest.setName("testT26");
-    TestRunner.run(typeCookTest);
   }
 }
