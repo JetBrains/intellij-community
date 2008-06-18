@@ -31,7 +31,6 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.Query;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -47,7 +46,7 @@ public class FindUsagesTest extends IdeaTestCase {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
-    builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome()).addContentRoot(myFixture.getTempDirPath()+ "/" + getTestName(true)).addSourceRoot("");
+    builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome()).addContentRoot(TestUtils.getTestDataPath() + "/findUsages" + "/" + getTestName(true)).addSourceRoot("");
     myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/findUsages");
     myFixture.setUp();
   }
@@ -56,10 +55,6 @@ public class FindUsagesTest extends IdeaTestCase {
     myFixture.tearDown();
     myFixture = null;
     super.tearDown();
-  }
-
-  public void testSetter1() throws Throwable {
-    doTest("setter1/A.groovy", 2);
   }
 
   public void testConstructor1() throws Throwable {
@@ -75,6 +70,10 @@ public class FindUsagesTest extends IdeaTestCase {
     final Query<PsiReference> query = ReferencesSearch.search(method);
 
     assertEquals(expectedCount, query.findAll().size());
+  }
+
+  public void testSetter1() throws Throwable {
+    doTest("setter1/A.groovy", 2);
   }
 
   public void testDerivedClass() throws Throwable {
@@ -147,7 +146,7 @@ public class FindUsagesTest extends IdeaTestCase {
 
     assertEquals(expectedUsagesCount, query.findAll().size());
   }
-  
+
   public void testAnnotatedMemberSearch() throws Throwable {
 
     final PsiReference ref = myFixture.getReferenceAtCaretPosition("annotatedMemberSearch/A.groovy");
