@@ -156,6 +156,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   @Nullable
   private SVNURL getBranchForUrl(final String url) {
     final VirtualFile root = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(myRoot);
+    if (root == null) {
+      return null;
+    }
     return SvnUtil.getBranchForUrl(myVcs, root, url);
   }
 
