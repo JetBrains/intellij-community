@@ -55,7 +55,8 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       PsiFile file = PsiDocumentManager.getInstance(method.getProject()).getPsiFile(document);
       PsiElement elementAt = file.findElementAt(startOffset);
       PsiElement parent = elementAt != null ? elementAt.getParent() : null;
-      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression) parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER) return;
+      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression) parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER)
+        return;
 
       if (parent instanceof GrAnnotationNameValuePair || parent.getParent() instanceof GrAnnotationNameValuePair) {
         document.insertString(offset, " = ");
@@ -93,8 +94,6 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
       }
-
-      return;
     }
 
     addTailType(item);
@@ -113,7 +112,8 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
   private void handleOverwrite(final int offset, final Document document) {
     final CharSequence sequence = document.getCharsSequence();
     int i = offset;
-    while (i < sequence.length() && (Character.isJavaIdentifierPart(sequence.charAt(i)) || sequence.charAt(i) == '\'')) i++;
+    while (i < sequence.length() && (Character.isJavaIdentifierPart(sequence.charAt(i)) || sequence.charAt(i) == '\''))
+      i++;
     document.deleteString(offset, i);
   }
 
@@ -125,10 +125,10 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     String[] exprs = {"true", "false", "null", "super", "this"};
     String[] withSemi = {"break", "continue"};
     String[] withSpace = {"private", "public", "protected", "static", "transient", "abstract",
-        "native", "volatile", "strictfp", "boolean", "byte", "char", "short", "int", "float", "long", "double", "void",
-        "new", "try", "while", "with", "switch", "for", "return", "throw", "throws", "assert", "synchronized", "package",
-        "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else", "instanceof",
-        "import", "final",};
+            "native", "volatile", "strictfp", "boolean", "byte", "char", "short", "int", "float", "long", "double", "void",
+            "new", "try", "while", "with", "switch", "for", "return", "throw", "throws", "assert", "synchronized", "package",
+            "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else", "instanceof",
+            "import", "final",};
     if (Arrays.asList(withSemi).contains(item.toString())) {
       item.setTailType(TailType.SEMICOLON);
       return;

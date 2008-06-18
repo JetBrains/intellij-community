@@ -72,7 +72,7 @@ public class GroovyCompletionData extends CompletionData {
     registerControlCompletion();
     registerSimpleExprsCompletion();
     registerBuiltInTypeCompletion();
-    registrBuiltInTypesAsArgumentCompletion();
+    registerBuiltInTypesAsArgumentCompletion();
     registerInstanceofCompletion();
     registerThrowsCompletion();
     registerBranchCompletion();
@@ -120,7 +120,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerControlCompletion() {
     String[] controlKeywords = {"try", "while", "with", "switch", "for",
-        "return", "throw", "assert", "synchronized",};
+            "return", "throw", "assert", "synchronized",};
 
     registerStandardCompletion(new ControlStructureFilter(), controlKeywords);
     registerStandardCompletion(new CaseDefaultFilter(), "case", "default");
@@ -134,11 +134,11 @@ public class GroovyCompletionData extends CompletionData {
     registerStandardCompletion(new AndFilter(new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), BUILT_IN_TYPES);
   }
 
-  private void registrBuiltInTypesAsArgumentCompletion() {
+  private void registerBuiltInTypesAsArgumentCompletion() {
     AndFilter filter = new AndFilter(new BuiltInTypeAsArgumentFilter(), new NotFilter(new ThrowsFilter()));
     CompletionVariant variant = setUpFilter(filter);
     for (String completion : BUILT_IN_TYPES) {
-      variant.addCompletion(completion, TailType.NONE);
+      variant.addCompletion(completion, TailType.SPACE);
     }
     registerVariant(variant);
   }
@@ -182,10 +182,10 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerModifierCompletion() {
     String[] modifiers = new String[]{"private", "public", "protected", "transient", "abstract",
-        "native", "volatile", "strictfp"};
+            "native", "volatile", "strictfp"};
     registerStandardCompletion(new ModifiersFilter(), modifiers);
     registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "transient", "abstract",
-        "native", "volatile", "strictfp", "synchronized", "static");
+            "native", "volatile", "strictfp", "synchronized", "static");
     registerStandardCompletion(new StaticFilter(), "static");
   }
 

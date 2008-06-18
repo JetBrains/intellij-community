@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 
@@ -28,14 +28,14 @@ import org.jetbrains.annotations.NonNls;
 public class KeywordCompletionTest extends CompletionTestBase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/completion/data/keyword";
+  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/completion/data/keyword/";
 
   protected String myNewDocumentText;
 
   public KeywordCompletionTest() {
     super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
+            System.getProperty("path") :
+            DATA_PATH
     );
   }
 
