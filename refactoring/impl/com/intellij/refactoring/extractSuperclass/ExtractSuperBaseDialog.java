@@ -16,6 +16,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -70,7 +71,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
     if (file instanceof PsiJavaFile) {
       name = ((PsiJavaFile)file).getPackageName();
     }
-    myPackageNameField = new ReferenceEditorWithBrowseButton(null, name, PsiManager.getInstance(myProject), false);
+    myPackageNameField = JavaReferenceEditorUtil.createReferenceEditorWithBrowseButton(null, name, PsiManager.getInstance(myProject), false);
   }
 
   private void initSourceClassField() {

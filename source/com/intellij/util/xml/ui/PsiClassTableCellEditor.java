@@ -14,8 +14,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 
 import javax.swing.*;
@@ -51,7 +51,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   }
 
   public final Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    final Document document = ReferenceEditorWithBrowseButton.createDocument(value == null ? "" : (String)value, PsiManager.getInstance(myProject), true);
+    final Document document = JavaReferenceEditorUtil.createDocument(value == null ? "" : (String)value, PsiManager.getInstance(myProject), true);
     myEditor = new EditorTextField(document, myProject, StdFileTypes.JAVA){
       protected boolean shouldHaveBorder() {
         return false;

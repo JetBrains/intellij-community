@@ -10,6 +10,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.AbstractConvertContext;
@@ -73,7 +74,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     return PsiClassControl.initReferenceEditorWithBrowseButton(boundedComponent,
                                                                 new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
                                                                   public Document fun(final String s) {
-                                                                    return ReferenceEditorWithBrowseButton.createTypeDocument(s, PsiManager.getInstance(project));
+                                                                    return JavaReferenceEditorUtil.createTypeDocument(s, PsiManager.getInstance(project));
                                                                   }
                                                                 }, ""), this);
   }

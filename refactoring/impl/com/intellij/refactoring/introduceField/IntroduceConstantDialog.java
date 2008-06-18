@@ -202,8 +202,8 @@ class IntroduceConstantDialog extends DialogWrapper {
       });
     }
     else {
-      ReferenceEditorWithBrowseButton targetClassName =
-        new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
+      ReferenceEditorWithBrowseButton targetClassName = JavaReferenceEditorUtil
+          .createReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
       myTargetClassNamePanel.setLayout(new BorderLayout());
       myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
       myTargetClassNameLabel.setLabelFor(targetClassName);

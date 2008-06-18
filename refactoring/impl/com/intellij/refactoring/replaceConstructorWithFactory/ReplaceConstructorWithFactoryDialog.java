@@ -12,6 +12,7 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.JavaReferenceEditorUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -41,7 +42,8 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
     setTitle(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME);
 
-    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(project), true);
+    myTfTargetClassName = JavaReferenceEditorUtil
+        .createReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(project), true);
 
     init();
   }

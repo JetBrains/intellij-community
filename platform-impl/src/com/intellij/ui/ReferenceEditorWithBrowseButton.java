@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.psi.*;
 import com.intellij.util.Function;
 
 import java.awt.event.ActionListener;
@@ -33,17 +32,6 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     myFactory = factory;
   }
 
-  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
-                                         final String text,
-                                         final PsiManager manager,
-                                         final boolean toAcceptClasses) {
-    this(browseActionListener, manager.getProject(), new Function<String,Document>() {
-      public Document fun(final String s) {
-        return createDocument(s, manager, toAcceptClasses);
-      }
-    }, text);
-  }
-
   public void addDocumentListener(DocumentListener listener) {
     myDocumentListeners.add(listener);
     getEditorTextField().getDocument().addDocumentListener(listener);
@@ -52,20 +40,6 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
   public void removeDocumentListener(DocumentListener listener) {
     myDocumentListeners.remove(listener);
     getEditorTextField().getDocument().removeDocumentListener(listener);
-  }
-
-  public static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
-  }
-
-  public static Document createTypeDocument(final String text, PsiManager manager) {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeCodeFragment(text, defaultPackage, false, true, false);
-    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }
 
   public EditorTextField getEditorTextField() {

@@ -126,7 +126,8 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    mySuperClassField = new ReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", PsiManager.getInstance(myProject), true);
+    mySuperClassField = JavaReferenceEditorUtil
+        .createReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", PsiManager.getInstance(myProject), true);
 
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";
     myTargetPackageField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {

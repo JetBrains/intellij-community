@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
@@ -44,7 +45,8 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     if (boundedComponent == null) {
       boundedComponent = new PsiClassPanel();
     }
-    ReferenceEditorWithBrowseButton editor = new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true);
+    ReferenceEditorWithBrowseButton editor = JavaReferenceEditorUtil
+        .createReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true);
     Document document = editor.getChildComponent().getDocument();
     JavaCodeFragment fragment = (JavaCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(document);
     assert fragment != null;
