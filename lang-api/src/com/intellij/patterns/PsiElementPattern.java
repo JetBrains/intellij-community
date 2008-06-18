@@ -6,6 +6,7 @@ package com.intellij.patterns;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.vfs.VirtualFile;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.collection;
 import static com.intellij.patterns.StandardPatterns.not;
@@ -74,6 +75,14 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return with(new PatternCondition<T>("inFile") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return filePattern.accepts(t.getContainingFile(), context);
+      }
+    });
+  }
+
+  public Self inVirtualFile(@NotNull final ElementPattern<? extends VirtualFile> filePattern) {
+    return with(new PatternCondition<T>("inVirtualFile") {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return filePattern.accepts(t.getContainingFile().getViewProvider().getVirtualFile(), context);
       }
     });
   }
