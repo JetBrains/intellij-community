@@ -372,7 +372,8 @@ public class DocumentationComponent extends JPanel implements Disposable{
             final PsiElement element = myElement.getElement();
             final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
             if (provider instanceof ExtensibleDocumentationProvider) {
-              presentation.setEnabled(((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element,
+              presentation.setEnabled(element != null &&
+                                      ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element,
                                                                                                                  DocumentationManager.getOriginalElement(element)));
             }
           }
