@@ -524,28 +524,34 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Nullable
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    
-    synchronized (myStubLock) {
-      StubTree stubHolder = derefStub();
-      if (stubHolder == null) {
-        if (getTreeElementNoLock() == null) {
 
-          final VirtualFile vFile = getVirtualFile();
-          stubHolder = StubTree.readFromVFile(vFile);
-          if (stubHolder != null) {
-            myStub = new WeakReference<StubTree>(stubHolder);
-            StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
-            base.setPsi(this);
-          }
-        }
-      }
-      return stubHolder;
+    final StubTree derefd = derefStub();
+    if (derefd != null) return derefd;
+    if (getTreeElementNoLock() != null) return null;
+
+    final VirtualFile vFile = getVirtualFile();
+    StubTree stubHolder = StubTree.readFromVFile(vFile);
+    if (stubHolder == null) return null;
+
+    synchronized (myStubLock) {
+      if (getTreeElementNoLock() != null) return null;
+
+      final StubTree derefdOnLock = derefStub();
+      if (derefdOnLock != null) return derefdOnLock;
+
+      myStub = new WeakReference<StubTree>(stubHolder);
+      StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
+      base.setPsi(this);
+
+      return derefStub();
     }
   }
 
   @Nullable
   private StubTree derefStub() {
-    return myStub != null ? myStub.get() : null;
+    synchronized (myStubLock) {
+      return myStub != null ? myStub.get() : null;
+    }
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
