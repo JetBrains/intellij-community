@@ -31,10 +31,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
@@ -81,7 +78,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
     myClassField = new ReferenceEditorWithBrowseButton(new BrowseClassListener(project), project, new Function<String, Document>() {
       public Document fun(String s) {
-        final Document document = ReferenceEditorWithBrowseButton.createTypeDocument(s, PsiManager.getInstance(project));
+        final Document document = JavaReferenceEditorUtil.createTypeDocument(s, PsiManager.getInstance(project));
         document.addDocumentListener(new DocumentAdapter() {
           @Override
           public void documentChanged(final DocumentEvent e) {

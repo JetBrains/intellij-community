@@ -30,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.Function;
 import org.intellij.plugins.intelliLang.inject.config.ui.ConfigurationPage;
 import org.intellij.plugins.intelliLang.util.ShiftTabAction;
@@ -103,7 +104,7 @@ class SettingsUI implements PersistentStateComponent<MasterDetailsComponent.UISt
 
   private static Document createDocument(final String s, final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new DocumentImpl(s);
-    return ReferenceEditorWithBrowseButton.createTypeDocument(s, PsiManager.getInstance(project));
+    return JavaReferenceEditorUtil.createTypeDocument(s, PsiManager.getInstance(project));
   }
 
   /**
