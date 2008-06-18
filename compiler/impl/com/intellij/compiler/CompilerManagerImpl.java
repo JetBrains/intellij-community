@@ -5,7 +5,6 @@ import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.packagingCompiler.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
-import com.intellij.compiler.notNullVerification.NotNullVerifyingCompiler;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +48,6 @@ public class CompilerManagerImpl extends CompilerManager {
 
     // predefined compilers
     addTranslatingCompiler(new JavaCompiler(myProject), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
-    addCompiler(new NotNullVerifyingCompiler(myProject));
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler(myProject));
     addCompiler(new IncrementalPackagingCompiler(myProject));

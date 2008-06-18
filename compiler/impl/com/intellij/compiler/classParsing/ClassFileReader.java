@@ -14,6 +14,7 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,9 +40,10 @@ public class ClassFileReader {
   private AnnotationConstantValue[] myRuntimeInvisibleAnnotations;
   @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
 
-  public ClassFileReader(@NotNull File file, SymbolTable symbolTable) {
+  public ClassFileReader(@NotNull File file, SymbolTable symbolTable, @Nullable final byte[] fileContent) {
     mySymbolTable = symbolTable;
     myFile = file;
+    myData = fileContent;
   }
 
   public String getPath() {

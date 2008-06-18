@@ -5,12 +5,12 @@
  */
 package com.intellij.compiler.impl.javaCompiler;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.*;
+import com.intellij.compiler.classParsing.AnnotationConstantValue;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.make.Cache;
-import com.intellij.compiler.make.CacheCorruptedException;
-import com.intellij.compiler.make.MakeUtil;
-import com.intellij.compiler.make.SourceFileFinder;
+import com.intellij.compiler.make.*;
+import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -30,12 +31,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -412,7 +417,7 @@ public class BackendCompilerWrapper {
     int exitValue = 0;
     try {
       Process process = myCompiler.launchProcess(chunk, outputDir, myCompileContext);
-      final ClassParsingThread classParsingThread = new ClassParsingThread();
+      final ClassParsingThread classParsingThread = new ClassParsingThread(isJdk6(chunk.getJdk()));
       final Future<?> classParsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(classParsingThread);
       
       OutputParser errorParser = myCompiler.createErrorParser(outputDir);
@@ -840,6 +845,13 @@ public class BackendCompilerWrapper {
     private final BlockingQueue<String> myPaths = new ArrayBlockingQueue<String>(50000);
     private CacheCorruptedException myError = null;
     private final String myStopThreadToken = new String();
+    private final boolean myAddNotNullAssertions;
+    private final boolean myIsJdk16;
+
+    private ClassParsingThread(final boolean isJdk16) {
+      myIsJdk16 = isJdk16;
+      myAddNotNullAssertions = CompilerWorkspaceConfiguration.getInstance(myProject).ASSERT_NOT_NULL;
+    }
 
     public void run() {
       String path;
@@ -874,12 +886,42 @@ public class BackendCompilerWrapper {
     private void processPath(final String path) throws CacheCorruptedException {
       try {
         final File file = new File(path); // the file is assumed to exist!
-        final int newClassQName = myCompileContext.getDependencyCache().reparseClassFile(file);
-        final Cache newClassesCache = myCompileContext.getDependencyCache().getNewClassesCache();
+        byte[] fileContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+        try{
+          fileContent = FileUtil.loadFileBytes(file);
+        }
+        catch(IOException ignored){
+        }
+
+        final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
+        final int newClassQName = dependencyCache.reparseClassFile(file, fileContent);
+        final Cache newClassesCache = dependencyCache.getNewClassesCache();
         final String sourceFileName = newClassesCache.getSourceFileName(newClassesCache.getClassId(newClassQName));
-        String relativePathToSource =
-          "/" + MakeUtil.createRelativePathToSource(myCompileContext.getDependencyCache().resolve(newClassQName), sourceFileName);
+        final String qName = dependencyCache.resolve(newClassQName);
+        String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
         putName(sourceFileName, newClassQName, relativePathToSource, path);
+        
+        if (myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName)) {
+          try {
+            ClassReader reader = new ClassReader(fileContent, 0, fileContent.length);
+            ClassWriter writer = new PsiClassWriter(myProject, myIsJdk16);
+
+            final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
+            reader.accept(instrumenter, 0);
+            if (instrumenter.isModification()) {
+              final FileOutputStream output = new FileOutputStream(file);
+              try {
+                output.write(writer.toByteArray());
+              }
+              finally {
+                output.close();
+              }
+            }
+          }
+          catch (Exception ignored) {
+            LOG.info(ignored);
+          }
+        }
       }
       catch (ClsFormatException e) {
         String message;
@@ -899,6 +941,37 @@ public class BackendCompilerWrapper {
     }
   }
 
+  private static boolean hasNotNullAnnotations(final Cache cache, final SymbolTable symbolTable, final int className) throws CacheCorruptedException {
+    for (int methodId : cache.getMethodIds(cache.getClassDeclarationId(className))) {
+      for (AnnotationConstantValue annotation : cache.getMethodRuntimeInvisibleAnnotations(methodId)) {
+        if (AnnotationUtil.NOT_NULL.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
+          return true;
+        }
+      }
+      final AnnotationConstantValue[][] paramAnnotations = cache.getMethodRuntimeInvisibleParamAnnotations(methodId);
+      for (AnnotationConstantValue[] _singleParamAnnotations : paramAnnotations) {
+        for (AnnotationConstantValue annotation : _singleParamAnnotations) {
+          if (AnnotationUtil.NOT_NULL.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isJdk6(final Sdk jdk) {
+    boolean isJDK16 = false;
+    if (jdk != null) {
+      final String versionString = jdk.getVersionString();
+      if (versionString != null) {
+        isJDK16 = versionString.contains("1.6") || versionString.contains("6.0");
+      }
+    }
+    return isJDK16;
+  }
+  
+  
   private static class OutputDir {
     private final String myPath;
     private final int myKind;

@@ -105,10 +105,10 @@ public class DependencyCache {
     myToUpdate.add(qName);
   }
 
-  public int reparseClassFile(@NotNull File file) throws ClsFormatException, CacheCorruptedException {
+  public int reparseClassFile(@NotNull File file, final byte[] fileContent) throws ClsFormatException, CacheCorruptedException {
     SymbolTable symbolTable = getSymbolTable();
 
-    final int qName = getNewClassesCache().importClassInfo(new ClassFileReader(file, symbolTable), symbolTable);
+    final int qName = getNewClassesCache().importClassInfo(new ClassFileReader(file, symbolTable, fileContent), symbolTable);
     addClassToUpdate(qName);
     addTraverseRoot(qName);
     return qName;
