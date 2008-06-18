@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -25,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -46,7 +48,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testClosureParameter1() throws Exception {
     doTest("closureParameter1/A.groovy");
   }
-  
+
   public void testClosureOwner() throws Exception {
     PsiReference ref = configureByFile("closureOwner/A.groovy");
     PsiElement resolved = ref.resolve();
@@ -89,7 +91,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testCatchParameter() throws Exception {
-    doTest("CatchParameter/CatchParameter.groovy");
+    doTest("catchParameter/CatchParameter.groovy");
   }
 
   public void testCaseClause() throws Exception {
@@ -188,17 +190,17 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
-  public void testGRVY633() throws Exception {
-    PsiReference ref = configureByFile("GRVY633/A.groovy");
+  public void testGrvy633() throws Exception {
+    PsiReference ref = configureByFile("grvy633/A.groovy");
     assertNull(ref.resolve());
   }
 
-  public void testGRVY575() throws Exception {
-    doTest("GRVY575/A.groovy");
+  public void testGrvy575() throws Exception {
+    doTest("grvy575/A.groovy");
   }
 
-  public void testGRVY747() throws Exception {
-    PsiReference ref = configureByFile("GRVY747/A.groovy");
+  public void testGrvy747() throws Exception {
+    PsiReference ref = configureByFile("grvy747/A.groovy");
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 

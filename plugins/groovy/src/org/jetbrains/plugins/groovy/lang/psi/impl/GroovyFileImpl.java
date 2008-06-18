@@ -147,8 +147,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
-          !(run instanceof GrImportStatement) &&
-          !run.processDeclarations(processor, state, null, place)) return false;
+              !(run instanceof GrImportStatement) &&
+              !run.processDeclarations(processor, state, lastParent, place)) return false;
       run = run.getPrevSibling();
     }
 
@@ -197,11 +197,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     boolean isAliasedImport = false;
     if (anchor instanceof GrImportStatement) {
       isAliasedImport = !((GrImportStatement) anchor).isAliasedImport() && statement.isAliasedImport() ||
-          ((GrImportStatement) anchor).isAliasedImport() && !statement.isAliasedImport();
+              ((GrImportStatement) anchor).isAliasedImport() && !statement.isAliasedImport();
     }
 
     if (anchor != null &&
-        (!(anchor instanceof GrImportStatement) || isAliasedImport)) {
+            (!(anchor instanceof GrImportStatement) || isAliasedImport)) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
     }
 
