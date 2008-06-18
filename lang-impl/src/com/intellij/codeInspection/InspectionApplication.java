@@ -68,7 +68,7 @@ public class InspectionApplication {
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         try {
           final ApplicationInfoEx applicationInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-          logMessage(1, InspectionsBundle.message("inspection.application.starting.up", applicationInfo.getFullApplicationName() + applicationInfo.getBuildNumber()));
+          logMessage(1, InspectionsBundle.message("inspection.application.starting.up", applicationInfo.getFullApplicationName()));
           application.doNotSave();          
           logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
