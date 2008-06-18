@@ -15,7 +15,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   private final List<Block> mySubBlocks;
   private final Indent myChildIndent;
 
-  SyntheticBlock(final List<Block> subBlocks, final Block parent, final Indent indent, XmlFormattingPolicy policy, final Indent childIndent) {
+  public SyntheticBlock(final List<Block> subBlocks, final Block parent, final Indent indent, XmlFormattingPolicy policy, final Indent childIndent) {
     super(subBlocks, parent, policy, indent);
     mySubBlocks = subBlocks;
     myChildIndent = childIndent;
