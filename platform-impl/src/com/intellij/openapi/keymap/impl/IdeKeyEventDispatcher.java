@@ -61,14 +61,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private boolean myPressedWasProcessed;
   private int myState = STATE_INIT;
 
-  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private JComponent myFoundComponent;
   private boolean myDisposed = false;
   private boolean myLeftCtrlPressed = false;
   private boolean myRightAltPressed = false;
 
   private KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
+
+  private KeyProcessorContext myContext = new KeyProcessorContext();
 
   public IdeKeyEventDispatcher(){
     Disposer.register(ApplicationManager.getApplication(), this);
@@ -140,16 +140,21 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     DataContext dataContext = dataManager.getDataContext();
 
+    myContext.setDataContext(dataContext);
+    myContext.setFocusOwner(focusOwner);
+    myContext.setModalContext(isModalContext);
+    myContext.setInputEvent(e);
+
     if (myState == STATE_INIT) {
-      return inInitState(focusOwner, e, isModalContext, dataContext);
+      return inInitState();
     } else if (myState == STATE_PROCESSED) {
-      return inProcessedState(focusOwner, e, isModalContext, dataContext);
+      return inProcessedState();
     } else if (myState == STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-      return inWaitForSecondStrokeState(e, isModalContext, dataContext);
+      return inWaitForSecondStrokeState();
     } else if (myState == STATE_SECOND_STROKE_IN_PROGRESS) {
-      return inSecondStrokeInProgressState(e, isModalContext, dataContext);
+      return inSecondStrokeInProgressState();
     } else if (myState == STATE_KEY_GESTURE_PROCESSOR) {
-      return myKeyGestureProcessor.process(e, isModalContext, dataContext);
+      return myKeyGestureProcessor.process();
     } else {
       throw new IllegalStateException("state = " + myState);
     }
@@ -191,11 +196,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return !isMainFrame && !isFloatingDecorator;
   }
 
-  private boolean inWaitForSecondStrokeState(KeyEvent e, boolean isModalContext, DataContext dataContext) {
+  private boolean inWaitForSecondStrokeState() {
     // a key pressed means that the user starts to enter the second stroke...
-    if (KeyEvent.KEY_PRESSED==e.getID()) {
+    if (KeyEvent.KEY_PRESSED==myContext.getInputEvent().getID()) {
       myState=STATE_SECOND_STROKE_IN_PROGRESS;
-      return inSecondStrokeInProgressState(e, isModalContext, dataContext);
+      return inSecondStrokeInProgressState();
     }
     // looks like RELEASEs (from the first stroke) go here...  skip them
     return true;
@@ -233,12 +238,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
-  private boolean inSecondStrokeInProgressState(KeyEvent e, boolean isModalContext, DataContext dataContext) {
+  private boolean inSecondStrokeInProgressState() {
+    KeyEvent e = myContext.getInputEvent();
+
     // when any key is released, we stop waiting for the second stroke
     if(KeyEvent.KEY_RELEASED==e.getID()){
       myFirstKeyStroke=null;
       myState=STATE_INIT;
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
       WindowManager.getInstance().getStatusBar(project).setInfo(null);
       return false;
     }
@@ -246,17 +253,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    fillActionsList(myFoundComponent, new KeyboardShortcut(myFirstKeyStroke, keyStroke), isModalContext);
+    updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(myFirstKeyStroke, keyStroke), myContext.isModalContext());
 
     // consume the wrong second stroke and keep on waiting
-    if (myActions.isEmpty()) {
+    if (myContext.getActions().isEmpty()) {
       return true;
     }
 
     // finally user had managed to enter the second keystroke, so let it be processed
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
     StatusBarEx statusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(project);
-    if (processAction(e, dataContext)) {
+    if (processAction(e, myActionProcessor)) {
       statusBar.setInfo(null);
       return true;
     } else {
@@ -264,7 +271,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
-  private boolean inProcessedState(Component focusOwner, final KeyEvent e, boolean isModalContext, DataContext dataContext) {
+  private boolean inProcessedState() {
+    KeyEvent e = (KeyEvent)myContext.getInputEvent();
+
     // ignore typed events which come after processed pressed event
     if (KeyEvent.KEY_TYPED == e.getID() && myPressedWasProcessed) {
       return true;
@@ -275,10 +284,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
     myState = STATE_INIT;
     myPressedWasProcessed = false;
-    return inInitState(focusOwner, e, isModalContext, dataContext);
+    return inInitState();
   }
 
-  private boolean inInitState(final Component focusOwner, KeyEvent e, boolean isModalContext, DataContext dataContext) {
+  private boolean inInitState() {
+    Component focusOwner = myContext.getFocusOwner();
+    boolean isModalContext = myContext.isModalContext();
+    DataContext dataContext = myContext.getDataContext();
+    KeyEvent e = (KeyEvent)myContext.getInputEvent();
+
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
       final InputContext inputContext = focusOwner.getInputContext();
@@ -304,11 +318,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    //if (myKeyGestureProcessor.processInitState(focusOwner, e, isModalContext, dataContext)) return true;
+    //if (myKeyGestureProcessor.processInitState()) return true;
 
-    boolean hasSecondStroke = fillActionsList(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
+    updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
 
-    if(myActions.isEmpty()) {
+    if(myContext.getActions().isEmpty()) {
       if (SystemInfo.isMac) {
         if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && hasMnemonicInWindow(focusOwner, e.getKeyCode())) {
           myPressedWasProcessed = true;
@@ -321,10 +335,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    if(hasSecondStroke){
+    if(myContext.isHasSecondStroke()){
       myFirstKeyStroke=keyStroke;
       ArrayList<Pair<AnAction, KeyStroke>> secondKeyStorkes = new ArrayList<Pair<AnAction,KeyStroke>>();
-      for (AnAction action : myActions) {
+      for (AnAction action : myContext.getActions()) {
         Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
         for (Shortcut shortcut : shortcuts) {
           if (shortcut instanceof KeyboardShortcut) {
@@ -353,7 +367,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       myState=STATE_WAIT_FOR_SECOND_KEYSTROKE;
       return true;
     }else{
-      return processAction(e, dataContext);
+      return processAction(e, myActionProcessor);
     }
   }
 
@@ -400,30 +414,47 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return false;
   }
 
-  private boolean processAction(final KeyEvent e, DataContext dataContext) {
+  private ActionProcessor myActionProcessor = new ActionProcessor() {
+    public AnActionEvent createEvent(final InputEvent inputEvent, final DataContext context, final String place, final Presentation presentation,
+                                     final ActionManager manager) {
+      return new AnActionEvent(inputEvent, context, place, presentation, manager, 0);
+    }
+
+    public void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent) {
+      myState = STATE_PROCESSED;
+      myPressedWasProcessed = inputEvent.getID() == KeyEvent.KEY_PRESSED;
+    }
+
+    public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
+      e.consume();
+      action.actionPerformed(actionEvent);
+    }
+  };
+
+  boolean processAction(final InputEvent e, ActionProcessor processor) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    for (final AnAction action : myActions) {
+    for (final AnAction action : myContext.getActions()) {
       final Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       final AnActionEvent actionEvent =
-        new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance(), 0);
+        processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
       action.beforeActionPerformedUpdate(actionEvent);
       if (!presentation.isEnabled()) {
         continue;
       }
 
-      myState = STATE_PROCESSED;
-      myPressedWasProcessed = e.getID() == KeyEvent.KEY_PRESSED;
+      processor.onUpdatePassed(e, action, actionEvent);
 
-      ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
+      ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount());
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext());
       Component component = (Component)actionEvent.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
         return true;
       }
-      e.consume();
-      action.actionPerformed(actionEvent);
+
+      processor.performAction(e, action, actionEvent);
+
       return true;
     }
 
@@ -434,9 +465,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * This method fills <code>myActions</code> list.
    * @return true if there is a shortcut with second stroke found.
    */
-  public boolean fillActionsList(Component component, Shortcut sc, boolean isModalContext){
-    myFoundComponent = null;
-    myActions.clear();
+  public KeyProcessorContext updateCurrentContext(Component component, Shortcut sc, boolean isModalContext){
+    myContext.setFoundComponent(null);
+    myContext.getActions().clear();
 
     boolean hasSecondStroke = false;
 
@@ -458,8 +489,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
         hasSecondStroke |= addAction(action, sc);
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
-      if (!myActions.isEmpty()) {
-        myFoundComponent = (JComponent)component;
+      if (!myContext.getActions().isEmpty()) {
+        myContext.setFoundComponent((JComponent)component);
         break;
       }
     }
@@ -480,7 +511,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
         hasSecondStroke |= addAction(action, sc);
       }
     }
-    return hasSecondStroke;
+    myContext.setHasSecondStroke(hasSecondStroke);
+
+    return myContext;
   }
 
   /**
@@ -494,8 +527,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (!each.isKeyboard()) continue;
       
       if (each.startsWith(sc)) {
-        if (!myActions.contains(action)) {
-          myActions.add(action);
+        if (!myContext.getActions().contains(action)) {
+          myContext.getActions().add(action);
         }
 
         if (each instanceof KeyboardShortcut) {
@@ -505,6 +538,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     return hasSecondStroke;
+  }
+
+  public KeyProcessorContext getContext() {
+    return myContext;
   }
 
   public void dispose() {

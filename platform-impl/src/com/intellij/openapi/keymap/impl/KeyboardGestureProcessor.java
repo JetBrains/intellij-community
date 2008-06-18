@@ -1,14 +1,14 @@
 package com.intellij.openapi.keymap.impl;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortuct;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.KeyboardGestureAction;
+import com.intellij.openapi.actionSystem.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class KeyboardGestureProcessor {
@@ -36,26 +36,32 @@ public class KeyboardGestureProcessor {
       myState.processDblClickTimer();
     }
   });
+  private ActionProcessor myActionProcessor = new MyActionProcessor();
 
   public KeyboardGestureProcessor(final IdeKeyEventDispatcher dispatcher) {
     myDispatcher = dispatcher;
   }
 
-  public boolean process(KeyEvent e, boolean isModalContext, DataContext dataContext) {
-    myCurrentEvent.key = e;
-    myCurrentEvent.isModal = isModalContext;
-    myCurrentEvent.dataContext = dataContext;
+  public boolean process() {
+    myCurrentEvent.key = myDispatcher.getContext().getInputEvent();
+    myCurrentEvent.isModal = myDispatcher.getContext().isModalContext();
+    myCurrentEvent.dataContext = myDispatcher.getContext().getDataContext();
 
     return myState.process();
   }
 
-  public boolean processInitState(final Component focusOwner, final KeyEvent e, final boolean modalContext, final DataContext dataContext) {
-    myCurrentEvent.focusOwner = focusOwner;
-    return process(e, modalContext, dataContext);
+  public boolean processInitState() {
+    myCurrentEvent.focusOwner = myDispatcher.getContext().getFocusOwner();
+    return process();
   }
 
-  private void notifyOnState(final KeyboardGestureAction.State state) {
-    final boolean actions = myDispatcher.fillActionsList(myCurrentEvent.focusOwner, getCurrentShortcut(), myCurrentEvent.isModal);
+  private void notifyOnState(final StateProcessor processor) {
+    final KeyProcessorContext context =
+        myDispatcher.updateCurrentContext(myCurrentEvent.focusOwner, getCurrentShortcut(), myCurrentEvent.isModal);
+
+
+    myDispatcher.processAction(myCurrentEvent.key, myActionProcessor);
+
 
   }
 
@@ -141,9 +147,9 @@ public class KeyboardGestureProcessor {
       setState(myWaitForAction);
 
       myContext.actionShortcut = KeyStroke.getKeyStrokeForEvent(myContext.activeKey);
-      myContext.type = KeyboardGestureAction.Type.dblClick;
+      myContext.type = KeyboardGestureAction.ModifierType.dblClick;
 
-      notifyOnState(KeyboardGestureAction.State.init);
+      notifyOnState(StateProcessor.INIT);
 
       return true;
     }
@@ -201,10 +207,44 @@ public class KeyboardGestureProcessor {
     private KeyEvent activeKey;
     long intiatorTimestamp;
     public KeyStroke actionShortcut;
-    public KeyboardGestureAction.Type type;
+    public KeyboardGestureAction.ModifierType type;
 
     public void setActiveKey(final KeyEvent key) {
       activeKey = key;
+    }
+  }
+
+  public static class StateProcessor {
+
+    static StateProcessor INIT = new StateProcessor();
+    static StateProcessor ACTION = new StateProcessor();
+    static StateProcessor FINISH = new StateProcessor();
+
+  }
+
+  private static class MyActionProcessor implements ActionProcessor {
+    public AnActionEvent createEvent(final InputEvent inputEvent, final DataContext context, final String place, final Presentation presentation,
+                                     final ActionManager manager) {
+      return new GestureKeyEvent(inputEvent, context, place, presentation, manager, 0);
+    }
+
+    public void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent) {
+    }
+
+    public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
+    }
+  }
+
+  public static class GestureKeyEvent extends AnActionEvent {
+    public GestureKeyEvent(final InputEvent inputEvent, @NotNull final DataContext dataContext, @NotNull @NonNls final String place, @NotNull final Presentation presentation,
+                           final ActionManager actionManager,
+                           final int modifiers) {
+      super(inputEvent, dataContext, place, presentation, actionManager, modifiers);
+    }
+
+    @Override
+    public void accept(final AnActionEventVisitor visitor) {
+      super.accept(visitor);
     }
   }
 }

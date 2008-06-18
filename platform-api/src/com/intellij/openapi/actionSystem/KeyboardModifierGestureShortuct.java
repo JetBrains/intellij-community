@@ -5,13 +5,13 @@ import javax.swing.*;
 public class KeyboardModifierGestureShortuct extends Shortcut {
 
   private KeyStroke myStroke;
-  private KeyboardGestureAction.Type myType;
+  private KeyboardGestureAction.ModifierType myType;
 
-  public static Shortcut newInstance(KeyboardGestureAction.Type type, KeyStroke stroke) {
+  public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
     return null;
   }
 
-  public KeyboardModifierGestureShortuct(final KeyStroke stroke, KeyboardGestureAction.Type type) {
+  public KeyboardModifierGestureShortuct(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
     myStroke = stroke;
     myType = type;
   }
@@ -20,7 +20,7 @@ public class KeyboardModifierGestureShortuct extends Shortcut {
     return myStroke;
   }
 
-  public KeyboardGestureAction.Type getType() {
+  public KeyboardGestureAction.ModifierType getType() {
     return myType;
   }
 
@@ -63,13 +63,13 @@ public class KeyboardModifierGestureShortuct extends Shortcut {
 
   public static class DblClick extends KeyboardModifierGestureShortuct {
     public DblClick(final KeyStroke stroke) {
-      super(stroke, KeyboardGestureAction.Type.dblClick);
+      super(stroke, KeyboardGestureAction.ModifierType.dblClick);
     }
   }
 
   public static class Hold extends KeyboardModifierGestureShortuct {
     public Hold(final KeyStroke stroke) {
-      super(stroke, KeyboardGestureAction.Type.hold);
+      super(stroke, KeyboardGestureAction.ModifierType.hold);
     }
   }
 }

@@ -31,7 +31,7 @@ import java.util.Map;
  * @see AnAction#update(AnActionEvent)
  */
 
-public final class AnActionEvent {
+public class AnActionEvent {
   private final InputEvent myInputEvent;
   private final ActionManager myActionManager;
   @NotNull private final DataContext myDataContext;
@@ -162,5 +162,9 @@ public final class AnActionEvent {
 
   public boolean isInInjectedContext() {
     return myWorksInInjected;
+  }
+
+  public void accept(AnActionEventVisitor visitor) {
+    visitor.visitEvent(this);
   }
 }
