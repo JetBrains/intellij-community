@@ -986,8 +986,17 @@ public class XmlUtil {
     if (type != null) {
       final String namespaceByPrefix = findNamespaceByPrefix(findPrefixByQualifiedName(type), xmlTag);
       XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
-      if (typeDecr == null && namespaceByPrefix.length() == 0 && context != null) {
-        typeDecr = context.getNSDescriptor("", true);
+      
+      if (typeDecr == null && namespaceByPrefix.length() == 0) {
+        if (context != null) typeDecr = context.getNSDescriptor("", true);
+
+        if (typeDecr == null) {
+          final PsiFile containingFile = xmlTag.getContainingFile();
+          if (containingFile instanceof XmlFile) {
+            final XmlDocument document = ((XmlFile)containingFile).getDocument();
+            if (document != null) typeDecr = (XmlNSDescriptor)document.getMetaData();
+          }
+        }
       }
 
       if (typeDecr instanceof XmlNSDescriptorImpl) {
