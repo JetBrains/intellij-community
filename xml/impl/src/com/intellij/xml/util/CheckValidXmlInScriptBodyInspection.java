@@ -57,7 +57,7 @@ public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspecti
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
         if (SCRIPT_TAG_NAME.equals(tag.getName()) ||
-            (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
+            (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName()))
            ) {
           final PsiFile psiFile = tag.getContainingFile();
           final FileType fileType = psiFile.getFileType();

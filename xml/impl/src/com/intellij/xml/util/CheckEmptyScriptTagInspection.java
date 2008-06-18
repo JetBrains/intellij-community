@@ -85,7 +85,7 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
 
   static boolean isScriptTag(final XmlTag tag) {
     return ( SCRIPT_TAG_NAME.equals(tag.getName()) ||
-          (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
+          (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName()))
         ) && tag.getLanguage() != XMLLanguage.INSTANCE;
   }
 
