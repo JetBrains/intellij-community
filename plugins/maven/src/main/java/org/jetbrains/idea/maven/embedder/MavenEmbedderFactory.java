@@ -49,6 +49,8 @@ public class MavenEmbedderFactory {
     "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
     "verify", "install", "site", "deploy"};
 
+  private static volatile Properties mySystemPropertiesCache;
+
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable final String override) {
     if (!StringUtil.isEmptyOrSpaces(override)) {
@@ -230,20 +232,24 @@ public class MavenEmbedderFactory {
   }
 
   public static Properties collectSystemProperties() {
-    Properties result = new Properties();
-    result.putAll(System.getProperties());
+    if (mySystemPropertiesCache == null) {
+      Properties result = new Properties();
+      result.putAll(System.getProperties());
 
-    try {
-      Properties envVars = CommandLineUtils.getSystemEnvVars();
-      for (Map.Entry<Object, Object> each : envVars.entrySet()) {
-        result.setProperty("env." + each.getKey().toString(), each.getValue().toString());
+      try {
+        Properties envVars = CommandLineUtils.getSystemEnvVars();
+        for (Map.Entry<Object, Object> each : envVars.entrySet()) {
+          result.setProperty("env." + each.getKey().toString(), each.getValue().toString());
+        }
       }
-    }
-    catch (IOException e) {
-      MavenLog.warn(e);
-    }
+      catch (IOException e) {
+        MavenLog.warn(e);
+      }
 
-    return result;
+      mySystemPropertiesCache = result;
+    }
+    
+    return mySystemPropertiesCache;
   }
 
   private static void validate(Configuration configuration) {

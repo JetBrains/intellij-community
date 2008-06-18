@@ -5,7 +5,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.PersistentHashMap;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -268,9 +271,9 @@ public abstract class MavenIndex {
 
     progress.setText2("Saving caches...");
 
-    for (String each : groupIds) newData.groupIds.enumerate(each);
-    for (String each : artifactIds) newData.artifactIds.enumerate(each);
-    for (String each : versions) newData.versions.enumerate(each);
+    for (String each : groupIds) newData.groupIds.add(each);
+    for (String each : artifactIds) newData.artifactIds.add(each);
+    for (String each : versions) newData.versions.add(each);
 
     for (Map.Entry<String, Set<String>> each : artifactIdsMap.entrySet()) {
       newData.artifactIdsMap.put(each.getKey(), each.getValue());
@@ -360,14 +363,14 @@ public abstract class MavenIndex {
     if (id.groupId == null) return;
 
     try {
-      myData.groupIds.enumerate(id.groupId);
+      myData.groupIds.add(id.groupId);
 
       if (id.artifactId != null) {
-        myData.artifactIds.enumerate(id.groupId + ":" + id.artifactId);
+        myData.artifactIds.add(id.groupId + ":" + id.artifactId);
         addToCache(myData.artifactIdsMap, id.groupId, id.artifactId);
 
         if (id.version != null) {
-          myData.versions.enumerate(id.groupId + ":" + id.artifactId + ":" + id.version);
+          myData.versions.add(id.groupId + ":" + id.artifactId + ":" + id.version);
           addToCache(myData.versionsMap, id.groupId + ":" + id.artifactId, id.version);
         }
       }
@@ -397,29 +400,41 @@ public abstract class MavenIndex {
   }
 
   public static class IndexData {
-    PersistentStringEnumerator groupIds;
-    PersistentStringEnumerator artifactIds;
-    PersistentStringEnumerator versions;
+    File myDir;
+    Set<String> groupIds;
+    Set<String> artifactIds;
+    Set<String> versions;
     PersistentHashMap<String, Set<String>> artifactIdsMap;
     PersistentHashMap<String, Set<String>> versionsMap;
 
     public IndexData(File dir) throws IOException {
-      groupIds = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
-      artifactIds = new PersistentStringEnumerator(new File(dir, ARTIFACT_IDS_FILE));
-      versions = new PersistentStringEnumerator(new File(dir, VERSIONS_FILE));
+      myDir = dir;
+      groupIds = read(GROUP_IDS_FILE);
+      artifactIds = read(ARTIFACT_IDS_FILE);
+      versions = read(VERSIONS_FILE);
 
       artifactIdsMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
       versionsMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
     }
 
+    private Set<String> read(String fileName) throws IOException {
+      File f = new File(myDir, fileName);
+      if (!f.exists()) return new HashSet<String>();
+      
+      DataInputStream s = new DataInputStream(new FileInputStream(f));
+      try {
+        return new SetDescriptor().read(s);
+      }
+      finally {
+        s.close();
+      }
+    }
+
     private PersistentHashMap<String, Set<String>> createPersistentMap(File f) throws IOException {
-      return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new EnumeratorSetDescriptor());
+      return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new SetDescriptor());
     }
 
     public void close() throws IOException {
-      safeClose(groupIds);
-      safeClose(artifactIds);
-      safeClose(versions);
       safeClose(artifactIdsMap);
       safeClose(versionsMap);
     }
@@ -429,15 +444,26 @@ public abstract class MavenIndex {
     }
 
     public void flush() throws IOException {
-      groupIds.flush();
-      artifactIds.flush();
-      versions.flush();
+      save(GROUP_IDS_FILE, groupIds);
+      save(ARTIFACT_IDS_FILE, artifactIds);
+      save(VERSIONS_FILE, versions);
+
       artifactIdsMap.flush();
       versionsMap.flush();
     }
+
+    private void save(String fileName, Set<String> values) throws IOException {
+      DataOutputStream s = new DataOutputStream(new FileOutputStream(new File(myDir, fileName)));
+      try {
+        new SetDescriptor().save(s, values);
+      }
+      finally {
+        s.close();
+      }
+    }
   }
 
-  private static class EnumeratorSetDescriptor implements DataExternalizer<Set<String>> {
+  private static class SetDescriptor implements DataExternalizer<Set<String>> {
     public void save(DataOutput s, Set<String> set) throws IOException {
       s.writeInt(set.size());
       for (String each : set) {

@@ -4,8 +4,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PersistentEnumerator;
-import com.intellij.util.io.PersistentStringEnumerator;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
@@ -156,15 +154,7 @@ public class MavenIndices {
   public Set<String> getGroupIds() throws MavenIndexException {
     return collect(new MavenIndex.DataProcessor<Collection<String>>() {
       public Collection<String> process(final MavenIndex.IndexData data) throws Exception {
-        final Set<String> result = new HashSet<String>();
-
-        data.groupIds.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-          public void process(int record) throws IOException {
-            result.add(data.groupIds.valueOf(record));
-          }
-        });
-
-        return result;
+        return data.groupIds;
       }
     });
   }
@@ -188,7 +178,7 @@ public class MavenIndices {
   public boolean hasGroupId(final String groupId) throws MavenIndexException {
     return process(new MavenIndex.DataProcessor<Boolean>() {
       public Boolean process(MavenIndex.IndexData data) throws Exception {
-        return hasValue(data.groupIds, groupId);
+        return data.groupIds.contains(groupId);
       }
     });
   }
@@ -196,7 +186,7 @@ public class MavenIndices {
   public boolean hasArtifactId(final String groupId, final String artifactId) throws MavenIndexException {
     return process(new MavenIndex.DataProcessor<Boolean>() {
       public Boolean process(MavenIndex.IndexData data) throws Exception {
-        return hasValue(data.artifactIds, groupId + ":" + artifactId);
+        return data.artifactIds.contains(groupId + ":" + artifactId);
       }
     });
   }
@@ -204,25 +194,9 @@ public class MavenIndices {
   public boolean hasVersion(final String groupId, final String artifactId, final String version) throws MavenIndexException {
     return process(new MavenIndex.DataProcessor<Boolean>() {
       public Boolean process(MavenIndex.IndexData data) throws Exception {
-        return hasValue(data.versions, groupId + ":" + artifactId + ":" + version);
+        return data.versions.contains(groupId + ":" + artifactId + ":" + version);
       }
     });
-  }
-
-  private boolean hasValue(final PersistentStringEnumerator enumerator, final String value) throws IOException {
-    class Found extends RuntimeException {
-    }
-    try {
-      enumerator.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-        public void process(int record) throws IOException {
-          if (value.equals(enumerator.valueOf(record))) throw new Found();
-        }
-      });
-    }
-    catch (Found e) {
-      return true;
-    }
-    return false;
   }
 
   private Set<String> collect(MavenIndex.DataProcessor<Collection<String>> p) throws MavenIndexException {
