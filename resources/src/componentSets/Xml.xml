@@ -13,6 +13,9 @@
       <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
       <implementation-class>com.intellij.javaee.ExternalResourceManagerImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
+    </component>
 
    </application-components>
   <project-components>

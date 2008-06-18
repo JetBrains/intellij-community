@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

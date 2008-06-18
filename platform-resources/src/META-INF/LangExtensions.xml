@@ -62,6 +62,9 @@
   <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                       serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
+                      serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

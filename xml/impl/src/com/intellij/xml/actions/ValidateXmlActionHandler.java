@@ -1,7 +1,6 @@
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -189,7 +188,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
             SwingUtilities.invokeLater(
               new Runnable() {
                   public void run() {
-                    if (!myErrorsDetected && CompilerWorkspaceConfiguration.getInstance(myProject).CLOSE_MESSAGE_VIEW_IF_SUCCESS) {
+                    if (!myErrorsDetected) {
                       SwingUtilities.invokeLater(
                           new Runnable() {
                             public void run() {
