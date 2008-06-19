@@ -537,13 +537,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       error += "doc: '" + document.getText() + "'\n";
       error += "psi: '" +  psiFile.getText() + "'\n";
       error += "ast: '" + psiFile.getNode().getText() + "'\n";
-      error += "language: " + psiFile.getLanguage()+"\n";
+      error += psiFile.getLanguage()+"\n";
       PsiElement context = psiFile.getContext();
       if (context != null) {
         error += "context: " + context +"; text: '" + context.getText() + "'\n";
-        error += "context file: " + context.getContainingFile();
+        error += "context file: " + context.getContainingFile() + "\n";
       }
-      error += "document window ranges: " + Arrays.asList(((DocumentWindow)document).getHostRanges());
+      error += "document window ranges: " + Arrays.asList(((DocumentWindow)document).getHostRanges())+"\n";
     }
     LOG.error(error);
     //document.replaceString(0, documentLength, psiFile.getText());

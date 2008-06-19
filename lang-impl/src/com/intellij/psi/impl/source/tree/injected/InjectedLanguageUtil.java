@@ -32,10 +32,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -541,7 +538,7 @@ public class InjectedLanguageUtil {
       boolean isOneLineEditor;
       boolean cleared;
       private final Project myProject;
-      private PsiManager myPsiManager;
+      private final PsiManager myPsiManager;
       private DocumentEx myHostDocument;
       private VirtualFile myHostVirtualFile;
       private final InjectedLanguageManagerImpl myInjectedManager;
@@ -550,7 +547,8 @@ public class InjectedLanguageUtil {
       public MyMultiHostRegistrar(Project project, InjectedLanguageManagerImpl injectedManager, PsiFile hostPsiFile) {
         myProject = project;
         myInjectedManager = injectedManager;
-        myHostPsiFile = hostPsiFile;
+        myHostPsiFile = PsiUtilBase.getTemplateLanguageFile(hostPsiFile);
+        myPsiManager = myHostPsiFile.getManager();
         cleared = true;
       }
 
@@ -573,6 +571,11 @@ public class InjectedLanguageUtil {
           throw new UnsupportedOperationException("Cannot inject language '" + language + "' since its getParserDefinition() returns null");
         }
         myLanguage = language;
+
+        FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
+        myHostVirtualFile = viewProvider.getVirtualFile();
+        myHostDocument = (DocumentEx)viewProvider.getDocument();
+
         return this;
       }
 
@@ -596,6 +599,8 @@ public class InjectedLanguageUtil {
                                          @NotNull PsiLanguageInjectionHost host,
                                          @NotNull TextRange rangeInsideHost) {
         ProperTextRange.assertProperRange(rangeInsideHost);
+        PsiFile containingFile = PsiUtilBase.getTemplateLanguageFile(host);
+        assert containingFile == myHostPsiFile : "Trying to inject into foreign file: "+containingFile+" while processing injections for "+myHostPsiFile;
         TextRange hostTextRange = host.getTextRange();
         if (!hostTextRange.contains(rangeInsideHost.shiftRight(hostTextRange.getStartOffset()))) {
           clear();
@@ -606,11 +611,6 @@ public class InjectedLanguageUtil {
           clear();
           throw new IllegalStateException("Seems you haven't called startInjecting()");
         }
-
-        FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
-        myHostVirtualFile = viewProvider.getVirtualFile();
-        myHostDocument = (DocumentEx)viewProvider.getDocument();
-        myPsiManager = viewProvider.getManager();
 
         if (prefix == null) prefix = "";
         if (suffix == null) suffix = "";
