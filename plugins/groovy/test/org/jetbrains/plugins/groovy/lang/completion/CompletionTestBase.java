@@ -2,10 +2,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionData;
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -39,7 +36,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
   protected FileEditorManager myFileEditorManager;
   protected PsiFile myFile;
   private static PrefixMatcher TRUE_MATCHER = new MyTruePrefixMatcher();
-  private final static String RULEZZZ = "IntellijIdeaRulezzz";
+  protected final static String RULEZZZ = "IntellijIdeaRulezzz";
 
   public CompletionTestBase(String path) {
     super(path);
@@ -124,6 +121,13 @@ public abstract class CompletionTestBase extends ActionTestCase {
      * Hack for IDEA completion
      */
     PsiFile newFile = createFile(newFileText);
+    CompletionContext context = new CompletionContext(myProject, myEditor, newFile, new OffsetMap(myEditor.getDocument())) {
+      @Override
+      public int getStartOffset() {
+        return myOffset + 1;
+      }
+    };
+
     PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
     if (lookupSet.size() == 0) {
       final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
@@ -131,6 +135,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
         // Do not duplicate reference & keyword variants for Grails tags
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, myFile);
+        insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
         completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, TRUE_MATCHER, myFile);
       }
       if (ref != null && addReferenceVariants(ref)) {
@@ -139,9 +144,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
       }
     }
 
-    String prefix = insertedElement.getText().substring(0, myOffset + 1 - insertedElement.getTextOffset());
-    prefix = StringUtil.trimStart(prefix, "@");
-    prefix = StringUtil.trimEnd(prefix, RULEZZZ);
+    String prefix = getSpecificPrefix(insertedElement);
 
     ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
@@ -153,6 +156,12 @@ public abstract class CompletionTestBase extends ActionTestCase {
 
     return lookupItems.toArray(new LookupItem[lookupItems.size()]);
 
+  }
+
+  protected String getSpecificPrefix(PsiElement insertedElement) {
+    String prefix = insertedElement.getText().substring(0, myOffset + 1 - insertedElement.getTextOffset());
+    prefix = StringUtil.trimStart(prefix, "@");
+    return StringUtil.trimEnd(prefix, RULEZZZ);
   }
 
   private static class MyTruePrefixMatcher extends PrefixMatcher {

@@ -41,7 +41,10 @@ public class ClassBlock implements GroovyElementTypes {
     Separators.parse(builder);
 
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
-      if (!ClassMember.parse(builder, className)) builder.advanceLexer();
+      if (!ClassMember.parse(builder, className)) {
+        builder.getTokenType();
+        builder.advanceLexer();
+      }
       if (!(Separators.parse(builder) || ParserUtils.lookAhead(builder, mRCURLY))) {
         builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
       }
