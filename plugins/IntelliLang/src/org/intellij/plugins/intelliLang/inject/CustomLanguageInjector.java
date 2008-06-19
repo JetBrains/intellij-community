@@ -72,7 +72,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
   @SuppressWarnings({"unchecked"})
   private final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> myTempPlaces = new ArrayList();
-  public static final Key<Boolean> HAS_UPARSABLE_FRAGMENTS = Key.create("HAS_UPARSABLE_FRAGMENTS");
+  static final Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
 
   public CustomLanguageInjector(Project project, Configuration configuration) {
     myProject = project;
@@ -137,7 +137,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
             final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
             if (language == null) continue;
             for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-              trinity.first.putUserData(HAS_UPARSABLE_FRAGMENTS, hasSubTags.get());
+              trinity.first.putUserData(HAS_UNPARSABLE_FRAGMENTS, hasSubTags.get());
             }
             processor.process(language, result);
           }
@@ -368,7 +368,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
       else list.add(Trinity.create(curHost, InjectedLanguage.create(langId, curPrefix, curSuffix, dynamic), ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
     }
     for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-      trinity.first.putUserData(HAS_UPARSABLE_FRAGMENTS, unparsable.get());
+      trinity.first.putUserData(HAS_UNPARSABLE_FRAGMENTS, unparsable.get());
     }
     processor.process(InjectedLanguage.findLanguageById(langId), list);
   }
@@ -412,6 +412,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
     public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
       final TreeSet<TextRange> ranges = new TreeSet<TextRange>(RANGE_COMPARATOR);
+      final PsiFile containingFile = host.getContainingFile();
       myInjector.getInjectedLanguage(host, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
         public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
           // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
@@ -421,12 +422,19 @@ public final class CustomLanguageInjector implements ProjectComponent {
             for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
               if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
             }
-            registrar.startInjecting(language);
+            boolean injectionStarted = false;
             for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
               final PsiLanguageInjectionHost host = trinity.first;
+              if (host.getContainingFile() != containingFile) continue;
+
               final TextRange textRange = trinity.third;
               final InjectedLanguage injectedLanguage = trinity.second;
               ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
+
+              if (!injectionStarted) {
+                registrar.startInjecting(language);
+                injectionStarted = true;
+              }
               if (injectedLanguage.isDynamic()) {
                 // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
                 // useful cases may break. This system is far from perfect still...
@@ -434,45 +442,43 @@ public final class CustomLanguageInjector implements ProjectComponent {
                 final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
                 adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
 
-                addPlaceSafe(registrar, language, host, textRange, prefix.toString(), suffix.toString());
+                addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange, language);
               }
               else {
-                addPlaceSafe(registrar, language, host, textRange, injectedLanguage.getPrefix(), injectedLanguage.getSuffix());
+                addPlaceSafe(registrar, injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange, language);
               }
             }
-            try {
+            //try {
+            if (injectionStarted) {
               registrar.doneInjecting();
             }
-            catch (AssertionError e) {
-              logError(language, host, null, e);
-            }
-            catch (Exception e) {
-              logError(language, host, null, e);
-            }
+            //}
+            //catch (AssertionError e) {
+            //  logError(language, host, null, e);
+            //}
+            //catch (Exception e) {
+            //  logError(language, host, null, e);
+            //}
           }
           return true;
         }
       });
     }
 
-    private static void addPlaceSafe(MultiHostRegistrar registrar,
-                                     Language language,
-                                     PsiLanguageInjectionHost host,
-                                     TextRange textRange,
-                                     String prefix,
-                                     String suffix) {
-      try {
+    private static void addPlaceSafe(MultiHostRegistrar registrar, String prefix, String suffix, PsiLanguageInjectionHost host, TextRange textRange,
+                                     Language language) {
+      //try {
         registrar.addPlace(prefix, suffix, host, textRange);
-      }
-      catch (AssertionError e) {
-        logError(language, host, textRange, e);
-      }
-      catch (Exception e) {
-        logError(language, host, textRange, e);
-      }
+      //}
+      //catch (AssertionError e) {
+      //  logError(language, host, textRange, e);
+      //}
+      //catch (Exception e) {
+      //  logError(language, host, textRange, e);
+      //}
     }
 
-    private static void logError(Language language, @NotNull PsiElement host, TextRange textRange, Throwable e) {
+    private static void logError(@NotNull Language language, @NotNull PsiElement host, TextRange textRange, Throwable e) {
       final String place = "[" + host.getText() + " - " + textRange + "]";
       LOG.info("Failed to inject language '" + language.getID() + "' into '" + place + "'. Possibly there are overlapping injection areas.", e);
     }
