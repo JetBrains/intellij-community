@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -482,6 +483,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     return !progress.isCanceled();
+  }
+
+  public boolean isInModalProgressThread() {
+    if (myExceptionalThreadWithReadAccessRunnable == null || !isExceptionalThreadWithReadAccess()) {
+      return false;
+    }
+    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (!progressIndicator.isModal()) return false;
+    if (!((ProgressIndicatorEx)progressIndicator).isModalityEntered()) return false;
+    return ((ModalityStateEx)getCurrentModalityState()).contains(progressIndicator);
   }
 
   public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, final ExecutorService executorService) throws Throwable {

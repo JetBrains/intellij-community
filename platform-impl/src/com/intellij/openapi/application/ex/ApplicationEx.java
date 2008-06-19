@@ -51,6 +51,8 @@ public interface ApplicationEx extends Application {
                                               boolean canBeCanceled,
                                               Project project);
 
+  boolean isInModalProgressThread();
+
   /**
    * Whenever
    * - one thread acquired read action,

@@ -6,6 +6,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
@@ -271,7 +272,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   public synchronized void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    assert application.isHeadlessEnvironment() || application.isUnitTestMode() || application.isDispatchThread() || application.isInModalProgressThread();
     LOG.assertTrue(!isDisposed());
     if (myProjectManagerListener != null) {
       myManager.removeProjectManagerListener(this, myProjectManagerListener);
