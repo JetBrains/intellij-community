@@ -32,6 +32,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
   private final Set<String> myFilesToDelete = new HashSet<String>();
 
   private static final String SHARED_SCHEME = "shared-scheme";
+  private static final String SHARED_SCHEME_ORIGINAL = "shared-scheme-original";
   private static final String NAME = "name";
   private static final String ORIGINAL_SCHEME_PATH = "original-scheme-path";
   private final String myFileSpec;
@@ -60,10 +61,8 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
 
     myBaseDir.mkdirs();
 
-    final StreamProvider[] providers = getProviders();
 
-
-    myDeletedNames.addAll(readDeletedSchemeNames(providers));
+    myDeletedNames.addAll(readDeletedSchemeNames());
 
 
     Map<String, E> read = new LinkedHashMap<String, E>();
@@ -72,7 +71,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
       read.put(e.getName(), e);
     }
 
-    for (E e : readSchemesFromProviders(providers)) {
+    for (E e : readSchemesFromProviders()) {
       read.put(e.getName(), e);
     }
 
@@ -82,9 +81,9 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     return result;
   }
 
-  private Collection<String> readDeletedSchemeNames(final StreamProvider[] providers) {
+  private Collection<String> readDeletedSchemeNames() {
     Collection<String> result = new HashSet<String>();
-    for (StreamProvider provider : providers) {
+    for (StreamProvider provider : getEnabledProviders()) {
       try {
         Document deletedNameDoc = provider.loadDocument(getFileFullPath(DELETED_XML), myRoamingType);
         if (deletedNameDoc != null) {
@@ -112,30 +111,28 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     }
   }
 
-  private Collection<E> readSchemesFromProviders(final StreamProvider[] providers) {
+  private Collection<E> readSchemesFromProviders() {
     Collection<E> result = new ArrayList<E>();
-    if (providers != null) {
-      for (StreamProvider provider : providers) {
-        String[] paths = provider.listSubFiles(myFileSpec);
-        for (String subpath : paths) {
-          if (!subpath.equals(DELETED_XML)) {
-            try {
-              final Document subDocument = provider.loadDocument(getFileFullPath(subpath), myRoamingType);
-              if (subDocument != null) {
-                checkFileNameIsFree(subpath);
-                final File file = new File(myBaseDir, subpath);
-                JDOMUtil.writeDocument(subDocument, file, "\n");
-                E scheme = readScheme(subDocument);
-                if (scheme != null) {
-                  loadScheme(file, scheme);
-                  result.add(scheme);
-                }
-
+    for (StreamProvider provider : getEnabledProviders()) {
+      String[] paths = provider.listSubFiles(myFileSpec);
+      for (String subpath : paths) {
+        if (!subpath.equals(DELETED_XML)) {
+          try {
+            final Document subDocument = provider.loadDocument(getFileFullPath(subpath), myRoamingType);
+            if (subDocument != null) {
+              checkFileNameIsFree(subpath);
+              final File file = new File(myBaseDir, subpath);
+              JDOMUtil.writeDocument(subDocument, file, "\n");
+              E scheme = readScheme(subDocument);
+              if (scheme != null) {
+                loadScheme(file, scheme);
+                result.add(scheme);
               }
+
             }
-            catch (Exception e) {
-              LOG.info("Cannot load data from IDEAServer: " + e.getLocalizedMessage());
-            }
+          }
+          catch (Exception e) {
+            LOG.info("Cannot load data from IDEAServer: " + e.getLocalizedMessage());
           }
         }
       }
@@ -263,6 +260,14 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
         }
       }
     }
+    else if (rootElement.getName().equals(SHARED_SCHEME_ORIGINAL)) {
+      SchemesManagerImpl<T, E>.SharedSchemeData schemeData = unwrap(subDocument);
+      E scheme = myProcessor.readScheme(schemeData.original);
+      if (scheme != null) {
+        renameScheme(scheme, schemeData.name);
+      }
+      return scheme;
+    }
     else {
       return myProcessor.readScheme(subDocument);
     }
@@ -333,26 +338,28 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     final HashMap<String, E> result = new HashMap<String, E>();
     if (providers != null) {
       for (StreamProvider provider : providers) {
-        String[] paths = provider.listSubFiles(myFileSpec);
-        for (String subpath : paths) {
-          try {
-            final Document subDocument = provider.loadDocument(getFileFullPath(subpath), RoamingType.GLOBAL);
-            if (subDocument != null) {
-              SharedSchemeData original = unwrap(subDocument);
-              final E scheme = myProcessor.readScheme(original.original);
-              if (!alreadyShared(subpath, currentSchemeList)) {
-                String schemeName = original.name;
-                String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, "", "", names);
-                renameScheme(scheme, uniqueName);
-                schemeName = uniqueName;
-                scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
-                scheme.getExternalInfo().setIsImported(true);
-                result.put(schemeName, scheme);
+        if (provider.isEnabled()) {
+          String[] paths = provider.listSubFiles(myFileSpec);
+          for (String subpath : paths) {
+            try {
+              final Document subDocument = provider.loadDocument(getFileFullPath(subpath), RoamingType.GLOBAL);
+              if (subDocument != null) {
+                SharedSchemeData original = unwrap(subDocument);
+                final E scheme = myProcessor.readScheme(original.original);
+                if (!alreadyShared(subpath, currentSchemeList)) {
+                  String schemeName = original.name;
+                  String uniqueName = UniqueNameGenerator.generateUniqueName("[shared] " + schemeName, "", "", names);
+                  renameScheme(scheme, uniqueName);
+                  schemeName = uniqueName;
+                  scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
+                  scheme.getExternalInfo().setIsImported(true);
+                  result.put(schemeName, scheme);
+                }
               }
             }
-          }
-          catch (Exception e) {
-            LOG.debug("Cannot load data from IDEAServer: " + e.getLocalizedMessage());
+            catch (Exception e) {
+              LOG.debug("Cannot load data from IDEAServer: " + e.getLocalizedMessage());
+            }
           }
         }
       }
@@ -369,7 +376,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
   private SharedSchemeData unwrap(final Document subDocument) {
     SharedSchemeData result = new SharedSchemeData();
     Element rootElement = subDocument.getRootElement();
-    if (rootElement.getName().equals(SHARED_SCHEME)) {
+    if (rootElement.getName().equals(SHARED_SCHEME_ORIGINAL)) {
       result.name = rootElement.getAttributeValue(NAME);
       result.description = rootElement.getAttributeValue(DESCRIPTION);
       result.original = new Document((Element)((Element)(rootElement.getChildren().iterator().next())).clone());
@@ -420,7 +427,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
   }
 
   private static Document wrap(final Document original, final String name, final String description) {
-    Element sharedElement = new Element(SHARED_SCHEME);
+    Element sharedElement = new Element(SHARED_SCHEME_ORIGINAL);
     sharedElement.setAttribute(NAME, name);
     sharedElement.setAttribute(DESCRIPTION, description);
     sharedElement.addContent(((Element)original.getRootElement().clone()));
@@ -453,17 +460,15 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     myBaseDir.mkdirs();
 
 
-    final StreamProvider[] providers = getProviders();
-
     UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
 
     reserveUsingFileNames(schemes, fileNameProvider);
 
     deleteFilesFromDeletedSchemes();
-    saveSchemes(schemes, providers, fileNameProvider);
+    saveSchemes(schemes, fileNameProvider);
 
     if (myDeletedNames.size() > 0) {
-      for (StreamProvider provider : providers) {
+      for (StreamProvider provider : getEnabledProviders()) {
         try {
           provider.saveContent(getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType);
         }
@@ -473,7 +478,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
       }
     }
     else {
-      for (StreamProvider provider : providers) {
+      for (StreamProvider provider : getEnabledProviders()) {
         provider.deleteFile(getFileFullPath(DELETED_XML), myRoamingType);
       }
 
@@ -489,12 +494,12 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
 
   private void deleteLocalAndServerFiles(final File file) {
     FileUtil.delete(file);
-    for (StreamProvider provider : getProviders()) {
+    for (StreamProvider provider : getEnabledProviders()) {
       provider.deleteFile(getFileFullPath(file.getName()), myRoamingType);
     }
   }
 
-  private void saveSchemes(final Collection<T> schemes, final StreamProvider[] providers, final UniqueFileNamesProvider fileNameProvider)
+  private void saveSchemes(final Collection<T> schemes, final UniqueFileNamesProvider fileNameProvider)
       throws WriteExternalException {
     for (T scheme : schemes) {
       if (isExternalizable(scheme)) {
@@ -510,7 +515,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
 
             Long oldHash = eScheme.getExternalInfo().getHash();
 
-            saveIfNeeded(providers, eScheme, file, document, newHash, oldHash);
+            saveIfNeeded(eScheme, file, document, newHash, oldHash);
           }
           catch (IOException e) {
             LOG.debug(e);
@@ -523,10 +528,6 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
 
 
     }
-  }
-
-  private StreamProvider[] getProviders() {
-    return myProviders;
   }
 
   private File getFileForScheme(final File baseDir, final UniqueFileNamesProvider fileNameProvider, final E scheme) {
@@ -542,14 +543,12 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     return new File(baseDir, fileName + EXT);
   }
 
-  private void saveIfNeeded(final StreamProvider[] providers, final E schemeKey, final File file, final Document document,
-                            final long newHash,
-                            final Long oldHash) throws IOException {
+  private void saveIfNeeded(final E schemeKey, final File file, final Document document, final long newHash, final Long oldHash) throws IOException {
     if (oldHash == null || newHash != oldHash.longValue() || !file.isFile()) {
       if (oldHash != null && newHash != oldHash.longValue()) {
         final byte[] text = StorageUtil.printDocument(document);
 
-        if (!Arrays.equals(FileUtil.loadFileBytes(file), text)) {
+        if (!file.isFile() || !Arrays.equals(FileUtil.loadFileBytes(file), text)) {
           FileUtil.writeToFile(file, text);        
         }
 
@@ -560,21 +559,29 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
       schemeKey.getExternalInfo().setHash(newHash);
       saveFileName(file, schemeKey);
 
-      saveOnServer(providers, file, document);
+      saveOnServer(file, document);
     }
   }
 
-  private void saveOnServer(final StreamProvider[] providers, final File file, final Document document) {
-    if (providers != null) {
-      for (StreamProvider provider : providers) {
-        try {
-          provider.saveContent(getFileFullPath(file.getName()), document, myRoamingType);
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
+  private void saveOnServer(final File file, final Document document) {
+    for (StreamProvider provider : getEnabledProviders()) {
+      try {
+        provider.saveContent(getFileFullPath(file.getName()), document, myRoamingType);
+      }
+      catch (IOException e) {
+        LOG.debug(e);
       }
     }
+  }
+
+  private Collection<StreamProvider> getEnabledProviders() {
+    ArrayList<StreamProvider> result = new ArrayList<StreamProvider>();
+    for (StreamProvider provider : myProviders) {
+      if (provider.isEnabled()) {
+        result.add(provider);
+      }
+    }
+    return result;
   }
 
   private void reserveUsingFileNames(final Collection<T> schemes, final UniqueFileNamesProvider fileNameProvider) {
