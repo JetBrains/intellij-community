@@ -194,7 +194,7 @@ public abstract class TestObject implements JavaCommandLine {
         myConfiguration.getName(),
         new DefaultCoverageFileProvider(coverageFileName),
         myConfiguration.getCoveragePatterns(), lastCoverageTime,
-        myConfiguration.getSuiteToMergeWith(), myConfiguration.getCoverageRunner());
+        myConfiguration.getSuiteToMergeWith(), myConfiguration.getCoverageRunner(), myConfiguration.isTrackPerTestCoverage());
       myConfiguration.appendCoverageArgument(myJavaParameters);
     }
   }
