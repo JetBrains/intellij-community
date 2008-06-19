@@ -178,12 +178,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     private void executeConfiguration(final Project project, DataContext dataContext) {
-      final RunnerAndConfigurationSettingsImpl configuration = getConfiguration(project);
-      if (configuration == null) {
-        return;
-      }
+      RunnerAndConfigurationSettingsImpl configuration = getConfiguration(project);
+      if (configuration == null) return;
 
-      final ProgramRunner runner = getRunner(myExecutor.getId(), configuration);
+      ProgramRunner runner = getRunner(myExecutor.getId(), configuration);
       LOG.assertTrue(runner != null, "Runner MUST not be null!");
 
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
@@ -194,6 +192,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         dialog.show();
         if (!dialog.isOK()) return;
         dataContext = recreateDataContext(project, component);
+        configuration = getConfiguration(project);
+        assert configuration != null;
+        runner = getRunner(myExecutor.getId(), configuration);
+        assert runner != null;
       }
 
       try {
