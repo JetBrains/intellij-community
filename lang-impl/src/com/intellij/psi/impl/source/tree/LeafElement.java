@@ -86,17 +86,16 @@ public abstract class LeafElement extends TreeElement {
     int hc = 0;
 
     if (len > TEXT_MATCHES_THRESHOLD && text instanceof String) {
-      final String str=(String)text;
+      final String str = (String)text;
 
       for (int i = 0; i < len; i++) {
         hc += str.charAt(i);
       }
 
       return hc;
-    } else {
-      for (int i = 0; i < len; i++) {
-        hc += text.charAt(i);
-      }
+    }
+    for (int i = 0; i < len; i++) {
+      hc += text.charAt(i);
     }
 
     return hc;
@@ -111,7 +110,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public ASTNode[] getChildren(TokenSet filter) {
-    return TreeElement.EMPTY_ARRAY;
+    return EMPTY_ARRAY;
   }
 
   public void addChild(@NotNull ASTNode child, ASTNode anchorBefore) {

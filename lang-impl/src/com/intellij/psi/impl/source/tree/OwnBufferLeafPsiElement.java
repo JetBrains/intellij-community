@@ -173,8 +173,7 @@ public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl imple
 
   public boolean isPhysical() {
     PsiFile file = getContainingFile();
-    if (file == null) return false;
-    return file.isPhysical();
+    return file != null && file.isPhysical();
   }
 
   @NotNull
