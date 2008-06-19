@@ -159,6 +159,11 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     }
   }
 
+  @Override
+  public boolean canHavePerTestCoverage() {
+    return false;
+  }
+
   private String getWorkingDirectory() {
     return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
   }
@@ -229,7 +234,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
           new DefaultCoverageFileProvider(coverageFileName),
           getCoveragePatterns(),
           lastCoverageTime,
-          getSuiteToMergeWith(), getCoverageRunner());
+          getSuiteToMergeWith(), getCoverageRunner(), isTrackPerTestCoverage());
         appendCoverageArgument(params);
       }
 
