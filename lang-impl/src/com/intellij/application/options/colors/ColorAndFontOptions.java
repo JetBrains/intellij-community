@@ -52,7 +52,11 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
+  private boolean mySomeSchemesDeleted = false;
+
   public boolean isModified() {
+    if (mySomeSchemesDeleted) return true;
+    
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
 
     for (MyColorScheme scheme : mySchemes.values()) {
@@ -144,6 +148,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
 
     mySchemes.remove(name);
     myPanel.resetSchemesCombo();
+    mySomeSchemesDeleted = true;
   }
 
   public void apply() throws ConfigurationException {
