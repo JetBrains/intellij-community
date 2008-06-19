@@ -140,6 +140,9 @@ public class GroovyOverrideImplementUtil {
             aClass.addMemberDeclaration(result, anchor);
 
             PsiUtil.shortenReferences(result);
+              //[GenerateMembersUtil.positionCaret in unsuitable because method.getBody() returns null, it is neccesary use method.getBlock() instead.
+              //but it is impossible in common case]
+//            GenerateMembersUtil.positionCaret(editor, result, true);
             positionCaret(editor, result);
           } catch (IncorrectOperationException e) {
             throw new RuntimeException(e);
@@ -150,7 +153,6 @@ public class GroovyOverrideImplementUtil {
     }
   }
 
-  //TODO: use such special method wich will be implemented in Diana 
   private static void positionCaret(Editor editor, GrMethod result) {
     final GrOpenBlock body = result.getBlock();
     if (body == null) return;
