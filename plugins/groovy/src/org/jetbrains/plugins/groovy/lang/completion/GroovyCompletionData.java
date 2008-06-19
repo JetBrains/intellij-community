@@ -17,16 +17,19 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
@@ -190,26 +193,40 @@ public class GroovyCompletionData extends CompletionData {
   }
 
 
-  private static CompletionVariant ourReferenceVariant;
+  private CompletionVariant ourReferenceVariant;
 
-  static {
+  {
     ourReferenceVariant = new CompletionVariant() {
-/* todo [DIANA] implement me!
-      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix) {
-        addReferenceCompletions(reference, position, set, prefix);
+      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PrefixMatcher matcher, final PsiFile file,
+                                          final CompletionData completionData) {
+        completeReference(reference, position, set, TailType.NONE, matcher, file, TrueFilter.INSTANCE, this);
       }
-*/
     };
-
     ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
     ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
-
   }
 
-  public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
-    //todo[DIANA] WTF is PrefixMatcher?
-//    ourReferenceVariant.addReferenceCompletions(reference, position, set, new CamelHumpMatcher(), position.getContainingFile(), this);
+  @Override
+  public void completeReference(final PsiReference reference, final Set<LookupItem> set, @NotNull final PsiElement position,
+                                final PrefixMatcher matcher, final PsiFile file, final int offset) {
+    final CompletionVariant[] variants = findVariants(position, file);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        boolean hasApplicableVariants = false;
+        for (CompletionVariant variant : variants) {
+          if (variant.hasReferenceFilter()) {
+            variant.addReferenceCompletions(reference, position, set, matcher, file, GroovyCompletionData.this);
+            hasApplicableVariants = true;
+          }
+        }
+
+        if (!hasApplicableVariants) {
+          ourReferenceVariant.addReferenceCompletions(reference, position, set, matcher, file, GroovyCompletionData.this);
+        }
+      }
+    });
   }
+
 
   /**
    * Template to add all standard keywords completions
@@ -220,8 +237,8 @@ public class GroovyCompletionData extends CompletionData {
   private void registerStandardCompletion(ElementFilter filter, String... keywords) {
     LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
+    variant.setItemProperty(LookupItem.HIGHLIGHTED_ATTR, "");
     variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletionFilter(TrueFilter.INSTANCE);
     ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
     variant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
     addCompletions(variant, keywords);
