@@ -49,7 +49,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
   private static final String VALUE_TAG = "@value";
 
   private final static TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN,
-      mGDOC_TAG_VALUE_SHARP_TOKEN);
+          mGDOC_TAG_VALUE_SHARP_TOKEN);
 
   private boolean isInInlinedTag = false;
   private int myBraceCounter = 0;
@@ -156,6 +156,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
       return true;
     } else if (ParserUtils.lookAhead(builder, mGDOC_TAG_VALUE_LT, mGDOC_TAG_VALUE_TOKEN)) {
       builder.advanceLexer();
+      builder.getTokenText(); //todo stub for peter
       builder.advanceLexer();
       if (mGDOC_TAG_VALUE_GT == builder.getTokenType()) {
         builder.advanceLexer();
@@ -199,8 +200,8 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     builder.advanceLexer();
     while (parseMethodParameter(builder) && !timeToEnd(builder)) {
       while (mGDOC_TAG_VALUE_COMMA != builder.getTokenType() &&
-          mGDOC_TAG_VALUE_RPAREN != builder.getTokenType() &&
-          !timeToEnd(builder)) {
+              mGDOC_TAG_VALUE_RPAREN != builder.getTokenType() &&
+              !timeToEnd(builder)) {
         builder.advanceLexer();
       }
       while (mGDOC_TAG_VALUE_COMMA == builder.getTokenType()) {
