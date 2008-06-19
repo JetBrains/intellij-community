@@ -73,14 +73,17 @@ public class ConfigurationUtil {
       AnnotatedMembersSearch.search(testAnnotation, scope).forEach(new Processor<PsiMember>() {
         public boolean process(final PsiMember annotated) {
           PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
-          if (containingClass != null
-              && annotated instanceof PsiMethod == isMethod
-              && testClassFilter.isAccepted(containingClass)) {
-            found.add(containingClass);
-            isJUnit4.set(Boolean.TRUE);
+          if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
+            if (testClassFilter.isAccepted(containingClass)) {
+              found.add(containingClass);
+              isJUnit4.set(Boolean.TRUE);
+            }
             ClassInheritorsSearch.search(containingClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
               public boolean execute(final PsiClass aClass) {
-                if (testClassFilter.isAccepted(aClass)) found.add(aClass);
+                if (testClassFilter.isAccepted(aClass)) {
+                  found.add(aClass);
+                  isJUnit4.set(Boolean.TRUE);
+                }
                 return true;
               }
             }));
