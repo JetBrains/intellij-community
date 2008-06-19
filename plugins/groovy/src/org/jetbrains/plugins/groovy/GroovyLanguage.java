@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyReferenceAdjuster;
-//import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
 
 /**
  * All main properties for Groovy language
@@ -37,10 +36,4 @@ public class GroovyLanguage extends Language {
   public ReferenceAdjuster getReferenceAdjuster() {
     return GroovyReferenceAdjuster.INSTANCE;
   }
-
-  //todo[DIANA] provide appropriate language extension
-//  public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
-//    return new GroovyStructureViewBuilder(psiFile);
-//  }
-
 }
