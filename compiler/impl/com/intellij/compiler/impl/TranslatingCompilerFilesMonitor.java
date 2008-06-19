@@ -494,22 +494,24 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
   
   private static void processRecursively(VirtualFile file, final FileProcessor processor) {
-    if (file.isDirectory()) {
-      new Object() {
-        void traverse(final VirtualFile dir) {
-          for (VirtualFile child : dir.getChildren()) {
-            if (child.isDirectory()) {
-              traverse(child);
-            }
-            else {
-              processor.execute(child);
+    if (file.getFileSystem() instanceof LocalFileSystem) {
+      if (file.isDirectory()) {
+        new Object() {
+          void traverse(final VirtualFile dir) {
+            for (VirtualFile child : dir.getChildren()) {
+              if (child.isDirectory()) {
+                traverse(child);
+              }
+              else {
+                processor.execute(child);
+              }
             }
           }
-        }
-      }.traverse(file);
-    }
-    else {
-      processor.execute(file);
+        }.traverse(file);
+      }
+      else {
+        processor.execute(file);
+      }
     }
   }
 
