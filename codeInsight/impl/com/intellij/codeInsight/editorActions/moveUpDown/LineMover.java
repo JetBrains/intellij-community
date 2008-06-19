@@ -9,23 +9,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
-class LineMover extends Mover {
-  public LineMover(final boolean isDown) {
-    super(isDown);
-  }
+class LineMover extends StatementUpDownMover {
 
-  protected boolean checkAvailable(Editor editor, PsiFile file) {
+  public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     LineRange range = getLineRangeFromSelection(editor);
 
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    if (range.startLine == 0 && !isDown) return false;
-    if (range.endLine >= maxLine && isDown) return false;
+    if (range.startLine == 0 && !down) return false;
+    if (range.endLine >= maxLine && down) return false;
 
-    toMove = range;
-    int nearLine = isDown ? range.endLine : range.startLine - 1;
-    toMove2 = new LineRange(nearLine, nearLine+1);
-    //insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
+    int nearLine = down ? range.endLine : range.startLine - 1;
+    info.toMove = range;
+    info.toMove2 = new LineRange(nearLine, nearLine + 1);
+
     return true;
   }
 

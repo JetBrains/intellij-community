@@ -10,10 +10,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 class MoveStatementHandler extends EditorWriteActionHandler {
   private final boolean isDown;
@@ -28,8 +30,10 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final Document document = editor.getDocument();
     PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
 
-    final Mover mover = getSuitableMover(editor, file);
-    mover.move(editor,file);
+    final MoverWrapper mover = getSuitableMover(editor, file);
+    if (mover != null) {
+      mover.move(editor,file);
+    }
   }
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
@@ -41,10 +45,10 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     PsiFile psiFile = documentManager.getPsiFile(document);
     PsiFile file = getRoot(psiFile, editor);
     if (file == null) return false;
-    final Mover mover = getSuitableMover(editor, file);
-    if (mover == null || mover.toMove2 == null) return false;
+    final MoverWrapper mover = getSuitableMover(editor, file);
+    if (mover == null || mover.getInfo().toMove2 == null) return false;
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    final LineRange range = mover.toMove;
+    final LineRange range = mover.getInfo().toMove;
     if (range.startLine == 0 && !isDown) return false;
 
     return range.endLine < maxLine || !isDown;
@@ -66,13 +70,20 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     return (PsiFile)PsiUtil.getRoot(node).getPsi();
   }
 
-  private Mover getSuitableMover(final Editor editor, final PsiFile file) {
-    // order is important
-    Mover[] movers = new Mover[]{new StatementMover(isDown), new DeclarationMover(isDown), new XmlMover(isDown), new LineMover(isDown)};
-    for (final Mover mover : movers) {
-      final boolean available = mover.checkAvailable(editor, file);
-      if (available) return mover;
+  @Nullable
+  private MoverWrapper getSuitableMover(final Editor editor, final PsiFile file) {
+    // order is important!
+    final StatementUpDownMover[] movers = Extensions.getExtensions(StatementUpDownMover.STATEMENT_UP_DOWN_MOVER_EP);
+    final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();
+    for (final StatementUpDownMover mover : movers) {
+      if (mover.checkAvailable(editor, file, info, isDown)) {
+        return new MoverWrapper(mover, info, isDown);
+      }
     }
+
+
+    // order is important
+    //Mover[] movers = new Mover[]{new StatementMover(isDown), new DeclarationMover(isDown), new XmlMover(isDown), new LineMover(isDown)};
     return null;
   }
 

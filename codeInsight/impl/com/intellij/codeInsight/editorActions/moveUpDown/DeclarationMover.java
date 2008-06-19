@@ -26,12 +26,10 @@ class DeclarationMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.DeclarationMover");
   private PsiEnumConstant myEnumToInsertSemicolonAfter;
 
-  public DeclarationMover(final boolean isDown) {
-    super(isDown);
-  }
+  @Override
+  public void beforeMove(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
+    super.beforeMove(editor, info, down);
 
-  protected void beforeMove(final Editor editor) {
-    super.beforeMove(editor);
     if (myEnumToInsertSemicolonAfter != null) {
       TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, myEnumToInsertSemicolonAfter.getManager());
 
@@ -40,7 +38,7 @@ class DeclarationMover extends LineMover {
         inserted = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(inserted);
         final LogicalPosition position = editor.offsetToLogicalPosition(inserted.getTextRange().getEndOffset());
 
-        toMove2 = new LineRange(position.line+1, position.line+1);
+        info.toMove2 = new LineRange(position.line + 1, position.line + 1);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -51,16 +49,18 @@ class DeclarationMover extends LineMover {
     }
   }
 
-  protected void afterMove(final Editor editor, final PsiFile file) {
-    super.afterMove(editor, file);
-    final int line1 = editor.offsetToLogicalPosition(range2.getStartOffset()).line;
-    final int line2 = editor.offsetToLogicalPosition(range2.getEndOffset()).line;
+  @Override
+  public void afterMove(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
+    super.afterMove(editor, file, info, down);
+
+    final int line1 = editor.offsetToLogicalPosition(info.range2.getStartOffset()).line;
+    final int line2 = editor.offsetToLogicalPosition(info.range2.getEndOffset()).line;
     Document document = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     documentManager.commitDocument(document);
     PsiWhiteSpace whiteSpace1 = findWhitespaceNear(document.getLineStartOffset(line1), file, false);
     PsiWhiteSpace whiteSpace2 = findWhitespaceNear(document.getLineStartOffset(line2), file, false);
-    PsiWhiteSpace whiteSpace = findWhitespaceNear(isDown ? range1.getStartOffset() : range1.getEndOffset(), file, false);
+    PsiWhiteSpace whiteSpace = findWhitespaceNear(down ? info.range1.getStartOffset() : info.range1.getEndOffset(), file, false);
     fixupWhiteSpace(whiteSpace1);
     fixupWhiteSpace(whiteSpace2);
 
@@ -87,13 +87,16 @@ class DeclarationMover extends LineMover {
     whitespace.getParent().getNode().replaceChild(whitespace.getNode(), node);
   }
 
-  protected boolean checkAvailable(Editor editor, PsiFile file) {
+  @Override
+  public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     if (!(file instanceof PsiJavaFile)) {
       return false;
     }
-    boolean available = super.checkAvailable(editor, file);
+
+    boolean available = super.checkAvailable(editor, file, info, down);
     if (!available) return false;
-    LineRange oldRange = toMove;
+
+    LineRange oldRange = info.toMove;
     final Pair<PsiElement, PsiElement> psiRange = getElementRange(editor, file, oldRange);
     if (psiRange == null) return false;
 
@@ -123,23 +126,23 @@ class DeclarationMover extends LineMover {
     }
     Document document = editor.getDocument();
 
-    PsiElement sibling = isDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
+    PsiElement sibling = down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
     if (sibling == null) return false;
-    sibling = firstNonWhiteElement(sibling, isDown);
+    sibling = firstNonWhiteElement(sibling, down);
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
-    toMove = range;
+    info.toMove = range;
     try {
-      LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, isDown, areWeMovingClass);
+      LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, down, areWeMovingClass);
       if (intraClassRange == null) {
-        toMove2 = new LineRange(sibling, sibling, document);
-        if (isDown && sibling.getNextSibling() == null) return false;
+        info.toMove2 = new LineRange(sibling, sibling, document);
+        if (down && sibling.getNextSibling() == null) return false;
       }
       else {
-        toMove2 = intraClassRange;
+        info.toMove2 = intraClassRange;
       }
     }
     catch (IllegalMoveException e) {
-      toMove2 = null;
+      info.toMove2 = null;
     }
     return true;
   }
@@ -244,7 +247,7 @@ class DeclarationMover extends LineMover {
     }
     if (sibling instanceof JspClassLevelDeclarationStatement) {
       // there should be another scriptlet/decl to move
-      if (firstNonWhiteElement(this.isDown ? sibling.getNextSibling() : sibling.getPrevSibling(), this.isDown) == null) throw new IllegalMoveException();
+      if (firstNonWhiteElement(isDown ? sibling.getNextSibling() : sibling.getPrevSibling(), isDown) == null) throw new IllegalMoveException();
     }
     return null;
   }

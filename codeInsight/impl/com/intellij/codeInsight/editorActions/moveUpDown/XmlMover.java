@@ -9,25 +9,22 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import org.jetbrains.annotations.NotNull;
 
 class XmlMover extends LineMover {
   //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.XmlMover");
 
-  public XmlMover(final boolean isDown) {
-    super(isDown);
-  }
-
-  protected boolean checkAvailable(Editor editor, PsiFile file) {
+  public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     if (!(file instanceof XmlFile)) {
       return false;
     }
-    boolean available = super.checkAvailable(editor, file);
+    boolean available = super.checkAvailable(editor, file, info, down);
     if (!available) return false;
 
     // updated moved range end to cover multiline tag start
     final Document document = editor.getDocument();
-    int movedLineStart = document.getLineStartOffset(toMove.startLine);
-    final int movedLineEnd = document.getLineEndOffset(toMove.endLine - 1);
+    int movedLineStart = document.getLineStartOffset(info.toMove.startLine);
+    final int movedLineEnd = document.getLineEndOffset(info.toMove.endLine - 1);
 
     PsiElement movedEndElement = file.findElementAt(movedLineEnd);
     if (movedEndElement instanceof PsiWhiteSpace) movedEndElement = PsiTreeUtil.prevLeaf(movedEndElement);
@@ -73,20 +70,20 @@ class XmlMover extends LineMover {
       final int valueStart = valueRange.getStartOffset();
 
       if (movedLineStart < valueStart && valueStart + 1 < document.getTextLength()) {
-        movedLineStart = updateMovedRegionEnd(document, movedLineStart, valueStart + 1);
+        movedLineStart = updateMovedRegionEnd(document, movedLineStart, valueStart + 1, info, down);
       }
       if (movedLineStart < valueRange.getStartOffset()) {
-        movedLineStart = updatedMovedRegionStart(document, movedLineStart, tag.getTextRange().getStartOffset());
+        movedLineStart = updatedMovedRegionStart(document, movedLineStart, tag.getTextRange().getStartOffset(), info, down);
       }
     } else if (movedParent instanceof XmlAttribute) {
       final int endOffset = textRange.getEndOffset() + 1;
-      if (endOffset < document.getTextLength()) movedLineStart = updateMovedRegionEnd(document, movedLineStart, endOffset);
-      movedLineStart = updatedMovedRegionStart(document, movedLineStart, textRange.getStartOffset());
+      if (endOffset < document.getTextLength()) movedLineStart = updateMovedRegionEnd(document, movedLineStart, endOffset, info, down);
+      movedLineStart = updatedMovedRegionStart(document, movedLineStart, textRange.getStartOffset(), info, down);
     }
 
     final TextRange moveDestinationRange = new TextRange(
-      document.getLineStartOffset(toMove2.startLine),
-      document.getLineStartOffset(toMove2.endLine)
+      document.getLineStartOffset(info.toMove2.startLine),
+      document.getLineStartOffset(info.toMove2.endLine)
     );
 
     if (movedParent instanceof XmlAttribute) {
@@ -96,15 +93,15 @@ class XmlMover extends LineMover {
         final TextRange valueRange = parent.getValue().getTextRange();
 
         // Do not move attributes out of tags
-        if ( (isDown && moveDestinationRange.getEndOffset() >= valueRange.getStartOffset()) ||
-             (!isDown && moveDestinationRange.getStartOffset() <= parent.getTextRange().getStartOffset())
+        if ( (down && moveDestinationRange.getEndOffset() >= valueRange.getStartOffset()) ||
+             (!down && moveDestinationRange.getStartOffset() <= parent.getTextRange().getStartOffset())
           ) {
-          toMove2 = null;
+          info.toMove2 = null;
         }
       }
     }
 
-    if (isDown) {
+    if (down) {
       PsiElement updatedElement = file.findElementAt(moveDestinationRange.getEndOffset());
       if (updatedElement instanceof PsiWhiteSpace) updatedElement = PsiTreeUtil.prevLeaf(updatedElement);
 
@@ -113,9 +110,9 @@ class XmlMover extends LineMover {
 
         if (namedParent instanceof XmlTag) {
           final XmlTag tag = (XmlTag)namedParent;
-          updatedMovedIntoEnd(document, tag.getValue().getTextRange().getStartOffset());
+          updatedMovedIntoEnd(document, info, tag.getValue().getTextRange().getStartOffset());
         } else if (namedParent instanceof XmlAttribute) {
-          updatedMovedIntoEnd(document, namedParent.getTextRange().getEndOffset());
+          updatedMovedIntoEnd(document, info, namedParent.getTextRange().getEndOffset());
         }
       }
     } else {
@@ -135,11 +132,13 @@ class XmlMover extends LineMover {
               ( tagValueRange.getLength() == 0 && tag.getTextRange().intersects(moveDestinationRange))
              ) {
             final int line = document.getLineNumber(tag.getTextRange().getStartOffset());
-            toMove2 = new LineRange(Math.min(line, toMove2.startLine), toMove2.endLine);
+            final LineRange toMove2 = info.toMove2;
+            info.toMove2 = new LineRange(Math.min(line, toMove2.startLine), toMove2.endLine);
           }
         } else if (namedParent instanceof XmlAttribute) {
           final int line = document.getLineNumber(namedParent.getTextRange().getStartOffset());
-          toMove2 = new LineRange(Math.min(line, toMove2.startLine), toMove2.endLine);
+          final LineRange toMove2 = info.toMove2;
+          info.toMove2 = new LineRange(Math.min(line, toMove2.startLine), toMove2.endLine);
         }
       }
     }
@@ -147,34 +146,39 @@ class XmlMover extends LineMover {
     return true;
   }
 
-  private void updatedMovedIntoEnd(final Document document, final int offset) {
+  private void updatedMovedIntoEnd(final Document document, @NotNull final MoveInfo info, final int offset) {
     if (offset + 1 < document.getTextLength()) {
       final int line = document.getLineNumber(offset + 1);
-      toMove2 = new LineRange(toMove2.startLine, Math.min(Math.max(line, toMove2.endLine), document.getLineCount() - 1));
+      final LineRange toMove2 = info.toMove2;
+      info.toMove2 = new LineRange(toMove2.startLine, Math.min(Math.max(line, toMove2.endLine), document.getLineCount() - 1));
     }
   }
 
-  private int updatedMovedRegionStart(final Document document, int movedLineStart, final int offset) {
+  private int updatedMovedRegionStart(final Document document, int movedLineStart, final int offset, @NotNull final MoveInfo info, final boolean down) {
     final int line = document.getLineNumber(offset);
+    final LineRange toMove = info.toMove;
     int delta = toMove.startLine - line;
-    toMove = new LineRange(Math.min(line, toMove.startLine), toMove.endLine);
+    info.toMove = new LineRange(Math.min(line, toMove.startLine), toMove.endLine);
 
     // update moved range
-    if (delta > 0 && !isDown) {
-      toMove2 = new LineRange(toMove2.startLine - delta, toMove2.endLine - delta);
+    if (delta > 0 && !down) {
+      final LineRange toMove2 = info.toMove2;
+      info.toMove2 = new LineRange(toMove2.startLine - delta, toMove2.endLine - delta);
       movedLineStart = document.getLineStartOffset(toMove.startLine);
     }
     return movedLineStart;
   }
 
-  private int updateMovedRegionEnd(final Document document, int movedLineStart, final int valueStart) {
+  private int updateMovedRegionEnd(final Document document, int movedLineStart, final int valueStart, @NotNull final MoveInfo info, final boolean down) {
     final int line = document.getLineNumber(valueStart);
+    final LineRange toMove = info.toMove;
     int delta = line - toMove.endLine;
-    toMove = new LineRange(toMove.startLine, Math.max(line, toMove.endLine));
+    info.toMove = new LineRange(toMove.startLine, Math.max(line, toMove.endLine));
 
     // update moved range
-    if (delta > 0 && isDown) {
-      toMove2 = new LineRange(toMove2.startLine + delta, Math.min(toMove2.endLine + delta, document.getLineCount() - 1));
+    if (delta > 0 && down) {
+      final LineRange toMove2 = info.toMove2;
+      info.toMove2 = new LineRange(toMove2.startLine + delta, Math.min(toMove2.endLine + delta, document.getLineCount() - 1));
       movedLineStart = document.getLineStartOffset(toMove.startLine);
     }
     return movedLineStart;

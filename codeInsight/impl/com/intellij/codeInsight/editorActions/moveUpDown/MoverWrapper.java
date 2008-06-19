@@ -13,57 +13,48 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-abstract class Mover {
-  protected final boolean isDown;
-  @NotNull protected LineRange toMove;
-  protected LineRange toMove2; // can be null if the move is illegal
-  protected RangeMarker range1;
-  protected RangeMarker range2;
-  protected boolean indentSource;
+class MoverWrapper {
+  protected final boolean myIsDown;
+  private StatementUpDownMover myMover;
+  private StatementUpDownMover.MoveInfo myInfo;
 
-  protected Mover(final boolean isDown) {
-    this.isDown = isDown;
+  protected MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
+    myMover = mover;
+    myIsDown = isDown;
+
+    myInfo = info;
   }
 
-  /**
-   * @return false if this mover is unable to find a place to move stuff at,
-   * otherwise, initialize fields and returns true
-   */
-  protected abstract boolean checkAvailable(Editor editor, PsiFile file);
-
-  protected void beforeMove(final Editor editor) {
-
-  }
-  protected void afterMove(final Editor editor, final PsiFile file) {
-
+  public StatementUpDownMover.MoveInfo getInfo() {
+    return myInfo;
   }
 
   public final void move(Editor editor, final PsiFile file) {
-    beforeMove(editor);
+    myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();
-    final int start = getLineStartSafeOffset(document, toMove.startLine);
-    final int end = getLineStartSafeOffset(document, toMove.endLine);
-    range1 = document.createRangeMarker(start, end);
+    final int start = StatementUpDownMover.getLineStartSafeOffset(document, myInfo.toMove.startLine);
+    final int end = StatementUpDownMover.getLineStartSafeOffset(document, myInfo.toMove.endLine);
+    myInfo.range1 = document.createRangeMarker(start, end);
 
     String textToInsert = document.getCharsSequence().subSequence(start, end).toString();
     if (!StringUtil.endsWithChar(textToInsert,'\n')) textToInsert += '\n';
 
-    final int start2 = document.getLineStartOffset(toMove2.startLine);
-    final int end2 = getLineStartSafeOffset(document,toMove2.endLine);
+    final int start2 = document.getLineStartOffset(myInfo.toMove2.startLine);
+    final int end2 = StatementUpDownMover.getLineStartSafeOffset(document,myInfo.toMove2.endLine);
     String textToInsert2 = document.getCharsSequence().subSequence(start2, end2).toString();
     if (!StringUtil.endsWithChar(textToInsert2,'\n')) textToInsert2 += '\n';
-    range2 = document.createRangeMarker(start2, end2);
-    if (range1.getStartOffset() < range2.getStartOffset()) {
-      range1.setGreedyToLeft(true);
-      range1.setGreedyToRight(false);
-      range2.setGreedyToLeft(true);
-      range2.setGreedyToRight(true);
+    myInfo.range2 = document.createRangeMarker(start2, end2);
+    if (myInfo.range1.getStartOffset() < myInfo.range2.getStartOffset()) {
+      myInfo.range1.setGreedyToLeft(true);
+      myInfo.range1.setGreedyToRight(false);
+      myInfo.range2.setGreedyToLeft(true);
+      myInfo.range2.setGreedyToRight(true);
     }
     else {
-      range1.setGreedyToLeft(true);
-      range1.setGreedyToRight(true);
-      range2.setGreedyToLeft(true);
-      range2.setGreedyToRight(false);
+      myInfo.range1.setGreedyToLeft(true);
+      myInfo.range1.setGreedyToRight(true);
+      myInfo.range2.setGreedyToLeft(true);
+      myInfo.range2.setGreedyToRight(false);
     }
 
     final CaretModel caretModel = editor.getCaretModel();
@@ -76,26 +67,26 @@ abstract class Mover {
     // to prevent flicker
     caretModel.moveToOffset(0);
 
-    document.insertString(range1.getStartOffset(), textToInsert2);
-    document.deleteString(range1.getStartOffset()+textToInsert2.length(), range1.getEndOffset());
+    document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
+    document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
 
-    document.insertString(range2.getStartOffset(), textToInsert);
-    document.deleteString(range2.getStartOffset()+textToInsert.length(), range2.getEndOffset());
+    document.insertString(myInfo.range2.getStartOffset(), textToInsert);
+    document.deleteString(myInfo.range2.getStartOffset()+textToInsert.length(), myInfo.range2.getEndOffset());
 
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     if (hasSelection) {
-      restoreSelection(editor, selectionStart, selectionEnd, start, range2.getStartOffset());
+      restoreSelection(editor, selectionStart, selectionEnd, start, myInfo.range2.getStartOffset());
     }
 
-    caretModel.moveToOffset(range2.getStartOffset() + caretRelativePos);
-    indentLinesIn(editor, file, document, project, range2);
-    if (indentSource) {
-      indentLinesIn(editor, file, document, project, range1);
+    caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
+    indentLinesIn(editor, file, document, project, myInfo.range2);
+    if (myInfo.indentSource) {
+      indentLinesIn(editor, file, document, project, myInfo.range1);
     }
 
-    afterMove(editor, file);
+    myMover.afterMove(editor, file, myInfo, myIsDown);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
@@ -128,11 +119,6 @@ abstract class Mover {
         throw new RuntimeException(ex);
       }
     }
-  }
-
-  protected static int getLineStartSafeOffset(final Document document, int line) {
-    if (line == document.getLineCount()) return document.getTextLength();
-    return document.getLineStartOffset(line);
   }
 
   private static boolean lineContainsNonSpaces(final Document document, final int line) {
