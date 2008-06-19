@@ -62,20 +62,20 @@ public class MavenProcess {
     final Semaphore finishSemaphore = new Semaphore();
     final ProgressIndicator[] indicator = new ProgressIndicator[1];
 
-    startSemaphore.up();
-    finishSemaphore.up();
+    startSemaphore.down();
+    finishSemaphore.down();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
       public void run(@NotNull ProgressIndicator i) {
         try {
           indicator[0] = i;
-          startSemaphore.down();
+          startSemaphore.up();
           t.run(new MavenProcess(i));
         }
         catch (CanceledException ignore) {
         }
         finally {
-          finishSemaphore.down();
+          finishSemaphore.up();
         }
       }
 
@@ -101,14 +101,22 @@ public class MavenProcess {
       myIndicator = indicator;
     }
 
-    public void stopAndWaitForFinish() {
+    public void stop() {
       myStartSemaphore.waitFor();
       myIndicator[0].cancel();
+    }
+
+    public void waitFor() {
       myFinishSemaphore.waitFor();
     }
 
     public boolean waitFor(long timeout) {
       return myFinishSemaphore.waitFor(timeout);
+    }
+
+    public void stopAndWaitForFinish() {
+      stop();
+      waitFor();
     }
   }
 

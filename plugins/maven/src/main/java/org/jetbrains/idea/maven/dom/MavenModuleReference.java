@@ -183,16 +183,16 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
           "    <version>xxx</version>\n" +
           "</project>");
 
-      MavenId parentId = PomDescriptor.describe(PomDescriptor.getPom(myPsiFile));
+      String artifactId = modulePomFile.getParent().getName();
 
-      parentId.artifactId = modulePomFile.getParent().getName();
+      MavenId parentId = PomDescriptor.describe(PomDescriptor.getPom(myPsiFile));
       if (parentId.groupId == null) parentId.groupId = "groupId";
       if (parentId.version == null) parentId.version = "version";
-
+      
       TemplateBuilder b = new TemplateBuilder(psiFile);
 
       b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(parentId.groupId));
-      b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(parentId.artifactId));
+      b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(artifactId));
       b.replaceElement(getTagValueElement(psiFile, "version"), new ConstantNode(parentId.version));
 
       return b;

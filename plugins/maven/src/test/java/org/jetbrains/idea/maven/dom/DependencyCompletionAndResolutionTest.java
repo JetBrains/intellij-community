@@ -1,24 +1,10 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.repository.MavenIndicesTestFixture;
+import com.intellij.psi.PsiReference;
 
-public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
-  private MavenIndicesTestFixture myIndicesFixture;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject);
-    myIndicesFixture.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myIndicesFixture.tearDown();
-    super.tearDown();
-  }
-
+public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -351,6 +337,137 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "</dependencies>");
 
     assertCompletionVariants(myProjectPom);
+  }
+
+  public void testResolutionOutsideTheProject() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId><caret>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    String filePath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
+    assertEquals(getPsiFile(f), ref.resolve());
+  }
+
+  public void testResolutionIsTypeBased() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId><caret>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "    <type>pom</type>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    String filePath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
+    assertEquals(getPsiFile(f), ref.resolve());
+  }
+
+  public void testResolutionInsideTheProject() throws Exception {
+    VirtualFile m1 = createModulePom("m1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>");
+
+    VirtualFile m2 = createModulePom("m2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>");
+
+    importSeveralProjects(m1, m2);
+
+    updateModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>test</groupId>" +
+                    "    <artifactId><caret>m2</artifactId>" +
+                    "    <version>1</version>" +
+                    "  </dependency>" +
+                    "</dependencies>");
+
+
+    PsiReference ref = getReferenceAtCaret(m1);
+    assertNotNull(ref);
+    assertEquals(getPsiFile(m2), ref.resolve());
+  }
+
+  public void testTypeCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <type><caret></type>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "jar", "pom", "ear", "ejb", "ejb-client", "war");
+  }
+
+  public void testDoNotHighlightUnknownType() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <type>xxx</type>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting(myProjectPom);
+  }
+
+  public void testScopeCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <scope><caret></scope>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "compile", "provided", "runtime", "test", "system", "import");
+  }
+
+  public void testInvalidScopeHighlighting() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <scope><error>xxx</error></scope>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting(myProjectPom);
   }
 
   public void testDoesNotHighlightCorrectValues() throws Throwable {

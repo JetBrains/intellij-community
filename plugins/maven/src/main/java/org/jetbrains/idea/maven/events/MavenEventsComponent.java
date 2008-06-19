@@ -331,6 +331,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
         updateScheduled = true;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
             if (myProject.isOpen()) {
               MavenKeymapExtension.createActions(myProject);
             }

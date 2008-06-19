@@ -125,6 +125,7 @@ public class RepositorySearchDialog extends DialogWrapper {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           myResultsList.setModel(model);
         }
       });

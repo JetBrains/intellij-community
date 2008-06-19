@@ -3,15 +3,16 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.lang.documentation.DocumentationProvider;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.IOException;
@@ -102,7 +103,6 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
   }
 
   protected PsiFile getPsiFile(VirtualFile f) {
-    Document d = FileDocumentManager.getInstance().getDocument(f);
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(d);
+    return PsiManager.getInstance(myProject).findFile(f);
   }
 }

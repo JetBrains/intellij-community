@@ -311,14 +311,18 @@ public class MavenProjectsTree {
     });
   }
 
-  public MavenProjectModel findProject(Artifact artifact) {
+  public MavenProjectModel findProject(MavenId id) {
     readLock();
     try {
-      return myMavenIdToProject.get(new MavenId(artifact));
+      return myMavenIdToProject.get(id);
     }
     finally {
       readUnlock();
     }
+  }
+
+  public MavenProjectModel findProject(Artifact artifact) {
+    return findProject(new MavenId(artifact));
   }
 
   public boolean isModuleOf(MavenProjectModel aggregator, MavenProjectModel module) {
@@ -500,6 +504,7 @@ public class MavenProjectsTree {
     void projectAdded(MavenProjectModel n);
 
     void beforeProjectUpdate(MavenProjectModel n);
+
     void projectUpdated(MavenProjectModel n);
 
     void projectRemoved(MavenProjectModel n);

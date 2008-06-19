@@ -39,4 +39,8 @@ public class MavenIndicesTestFixture {
   public MavenIndicesManager getIndicesManager() {
     return myIndicesManager;
   }
+
+  public MavenWithDataTestFixture getDataTestFixture() {
+    return myDataTestFixture;
+  }
 }

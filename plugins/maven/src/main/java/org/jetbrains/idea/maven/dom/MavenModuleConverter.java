@@ -36,5 +36,4 @@ public class MavenModuleConverter extends Converter<PsiFile> implements CustomRe
     TextRange range = ElementManipulators.getValueTextRange(element);
     return new PsiReference[]{new MavenModuleReference(element, virtualFile, psiFile, originalText, resolvedText, range)};
   }
-
 }

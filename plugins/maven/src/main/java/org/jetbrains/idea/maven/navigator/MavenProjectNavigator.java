@@ -214,6 +214,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       public void projectAdded(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
+
             final PomNode newNode = new PomNode(n);
             fileToNode.put(n.getFile(), newNode);
             root.addToStructure(newNode);
@@ -231,6 +233,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       public void projectUpdated(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
+
             final PomNode pomNode = fileToNode.get(n.getFile());
             if (pomNode != null) {
               pomNode.onFileUpdate();
@@ -247,6 +251,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       public void projectRemoved(final MavenProjectModel n) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
+
             final PomNode pomNode = fileToNode.get(n.getFile());
             if (pomNode != null) {
               fileToNode.remove(n.getFile());

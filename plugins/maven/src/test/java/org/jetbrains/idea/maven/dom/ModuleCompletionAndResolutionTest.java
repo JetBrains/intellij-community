@@ -11,7 +11,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 
 import java.util.List;
 
-public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
+public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   public void testCompleteFromAllAvailableModules() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
