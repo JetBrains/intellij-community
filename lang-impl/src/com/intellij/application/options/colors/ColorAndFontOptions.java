@@ -119,6 +119,9 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     if (scheme == null) return;
 
     EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
+
+    scheme.apply(clone);
+
     clone.setName(name);
     MyColorScheme newScheme = new MyColorScheme(clone);
     initScheme(newScheme);
@@ -581,12 +584,16 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
 
     public void apply() {
-      myParentScheme.setEditorFontSize(myFontSize);
-      myParentScheme.setEditorFontName(myFontName);
-      myParentScheme.setLineSpacing(myLineSpacing);
+      apply(myParentScheme);
+    }
+
+    public void apply(EditorColorsScheme scheme) {
+      scheme.setEditorFontSize(myFontSize);
+      scheme.setEditorFontName(myFontName);
+      scheme.setLineSpacing(myLineSpacing);
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
-        descriptor.apply(myParentScheme);
+        descriptor.apply(scheme);
       }
     }
 
