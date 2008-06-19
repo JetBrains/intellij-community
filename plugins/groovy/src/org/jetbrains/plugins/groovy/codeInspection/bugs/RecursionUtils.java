@@ -511,8 +511,11 @@ class RecursionUtils {
 
   private static boolean ifStatementDefinitelyRecurses(
       GrIfStatement ifStatement, GrMethod method) {
-    final GrExpression condition = (GrExpression) ifStatement.getCondition();
-    if (expressionDefinitelyRecurses(condition, method)) {
+    final GrCondition condition = ifStatement.getCondition();
+    if (!(condition instanceof GrExpression)) {
+      return false;
+    }
+    if (expressionDefinitelyRecurses((GrExpression) condition, method)) {
       return true;
     }
     final GrStatement thenBranch = ifStatement.getThenBranch();
