@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
- * @uthor ven
+ * @author ven
  */
 public class FindUsagesTest extends IdeaTestCase {
   protected CodeInsightTestFixture myFixture;

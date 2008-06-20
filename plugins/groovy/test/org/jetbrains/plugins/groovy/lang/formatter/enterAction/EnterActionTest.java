@@ -54,7 +54,6 @@ public class EnterActionTest extends ActionTestCase {
     );
   }
 
-
   protected EditorActionHandler getMyHandler() {
     return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
   }
