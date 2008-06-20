@@ -428,7 +428,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public SearchScope getUseScope() {
-    return PsiImplUtil.getUseScope(this);
+    return com.intellij.psi.impl.PsiImplUtil.getMemberUseScope(this);
   }
 
   public PsiElement getOriginalElement() {

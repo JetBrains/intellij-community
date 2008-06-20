@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -152,8 +151,8 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
 
   private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
     PsiMethod[] methods = clazz instanceof GrTypeDefinition ?
-        ((GrTypeDefinition) clazz).findCodeMethodsBySignature(proto, true) :
-        clazz.findMethodsBySignature(proto, true);
+            ((GrTypeDefinition) clazz).findCodeMethodsBySignature(proto, true) :
+            clazz.findMethodsBySignature(proto, true);
     for (PsiMethod method : methods) {
       if (clazz.equals(method.getContainingClass())) return true;
 
@@ -176,7 +175,8 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     if (isProperty()) {
       return getManager().getFileManager().getUseScope(this); //maximal scope
     }
-    return PsiImplUtil.getUseScope(this);
+    return com.intellij.psi.impl.PsiImplUtil.getMemberUseScope(this);
+    ;
   }
 
   public PsiElement getOriginalElement() {
