@@ -433,7 +433,11 @@ public class PsiUtilBase {
           break;
         }
       }
-      curOffset = elt.getTextRange().getEndOffset();
+      int endOffset = elt.getTextRange().getEndOffset();
+      if (endOffset == curOffset) {
+        endOffset++;
+      }
+      curOffset = endOffset;
     } while(curOffset < end);
     return narrowLanguage(lang, file.getLanguage());
   }
