@@ -1,0 +1,88 @@
+package com.intellij.openapi.keymap.impl.keyGestures;
+
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.impl.ActionProcessor;
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+
+public class KeyboardGestureProcessor {
+
+  IdeKeyEventDispatcher myDispatcher;
+
+  final KeyGestureState myWaitForStart = new KeyGestureState.WaitForStart(this);
+  final KeyGestureState myModifierPressed = new KeyGestureState.ModifierPressed(this);
+  final KeyGestureState myWaitForDblClick = new KeyGestureState.WaitForDblClick(this);
+  final KeyGestureState myWaitForAction = new KeyGestureState.WaitForAction(this);
+  final KeyGestureState myWaitForActionEnd = new KeyGestureState.WaitForActionEnd(this);
+
+  KeyGestureState myState = myWaitForStart;
+
+  StateContext myContext = new StateContext();
+
+  Timer myHoldTimer = new Timer(1200, new ActionListener() {
+    public void actionPerformed(final ActionEvent e) {
+    }
+  });
+
+  Timer myDblClickTimer = new Timer(500, new ActionListener() {
+    public void actionPerformed(final ActionEvent e) {
+      myState.processDblClickTimer();
+    }
+  });
+  private ActionProcessor myActionProcessor = new MyActionProcessor();
+  public ActionManager myActionManager = ActionManager.getInstance();
+
+  public KeyboardGestureProcessor(final IdeKeyEventDispatcher dispatcher) {
+    myDispatcher = dispatcher;
+  }
+
+  public boolean process() {
+    myContext.keyToProcess = myDispatcher.getContext().getInputEvent();
+    myContext.isModal = myDispatcher.getContext().isModalContext();
+    myContext.dataContext = myDispatcher.getContext().getDataContext();
+
+    return myState.process();
+  }
+
+  public boolean processInitState() {
+    myContext.focusOwner = myDispatcher.getContext().getFocusOwner();
+    return process();
+  }
+
+  void processCurrentState() {
+    myDispatcher.updateCurrentContext(myContext.focusOwner, getCurrentShortcut(), myContext.isModal);
+    myDispatcher.processAction(myContext.keyToProcess, myActionProcessor);
+  }
+
+  private Shortcut getCurrentShortcut() {
+    return KeyboardModifierGestureShortuct.newInstance(myContext.modifierType, myContext.actionShortcut);
+  }
+
+  void setState(KeyGestureState state) {
+    myState = state;
+    if (myState == myWaitForStart) {
+      myContext.actionKey = null;
+    }
+  }
+
+
+  private class MyActionProcessor implements ActionProcessor {
+    public AnActionEvent createEvent(final InputEvent inputEvent, final DataContext context, final String place, final Presentation presentation,
+                                     final ActionManager manager) {
+      myContext.actionPresentation = presentation;
+      myContext.actionPlace = place;
+      return myState.createActionEvent();
+    }
+
+    public void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent) {
+    }
+
+    public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
+    }
+  }
+
+}

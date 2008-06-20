@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
-class KeyProcessorContext {
+public class KeyProcessorContext {
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
   private JComponent myFoundComponent;
   private boolean myHasSecondStroke;
