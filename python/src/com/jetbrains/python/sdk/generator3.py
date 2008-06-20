@@ -65,10 +65,28 @@ else: # < 3.0
     
 
 #
+IDENT_PATTERN = "[A-Za-z_][0-9A-Za-z_]*" # re pattern for identifier
+STR_CHAR_PATTERN = "[0-9A-Za-z_.,\+\-&\*% ]" 
 
 DOC_FUNC_RE = re.compile("(?:.*\.)?(\w+)\(([^\)]*)\).*") # $1 = function name, $2 = arglist
 
-SANE_REPR_RE = re.compile("[A-Za-z_][0-9A-Za-z_]*(?:\(.*\))?") # identifier with possible (...)
+SANE_REPR_RE = re.compile(IDENT_PATTERN + "(?:\(.*\))?") # identifier with possible (...), go catches
+
+IDENT_RE = re.compile("(" + IDENT_PATTERN + ")") # $1 = identifier
+
+STARS_IDENT_RE = re.compile("(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, maybe with * or **
+
+IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + "\s*=)") # $1 = identifier with following '='
+
+VAL_RE  = re.compile(
+  "(-?[0-9]+)|"+
+  "('" + STR_CHAR_PATTERN + "*')|"+
+  '("' + STR_CHAR_PATTERN + '*")|'+
+  "(\[\])|"+
+  "(\{\})|"+
+  "(\(\))|" +
+  "(None)"
+) # $? = sane default value
 
 def _searchbases(cls, accum):
   # logic copied from inspect.py
@@ -135,6 +153,13 @@ EASY_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType, dict, tuple, list)
 
 def isSaneRValue(x):
   return isinstance(x, EASY_TYPES)
+  
+def sanitizeIdent(x):
+  "Takes an identifier and returns it sanitized"
+  if x in ("class", "object", "def", "self", "None"):
+    return "p_" + x
+  else:
+    return x
   
 
 class ModuleRedeclarator(object):
@@ -335,27 +360,56 @@ class ModuleRedeclarator(object):
           if matches[0] == p_name or is_init: 
             # they seem to really mention what we need
             sig_note = "restored from __doc__"
+            reqargs = []
+            optargs = []
+            optargvals = [] # values of optional args, "=x" or "", one per optarg
+            argmod = 1 # argument modifier counter for duplicate values
             if len(matches) > 1:
-              arg_grp = matches[1].split("[") # from "a, b[, c]" we want ("a, b", "c")
-              fixargs = arg_grp[0]
-              for arg in fixargs.split(", "):
-                if not arg:
-                  continue # for ''
+              argstr = matches[1]
+              # cut between fixed and optional args, e.g "a, b[, c]" or "a, b=1" 
+              cutpos = string.find(argstr, '[') # before this point come required args, after it optional
+              if cutpos < 0:
+                cutpos = len(argstr)
+              m = IDENT_EQ_RE.search(argstr)
+              if m:
+                othercutpos = m.start()
+              else:
+                othercutpos = len(argstr)
+              cutpos = min(cutpos, othercutpos)
+              # possible "required args" 
+              for arg in argstr[:cutpos].split(", "): 
                 arg = arg.strip("\"'") # doc might speak of f("foo")
-                if arg == "...":
+                m = IDENT_RE.search(arg)
+                if m and m.groups() and m.groups()[0]:
+                  argname = sanitizeIdent(m.groups(0)[0])
+                  if argname in reqargs:
+                    argname += str(argmod) # foo -> foo1, etc
+                    argmod += 1
+                  reqargs.append(argname)
+                elif arg == "...":
                   arg = "*more" # doc might speak of f(x, ...)
-                spec.append(arg)
-              # there could be "optional" args
-              for optarg in arg_grp[1:]:
-                cutpos = optarg.find("]")
-                if cutpos != -1:
-                  optarg = optarg[0 : cutpos] # cut possible final ]s
-                if optarg.startswith(","): # probably it was "a[,b]" or "a [, b]" 
-                  optarg = optarg[1:]
-                optarg = optarg.strip()
-                if optarg.find("*") == -1 and optarg.find("=") == -1: # simple argument, not "*x" or "x=1"
-                  optarg += "=None" # NOTE: default value is not exactly good
-                spec.append(optarg)
+                  reqargs.append(arg)
+                  # else: skip the unknown thing
+              # possible "optional args" 
+              for arg in argstr[cutpos:].split(','):
+                m = STARS_IDENT_RE.search(arg)
+                if m and m.groups() and m.groups()[0]: # got default value?
+                  argname = sanitizeIdent(m.groups(0)[0])
+                  if argname in reqargs or argname in optargs:
+                    argname += str(argmod) # foo -> foo1, etc
+                    argmod += 1
+                  optargs.append(argname)
+                  if argname.startswith("*"):
+                    optargvals.append("") # "*x" args can't have default values
+                  else:
+                    mdef = VAL_RE.search(arg)
+                    if mdef:
+                      defval = arg[mdef.start() : mdef.end()]
+                    else:
+                      defval = 'None'
+                    optargvals.append("="+defval)
+            # reconstruct the spec
+            spec = reqargs + [n + v for (n, v) in zip(optargs, optargvals)]
       else:
         funcdoc = None
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # " + sig_note, indent);
@@ -548,7 +602,79 @@ class ModuleRedeclarator(object):
         self._defined[item_name] = True
         self.out("", 0) # empty line after each item
     
-    
+
+# command-line interface
+if __name__ == "__main__":
+  from getopt import getopt
+  import os
+  try:
+    import io  # in 3.0
+    fopen = io.open
+  except ImportError:
+    fopen = open
+  
+  # handle cmdline
+  helptext="""Generates interface skeletons for python modules.
+  Usage: generator [options] [name ...]
+  Every "name" is a (qualified) module name, e.g. "foo.bar"
+  Output files will be named as modules plus ".py" suffix.
+  Normally every name processed will be printed and stdout flushed. 
+  Options are:
+  -h -- prints this help message.
+  -d dir -- output directory, must be writable. If not given, current dir is used. 
+  -b -- use names from sys.builtin_module_names
+  -q -- quiet, do not print anything on stdout. Errors still go to stderr.
+  """
+  opts, fnames = getopt(sys.argv[1:], "d:hbq")
+  opts = dict(opts)
+  if not opts or '-h' in opts:
+    print(helptext)
+    sys.exit(0)
+  if '-b' not in opts and not fnames:
+    print("Neither -b nor any module name given")  
+    sys.exit(1)
+  quiet = '-q' in opts
+  subdir = opts.get('-d', '')
+  # determine names
+  names = fnames
+  if '-b' in opts:
+    names.extend(sys.builtin_module_names)
+    names.remove('__main__') # we don't want ourselves processed
+  # go on
+  for name in names:
+    if not quiet:
+      sys.stdout.write(name + "\n")
+      sys.stdout.flush()
+    action = "doing nothing"
+    try:
+      quals = name.split(".")
+      dirname = subdir
+      if dirname:
+        dirname += os.path.sep # "a -> a/"
+      for pathindex in range(len(quals)-1): # create dirs for all quals but last
+        dirname += os.path.sep.join(quals[0 : pathindex+1])
+        if not os.path.isdir(dirname):
+          action = "creating subdir " + dirname
+          os.mkdir(dirname)
+      fname = dirname + os.path.sep + quals[-1] + ".py"
+      action = "opening " + fname
+      outfile = fopen(fname, "w")
+      #
+      action = "importing"
+      mod = __import__(name) 
+      # we can't really import a.b.c, only a, so follow the path
+      for q in quals[1:]:
+        action = "getting submodule " + q
+        mod = getattr(mod, q)
+      #
+      action = "restoring"
+      r = ModuleRedeclarator(mod, outfile)
+      r.redo(name)
+      action = "closing " + fname
+      outfile.close()
+    except:
+      sys.stderr.write("Failed to process " + name + " while " + action + "\n")
+  
 ## simple use cases:
 """
 import generator3 as g3
