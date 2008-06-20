@@ -56,7 +56,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
 
   protected abstract Set<String> getVariants(MavenIndicesManager manager, MavenId id) throws MavenIndexException;
 
-  private MavenId getId(ConvertContext context) {
+  protected MavenId getId(ConvertContext context) {
     Dependency dep = getMavenDependency(context);
     if (dep != null) {
       return createId(context, dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
@@ -152,12 +152,12 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     return result;
   }
 
-  private MavenParent getMavenParent(ConvertContext context) {
+  protected MavenParent getMavenParent(ConvertContext context) {
     DomElement parentElement = context.getInvocationElement().getParent();
     return parentElement instanceof MavenParent ? (MavenParent)parentElement : null;
   }
 
-  private Dependency getMavenDependency(ConvertContext context) {
+  protected Dependency getMavenDependency(ConvertContext context) {
     DomElement parentElement = context.getInvocationElement().getParent();
     return parentElement instanceof Dependency ? (Dependency)parentElement : null;
   }

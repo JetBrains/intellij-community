@@ -1,7 +1,10 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 
 public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
@@ -109,7 +112,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  <version>1</version>" +
                      "  <relativePath>parent/pom.xml</relativePath>" +
                      "</parent>");
-    
+
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
                                          "<artifactId>parent</artifactId>" +
@@ -118,6 +121,35 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
     assertEquals(getPsiFile(parent), ref.resolve());
+  }
+
+  public void testRelativePathCompletion() throws Throwable {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath><caret></relativePath>" +
+                     "</parent>");
+
+    createModulePom("dir/one",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>one</artifactId>" +
+                    "<version>1</version>");
+
+    createModulePom("two",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>two</artifactId>" +
+                    "<version>1</version>");
+
+    assertCompletionVariants(myProjectPom, "dir/one/pom.xml", "two/pom.xml");
   }
 
   public void testHighlightingUnknownValues() throws Throwable {
@@ -147,5 +179,65 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "</parent>");
 
     checkHighlighting();
+  }
+
+  public void testPathQuickFixForInvalidValue() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    VirtualFile m = createModulePom("bar",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>one</artifactId>" +
+                                    "<version>1</version>");
+
+    importSeveralProjects(myProjectPom, m);
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>one</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath><caret>xxx</relativePath>" +
+                     "</parent>");
+
+    IntentionAction i = getIntentionAtCaret("Fix relative path");
+    assertNotNull(i);
+
+    myCodeInsightFixture.launchAction(i);
+
+    int offset = myCodeInsightFixture.getEditor().getCaretModel().getOffset();
+    PsiElement el = myCodeInsightFixture.getFile().findElementAt(offset);
+
+    assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));
+  }
+
+  public void testDoNotShowPathQuickFixForValidPath() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    VirtualFile m = createModulePom("bar",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>one</artifactId>" +
+                                    "<version>1</version>");
+
+    importSeveralProjects(myProjectPom, m);
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>one</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath><caret>bar/pom.xml</relativePath>" +
+                     "</parent>");
+
+    assertNull(getIntentionAtCaret("Fix relative path"));
   }
 }

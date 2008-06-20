@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.IOException;
@@ -100,6 +102,13 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
 
   protected void checkHighlighting(VirtualFile f) throws Throwable {
     myCodeInsightFixture.testHighlighting(true, true, true, f);
+  }
+
+  protected IntentionAction getIntentionAtCaret(String intentionName) throws Throwable {
+    myCodeInsightFixture.configureFromExistingVirtualFile(myProjectPom);
+    List<IntentionAction> intentions = myCodeInsightFixture.getAvailableIntentions();
+
+    return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
   }
 
   protected PsiFile getPsiFile(VirtualFile f) {

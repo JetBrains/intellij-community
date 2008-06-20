@@ -7,9 +7,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-
-import java.util.List;
 
 public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   public void testCompleteFromAllAvailableModules() throws Exception {
@@ -462,12 +459,5 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertEquals(doc, selectedEditor.getDocument());
 
     assertEquals(expectedText, doc.getText());
-  }
-
-  private IntentionAction getIntentionAtCaret(String intentionName) throws Throwable {
-    myCodeInsightFixture.configureFromExistingVirtualFile(myProjectPom);
-    List<IntentionAction> intentions = myCodeInsightFixture.getAvailableIntentions();
-
-    return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
   }
 }

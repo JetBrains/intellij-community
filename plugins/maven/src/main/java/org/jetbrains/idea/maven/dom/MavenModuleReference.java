@@ -32,7 +32,6 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConstants;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,13 +105,8 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
   }
 
   private String calcRelativeModulePath(VirtualFile modulePom) {
-    String result = FileUtil.getRelativePath(new File(myVirtualFile.getParent().getPath()),
-                                             new File(modulePom.getPath()));
-
-    result = FileUtil.toSystemIndependentName(result);
-    result = result.substring(0, result.length() - ("/" + MavenConstants.POM_XML).length());
-
-    return result;
+    String result = MavenDomUtil.calcRelativePath(myVirtualFile.getParent(), modulePom);
+    return result.substring(0, result.length() - ("/" + MavenConstants.POM_XML).length());
   }
 
   private PsiFile getPsiFile(VirtualFile file) {
