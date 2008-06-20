@@ -176,8 +176,13 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    myManager.save();
-    setModified(false);
+    try {
+      myManager.save();
+      setModified(false);
+    }
+    catch (MavenIndexException e) {
+      throw new ConfigurationException("Cannot save indices: " + e.getMessage());
+    }
   }
 
   public void reset() {

@@ -85,7 +85,7 @@ public class MavenIndices {
     FileUtil.delete(myIndicesDir);
   }
 
-  public synchronized void save() {
+  public synchronized void save() throws MavenIndexException {
     try {
       FileOutputStream fs = new FileOutputStream(getListFile());
       try {
@@ -100,7 +100,7 @@ public class MavenIndices {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new MavenIndexException(e);
     }
   }
 

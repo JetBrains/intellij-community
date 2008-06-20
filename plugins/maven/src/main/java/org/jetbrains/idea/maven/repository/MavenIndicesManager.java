@@ -162,7 +162,10 @@ public class MavenIndicesManager implements ApplicationComponent {
       myEmbedder = null;
     }
     catch (MavenEmbedderException e) {
-      throw new RuntimeException(e);
+      MavenLog.info(e);
+    }
+    catch (MavenIndexException e) {
+      logError(e);
     }
   }
 
@@ -204,7 +207,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     return new MavenIndicesConfigurable(p, this);
   }
 
-  public void save() {
+  public void save() throws MavenIndexException {
     myIndices.save();
   }
 
