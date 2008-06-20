@@ -34,7 +34,6 @@ public class KeyboardGestureProcessor {
     }
   });
   private ActionProcessor myActionProcessor = new MyActionProcessor();
-  public ActionManager myActionManager = ActionManager.getInstance();
 
   public KeyboardGestureProcessor(final IdeKeyEventDispatcher dispatcher) {
     myDispatcher = dispatcher;
