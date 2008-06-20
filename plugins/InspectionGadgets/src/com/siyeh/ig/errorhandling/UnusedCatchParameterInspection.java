@@ -37,8 +37,6 @@ public class UnusedCatchParameterInspection extends BaseInspection {
     public boolean m_ignoreCatchBlocksWithComments = false;
     /** @noinspection PublicField */
     public boolean m_ignoreTestCases = false;
-    /** @noinspection PublicField */
-    public boolean m_ignoreIgnoreParameter = true;
 
     @NotNull
     public String getDisplayName() {
@@ -55,20 +53,27 @@ public class UnusedCatchParameterInspection extends BaseInspection {
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "unused.catch.parameter.ignore.empty.option"),
                 "m_ignoreTestCases");
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "unused.catch.parameter.ignore.name.option"),
-                "m_ignoreIgnoreParameter");
         return optionsPanel;
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final boolean namedIgnoreButUsed = ((Boolean) infos[0]).booleanValue();
+        if (namedIgnoreButUsed) {
+            return InspectionGadgetsBundle.message(
+                "used.catch.parameter.named.ignore.problem.descriptor"
+            );
+        }
         return InspectionGadgetsBundle.message(
                 "unused.catch.parameter.problem.descriptor");
     }
 
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
+        final boolean namedIgnoreButUsed = ((Boolean) infos[0]).booleanValue();
+        if (namedIgnoreButUsed) {
+            return null;
+        }
         return new UnusedCatchParameterFix();
     }
 
@@ -121,11 +126,8 @@ public class UnusedCatchParameterInspection extends BaseInspection {
                 return;
             }
             @NonNls final String parametername = parameter.getName();
-            if (m_ignoreIgnoreParameter &&
-                    ("ignore".equals(parametername) ||
-                            "ignored".equals(parametername))) {
-                return;
-            }
+            final boolean namedIgnore = "ignore".equals(parametername) ||
+                    "ignored".equals(parametername);
             final PsiCodeBlock block = section.getCatchBlock();
             if (block == null) {
                 return;
@@ -142,9 +144,14 @@ public class UnusedCatchParameterInspection extends BaseInspection {
                     new CatchParameterUsedVisitor(parameter);
             block.accept(visitor);
             if (visitor.isUsed()) {
+                if (namedIgnore) {
+                    registerVariableError(parameter, Boolean.valueOf(true));
+                }
+                return;
+            } else if (namedIgnore) {
                 return;
             }
-            registerVariableError(parameter);
+            registerVariableError(parameter, Boolean.valueOf(false));
         }
     }
 }
