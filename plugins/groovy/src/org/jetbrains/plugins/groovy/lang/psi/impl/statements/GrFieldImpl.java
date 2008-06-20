@@ -176,7 +176,6 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
       return getManager().getFileManager().getUseScope(this); //maximal scope
     }
     return com.intellij.psi.impl.PsiImplUtil.getMemberUseScope(this);
-    ;
   }
 
   public PsiElement getOriginalElement() {
