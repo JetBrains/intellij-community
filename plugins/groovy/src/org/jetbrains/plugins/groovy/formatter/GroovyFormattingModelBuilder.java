@@ -41,8 +41,10 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     if (element instanceof GspOuterGroovyElement) {
       containingFile = ((GspFile) element.getContainingFile()).getGroovyLanguageRoot();
     }
+    ASTNode astNode = containingFile.getNode();
+    assert astNode != null;
     return FormattingModelProvider.createFormattingModelForPsiFile(containingFile,
-        new GroovyBlock(node, null, Indent.getAbsoluteNoneIndent(), null, settings), settings);
+            new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, settings), settings);
   }
 
   @Nullable

@@ -57,10 +57,6 @@ public class FindUsagesTest extends IdeaTestCase {
     super.tearDown();
   }
 
-  public void testConstructor1() throws Throwable {
-    doConstructorTest("constructor1/A.groovy", 2);
-  }
-
   private void doConstructorTest(String filePath, int expectedCount) throws Throwable {
     myFixture.configureByFile(filePath);
     final PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
@@ -70,10 +66,6 @@ public class FindUsagesTest extends IdeaTestCase {
     final Query<PsiReference> query = ReferencesSearch.search(method);
 
     assertEquals(expectedCount, query.findAll().size());
-  }
-
-  public void testSetter1() throws Throwable {
-    doTest("setter1/A.groovy", 2);
   }
 
   public void testDerivedClass() throws Throwable {
@@ -86,6 +78,14 @@ public class FindUsagesTest extends IdeaTestCase {
     final Query<PsiClass> query = DirectClassInheritorsSearch.search(clazz, projectScope);
 
     assertEquals(1, query.findAll().size());
+  }
+
+  public void testConstructor1() throws Throwable {
+    doConstructorTest("constructor1/A.groovy", 2);
+  }
+
+  public void testSetter1() throws Throwable {
+    doTest("setter1/A.groovy", 2);
   }
 
   public void testGetter1() throws Throwable {

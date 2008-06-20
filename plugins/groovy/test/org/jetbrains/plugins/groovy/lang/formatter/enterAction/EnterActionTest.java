@@ -40,7 +40,7 @@ import java.io.IOException;
 public class EnterActionTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/formatter/enterAction/data/";
+  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/formatter/enterAction/data/actual";
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;
@@ -49,8 +49,8 @@ public class EnterActionTest extends ActionTestCase {
 
   public EnterActionTest() {
     super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
+            System.getProperty("path") :
+            DATA_PATH
     );
   }
 
