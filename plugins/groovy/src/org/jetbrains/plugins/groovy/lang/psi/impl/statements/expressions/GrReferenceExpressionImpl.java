@@ -245,7 +245,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       } else {
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && "java.lang.Object".equals(containingClass.getQualifiedName()) &&
-            "getClass".equals(method.getName())) {
+                "getClass".equals(method.getName())) {
           result = getTypeForObjectGetClass(facade, method);
         } else {
           if (method instanceof GrAccessorMethod) {
@@ -271,7 +271,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else if (resolved == null) {
       if ("class".equals(getReferenceName())) {
         return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.Class",
-            getResolveScope());
+                getResolveScope());
       }
 
       GrExpression qualifier = getQualifierExpression();
@@ -309,7 +309,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     if (type instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType) type).resolve();
       if (clazz != null &&
-          "java.lang.Class".equals(clazz.getQualifiedName())) {
+              "java.lang.Class".equals(clazz.getQualifiedName())) {
         PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
         if (typeParameters.length == 1) {
           PsiClass qualifierClass = null;
@@ -397,8 +397,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (propertyCandidates.length > 0) return propertyCandidates;
       if (refExpr.getKind() == Kind.TYPE_OR_PROPERTY) {
         EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression ?
-            EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE) :
-            EnumSet.of(ClassHint.ResolveKind.CLASS);
+                EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE) :
+                EnumSet.of(ClassHint.ResolveKind.CLASS);
         ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, kinds);
         resolveImpl(refExpr, classProcessor);
         return classProcessor.getCandidates();
@@ -479,7 +479,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                 PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
                 if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
                 if (typeParameters.length == 1) {
-                  substitutor.put(typeParameters[0], qualifierType);
+                  substitutor = substitutor.put(typeParameters[0], qualifierType);
                   state = state.put(PsiSubstitutor.KEY, substitutor);
                 }
                 if (!javaLangClass.processDeclarations(processor, state, null, refExpr)) return;
@@ -499,7 +499,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         PsiClass qualifierClass = qualifierResult.getElement();
         if (qualifierClass != null) {
           if (!qualifierClass.processDeclarations(processor,
-              ResolveState.initial().put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor()), null, refExpr)) return;
+                  ResolveState.initial().put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor()), null, refExpr))
+            return;
         }
         if (!ResolveUtil.processCategoryMembers(refExpr, processor, (PsiClassType) qualifierType)) return;
       } else if (qualifierType instanceof PsiArrayType) {
