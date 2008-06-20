@@ -80,7 +80,6 @@ public class CompileDriver {
   private Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
   private Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
 
-  private ProjectRootManager myProjectRootManager;
   @NonNls private static final String VERSION_FILE_NAME = "version.dat";
   @NonNls private static final String LOCK_FILE_NAME = "in_progress.dat";
 
@@ -111,7 +110,6 @@ public class CompileDriver {
       }
     }
 
-    myProjectRootManager = ProjectRootManager.getInstance(myProject);
     myProcessingCompilerAdapterFactory = new FileProcessingCompilerAdapterFactory() {
       public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
         return new FileProcessingCompilerAdapter(context, compiler);
@@ -832,7 +830,7 @@ public class CompileDriver {
           if (!myShouldClearOutputDirectory) {
             final ArrayList<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
             TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-                context, ((TranslatingCompiler)compiler), Arrays.<VirtualFile>asList(allSources).iterator(), true, new ArrayList<VirtualFile>(), toDelete
+                context, (TranslatingCompiler)compiler, Arrays.<VirtualFile>asList(allSources).iterator(), true, new ArrayList<VirtualFile>(), toDelete
             );
             for (Trinity<File, String, Boolean> trinity : toDelete) {
               final File file = trinity.getFirst();
@@ -1147,13 +1145,12 @@ public class CompileDriver {
                                  final boolean onlyCheckStatus) throws ExitException {
 
 
-    final boolean[] wereFilesDeleted = new boolean[]{false};
     final Set<VirtualFile> toCompile = new HashSet<VirtualFile>();
     final List<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
     context.getProgressIndicator().pushState();
-    
+
+    final boolean[] wereFilesDeleted = new boolean[]{false};
     try {
-      final IOException[] ex = new IOException[] {null};
       final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
       ApplicationManager.getApplication().runReadAction(new Runnable() { // todo: do we really need readAction here?
         public void run() {
@@ -1176,10 +1173,7 @@ public class CompileDriver {
           }
         }
       });
-      if (ex[0] != null) {
-        throw ex[0];
-      }
-      
+
       if (onlyCheckStatus) {
         if (toDelete.isEmpty() && toCompile.isEmpty()) {
           return false;
@@ -1221,7 +1215,7 @@ public class CompileDriver {
     return !toCompile.isEmpty() || wereFilesDeleted[0];
   }
 
-  private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete, final Set<File> outputDirectories) throws CacheCorruptedException, IOException {
+  private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete, final Set<File> outputDirectories) throws CacheCorruptedException {
     DeleteHelper deleteHelper = new DeleteHelper(outputDirectories);
     int total = toDelete.size();
     final DependencyCache dependencyCache = context.getDependencyCache();

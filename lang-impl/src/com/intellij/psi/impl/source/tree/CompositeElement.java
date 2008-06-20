@@ -93,7 +93,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
         current = current.getTreeNext();
       }
     }
-    current = lastKnownStart != parent ? lastKnownStart : parent.getFirstChildNode();
+    current = lastKnownStart == parent ? parent.getFirstChildNode() : lastKnownStart;
     int start = lastKnownStart.myStartOffset;
     while(current != this) {
       if(current instanceof CompositeElement){
@@ -243,7 +243,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   public ASTNode[] getChildren(TokenSet filter) {
     int count = countChildren(filter);
     if (count == 0) {
-      return TreeElement.EMPTY_ARRAY;
+      return EMPTY_ARRAY;
     }
     final ASTNode[] result = new ASTNode[count];
     count = 0;

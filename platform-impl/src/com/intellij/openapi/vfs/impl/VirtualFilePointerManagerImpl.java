@@ -26,9 +26,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent{
-  private THashMap<VirtualFilePointerListener, THashSet<VirtualFilePointer>> myListenerToPointersMap;
+  private Map<VirtualFilePointerListener, Set<VirtualFilePointer>> myListenerToPointersMap;
 
   private WeakValueHashMap<String, VirtualFilePointer> myUrlToPointerMap;
 
@@ -111,10 +113,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private void initContainers() {
     myContainers = new WeakList<VirtualFilePointerContainerImpl>();
-    myListenerToPointersMap = new THashMap<VirtualFilePointerListener, THashSet<VirtualFilePointer>>();
-    myUrlToPointerMap = new WeakValueHashMap<String, VirtualFilePointer>(SystemInfo.isFileSystemCaseSensitive
-                                                                         ? (TObjectHashingStrategy<String>)TObjectHashingStrategy.CANONICAL
-                                                                         : CaseInsensitiveStringHashingStrategy.INSTANCE);
+    myListenerToPointersMap = new THashMap<VirtualFilePointerListener, Set<VirtualFilePointer>>();
+    TObjectHashingStrategy<String> strategy = SystemInfo.isFileSystemCaseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE;
+    myUrlToPointerMap = new WeakValueHashMap<String, VirtualFilePointer>(strategy);
   }
 
   private synchronized VirtualFilePointer doAdd(String url, VirtualFile file, final VirtualFilePointerListener listener) {
@@ -134,7 +135,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
 
     if (listener != null) {
-      THashSet<VirtualFilePointer> pointerSet = myListenerToPointersMap.get(listener);
+      Set<VirtualFilePointer> pointerSet = myListenerToPointersMap.get(listener);
       if (pointerSet == null) {
         pointerSet = new THashSet<VirtualFilePointer>();
         myListenerToPointersMap.put(listener, pointerSet);
@@ -155,7 +156,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   public synchronized VirtualFilePointer duplicate(VirtualFilePointer pointer, VirtualFilePointerListener listener) {
     if (listener != null) {
-      THashSet<VirtualFilePointer> virtualFilePointers = myListenerToPointersMap.get(listener);
+      Set<VirtualFilePointer> virtualFilePointers = myListenerToPointersMap.get(listener);
 
       if (virtualFilePointers == null) {
         virtualFilePointers = new THashSet<VirtualFilePointer>();
@@ -169,7 +170,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   public synchronized void kill(VirtualFilePointer pointer, final VirtualFilePointerListener listener) {
     if (listener != null) {
-      final THashSet<VirtualFilePointer> pointerSet = myListenerToPointersMap.get(listener);
+      Set<VirtualFilePointer> pointerSet = myListenerToPointersMap.get(listener);
       if (pointerSet != null) {
         pointerSet.remove(pointer);
         if (pointerSet.isEmpty()) myListenerToPointersMap.remove(listener);

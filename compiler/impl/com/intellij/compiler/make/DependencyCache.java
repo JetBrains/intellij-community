@@ -54,9 +54,9 @@ public class DependencyCache {
   private SymbolTable mySymbolTable;
   private final String mySymbolTableFilePath;
   private final String myStoreDirectoryPath;
-  private static final @NonNls String SYMBOLTABLE_FILE_NAME = "symboltable.dat";
+  @NonNls private static final String SYMBOLTABLE_FILE_NAME = "symboltable.dat";
 
-  public DependencyCache(String storeDirectoryPath) {
+  public DependencyCache(@NonNls String storeDirectoryPath) {
     myStoreDirectoryPath = storeDirectoryPath;
     LOG.assertTrue(myStoreDirectoryPath != null);
 
@@ -142,12 +142,12 @@ public class DependencyCache {
     final DependencyCacheNavigator navigator = getCacheNavigator();
 
     final Job<Object> cleanJob = JobScheduler.getInstance().createJob("cleaning stuff", Job.DEFAULT_PRIORITY);
-    final CacheCorruptedException[] exception = new CacheCorruptedException[] {null};
 
     // remove unnecesary dependencies
     final TIntHashSet toClean = new TIntHashSet();
     toClean.addAll(namesToUpdate);
     toClean.addAll(myClassesWithSourceRemoved.toArray());
+    final CacheCorruptedException[] exception = new CacheCorruptedException[]{null};
     for (final int qName : toClean.toArray()) {
       final int oldClassId = cache.getClassId(qName);
       if (oldClassId == Cache.UNKNOWN) {
@@ -786,10 +786,6 @@ public class DependencyCache {
       dollarIndex = qualifiedName.lastIndexOf('$');
     }
     return false;
-  }
-
-  private static PsiClass getTopLevelClass(PsiClass psiClass) {
-    return PsiUtil.getTopLevelClass(psiClass);
   }
 
   private class DeclaringClassFinder implements ClassInfoProcessor {
