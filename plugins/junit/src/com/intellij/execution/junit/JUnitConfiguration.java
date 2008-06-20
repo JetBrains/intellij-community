@@ -40,11 +40,15 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.ui.classFilter.ClassFilter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class JUnitConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
@@ -91,7 +95,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
       }
 
       if (pattern != null && pattern.length() > 0) {
-        setCoveragePatterns(new String[]{pattern + ".*"});
+        setCoveragePatterns(new ClassFilter[]{new ClassFilter(pattern + ".*")});
       }
     }
   }

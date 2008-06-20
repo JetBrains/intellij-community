@@ -178,7 +178,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(config.getCoverageFilePath());
       LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
       myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(config.getGeneratedName() + " Coverage Results", fileProvider,
-                                                                    config.getCoveragePatterns(), new Date().getTime(),
+                                                                    config.getPatterns(), new Date().getTime(),
                                                                     null, config.getCoverageRunner(), config.isTrackPerTestCoverage());
       LOGGER.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
       config.appendCoverageArgument(javaParameters);
