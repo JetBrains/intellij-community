@@ -5,7 +5,6 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.extensions.Extensions;
@@ -82,7 +81,10 @@ public class NavBarModel {
   }
 
   protected boolean updateModel(DataContext dataContext) {
-    PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (psiElement == null) {
+      psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
+    }
     psiElement = normalize(psiElement);
     if (psiElement != null && psiElement.isValid()) {
       return updateModel(psiElement);
