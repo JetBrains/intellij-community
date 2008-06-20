@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,25 +41,26 @@ public class ObsoleteCollectionInspection extends BaseInspection {
         return "UseOfObsoleteCollectionType";
     }
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "use.obsolete.collection.type.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "use.obsolete.collection.type.problem.descriptor");
     }
 
-    @Nullable
+    @Override @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "use.obsolete.collection.type.ignore.library.arguments.option"
         ), this, "ignoreLibraryArguments");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ObsoleteCollectionVisitor();
     }
@@ -107,7 +108,8 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             registerError(typeElement);
         }
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression newExpression){
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression newExpression){
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
             if (!isObsoleteCollectionType(type)){
@@ -151,9 +153,8 @@ public class ObsoleteCollectionInspection extends BaseInspection {
                             GlobalSearchScope.fileScope(containingFile));
             for (PsiReference reference : query) {
                 final PsiElement element = reference.getElement();
-                final PsiElement parent = element.getParent();
                 if (isObsoleteCollectionTypeElementArgumentOfLibraryMethod(
-                        parent)) {
+                        element)) {
                     return true;
                 }
             }
