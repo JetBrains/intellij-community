@@ -31,4 +31,6 @@ public interface TldDescriptor extends XmlNSDescriptor {
   XmlFile getDeclarationFile();
 
   FunctionDescriptor getFunctionDescriptor(String name);
+
+  void resetClassloaderState();
 }

@@ -20,4 +20,6 @@ public interface JspElementDescriptor extends XmlElementDescriptor {
   boolean isRequiredAttributeImplicitlyPresent(XmlTag tag,String attributeName);
   @Nullable
   XmlTag findVariableWithName(String name);
+
+  void resetClassloaderState();
 }
