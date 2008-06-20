@@ -232,7 +232,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(
           name,
           new DefaultCoverageFileProvider(coverageFileName),
-          getCoveragePatterns(),
+          getPatterns(),
           lastCoverageTime,
           getSuiteToMergeWith(), getCoverageRunner(), isTrackPerTestCoverage());
         appendCoverageArgument(params);
