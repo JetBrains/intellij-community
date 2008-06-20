@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariablePassedAsArgumentVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class MismatchedArrayReadWriteInspection extends BaseInspection {
+public class MismatchedArrayReadWriteInspection extends BaseInspection{
 
     @NotNull
     public String getID(){
@@ -76,13 +77,14 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
             final boolean written = arrayContentsAreWritten(field,
                                                             containingClass);
             final boolean read = arrayContentsAreRead(field, containingClass);
-            if (written == read) {
+            if (written == read){
                 return;
             }
             registerFieldError(field, Boolean.valueOf(written));
         }
 
-        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable){
+        @Override public void visitLocalVariable(
+                @NotNull PsiLocalVariable variable){
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
@@ -120,7 +122,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
             if(VariableAccessUtils.variableIsReturned(variable, context)){
                 return true;
             }
-            if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+            if(variableIsWrittenAsMethodArgument(variable,
                     context)){
                 return true;
             }
@@ -146,8 +148,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
             if(VariableAccessUtils.variableIsReturned(variable, context)){
                 return true;
             }
-            if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                    context)){
+            if(variableIsReadAsMethodArgument(variable, context)) {
                 return true;
             }
             return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
@@ -163,9 +164,121 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
                     (PsiNewExpression) initializer;
             return newExpression.getArrayInitializer() == null;
         }
+
+        public static boolean variableIsWrittenAsMethodArgument(
+                @NotNull PsiVariable variable, @NotNull PsiElement context){
+            final VariablePassedAsArgumentVisitor visitor =
+                    new VariablePassedAsArgumentVisitor(variable, true);
+            context.accept(visitor);
+            return visitor.isPassed();
+        }
+
+        public static boolean variableIsReadAsMethodArgument(
+                @NotNull PsiVariable variable, @NotNull PsiElement context){
+            final VariablePassedAsArgumentVisitor visitor =
+                    new VariablePassedAsArgumentVisitor(variable, false);
+            context.accept(visitor);
+            return visitor.isPassed();
+        }
+
+        static class VariablePassedAsArgumentVisitor
+                extends JavaRecursiveElementVisitor{
+
+            @NotNull
+            private final PsiVariable variable;
+            private final boolean write;
+            private boolean passed = false;
+
+            public VariablePassedAsArgumentVisitor(
+                    @NotNull PsiVariable variable, boolean write){
+                super();
+                this.variable = variable;
+                this.write = write;
+            }
+
+            @Override public void visitElement(@NotNull PsiElement element){
+                if(!passed){
+                    super.visitElement(element);
+                }
+            }
+
+            @Override public void visitMethodCallExpression(
+                    @NotNull PsiMethodCallExpression call){
+                if(passed){
+                    return;
+                }
+                super.visitMethodCallExpression(call);
+                final PsiExpressionList argumentList = call.getArgumentList();
+                final PsiExpression[] arguments = argumentList.getExpressions();
+                for(int i = 0; i < arguments.length; i++){
+                    final PsiExpression argument = arguments[i];
+                    if(VariableAccessUtils.mayEvaluateToVariable(argument,
+                            variable)){
+                        if(write && i == 0 && isCallToSystemArraycopy(call)){
+                            return;
+                        }
+                        if(!write && i == 2 && isCallToSystemArraycopy(call)){
+                            return;
+                        }
+                        passed = true;
+                    }
+                }
+            }
+
+            private static boolean isCallToSystemArraycopy(
+                    PsiMethodCallExpression call){
+                final PsiReferenceExpression methodExpression =
+                        call.getMethodExpression();
+                final String name =
+                        methodExpression.getReferenceName();
+                if(!"arraycopy".equals(name)){
+                    return false;
+                }
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if(!(qualifier instanceof PsiReferenceExpression)){
+                    return false;
+                }
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression) qualifier;
+                final PsiElement element =
+                        referenceExpression.resolve();
+                if(!(element instanceof PsiClass)){
+                    return false;
+                }
+                final PsiClass aClass = (PsiClass) element;
+                final String qualifiedName =
+                        aClass.getQualifiedName();
+                return "java.lang.System".equals(qualifiedName);
+            }
+
+            @Override public void visitNewExpression(
+                    @NotNull PsiNewExpression newExpression){
+                if(passed){
+                    return;
+                }
+                super.visitNewExpression(newExpression);
+                final PsiExpressionList argumentList =
+                        newExpression.getArgumentList();
+                if(argumentList == null){
+                    return;
+                }
+                final PsiExpression[] arguments = argumentList.getExpressions();
+                for(final PsiExpression argument : arguments){
+                    if(VariableAccessUtils.mayEvaluateToVariable(argument,
+                            variable)){
+                        passed = true;
+                    }
+                }
+            }
+
+            public boolean isPassed(){
+                return passed;
+            }
+        }
     }
 
-  public boolean runForWholeFile() {
-    return true;
-  }
+    public boolean runForWholeFile(){
+        return true;
+    }
 }
