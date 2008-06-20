@@ -17,7 +17,8 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -177,28 +178,6 @@ public class ClasspathPanel extends JPanel {
         }
       }
     });
-    final ActionManager actionManager = ActionManager.getInstance();
-    final DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
-      public void actionPerformed(AnActionEvent e) {
-        navigate();
-      }
-
-      public void update(AnActionEvent e) {
-        final Presentation presentation = e.getPresentation();
-        presentation.setEnabled(false);
-        if (myEntryTable.getSelectedRowCount() != 1) return;
-        final OrderEntry entry = myModel.getItemAt(myEntryTable.getSelectedRow()).getEntry();
-        if (entry != null && entry.isValid()){
-          if (!(entry instanceof ModuleSourceOrderEntry)){
-            presentation.setEnabled(true);
-          }
-        }
-      }
-    };
-    navigateAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myEntryTable);
-    group.add(navigateAction);
-    PopupHandler.installPopupHandler(myEntryTable, group, ActionPlaces.UNKNOWN, actionManager);
   }
 
   private void navigate() {
