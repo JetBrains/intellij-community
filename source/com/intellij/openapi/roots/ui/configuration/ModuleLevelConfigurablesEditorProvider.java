@@ -57,7 +57,7 @@ public class ModuleLevelConfigurablesEditorProvider implements ModuleConfigurati
     for (final Configurable moduleConfigurable : moduleConfigurables) {
       result.add(new ConfigurableWrapper(moduleConfigurable));
     }
-    for(Configurable configurable: Extensions.getExtensions(MODULE_CONFIGURABLES)) {
+    for(Configurable configurable: Extensions.getExtensions(MODULE_CONFIGURABLES, myModule)) {
       result.add(new ConfigurableWrapper(configurable));
     }
 
