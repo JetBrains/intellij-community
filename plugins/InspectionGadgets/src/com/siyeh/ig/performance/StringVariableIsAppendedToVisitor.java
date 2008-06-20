@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,24 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
+
     private boolean appendedTo = false;
     private final PsiVariable variable;
+    private final boolean onlyWarnOnLoop;
 
-    StringVariableIsAppendedToVisitor(PsiVariable variable) {
+    StringVariableIsAppendedToVisitor(PsiVariable variable,
+                                      boolean onlyWarnOnLoop) {
         super();
         this.variable = variable;
+        this.onlyWarnOnLoop = onlyWarnOnLoop;
     }
 
-    @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
+    @Override public void visitAssignmentExpression(
+            @NotNull PsiAssignmentExpression assignment) {
         if(appendedTo){
             return;
         }
@@ -42,6 +48,10 @@ class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
             return;
         }
         final PsiReferenceExpression reference = (PsiReferenceExpression) lhs;
+        final PsiExpression qualifier = reference.getQualifierExpression();
+        if (qualifier != null) {
+            return;
+        }
         final PsiElement referent = reference.resolve();
         if (!variable.equals(referent)) {
             return;
@@ -49,8 +59,14 @@ class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
         final PsiJavaToken operationSign = assignment.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
         if (tokenType.equals(JavaTokenType.PLUSEQ)) {
+            if (onlyWarnOnLoop && !ControlFlowUtils.isInLoop(assignment)) {
+                return;
+            }
             appendedTo = true;
         } else if (isConcatenation(rhs)) {
+            if (onlyWarnOnLoop && !ControlFlowUtils.isInLoop(assignment)) {
+                return;
+            }
             appendedTo = true;
         }
     }
@@ -69,7 +85,8 @@ class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
             return isConcatenation(body);
         }
         if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) expression;
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) expression;
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             return isConcatenation(lhs) || isConcatenation(rhs);

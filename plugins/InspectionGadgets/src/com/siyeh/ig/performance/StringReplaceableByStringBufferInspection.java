@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,15 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-public class StringReplaceableByStringBufferInspection
-        extends BaseInspection {
+import javax.swing.*;
+
+public class StringReplaceableByStringBufferInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean onlyWarnOnLoop = true;
 
     @NotNull
     public String getID() {
@@ -43,14 +48,22 @@ public class StringReplaceableByStringBufferInspection
                 "string.replaceable.by.string.buffer.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "string.replaceable.by.string.buffer.in.loop.option"), 
+                this, "onlyWarnOnLoop");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new StringReplaceableByStringBufferVisitor();
     }
 
-    private static class StringReplaceableByStringBufferVisitor
+    private class StringReplaceableByStringBufferVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(
+                @NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
@@ -67,10 +80,11 @@ public class StringReplaceableByStringBufferInspection
             registerVariableError(variable);
         }
 
-        public static boolean variableIsAppendedTo(PsiVariable variable,
+        public boolean variableIsAppendedTo(PsiVariable variable,
                                                    PsiElement context) {
             final StringVariableIsAppendedToVisitor visitor = 
-                    new StringVariableIsAppendedToVisitor(variable);
+                    new StringVariableIsAppendedToVisitor(variable, 
+                            onlyWarnOnLoop);
             context.accept(visitor);
             return visitor.isAppendedTo();
         }
