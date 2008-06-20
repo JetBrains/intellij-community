@@ -3,6 +3,10 @@
   <extensionPoint name="codeFoldingOptionsProvider" interface="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
   <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
+  <extensionPoint name="moduleConfigurable"
+                  interface="com.intellij.openapi.options.Configurable"
+                  area="IDEA_MODULE"/>
+
   <extensionPoint name="indexPatternProvider"
                   interface="com.intellij.psi.search.IndexPatternProvider"/>
 
