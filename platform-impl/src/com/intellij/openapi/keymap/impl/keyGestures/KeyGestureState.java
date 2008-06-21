@@ -104,7 +104,7 @@ abstract class KeyGestureState {
       myContext.actionShortcut = KeyStroke.getKeyStrokeForEvent(myContext.actionKey);
       myContext.modifierType = KeyboardGestureAction.ModifierType.dblClick;
 
-      myProcessor.processCurrentState();
+      myProcessor.executeAction();
 
       return true;
     }

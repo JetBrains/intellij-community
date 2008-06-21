@@ -11,4 +11,5 @@ public interface ActionProcessor {
   void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent);
 
   void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent);
+
 }

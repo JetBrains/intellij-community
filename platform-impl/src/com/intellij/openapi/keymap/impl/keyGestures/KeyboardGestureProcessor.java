@@ -52,7 +52,7 @@ public class KeyboardGestureProcessor {
     return process();
   }
 
-  void processCurrentState() {
+  void executeAction() {
     myDispatcher.updateCurrentContext(myContext.focusOwner, getCurrentShortcut(), myContext.isModal);
     myDispatcher.processAction(myContext.keyToProcess, myActionProcessor);
   }
@@ -68,6 +68,10 @@ public class KeyboardGestureProcessor {
     }
   }
 
+  public ActionManager getActionManager() {
+    return ActionManager.getInstance();
+  }
+
 
   private class MyActionProcessor implements ActionProcessor {
     public AnActionEvent createEvent(final InputEvent inputEvent, final DataContext context, final String place, final Presentation presentation,
@@ -81,6 +85,32 @@ public class KeyboardGestureProcessor {
     }
 
     public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
+      final boolean isGestureAction = action instanceof KeyboardGestureAction;
+      actionEvent.accept(new AnActionEventVisitor() {
+        @Override
+        public void visitGestureInitEvent(final AnActionEvent anActionEvent) {
+          if (isGestureAction) {
+            execute(anActionEvent, action, e);
+          }
+        }
+
+        @Override
+        public void visitGesturePerformedEvent(final AnActionEvent anActionEvent) {
+          execute(anActionEvent, action, e);
+        }
+
+        @Override
+        public void visitGestureFinishEvent(final AnActionEvent anActionEvent) {
+          if (isGestureAction) {
+            execute(anActionEvent, action, e);
+          }
+        }
+      });
+    }
+
+    private void execute(final AnActionEvent anActionEvent, final AnAction action, final InputEvent e) {
+      action.actionPerformed(anActionEvent);
+      e.consume();
     }
   }
 
