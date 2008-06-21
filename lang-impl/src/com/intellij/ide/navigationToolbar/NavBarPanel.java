@@ -72,13 +72,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observer;
 import java.util.Observable;
+import java.util.Observer;
 
 /**
  * User: anna
@@ -778,22 +778,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   public void cutBorder(final int rightOffset) {
-    myScrollablePanel.setBorder(new EtchedBorder() {
+    myScrollablePanel.setBorder(new Border() {
       public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-        g.translate(x, y);
+        g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
+        g.drawLine(0, 0, width - rightOffset + 3, 0);
+        g.drawLine(0, height - 1 , width, height - 1);
+      }
 
-        g.setColor(etchType == LOWERED ? getShadowColor(c) : getHighlightColor(c));
-        g.drawLine(0, height - 2, 0, 0);
-        g.drawLine(0, 0, width - rightOffset, 0);
-        g.drawLine(0, height - 2, width - 2, height - 2);
-        g.drawLine(width - 2, height - 2, width - 2, 0);
+      public Insets getBorderInsets(final Component c) {
+        return new Insets(1, 1, 1, 1);
+      }
 
-        g.setColor(etchType == LOWERED ? getHighlightColor(c) : getShadowColor(c));
-        g.drawLine(1, height - 3, 1, 1);
-        g.drawLine(1, 1, width - 3, 1);
-        g.drawLine(0, height - 1, width - 1, height - 1);
-
-        g.translate(-x, -y);
+      public boolean isBorderOpaque() {
+        return true;
       }
     });
   }

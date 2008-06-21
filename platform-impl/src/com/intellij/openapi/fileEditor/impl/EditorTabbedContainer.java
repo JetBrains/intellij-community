@@ -4,8 +4,8 @@ import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -125,6 +126,7 @@ final class EditorTabbedContainer implements Disposable {
   private void updateTabBorder() {
     if (!myProject.isOpen()) return;
 
+    myTabs.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
     final List<String> rightIds =
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
      myTabs.setPaintBorder(10, -1, rightIds.size() > 0 ? 1 : 0, -1);
