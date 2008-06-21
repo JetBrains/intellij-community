@@ -42,9 +42,9 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -77,6 +77,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observer;
+import java.util.Observable;
 
 /**
  * User: anna
@@ -319,7 +321,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         final MyCompositeLabel label = new MyCompositeLabel(index,
                                                             hasChildren ? wrapIcon(icon, index, Color.gray) : icon,
                                                             NavBarModel.getPresentableText(object, getWindow()),
-                                                            myModel.getTextAttributes(object, false));
+                                                            myModel.getTextAttributes(object, false), myModel);
 
         installActions(index, hasChildren, icon, label);
         myList.add(label);
@@ -358,7 +360,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void paintComponent() {
     myPreferredWidth = 0;
     myScrollablePanel.removeAll();
-    myScrollablePanel.revalidate();
+    myScrollablePanel.invalidate();
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST,
                                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     final MyCompositeLabel toBeContLabel = getDotsLabel();
@@ -420,11 +422,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     final boolean hasNavigationButtons = lastIndx > 0 || myFirstIndex > 0;
     myLeftButton.setVisible(hasNavigationButtons);
     myRightButton.setVisible(hasNavigationButtons);
+
+    revalidate();
     repaint();
   }
 
   private MyCompositeLabel getDotsLabel() {
-    return new MyCompositeLabel(-1, null, "...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    return new MyCompositeLabel(-1, null, "...", SimpleTextAttributes.REGULAR_ATTRIBUTES, myModel);
   }
 
   private Window getWindow() {
@@ -877,16 +881,20 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     });
   }
 
-  protected class MyCompositeLabel extends JPanel {
+  protected static class MyCompositeLabel extends JPanel implements Observer {
     private JLabel myLabel;
     private SimpleColoredComponent myColoredComponent;
 
     private final String myText;
     private final SimpleTextAttributes myAttributes;
     private final int myIndex;
+    private int myLastSelectedIndex = -1;
 
-    public MyCompositeLabel(final int idx, final Icon icon, final String presentableText, final SimpleTextAttributes textAttributes) {
+    private NavBarModel myModel;
+
+    public MyCompositeLabel(final int idx, final Icon icon, final String presentableText, final SimpleTextAttributes textAttributes, NavBarModel model) {
       super(new GridBagLayout());
+      myModel = model;
       myIndex = idx;
       myText = presentableText;
       myAttributes = textAttributes;
@@ -894,6 +902,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
                                                            GridBagConstraints.NONE, new Insets(0, 2, 0, 0), 0, 0);
       setFont(UIUtil.getLabelFont());
       setBackground(UIUtil.getListBackground());
+      setOpaque(true);
       myLabel = new JLabel(icon);
       myLabel.setOpaque(false);
       add(myLabel, gc);
@@ -902,12 +911,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         {
           setPaintFocusBorder(true);
           setFocusBorderAroundIcon(true);
+          setOpaque(true);
         }
       };
       myColoredComponent.setIpad(new Insets(0, -1, 0, -1));
       myColoredComponent.append(presentableText, textAttributes);
       myColoredComponent.setOpaque(true);
       add(myColoredComponent, gc);
+
+      update();
     }
 
     public JLabel getLabel() {
@@ -918,8 +930,26 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       return myColoredComponent;
     }
 
-    protected void paintComponent(final Graphics g) {
-      super.paintComponent(g);
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      myModel.addSelectionObserver(this);
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      myModel.removeSelectionObserver(this);
+    }
+
+    public void update(final Observable o, final Object arg) {
+      if (myLastSelectedIndex != myModel.getSelectedIndex()) {
+        update();
+        myLastSelectedIndex = myModel.getSelectedIndex();
+      }
+    }
+
+    private void update() {
       myColoredComponent.clear();
       final boolean selected = myModel.getSelectedIndex() == myIndex;
       final Color fg = selected

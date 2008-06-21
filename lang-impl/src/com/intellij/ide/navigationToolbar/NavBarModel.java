@@ -37,6 +37,8 @@ public class NavBarModel {
   private int mySelectedIndex;
   private Project myProject;
 
+  private MyObservable myObservable = new MyObservable();
+
   public NavBarModel(final Project project) {
     myProject = project;
   }
@@ -359,7 +361,9 @@ public class NavBarModel {
   }
 
   public void setSelectedIndex(final int selectedIndex) {
+    if (mySelectedIndex == selectedIndex) return;
     mySelectedIndex = selectedIndex;
+    myObservable.fireChange();
   }
 
   private static final class SiblingsComparator implements Comparator<Object> {
@@ -392,6 +396,22 @@ public class NavBarModel {
         return Pair.create(3, ((PsiNamedElement)object).getName());
       }
       return null;
+    }
+  }
+
+  public void addSelectionObserver(Observer observer) {
+    myObservable.addObserver(observer);
+  }
+
+  public void removeSelectionObserver(Observer observer) {
+    myObservable.deleteObserver(observer);
+  }
+
+
+  private static class MyObservable extends Observable {
+    public void fireChange() {
+      setChanged();
+      notifyObservers();
     }
   }
 }
