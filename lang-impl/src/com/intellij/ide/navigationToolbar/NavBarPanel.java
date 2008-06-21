@@ -221,17 +221,27 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           hideHint();
           return;
         }
-
-        final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-        if (focusedComponent != NavBarPanel.this && !isAncestorOf(focusedComponent)) {
-          if (myNodePopup == null || !myNodePopup.isVisible() || !myNodePopup.isFocused()) {
-            hideHint();
+        // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet
+        // but future focused component
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            processFocusLost(e);
           }
-        }
+        });
       }
     });
 
     updateList();
+  }
+
+  private void processFocusLost(final FocusEvent e) {
+    final boolean nodePopupInactive = myNodePopup == null || !myNodePopup.isVisible() || !myNodePopup.isFocused();
+    if (nodePopupInactive) {
+      final Component opposite = e.getOppositeComponent();
+      if (opposite != null && opposite != this && !isAncestorOf(opposite)) {
+        hideHint();
+      }
+    }
   }
 
   private void selectLast() {
