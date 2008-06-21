@@ -197,7 +197,12 @@ class ModuleRedeclarator(object):
       for line in docstring.split("\n"):
         self.out(line, indent)
       self.out('"""', indent)
-    
+
+  def outDocAttr(self, p_object, indent):
+    if hasattr(p_object, "__doc__"):
+      self.outDocstring(p_object.__doc__, indent)
+    else:
+      self.out("# no doc", indent)
     
   # Some values are known to be of no use in source and needs to be suppressed.
   # Dict is keyed by module names, with "*" meaning "any module";
@@ -336,7 +341,7 @@ class ModuleRedeclarator(object):
       if kwarg:
         spec.append("**" + kwarg)
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # reliably restored by inspect", indent);
-      self.outDocstring(p_func.__doc__, indent+1)
+      self.outDocAttr(p_func, indent+1)
       self.out("pass", indent+1);
     else:
       # __doc__ is our best source of arglist
@@ -366,16 +371,18 @@ class ModuleRedeclarator(object):
             argmod = 1 # argument modifier counter for duplicate values
             if len(matches) > 1:
               argstr = matches[1]
-              # cut between fixed and optional args, e.g "a, b[, c]" or "a, b=1" 
-              cutpos = string.find(argstr, '[') # before this point come required args, after it optional
-              if cutpos < 0:
-                cutpos = len(argstr)
-              m = IDENT_EQ_RE.search(argstr)
+              # cut between fixed and optional args  
+              brk_cutpos = string.find(argstr, '[') # (a, b[, c]) 
+              if brk_cutpos < 0:
+                brk_cutpos = len(argstr)
+              star_cutpos = string.find(argstr, '*') # (a, *b) 
+              if star_cutpos < 0:
+                star_cutpos = len(argstr)
+              eq_cutpos = len(argstr)   
+              m = IDENT_EQ_RE.search(argstr) # (a, b=1)
               if m:
-                othercutpos = m.start()
-              else:
-                othercutpos = len(argstr)
-              cutpos = min(cutpos, othercutpos)
+                eq_cutpos = m.start()
+              cutpos = min(star_cutpos, brk_cutpos, eq_cutpos) # before this point come required args, after it optional
               # possible "required args" 
               for arg in argstr[:cutpos].split(", "): 
                 arg = arg.strip("\"'") # doc might speak of f("foo")
@@ -429,7 +436,7 @@ class ModuleRedeclarator(object):
     if bases:
       base_def = "(" + ", ".join([x.__name__ for x in bases]) + ")"
     self.out("class " + p_name + base_def + ":", indent);
-    self.outDocstring(p_class.__doc__, indent+1)
+    self.outDocAttr(p_class, indent+1)
     # inner parts
     if hasattr(p_class, "__dict__"):
       methods = {}
@@ -480,7 +487,7 @@ class ModuleRedeclarator(object):
     self.out("# module " + p_name +  mod_name, 0)
     if hasattr(self.module, "__file__"):
       self.out("# from file " + self.module.__file__, 0)
-    self.outDocstring(self.module.__doc__, 0)
+    self.outDocAttr(self.module, 0)
     # find whatever other self.imported_modules the module knows; effectively these are imports
     for item_name in self.module.__dict__:
       item = self.module.__dict__[item_name]
@@ -621,11 +628,12 @@ if __name__ == "__main__":
   Normally every name processed will be printed and stdout flushed. 
   Options are:
   -h -- prints this help message.
-  -d dir -- output directory, must be writable. If not given, current dir is used. 
+  -d dir -- output dir, must be writable. If not given, current dir is used. 
   -b -- use names from sys.builtin_module_names
   -q -- quiet, do not print anything on stdout. Errors still go to stderr.
+  -u -- update, only recreate skeletons for newer files, and skip unchanged.
   """
-  opts, fnames = getopt(sys.argv[1:], "d:hbq")
+  opts, fnames = getopt(sys.argv[1:], "d:hbqu")
   opts = dict(opts)
   if not opts or '-h' in opts:
     print(helptext)
@@ -634,12 +642,14 @@ if __name__ == "__main__":
     print("Neither -b nor any module name given")  
     sys.exit(1)
   quiet = '-q' in opts
+  update_mode = "-u" in opts
   subdir = opts.get('-d', '')
   # determine names
   names = fnames
   if '-b' in opts:
     names.extend(sys.builtin_module_names)
-    names.remove('__main__') # we don't want ourselves processed
+    if '__main__' in names:
+      names.remove('__main__') # we don't want ourselves processed
   # go on
   for name in names:
     if not quiet:
@@ -657,8 +667,6 @@ if __name__ == "__main__":
           action = "creating subdir " + dirname
           os.mkdir(dirname)
       fname = dirname + os.path.sep + quals[-1] + ".py"
-      action = "opening " + fname
-      outfile = fopen(fname, "w")
       #
       action = "importing"
       mod = __import__(name) 
@@ -667,6 +675,14 @@ if __name__ == "__main__":
         action = "getting submodule " + q
         mod = getattr(mod, q)
       #
+      if update_mode and hasattr(mod, "__file__"):
+        action = "probing " + fname
+        mod_mtime = os.path.exists(mod.__file__) and os.path.getmtime(mod.__file__) or 0.0
+        file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
+        if mod_mtime <= file_mtime:
+          continue # skip the file
+      action = "opening " + fname
+      outfile = fopen(fname, "w")
       action = "restoring"
       r = ModuleRedeclarator(mod, outfile)
       r.redo(name)
@@ -674,62 +690,4 @@ if __name__ == "__main__":
       outfile.close()
     except:
       sys.stderr.write("Failed to process " + name + " while " + action + "\n")
-  
-## simple use cases:
-"""
-import generator3 as g3
-import sys
-
-
-r = g3.ModuleRedeclarator(sys, sys.stdout)
-r.redo("sys")
-
-
-from pysqlite2 import dbapi2
-r = g3.ModuleRedeclarator(dbapi2, sys.stdout)
-r.redo("dbapi2")
-"""
-
-"""
-class Pseudo(object):
-  def __init__(self, name):
-    self.__name__ = name
-
-pseudomod = Pseudo("pseudomod")
-
-class Foo(object): pass
-
-class Far(Foo):
-  HAR = '123'
-
-pseudomod.Foo = Foo
-pseudomod.Far = Far
-
-pseudomod.syys = sys
-pseudomod.input = sys.stdin
-
-pseudomod.mapping = {Foo: Far}
-
-Foo.out = sys.stdout
-
-import generator3 as g3
-import sys
-r = g3.ModuleRedeclarator(pseudomod, sys.stdout)
-r.redo("pseudomod")
-"""
-
-"""
-import generator3 as g3
-import sys
-try:
-  import io
-  fopen = io.open
-except ImportError:
-  fopen = open
-
-import __builtin__
-f = fopen("b" + hex(sys.hexversion)[2:] + ".py", "w")
-r = g3.ModuleRedeclarator(__builtin__, f)
-r.redo("__builtin__")
-f.close()
-"""
+      #raise
