@@ -451,7 +451,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
 
-    String s55 = "for(Iterator<String> iterator = stringlist.iterator(); iterator.hasNext()) {\n" +
+    String s55 = "for(Iterator<String> iterator = stringlist.getSectionsIterator(); getSectionsIterator.hasNext()) {\n" +
                  "      String str = iterator.next();\n" +
                  "      System.out.println( str );\n" +
                  "}";
