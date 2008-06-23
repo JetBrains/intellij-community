@@ -138,8 +138,8 @@ public class MavenIndices {
     myIndices.remove(i);
   }
 
-  public void change(MavenIndex i, String id, String repositoryPathOrUrl) throws MavenIndexException {
-    i.change(id, repositoryPathOrUrl);
+  public void change(MavenIndex i, String repositoryPathOrUrl) throws MavenIndexException {
+    i.change(repositoryPathOrUrl);
   }
 
   public void update(MavenIndex i, Project project, ProgressIndicator progress) throws MavenIndexException,

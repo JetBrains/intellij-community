@@ -56,7 +56,6 @@ public abstract class MavenIndex {
 
   private File myIndicesDir;
 
-  private String myId;
   private String myRepositoryPathOrUrl;
   private Kind myKind;
 
@@ -64,32 +63,30 @@ public abstract class MavenIndex {
 
   private IndexData myData;
 
-  public MavenIndex(String id, String repositoryPathOrUrl, Kind kind) {
-    myId = id;
+  public MavenIndex(String repositoryPathOrUrl, Kind kind) {
     myRepositoryPathOrUrl = repositoryPathOrUrl;
     myKind = kind;
   }
 
   public static MavenIndex read(DataInputStream s) throws IOException {
     Kind kind = Kind.forCode(s.readInt());
-    String id = s.readUTF();
     String repo = readStringOrNull(s);
     String dataDir = readStringOrNull(s);
 
-    MavenIndex result = create(kind, id, repo);
+    MavenIndex result = create(kind, repo);
     result.myDataDir = dataDir;
 
     return result;
   }
 
-  private static MavenIndex create(Kind kind, String id, String repo) {
+  private static MavenIndex create(Kind kind, String repo) {
     switch (kind) {
       case LOCAL:
-        return new LocalMavenIndex(id, repo);
+        return new LocalMavenIndex(repo);
       case REMOTE:
-        return new RemoteMavenIndex(id, repo);
+        return new RemoteMavenIndex(repo);
       case PROJECT:
-        return new ProjectMavenIndex(id, repo);
+        return new ProjectMavenIndex(repo);
     }
     throw new RuntimeException("unexpected kind: " + kind);
   }
@@ -103,7 +100,6 @@ public abstract class MavenIndex {
 
   public synchronized void write(DataOutputStream s) throws IOException {
     s.writeInt(myKind.getCode());
-    s.writeUTF(myId);
     writeStringOrNull(s, myRepositoryPathOrUrl);
     writeStringOrNull(s, myDataDir);
   }
@@ -112,10 +108,6 @@ public abstract class MavenIndex {
     boolean has = string != null;
     s.writeBoolean(has);
     if (has) s.writeUTF(string);
-  }
-
-  public synchronized String getId() {
-    return myId;
   }
 
   public synchronized File getRepositoryFile() {
@@ -163,9 +155,8 @@ public abstract class MavenIndex {
     }
   }
 
-  public synchronized void change(String id, String repositoryPathOrUrl) throws MavenIndexException {
+  public synchronized void change(String repositoryPathOrUrl) throws MavenIndexException {
     remove();
-    myId = id;
     myRepositoryPathOrUrl = repositoryPathOrUrl;
     open(myIndicesDir);
   }
@@ -180,8 +171,8 @@ public abstract class MavenIndex {
   }
 
   private synchronized IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
-    return indexer.addIndexingContext(myId,
-                                      myId,
+    return indexer.addIndexingContext(getId(),
+                                      getId(),
                                       getRepositoryFile(),
                                       getContextDir(),
                                       getRepositoryUrl(),
@@ -189,9 +180,12 @@ public abstract class MavenIndex {
                                       NexusIndexer.FULL_INDEX);
   }
 
+  private String getId() {
+    return Integer.toHexString(myRepositoryPathOrUrl.hashCode());
+  }
 
   private synchronized File getIndexDir() {
-    return new File(myIndicesDir, myId);
+    return new File(myIndicesDir, getId());
   }
 
   private synchronized File getContextDir() {
@@ -420,7 +414,7 @@ public abstract class MavenIndex {
     private Set<String> read(String fileName) throws IOException {
       File f = new File(myDir, fileName);
       if (!f.exists()) return new HashSet<String>();
-      
+
       DataInputStream s = new DataInputStream(new FileInputStream(f));
       try {
         return new SetDescriptor().read(s);

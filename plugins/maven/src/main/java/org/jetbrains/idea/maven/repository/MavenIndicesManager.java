@@ -5,17 +5,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
@@ -30,6 +32,10 @@ import java.io.File;
 import java.util.*;
 
 public class MavenIndicesManager implements ApplicationComponent {
+  public enum IndexUpdatingState {
+    IDLE, WAITING, UPDATING
+  }
+
   private boolean isInitialized;
 
   private MavenEmbedder myEmbedder;
@@ -37,6 +43,12 @@ public class MavenIndicesManager implements ApplicationComponent {
 
   private Map<Project, MavenIndex> myMavenProjectIndices = new HashMap<Project, MavenIndex>();
   private Map<Project, MavenProjectsManager.Listener> myMavenProjectListeners = new HashMap<Project, MavenProjectsManager.Listener>();
+
+  private final Object myUpdatingIndicesLock = new Object();
+  private List<MavenIndex> myWaitingIndices = new ArrayList<MavenIndex>();
+  private MavenIndex myUpdatingIndex;
+
+  private BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(RepositoryBundle.message("maven.indices.updating"));
 
   public static MavenIndicesManager getInstance() {
     return ApplicationManager.getApplication().getComponent(MavenIndicesManager.class);
@@ -120,21 +132,25 @@ public class MavenIndicesManager implements ApplicationComponent {
       checkProjectIndex(p);
     }
     catch (MavenIndexException e) {
-      logError(e);
+      showError(e);
     }
   }
 
   private void shutdownProjectIndices(Project p) {
     MavenProjectsManager.Listener l = myMavenProjectListeners.remove(p);
-    if (l == null) return; // wan not initialized
-    
+    if (l == null) return; // was not initialized
+
     MavenProjectsManager.getInstance(p).removeListener(l);
     myMavenProjectIndices.remove(p);
   }
 
-  private void logError(MavenIndexException e) {
-    MavenLog.warn(e);
-    //new MavenErrorWindow(p, RepositoryBundle.message("maven.indices")).displayErrors(e);
+  private void showError(final MavenIndexException e) {
+    MavenLog.info(e);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Messages.showErrorDialog(e.getMessage(), RepositoryBundle.message("maven.indices"));
+      }
+    });
   }
 
   private MavenCoreSettings getSettings(Project p) {
@@ -161,23 +177,23 @@ public class MavenIndicesManager implements ApplicationComponent {
       myIndices = null;
       myEmbedder = null;
     }
-    catch (MavenEmbedderException e) {
-      MavenLog.info(e);
-    }
-    catch (MavenIndexException e) {
-      logError(e);
+    catch (Exception e) {
+      MavenLog.error(e);
     }
   }
 
   private void checkLocalIndex(Project p) throws MavenIndexException {
     File localRepoFile = getSettings(p).getEffectiveLocalRepository();
+    if (localRepoFile == null) return;
+
+    VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(localRepoFile);
+    if (f == null) return;
 
     for (MavenIndex i : myIndices.getIndices()) {
-      if (localRepoFile.equals(i.getRepositoryFile())) return;
+      if (f.getPath().equals(i.getRepositoryPathOrUrl())) return;
     }
 
-    String repoPath = localRepoFile.getPath();
-    MavenIndex index = new LocalMavenIndex("local (" + Integer.toHexString(repoPath.hashCode()) + ")", repoPath);
+    MavenIndex index = new LocalMavenIndex(f.getPath());
     myIndices.add(index);
     scheduleUpdate(p, index);
   }
@@ -185,17 +201,15 @@ public class MavenIndicesManager implements ApplicationComponent {
   private void checkProjectIndex(Project p) throws MavenIndexException {
     MavenIndex projectIndex = null;
 
-    String indexId = p.getLocationHash();
-
     for (MavenIndex i : myIndices.getIndices()) {
-      if (indexId.equals(i.getId())) {
+      if (p.getBaseDir().getPath().equals(i.getRepositoryPathOrUrl())) {
         projectIndex = i;
         break;
       }
     }
 
     if (projectIndex == null) {
-      projectIndex = new ProjectMavenIndex(indexId, p.getBaseDir().getPath());
+      projectIndex = new ProjectMavenIndex(p.getBaseDir().getPath());
       myIndices.add(projectIndex);
     }
 
@@ -215,8 +229,8 @@ public class MavenIndicesManager implements ApplicationComponent {
     myIndices.add(i);
   }
 
-  public void change(MavenIndex i, String id, String repositoryPathOrUrl) throws MavenIndexException {
-    myIndices.change(i, id, repositoryPathOrUrl);
+  public void change(MavenIndex i, String repositoryPathOrUrl) throws MavenIndexException {
+    myIndices.change(i, repositoryPathOrUrl);
   }
 
   public void remove(MavenIndex i) throws MavenIndexException {
@@ -238,7 +252,7 @@ public class MavenIndicesManager implements ApplicationComponent {
       each.addArtifact(artifact);
     }
     catch (MavenIndexException e) {
-      logError(e);
+      MavenLog.error(e);
     }
   }
 
@@ -251,33 +265,78 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   private void doScheduleUpdate(final Project p, final MavenIndex index) {
-    new Task.Backgroundable(null, RepositoryBundle.message("maven.indices.updating"), true) {
+    List<MavenIndex> all = index != null
+                           ? Collections.singletonList(index)
+                           : myIndices.getIndices();
+    final List<MavenIndex> toSchedule = new ArrayList<MavenIndex>();
+
+    synchronized (myUpdatingIndicesLock) {
+      for (MavenIndex each : all) {
+        if (myWaitingIndices.contains(each)) continue;
+        toSchedule.add(each);
+      }
+
+      myWaitingIndices.addAll(toSchedule);
+    }
+
+    myUpdatingQueue.run(new Task.Backgroundable(null, RepositoryBundle.message("maven.indices.updating"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          List<MavenIndex> infos = index != null
-                                   ? Collections.singletonList(index)
-                                   : myIndices.getIndices();
+        doUpdateIndices(toSchedule, p, indicator);
+      }
+    });
+  }
+
+  private void doUpdateIndices(List<MavenIndex> indices, final Project p, ProgressIndicator indicator) {
+    try {
+      List<MavenIndex> remainingWaiting = new ArrayList<MavenIndex>(indices);
+
+      try {
+        for (MavenIndex each : indices) {
+          if (indicator.isCanceled()) return;
+
+          indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getRepositoryPathOrUrl()));
+
+          synchronized (myUpdatingIndicesLock) {
+            remainingWaiting.remove(each);
+            myWaitingIndices.remove(each);
+            myUpdatingIndex = each;
+          }
 
           try {
-            for (MavenIndex each : infos) {
-              indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getId()));
-              myIndices.update(each, p, indicator);
+            myIndices.update(each, p, indicator);
+          }
+          finally {
+            synchronized (myUpdatingIndicesLock) {
+              myUpdatingIndex = null;
             }
           }
-          catch (ProcessCanceledException ignore) {
-          }
-
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              rehighlightAllPoms(p);
-            }
-          });
-        }
-        catch (MavenIndexException e) {
-          logError(e);
         }
       }
-    }.queue();
+      catch (ProcessCanceledException ignore) {
+      }
+      finally {
+        synchronized (myUpdatingIndicesLock) {
+          myWaitingIndices.removeAll(remainingWaiting);
+        }
+      }
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          rehighlightAllPoms(p);
+        }
+      });
+    }
+    catch (MavenIndexException e) {
+      showError(e);
+    }
+  }
+
+  public IndexUpdatingState getUpdatingState(MavenIndex index) {
+    synchronized (myUpdatingIndicesLock) {
+      if (myUpdatingIndex == index) return IndexUpdatingState.UPDATING;
+      if (myWaitingIndices.contains(index)) return IndexUpdatingState.WAITING;
+      return IndexUpdatingState.IDLE;
+    }
   }
 
   private void rehighlightAllPoms(final Project p) {

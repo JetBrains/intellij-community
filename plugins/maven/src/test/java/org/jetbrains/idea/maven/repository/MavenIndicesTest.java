@@ -46,7 +46,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testAddingLocal() throws Exception {
-    MavenIndex i = new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
@@ -54,8 +54,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testAddingSeveral() throws Exception {
-    MavenIndex i1 = new LocalMavenIndex("local1", myDataTestFixture.getTestDataPath("local1"));
-    MavenIndex i2 = new LocalMavenIndex("local2", myDataTestFixture.getTestDataPath("local2"));
+    MavenIndex i1 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i2 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local2"));
     myIndices.add(i1);
     myIndices.add(i2);
     myIndices.update(i1, myProject, new EmptyProgressIndicator());
@@ -65,37 +65,37 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testAddingWithoutUpdate() throws Exception {
-    myIndices.add(new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local1")));
+    myIndices.add(new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1")));
     assertTrue(myIndices.getGroupIds().isEmpty());
   }
 
   public void testUpdatingLocalClearsPreviousIndex() throws Exception {
-    MavenIndex i = new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
     myIndices.add(i);
 
     myIndices.update(i, myProject, new EmptyProgressIndicator());
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "junit");
 
-    myIndices.change(i, "local", myDataTestFixture.getTestDataPath("local2"));
+    myIndices.change(i, myDataTestFixture.getTestDataPath("local2"));
     myIndices.update(i, myProject, new EmptyProgressIndicator());
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "jmock");
   }
 
   public void testChanging() throws Exception {
-    MavenIndex i = new LocalMavenIndex("local1", myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
     myIndices.add(i);
 
     myIndices.update(i, myProject, new EmptyProgressIndicator());
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "junit");
 
-    myIndices.change(i, "local2", myDataTestFixture.getTestDataPath("local2"));
+    myIndices.change(i, myDataTestFixture.getTestDataPath("local2"));
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "jmock");
   }
 
   public void testAddingRemote() throws Exception {
-    MavenIndex i = new RemoteMavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"));
+    MavenIndex i = new RemoteMavenIndex("file:///" + myDataTestFixture.getTestDataPath("remote"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
@@ -119,7 +119,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
 
     importSeveralProjects(myProjectPom, m1, m2);
 
-    MavenIndex i = new ProjectMavenIndex("project", myProject.getBaseDir().getPath());
+    MavenIndex i = new ProjectMavenIndex(myProject.getBaseDir().getPath());
     myIndices.add(i);
 
     assertTrue(myIndices.getGroupIds().isEmpty());
@@ -140,7 +140,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>version</version>");
 
-    MavenIndex i = new ProjectMavenIndex("project", myProject.getBaseDir().getPath());
+    MavenIndex i = new ProjectMavenIndex(myProject.getBaseDir().getPath());
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
@@ -155,18 +155,18 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testChangingWithSameID() throws Exception {
-    MavenIndex i = new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
-    myIndices.change(i, "local", myDataTestFixture.getTestDataPath("local2"));
+    myIndices.change(i, myDataTestFixture.getTestDataPath("local2"));
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "jmock");
   }
 
   public void testRemoving() throws Exception {
-    MavenIndex i = new RemoteMavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"));
+    MavenIndex i = new RemoteMavenIndex("file:///" + myDataTestFixture.getTestDataPath("remote"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
@@ -175,7 +175,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testClearIndexAfterRemoving() throws Exception {
-    MavenIndex i = new RemoteMavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"));
+    MavenIndex i = new RemoteMavenIndex("file:///" + myDataTestFixture.getTestDataPath("remote"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
@@ -185,8 +185,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testSaving() throws Exception {
-    MavenIndex i1 = new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local2"));
-    MavenIndex i2 = new RemoteMavenIndex("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"));
+    MavenIndex i1 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local2"));
+    MavenIndex i2 = new RemoteMavenIndex("file:///" + myDataTestFixture.getTestDataPath("remote"));
     myIndices.add(i1);
     myIndices.add(i2);
     myIndices.update(i1, myProject, new EmptyProgressIndicator());
@@ -202,7 +202,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testClearingIndexesOnLoadError() throws Exception {
-    MavenIndex i = new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local2"));
+    MavenIndex i = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local2"));
     myIndices.add(i);
     myIndices.save();
     shutdownIndex();
@@ -220,8 +220,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testClearingAlreadyLoadedIndexesOnLoadError() throws Exception {
-    myIndices.add(new LocalMavenIndex("local1", myDataTestFixture.getTestDataPath("local1")));
-    myIndices.add(new LocalMavenIndex("local2", myDataTestFixture.getTestDataPath("local2")));
+    myIndices.add(new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1")));
+    myIndices.add(new LocalMavenIndex(myDataTestFixture.getTestDataPath("local2")));
     myIndices.save();
     shutdownIndex();
 
@@ -240,8 +240,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testLoadingIndexIfCachesAreBroken() throws Exception {
-    MavenIndex i1 = new LocalMavenIndex("local1", myDataTestFixture.getTestDataPath("local1"));
-    MavenIndex i2 = new LocalMavenIndex("local2", myDataTestFixture.getTestDataPath("local2"));
+    MavenIndex i1 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i2 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local2"));
     myIndices.add(i1);
     myIndices.add(i2);
     myIndices.update(i1, myProject, new EmptyProgressIndicator());
@@ -270,7 +270,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testAddingIndexWithExistingDirectoryDoesNotThrowException() throws Exception {
-    MavenIndex i = new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
@@ -283,8 +283,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testGettingArtifactInfos() throws Exception {
-    MavenIndex i1 = new LocalMavenIndex("local1", myDataTestFixture.getTestDataPath("local1"));
-    MavenIndex i2 = new LocalMavenIndex("local2", myDataTestFixture.getTestDataPath("local2"));
+    MavenIndex i1 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i2 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local2"));
     myIndices.add(i1);
     myIndices.add(i2);
     myIndices.update(i1, myProject, new EmptyProgressIndicator());
@@ -302,12 +302,12 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testGettingArtifactInfosFromUnUpdatedRepositories() throws Exception {
-    myIndices.add(new LocalMavenIndex("local1", myDataTestFixture.getTestDataPath("local1")));
+    myIndices.add(new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1")));
     assertUnorderedElementsAreEqual(myIndices.getGroupIds()); // shouldn't throw
   }
 
   public void testGettingArtifactInfosAfterReload() throws Exception {
-    MavenIndex i = new LocalMavenIndex("local", myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
 
@@ -320,8 +320,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testHasArtifactInfo() throws Exception {
-    MavenIndex i1 = new LocalMavenIndex("local1", myDataTestFixture.getTestDataPath("local1"));
-    MavenIndex i2 = new LocalMavenIndex("local2", myDataTestFixture.getTestDataPath("local2"));
+    MavenIndex i1 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local1"));
+    MavenIndex i2 = new LocalMavenIndex(myDataTestFixture.getTestDataPath("local2"));
     myIndices.add(i1);
     myIndices.add(i2);
     myIndices.update(i1, myProject, new EmptyProgressIndicator());

@@ -1,23 +1,22 @@
 package org.jetbrains.idea.maven.repository;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
 import javax.swing.*;
 
 public class EditMavenRepositoryDialog extends DialogWrapper {
   private JPanel myMainPanel;
-  private JTextField myIdField;
   private JTextField myUrlField;
 
   public EditMavenRepositoryDialog() {
-    this("", "");
+    this("");
   }
 
-  public EditMavenRepositoryDialog(String id, String url) {
+  public EditMavenRepositoryDialog(String url) {
     super(false);
-    setTitle("Maven Repository");
-    myIdField.setText(id);
-    myUrlField.setText(url);
+    setTitle("Edit Maven Repository");
+    myUrlField.setText(url.length() == 0 ? "http://" : url);
     init();
   }
 
@@ -25,11 +24,11 @@ public class EditMavenRepositoryDialog extends DialogWrapper {
     return myMainPanel;
   }
 
-  public String getId() {
-    return myIdField.getText();
-  }
-
   public String getUrl() {
-    return myUrlField.getText();
+    String result = myUrlField.getText();
+    if (VirtualFileManager.extractProtocol(result) == null) {
+      result = "http://" + result;
+    }
+    return result;
   }
 }

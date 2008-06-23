@@ -24,4 +24,8 @@ public class MavenLog {
   public static void warn(Throwable throwable) {
     LOG.warn(throwable);
   }
+
+  public static void error(Throwable throwable) {
+    LOG.error(throwable);
+  }
 }
