@@ -43,8 +43,8 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-      final LineMarkerProvider provider = LineMarkerProviders.INSTANCE.forLanguage(language);
-      if (provider != null) {
+      final List<LineMarkerProvider> providers = LineMarkerProviders.INSTANCE.allForLanguage(language);
+      for (LineMarkerProvider provider : providers) {
         provider.collectSlowLineMarkers(elements, myMarkers);
       }
     }

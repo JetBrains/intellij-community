@@ -57,24 +57,24 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
       if (elements.isEmpty()) {
         elements = Collections.singletonList(psiRoot);
       }
-      final LineMarkerProvider provider = LineMarkerProviders.INSTANCE.forLanguage(language);
-      if (provider != null) {
-        addLineMarkers(elements, provider, lineMarkers);
-      }
+      final List<LineMarkerProvider> providers = LineMarkerProviders.INSTANCE.allForLanguage(language);
+      addLineMarkers(elements, providers, lineMarkers);
     }
 
     myMarkers = lineMarkers;
   }
 
-  private static void addLineMarkers(List<PsiElement> elements, final LineMarkerProvider provider, List<LineMarkerInfo> result) throws ProcessCanceledException {
+  private static void addLineMarkers(List<PsiElement> elements, final List<LineMarkerProvider> providers, List<LineMarkerInfo> result) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
-      LineMarkerInfo info = provider.getLineMarkerInfo(element);
-      if (info != null) {
-        result.add(info);
+      for (LineMarkerProvider provider: providers) {
+        LineMarkerInfo info = provider.getLineMarkerInfo(element);
+        if (info != null) {
+          result.add(info);
+        }
       }
     }
   }
@@ -86,10 +86,8 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
         return Collections.emptyList();
       }
       ArrayList<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>();
-      final LineMarkerProvider provider = LineMarkerProviders.INSTANCE.forLanguage(myFile.getLanguage());
-      if (provider != null) {
-        addLineMarkers(CollectHighlightsUtil.getElementsInRange(myFile, myStartOffset, myEndOffset), provider, result);
-      }
+      final List<LineMarkerProvider> provider = LineMarkerProviders.INSTANCE.allForLanguage(myFile.getLanguage());
+      addLineMarkers(CollectHighlightsUtil.getElementsInRange(myFile, myStartOffset, myEndOffset), provider, result);
       return result;
     }
     catch (ProcessCanceledException e) {
