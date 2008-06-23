@@ -1,7 +1,7 @@
 package com.intellij.openapi.keymap.impl.keyGestures;
 
-import com.intellij.openapi.actionSystem.KeyboardGestureAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardGestureAction;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -109,10 +109,6 @@ abstract class KeyGestureState {
       return true;
     }
 
-    @Override
-    public AnActionEvent createActionEvent() {
-      return new GestureActionEvent.Init(myProcessor);
-    }
   }
 
   static class WaitForAction extends KeyGestureState {
@@ -130,8 +126,8 @@ abstract class KeyGestureState {
       if (myContext.keyToProcess.getID() == KeyEvent.KEY_RELEASED && myContext.keyToProcess.getKeyChar() == KeyEvent.CHAR_UNDEFINED) {
         final int pressedModifiers = myContext.keyToProcess.getKeyCode() & myContext.actionKey.getModifiersEx();
         if (pressedModifiers == 0) {
-          myProcessor.setState(myProcessor.myWaitForStart);
-          return true;
+          myProcessor.setState(myProcessor.myFinish);
+          return myProcessor.myState.process();
         }
       }
 
@@ -143,6 +139,28 @@ abstract class KeyGestureState {
 
       return false;
     }
+
+    @Override
+    public AnActionEvent createActionEvent() {
+      return new GestureActionEvent.Init(myProcessor);
+    }
+  }
+
+  static class ProcessFinish extends KeyGestureState {
+    ProcessFinish(final KeyboardGestureProcessor processor) {
+      super(processor);
+    }
+
+    boolean process() {
+      myProcessor.executeAction();
+      myProcessor.setState(myProcessor.myWaitForStart);
+      return false;
+    }
+
+    @Override
+    public AnActionEvent createActionEvent() {
+      return new GestureActionEvent.Finish(myProcessor);
+    }
   }
 
   static class WaitForActionEnd extends KeyGestureState {
@@ -153,16 +171,17 @@ abstract class KeyGestureState {
 
     boolean process() {
       if (myContext.keyToProcess.getID() == KeyEvent.KEY_RELEASED) {
-        if (myContext.keyToProcess.getModifiersEx() != myContext.actionKey.getModifiersEx()) {
-          myProcessor.setState(myProcessor.myWaitForAction);
-          return true;
-        }
-
+        myProcessor.executeAction();
         myProcessor.setState(myProcessor.myWaitForAction);
         return true;
       }
 
       return false;
+    }
+
+    @Override
+    public AnActionEvent createActionEvent() {
+      return new GestureActionEvent.PerformAction(myProcessor);
     }
   }
 

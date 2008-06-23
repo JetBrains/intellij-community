@@ -47,11 +47,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
 
-  private static final int STATE_INIT = 0;
+  public static final int STATE_INIT = 0;
   private static final int STATE_WAIT_FOR_SECOND_KEYSTROKE = 1;
   private static final int STATE_SECOND_STROKE_IN_PROGRESS = 2;
   private static final int STATE_PROCESSED = 3;
-  private static final int STATE_KEY_GESTURE_PROCESSOR = 4;
+  public static final int STATE_KEY_GESTURE_PROCESSOR = 4;
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -76,7 +76,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   public boolean isWaitingForSecondKeyStroke(){
-    return myState == STATE_WAIT_FOR_SECOND_KEYSTROKE || myPressedWasProcessed;
+    return getState() == STATE_WAIT_FOR_SECOND_KEYSTROKE || myPressedWasProcessed;
   }
 
   /**
@@ -123,7 +123,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         // The following couple of lines of code is a PATCH!!!
         // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach editor when an action
         // is invoked from main menu via Enter key.
-        myState=STATE_PROCESSED;
+        setState(STATE_PROCESSED);
         myPressedWasProcessed=true;
         return false;
       }
@@ -146,18 +146,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
     myContext.setModalContext(isModalContext);
     myContext.setInputEvent(e);
 
-    if (myState == STATE_INIT) {
+    if (getState() == STATE_INIT) {
       return inInitState();
-    } else if (myState == STATE_PROCESSED) {
+    } else if (getState() == STATE_PROCESSED) {
       return inProcessedState();
-    } else if (myState == STATE_WAIT_FOR_SECOND_KEYSTROKE) {
+    } else if (getState() == STATE_WAIT_FOR_SECOND_KEYSTROKE) {
       return inWaitForSecondStrokeState();
-    } else if (myState == STATE_SECOND_STROKE_IN_PROGRESS) {
+    } else if (getState() == STATE_SECOND_STROKE_IN_PROGRESS) {
       return inSecondStrokeInProgressState();
-    } else if (myState == STATE_KEY_GESTURE_PROCESSOR) {
+    } else if (getState() == STATE_KEY_GESTURE_PROCESSOR) {
       return myKeyGestureProcessor.process();
     } else {
-      throw new IllegalStateException("state = " + myState);
+      throw new IllegalStateException("state = " + getState());
     }
   }
 
@@ -200,7 +200,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private boolean inWaitForSecondStrokeState() {
     // a key pressed means that the user starts to enter the second stroke...
     if (KeyEvent.KEY_PRESSED==myContext.getInputEvent().getID()) {
-      myState=STATE_SECOND_STROKE_IN_PROGRESS;
+      setState(STATE_SECOND_STROKE_IN_PROGRESS);
       return inSecondStrokeInProgressState();
     }
     // looks like RELEASEs (from the first stroke) go here...  skip them
@@ -245,7 +245,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // when any key is released, we stop waiting for the second stroke
     if(KeyEvent.KEY_RELEASED==e.getID()){
       myFirstKeyStroke=null;
-      myState=STATE_INIT;
+      setState(STATE_INIT);
       Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
       WindowManager.getInstance().getStatusBar(project).setInfo(null);
       return false;
@@ -283,7 +283,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       //see IDEADEV-8615
       return true;
     }
-    myState = STATE_INIT;
+    setState(STATE_INIT);
     myPressedWasProcessed = false;
     return inInitState();
   }
@@ -327,7 +327,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (SystemInfo.isMac) {
         if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && hasMnemonicInWindow(focusOwner, e.getKeyCode())) {
           myPressedWasProcessed = true;
-          myState = STATE_PROCESSED;
+          setState(STATE_PROCESSED);
           return false;
         }
       }
@@ -365,7 +365,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
 
       WindowManager.getInstance().getStatusBar(project).setInfo(message.toString());
-      myState=STATE_WAIT_FOR_SECOND_KEYSTROKE;
+      setState(STATE_WAIT_FOR_SECOND_KEYSTROKE);
       return true;
     }else{
       return processAction(e, myActionProcessor);
@@ -422,7 +422,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     public void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent) {
-      myState = STATE_PROCESSED;
+      setState(STATE_PROCESSED);
       myPressedWasProcessed = inputEvent.getID() == KeyEvent.KEY_PRESSED;
     }
 
@@ -547,5 +547,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public void dispose() {
     myDisposed = true;
+  }
+
+  public int getState() {
+    return myState;
+  }
+
+  public void setState(final int state) {
+    myState = state;
   }
 }

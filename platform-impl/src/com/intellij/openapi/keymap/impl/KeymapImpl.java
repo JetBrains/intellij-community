@@ -1,9 +1,6 @@
 package com.intellij.openapi.keymap.impl;
 
-import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortuct;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
@@ -129,6 +126,11 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  {
+//todo kirillk: will be removed
+    addShortcut("TestGestureAction", KeyboardModifierGestureShortuct.newInstance(KeyboardGestureAction.ModifierType.dblClick, KeyStroke.getKeyStroke("meta 1")));
   }
 
   public String getName() {

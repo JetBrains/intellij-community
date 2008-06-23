@@ -8,10 +8,17 @@ public class KeyboardModifierGestureShortuct extends Shortcut {
   private KeyboardGestureAction.ModifierType myType;
 
   public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
-    return null;
+    switch (type) {
+      case dblClick:
+        return new DblClick(stroke);
+      case hold:
+        return new Hold(stroke);
+    }
+
+    throw new IllegalArgumentException(type.toString());
   }
 
-  public KeyboardModifierGestureShortuct(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
+  protected KeyboardModifierGestureShortuct(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
     myStroke = stroke;
     myType = type;
   }

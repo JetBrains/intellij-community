@@ -13,15 +13,17 @@ public class KeyboardGestureProcessor {
 
   IdeKeyEventDispatcher myDispatcher;
 
+  StateContext myContext = new StateContext();
+
   final KeyGestureState myWaitForStart = new KeyGestureState.WaitForStart(this);
   final KeyGestureState myModifierPressed = new KeyGestureState.ModifierPressed(this);
   final KeyGestureState myWaitForDblClick = new KeyGestureState.WaitForDblClick(this);
   final KeyGestureState myWaitForAction = new KeyGestureState.WaitForAction(this);
   final KeyGestureState myWaitForActionEnd = new KeyGestureState.WaitForActionEnd(this);
+  final KeyGestureState myFinish = new KeyGestureState.ProcessFinish(this);
 
   KeyGestureState myState = myWaitForStart;
 
-  StateContext myContext = new StateContext();
 
   Timer myHoldTimer = new Timer(1200, new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
@@ -62,10 +64,16 @@ public class KeyboardGestureProcessor {
   }
 
   void setState(KeyGestureState state) {
-    myState = state;
-    if (myState == myWaitForStart) {
+    final boolean isGestureProcessingState = myDispatcher.getState() == IdeKeyEventDispatcher.STATE_KEY_GESTURE_PROCESSOR;
+    if (state == myWaitForStart) {
       myContext.actionKey = null;
+      if (isGestureProcessingState) {
+        myDispatcher.setState(IdeKeyEventDispatcher.STATE_INIT);
+      }
+    } else if (state == myWaitForAction) {
+      myDispatcher.setState(IdeKeyEventDispatcher.STATE_KEY_GESTURE_PROCESSOR);
     }
+    myState = state;
   }
 
   public ActionManager getActionManager() {
