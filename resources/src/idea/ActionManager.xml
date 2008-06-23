@@ -145,10 +145,6 @@
       <add-to-group group-id="CodeSurroundGroup" anchor="last"/>
     </action>
 
-    <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction">
-      <add-to-group group-id="CodeFormatGroup" anchor="after" relative-to-action="ReformatCode"/>
-    </action>
-
     <group id="CodeMenu2">
       <separator/>
       <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
