@@ -18,7 +18,4 @@ public class ReadFileType extends AbstractFileType {
     return myElement;
   }
 
-  public SettingsEditor getEditor() {
-    return null;
-  }
 }
