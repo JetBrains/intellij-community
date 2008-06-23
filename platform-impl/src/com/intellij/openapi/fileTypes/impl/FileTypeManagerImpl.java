@@ -54,6 +54,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final Set<String> myIgnoredFiles = new ConcurrentHashSet<String>();
   private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
+  private final Map<FileNameMatcher, String> myUnresolvedRemovedMappings = new THashMap<FileNameMatcher, String>();
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
   @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
@@ -450,6 +451,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (type != null) {
         associate(type, association.getFirst(), false);
       }
+      else {
+        myUnresolvedMappings.put(association.getFirst(), association.getSecond());
+      }
     }
 
     List<Pair<FileNameMatcher, String>> removedAssociations = AbstractFileType.readRemovedAssociations(e);
@@ -458,6 +462,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       FileType type = getFileTypeByName(removedAssociation.getSecond());
       if (type != null) {
         removeAssociation(type, removedAssociation.getFirst(), false);
+      }
+      else {
+        myUnresolvedRemovedMappings.put(removedAssociation.getFirst(), removedAssociation.getSecond());
       }
     }
   }
@@ -608,6 +615,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         myPatternsTable.addAssociation(matcher, fileType);
         myUnresolvedMappings.remove(matcher);
       }
+    }
+
+    for (FileNameMatcher matcher : new THashSet<FileNameMatcher>(myUnresolvedRemovedMappings.keySet())) {
+      String name = myUnresolvedRemovedMappings.get(matcher);
+      if (Comparing.equal(name, fileType.getName())) {
+        removeAssociation(fileType, matcher, false);
+        myUnresolvedRemovedMappings.remove(matcher);
+      }
+
     }
   }
 
