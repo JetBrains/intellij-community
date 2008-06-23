@@ -17,7 +17,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -28,6 +27,7 @@ import java.awt.event.ActionListener;
 public class AsyncProcessIcon extends AnimatedIcon {
 
   public static final int COUNT = 12;
+  public static final int CYCLE_LENGTH = 800;
 
   public AsyncProcessIcon(@NonNls String name) {
     super(name);
@@ -38,7 +38,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
     }
     Icon passive = IconLoader.getIcon("/process/step_passive.png");
 
-    init(icons, passive, 800, 0, -1);
+    init(icons, passive, CYCLE_LENGTH, 0, -1);
   }
 
   public static void main(String[] args) {

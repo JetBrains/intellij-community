@@ -16,14 +16,13 @@
 
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.Queue;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -34,7 +33,11 @@ public class BackgroundTaskQueue {
   private boolean myHasActiveTask = false;
   private Task.Backgroundable myRunnerTask;
 
-  public BackgroundTaskQueue(final Project project, String title) {
+  public BackgroundTaskQueue(String title) {
+    this(null, title);
+  }
+
+  public BackgroundTaskQueue(Project project, String title) {
     myProject = project;
     myRunnerTask = new Task.Backgroundable(project, title) {
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -51,7 +54,7 @@ public class BackgroundTaskQueue {
           task.run(indicator);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              if (!project.isDisposed()) {
+              if (myProject == null || !myProject.isDisposed()) {
                 task.onSuccess();
               }
             }
@@ -84,7 +87,7 @@ public class BackgroundTaskQueue {
         else {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              if (!myProject.isDisposed()) {
+              if (myProject == null || !myProject.isDisposed()) {
                 ProgressManager.getInstance().run(myRunnerTask);
               }
             }
