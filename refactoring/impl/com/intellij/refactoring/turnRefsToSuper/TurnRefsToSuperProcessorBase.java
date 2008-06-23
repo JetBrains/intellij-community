@@ -586,7 +586,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   protected void markNodes() {
-    //for (Iterator iterator = myDependencyMap.keySet().iterator(); iterator.hasNext();) {
+    //for (Iterator iterator = myDependencyMap.keySet().getSectionsIterator(); getSectionsIterator.hasNext();) {
     for (final PsiElement element : myElementToNode.keySet()) {
       if (element instanceof PsiExpression) {
         final PsiElement parent = element.getParent();

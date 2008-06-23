@@ -1,9 +1,9 @@
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Field;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -11,12 +11,9 @@ import com.sun.jdi.Field;
  */
 
 public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.descriptors.data.StaticFieldData");
   private final Field myField;
 
-  public StaticFieldData(Field field) {
-    super();
-    LOG.assertTrue(field != null);
+  public StaticFieldData(@NotNull Field field) {
     myField = field;
   }
 

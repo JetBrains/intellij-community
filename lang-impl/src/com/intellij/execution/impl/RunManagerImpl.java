@@ -4,7 +4,6 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -17,8 +16,6 @@ import java.util.*;
 
 
 public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.RunManager");
-
   private final Project myProject;
 
   private Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
@@ -58,8 +55,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   // separate method needed for tests
-  public final void initializeConfigurationTypes(final ConfigurationType[] factories) {
-    LOG.assertTrue(factories != null);
+  public final void initializeConfigurationTypes(@NotNull final ConfigurationType[] factories) {
     Arrays.sort(factories, new Comparator<ConfigurationType>() {
       public int compare(final ConfigurationType o1, final ConfigurationType o2) {
         return o1.getDisplayName().compareTo(o2.getDisplayName());
@@ -124,14 +120,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   /**
    * Template configuration is not included
    */
-  public RunConfiguration[] getConfigurations(final ConfigurationType type) {
-    LOG.assertTrue(type != null);
+  public RunConfiguration[] getConfigurations(@NotNull final ConfigurationType type) {
 
     final List<RunConfiguration> array = new ArrayList<RunConfiguration>();
     for (RunnerAndConfigurationSettingsImpl myConfiguration : getSortedConfigurations()) {
       final RunConfiguration configuration = myConfiguration.getConfiguration();
       final ConfigurationType configurationType = configuration.getType();
-      if (configurationType != null && type.getId().equals(configurationType.getId())) {
+      if (type.getId().equals(configurationType.getId())) {
         array.add(configuration);
       }
     }
@@ -159,8 +154,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   /**
    * Template configuration is not included
    */
-  public RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(final ConfigurationType type) {
-    LOG.assertTrue(type != null);
+  public RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(@NotNull final ConfigurationType type) {
 
     final LinkedHashSet<RunnerAndConfigurationSettingsImpl> array = new LinkedHashSet<RunnerAndConfigurationSettingsImpl>();
     for (RunnerAndConfigurationSettingsImpl configuration : getSortedConfigurations()) {
@@ -194,8 +188,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return settings.getType().getDisplayName() + "." + settings.getName();
   }
 
-  public void removeConfigurations(final ConfigurationType type) {
-    LOG.assertTrue(type != null);
+  public void removeConfigurations(@NotNull final ConfigurationType type) {
 
     //for (Iterator<Pair<RunConfiguration, JavaProgramRunner>> it = myRunnerPerConfigurationSettings.keySet().iterator(); it.hasNext();) {
     //  final Pair<RunConfiguration, JavaProgramRunner> pair = it.next();
@@ -251,8 +244,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     mySelectedConfiguration = configuration;
   }
 
-  public static boolean canRunConfiguration(final RunConfiguration configuration) {
-    LOG.assertTrue(configuration != null);
+  public static boolean canRunConfiguration(@NotNull final RunConfiguration configuration) {
     try {
       configuration.checkConfiguration();
     }
@@ -265,8 +257,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return true;
   }
 
-  public void writeExternal(final Element parentNode) throws WriteExternalException {
-    LOG.assertTrue(parentNode != null);
+  public void writeExternal(@NotNull final Element parentNode) throws WriteExternalException {
 
     if (myTempConfiguration != null) {
       addConfigurationElement(parentNode, myTempConfiguration, TEMP_CONFIGURATION);
@@ -415,8 +406,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return "RunManager";
   }
 
-  public void setTemporaryConfiguration(final RunnerAndConfigurationSettingsImpl tempConfiguration) {
-    LOG.assertTrue(tempConfiguration != null);
+  public void setTemporaryConfiguration(@NotNull final RunnerAndConfigurationSettingsImpl tempConfiguration) {
     myConfigurations = getStableConfigurations();
     myTempConfiguration = tempConfiguration;
     addConfiguration(myTempConfiguration, isConfigurationShared(tempConfiguration), getStepsBeforeLaunch(tempConfiguration.getConfiguration()));

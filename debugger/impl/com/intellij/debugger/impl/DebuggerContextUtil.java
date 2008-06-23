@@ -4,7 +4,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -12,8 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
  */
 
 public class DebuggerContextUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerContextUtil");
-
   public static void setStackFrame(DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DebuggerContextImpl context = manager.getContext();
@@ -33,8 +31,7 @@ public class DebuggerContextUtil {
     contextManager.setState(newContext, context.getDebuggerSession().getState(), DebuggerSession.EVENT_CONTEXT, null);
   }
 
-  public static DebuggerContextImpl createDebuggerContext(DebuggerSession session, SuspendContextImpl suspendContext){
-    LOG.assertTrue(session != null);
+  public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext){
     return DebuggerContextImpl.createDebuggerContext(session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
   }
 }

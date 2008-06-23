@@ -14,6 +14,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
+import org.jetbrains.annotations.NotNull;
 
 public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameXmlAttributeProcessor");
@@ -46,12 +47,11 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  private static void doRenameXmlAttributeValue(XmlAttributeValue value,
+  private static void doRenameXmlAttributeValue(@NotNull XmlAttributeValue value,
                                                 String newName,
                                                 UsageInfo[] infos,
                                                 RefactoringElementListener listener)
     throws IncorrectOperationException {
-    LOG.assertTrue(value != null);
     LOG.assertTrue(value.isValid());
 
     renameAll(value, infos, newName, value.getValue());

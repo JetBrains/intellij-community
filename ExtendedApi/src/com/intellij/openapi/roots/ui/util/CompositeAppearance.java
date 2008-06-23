@@ -4,6 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,8 +19,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
   private int myInsertionIndex = 0;
 
   public synchronized void customize(SimpleColoredComponent component) {
-    for (Iterator iterator = getSectionsIterator(); iterator.hasNext();) {
-      TextSection section = (TextSection) iterator.next();
+    for (TextSection section : mySections) {
       TextAttributes attributes = section.ATTRIBUTES;
       component.append(section.TEXT, SimpleTextAttributes.fromTextAttributes(attributes));
     }
@@ -28,9 +29,8 @@ public class CompositeAppearance implements ModifiableCellAppearance {
   public void setIcon(Icon icon) { myIcon = icon; }
 
   public synchronized String getText() {
-    StringBuffer buffer = new StringBuffer();
-    for (Iterator<TextSection> iterator = getSectionsIterator(); iterator.hasNext();) {
-      TextSection section = iterator.next();
+    StringBuilder buffer = new StringBuilder();
+    for (TextSection section : mySections) {
       buffer.append(section.TEXT);
     }
     return buffer.toString();
@@ -42,16 +42,15 @@ public class CompositeAppearance implements ModifiableCellAppearance {
     if (SwingUtilities.isEventDispatchThread())
       return appearance.mySections.equals(mySections);
     else
-      return new ArrayList(appearance.mySections).equals(new ArrayList(mySections));
+      return new ArrayList<TextSection>(appearance.mySections).equals(new ArrayList<TextSection>(mySections));
   }
 
   public int hashCode() {return getText().hashCode();}
 
-  protected void addSectionAt(int index, TextSection section) {
+  protected void addSectionAt(int index, @NotNull TextSection section) {
     synchronized(this) {
-      LOG.assertTrue(section != null);
       mySections.add(index, section);
-      for (Iterator<TextSection> iterator = getSectionsIterator(); iterator.hasNext();) {
+      for (Iterator<TextSection> iterator = mySections.iterator(); iterator.hasNext();) {
         TextSection textSection = iterator.next();
         if (textSection == null) {
           LOG.assertTrue(false, "index: " + index + " size: " + mySections.size());
@@ -71,10 +70,6 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   public DequeEnd getSuffix() {
     return new DequeSuffix();
-  }
-
-  protected Iterator<TextSection> getSectionsIterator() {
-    return mySections.iterator();
   }
 
   public static CompositeAppearance textComment(String text, String comment) {
@@ -99,6 +94,11 @@ public class CompositeAppearance implements ModifiableCellAppearance {
     appearance.setIcon(CellAppearanceUtils.INVALID_ICON);
     appearance.getEnding().addText(absolutePath, SimpleTextAttributes.ERROR_ATTRIBUTES);
     return appearance;
+  }
+
+  @TestOnly
+  public Iterator<TextSection> getSectionsIterator() {
+    return mySections.iterator();
   }
 
   protected static class TextSection {

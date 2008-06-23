@@ -6,6 +6,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,7 +19,7 @@ public class TodoFilter implements Cloneable{
 
   private String myName;
   // TODO[vova] use array for storing TodoPatterns. Perhaps it's better...
-  private HashSet myTodoPatterns;
+  private HashSet<TodoPattern> myTodoPatterns;
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ELEMENT_PATTERN = "pattern";
   @NonNls private static final String ATTRIBUTE_INDEX = "index";
@@ -28,7 +29,7 @@ public class TodoFilter implements Cloneable{
    */
   public TodoFilter(){
     setName("");
-    myTodoPatterns=new HashSet(1);
+    myTodoPatterns=new HashSet<TodoPattern>(1);
   }
 
   /**
@@ -36,8 +37,8 @@ public class TodoFilter implements Cloneable{
    * <code>TodoItem</code>s accepted by the filter.
    */
   public boolean accept(PsiSearchHelper searchHelper,PsiFile psiFile){
-    for(Iterator i=iterator();i.hasNext();){
-      TodoPattern todoPattern=(TodoPattern)i.next();
+    for(Iterator<TodoPattern> i=iterator();i.hasNext();){
+      TodoPattern todoPattern= i.next();
       if(searchHelper.getTodoItemsCount(psiFile,todoPattern)>0){
         return true;
       }
@@ -52,8 +53,7 @@ public class TodoFilter implements Cloneable{
     return myName;
   }
 
-  public void setName(String name){
-    LOG.assertTrue(name!=null);
+  public void setName(@NotNull String name){
     myName=name;
   }
 
@@ -83,7 +83,7 @@ public class TodoFilter implements Cloneable{
   /**
    * @return iterator of containing patterns.
    */
-  public Iterator iterator(){
+  public Iterator<TodoPattern> iterator(){
     return myTodoPatterns.iterator();
   }
 
@@ -91,7 +91,7 @@ public class TodoFilter implements Cloneable{
    * @return <code>true</code> if and only if filter contains no <code>TodoPattern</code>s.
    */
   public boolean isEmpty(){
-    return myTodoPatterns.size()==0;
+    return myTodoPatterns.isEmpty();
   }
 
   /**
@@ -117,23 +117,23 @@ public class TodoFilter implements Cloneable{
       throw new IllegalArgumentException();
     }
     myTodoPatterns.clear();
-    for(Iterator i=element.getChildren().iterator();i.hasNext();){
-      Element child=(Element)i.next();
-      if(!ELEMENT_PATTERN.equals(child.getName())){
+    for (Object o : element.getChildren()) {
+      Element child = (Element)o;
+      if (!ELEMENT_PATTERN.equals(child.getName())) {
         continue;
       }
-      try{
-        int index=Integer.parseInt(child.getAttributeValue(ATTRIBUTE_INDEX));
-        if(index<0||index>patterns.length-1){
+      try {
+        int index = Integer.parseInt(child.getAttributeValue(ATTRIBUTE_INDEX));
+        if (index < 0 || index > patterns.length - 1) {
           continue;
         }
-        TodoPattern pattern=patterns[index];
-        if(myTodoPatterns.contains(pattern)){
+        TodoPattern pattern = patterns[index];
+        if (myTodoPatterns.contains(pattern)) {
           continue;
         }
         myTodoPatterns.add(pattern);
-      }catch(NumberFormatException exc){
-        continue;
+      }
+      catch (NumberFormatException ignored) {
       }
     }
   }
@@ -144,21 +144,19 @@ public class TodoFilter implements Cloneable{
    */
   public void writeExternal(Element element,TodoPattern[] patterns){
     element.setAttribute(ATTRIBUTE_NAME,myName);
-    for(Iterator i=myTodoPatterns.iterator();i.hasNext();){
-      TodoPattern pattern=(TodoPattern)i.next();
-      int index=getPatterIndex(pattern,patterns);
-      LOG.assertTrue(index!=-1);
-      Element child=new Element(ELEMENT_PATTERN);
-      child.setAttribute(ATTRIBUTE_INDEX,Integer.toString(index));
+    for (TodoPattern pattern : myTodoPatterns) {
+      int index = getPatterIndex(pattern, patterns);
+      LOG.assertTrue(index != -1);
+      Element child = new Element(ELEMENT_PATTERN);
+      child.setAttribute(ATTRIBUTE_INDEX, Integer.toString(index));
       element.addContent(child);
     }
   }
 
   public int hashCode(){
     int hashCode=myName.hashCode();
-    for(Iterator i=myTodoPatterns.iterator();i.hasNext();){
-      TodoPattern todoPattern=(TodoPattern)i.next();
-      hashCode+=todoPattern.hashCode();
+    for (TodoPattern myTodoPattern : myTodoPatterns) {
+      hashCode += myTodoPattern.hashCode();
     }
     return hashCode;
   }
@@ -177,9 +175,8 @@ public class TodoFilter implements Cloneable{
       return false;
     }
 
-    for(Iterator i=myTodoPatterns.iterator();i.hasNext();){
-      TodoPattern pattern=(TodoPattern)i.next();
-      if(!filter.contains(pattern)){
+    for (TodoPattern pattern : myTodoPatterns) {
+      if (!filter.contains(pattern)) {
         return false;
       }
     }
@@ -190,7 +187,7 @@ public class TodoFilter implements Cloneable{
   public TodoFilter clone(){
     try{
       TodoFilter filter = (TodoFilter)super.clone();
-      filter.myTodoPatterns=new HashSet(myTodoPatterns);
+      filter.myTodoPatterns=new HashSet<TodoPattern>(myTodoPatterns);
       return filter;
     }catch(CloneNotSupportedException e){
       LOG.error(e);

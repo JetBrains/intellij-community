@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -13,11 +12,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PsiClassReferenceType extends PsiClassType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassReferenceType");
   private final PsiJavaCodeReferenceElement myReference;
 
-  public PsiClassReferenceType(PsiJavaCodeReferenceElement reference) {
-    LOG.assertTrue(reference != null);
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference) {
     myReference = reference;
   }
 

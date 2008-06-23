@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -112,8 +113,7 @@ public abstract class DiffMarkup implements EditorSource {
     return size > 0 ? myHighLighters.get(size - 1) : null;
   }
 
-  private void saveHighlighter(RangeHighlighter marker) {
-    LOG.assertTrue(marker != null);
+  private void saveHighlighter(@NotNull RangeHighlighter marker) {
     myHighLighters.add(marker);
   }
 

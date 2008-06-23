@@ -486,12 +486,10 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
 
   /** Helper method */
   private static void writeInitialValuesElement(
-    final Element itemElement,
-    final HashMap<String, StringDescriptor> name2value
+    @NotNull final Element itemElement,
+    @NotNull final HashMap<String, StringDescriptor> name2value
   ){
-    LOG.assertTrue(itemElement != null);
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
-    LOG.assertTrue(name2value != null);
 
     if(name2value.size() == 0){ // do not append 'initial-values' subtag
       return;

@@ -37,6 +37,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +54,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private PsiClass myParentClass;
 
-  protected boolean invokeImpl(final Project project, final PsiExpression selectedExpr, final Editor editor) {
-    LOG.assertTrue(selectedExpr != null);
+  protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
     final PsiFile file = selectedExpr.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
 

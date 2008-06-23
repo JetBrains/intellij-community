@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -82,20 +83,19 @@ public class BraceEnforcer extends JavaRecursiveElementVisitor {
     }
   }
 
-  private void replaceWithBlock(PsiStatement statement, PsiStatement blockCandidate) {
-    AbstractPostFormatProcessor.LOG.assertTrue(statement != null);
+  private void replaceWithBlock(@NotNull PsiStatement statement, PsiStatement blockCandidate) {
     if (!statement.isValid()) {
-      AbstractPostFormatProcessor.LOG.assertTrue(false);
+      LOG.assertTrue(false);
     }
 
     if (!checkRangeContainsElement(blockCandidate)) return;
 
     final PsiManager manager = statement.getManager();
-    AbstractPostFormatProcessor.LOG.assertTrue(manager != null);
+    LOG.assertTrue(manager != null);
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     
     String oldText = blockCandidate.getText();
-    StringBuffer buf = new StringBuffer(oldText.length() + 3);
+    StringBuilder buf = new StringBuilder(oldText.length() + 3);
     buf.append('{');
     buf.append(oldText);
     buf.append("\n}");
@@ -105,9 +105,11 @@ public class BraceEnforcer extends JavaRecursiveElementVisitor {
                                 SourceTreeToPsiMap.psiElementToTree(blockCandidate),
                                 SourceTreeToPsiMap.psiElementToTree(factory.createStatementFromText(buf.toString(), null)));
       CodeStyleManager.getInstance(statement.getProject()).reformat(statement, true);
-    } catch (IncorrectOperationException e) {
-      AbstractPostFormatProcessor.LOG.error(e);
-    } finally {
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    finally {
       updateResultRange(oldTextLength , statement.getTextLength());
     }
   }

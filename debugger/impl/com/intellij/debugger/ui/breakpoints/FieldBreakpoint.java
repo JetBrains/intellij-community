@@ -33,6 +33,7 @@ import com.sun.jdi.request.AccessWatchpointRequest;
 import com.sun.jdi.request.ModificationWatchpointRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -50,15 +51,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
   private static Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png");
-  public static final @NonNls Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
+  @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
   protected FieldBreakpoint(Project project) {
     super(project);
   }
 
-  private FieldBreakpoint(Project project, RangeHighlighter highlighter, String fieldName) {
+  private FieldBreakpoint(Project project, RangeHighlighter highlighter, @NotNull String fieldName) {
     super(project, highlighter);
-    LOG.assertTrue(fieldName != null);
     myFieldName = fieldName;
   }
 
@@ -98,7 +98,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
 
   public PsiField getPsiField() {
     final SourcePosition sourcePosition = getSourcePosition();
-    final PsiField field = ApplicationManager.getApplication().runReadAction((Computable<PsiField>)new Computable<PsiField>() {
+    final PsiField field = ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
       public PsiField compute() {
         final PsiClass psiClass = getPsiClassAt(sourcePosition);
         return psiClass != null ? psiClass.findFieldByName(myFieldName, true) : null;
@@ -124,10 +124,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
 
   public boolean moveTo(SourcePosition position) {
     final PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, position);
-    if (field == null) {
-      return false;
-    }
-    return super.moveTo(SourcePosition.createFromElement(field));
+    return field != null && super.moveTo(SourcePosition.createFromElement(field));
   }
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
@@ -254,7 +251,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
       return DebuggerBundle.message("status.breakpoint.invalid");
     }
     final String className = getClassName();
-    return (className != null && className.length() > 0) ? (className + "." + myFieldName) : myFieldName;
+    return className != null && className.length() > 0 ? className + "." + myFieldName : myFieldName;
   }
 
   public static FieldBreakpoint create(Project project, Document document, int lineIndex, String fieldName) {
@@ -281,8 +278,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     Document document = null;
     try {
       List locations = field.declaringType().allLineLocations();
-      if(locations.size() > 0) {
-        Location location = ((Location) locations.get(0));
+      if(!locations.isEmpty()) {
+        Location location = (Location)locations.get(0);
         line = location.lineNumber();
         VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(location.sourcePath());
         if(file != null) {

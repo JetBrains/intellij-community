@@ -287,11 +287,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private final Map<PsiElement, List<PsiElement>> finallyBlockToUnhandledExceptions = new HashMap<PsiElement, List<PsiElement>>();
 
-  private boolean patchCheckedThrowInstructionIfInsideFinally(ConditionalThrowToInstruction instruction,
+  private boolean patchCheckedThrowInstructionIfInsideFinally(@NotNull ConditionalThrowToInstruction instruction,
                                                               PsiElement throwingElement,
                                                               PsiElement elementToJumpTo) {
-    LOG.assertTrue(instruction != null);
-
     final PsiElement finallyBlock = findEnclosingFinallyBlockElement(throwingElement, elementToJumpTo);
     if (finallyBlock == null) return false;
 
@@ -312,11 +310,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return true;
   }
 
-  private boolean patchUncheckedThrowInstructionIfInsideFinally(ConditionalThrowToInstruction instruction,
+  private boolean patchUncheckedThrowInstructionIfInsideFinally(@NotNull ConditionalThrowToInstruction instruction,
                                                                 PsiElement throwingElement,
                                                                 PsiElement elementToJumpTo) {
-    LOG.assertTrue(instruction != null);
-
     final PsiElement finallyBlock = findEnclosingFinallyBlockElement(throwingElement, elementToJumpTo);
     if (finallyBlock == null) return false;
 

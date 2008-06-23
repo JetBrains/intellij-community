@@ -148,7 +148,7 @@ public class PullUpDialog extends DialogWrapper {
     final PsiClass targetClass = (PsiClass) myClassCombo.getSelectedItem();
     myMemberInfos = myMemberInfoStorage.getMemberInfosList(targetClass);
     /*Set duplicated = myMemberInfoStorage.getDuplicatedMemberInfos(targetClass);
-    for (Iterator iterator = duplicated.iterator(); iterator.hasNext();) {
+    for (Iterator iterator = duplicated.getSectionsIterator(); getSectionsIterator.hasNext();) {
       ((MemberInfo) iterator.next()).setChecked(false);
     }*/
   }

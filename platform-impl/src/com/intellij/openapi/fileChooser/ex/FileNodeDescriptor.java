@@ -1,19 +1,16 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.NotNull;
-
 public class FileNodeDescriptor extends NodeDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileNodeDescriptor");
 
   private FileElement myFileElement;
   private Icon myOriginalOpenIcon;
@@ -21,7 +18,7 @@ public class FileNodeDescriptor extends NodeDescriptor {
   private final String myComment;
 
   public FileNodeDescriptor(Project project,
-                            FileElement element,
+                            @NotNull FileElement element,
                             NodeDescriptor parentDescriptor,
                             Icon openIcon,
                             Icon closedIcon,
@@ -31,7 +28,6 @@ public class FileNodeDescriptor extends NodeDescriptor {
     myOriginalOpenIcon = openIcon;
     myOriginalClosedIcon = closedIcon;
     myComment = comment;
-    LOG.assertTrue(element != null);
     myFileElement = element;
     myName = name;
   }

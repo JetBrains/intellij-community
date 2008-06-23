@@ -1,8 +1,8 @@
 package com.intellij.refactoring.rename.naming;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.usages.RenameableUsage;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -11,7 +11,6 @@ import java.util.*;
  * @author peter
  */
 public abstract class AutomaticUsageRenamer<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.AutomaticRenamer");
   private String myOldName;
   private String myNewName;
   private final Map<T, String> myRenames = new LinkedHashMap<T, String>();
@@ -96,8 +95,7 @@ public abstract class AutomaticUsageRenamer<T> {
     return myRenames;
   }
 
-  public void setRename(T element, String replacement) {
-    LOG.assertTrue(replacement != null);
+  public void setRename(T element, @NotNull String replacement) {
     myRenames.put(element, replacement);
   }
 

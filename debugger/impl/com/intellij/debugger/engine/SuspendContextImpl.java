@@ -17,6 +17,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -48,8 +49,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
   private HashSet<ObjectReference>       myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl          myEvaluationContext = null;
 
-  SuspendContextImpl(DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
-    LOG.assertTrue(debugProcess != null);
+  SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
     myDebugProcess = debugProcess;
     mySuspendPolicy = suspendPolicy;
     myVotesToVote = eventVotes;

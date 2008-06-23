@@ -1,6 +1,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.concurrent.locks.Condition;
@@ -27,8 +28,7 @@ public class EventQueue<E> {
     }
   }
 
-  public void put(E event, int priority) {
-    LOG.assertTrue(event != null);
+  public void put(@NotNull E event, int priority) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("put event " + event);
     }

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public abstract class MethodSignatureBase implements MethodSignature {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBase");
 
   private final PsiSubstitutor mySubstitutor;
   private final PsiType[] myParameterTypes;
@@ -40,8 +38,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myTypeParameters = typeParameters;
   }
 
-  protected MethodSignatureBase(PsiSubstitutor substitutor, PsiParameterList parameterList, @Nullable PsiTypeParameterList typeParameterList) {
-    LOG.assertTrue(substitutor != null);
+  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, PsiParameterList parameterList, @Nullable PsiTypeParameterList typeParameterList) {
     mySubstitutor = substitutor;
     if (parameterList != null) {
       final PsiParameter[] parameters = parameterList.getParameters();
@@ -82,7 +79,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
 
     final PsiType[] parameterTypes = getParameterTypes();
     result += 37 * parameterTypes.length;
-    PsiType firstParamType = parameterTypes.length != 0 ? parameterTypes[0] : null;
+    PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
     if (firstParamType != null) {
       result += firstParamType.hashCode();
     }

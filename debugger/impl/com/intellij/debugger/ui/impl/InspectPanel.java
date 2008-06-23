@@ -11,18 +11,15 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class InspectPanel extends DebuggerTreePanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.InspectPanel");
-
-  public InspectPanel(Project project, DebuggerStateManager stateManager, NodeDescriptorImpl inspectDescriptor) {
+  public InspectPanel(Project project, DebuggerStateManager stateManager, @NotNull NodeDescriptorImpl inspectDescriptor) {
     super(project, stateManager);
-    LOG.assertTrue(inspectDescriptor != null);
 
     getInspectTree().setInspectDescriptor(inspectDescriptor);
 

@@ -207,7 +207,8 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
         if (element == null) {
           LOG.assertTrue(refMethod != null);
           psiMethod = (PsiMethod)refMethod.getElement();
-        } else {
+        }
+        else {
           psiMethod = (PsiMethod)element;
         }
         if (psiMethod == null) return; //invalid refMethod

@@ -129,7 +129,7 @@ public class JikesCompiler extends ExternalCompiler {
     return commandLine.toArray(new String[commandLine.size()]);
   }
 
-  private void _createStartupCommand(final ModuleChunk chunk, final ArrayList<String> commandLine, final String outputPath) throws IOException {
+  private void _createStartupCommand(final ModuleChunk chunk, final ArrayList<String> commandLine, @NotNull final String outputPath) throws IOException {
 
     myTempFile = File.createTempFile("jikes", ".tmp");
     myTempFile.deleteOnExit();
@@ -171,7 +171,6 @@ public class JikesCompiler extends ExternalCompiler {
 
     //noinspection HardCodedStringLiteral
     commandLine.add("-d");
-    LOG.assertTrue(outputPath != null);
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
     JikesSettings jikesSettings = JikesSettings.getInstance(myProject);

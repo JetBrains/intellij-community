@@ -3,7 +3,6 @@ package com.intellij.refactoring.changeSignature.inCallers;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -25,6 +24,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -39,7 +39,6 @@ import java.util.Set;
  * @author ven
  */
 public abstract class CallerChooser extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.inCallers.CallerChooser");
   PsiMethod myMethod;
   private Alarm myAlarm = new Alarm();
   private MethodNode myRoot;
@@ -63,7 +62,7 @@ public abstract class CallerChooser extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    Splitter splitter = new Splitter(false, ((float)0.6));
+    Splitter splitter = new Splitter(false, (float)0.6);
     JPanel result = new JPanel(new BorderLayout());
     if (myTree == null) {
       myTree = createTree();
@@ -152,8 +151,7 @@ public abstract class CallerChooser extends DialogWrapper {
     return document.getText().substring(start, end);
   }
 
-  private int getStartOffset (final PsiMethod method) {
-    LOG.assertTrue(method != null);
+  private int getStartOffset (@NotNull final PsiMethod method) {
     final PsiFile file = method.getContainingFile();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
     return document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));

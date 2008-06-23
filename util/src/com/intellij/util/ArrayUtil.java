@@ -17,7 +17,6 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.ui.update.ComparableObjectCheck;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
 
@@ -357,7 +356,7 @@ public class ArrayUtil {
 
   public static int indexOf(Object[] objects, Object object) {
     for (int i = 0; i < objects.length; i++) {
-      if (ComparableObjectCheck.equals(objects[i], object)) return i;
+      if (ObjectUtils.equals(objects[i], object)) return i;
     }
 
     return -1;

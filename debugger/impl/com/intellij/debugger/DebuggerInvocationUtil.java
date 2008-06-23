@@ -3,10 +3,10 @@ package com.intellij.debugger;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -14,10 +14,7 @@ import com.intellij.psi.PsiDocumentManager;
  */
 
 public class DebuggerInvocationUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.DebuggerInvocationUtil");
-
-  public static void invokeLater(final Project project, final Runnable runnable) {
-    LOG.assertTrue(runnable != null);
+  public static void invokeLater(final Project project, @NotNull final Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (project != null && !project.isDisposed()) {
@@ -27,8 +24,7 @@ public class DebuggerInvocationUtil {
     });
   }
 
-  public static void invokeLater(final Project project, final Runnable runnable, ModalityState state) {
-    LOG.assertTrue(runnable != null);
+  public static void invokeLater(final Project project, @NotNull final Runnable runnable, ModalityState state) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if(project == null || project.isDisposed()) return;
@@ -38,8 +34,7 @@ public class DebuggerInvocationUtil {
     }, state);
   }
 
-  public static void invokeAndWait(final Project project, final Runnable runnable, ModalityState state) {
-    LOG.assertTrue(runnable != null);
+  public static void invokeAndWait(final Project project, @NotNull final Runnable runnable, ModalityState state) {
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         if(project == null || project.isDisposed()) return;
@@ -49,7 +44,7 @@ public class DebuggerInvocationUtil {
     }, state);
   }
 
-  public static  <T> T commitAndRunReadAction(Project project, final com.intellij.debugger.EvaluatingComputable<T> computable) throws EvaluateException {
+  public static  <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
     final Throwable[] ex = new Throwable[] { null };
     T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<T>() {
           public T compute() {

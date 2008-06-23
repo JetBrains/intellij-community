@@ -13,13 +13,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Feb 25, 2004
- * Time: 4:51:20 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerManagerThreadImpl");
@@ -132,9 +129,8 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
 
-  public void processEvent(DebuggerCommandImpl managerCommand) {
+  public void processEvent(@NotNull DebuggerCommandImpl managerCommand) {
     assertIsManagerThread();
-    LOG.assertTrue(managerCommand != null);
     try {
       if(myEvents.isClosed()) {
         managerCommand.notifyCancelled();
@@ -206,7 +202,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   public void invokeCommand(final DebuggerCommand command) {
     if(command instanceof SuspendContextCommand) {
-      SuspendContextCommand suspendContextCommand = ((SuspendContextCommand) command);
+      SuspendContextCommand suspendContextCommand = (SuspendContextCommand)command;
       invokeLater(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
         public void contextAction() throws Exception {
           command.action();

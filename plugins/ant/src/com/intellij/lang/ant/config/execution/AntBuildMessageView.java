@@ -35,6 +35,7 @@ import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.content.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -775,8 +776,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     myScrollerTimer.stop();
   }
 
-  void buildFinished(boolean isProgressAborted, long buildTimeInMilliseconds, final AntBuildListener antBuildListener) {
-    LOG.assertTrue(antBuildListener != null);
+  void buildFinished(boolean isProgressAborted, long buildTimeInMilliseconds, @NotNull final AntBuildListener antBuildListener) {
     final boolean aborted = isProgressAborted || myIsAborted;
     String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
     WindowManager.getInstance().getStatusBar(myProject).setInfo(message);

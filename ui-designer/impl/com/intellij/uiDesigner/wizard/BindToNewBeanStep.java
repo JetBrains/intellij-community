@@ -7,6 +7,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -29,8 +30,7 @@ final class BindToNewBeanStep extends StepAdapter{
   private JCheckBox myChkGetData;
   private JPanel myPanel;
 
-  BindToNewBeanStep(final WizardData data) {
-    LOG.assertTrue(data != null);
+  BindToNewBeanStep(@NotNull final WizardData data) {
     myData = data;
     myTableModel = new MyTableModel();
     myTable.setModel(myTableModel);

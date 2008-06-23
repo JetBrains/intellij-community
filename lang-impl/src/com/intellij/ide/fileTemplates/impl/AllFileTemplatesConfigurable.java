@@ -159,7 +159,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
         onListSelectionChanged();
       }
 
-      protected FileTemplateTabAsTree.FileTemplateNode initModel() {
+      protected FileTemplateNode initModel() {
         SortedSet<FileTemplateGroupDescriptor> categories = new TreeSet<FileTemplateGroupDescriptor>(new Comparator<FileTemplateGroupDescriptor>() {
           public int compare(FileTemplateGroupDescriptor o1, FileTemplateGroupDescriptor o2) {
             return o1.getTitle().compareTo(o2.getTitle());
@@ -561,7 +561,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
 
   private static void removeTemplate(FileTemplate aTemplate, int listId, boolean fromDiskOnly) {
     FileTemplateManager manager = FileTemplateManager.getInstance();
-    if (listId == AllFileTemplatesConfigurable.TEMPLATE_ID) {
+    if (listId == TEMPLATE_ID) {
       if (!aTemplate.isInternal()) {
         manager.removeTemplate(aTemplate, fromDiskOnly);
       } else {
@@ -617,13 +617,16 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     for (FileTemplate aModifiedTemplate : newModifiedItems) {
       LOG.assertTrue(aModifiedTemplate != null);
       if (!savedTemplate2ModifiedTemplate.containsValue(aModifiedTemplate)) {
-        if (listId == AllFileTemplatesConfigurable.TEMPLATE_ID) {
+        if (listId == TEMPLATE_ID) {
           templatesManager.addTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        } else if (listId == AllFileTemplatesConfigurable.PATTERN_ID) {
+        }
+        else if (listId == PATTERN_ID) {
           templatesManager.addPattern(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        } else if (listId == CODE_ID) {
+        }
+        else if (listId == CODE_ID) {
           templatesManager.addCodeTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        } else if (listId == J2EE_ID) {
+        }
+        else if (listId == J2EE_ID) {
           templatesManager.addJ2eeTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
         }
       }

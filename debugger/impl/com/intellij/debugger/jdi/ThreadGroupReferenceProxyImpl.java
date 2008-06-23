@@ -3,16 +3,15 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.debugger.engine.jdi.ThreadGroupReferenceProxy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ThreadGroupReference;
 import com.sun.jdi.ThreadReference;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadGroupReferenceProxy{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl");
@@ -23,7 +22,6 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
 
   public ThreadGroupReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, ThreadGroupReference threadGroupReference) {
     super(virtualMachineProxy, threadGroupReference);
-    LOG.assertTrue(threadGroupReference != null);
   }
 
   public ThreadGroupReference getThreadGroupReference() {

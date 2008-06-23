@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -41,7 +42,7 @@ public class ParametersList implements Cloneable{
   }
 
   public String getParametersString() {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     final String separator = " ";
     for (final String param : myParameters) {
       buffer.append(separator);
@@ -67,8 +68,7 @@ public class ParametersList implements Cloneable{
     myParameters.add(expandMacros(parameter));
   }
 
-  public void addAt(final int index, final String parameter) {
-    LOG.assertTrue(parameter != null);
+  public void addAt(final int index, @NotNull final String parameter) {
     myParameters.add(index, expandMacros(parameter));
   }
 
@@ -234,9 +234,7 @@ public class ParametersList implements Cloneable{
           myUnquotedSlash = false;
           return false;
         }
-        else {
-          myTokenStarted = true;
-        }
+        myTokenStarted = true;
         return true;
       }
       else if (c == ' ') {

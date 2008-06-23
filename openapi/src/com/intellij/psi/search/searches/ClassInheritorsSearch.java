@@ -32,9 +32,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author max
@@ -138,12 +139,10 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   private static boolean processInheritors(final Processor<PsiClass> consumer,
                                            final PsiClass baseClass,
-                                           final SearchScope searchScope,
+                                           @NotNull final SearchScope searchScope,
                                            final boolean checkDeep,
                                            final boolean checkInheritance,
                                            final boolean includeAnonymous) {
-    LOG.assertTrue(searchScope != null);
-
     if (baseClass instanceof PsiAnonymousClass) return true;
 
     if (isFinal(baseClass)) return true;

@@ -231,8 +231,7 @@ public class PsiClassImplUtil {
     return result;
   }
 
-  private static <T extends PsiMember> Map<String, List> generateMapByList(final List<Pair<T, PsiSubstitutor>> list) {
-    LOG.assertTrue(list != null);
+  private static <T extends PsiMember> Map<String, List> generateMapByList(@NotNull final List<Pair<T, PsiSubstitutor>> list) {
     Map<String, List> map = new HashMap<String, List>();
     map.put(ALL, list);
     for (final Pair<T, PsiSubstitutor> info : list) {
@@ -579,7 +578,7 @@ public class PsiClassImplUtil {
   @NotNull public static PsiClass[] getSupers(PsiClass psiClass) {
     final PsiClass[] supers = getSupersInner(psiClass);
     for (final PsiClass aSuper : supers) {
-      LOG.assertTrue(aSuper != null);///
+      LOG.assertTrue(aSuper != null);
     }
     return supers;
   }

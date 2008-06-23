@@ -4,10 +4,10 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: lex
@@ -15,18 +15,15 @@ import com.sun.jdi.Value;
  * Time: 2:02:29 PM
  */
 public final class EvaluationContextImpl implements EvaluationContext{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.EvaluationContextImpl");
-
   private final Value myThisObject;
   private final SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
   private boolean myAutoLoadClasses = true;
   
-  public EvaluationContextImpl(SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, Value thisObject) {
+  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, Value thisObject) {
     myThisObject = thisObject;
     myFrameProxy = frameProxy;
     mySuspendContext = suspendContext;
-    LOG.assertTrue(suspendContext != null);
   }
 
   public Value getThisObject() {

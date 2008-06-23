@@ -8,7 +8,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Pair;
@@ -17,6 +16,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +35,9 @@ import java.util.List;
     )}
 )
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
-  private static final @NonNls String REFERENCE_RENDERER = "Reference renderer";
-  public static final @NonNls String RENDERER_TAG = "Renderer";
-  private static final @NonNls String RENDERER_ID = "ID";
+  @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
+  @NonNls public static final String RENDERER_TAG = "Renderer";
+  @NonNls private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
   private List<NodeRenderer> myPluginRenderers = new ArrayList<NodeRenderer>();
@@ -68,9 +67,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       createExpressionChildrenRenderer("toArray()", "!isEmpty()")
     )
   };
-  private static final @NonNls String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
-  private static final @NonNls String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
-  private static final @NonNls String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
+  @NonNls private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
+  @NonNls private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
+  @NonNls private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
   
   public NodeRendererSettings() {
     // default configuration
@@ -182,8 +181,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return myCustomRenderers;
   }
 
-  public void setCustomRenderers(final RendererConfiguration customRenderers) {
-    LOG.assertTrue(customRenderers != null);
+  public void setCustomRenderers(@NotNull final RendererConfiguration customRenderers) {
     RendererConfiguration oldConfig = myCustomRenderers;
     myCustomRenderers = customRenderers;
     if (oldConfig == null || !oldConfig.equals(customRenderers)) {
@@ -313,7 +311,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private CompoundReferenceRenderer createCompoundReferenceRenderer(
-    final @NonNls String rendererName, @NonNls final String className, final LabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
+    @NonNls final String rendererName, @NonNls final String className, final LabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
     ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
@@ -341,7 +339,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return childrenRenderer;
   }
 
-  private static LabelRenderer createLabelRenderer(@NonNls final String prefix, @NonNls final String expressionText, final @NonNls String postfix) {
+  private static LabelRenderer createLabelRenderer(@NonNls final String prefix, @NonNls final String expressionText, @NonNls final String postfix) {
     final LabelRenderer labelRenderer = new LabelRenderer() {
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
         final String evaluated = super.calcLabel(descriptor, evaluationContext, labelListener);

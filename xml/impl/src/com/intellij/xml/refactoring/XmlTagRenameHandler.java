@@ -43,9 +43,8 @@ public class XmlTagRenameHandler implements RenameHandler {
     return editor.getSettings().isVariableInplaceRenameEnabled();
   }
 
-  private static boolean isDeclarationOutOfProjectOrAbsent(final Project project, final DataContext context) {
+  private static boolean isDeclarationOutOfProjectOrAbsent(@NotNull final Project project, final DataContext context) {
     final PsiElement[] elements = BaseRefactoringAction.getPsiElementArray(context);
-    LOG.assertTrue(project != null);
     return elements.length == 0 || elements.length == 1 && !PsiManager.getInstance(project).isInProject(elements[0]);
   }
 
@@ -97,7 +96,7 @@ public class XmlTagRenameHandler implements RenameHandler {
   }
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
-    PsiElement element = (elements.length == 1) ? elements[0] : null;
+    PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) {
       element = getElement(dataContext);
     }

@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
@@ -86,7 +87,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
 
     private static String readTagTypeFrom(final byte[] byteMessage) {
-      final StringBuffer result = new StringBuffer();
+      final StringBuilder result = new StringBuilder();
       for (byte b : byteMessage) {
         if (b == ' ') return result.toString();
         result.append((char)b);
@@ -99,11 +100,11 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
   }
 
-  private final static byte NOT_LOADED = 0;
-  private final static byte FILE_NOT_FOUND = 1;
-  private final static byte DELETED = 2;
-  private final static byte SUCCESSFULLY_LOADED = 3;
-  private final static byte LOADING = 4;
+  private static final byte NOT_LOADED = 0;
+  private static final byte FILE_NOT_FOUND = 1;
+  private static final byte DELETED = 2;
+  private static final byte SUCCESSFULLY_LOADED = 3;
+  private static final byte LOADING = 4;
 
   private byte myState = NOT_LOADED;
 
@@ -125,8 +126,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     );
   }
 
-  public static GetFileContentOperation createForFile(VirtualFile file) throws CannotFindCvsRootException {
-    LOG.assertTrue(file != null);
+  public static GetFileContentOperation createForFile(@NotNull VirtualFile file) throws CannotFindCvsRootException {
     return createForFile(file, RevisionOrDateImpl.createOn(file));
   }
 
@@ -137,9 +137,8 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
                                        RevisionOrDateImpl.createOn(filePath.getVirtualFileParent(), filePath.getName()));
   }
 
-  public GetFileContentOperation(File cvsFile, CvsEnvironment environment, RevisionOrDate revisionOrDate) {
+  public GetFileContentOperation(File cvsFile, CvsEnvironment environment, @NotNull RevisionOrDate revisionOrDate) {
     super(environment);
-    LOG.assertTrue(revisionOrDate != null);
     myRevisionOrDate = revisionOrDate;
     myRoot = CvsRootProvider.createOn(null, environment);
     myModuleName = cvsFile.getPath().replace(File.separatorChar, '/');

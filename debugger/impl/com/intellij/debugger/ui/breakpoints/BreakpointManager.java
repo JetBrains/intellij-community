@@ -43,10 +43,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
-import com.sun.jdi.Field;
-import com.sun.jdi.InternalException;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ThreadReference;
+import com.sun.jdi.*;
 import com.sun.jdi.request.*;
 import gnu.trove.TIntHashSet;
 import org.jdom.Element;
@@ -61,7 +58,7 @@ import java.util.*;
 public class BreakpointManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
 
-  private static final @NonNls String RULES_GROUP_NAME = "breakpoint_rules";
+  @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
   private final Project myProject;
   private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
   private List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
@@ -102,8 +99,8 @@ public class BreakpointManager implements JDOMExternalizable {
       }
     }
   };
-  private static final @NonNls String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
-  private static final @NonNls String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
+  @NonNls private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
+  @NonNls private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
   @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
 
   private void update(List<BreakpointWithHighlighter> breakpoints) {
@@ -136,7 +133,7 @@ public class BreakpointManager implements JDOMExternalizable {
   private void setInvalid(final BreakpointWithHighlighter breakpoint) {
     Collection<DebuggerSession> sessions = DebuggerManagerEx.getInstanceEx(myProject).getSessions();
 
-    for (Iterator<DebuggerSession> iterator = sessions.iterator(); iterator.hasNext();) {
+    for (Iterator<DebuggerSession> iterator = sessions.getSectionsIterator(); getSectionsIterator.hasNext();) {
       DebuggerSession session = iterator.next();
       final DebugProcessImpl process = session.getProcess();
       process.getManagerThread().invokeLater(new DebuggerCommandImpl() {
@@ -178,7 +175,8 @@ public class BreakpointManager implements JDOMExternalizable {
     myEditorMouseListener = new EditorMouseAdapter() {
       private EditorMouseEvent myMousePressedEvent;
 
-      private @Nullable Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, final int line) {
+      @Nullable
+      private Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, final int line) {
         final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
         if (editor == null) {
           return null;
@@ -419,9 +417,8 @@ public class BreakpointManager implements JDOMExternalizable {
     return fieldBreakpoint;
   }
 
-  public ExceptionBreakpoint addExceptionBreakpoint(String exceptionClassName, String packageName) {
+  public ExceptionBreakpoint addExceptionBreakpoint(@NotNull String exceptionClassName, String packageName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(exceptionClassName != null);
     ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName, packageName);
     addBreakpoint(breakpoint);
     if (LOG.isDebugEnabled()) {
@@ -492,7 +489,7 @@ public class BreakpointManager implements JDOMExternalizable {
    * @return
    */
   @Nullable
-  public <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, final @Nullable Key<T> category) {
+  public <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, @Nullable final Key<T> category) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {

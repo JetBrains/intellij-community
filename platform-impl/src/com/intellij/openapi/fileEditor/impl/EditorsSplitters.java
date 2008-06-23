@@ -16,7 +16,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.update.ComparableObjectCheck;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -529,7 +529,7 @@ public final class EditorsSplitters extends JPanel {
         }
       }
 
-      boolean changed = !ComparableObjectCheck.equals(newWindow, myCurrentWindow) || !ComparableObjectCheck.equals(newFile, myCurrentFile);
+      boolean changed = !ObjectUtils.equals(newWindow, myCurrentWindow) || !ObjectUtils.equals(newFile, myCurrentFile);
 
       myCurrentFile = newFile;
       myCurrentWindow = newWindow;

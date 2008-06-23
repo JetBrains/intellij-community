@@ -33,6 +33,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -448,8 +449,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
     }
   }
 
-  private static void encodeClassTypeInfoInReference(CompositeElement reference, PsiClass referencedClass, PsiSubstitutor substitutor) {
-    LOG.assertTrue(referencedClass != null);
+  private static void encodeClassTypeInfoInReference(@NotNull CompositeElement reference, PsiClass referencedClass, PsiSubstitutor substitutor) {
     reference.putCopyableUserData(REFERENCED_CLASS_KEY, referencedClass);
 
     final PsiTypeParameter[] typeParameters = referencedClass.getTypeParameters();

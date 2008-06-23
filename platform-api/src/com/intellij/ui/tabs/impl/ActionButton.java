@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.util.ui.update.ComparableObjectCheck;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
@@ -59,8 +59,7 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean areEqual(Presentation p1, Presentation p2) {
     if (p1 == null || p2 == null) return false;
 
-    return ComparableObjectCheck.equals(p1.getText(), p2.getText()) &&
-           ComparableObjectCheck.equals(p1.getIcon(), p2.getIcon()) &&
+    return ObjectUtils.equals(p1.getText(), p2.getText()) && ObjectUtils.equals(p1.getIcon(), p2.getIcon()) &&
            p1.isEnabled() == p2.isEnabled() &&
            p1.isVisible() == p2.isVisible();
 

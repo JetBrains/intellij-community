@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,9 +25,7 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
   private final SimpleTextAttributes myAttrs2;
   private final SimpleTextAttributes myAttrs3;
 
-  FormPropertyTableCellRenderer(final Project project) {
-    LOG.assertTrue(project != null);
-
+  FormPropertyTableCellRenderer(@NotNull final Project project) {
     myPalette = Palette.getInstance(project);
     myAttrs1 = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
     myAttrs2 = SimpleTextAttributes.REGULAR_ATTRIBUTES;
@@ -37,14 +36,13 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
 
   protected void customizeCellRenderer(
     final JTable table,
-    final Object value,
+    @NotNull final Object value,
     final boolean selected,
     final boolean hasFocus,
     final int row,
     final int column
   ) {
     final FormProperty property = (FormProperty)value;
-    LOG.assertTrue(property != null);
 
     final LwComponent component = property.getLwComponent();
 

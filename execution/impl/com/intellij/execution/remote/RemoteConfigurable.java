@@ -7,12 +7,12 @@ package com.intellij.execution.remote;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -20,7 +20,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.*;
 
 public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.remote.RemoteConfigurable");
   JPanel myPanel;
   private JRadioButton myRbSocket;
   private JRadioButton myRbShmem;
@@ -102,43 +101,40 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myPortField.addFocusListener(fieldFocusListener);
   }
 
-  public void applyEditorTo(final RemoteConfiguration configuration) throws ConfigurationException {
-    LOG.assertTrue(configuration != null);
-    final RemoteConfiguration remoteConfiguration = configuration;
-    remoteConfiguration.HOST = (myHostField.isEditable() ? myHostField.getText() : myHostName).trim();
-    if ("".equals(remoteConfiguration.HOST)) {
-      remoteConfiguration.HOST = null;
+  public void applyEditorTo(@NotNull final RemoteConfiguration configuration) throws ConfigurationException {
+    configuration.HOST = (myHostField.isEditable() ? myHostField.getText() : myHostName).trim();
+    if ("".equals(configuration.HOST)) {
+      configuration.HOST = null;
     }
-    remoteConfiguration.PORT = myPortField.getText().trim();
-    if ("".equals(remoteConfiguration.PORT)) {
-      remoteConfiguration.PORT = null;
+    configuration.PORT = myPortField.getText().trim();
+    if ("".equals(configuration.PORT)) {
+      configuration.PORT = null;
     }
-    remoteConfiguration.SHMEM_ADDRESS = myAddressField.getText().trim();
-    if ("".equals(remoteConfiguration.SHMEM_ADDRESS)) {
-      remoteConfiguration.SHMEM_ADDRESS = null;
+    configuration.SHMEM_ADDRESS = myAddressField.getText().trim();
+    if ("".equals(configuration.SHMEM_ADDRESS)) {
+      configuration.SHMEM_ADDRESS = null;
     }
-    remoteConfiguration.USE_SOCKET_TRANSPORT = myRbSocket.isSelected();
-    remoteConfiguration.SERVER_MODE = myRbListen.isSelected();
+    configuration.USE_SOCKET_TRANSPORT = myRbSocket.isSelected();
+    configuration.SERVER_MODE = myRbListen.isSelected();
   }
 
   public void resetEditorFrom(final RemoteConfiguration configuration) {
-    final RemoteConfiguration remoteConfiguration = configuration;
     if (!SystemInfo.isWindows) {
-      remoteConfiguration.USE_SOCKET_TRANSPORT = true;
+      configuration.USE_SOCKET_TRANSPORT = true;
       myRbShmem.setEnabled(false);
       myAddressField.setEditable(false);
     }
-    myAddressField.setText(remoteConfiguration.SHMEM_ADDRESS);
-    myHostName = remoteConfiguration.HOST;
-    myHostField.setText(remoteConfiguration.HOST);
-    myPortField.setText(remoteConfiguration.PORT);
-    if (remoteConfiguration.USE_SOCKET_TRANSPORT) {
+    myAddressField.setText(configuration.SHMEM_ADDRESS);
+    myHostName = configuration.HOST;
+    myHostField.setText(configuration.HOST);
+    myPortField.setText(configuration.PORT);
+    if (configuration.USE_SOCKET_TRANSPORT) {
       myRbSocket.doClick();
     }
     else {
       myRbShmem.doClick();
     }
-    if (remoteConfiguration.SERVER_MODE) {
+    if (configuration.SERVER_MODE) {
       myRbListen.doClick();
     }
     else {
@@ -147,6 +143,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myRbShmem.setEnabled(SystemInfo.isWindows);
   }
 
+  @NotNull
   public JComponent createEditor() {
     return myPanel;
   }
@@ -170,7 +167,4 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   }
 
 
-  @NonNls public String getHelpTopic() {
-    return "project.runDebugRemote";
-  }
 }

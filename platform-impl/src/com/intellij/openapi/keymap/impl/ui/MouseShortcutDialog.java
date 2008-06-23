@@ -2,27 +2,23 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author Vladimir Kondratyev
  */
 class MouseShortcutDialog extends DialogWrapper{
-  private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.MouseShortcutDialog");
-
   private final Keymap myKeymap;
   private final String myActionId;
   private final Group myMainGroup;
@@ -43,18 +39,15 @@ class MouseShortcutDialog extends DialogWrapper{
   public MouseShortcutDialog(
     JComponent parentComponent,
     MouseShortcut shortcut,
-    Keymap keymap,
-    String actiondId,
-    Group mainGroup
+    @NotNull Keymap keymap,
+    @NotNull String actiondId,
+    @NotNull Group mainGroup
   ){
     super(parentComponent,true);
     setTitle(KeyMapBundle.message("mouse.shortcut.dialog.title"));
 
-    LOG.assertTrue(keymap!=null);
     myKeymap=keymap;
-    LOG.assertTrue(actiondId!=null);
     myActionId=actiondId;
-    LOG.assertTrue(mainGroup!=null);
     myMainGroup=mainGroup;
 
     myRbSingleClick=new JRadioButton(KeyMapBundle.message("mouse.shortcut.dialog.single.click.radio"));
@@ -203,36 +196,32 @@ class MouseShortcutDialog extends DialogWrapper{
       mouseShortcut=new MouseShortcut(myButton,myModifiers,2);
     }
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     String[] actionIds = myKeymap.getActionIds(mouseShortcut);
-    for(int i = 0; i < actionIds.length; i++) {
-      String actionId = actionIds[i];
-      if (actionId.equals(myActionId)){
+    for (String actionId : actionIds) {
+      if (actionId.equals(myActionId)) {
         continue;
       }
 
       String actionPath = myMainGroup.getActionQualifiedPath(actionId);
       // actionPath == null for editor actions having corresponding $-actions
-      if (actionPath == null){
+      if (actionPath == null) {
         continue;
       }
 
       Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
-      for (int j = 0; j < shortcuts.length; j++) {
-        if (!(shortcuts[j] instanceof MouseShortcut)){
+      for (Shortcut shortcut1 : shortcuts) {
+        if (!(shortcut1 instanceof MouseShortcut)) {
           continue;
         }
 
-        MouseShortcut shortcut = (MouseShortcut)shortcuts[j];
+        MouseShortcut shortcut = (MouseShortcut)shortcut1;
 
-        if (
-          shortcut.getButton() != mouseShortcut.getButton() ||
-          shortcut.getModifiers() != mouseShortcut.getModifiers()
-        ){
+        if (shortcut.getButton() != mouseShortcut.getButton() || shortcut.getModifiers() != mouseShortcut.getModifiers()) {
           continue;
         }
 
-        if(buffer.length() > 1) {
+        if (buffer.length() > 1) {
           buffer.append('\n');
         }
         buffer.append('[');
@@ -256,8 +245,7 @@ class MouseShortcutDialog extends DialogWrapper{
     public MyClickPad(){
       super(
         KeyMapBundle.message("mouse.shortcut.label"),
-        IconLoader.getIcon("/general/mouse.png"),
-        JLabel.CENTER
+        IconLoader.getIcon("/general/mouse.png"), SwingConstants.CENTER
       );
       // It's very imporatant that MouseListener is added to the Dialog. If you add
       // the same listener, for example, into the MyClickPad component you get fake

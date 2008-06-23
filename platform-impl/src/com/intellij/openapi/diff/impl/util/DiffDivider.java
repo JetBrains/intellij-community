@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,9 +55,8 @@ public class DiffDivider extends JComponent {
     myEditors[1] = null;
   }
 
-  public void listenEditors(EditingSides sides) {
+  public void listenEditors(@NotNull EditingSides sides) {
     stopListenEditors();
-    LOG.assertTrue(sides != null);
     myPaint = new DiffDividerPaint(sides, myLeftSide);
     myEditors[0] = sides.getEditor(FragmentSide.SIDE1);
     myEditors[1] = sides.getEditor(FragmentSide.SIDE2);

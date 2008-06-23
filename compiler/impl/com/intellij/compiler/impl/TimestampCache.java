@@ -5,7 +5,7 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -13,13 +13,11 @@ import java.io.File;
 import java.io.IOException;
 
 public class TimestampCache extends StateCache <Long> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TsCache");
   public TimestampCache(File storeDirectory) throws IOException {
     super(new File(storeDirectory, "timestamps"));
   }
 
-  public void update(String url, Long state) throws IOException {
-    LOG.assertTrue(state != null);
+  public void update(String url, @NotNull Long state) throws IOException {
     super.update(url, state);
   }
 

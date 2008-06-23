@@ -1,6 +1,5 @@
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleJdkOrderEntry;
@@ -13,6 +12,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -21,7 +21,6 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                                                                                   ClonableOrderEntry,
                                                                                   ModuleJdkOrderEntry,
                                                                                   ProjectJdkTable.Listener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.JdkLibraryEntryImpl");
   @NonNls static final String ENTRY_TYPE = "jdk";
   @NonNls private static final String JDK_NAME_ATTR = "jdkName";
   @NonNls private static final String JDK_TYPE_ATTR = "jdkType";
@@ -30,12 +29,11 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   private String myJdkName;
   private String myJdkType;
 
-  ModuleJdkOrderEntryImpl(Sdk projectJdk,
+  ModuleJdkOrderEntryImpl(@NotNull Sdk projectJdk,
                           RootModelImpl rootModel,
                           ProjectRootManagerImpl projectRootManager,
                           VirtualFilePointerManager filePointerManager) {
     super(rootModel, projectRootManager, filePointerManager);
-    LOG.assertTrue(projectJdk != null);
     init(projectJdk, null, null);
   }
 

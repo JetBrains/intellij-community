@@ -32,6 +32,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -482,8 +483,7 @@ public class MergePanel2 implements DiffViewer {
       myPanel.setStatusBarText(text);
     }
 
-    public void dispose(MergeList mergeList) {
-      LOG.assertTrue(mergeList != null);
+    public void dispose(@NotNull MergeList mergeList) {
       ChangeCounter.getOrCreate(mergeList).removeListener(this);
     }
 

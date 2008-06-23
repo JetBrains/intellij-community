@@ -52,9 +52,8 @@ public final class ExecutionHandler {
                               String[] targets,
                               final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
-                              final AntBuildListener antBuildListener) {
+                              @NotNull final AntBuildListener antBuildListener) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    LOG.assertTrue(antBuildListener != null);
     final AntCommandLineBuilder builder = new AntCommandLineBuilder();
     final AntBuildMessageView messageView;
     final GeneralCommandLine commandLine;
@@ -111,21 +110,17 @@ public final class ExecutionHandler {
   }
 
   private static void runBuild(final ProgressIndicator progress,
-                               final AntBuildMessageView errorView,
-                               final AntBuildFile buildFile,
-                               final AntBuildListener antBuildListener,
-                               GeneralCommandLine commandLine) {
-    LOG.assertTrue(antBuildListener != null);
-    LOG.assertTrue(errorView != null);
-    LOG.assertTrue(commandLine != null);
-    LOG.assertTrue(buildFile != null);
+                               @NotNull final AntBuildMessageView errorView,
+                               @NotNull final AntBuildFile buildFile,
+                               @NotNull final AntBuildListener antBuildListener,
+                               @NotNull GeneralCommandLine commandLine) {
     final Project project = buildFile.getProject();
 
     final long startTime = new Date().getTime();
-    JUnitProcessHandler handler;
     if (LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING) {
       LocalHistory.putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
     }
+    JUnitProcessHandler handler;
     try {
       handler = JUnitProcessHandler.runCommandLine(commandLine);
     }

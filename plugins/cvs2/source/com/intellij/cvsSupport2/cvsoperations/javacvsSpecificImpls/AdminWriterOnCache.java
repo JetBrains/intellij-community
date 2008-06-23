@@ -16,6 +16,7 @@ import org.netbeans.lib.cvsclient.admin.AdminWriter;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
 import org.netbeans.lib.cvsclient.file.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,17 +150,15 @@ public class AdminWriterOnCache implements IAdminWriter {
     myAdminWriter.setEntriesDotStatic(directoryObject, set, cvsFileSystem);
   }
 
-  public void writeTemplateFile(DirectoryObject directoryObject,
+  public void writeTemplateFile(@NotNull DirectoryObject directoryObject,
                                 int fileLength,
                                 InputStream inputStream,
                                 IReaderFactory readerFactory,
                                 IClientEnvironment clientEnvironment) throws IOException {
-    LOG.assertTrue(directoryObject != null);
     myAdminWriter.writeTemplateFile(directoryObject, fileLength, inputStream, readerFactory, clientEnvironment);
   }
 
-  public void directoryAdded(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
-    LOG.assertTrue(directoryObject != null);
+  public void directoryAdded(@NotNull DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
     LOG.assertTrue(directoryObject.getParent() != null, directoryObject.getPath());
 
     File directory = cvsFileSystem.getLocalFileSystem().getFile(directoryObject);

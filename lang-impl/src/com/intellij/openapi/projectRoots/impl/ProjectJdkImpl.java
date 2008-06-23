@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -62,8 +63,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     return myName;
   }
 
-  public void setName(String name) {
-    LOG.assertTrue(name != null);
+  public void setName(@NotNull String name) {
     myName = name;
   }
 

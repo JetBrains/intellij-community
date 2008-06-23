@@ -16,6 +16,7 @@
 package com.intellij.openapi.cvsIntegration;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -31,18 +32,13 @@ public class CvsRepository {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.cvsIntegration.CvsRepository");
 
-  public CvsRepository(String stringRepresentation,
-                       String method,
+  public CvsRepository(@NotNull String stringRepresentation,
+                       @NotNull String method,
                        String user,
-                       String host,
-                       String repository,
+                       @NotNull String host,
+                       @NotNull String repository,
                        int port,
-                       DateOrRevision branch) {
-    LOG.assertTrue(method != null);
-    LOG.assertTrue(host != null);
-    LOG.assertTrue(repository != null);
-    LOG.assertTrue(branch != null);
-    LOG.assertTrue(stringRepresentation != null);
+                       @NotNull DateOrRevision branch) {
     LOG.assertTrue(port > 0);
 
     myMethod = method;

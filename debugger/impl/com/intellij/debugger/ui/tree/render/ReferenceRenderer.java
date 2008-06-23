@@ -7,6 +7,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ReferenceRenderer implements Renderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ReferenceRenderer");
@@ -16,8 +17,7 @@ public abstract class ReferenceRenderer implements Renderer {
     this("java.lang.Object");
   }
 
-  protected ReferenceRenderer(String className) {
-    LOG.assertTrue(className != null);
+  protected ReferenceRenderer(@NotNull String className) {
     myProperties.setClassName(className);
   }
 
@@ -30,9 +30,8 @@ public abstract class ReferenceRenderer implements Renderer {
   }
 
   public Renderer clone() {
-    final ReferenceRenderer cloned;
     try {
-      cloned = (ReferenceRenderer)super.clone();
+      final ReferenceRenderer cloned = (ReferenceRenderer)super.clone();
       cloned.myProperties = myProperties.clone();
       return cloned;
     }
@@ -43,10 +42,7 @@ public abstract class ReferenceRenderer implements Renderer {
   }
 
   public boolean isApplicable(Type type) {
-    if(type == null || !(type instanceof ReferenceType)) {
-      return false;
-    }
-    return DebuggerUtils.instanceOf(type, getClassName());
+    return type != null && type instanceof ReferenceType && DebuggerUtils.instanceOf(type, getClassName());
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

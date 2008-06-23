@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Attribute;
@@ -52,7 +52,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   public void load() throws IOException, StateStorage.StateStorageException {
     super.load();
 
-    final ModuleStoreImpl.ModuleFileData storageData = getMainStorageData();
+    final ModuleFileData storageData = getMainStorageData();
     final String moduleTypeId = storageData.myOptions.get(ModuleImpl.ELEMENT_TYPE);
     myModule.setModuleType(ModuleTypeManager.getInstance().findByID(moduleTypeId));
   }
@@ -152,8 +152,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return (ProjectConversionHelper)module.getProject().getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
-  public void setModuleFilePath(final String filePath) {
-    LOG.assertTrue(filePath != null);
+  public void setModuleFilePath(@NotNull final String filePath) {
     final String path = filePath.replace(File.separatorChar, '/');
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -221,10 +220,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
   @Override
   protected boolean optimizeTestLoading() {
-    return ((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed();
-  }
-
-  public synchronized void initStore() {
+    return ((ProjectEx)myModule.getProject()).isOptimiseTestLoadSpeed();
   }
 
   protected StateStorageManager createStateStorageManager() {

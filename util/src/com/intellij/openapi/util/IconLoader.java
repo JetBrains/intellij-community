@@ -61,8 +61,7 @@ public final class IconLoader {
   }
 
   @Deprecated
-  public static Icon getIcon(final Image image) {
-    LOG.assertTrue(image != null);
+  public static Icon getIcon(@NotNull final Image image) {
     return new MyImageIcon(image);
   }
 
@@ -94,10 +93,10 @@ public final class IconLoader {
   }
 
   @NotNull
-  public static Icon getIcon(final String path, final Class aClass) {
+  public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
     final Icon icon = findIcon(path, aClass);
     if (icon == null) {
-      LOG.error("Icon cannot be found in '" + path + "', aClass='" + (aClass == null ? null : aClass.getName()) + "'");
+      LOG.error("Icon cannot be found in '" + path + "', aClass='" + aClass + "'");
     }
     return icon;
   }

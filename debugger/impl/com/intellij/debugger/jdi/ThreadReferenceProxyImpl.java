@@ -34,7 +34,6 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   public ThreadReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, ThreadReference threadReference) {
     super(virtualMachineProxy, threadReference);
-    LOG.assertTrue(threadReference != null);
   }
 
   public ThreadReference getThreadReference() {

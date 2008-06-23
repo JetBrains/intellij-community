@@ -3,17 +3,15 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class ObjectReferenceProxyImpl extends JdiProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ObjectReferenceProxyImpl");
   private final ObjectReference myObjectReference;
 
   //caches
@@ -21,9 +19,8 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   private Type myType;
   private Boolean myIsCollected = null;
 
-  public ObjectReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, ObjectReference objectReference) {
+  public ObjectReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, @NotNull ObjectReference objectReference) {
     super(virtualMachineProxy);
-    LOG.assertTrue(objectReference != null);
     myObjectReference = objectReference;
   }
 
@@ -52,14 +49,15 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return myType;
   }
 
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     final ObjectReference objectReference = getObjectReference();
     //noinspection HardCodedStringLiteral
     final String objRefString = objectReference != null? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
   }
 
-  public Map getValues(List list) {
+  public Map<Field, Value> getValues(List<? extends Field> list) {
     return getObjectReference().getValues(list);
   }
 
@@ -90,10 +88,9 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
    */
   public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
     List<ThreadReference> list = getObjectReference().waitingThreads();
-    List<ThreadReferenceProxyImpl> proxiesList = new ArrayList(list.size());
+    List<ThreadReferenceProxyImpl> proxiesList = new ArrayList<ThreadReferenceProxyImpl>(list.size());
 
-    for (Iterator<ThreadReference> iterator = list.iterator(); iterator.hasNext();) {
-      ThreadReference threadReference = iterator.next();
+    for (ThreadReference threadReference : list) {
       proxiesList.add(getVirtualMachineProxy().getThreadReferenceProxy(threadReference));
     }
     return proxiesList;
@@ -115,7 +112,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     if(this == o) return true;
 
     ObjectReference ref = myObjectReference;
-    return ref != null ? ref.equals(((ObjectReferenceProxyImpl)o).myObjectReference) : false;
+    return ref != null && ref.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }
 
 

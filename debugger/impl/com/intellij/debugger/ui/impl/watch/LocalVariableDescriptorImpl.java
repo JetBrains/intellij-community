@@ -13,7 +13,6 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -21,10 +20,9 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.PrimitiveType;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements LocalVariableDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl");
-
   private final StackFrameProxyImpl myFrameProxy;
   private final LocalVariableProxyImpl myLocalVariable;
 
@@ -35,10 +33,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   private boolean myIsVisible = true;
 
   public LocalVariableDescriptorImpl(Project project,
-                                     LocalVariableProxyImpl local) {
+                                     @NotNull LocalVariableProxyImpl local) {
     super(project);
     setLvalue(true);
-    LOG.assertTrue(local      != null);
     myFrameProxy = local.getFrame();
     myLocalVariable = local;
   }

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -45,8 +46,8 @@ public class SelectFromListDialog extends DialogWrapper {
     myList.setSelectionMode(selectionMode);
     setTitle(title);
 
-    for (int i = 0; i < objects.length; i++) {
-      myModel.addElement(objects[i]);
+    for (Object object : objects) {
+      myModel.addElement(object);
     }
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -73,8 +74,7 @@ public class SelectFromListDialog extends DialogWrapper {
     return myMainPanel;
   }
   
-  public void addToDialog(JComponent userComponent, String borderLayoutConstraints) {
-    LOG.assertTrue(borderLayoutConstraints != null);
+  public void addToDialog(JComponent userComponent, @NotNull String borderLayoutConstraints) {
     LOG.assertTrue(!borderLayoutConstraints.equals(BorderLayout.CENTER), "Can't add any component to center");
     myMainPanel.add(userComponent, borderLayoutConstraints);
   }

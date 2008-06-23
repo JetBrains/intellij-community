@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class AbstractPostFormatProcessor {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.BraceEnforcer");
   protected final CodeStyleSettings mySettings;
   private TextRange myResultTextRange;
 

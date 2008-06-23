@@ -27,10 +27,10 @@ import java.io.IOException;
  * Date: Jul 17, 2002
  */
 public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme, ExternalizableScheme {
-  private static final @NonNls String CODE_SCHEME = "code_scheme";
-  private static final @NonNls String NAME = "name";
-  private static final @NonNls String PARENT = "parent";
-  private static final @NonNls String XML_EXTENSION = ".xml";
+  @NonNls private static final String CODE_SCHEME = "code_scheme";
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String PARENT = "parent";
+  @NonNls private static final String XML_EXTENSION = ".xml";
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl");
 
   private String myName;
@@ -85,8 +85,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
     return myCodeStyleSettings;
   }
 
-  public void setCodeStyleSettings(CodeStyleSettings codeStyleSettings){
-    LOG.assertTrue(codeStyleSettings != null);
+  public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings){
     myCodeStyleSettings = codeStyleSettings;
   }
 

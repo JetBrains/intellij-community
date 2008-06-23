@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -27,12 +28,11 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private Boolean myIsObsolete = null;
   private Map<LocalVariable,Value> myAllValues;
 
-  public StackFrameProxyImpl(ThreadReferenceProxyImpl threadProxy, StackFrame frame, int fromBottomIndex /* 1-based */) {
+  public StackFrameProxyImpl(ThreadReferenceProxyImpl threadProxy, @NotNull StackFrame frame, int fromBottomIndex /* 1-based */) {
     super(threadProxy.getVirtualMachine());
     myThreadProxy = threadProxy;
     myFrameFromBottomIndex = fromBottomIndex;
     myStackFrame = frame;
-    LOG.assertTrue(frame != null);
   }
 
   public boolean isObsolete() throws EvaluateException {

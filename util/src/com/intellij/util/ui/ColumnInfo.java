@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +37,6 @@ public abstract class ColumnInfo <Item, Aspect> {
       }
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.ColumnInfo");
   private String myName;
   public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
 
@@ -65,8 +64,7 @@ public abstract class ColumnInfo <Item, Aspect> {
     return myName;
   }
 
-  public void sort(List<Item> list) {
-    LOG.assertTrue(list != null);
+  public void sort(@NotNull List<Item> list) {
     Comparator<Item> comparator = getComparator();
     if (comparator != null) {
       Collections.sort(list, comparator);
@@ -138,7 +136,7 @@ public abstract class ColumnInfo <Item, Aspect> {
   }
 
   public int hashCode() {
-    return (myName != null ? myName.hashCode() : 0);
+    return myName != null ? myName.hashCode() : 0;
   }
 
   public boolean hasError() {

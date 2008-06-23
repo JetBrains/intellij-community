@@ -13,10 +13,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -97,8 +97,7 @@ public class JVMNameUtil {
   private static class JVMNameBuffer {
     List<JVMName> myList = new ArrayList<JVMName>();
 
-    public void append(JVMName evaluator){
-      LOG.assertTrue(evaluator != null);
+    public void append(@NotNull JVMName evaluator){
       myList.add(evaluator);
     }
 
@@ -112,26 +111,25 @@ public class JVMNameUtil {
 
     public JVMName toName() {
       final List<JVMName> optimised = new ArrayList<JVMName>();
-      for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
-        JVMName evaluator = (JVMName) iterator.next();
-        if(evaluator instanceof JVMRawText && optimised.size() > 0 && optimised.get(optimised.size() - 1) instanceof JVMRawText){
-          JVMRawText nameEvaluator = (JVMRawText) optimised.get(optimised.size() - 1);
+      for (JVMName evaluator : myList) {
+        if (evaluator instanceof JVMRawText && !optimised.isEmpty() && optimised.get(optimised.size() - 1) instanceof JVMRawText) {
+          JVMRawText nameEvaluator = (JVMRawText)optimised.get(optimised.size() - 1);
           nameEvaluator.setName(nameEvaluator.getName() + ((JVMRawText)evaluator).getName());
-        } else {
+        }
+        else {
           optimised.add(evaluator);
         }
       }
 
       if(optimised.size() == 1) return optimised.get(0);
-      if(optimised.size() == 0) return new JVMRawText("");
+      if(optimised.isEmpty()) return new JVMRawText("");
 
       return new JVMName() {
         String myName = null;
         public String getName(DebugProcessImpl process) throws EvaluateException {
           if(myName == null){
             String name = "";
-            for (Iterator iterator = optimised.iterator(); iterator.hasNext();) {
-              JVMName nameEvaluator = (JVMName) iterator.next();
+            for (JVMName nameEvaluator : optimised) {
               name += nameEvaluator.getName(process);
             }
             myName = name;
@@ -142,8 +140,7 @@ public class JVMNameUtil {
         public String getDisplayName(DebugProcessImpl debugProcess) {
           if(myName == null) {
             String displayName = "";
-            for (Iterator iterator = optimised.iterator(); iterator.hasNext();) {
-              JVMName nameEvaluator = (JVMName) iterator.next();
+            for (JVMName nameEvaluator : optimised) {
               displayName += nameEvaluator.getDisplayName(debugProcess);
             }
             return displayName;
@@ -187,7 +184,7 @@ public class JVMNameUtil {
 
     public String getName(DebugProcessImpl process) throws EvaluateException {
       List<ReferenceType> allClasses = process.getPositionManager().getAllClasses(mySourcePosition);
-      if(allClasses.size() > 0) {
+      if(!allClasses.isEmpty()) {
         return allClasses.get(0).name();
       }
 
@@ -232,7 +229,8 @@ public class JVMNameUtil {
     return new JVMClassAt(SourcePosition.createFromElement(psiClass));
   }
 
-  public static @Nullable JVMName getContextClassJVMQualifiedName(@Nullable SourcePosition pos) {
+  @Nullable
+  public static JVMName getContextClassJVMQualifiedName(@Nullable SourcePosition pos) {
     if (pos == null) {
       return null;
     }
@@ -279,7 +277,8 @@ public class JVMNameUtil {
     return signature.toName();
   }
 
-  public static @Nullable PsiClass getClassAt(SourcePosition position) {
+  @Nullable
+  public static PsiClass getClassAt(SourcePosition position) {
     final int offset = position.getOffset();
     if (offset < 0) {
       return null;
@@ -296,7 +295,8 @@ public class JVMNameUtil {
     return PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
   }
 
-  public static @Nullable String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+  @Nullable
+  public static String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
     final PsiFile positionFile = position.getFile();
     if (positionFile instanceof JspFile) {
       return positionFile.getName() + ":" + position.getLine();
@@ -313,14 +313,15 @@ public class JVMNameUtil {
 
     if(debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
-      if(allClasses.size() > 0) {
+      if(!allClasses.isEmpty()) {
         return allClasses.get(0).name();
       }
     }
     return DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine());
   }
 
-  public static @Nullable String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+  @Nullable
+  public static String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
     final PsiFile positionFile = position.getFile();
     if (positionFile instanceof JspFile) {
       final PsiDirectory dir = positionFile.getContainingDirectory();
@@ -334,7 +335,7 @@ public class JVMNameUtil {
       if(toplevel != null) {
         String qName = toplevel.getQualifiedName();
         if (qName != null) {
-          int i = qName.lastIndexOf(".");
+          int i = qName.lastIndexOf('.');
           return i > 0 ? qName.substring(0, i) : "";
         }
       }
@@ -342,7 +343,7 @@ public class JVMNameUtil {
 
     if(debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
-      if(allClasses.size() > 0) {
+      if(!allClasses.isEmpty()) {
         final String className = allClasses.get(0).name();
         int dotIndex = className.lastIndexOf('.');
         if (dotIndex >= 0) {

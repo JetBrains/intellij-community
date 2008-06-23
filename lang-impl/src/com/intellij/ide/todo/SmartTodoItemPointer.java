@@ -1,25 +1,21 @@
 package com.intellij.ide.todo;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.TodoItem;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
  */
 public final class SmartTodoItemPointer {
-  private static final Logger LOG=Logger.getInstance("#com.intellij.ide.todo.SmartTodoItemPointer");
-
   private final TodoItem myTodoItem;
   private final Document myDocument;
   private final RangeMarker myRangeMarker;
 
-  public SmartTodoItemPointer(TodoItem todoItem,Document document){
-    LOG.assertTrue(todoItem!=null);
+  public SmartTodoItemPointer(@NotNull TodoItem todoItem,@NotNull Document document){
     myTodoItem=todoItem;
-    LOG.assertTrue(document!=null);
     myDocument=document;
     TextRange textRange=myTodoItem.getTextRange();
     myRangeMarker=document.createRangeMarker(textRange.getStartOffset(),textRange.getEndOffset());

@@ -353,8 +353,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return removed;
   }
 
-  private void gotoPlaceInfo(PlaceInfo info) { // TODO: Msk
-    LOG.assertTrue(info != null);
+  private void gotoPlaceInfo(@NotNull PlaceInfo info) { // TODO: Msk
     final boolean wasActive = myToolWindowManager.isEditorComponentActive();
     final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive);
     final FileEditor        [] editors   = editorsWithProviders.getFirst();
@@ -378,8 +377,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return myEditorManager.getSelectedEditorWithProvider(selectedFiles[0]);
   }
 
-  private PlaceInfo createPlaceInfo(final FileEditor fileEditor, final FileEditorProvider fileProvider) {
-    LOG.assertTrue(fileEditor != null);
+  private PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {
     final VirtualFile file = myEditorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
 

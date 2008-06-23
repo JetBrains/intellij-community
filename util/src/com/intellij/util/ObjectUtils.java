@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -33,8 +32,6 @@ import java.util.List;
  * @version $Id: ObjectUtils.java,v 1.4 2002/09/22 09:18:33 scolebourne Exp $
  */
 public class ObjectUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ObjectUtils");
-
     /**
      * Singleton used as a null placeholder where null has another meaning.
      * <p>
@@ -68,7 +65,7 @@ public class ObjectUtils {
      * @return object if it is not null, defaultValue otherwise
      */
     public static Object defaultIfNull(Object object, Object defaultValue) {
-        return (object != null ? object : defaultValue);
+        return object != null ? object : defaultValue;
     }
 
     /**
@@ -83,10 +80,7 @@ public class ObjectUtils {
         if (object1 == object2) {
             return true;
         }
-        if ((object1 == null) || (object2 == null)) {
-            return false;
-        }
-        return object1.equals(object2);
+      return object1 != null && object2 != null && object1.equals(object2);
     }
 
     /**
@@ -108,14 +102,13 @@ public class ObjectUtils {
     }
 
   public static boolean haveSameElements(Object[] expected, Object[] actual) {
-    List expectedList = Arrays.asList(expected);
-    List actualList = Arrays.asList(actual);
-    return new HashSet(expectedList).equals(new HashSet(actualList)) && expected.length == actual.length;
+    List<Object> expectedList = Arrays.asList(expected);
+    List<Object> actualList = Arrays.asList(actual);
+    return new HashSet<Object>(expectedList).equals(new HashSet<Object>(actualList)) && expected.length == actual.length;
   }
 
   @NotNull
-  public static <T> T assertNotNull(final T t) {
-    LOG.assertTrue(t != null);
+  public static <T> T assertNotNull(@NotNull final T t) {
     return t;
   }
 
@@ -141,7 +134,7 @@ public class ObjectUtils {
          * @return the singleton value
          */
         private Object readResolve() {
-            return ObjectUtils.NULL;
+            return NULL;
         }
     }
 

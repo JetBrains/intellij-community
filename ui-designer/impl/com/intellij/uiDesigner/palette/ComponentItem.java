@@ -426,8 +426,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private static final class MySmallIcon implements Icon{
     private final Image myImage;
 
-    public MySmallIcon(final Image delegate) {
-      LOG.assertTrue(delegate != null);
+    public MySmallIcon(@NotNull final Image delegate) {
       myImage = delegate;
     }
 

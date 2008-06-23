@@ -1,10 +1,10 @@
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.ui.impl.watch.StaticDescriptorImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -12,15 +12,11 @@ import com.sun.jdi.ReferenceType;
  */
 
 public final class StaticData extends DescriptorData<StaticDescriptorImpl>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.descriptors.data.StaticData");
-
   private static final Key STATIC = new Key("STATIC");
 
   private final ReferenceType myRefType;
 
-  public StaticData(ReferenceType refType) {
-    super();
-    LOG.assertTrue(refType != null);
+  public StaticData(@NotNull ReferenceType refType) {
     myRefType = refType;
   }
 
@@ -33,9 +29,8 @@ public final class StaticData extends DescriptorData<StaticDescriptorImpl>{
   }
 
   public boolean equals(Object object) {
-    if(!(object instanceof StaticData)) return false;
+    return object instanceof StaticData;
 
-    return true;
   }
 
   public int hashCode() {

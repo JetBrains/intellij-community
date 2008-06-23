@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -110,12 +111,7 @@ public final class Match {
       return true;
     }
     else {
-      if (!myReturnValue.isEquivalent(returnValue)) {
-        return false;
-      }
-      else {
-        return true;
-      }
+      return myReturnValue.isEquivalent(returnValue);
     }
   }
 
@@ -147,8 +143,7 @@ public final class Match {
     }
   }
 
-  boolean putDeclarationCorrespondence(PsiElement patternDeclaration, PsiElement matchDeclaration) {
-    LOG.assertTrue(matchDeclaration != null);
+  boolean putDeclarationCorrespondence(PsiElement patternDeclaration, @NotNull PsiElement matchDeclaration) {
     PsiElement originalValue = myDeclarationCorrespondence.get(patternDeclaration);
     if (originalValue == null) {
       myDeclarationCorrespondence.put(patternDeclaration, matchDeclaration);
@@ -216,16 +211,14 @@ public final class Match {
   }
 
   TextRange getTextRange() {
-    final TextRange textRange =
-      new TextRange(getMatchStart().getTextRange().getStartOffset(),
-                    getMatchEnd().getTextRange().getEndOffset());
-    return textRange;
+    return new TextRange(getMatchStart().getTextRange().getStartOffset(),
+                  getMatchEnd().getTextRange().getEndOffset());
   }
 
   @Nullable
   public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString) {
     if (!myChangedParams.isEmpty()) {
-      @NonNls StringBuffer buffer = new StringBuffer();
+      @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append(visibilityString);
       if (buffer.length() > 0) {
         buffer.append(" ");

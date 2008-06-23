@@ -6,7 +6,6 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.*;
 import com.intellij.openapi.command.AbnormalCommandTerminationException;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CodeEditUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
   private static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("CREATED BY IDEA");
   private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENTATION");
   private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT BEFORE THIS ELEMENT");
@@ -42,9 +40,7 @@ public class CodeEditUtil {
     removeChildren(parent, child, child);
   }
 
-  public static ASTNode addChildren(CompositeElement parent, ASTNode first, ASTNode last, ASTNode anchorBefore) {
-    LOG.assertTrue(first != null);
-    LOG.assertTrue(last != null);
+  public static ASTNode addChildren(CompositeElement parent, @NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchorBefore) {
     ASTNode lastChild = last.getTreeNext();
     ASTNode current = first;
     while(current != lastChild){
@@ -321,9 +317,7 @@ public class CodeEditUtil {
 
   }
 
-  private static IndentInfo getWhiteSpaceBeforeToken(final ASTNode tokenNode, final PsiFile file, final boolean mayChangeLineFeeds) {
-    LOG.assertTrue(tokenNode != null);
-
+  private static IndentInfo getWhiteSpaceBeforeToken(@NotNull final ASTNode tokenNode, final PsiFile file, final boolean mayChangeLineFeeds) {
     final Project project = file.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     final int tokenStartOffset = tokenNode.getStartOffset();

@@ -565,9 +565,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   private FileTemplate getTemplateFromManager(@NotNull @NonNls String templateName,
-                                              FileTemplateManagerImpl templatesManager,
+                                              @NotNull FileTemplateManagerImpl templatesManager,
                                               @NotNull @NonNls String templateType) {
-    LOG.assertTrue(templatesManager != null);
     String name = templateName;
     String extension = myTypeManager.getExtension(name);
     if (extension.length() > 0) {

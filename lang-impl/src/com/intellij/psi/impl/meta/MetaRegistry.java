@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -12,6 +11,7 @@ import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -25,7 +25,6 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class MetaRegistry extends MetaDataRegistrar {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.meta.MetaRegistry");
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
@@ -33,7 +32,7 @@ public class MetaRegistry extends MetaDataRegistrar {
   public static void bindDataToElement(final PsiElement element, final PsiMetaData data){
     CachedValue<PsiMetaData> value =
       element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaData>() {
-      public CachedValueProvider.Result<PsiMetaData> compute() {
+      public Result<PsiMetaData> compute() {
         data.init(element);
         return new Result<PsiMetaData>(data, data.getDependences());
       }
@@ -43,7 +42,7 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   public static PsiMetaData getMeta(final PsiElement element) {
     final PsiMetaData base = getMetaBase(element);
-    return base instanceof PsiMetaData ? base : null;
+    return base != null ? base : null;
   }
 
   private static UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =
@@ -93,7 +92,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     addBinding(new MyBinding(filter, aMetadataClass));
   }
 
-  private static <T extends PsiMetaData> void addBinding(final MyBinding binding) {
+  private static void addBinding(final MyBinding binding) {
     ourBindings.add(0, binding);
   }
 
@@ -105,9 +104,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     ElementFilter myFilter;
     Class<PsiMetaData> myDataClass;
 
-    public <T extends PsiMetaData> MyBinding(ElementFilter filter, Class<T> dataClass) {
-      LOG.assertTrue(filter != null);
-      LOG.assertTrue(dataClass != null);
+    public <T extends PsiMetaData> MyBinding(@NotNull ElementFilter filter, @NotNull Class<T> dataClass) {
       myFilter = filter;
       myDataClass = (Class)dataClass;
     }

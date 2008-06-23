@@ -5,8 +5,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -16,7 +16,6 @@ import javax.swing.tree.MutableTreeNode;
  * @author max
  */
 public class RefElementNode extends InspectionTreeNode {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.RefElementNode");
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected InspectionTool myTool;
@@ -26,10 +25,9 @@ public class RefElementNode extends InspectionTreeNode {
     myTool = tool;
   }
 
-  public RefElementNode(RefElement element, final InspectionTool inspectionTool) {
+  public RefElementNode(@NotNull RefElement element, final InspectionTool inspectionTool) {
     super(element);
     myTool = inspectionTool;
-    LOG.assertTrue(element != null);
   }
 
   public boolean hasDescriptorsUnder() { return myHasDescriptorsUnder; }

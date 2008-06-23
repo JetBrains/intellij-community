@@ -15,13 +15,11 @@
  */
 package com.intellij.execution;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.NotNull;
 
 public class CantRunException extends ExecutionException {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.CantRunException");
-
   public CantRunException(final String message) {
     super(message);
   }
@@ -33,20 +31,15 @@ public class CantRunException extends ExecutionException {
     return new CantRunException(ExecutionBundle.message("module.does.not.exist.error.message", moduleName));
   }
 
-  public static CantRunException noJdkForModule(final Module module) {
-    LOG.assertTrue(module != null);
+  public static CantRunException noJdkForModule(@NotNull final Module module) {
     return new CantRunException(ExecutionBundle.message("no.jdk.for.module.error.message", module.getName()));
   }
 
-  public static CantRunException jdkMisconfigured(final Sdk jdk, final Module module) {
-    LOG.assertTrue(module != null);
-    LOG.assertTrue(jdk != null);
+  public static CantRunException jdkMisconfigured(@NotNull final Sdk jdk, @NotNull final Module module) {
     return new CantRunException(ExecutionBundle.message("jdk.is.bad.configured.error.message", jdk.getName()));
   }
 
-  public static CantRunException classNotFound(final String className, final Module module) {
-    LOG.assertTrue(className != null);
-    LOG.assertTrue(module != null);
+  public static CantRunException classNotFound(@NotNull final String className, @NotNull final Module module) {
     return new CantRunException(ExecutionBundle.message("class.not.found.in.module.error.message", className, module.getName()));
   }
 

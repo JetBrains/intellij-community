@@ -6,7 +6,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -18,11 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ModuleGroup {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ModuleGroup");
   private final String[] myGroupPath;
 
-  public ModuleGroup(String[] groupPath) {
-    LOG.assertTrue(groupPath != null);
+  public ModuleGroup(@NotNull String[] groupPath) {
     myGroupPath = groupPath;
   }
 

@@ -61,6 +61,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -260,10 +261,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @Nullable
-  private static PsiFile getContainingFileByTree(final PsiElement changeScope) {
+  private static PsiFile getContainingFileByTree(@NotNull final PsiElement changeScope) {
     // there could be pseudo phisical trees (JSPX/JSP/etc.) which must not translate
     // any changes to document and not to fire any PSI events
-    LOG.assertTrue(changeScope != null);
     final PsiFile psiFile;
     final ASTNode node = changeScope.getNode();
     if (node == null) {

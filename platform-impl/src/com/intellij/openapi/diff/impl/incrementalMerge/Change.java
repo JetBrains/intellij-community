@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -99,8 +100,7 @@ public abstract class Change {
     Document targetDocument = getChangeList().getDocument(targetSide);
     if (!targetDocument.isWritable()) return false;
     Editor targetEditor = getHighlighterHolder(targetSide).getEditor();
-    if (targetEditor.isViewer()) return false;
-    return true;
+    return !targetEditor.isViewer();
   }
 
   public static class ChangeOrder implements Comparator<Change> {
@@ -214,8 +214,7 @@ public abstract class Change {
       }
     }
 
-    private RangeHighlighter cloneMainHighlighter(RangeHighlighter mainHighlighter) {
-      LOG.assertTrue(mainHighlighter != null);
+    private RangeHighlighter cloneMainHighlighter(@NotNull RangeHighlighter mainHighlighter) {
       RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(mainHighlighter.getStartOffset(), mainHighlighter.getEndOffset(), mainHighlighter.getLayer(),
                                                                                    null, mainHighlighter.getTargetArea());
       // TODO[dyoma] copy greedyToLeft and greedyToRight

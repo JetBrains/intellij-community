@@ -42,10 +42,7 @@ public final class TreeUtil {
    * @param tree JTree to collect expanded paths from.
    * @param paths output parameter.
    */
-  public static void collectExpandedPaths(final JTree tree, final List<TreePath> paths){
-    LOG.assertTrue(tree != null);
-    LOG.assertTrue(paths != null);
-
+  public static void collectExpandedPaths(@NotNull final JTree tree, @NotNull final List<TreePath> paths){
     final TreeModel model = tree.getModel();
     final Object root = model.getRoot();
     LOG.assertTrue(root != null);
@@ -138,10 +135,7 @@ public final class TreeUtil {
    * @param tree JTree to apply expansion status to
    * @param paths to expand. See {@link #collectExpandedPaths(JTree, List<TreePath>)}
    */
-  public static void restoreExpandedPaths(final JTree tree, final List<TreePath> paths){
-    LOG.assertTrue(tree != null);
-    LOG.assertTrue(paths != null);
-
+  public static void restoreExpandedPaths(@NotNull final JTree tree, @NotNull final List<TreePath> paths){
     for(int i = paths.size() - 1; i >= 0; i--){
       tree.expandPath(paths.get(i));
     }
@@ -206,18 +200,13 @@ public final class TreeUtil {
    * Removes last component in the current selection path.
    * @param tree to remove selected node from.
    */
-  public static void removeSelected(final JTree tree) {
-    LOG.assertTrue(tree != null);
-
+  public static void removeSelected(@NotNull final JTree tree) {
     final TreePath selectionPath = tree.getSelectionPath();
     if (selectionPath == null) return;
     removeLastPathComponent((DefaultTreeModel) tree.getModel(), selectionPath).restoreSelection(tree);
   }
 
-  public static void removeLastPathComponent(final JTree tree, final TreePath pathToBeRemoved){
-    LOG.assertTrue(tree != null);
-    LOG.assertTrue(pathToBeRemoved != null);
-
+  public static void removeLastPathComponent(@NotNull final JTree tree, @NotNull final TreePath pathToBeRemoved){
     removeLastPathComponent((DefaultTreeModel)tree.getModel(), pathToBeRemoved).restoreSelection(tree);
   }
 

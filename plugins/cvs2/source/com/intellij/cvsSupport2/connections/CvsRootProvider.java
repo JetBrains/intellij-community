@@ -3,7 +3,7 @@ package com.intellij.cvsSupport2.connections;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -14,9 +14,6 @@ import java.io.File;
  * author: lesya
  */
 public abstract class CvsRootProvider implements CvsEnvironment{
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.CvsRootProvider");
-
   private File myLocalRoot;
   private File myAdminRoot;
   protected final CvsEnvironment myCvsEnvironment;
@@ -35,8 +32,7 @@ public abstract class CvsRootProvider implements CvsEnvironment{
     myCvsEnvironment = cvsRoot;
   }
 
-  public void changeLocalRootTo(File localRoot){
-    LOG.assertTrue(localRoot != null);
+  public void changeLocalRootTo(@NotNull File localRoot){
     myLocalRoot = localRoot;
   }
 

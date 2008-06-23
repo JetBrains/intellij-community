@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class DocumentContent extends DiffContent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.DocumentContent");
   private final Document myDocument;
   private final VirtualFile myFile;
   private final FileType myOverridenType;
@@ -34,9 +33,8 @@ public class DocumentContent extends DiffContent {
     this(project, document, null);
   }
 
-  public DocumentContent(Project project, Document document, FileType type) {
+  public DocumentContent(Project project, @NotNull Document document, FileType type) {
     myProject = project;
-    LOG.assertTrue(document != null);
     myDocument = document;
     myFile = FileDocumentManager.getInstance().getFile(document);
     myOverridenType = type;

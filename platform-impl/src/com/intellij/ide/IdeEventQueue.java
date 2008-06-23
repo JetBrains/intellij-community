@@ -20,6 +20,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -195,8 +196,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
 
-  public void addIdleListener(final Runnable runnable, final int timeout) {
-    LOG.assertTrue(runnable != null);
+  public void addIdleListener(@NotNull final Runnable runnable, final int timeout) {
     LOG.assertTrue(timeout > 0);
     synchronized (myLock) {
       myIdleListeners.add(runnable);
@@ -207,8 +207,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
 
-  public void removeIdleListener(final Runnable runnable) {
-    LOG.assertTrue(runnable != null);
+  public void removeIdleListener(@NotNull final Runnable runnable) {
     synchronized (myLock) {
       final boolean wasRemoved = myIdleListeners.remove(runnable);
       if (!wasRemoved) {
@@ -221,22 +220,19 @@ public class IdeEventQueue extends EventQueue {
   }
 
 
-  public void addActivityListener(final Runnable runnable) {
-    LOG.assertTrue(runnable != null);
+  public void addActivityListener(@NotNull final Runnable runnable) {
     synchronized (myLock) {
       myActivityListeners.add(runnable);
     }
   }
-  public void addActivityListener(final Runnable runnable, Disposable parentDisposable) {
-    LOG.assertTrue(runnable != null);
+  public void addActivityListener(@NotNull final Runnable runnable, Disposable parentDisposable) {
     synchronized (myLock) {
       ContainerUtil.add(runnable, myActivityListeners, parentDisposable);
     }
   }
 
 
-  public void removeActivityListener(final Runnable runnable) {
-    LOG.assertTrue(runnable != null);
+  public void removeActivityListener(@NotNull final Runnable runnable) {
     synchronized (myLock) {
       final boolean wasRemoved = myActivityListeners.remove(runnable);
       if (!wasRemoved) {

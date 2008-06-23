@@ -75,14 +75,12 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     addListeners();
   }
 
-  public LibraryOrderEntryImpl(String name,
-                               String level,
+  public LibraryOrderEntryImpl(@NotNull String name,
+                               @NotNull String level,
                                RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     super(rootModel, projectRootManager, filePointerManager);
-    LOG.assertTrue(name != null);
-    LOG.assertTrue(level != null);
     searchForLibrary(level, name);
     init(getRootProvider());
     addListeners();

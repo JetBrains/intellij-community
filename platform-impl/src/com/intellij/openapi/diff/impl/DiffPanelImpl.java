@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -243,9 +244,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     });
   }
 
-  public void setCurrentSide(DiffSideView viewSide) {
+  public void setCurrentSide(@NotNull DiffSideView viewSide) {
     LOG.assertTrue(viewSide != myCurrentSide);
-    LOG.assertTrue(viewSide != null);
     if (myCurrentSide != null) myCurrentSide.beSlave();
     myCurrentSide = viewSide;
   }

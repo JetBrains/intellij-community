@@ -946,14 +946,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public Component getTableCellRendererComponent(
       final JTable table,
-      final Object value,
+      @NotNull final Object value,
       final boolean selected,
       final boolean hasFocus,
       final int row,
       int column
     ){
-      LOG.assertTrue(value!=null);
-
       myPropertyNameRenderer.getTableCellRendererComponent(table,value,selected,hasFocus,row,column);
 
       column=table.convertColumnIndexToModel(column);
@@ -1105,8 +1103,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
     }
 
-    public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column){
-      LOG.assertTrue(value!=null);
+    public Component getTableCellEditorComponent(final JTable table, @NotNull final Object value, final boolean isSelected, final int row, final int column){
       final Property property=(Property)value;
       try {
         //noinspection unchecked

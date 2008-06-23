@@ -16,7 +16,6 @@
 package com.intellij.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -50,15 +49,13 @@ public abstract class SourcePosition implements Navigatable{
   public abstract Editor openEditor(boolean requestFocus);
 
   private abstract static class SourcePositionCache extends SourcePosition {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition.SourcePositionCache");
     private final @NotNull PsiFile myFile;
     private long myModificationStamp = -1L;
 
     private int myLine;
     private int myOffset;
 
-    public SourcePositionCache(PsiFile file) {
-      LOG.assertTrue(file != null);
+    public SourcePositionCache(@NotNull PsiFile file) {
       myFile = file;
       updateData();
     }

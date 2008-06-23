@@ -46,6 +46,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,9 +67,8 @@ public class ModuleLinkImpl extends ModuleLink {
     methodToDescription.put(PackagingMethod.INCLUDE_MODULE_IN_BUILD, CompilerBundle.message("packaging.method.description.include.module.in.build"));
   }
 
-  public ModuleLinkImpl(Module module, Module parentModule) {
+  public ModuleLinkImpl(@NotNull Module module, Module parentModule) {
     super(parentModule);
-    LOG.assertTrue(module != null);
     myModule = module;
     myModuleName = ModuleUtil.getModuleNameInReadAction(myModule);
   }
@@ -88,7 +88,8 @@ public class ModuleLinkImpl extends ModuleLink {
     return myModule;
   }
 
-  public @Nullable Module getModule() {
+  @Nullable
+  public Module getModule() {
     if (myModule != null && myModule.isDisposed()) {
       myModule = null;
     }
@@ -107,8 +108,7 @@ public class ModuleLinkImpl extends ModuleLink {
   }
 
   public boolean equalsIgnoreAttributes(ContainerElement otherElement) {
-    if (!(otherElement instanceof ModuleLink)) return false;
-    return Comparing.strEqual(((ModuleLink)otherElement).getName(), getName());
+    return otherElement instanceof ModuleLink && Comparing.strEqual(((ModuleLink)otherElement).getName(), getName());
   }
 
   public String getPresentableName() {

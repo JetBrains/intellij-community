@@ -7,16 +7,15 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.containers.ObjectIntCache;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
 public class SymbolTable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.SymbolTable");
   private final PersistentStringEnumerator myTrie;
 
   // both caches should have equal size
@@ -40,8 +39,7 @@ public class SymbolTable {
     }
   }
 
-  public synchronized int getId(String symbol) throws CacheCorruptedException {
-    LOG.assertTrue(symbol != null);
+  public synchronized int getId(@NotNull String symbol) throws CacheCorruptedException {
     if (symbol.length() == 0) {
       return -1;
     }

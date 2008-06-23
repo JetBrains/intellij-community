@@ -8,14 +8,12 @@ import com.intellij.pom.xml.events.XmlDocumentChanged;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 public class XmlDocumentChangedImpl implements XmlDocumentChanged {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl");
   private XmlDocument myDocument;
 
-  public XmlDocumentChangedImpl(XmlDocument document) {
-    LOG.assertTrue(document != null);
+  public XmlDocumentChangedImpl(@NotNull XmlDocument document) {
     myDocument = document;
   }
 

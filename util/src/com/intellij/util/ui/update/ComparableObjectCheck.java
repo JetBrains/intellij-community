@@ -15,15 +15,12 @@
  */
 package com.intellij.util.ui.update;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ObjectUtils;
 
 
 public class ComparableObjectCheck {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.update.ComparableObjectCheck");
-
-  public static boolean equals(ComparableObject me, Object him) {
-    LOG.assertTrue(me != null);
-
+  public static boolean equals(@NotNull ComparableObject me, Object him) {
     if (me == him) {
       return true;
     }
@@ -40,7 +37,7 @@ public class ComparableObjectCheck {
     }
 
     for (int i = 0; i < my.length; i++) {
-      if (!equals(my[i], his[i])) {
+      if (!ObjectUtils.equals(my[i], his[i])) {
         return false;
       }
     }
@@ -48,16 +45,6 @@ public class ComparableObjectCheck {
     return true;
   }
 
-  public static boolean equals(Object object1, Object object2) {
-    if (object1 == object2) {
-      return true;
-    }
-    if ((object1 == null) || (object2 == null)) {
-      return false;
-    }
-    return object1.equals(object2);
-  }
-  
   public static int hashCode(ComparableObject me, int superCode) {
     Object[] objects = me.getEqualityObjects();
     if (objects.length == 0) {

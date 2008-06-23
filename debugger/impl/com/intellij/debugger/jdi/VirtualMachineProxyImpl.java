@@ -16,11 +16,13 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.tools.jdi.VoidValueImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
@@ -32,7 +34,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   // cached data
   private Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
-  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new com.intellij.util.containers.HashMap<ThreadReference, ThreadReferenceProxyImpl>();
+  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<ThreadReference, ThreadReferenceProxyImpl>();
   private Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
@@ -42,17 +44,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final boolean myVersionHigher_15;
   private final boolean myVersionHigher_14;
 
-  public VirtualMachineProxyImpl(DebugProcessImpl debugProcess, VirtualMachine virtualMachine) {
-    LOG.assertTrue(virtualMachine != null);
+  public VirtualMachineProxyImpl(DebugProcessImpl debugProcess, @NotNull VirtualMachine virtualMachine) {
     myVirtualMachine = virtualMachine;
     myDebugProcess = debugProcess;
 
     myVersionHigher_15 = versionHigher("1.5");
     myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
-    List groups = virtualMachine.topLevelThreadGroups();
-    for (Iterator it = groups.iterator(); it.hasNext();) {
-      ThreadGroupReference threadGroupReference = (ThreadGroupReference)it.next();
+    List<ThreadGroupReference> groups = virtualMachine.topLevelThreadGroups();
+    for (ThreadGroupReference threadGroupReference : groups) {
       threadGroupCreated(threadGroupReference);
     }
   }
@@ -83,7 +83,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public List<ReferenceType> allClasses() {
     if (myAllClasses == null) {
-      myAllClasses = (List<ReferenceType>)myVirtualMachine.allClasses();
+      myAllClasses = myVirtualMachine.allClasses();
     }
     return myAllClasses;
   }
@@ -92,7 +92,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.toString();
   }
 
-  public void redefineClasses(Map map) {
+  public void redefineClasses(Map<ReferenceType, byte[]> map) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       myVirtualMachine.redefineClasses(map);
@@ -155,8 +155,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
     List<ThreadGroupReferenceProxyImpl> result = new ArrayList<ThreadGroupReferenceProxyImpl>(list.size());
 
-    for (Iterator<ThreadGroupReference> iterator = list.iterator(); iterator.hasNext();) {
-      ThreadGroupReference threadGroup = iterator.next();
+    for (ThreadGroupReference threadGroup : list) {
       result.add(getThreadGroupReferenceProxy(threadGroup));
     }
 
@@ -194,7 +193,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     try {
       Constructor<VoidValueImpl> constructor = VoidValueImpl.class.getDeclaredConstructor(new Class[]{VirtualMachine.class});
       constructor.setAccessible(true);
-      return constructor.newInstance(new Object[] {myVirtualMachine});
+      return constructor.newInstance(myVirtualMachine);
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);
@@ -404,7 +403,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         //return myVirtualMachine.canGetMethodReturnValues();
         try {
           //noinspection HardCodedStringLiteral
-          final java.lang.reflect.Method method = VirtualMachine.class.getDeclaredMethod("canGetMethodReturnValues");
+          final Method method = VirtualMachine.class.getDeclaredMethod("canGetMethodReturnValues");
           final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
           return rv.booleanValue();
         }
@@ -481,7 +480,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         return getThreadGroupReferenceProxy((ThreadGroupReference)objectReference);
       }
       else {
-        ObjectReferenceProxyImpl proxy = (ObjectReferenceProxyImpl)myObjectReferenceProxies.get(objectReference);
+        ObjectReferenceProxyImpl proxy = myObjectReferenceProxies.get(objectReference);
         if (proxy == null) {
           if (objectReference instanceof StringReference) {
             proxy = new StringReferenceProxy(this, (StringReference)objectReference);
@@ -512,7 +511,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
 
     myAllClasses = null;
-    if (myNestedClassesCache.size() > 0) {
+    if (!myNestedClassesCache.isEmpty()) {
       myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
     }
     myAllThreadsDirty = true;
@@ -528,7 +527,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public static boolean isCollected(ObjectReference reference) {
-    return isJ2ME(reference.virtualMachine()) ? false : reference.isCollected();
+    return !isJ2ME(reference.virtualMachine()) && reference.isCollected();
   }
 
   public String getResumeStack() {
@@ -545,9 +544,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public boolean isSuspended() {
     //logThreads();
-    for (Iterator iterator = allThreads().iterator(); iterator.hasNext();) {
-      ThreadReferenceProxyImpl thread = (ThreadReferenceProxyImpl)iterator.next();
-      if(thread.getSuspendCount() == 0) {
+    for (ThreadReferenceProxyImpl thread : allThreads()) {
+      if (thread.getSuspendCount() == 0) {
         return false;
       }
     }
@@ -556,8 +554,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public void logThreads() {
     if(LOG.isDebugEnabled()) {
-      for (Iterator iterator = allThreads().iterator(); iterator.hasNext();) {
-        ThreadReferenceProxyImpl thread = (ThreadReferenceProxyImpl)iterator.next();
+      for (ThreadReferenceProxyImpl thread : allThreads()) {
         if (!thread.isCollected()) {
           LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());
         }
@@ -566,7 +563,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
 
-  private static abstract class Capability {
+  private abstract static class Capability {
     Boolean myValue = null;
 
     public final boolean isAvailable() {

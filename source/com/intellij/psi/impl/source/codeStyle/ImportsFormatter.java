@@ -80,7 +80,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
             attribute.setValue(newAttributeValue);
           }
           catch (IncorrectOperationException e) {
-            AbstractPostFormatProcessor.LOG.error(e);
+            LOG.error(e);
           }
           finally {
             updateResultRange(oldLength, attribute.getTextLength());

@@ -39,8 +39,7 @@ public class RenameModuleHandler implements RenameHandler {
     LOG.assertTrue(false);
   }
 
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    LOG.assertTrue(dataContext != null);
+  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, @NotNull DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,

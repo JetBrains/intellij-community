@@ -4,6 +4,7 @@ import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ArrayReference;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -16,9 +17,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
   private ArrayReference myArray;
   private int myIndex;
 
-  public ArrayItemData(ArrayReference arrRef, int idx) {
-    super();
-    LOG.assertTrue(arrRef != null);
+  public ArrayItemData(@NotNull ArrayReference arrRef, int idx) {
     LOG.assertTrue(0 <= idx);
     if(LOG.isDebugEnabled()) {
       LOG.assertTrue(idx <= arrRef.length());
@@ -36,9 +35,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
   }
 
   public boolean equals(Object object) {
-    if(!(object instanceof ArrayItemData)) return false;
-    return myArray.equals(((ArrayItemData)object).myArray) &&
-           ((ArrayItemData)object).myIndex == myIndex;
+    return object instanceof ArrayItemData && myArray.equals(((ArrayItemData)object).myArray) && ((ArrayItemData)object).myIndex == myIndex;
   }
 
   public int hashCode() {
@@ -53,8 +50,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
     }
 
     public boolean equals(Object o) {
-      if(!(o instanceof ArrayItemDisplayKeyImpl)) return false;
-      return ((ArrayItemDisplayKeyImpl)o).myIndex == myIndex;
+      return o instanceof ArrayItemDisplayKeyImpl && ((ArrayItemDisplayKeyImpl)o).myIndex == myIndex;
     }
 
     public int hashCode() {
