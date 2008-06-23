@@ -81,7 +81,6 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
   protected void update(){
     if (!myHasFindWhatPanel){
       setOKActionEnabled(true);
-      return;
     }
     else{
       myFindUsagesOptions.putUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY, (ThrowSearchUtil.Root)myCbExns.getSelectedItem());

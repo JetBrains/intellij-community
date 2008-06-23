@@ -13,10 +13,12 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -497,9 +499,7 @@ public class EditorWindow {
   /**
    * @return icon which represents file's type and modification status
    */
-  private Icon getFileIcon(final VirtualFile file) {
-    LOG.assertTrue(file != null);
-
+  private Icon getFileIcon(@NotNull final VirtualFile file) {
     if (!file.isValid()) {
       Icon fakeIcon = FileTypes.UNKNOWN.getIcon();
       assert fakeIcon != null : "Can't find the icon for unknown file type";
@@ -669,19 +669,19 @@ public class EditorWindow {
   }
 
   public boolean isFilePinned(final VirtualFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if(!isFileOpen(file)){
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    FileEditorManagerImpl.assertThread();
     final EditorComposite editorComposite = findFileComposite(file);
     return editorComposite.isPinned();
   }
 
   public void setFilePinned(final VirtualFile file, final boolean pinned) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if(!isFileOpen(file)){
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
-    FileEditorManagerImpl.assertThread();
     final EditorComposite editorComposite = findFileComposite(file);
     editorComposite.setPinned(pinned);
     updateFileIcon(file);

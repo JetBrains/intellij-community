@@ -89,7 +89,7 @@ public abstract class FindManager {
    * @return the result of the search.
    */
   @NotNull
-  public abstract FindResult findString(CharSequence text, int offset, FindModel model);
+  public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model);
 
   /**
    * Gets the string to replace with, given the specified found string and find/replace
@@ -99,7 +99,7 @@ public abstract class FindManager {
    * @param model       the search and replace settings, including the replace string.
    * @return the string to replace the specified found string.
    */
-  public abstract String getStringToReplace(String foundString, FindModel model);
+  public abstract String getStringToReplace(@NotNull String foundString, FindModel model);
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are
@@ -141,7 +141,7 @@ public abstract class FindManager {
    * @param editor editor, for which find model shall be retreived for
    * @return the model to use for the operations.
    */
-  public abstract FindModel getFindNextModel(Editor editor);
+  public abstract FindModel getFindNextModel(@NotNull Editor editor);
 
   /**
    * Checks if the Find Usages action is available for the specified element.
@@ -166,7 +166,7 @@ public abstract class FindManager {
    * @param element the element for which the find is performed.
    * @param editor  the editor in which the find is performed.
    */
-  public abstract void findUsagesInEditor(@NotNull PsiElement element, FileEditor editor);
+  public abstract void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor editor);
 
   /**
    * Performs a "Find Next" operation after "Find Usages in File" or
@@ -176,7 +176,7 @@ public abstract class FindManager {
    * @return true if the operation was performed (not necessarily found anything),
    *         false if an error occurred during the operation.
    */
-  public abstract boolean findNextUsageInEditor(FileEditor editor);
+  public abstract boolean findNextUsageInEditor(@NotNull FileEditor editor);
 
   /**
    * Performs a "Find Previous" operation after "Find Usages in File" or
@@ -186,7 +186,7 @@ public abstract class FindManager {
    * @return true if the operation was performed (not necessarily found anything),
    *         false if an error occurred during the operation.
    */
-  public abstract boolean findPreviousUsageInEditor(FileEditor editor);
+  public abstract boolean findPreviousUsageInEditor(@NotNull FileEditor editor);
 
   /**
    * Possible return values for the {@link FindManager#showPromptDialog(FindModel, String)} method.

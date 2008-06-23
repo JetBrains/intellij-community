@@ -136,7 +136,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
 
   public void selectInEditor() {
     if (!isValid()) return;
-    Editor editor = openTextEditor(false);
+    Editor editor = openTextEditor(true);
     RangeMarker marker = getRangeMarker();
     editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
   }

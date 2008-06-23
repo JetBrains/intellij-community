@@ -186,16 +186,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return result.toArray(new VirtualFile[result.size()]);
   }
 
-  private VirtualFile[] getExcludeRootsFromAllModules() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = getModuleManager().getSortedModules();
-    for (Module module : modules) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getExcludeRoots();
-      result.addAll(Arrays.asList(files));
-    }
-    return result.toArray(new VirtualFile[result.size()]);
-  }
-
   public VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();

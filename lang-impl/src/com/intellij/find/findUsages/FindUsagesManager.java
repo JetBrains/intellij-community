@@ -215,9 +215,12 @@ public class FindUsagesManager implements JDOMExternalizable {
     final FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
 
-    final AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(scopeFile != null, shouldOpenInNewTab(), mustOpenInNewTab());
-    dialog.show();
-    if (!dialog.isOK()) return;
+    boolean singleFile = scopeFile != null;
+    final AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(singleFile, shouldOpenInNewTab(), mustOpenInNewTab());
+    if (!singleFile) {
+      dialog.show();
+      if (!dialog.isOK()) return;
+    }
 
     setOpenInNewTab(dialog.isShowInSeparateWindow());
 
@@ -227,16 +230,16 @@ public class FindUsagesManager implements JDOMExternalizable {
     LOG.assertTrue(handler.getPsiElement().isValid());
     final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
       new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
-    if (scopeFile == null) {
-      findUsages(descriptor, handler, dialog.isSkipResultsWhenOneUsage(), dialog.isShowInSeparateWindow(), findUsagesOptions);
-    }
-    else {
+    if (singleFile) {
       findUsagesOptions = (FindUsagesOptions)findUsagesOptions.clone();
       findUsagesOptions.isDerivedClasses = false;
       findUsagesOptions.isDerivedInterfaces = false;
       findUsagesOptions.isImplementingClasses = false;
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
       findUsagesInEditor(descriptor, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions, editor);
+    }
+    else {
+      findUsages(descriptor, handler, dialog.isSkipResultsWhenOneUsage(), dialog.isShowInSeparateWindow(), findUsagesOptions);
     }
   }
 
@@ -386,8 +389,7 @@ public class FindUsagesManager implements JDOMExternalizable {
                                   final PsiFile scopeFile,
                                   final FileSearchScope direction,
                                   final FindUsagesOptions findUsagesOptions,
-                                  FileEditor fileEditor) {
-    LOG.assertTrue(fileEditor != null);
+                                  @NotNull FileEditor fileEditor) {
     initLastSearchElement(findUsagesOptions, descriptor);
 
     clearStatusBar();

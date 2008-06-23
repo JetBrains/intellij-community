@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -100,7 +101,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
   }
 
-  private static boolean shouldSearchForParameterInOverridingMethods(final PsiElement psiElement, final PsiParameter parameter) {
+  private static boolean askWhetherShouldSearchForParameterInOverridingMethods(final PsiElement psiElement, final PsiParameter parameter) {
     return Messages.showDialog(psiElement.getProject(),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
@@ -135,9 +136,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         if (PsiUtil.canBeOverriden(method)) {
           final PsiClass aClass = method.getContainingClass();
           LOG.assertTrue(aClass != null); //Otherwise can not be overriden
-          if (aClass.isInterface()
-              || method.hasModifierProperty(PsiModifier.ABSTRACT)
-              || shouldSearchForParameterInOverridingMethods(element, parameter)) {
+
+          boolean hasOverridden = OverridingMethodsSearch.search(method).findFirst() != null;
+          if (hasOverridden && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
             return getParameterElementsToSearch(parameter);
           }
         }
@@ -151,15 +152,15 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     PsiElement element = getPsiElement();
     if (element instanceof PsiField) {
       final PsiField field = (PsiField)element;
-      if (field.getContainingClass() != null) {
-        final String propertyName =
-          JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null) {
+        final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
         PsiMethod getter = PropertyUtil.
           findPropertyGetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
-                                     ContainerUtil.iterate(field.getContainingClass().getMethods()));
+                                     ContainerUtil.iterate(containingClass.getMethods()));
         PsiMethod setter = PropertyUtil.
           findPropertySetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
-                                     ContainerUtil.iterate(field.getContainingClass().getMethods()));
+                                     ContainerUtil.iterate(containingClass.getMethods()));
         if (getter != null || setter != null) {
           if (Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
                                   FindBundle.message("find.field.accessors.title"),
@@ -207,7 +208,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       public String compute() {
         PsiElement norm = element;
         if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-          norm = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+          norm = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
         }
         if (norm instanceof PsiPackage) {
           return ((PsiPackage)norm).getQualifiedName();
@@ -461,7 +462,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         final PsiField field = fields[i];
         // filter hidden fields
         for (int j = 0; j < i; j++) {
-          if (field.getName().equals(fields[j].getName())) continue FieldsLoop;
+          if (Comparing.strEqual(field.getName(), fields[j].getName())) continue FieldsLoop;
         }
         final PsiClass fieldClass = field.getContainingClass();
         if (manager.areElementsEquivalent(fieldClass, aClass)) {
@@ -492,28 +493,26 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   @Nullable
   private static PsiClass getFieldOrMethodAccessedClass(PsiReferenceExpression ref, PsiClass fieldOrMethodClass) {
     PsiElement[] children = ref.getChildren();
-    if (children.length > 1 && children[0] instanceof PsiExpression){
+    if (children.length > 1 && children[0] instanceof PsiExpression) {
       PsiExpression expr = (PsiExpression)children[0];
       PsiType type = expr.getType();
-      if (type != null){
+      if (type != null) {
         if (!(type instanceof PsiClassType)) return null;
         return PsiUtil.resolveClassInType(type);
       }
-      else{
-        if (expr instanceof PsiReferenceExpression){
+      else {
+        if (expr instanceof PsiReferenceExpression) {
           PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
           if (refElement instanceof PsiClass) return (PsiClass)refElement;
         }
         return null;
       }
     }
-    else{
-      PsiManager manager = ref.getManager();
-      for(PsiElement parent = ref; parent != null; parent = parent.getParent()){
-        if (parent instanceof PsiClass
-          && (manager.areElementsEquivalent(parent, fieldOrMethodClass) || ((PsiClass)parent).isInheritor(fieldOrMethodClass, true))){
-          return (PsiClass)parent;
-        }
+    PsiManager manager = ref.getManager();
+    for(PsiElement parent = ref; parent != null; parent = parent.getParent()){
+      if (parent instanceof PsiClass
+        && (manager.areElementsEquivalent(parent, fieldOrMethodClass) || ((PsiClass)parent).isInheritor(fieldOrMethodClass, true))){
+        return (PsiClass)parent;
       }
     }
     return null;
@@ -640,7 +639,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       return true;
     }
     if (refElement instanceof PsiPackage && !options.isIncludeSubpackages &&
-        ((PsiJavaCodeReferenceElement)usage).resolve() instanceof PsiPackage) {
+        ((PsiReference)usage).resolve() instanceof PsiPackage) {
       PsiElement parent = usage.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)parent).resolve() instanceof PsiPackage) {
         return false;

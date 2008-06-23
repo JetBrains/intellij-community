@@ -27,4 +27,6 @@ public interface DocumentWindow extends Document {
   RangeMarker[] getHostRanges();
 
   boolean areRangesEqual(@NotNull DocumentWindow documentWindow);
+
+  boolean isValid();
 }

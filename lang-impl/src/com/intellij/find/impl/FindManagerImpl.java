@@ -189,7 +189,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return myFindNextModel;
   }
 
-  public FindModel getFindNextModel(final Editor editor) {
+  public FindModel getFindNextModel(@NotNull final Editor editor) {
     if (myFindNextModel == null) return null;
 
     final JComponent header = editor.getHeaderComponent();
@@ -213,7 +213,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @NotNull
-  public FindResult findString(CharSequence text, int offset, FindModel model){
+  public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model){
     if (LOG.isDebugEnabled()) {
       LOG.debug("offset="+offset);
       LOG.debug("textlength="+text.length());
@@ -319,7 +319,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
-  public String getStringToReplace(String foundString, FindModel model) {
+  public String getStringToReplace(@NotNull String foundString, FindModel model) {
     if (model == null) {
       return null;
     }
@@ -409,7 +409,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     myFindUsagesManager.findUsages(element, null, null);
   }
 
-  public void findUsagesInEditor(@NotNull PsiElement element, FileEditor fileEditor) {
+  public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
@@ -420,9 +420,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
-  public boolean findNextUsageInEditor(FileEditor fileEditor) {
-    LOG.assertTrue(fileEditor != null);
-
+  public boolean findNextUsageInEditor(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
@@ -505,9 +503,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return false;
   }
 
-  public boolean findPreviousUsageInEditor(FileEditor fileEditor) {
-    LOG.assertTrue(fileEditor != null);
-
+  public boolean findPreviousUsageInEditor(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();

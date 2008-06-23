@@ -36,11 +36,11 @@ public class RangeMarkerWindow implements RangeMarkerEx {
     return myDocumentWindow.hostToInjected(hostOffset);
   }
 
-  ////////////////////////////delegates
   public boolean isValid() {
-    return myHostMarker.isValid();
+    return myHostMarker.isValid() && myDocumentWindow.isValid();
   }
 
+  ////////////////////////////delegates
   public void setGreedyToLeft(final boolean greedy) {
     myHostMarker.setGreedyToLeft(greedy);
   }

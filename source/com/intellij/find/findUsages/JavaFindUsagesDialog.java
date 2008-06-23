@@ -44,7 +44,8 @@ public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
       if (myIncludeOverloadedMethodsAvailable) {
         FindSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedMethods.isSelected());
       }
-    } else {
+    }
+    else {
       return;
     }
     super.doOKAction();

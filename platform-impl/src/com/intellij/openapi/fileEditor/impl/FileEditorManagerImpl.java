@@ -110,7 +110,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public JComponent getPreferredFocusedComponent() {
-    assertThread();
+    assertDispatchThread();
     final EditorWindow window = mySplitters.getCurrentWindow();
     if (window != null) {
       final EditorWithProviderComposite editor = window.getSelectedEditor();
@@ -302,7 +302,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
-    assertThread();
+    assertDispatchThread();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -322,7 +322,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   //============================= EditorManager methods ================================
   public void closeFile(@NotNull final VirtualFile file) {
-    assertThread();
+    assertDispatchThread();
 
     final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
     if (request != null) {
@@ -351,7 +351,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   private void closeFileImpl(@NotNull final VirtualFile file) {
-    assertThread();
+    assertDispatchThread();
     ++mySplitters.myInsideChange;
     try {
       final List<EditorWindow> windows = mySplitters.findWindows(file);
@@ -388,7 +388,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
-    assertThread();
+    assertDispatchThread();
     return openFileImpl2(mySplitters.getOrCreateCurrentWindow(file), file, focusEditor, null);
   }
 
@@ -412,10 +412,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
    *              is not <code>null</code> then it's used to restore state for the newly created
    */
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window, final VirtualFile file, final boolean focusEditor,
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window, @NotNull final VirtualFile file, final boolean focusEditor,
                                                                   final HistoryEntry entry) {
-    LOG.assertTrue(file != null);
-
     // Open file
     window.myInsideTabChange++;
     FileEditor[] editors;
@@ -618,7 +616,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
-    assertThread();
+    assertDispatchThread();
     if (descriptor.getFile() instanceof VirtualFileWindow) {
       VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
       int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
@@ -725,7 +723,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public Editor getSelectedTextEditor() {
-    assertThread();
+    assertDispatchThread();
 
     final EditorWindow currentWindow = mySplitters.getCurrentWindow();
     if (currentWindow != null) {
@@ -764,7 +762,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
 
-  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull final VirtualFile file) {
+  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
       return composite.getSelectedEditorWithProvider();
@@ -781,7 +780,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull final VirtualFile file) {
-    assertThread();
+    assertDispatchThread();
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
@@ -798,8 +797,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @NotNull
-  public FileEditor[] getEditors(@NotNull final VirtualFile file) {
-    assertThread();
+  public FileEditor[] getEditors(@NotNull VirtualFile file) {
+    assertDispatchThread();
+    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
@@ -831,7 +831,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public FileEditor[] getAllEditors() {
-    assertThread();
+    assertDispatchThread();
     final ArrayList<FileEditor> result = new ArrayList<FileEditor>();
     final EditorWithProviderComposite[] editorsComposites = mySplitters.getEditorsComposites();
     for (EditorWithProviderComposite editorsComposite : editorsComposites) {
@@ -886,14 +886,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final Map<FileEditorManagerListener, MessageBusConnection> myListenerToConnectionMap = new HashMap<FileEditorManagerListener, MessageBusConnection>();
 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
-/*    assertThread();*/
+/*    assertDispatchThread();*/
     final MessageBusConnection connection = getProject().getMessageBus().connect();
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     myListenerToConnectionMap.put(listener, connection);
   }
 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener, final Disposable parentDisposable) {
-    /*assertThread();*/
+    /*assertDispatchThread();*/
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         myListenerToConnectionMap.remove(listener);
@@ -905,7 +905,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public void removeFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
-    /*assertThread();*/
+    /*assertDispatchThread();*/
     final MessageBusConnection connection = myListenerToConnectionMap.remove(listener);
     if (connection != null) {
       connection.disconnect();
@@ -986,8 +986,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     mySplitters.readExternal(element);
   }
 
-  private EditorWithProviderComposite getEditorComposite(final FileEditor editor) {
-    LOG.assertTrue(editor != null);
+  private EditorWithProviderComposite getEditorComposite(@NotNull final FileEditor editor) {
     final EditorWithProviderComposite[] editorsComposites = mySplitters.getEditorsComposites();
     for (int i = editorsComposites.length - 1; i >= 0; i--) {
       final EditorWithProviderComposite composite = editorsComposites[i];
@@ -1005,7 +1004,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
 //======================= Misc =====================
 
-  public static void assertThread() {
+  private static void assertDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
@@ -1078,7 +1077,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    */
   private final class MyVirtualFileListener extends VirtualFileAdapter {
     public void beforeFileDeletion(VirtualFileEvent e) {
-      assertThread();
+      assertDispatchThread();
       final VirtualFile file = e.getFile();
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
@@ -1090,7 +1089,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     public void propertyChanged(VirtualFilePropertyEvent e) {
       if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
-        assertThread();
+        assertDispatchThread();
         final VirtualFile file = e.getFile();
         if (isFileOpen(file)) {
           updateFileName(file);
@@ -1103,7 +1102,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     private void updateIconAndStatusbar(final VirtualFilePropertyEvent e) {
-      assertThread();
+      assertDispatchThread();
       final VirtualFile file = e.getFile();
       if (isFileOpen(file)) {
         updateFileIcon(file);
@@ -1129,7 +1128,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 /*
 private final class MyVirtualFileListener extends VirtualFileAdapter {
   public void beforeFileDeletion(final VirtualFileEvent e) {
-    assertThread();
+    assertDispatchThread();
     final VirtualFile file = e.getFile();
     final VirtualFile[] openFiles = getOpenFiles();
     for (int i = openFiles.length - 1; i >= 0; i--) {
@@ -1141,7 +1140,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
 
   public void propertyChanged(final VirtualFilePropertyEvent e) {
     if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
-      assertThread();
+      assertDispatchThread();
       final VirtualFile file = e.getFile();
       if (isFileOpen(file)) {
         if (file.equals(getSelectedFiles()[0])) { // update "write" status
@@ -1163,7 +1162,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
 
   private final class MyEditorPropertyChangeListener implements PropertyChangeListener {
     public void propertyChange(final PropertyChangeEvent e) {
-      assertThread();
+      assertDispatchThread();
 
       final String propertyName = e.getPropertyName();
       if (FileEditor.PROP_MODIFIED.equals(propertyName)) {
@@ -1192,7 +1191,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
    */
   private final class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() { // update color of all open files
-      assertThread();
+      assertDispatchThread();
       LOG.debug("FileEditorManagerImpl.MyFileStatusListener.fileStatusesChanged()");
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
@@ -1210,7 +1209,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
 
     public void fileStatusChanged(@NotNull final VirtualFile file) { // update color of the file (if necessary)
-      assertThread();
+      assertDispatchThread();
       if (isFileOpen(file)) {
         updateFileStatus(file);
       }
@@ -1230,7 +1229,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
 
     public void fileTypesChanged(final FileTypeEvent event) {
-      assertThread();
+      assertDispatchThread();
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         final VirtualFile file = openFiles[i];
@@ -1246,7 +1245,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
    */
   private final class MyUISettingsListener implements UISettingsListener {
     public void uiSettingsChanged(final UISettings source) {
-      assertThread();
+      assertDispatchThread();
       setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
       mySplitters.setTabsPlacement(source.EDITOR_TAB_PLACEMENT);
       mySplitters.trimToSize(source.EDITOR_TAB_LIMIT);
