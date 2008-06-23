@@ -1088,7 +1088,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     return myCaption;
   }
 
-  public void setHeaderComponent(JComponent c) {
+  private void setHeaderComponent(JComponent c) {
     boolean doRevalidate = false;
     if (myHeaderComponent != null) {
       myHeaderPanel.remove(myHeaderComponent);
@@ -1101,6 +1101,12 @@ public class AbstractPopup implements JBPopup, Disposable {
       myHeaderPanel.remove(myCaption);
       myHeaderPanel.add(c, BorderLayout.NORTH);
       myHeaderComponent = c;
+
+      final Dimension size = myContent.getSize();
+      if (size.height < c.getPreferredSize().height * 2) {
+        size.height += c.getPreferredSize().height;
+        setSize(size);
+      }
 
       doRevalidate = true;
     }
