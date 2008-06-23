@@ -211,9 +211,8 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
   };
 
   final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
-    public void setName(final String qualifiedName) {
+    public void setName(@NotNull final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
-      LOG.assertTrue(qualifiedName != null);
       myData.MAIN_CLASS_NAME = qualifiedName;
       if (generatedName) setGeneratedName();
     }

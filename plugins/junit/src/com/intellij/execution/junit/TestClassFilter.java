@@ -21,22 +21,20 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 public class TestClassFilter implements TreeClassChooser.ClassFilterWithScope {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestClassFilter");
   private final PsiClass myBase;
   private final Project myProject;
   private final GlobalSearchScope myScope;
 
-  private TestClassFilter(final PsiClass base, final GlobalSearchScope scope) {
-    LOG.assertTrue(base != null);
+  private TestClassFilter(@NotNull PsiClass base, final GlobalSearchScope scope) {
     myBase = base;
     myProject = base.getProject();
     myScope = scope;

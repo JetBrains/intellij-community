@@ -24,8 +24,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer, DispatchListener, Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.model.JUnitListenersNotifier");
@@ -112,8 +115,7 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
 //    MEASURER.stop(ON_EVENT);
   }
 
-  public void addListener(final JUnitListener listener) {
-    LOG.assertTrue(listener != null);
+  public void addListener(@NotNull JUnitListener listener) {
     myListeners.add(listener);
   }
 
