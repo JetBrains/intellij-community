@@ -65,6 +65,9 @@
   <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
                       serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.paths.PathReferenceManager"
+                      serviceImplementation="com.intellij.openapi.paths.PathReferenceManagerImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
