@@ -135,11 +135,9 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       public void initScheme(final TemplateGroup scheme) {
         Collection<TemplateImpl> templates = scheme.getTemplates();
 
-        scheme.blocked = true;
         for (TemplateImpl template : templates) {
           addTemplate(template);
         }
-        scheme.blocked = false;
       }
     };
 
@@ -394,7 +392,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         description = element.getAttributeValue(DESCRIPTION);
       }
       String shortcut = element.getAttributeValue(SHORTCUT);
-      if (isDefault && myDeletedTemplates.contains(name)) continue;
+      if (isDefault && (myDeletedTemplates.contains(name) || myTemplates.containsKey(name))) continue;
       TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault, id);
       template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
       template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));

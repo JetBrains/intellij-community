@@ -14,21 +14,17 @@ public class TemplateGroup implements ExternalizableScheme {
   private final Collection<TemplateImpl> myTemplates = new ArrayList<TemplateImpl>();
   private ExternalInfo myExternalInfo = new ExternalInfo();
 
-  public boolean blocked = false;
 
   public TemplateGroup(final String name) {
     myName = name;
   }
 
   public void addTemplate(TemplateImpl t) {
-    if (blocked) {
-      System.out.println("");
-    }
     myTemplates.add(t);
   }
 
   public Collection<TemplateImpl> getTemplates() {
-    return Collections.unmodifiableCollection(myTemplates);
+    return Collections.unmodifiableCollection(new ArrayList<TemplateImpl>(myTemplates));
   }
 
   public String getName() {
@@ -43,10 +39,6 @@ public class TemplateGroup implements ExternalizableScheme {
   }
 
   public void removeTemplate(final TemplateImpl template) {
-    if (blocked) {
-      System.out.println("");
-    }
-    
     for (Iterator templateIterator = myTemplates.iterator(); templateIterator.hasNext();) {
       TemplateImpl t = (TemplateImpl)templateIterator.next();
       if (t.getKey() != null && t.getKey().equals(template.getKey())) {
