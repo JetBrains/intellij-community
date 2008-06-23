@@ -40,21 +40,22 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @NotNull
   public ASTNode getNode() {
-    if (myNode == null) {
+    ASTNode node = myNode;
+    if (node == null) {
       synchronized (PsiLock.LOCK) {
-        if (myNode == null) {
+        node = myNode;
+        if (node == null) {
           PsiFileImpl file = (PsiFileImpl)getContainingFile();
           assert file.getTreeElement() == null;
           file.loadTreeElement();
-          if (myNode == null) {
-            assert false: "failed to bind stub to AST for element " + this + " in " +
+          node = myNode;
+          assert node != null: "failed to bind stub to AST for element " + this + " in " +
                           (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath());
-          }
         }
       }
     }
 
-    return myNode;
+    return node;
   }
 
   public void setNode(final ASTNode node) {

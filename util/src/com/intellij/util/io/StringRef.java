@@ -10,17 +10,18 @@ import java.io.IOException;
 public class StringRef {
   private int id;
   private String name;
-  private PersistentStringEnumerator store;
+  private final PersistentStringEnumerator store;
 
   private StringRef(final String name) {
     this.name = name;
-    this.id = -1;
+    id = -1;
+    store = null;
   }
 
   private StringRef(final int id, final PersistentStringEnumerator store) {
     this.id = id;
     this.store = store;
-    this.name = null;
+    name = null;
   }
 
   public String getString() {
@@ -84,7 +85,7 @@ public class StringRef {
     return nameId != 0 ? new StringRef(nameId, store) : null;
   }
 
-  private final static StringRef[] EMPTY_ARRAY = new StringRef[0];
+  private static final StringRef[] EMPTY_ARRAY = new StringRef[0];
   public static StringRef[] createArray(int count) {
     return count == 0 ? EMPTY_ARRAY : new StringRef[count];
   }
