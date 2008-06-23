@@ -404,7 +404,6 @@ public class CompositeElement extends TreeElement implements Cloneable {
     ChangeUtil.addChildren(this, firstChild, lastChild, anchorBefore);
   }
 
-  @NotNull
   public PsiElement getPsi() {
     if (myWrapper != null) return myWrapper;
     synchronized (PsiLock.LOCK) {
