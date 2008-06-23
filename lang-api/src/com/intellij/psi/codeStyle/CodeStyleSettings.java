@@ -1124,7 +1124,15 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
-    for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
+    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(myCustomSettings.values());
+    
+    Collections.sort(customSettings, new Comparator<CustomCodeStyleSettings>(){
+      public int compare(final CustomCodeStyleSettings o1, final CustomCodeStyleSettings o2) {
+        return o1.getTagName().compareTo(o2.getTagName());
+      }
+    });
+
+    for (final CustomCodeStyleSettings settings : customSettings) {
       final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
       assert parentCustomSettings != null;
       settings.writeExternal(element, parentCustomSettings);
