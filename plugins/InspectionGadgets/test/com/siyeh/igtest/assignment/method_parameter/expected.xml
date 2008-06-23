@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+  <file>AssigmentToMethodParameterMissesCompoundAssign.java</file>
+  <line>19</line>
+  <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Assignment to method parameter</problem_class>
+  <description>Assignment to method parameter &lt;code&gt;s&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

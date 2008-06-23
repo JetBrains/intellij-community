@@ -35,18 +35,19 @@ public class AssignmentToMethodParameterInspection
     @SuppressWarnings({"PublicField"})
     public boolean ignoreTransformationOfOriginalParameter = false;
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assignment.to.method.parameter.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "assignment.to.method.parameter.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -54,10 +55,12 @@ public class AssignmentToMethodParameterInspection
                 "ignoreTransformationOfOriginalParameter");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ExtractParameterAsLocalVariableFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AssignmentToMethodParameterVisitor();
     }
@@ -76,6 +79,20 @@ public class AssignmentToMethodParameterInspection
             if (ignoreTransformationOfOriginalParameter) {
                 final PsiExpression rhs = expression.getRExpression();
                 if (rhs != null && VariableAccessUtils.variableIsUsed(parameter, rhs)) {
+                    return;
+                }
+                final IElementType tokenType =
+                        expression.getOperationTokenType();
+                if (tokenType == JavaTokenType.PLUSEQ ||
+                        tokenType == JavaTokenType.ASTERISKEQ ||
+                        tokenType == JavaTokenType.DIVEQ ||
+                        tokenType == JavaTokenType.ANDEQ ||
+                        tokenType == JavaTokenType.OREQ ||
+                        tokenType == JavaTokenType.XOREQ ||
+                        tokenType == JavaTokenType.PERCEQ ||
+                        tokenType == JavaTokenType.LTLTEQ ||
+                        tokenType == JavaTokenType.GTGTEQ ||
+                        tokenType == JavaTokenType.GTGTGTEQ) {
                     return;
                 }
             }
