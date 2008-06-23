@@ -270,7 +270,15 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     public RecognizedFileTypes() {
       super(new BorderLayout());
       add(myWholePanel, BorderLayout.CENTER);
-      myFileTypesList.setCellRenderer(new FileTypeRenderer());
+      myFileTypesList.setCellRenderer(new FileTypeRenderer(new FileTypeRenderer.FileTypeListProvider(){
+        public Iterable<FileType> getCurrentFileTypeList() {
+          ArrayList<FileType> result = new ArrayList<FileType>();
+          for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
+            result.add((FileType)myFileTypesList.getModel().getElementAt(i));
+          }
+          return result;
+        }
+      }));
       myFileTypesList.setModel(new DefaultListModel());
 
       if (getSchemesManager().isImportAvailable()) {
