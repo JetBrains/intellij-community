@@ -310,7 +310,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       if (annotation == null) continue; // maybe out of highlightable range
       // force attribute colors to override host' ones
 
-      TextAttributes attributes = keys.length == 0 ? null : globalScheme.getAttributes(keys[0]);
+      TextAttributes attributes = null;
+      for(TextAttributesKey key:keys) {
+        TextAttributes attrs2 = globalScheme.getAttributes(key);
+        if (attrs2 != null) {
+          attributes = attributes != null ? TextAttributes.merge(attributes, attrs2):attrs2;
+        }
+      }
       if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
         annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
       }
