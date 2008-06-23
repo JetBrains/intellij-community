@@ -42,7 +42,6 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -297,9 +296,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     final DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
-    final JBPopup childPopup = JBPopupFactory.getInstance().getChildPopup(this);
-
-    if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent) || (childPopup != null && childPopup.isPersistent() && childPopup.isFocused())) {
+    if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent) || (myNodePopup != null && myNodePopup.isVisible())) {
       immediateUpdateList(false);
     }
     else {
@@ -488,11 +485,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 1) {
           ctrlClick(index);
           myModel.setSelectedIndex(index);
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              requestFocusInWindow();
-            }
-          });
           e.consume();
         }
       }

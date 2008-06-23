@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
@@ -296,30 +295,6 @@ public class FocusTrackback {
         ourRootWindowToParentsStack.remove(each);
       }
     }
-  }
-
-  @Nullable
-  public static JBPopup getChildPopup(@NotNull final Component component) {
-    final Window window = SwingUtilities.windowForComponent(component);
-    if (window == null) return null;
-
-    final List<FocusTrackback> stack = getCleanStackForRoot(findUtlimateParent(window));
-
-    for (FocusTrackback each : stack) {
-      if (each.isChildFor(component) && each.getRequestor() instanceof JBPopup) {
-        return (JBPopup)each.getRequestor();
-      }
-    }
-
-    return null;
-  }
-
-  private boolean isChildFor(final Component parent) {
-    final Component toFocus = queryToFocus(getCleanStack(), this);
-    if (toFocus == null) return false;
-    if (parent == toFocus) return true;
-
-    return SwingUtilities.isDescendingFrom(toFocus, parent);
   }
 
   public Object getRequestor() {

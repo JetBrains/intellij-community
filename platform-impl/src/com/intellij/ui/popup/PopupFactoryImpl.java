@@ -562,7 +562,4 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
   }
 
-  public JBPopup getChildPopup(@NotNull final Component component) {
-    return FocusTrackback.getChildPopup(component);
-  }
 }

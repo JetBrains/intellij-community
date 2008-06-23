@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -200,5 +199,4 @@ public abstract class JBPopupFactory {
 
   public abstract Point getCenterOf(JComponent container, JComponent content);
   
-  public abstract JBPopup getChildPopup(@NotNull Component parent);
 }
