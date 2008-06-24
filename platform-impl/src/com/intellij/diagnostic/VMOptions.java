@@ -1,7 +1,11 @@
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,13 +13,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VMOptions {
-  private static final String MEM_SIZE_EXPR = "(\\d*)([a-zA-Z]*)";
-  private static final String XMX_OPTION = "-Xmx";
-  private static final String PERM_GEN_OPTION = "-XX:MaxPermSize=";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.VMOptions");
 
-  private static final Pattern XMX_PATTERN = Pattern.compile(XMX_OPTION + MEM_SIZE_EXPR);
-  private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
-  private static final Pattern MAC_OS_VM_OPTIONS_PATTERN = Pattern.compile("(<key>VMOptions</key>\\s*<string>)(.*)(</string>)");
+  @NonNls public static final String XMX_OPTION_NAME = "Xmx";
+  @NonNls public static final String PERM_GEN_OPTION_NAME = "XX:MaxPermSize";
+
+  @NonNls private static final String XMX_OPTION = "-" + XMX_OPTION_NAME;
+  @NonNls private static final String PERM_GEN_OPTION = "-" + PERM_GEN_OPTION_NAME + "=";
+
+  @NonNls private static final String MEM_SIZE_EXPR = "(\\d*)([a-zA-Z]*)";
+
+  @NonNls private static final Pattern XMX_PATTERN = Pattern.compile(XMX_OPTION + MEM_SIZE_EXPR);
+  @NonNls private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
+  @NonNls private static final Pattern MAC_OS_VM_OPTIONS_PATTERN = Pattern.compile("(<key>VMOptions</key>\\s*<string>)(.*)(</string>)");
+
+  @NonNls private static final String INFO_PLIST = "/Contents/Info.plist";
+  @NonNls private static final String IDEA_EXE_VMOPTIONS = "\\idea.exe.vmoptions";
+  @NonNls private static final String IDEA_VMOPTIONS = "/idea.vmoptions";
 
   private static String ourTestPath;
   private static boolean ourTestMacOs;
@@ -29,43 +43,50 @@ public class VMOptions {
     ourTestPath = null;
   }
 
-  public static int readXmx() throws IOException {
+  public static int readXmx() {
     return readOption(XMX_PATTERN);
   }
 
-  public static void writeXmx(int value) throws IOException {
+  public static void writeXmx(int value) {
     writeOption(XMX_OPTION, value, XMX_PATTERN);
   }
 
-  public static int readMaxPermGen() throws IOException {
+  public static int readMaxPermGen() {
     return readOption(PERM_GEN_PATTERN);
   }
 
-  public static void writeMaxPermGen(int value) throws IOException {
+  public static void writeMaxPermGen(int value) {
     writeOption(PERM_GEN_OPTION, value, PERM_GEN_PATTERN);
   }
 
-  private static int readOption(Pattern pattern) throws IOException {
-    String content = new String(FileUtil.loadFileText(getFile()));
-
-    if (isMacOs()) {
-      content = extractMacOsVMOptionsSection(content);
-      if (content == null) return -1;
-    }
-
-    Matcher m = pattern.matcher(content);
-    if (!m.find()) return -1;
-
-    String valueString = m.group(1);
-    String unitString = m.group(2);
-
+  private static int readOption(Pattern pattern) {
     try {
-      int value = Integer.parseInt(valueString);
-      double multiplier = parseUnit(unitString);
+      String content = new String(FileUtil.loadFileText(getFile()));
 
-      return (int)(value * multiplier);
+      if (isMacOs()) {
+        content = extractMacOsVMOptionsSection(content);
+        if (content == null) return -1;
+      }
+
+      Matcher m = pattern.matcher(content);
+      if (!m.find()) return -1;
+
+      String valueString = m.group(1);
+      String unitString = m.group(2);
+
+      try {
+        int value = Integer.parseInt(valueString);
+        double multiplier = parseUnit(unitString);
+
+        return (int)(value * multiplier);
+      }
+      catch (NumberFormatException e) {
+        LOG.info(e);
+        return -1;
+      }
     }
-    catch (NumberFormatException e) {
+    catch (IOException e) {
+      LOG.info(e);
       return -1;
     }
   }
@@ -76,38 +97,44 @@ public class VMOptions {
     return 1;
   }
 
-  private static void writeOption(String option, int value, Pattern pattern) throws IOException {
-    String optionValue = option + value + "m";
-    String content = new String(FileUtil.loadFileText(getFile()));
-    String vmOptions;
+  private static void writeOption(String option, int value, Pattern pattern) {
+    try {
+      String optionValue = option + value + "m";
+      String content = new String(FileUtil.loadFileText(getFile()));
+      String vmOptions;
 
-    if (isMacOs()) {
-      vmOptions = extractMacOsVMOptions(content);
-      if (vmOptions == null) return;
-    }
-    else {
-      vmOptions = content;
-    }
+      if (isMacOs()) {
+        vmOptions = extractMacOsVMOptions(content);
+        if (vmOptions == null) return;
+      }
+      else {
+        vmOptions = content;
+      }
 
-    vmOptions = replace(pattern, vmOptions, optionValue, "", "", vmOptions + " " + optionValue);
+      vmOptions = replace(pattern, vmOptions, optionValue, "", "", vmOptions + " " + optionValue);
 
-    if (isMacOs()) {
-      content = replace(MAC_OS_VM_OPTIONS_PATTERN, content, vmOptions, "$1", "$3", content);
-    }
-    else {
-      content = vmOptions;
-    }
+      if (isMacOs()) {
+        content = replace(MAC_OS_VM_OPTIONS_PATTERN, content, vmOptions, "$1", "$3", content);
+      }
+      else {
+        content = vmOptions;
+      }
 
-    FileUtil.writeToFile(getFile(), content.getBytes());
+      FileUtil.setReadOnlyAttribute(getFile().getPath(), false);
+      FileUtil.writeToFile(getFile(), content.getBytes());
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
   }
 
-  public static String extractMacOsVMOptionsSection(String text) {
+  private static String extractMacOsVMOptionsSection(String text) {
     Matcher m = MAC_OS_VM_OPTIONS_PATTERN.matcher(text);
     if (!m.find()) return null;
     return m.group();
   }
 
-  public static String extractMacOsVMOptions(String text) {
+  private static String extractMacOsVMOptions(String text) {
     Matcher m = MAC_OS_VM_OPTIONS_PATTERN.matcher(text);
     if (!m.find()) return null;
     return m.group(2);
@@ -130,11 +157,22 @@ public class VMOptions {
   }
 
   private static File getFile() {
-    return new File(ourTestPath);
+    if (ourTestPath != null) return new File(ourTestPath);
+    return new File(getSettingsFilePath());
+  }
+
+  public static String getSettingsFilePath() {
+    if (SystemInfo.isMac) {
+      return PathManager.getHomePath() + INFO_PLIST;
+    }
+    else if (SystemInfo.isWindows) {
+      return PathManager.getBinPath() + IDEA_EXE_VMOPTIONS;
+    }
+    return PathManager.getBinPath() + IDEA_VMOPTIONS.replace('/', File.separatorChar);
   }
 
   private static boolean isMacOs() {
     if (ourTestPath != null) return ourTestMacOs;
-    return false;
+    return SystemInfo.isMac;
   }
 }
