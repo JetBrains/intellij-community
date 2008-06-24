@@ -158,7 +158,6 @@
     <lang.ast.factory language="JAVA_HOLDER_METHOD_TREE" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
 
     <usageTypeProvider implementation="com.intellij.util.xml.DomUsageTypeProvider"/>
-    <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.XmlCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.HtmlCodeStyleSettingsProvider"/>
