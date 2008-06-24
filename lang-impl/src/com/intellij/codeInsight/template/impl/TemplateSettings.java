@@ -181,6 +181,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         myDeletedTemplates.add(child.getAttributeValue(NAME));
       }
     }
+
+    for (String name : myDeletedTemplates) {
+      Template toDelete = myTemplates.get(name);
+      if (toDelete != null) {
+        removeTemplate(toDelete);
+      }
+    }
+
     //TODO lesya reload schemes
   }
 
@@ -275,7 +283,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
       myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
     }
-
+    myDeletedTemplates.remove(template.getKey());
 
   }
 
@@ -485,7 +493,11 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   public void setTemplates(List<TemplateGroup> newGroups) {
     myTemplates.clear();
-    myTemplatesById.clear();    
+    myTemplatesById.clear();
+    myDeletedTemplates.clear();
+    for (TemplateImpl template : myDefaultTemplates.values()) {
+      myDeletedTemplates.add(template.getKey());
+    }
     mySchemesManager.clearAllSchemes();
     myMaxKeyLength = 0;
     for (TemplateGroup group : newGroups) {
