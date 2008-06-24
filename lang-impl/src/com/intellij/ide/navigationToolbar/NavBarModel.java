@@ -83,9 +83,9 @@ public class NavBarModel {
   }
 
   protected boolean updateModel(DataContext dataContext) {
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
-      psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
+      psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     psiElement = normalize(psiElement);
     if (psiElement != null && psiElement.isValid()) {
