@@ -652,7 +652,7 @@ public class FileBasedIndex implements ApplicationComponent {
       return ((VirtualFileWithId)file).getId();
     }
 
-    throw new IllegalArgumentException("Virtual file doesn't support id: " + file);
+    throw new IllegalArgumentException("Virtual file doesn't support id: " + file + ", implementation class: " + file.getClass().getName());
   }
 
   private static CharSequence loadContent(VirtualFile file) {
