@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
+import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,10 @@ public abstract class ASTFactory {
     final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(lang);
     final LeafElement customLeaf = factory.createLeaf(type, fileText, start, end, table);
     return customLeaf != null ? customLeaf : DEFAULT.createLeaf(type, fileText, start, end, table);
+  }
+
+  public static LeafElement leaf(final Lexer lexer, final CharTable charTable) {
+    return leaf(lexer.getTokenType(), lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), charTable);
   }
 
   @NotNull

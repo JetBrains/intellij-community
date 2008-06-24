@@ -1,27 +1,14 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
 package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringImpl;
-import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory;
-import com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory;
 
-import java.util.Set;
 import java.util.Collection;
+import java.util.Set;
 
-/**
- * @author dsl
- */
-public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> implements RenameRefactoring {
-  private static final AutomaticVariableRenamerFactory ourVariableRenamerFactory = new AutomaticVariableRenamerFactory();
-  private static final AutomaticInheritorRenamerFactory ourInheritorRenamerFactory = new AutomaticInheritorRenamerFactory();
-
+public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> {
   public RenameRefactoringImpl(Project project,
                                PsiElement element,
                                String newName,
@@ -40,24 +27,6 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
 
   public Collection<String> getNewNames() {
     return myProcessor.getNewNames();
-  }
-
-  public void setShouldRenameVariables(boolean value) {
-    if (value) {
-      myProcessor.addRenamerFactory(ourVariableRenamerFactory);
-    }
-    else {
-      myProcessor.removeRenamerFactory(ourVariableRenamerFactory);
-    }
-  }
-
-  public void setShouldRenameInheritors(boolean value) {
-    if (value) {
-      myProcessor.addRenamerFactory(ourInheritorRenamerFactory);
-    }
-    else {
-      myProcessor.removeRenamerFactory(ourInheritorRenamerFactory);
-    }
   }
 
   public void setSearchInComments(boolean value) {

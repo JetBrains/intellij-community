@@ -26,7 +26,7 @@ public class RefactoringFactoryImpl extends RefactoringFactory {
   }
 
   public RenameRefactoring createRename(PsiElement element, String newName) {
-    return new RenameRefactoringImpl(myProject, element, newName, true, true);
+    return new JavaRenameRefactoringImpl(myProject, element, newName, true, true);
   }
 
   public MoveInnerRefactoring createMoveInner(PsiClass innerClass, String newName, boolean passOuterClass, String parameterName) {

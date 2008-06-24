@@ -14,7 +14,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.beanProperties.BeanProperty;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RenameRefactoring;
-import com.intellij.refactoring.openapi.impl.RenameRefactoringImpl;
+import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
   public static void doRename(@NotNull final BeanProperty property, final String newName, final boolean searchInComments) {
     final PsiElement psiElement = property.getPsiElement();
-    final RenameRefactoring rename = new RenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
+    final RenameRefactoring rename = new JavaRenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
 
     final PsiMethod setter = property.getSetter();
     if (setter != null) {
