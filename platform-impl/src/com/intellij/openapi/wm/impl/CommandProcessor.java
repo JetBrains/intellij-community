@@ -14,15 +14,11 @@ import java.util.Map;
 
 public final class CommandProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.CommandProcessor");
-  private final Object myLock;
+  private final Object myLock = new Object();
 
   private final List<Bulk> myCommandList = new ArrayList<Bulk>();
   private final Map<Bulk, Condition> myCommandToExpire = new HashMap<Bulk, Condition>();
   private int myCommandCount;
-
-  public CommandProcessor() {
-    myLock = new Object();
-  }
 
   public final int getCommandCount() {
     synchronized (myLock) {

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ConfigFileImpl implements ConfigFile {
-  private @NotNull ConfigFileInfo myInfo;
+  @NotNull private ConfigFileInfo myInfo;
   private VirtualFilePointer myFilePointer;
   private PsiFile myPsiFile;
   private final ConfigFileContainerImpl myContainer;
@@ -40,7 +40,7 @@ public class ConfigFileImpl implements ConfigFile {
     }
   };
 
-  public ConfigFileImpl(final @NotNull ConfigFileContainerImpl container, @NotNull final ConfigFileInfo configuration) {
+  public ConfigFileImpl(@NotNull final ConfigFileContainerImpl container, @NotNull final ConfigFileInfo configuration) {
     myContainer = container;
     myInfo = configuration;
     setUrl(configuration.getUrl());
@@ -92,7 +92,7 @@ public class ConfigFileImpl implements ConfigFile {
   @Nullable
   public XmlFile getXmlFile() {
     final PsiFile file = getPsiFile();
-    return file instanceof XmlFile? ((XmlFile)file) : null;
+    return file instanceof XmlFile ? (XmlFile)file : null;
   }
 
   public void dispose() {

@@ -182,6 +182,14 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   public void disposeComponent() {
+    for (Map.Entry<VirtualFilePointerListener, Set<VirtualFilePointer>> entry : myListenerToPointersMap.entrySet()) {
+      VirtualFilePointerListener listener = entry.getKey();
+      Set<VirtualFilePointer> pointerSet = entry.getValue();
+      System.err.println("Not disposed pointer: listener="+listener+"; urls: "+pointerSet);
+    }
+    //if (myListenerToPointersMap.isEmpty()) {
+    //  System.err.println("All pointers are disposed");
+    //}
   }
 
   @NotNull

@@ -43,7 +43,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       return myFile.getName();
     } else {
       int index = myUrl.lastIndexOf('/');
-      return (index >= 0) ? myUrl.substring(index + 1) : myUrl;
+      return index >= 0 ? myUrl.substring(index + 1) : myUrl;
     }
   }
 
@@ -62,7 +62,8 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     if (!myInitialized) update();
     if (myUrl != null) {
       return myUrl;
-    } else {
+    }
+    else {
       return myFile.getUrl();
     }
   }
@@ -133,5 +134,10 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       final VirtualFile fileByUrl = myVirtualFileManager.findFileByUrl(myUrl);
       return fileByUrl != null;
     }
+  }
+
+  @Override
+  public String toString() {
+    return getUrl();
   }
 }

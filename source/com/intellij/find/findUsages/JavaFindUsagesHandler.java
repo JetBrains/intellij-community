@@ -616,8 +616,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         return addResult(result, ref, options, parentClass);
       }
     });
-
-    //addImplicitConstructorCalls(method, result, searchScope);
   }
 
   public static void addResult(Processor<UsageInfo> total, PsiElement element, FindUsagesOptions options, PsiElement refElement) {
