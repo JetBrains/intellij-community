@@ -267,21 +267,48 @@ public class FileBasedIndex implements ApplicationComponent {
     return Collections.emptyList();
   }
 
-  public <K> void ensureUpToDate(final ID<K, ?> indexId) {
-    try {
-      checkRebuild(indexId);
-      indexUnsavedDocuments();
-    }
-    catch (StorageException e) {
-      scheduleRebuild(indexId, e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
-        scheduleRebuild(indexId, e);
+  private ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<Integer>();
+  
+  public void disableUpToDateCheckForCurrentThread() {
+    final Integer currentValue = myUpToDateCheckState.get();
+    myUpToDateCheckState.set(currentValue == null? 1 : currentValue.intValue() + 1);
+  }
+  
+  public void enableUpToDateCheckForCurrentThread() {
+    final Integer currentValue = myUpToDateCheckState.get();
+    if (currentValue != null) {
+      final int newValue = currentValue.intValue() - 1;
+      if (newValue != 0) {
+        myUpToDateCheckState.set(newValue);
       }
       else {
-        throw e;
+        myUpToDateCheckState.remove();
+      }
+    }
+  }
+  
+  private <K> boolean isUpToDateCheckEnabled() {
+    final Integer value = myUpToDateCheckState.get();
+    return value == null || value.intValue() == 0;
+  }
+
+  public <K> void ensureUpToDate(final ID<K, ?> indexId) {
+    if (isUpToDateCheckEnabled()) {
+      try {
+        checkRebuild(indexId);
+        indexUnsavedDocuments();
+      }
+      catch (StorageException e) {
+        scheduleRebuild(indexId, e);
+      }
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof StorageException || cause instanceof IOException) {
+          scheduleRebuild(indexId, e);
+        }
+        else {
+          throw e;
+        }
       }
     }
   }
