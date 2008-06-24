@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public abstract class ResolveTestCase extends PsiTestCase {
-  protected static final String MARKER = "<ref>";
+  @NonNls protected static final String MARKER = "<ref>";
 
   protected PsiReference configureByFile(@NonNls String filePath) throws Exception{
     return configureByFile(filePath, null);

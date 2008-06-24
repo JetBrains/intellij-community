@@ -405,18 +405,20 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public PsiElement getPsi() {
-    if (myWrapper != null) return myWrapper;
+    PsiElement wrapper = myWrapper;
+    if (wrapper != null) return wrapper;
     synchronized (PsiLock.LOCK) {
-      if (myWrapper != null) return myWrapper;
+      wrapper = myWrapper;
+      if (wrapper != null) return wrapper;
 
       final Language lang = getElementType().getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       if (parserDefinition != null) {
-        myWrapper = parserDefinition.createElement(this);
+        myWrapper = wrapper = parserDefinition.createElement(this);
         //noinspection ConstantConditions
-        LOG.assertTrue(myWrapper != null, "ParserDefinition.createElement() may not return null");
+        LOG.assertTrue(wrapper != null, "ParserDefinition.createElement() may not return null");
       }
-      return myWrapper;
+      return wrapper;
     }
   }
 
