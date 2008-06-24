@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.IndexedRootsProvider;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.Collections;
@@ -15,13 +16,14 @@ import java.util.Set;
  */
 public class ExternalResourcesRootsProvider implements IndexedRootsProvider {
 
+  @Nullable
   public static VirtualFile getStandardSchemas() {
     final URL resource = ExternalResourcesRootsProvider.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS);
-    return VfsUtil.findFileByURL(resource);
+    return resource == null ? null : VfsUtil.findFileByURL(resource);
   }
 
   public Set<VirtualFile> getRootsToIndex(final Project project) {
     final VirtualFile file = getStandardSchemas();
-    return Collections.singleton(file);
+    return file != null ? Collections.singleton(file) : Collections.<VirtualFile>emptySet();
   }
 }
