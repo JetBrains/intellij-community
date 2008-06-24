@@ -745,6 +745,7 @@
             text="Delete Selection"/>
 
     <action id="Graph.Show.Edge.Labels" class="com.intellij.openapi.graph.builder.actions.ShowEdgeLabels" text="Show Edge Labels"/>
+    <action id="Graph.Current.Node.Dependencies.Filter" class="com.intellij.openapi.graph.impl.builder.SelectionNodeModeAction" />
 
     <action id="Graph.Print" class="com.intellij.openapi.graph.builder.actions.printing.PrintGraphAction" text="Print Graph"/>
     <action id="Graph.Print.Preview" class="com.intellij.openapi.graph.builder.actions.printing.PrintPreviewAction" text="Print Preview"/>
@@ -811,6 +812,7 @@
 
       <separator/>
       <reference ref="Graph.Show.Edge.Labels"/>
+      <reference ref="Graph.Current.Node.Dependencies.Filter"/>
     </group>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
