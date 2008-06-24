@@ -501,9 +501,11 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     mySchemesManager.clearAllSchemes();
     myMaxKeyLength = 0;
     for (TemplateGroup group : newGroups) {
-      mySchemesManager.addNewScheme(group, true);
-      for (TemplateImpl template : group.getTemplates()) {
-        addTemplate(template);
+      if (!group.isEmpty()) {
+        mySchemesManager.addNewScheme(group, true);
+        for (TemplateImpl template : group.getTemplates()) {
+          addTemplate(template);
+        }
       }
     }
   }

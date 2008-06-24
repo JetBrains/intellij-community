@@ -343,31 +343,44 @@ class TemplateListPanel extends JPanel {
     if (selected < 0) return;
 
     TemplateImpl template = getTemplate(selected);
+    DefaultMutableTreeNode oldTemplateNode = getNode(selected);
     if (template == null) return;
+
+    String oldGroupName = template.getGroupName();
+
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem());
     dialog.show();
     if (!dialog.isOK()) return;
 
-    TemplateGroup group = getTemplateGroup(template);
+    TemplateGroup group = getTemplateGroup(template.getGroupName());
 
     LOG.assertTrue(group != null, template.getGroupName());
 
-    group.removeTemplate(template);
     dialog.apply();
 
-    TemplateGroup newGroup = getTemplateGroup(template);
     AbstractTableModel model = (AbstractTableModel)myTreeTable.getModel();
 
-    if (newGroup == null) {
-      newGroup = new TemplateGroup(template.getGroupName());
-      myTemplateGroups.add(newGroup);
+    if (!oldGroupName.equals(template.getGroupName())) {
+      TemplateGroup oldGroup = getTemplateGroup(oldGroupName);
+      oldGroup.removeTemplate(template);
+
+      template.setId(null);//To make it not equal with default template with the same name
+
+      JTree tree = myTreeTable.getTree();
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
+      removeNodeFromParent(oldTemplateNode);
+      if (parent.getChildCount() == 0) removeNodeFromParent(parent);
+
+      DefaultMutableTreeNode templateNode = addTemplate(template);
+
+      TreePath newTemplatePath = new TreePath(templateNode.getPath());
+      tree.expandPath(newTemplatePath);
+
+      selected = tree.getRowForPath(newTemplatePath);
+
       model.fireTableStructureChanged();
     }
-
-    //TODO lesya
-
-    newGroup.addTemplate(template);
 
     model.fireTableRowsUpdated(selected, selected);
     myTreeTable.setRowSelectionInterval(selected, selected);
@@ -376,9 +389,31 @@ class TemplateListPanel extends JPanel {
     isModified = true;
   }
 
-  private TemplateGroup getTemplateGroup(final TemplateImpl template) {
+  private DefaultMutableTreeNode getNode(final int row) {
+    JTree tree = myTreeTable.getTree();
+    TreePath path = tree.getPathForRow(row);
+    if (path != null) {
+      return (DefaultMutableTreeNode)path.getLastPathComponent();
+    }
+
+    return null;
+
+  }
+
+  private DefaultMutableTreeNode getGroupNode(final String groupName) {
+    for (int i = 0; i < myTreeRoot.getChildCount(); i++) {
+      DefaultMutableTreeNode groupNode = (DefaultMutableTreeNode)myTreeRoot.getChildAt(i);
+      if (((TemplateGroup)groupNode.getUserObject()).getName().equals(groupName)) {
+        return groupNode;
+      }
+    }
+
+    return null;
+  }
+
+  private TemplateGroup getTemplateGroup(final String groupName) {
     for (TemplateGroup group : myTemplateGroups) {
-      if (group.getName().equals(template.getGroupName())) return group;
+      if (group.getName().equals(groupName)) return group;
     }
 
     return null;
@@ -560,8 +595,8 @@ class TemplateListPanel extends JPanel {
     }, 100);
   }
 
-  private void addTemplate(TemplateImpl template) {
-    TemplateGroup newGroup = getTemplateGroup(template);
+  private DefaultMutableTreeNode addTemplate(TemplateImpl template) {
+    TemplateGroup newGroup = getTemplateGroup(template.getGroupName());
     if (newGroup == null) {
       newGroup = new TemplateGroup(template.getGroupName());
       insertNewGroup(newGroup);
@@ -580,12 +615,12 @@ class TemplateListPanel extends JPanel {
           child.insert(node, index);
           myTreeTableModel.nodesWereInserted(child, new int[]{index});
           setSelectedNode(node);
-          return;
+          return node;
         }
       }
     }
 
-
+    return null;
   }
 
   private void insertNewGroup(final TemplateGroup newGroup) {
@@ -628,7 +663,7 @@ class TemplateListPanel extends JPanel {
     LOG.assertTrue(node.getUserObject() instanceof TemplateImpl);
 
     TemplateImpl template = (TemplateImpl)node.getUserObject();
-    getTemplateGroup(template).removeTemplate(template);
+    getTemplateGroup(template.getGroupName()).removeTemplate(template);
 
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
     TreePath treePathToSelect = (parent.getChildAfter(node) != null || parent.getChildCount() == 1 ?
