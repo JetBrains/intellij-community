@@ -78,23 +78,24 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return null;
   }
   
-  public void collectFiles(CompileContext context, final TranslatingCompiler compiler, Iterator<VirtualFile> scopeSrcIterator, 
-                          boolean forceCompile,
-                          Collection<VirtualFile> toCompile,
-                          Collection<Trinity<File, String, Boolean>> toDelete) {
+  public void collectFiles(CompileContext context, final TranslatingCompiler compiler, Iterator<VirtualFile> scopeSrcIterator, boolean forceCompile,
+                           final boolean isRebuild,
+                           Collection<VirtualFile> toCompile,
+                           Collection<Trinity<File, String, Boolean>> toDelete) {
     final Project project = context.getProject();
     final String projectId = getProjectId(project);
     final CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
+    final boolean _forceCompile = forceCompile || isRebuild; 
     synchronized (mySourcesToRecompile) {
       final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(projectId);
-      if (forceCompile || (pathsToRecompile != null && pathsToRecompile.size() > 0)) {
+      if (_forceCompile || (pathsToRecompile != null && pathsToRecompile.size() > 0)) {
         while (scopeSrcIterator.hasNext()) {
           final VirtualFile file = scopeSrcIterator.next();
           if (configuration.isExcludedFromCompilation(file) || !compiler.isCompilableFile(file, context)) {
             continue;
           }
           final int fileId = getFileId(file);
-          if (forceCompile) {
+          if (_forceCompile) {
             toCompile.add(file);
             if (pathsToRecompile == null || !pathsToRecompile.contains(fileId)) {
               addSourceForRecompilation(Collections.singletonList(projectId), file, null);
@@ -107,15 +108,21 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
     // it is important that files to delete are collected after the files to compile (see what happens if forceCompile == true)
-    final CompileScope compileScope = context.getCompileScope();
-    synchronized (myOutputsToDelete) {
-      for (String outputPath : myOutputsToDelete.keySet()) {
-        final SourceUrlClassNamePair classNamePair = myOutputsToDelete.get(outputPath);
-        final String sourceUrl = classNamePair.getSourceUrl();
-        if (compileScope.belongs(sourceUrl)) {
-          final boolean sourcePresent = VirtualFileManager.getInstance().findFileByUrl(sourceUrl) != null;
-          //noinspection UnnecessaryBoxing
-          toDelete.add(new Trinity<File, String, Boolean>(new File(outputPath), classNamePair.getClassName(), Boolean.valueOf(sourcePresent)));
+    if (!isRebuild) {
+      final CompileScope compileScope = context.getCompileScope();
+      synchronized (myOutputsToDelete) {
+        for (String outputPath : myOutputsToDelete.keySet()) {
+          final SourceUrlClassNamePair classNamePair = myOutputsToDelete.get(outputPath);
+          final String sourceUrl = classNamePair.getSourceUrl();
+          if (compileScope.belongs(sourceUrl)) {
+            final VirtualFile srcFile = VirtualFileManager.getInstance().findFileByUrl(sourceUrl);
+            final boolean sourcePresent = srcFile != null;
+            if (sourcePresent && !compiler.isCompilableFile(srcFile, context)) {
+              continue; // do not collect files that were compiled by another compiler
+            }
+            //noinspection UnnecessaryBoxing
+            toDelete.add(new Trinity<File, String, Boolean>(new File(outputPath), classNamePair.getClassName(), Boolean.valueOf(sourcePresent)));
+          }
         }
       }
     }
@@ -827,13 +834,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
     public boolean execute(String outputPath) {
       final VirtualFile outFile = myFileSystem.findFileByPath(outputPath);
-      String classname = null;
-      final OutputFileInfo outputInfo = outFile != null? loadOutputInfo(outFile) : null;
-      if (outputInfo != null) {
-        classname = outputInfo.getClassName();
-      }
-      synchronized (myOutputsToDelete) {
-        myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(mySrcUrl, classname));
+      if (outFile != null) { // not deleted yet
+        final OutputFileInfo outputInfo = loadOutputInfo(outFile);
+        final String classname = outputInfo != null? outputInfo.getClassName() : null;
+        synchronized (myOutputsToDelete) {
+          myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(mySrcUrl, classname));
+        }
       }
       return true;
     }

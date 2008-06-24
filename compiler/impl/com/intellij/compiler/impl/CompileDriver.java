@@ -830,7 +830,12 @@ public class CompileDriver {
           if (!myShouldClearOutputDirectory) {
             final ArrayList<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
             TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-                context, (TranslatingCompiler)compiler, Arrays.<VirtualFile>asList(allSources).iterator(), true, new ArrayList<VirtualFile>(), toDelete
+                context, 
+                (TranslatingCompiler)compiler, Arrays.<VirtualFile>asList(allSources).iterator(), 
+                true /*pass true to make sure that every source in scope file is processed*/, 
+                false /*important! should pass false to enable collection of files to delete*/, 
+                new ArrayList<VirtualFile>(), 
+                toDelete
             );
             for (Trinity<File, String, Boolean> trinity : toDelete) {
               final File file = trinity.getFirst();
@@ -1156,7 +1161,7 @@ public class CompileDriver {
         public void run() {
 
           TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-              context, compiler, Arrays.asList(snapshot.getFiles()).iterator(), forceCompile || isRebuild, toCompile, toDelete
+              context, compiler, Arrays.asList(snapshot.getFiles()).iterator(), forceCompile, isRebuild, toCompile, toDelete
           );
           if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
