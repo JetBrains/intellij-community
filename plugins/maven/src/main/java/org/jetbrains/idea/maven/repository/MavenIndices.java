@@ -87,6 +87,7 @@ public class MavenIndices {
 
   public synchronized void save() throws MavenIndexException {
     try {
+      getListFile().getParentFile().mkdirs();
       FileOutputStream fs = new FileOutputStream(getListFile());
       try {
         DataOutputStream os = new DataOutputStream(fs);

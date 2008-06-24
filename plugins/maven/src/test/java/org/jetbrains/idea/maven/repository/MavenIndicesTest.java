@@ -35,8 +35,12 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   private void initIndex() throws Exception {
+    initIndex("index");
+  }
+
+  private void initIndex(String relativeDir) {
     myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings());
-    myIndexDir = new File(myDir, "index");
+    myIndexDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myEmbedder, myIndexDir);
   }
 
@@ -199,6 +203,12 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     myIndices.load();
 
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "junit", "jmock");
+  }
+
+  public void testSavingInAbsenseOfParentDirectories() throws Exception {
+    String subDir = "subDir1/subDir2/index";
+    initIndex(subDir);
+    myIndices.save(); // shouldn't throw
   }
 
   public void testClearingIndexesOnLoadError() throws Exception {
