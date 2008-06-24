@@ -7,9 +7,16 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +57,10 @@ public class VariableTypeFix implements IntentionAction {
     if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
       myVariable.normalizeDeclaration();
-      myVariable.getTypeElement().replace(JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(myReturnType));
+      final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(myVariable));
+      rules.setMigrationRootType(myReturnType);
+      rules.setBoundScope(GlobalSearchScope.projectScope(project));
+      new TypeMigrationProcessor(project, myVariable, rules).run();
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
       UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {
