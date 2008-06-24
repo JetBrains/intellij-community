@@ -111,8 +111,14 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
     return myMethod.getHierarchicalMethodSignature();
   }
 
-  public boolean hasModifierProperty(@NotNull String name) {
-    return myMethod.hasModifierProperty(name);
+  public boolean hasModifierProperty(@NotNull final String name) {
+      final Ref<Boolean> res = new Ref<Boolean>();
+      ApplicationManager.getApplication().runReadAction(new Runnable(){
+          public void run() {
+              res.set(myMethod.hasModifierProperty(name));
+          }
+      });
+      return res.get();
   }
 
   @NotNull
