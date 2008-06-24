@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,10 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
         final PsiEllipsisType lastParameterType =
                 (PsiEllipsisType)lastParameter.getType();
         final PsiType lastType = lastParameterType.getComponentType();
-        return !lastType.equals(type);
+        final JavaResolveResult resolveResult =
+                methodCallExpression.resolveMethodGenerics();
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        final PsiType substitutedType = substitutor.substitute(lastType);
+        return !substitutedType.equals(type);
     }
 }

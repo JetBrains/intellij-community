@@ -24,11 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class WrapVarargArgumentsWithExplicitArrayIntention extends Intention {
 
-    @NotNull
+    @Override @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new VarargArgumentsPredicate();
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiMethodCallExpression methodCallExpression =
