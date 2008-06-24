@@ -782,8 +782,7 @@ class TemplateListPanel extends JPanel {
       }
       updateTemplateTextArea();
       myEditor.getComponent().setEnabled(enableEditButton);
-      myExpandByCombo.setEnabled(enableEditButton);
-      
+
       if (myCopyButton != null) {
         myCopyButton.setEnabled(enableCopyButton);
         myEditButton.setEnabled(enableEditButton);

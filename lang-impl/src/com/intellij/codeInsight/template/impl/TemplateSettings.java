@@ -367,6 +367,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true, true);
   }
 
+  @Nullable
   public TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate) throws InvalidDataException {
     if (document == null) {
       throw new InvalidDataException();
@@ -429,10 +430,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     if (registerTemplate) {
       TemplateGroup existingScheme = mySchemesManager.findSchemeByName(result.getName());
-      if (existingScheme == null) {
-        mySchemesManager.addNewScheme(result, false);
-      }
-      else {
+      if (existingScheme != null) {
         result = existingScheme;
       }
     }
@@ -445,7 +443,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       result.addTemplate(template);
     }
 
-    return result;
+    if (registerTemplate) {
+      TemplateGroup existingScheme = mySchemesManager.findSchemeByName(result.getName());
+      if (existingScheme == null && !result.isEmpty()) {
+        mySchemesManager.addNewScheme(result, false);
+      }
+    }
+
+    return result.isEmpty() ? null : result;
 
   }
 
