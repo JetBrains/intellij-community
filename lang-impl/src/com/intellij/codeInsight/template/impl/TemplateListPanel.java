@@ -461,22 +461,25 @@ class TemplateListPanel extends JPanel {
       removeTemplateAt(selected);
       isModified = true;
     }
-    TemplateGroup group = getGroup(selected);
-    if (group != null) {
-      int result = Messages.showOkCancelDialog(this, CodeInsightBundle.message("template.delete.group.confirmation.text"),
-                                               CodeInsightBundle.message("template.delete.confirmation.title"),
-                                               Messages.getQuestionIcon());
-      if (result != DialogWrapper.OK_EXIT_CODE) return;
+    else {
+      TemplateGroup group = getGroup(selected);
+      if (group != null) {
+        int result = Messages.showOkCancelDialog(this, CodeInsightBundle.message("template.delete.group.confirmation.text"),
+                                                 CodeInsightBundle.message("template.delete.confirmation.title"),
+                                                 Messages.getQuestionIcon());
+        if (result != DialogWrapper.OK_EXIT_CODE) return;
 
-      JTree tree = myTreeTable.getTree();
-      TreePath path = tree.getPathForRow(selected);
+        JTree tree = myTreeTable.getTree();
+        TreePath path = tree.getPathForRow(selected);
 
-      myTemplateGroups.remove(group);
+        myTemplateGroups.remove(group);
 
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      removeNodeFromParent(node);
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        removeNodeFromParent(node);
 
-      isModified = true;
+        isModified = true;
+      }
+
     }
 
   }
@@ -672,7 +675,10 @@ class TemplateListPanel extends JPanel {
     DefaultMutableTreeNode toSelect = treePathToSelect != null ? (DefaultMutableTreeNode)treePathToSelect.getLastPathComponent() : null;
 
     removeNodeFromParent(node);
-    if (parent.getChildCount() == 0) removeNodeFromParent(parent);
+    if (parent.getChildCount() == 0) {
+      myTemplateGroups.remove(parent.getUserObject());
+      removeNodeFromParent(parent);
+    }
     if (toSelect != null) {
       setSelectedNode(toSelect);
     }
@@ -760,7 +766,7 @@ class TemplateListPanel extends JPanel {
         enableCopyButton = false;
         if (node.getUserObject() instanceof TemplateImpl) {
           enableCopyButton = true;
-          TemplateGroup group = getSchemesManager().findSchemeByName(((TemplateImpl)node.getUserObject()).getGroupName());
+          TemplateGroup group = getTemplateGroup(template.getGroupName());
           if (group != null && !getSchemesManager().isShared(group)) {
             enableEditButton = true;
             enableRemoveButton = true;
