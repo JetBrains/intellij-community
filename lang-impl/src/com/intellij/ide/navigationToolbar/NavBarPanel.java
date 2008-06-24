@@ -42,6 +42,8 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -72,6 +74,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -91,8 +94,18 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   private int myFirstIndex = 0;
 
-  private JButton myLeftButton = new JButton(LEFT_ICON);
-  private JButton myRightButton = new JButton(RIGHT_ICON);
+  private InplaceButton myLeftButton = new InplaceButton(new IconButton("Scroll Left", LEFT_ICON), new ActionListener() {
+    public void actionPerformed(final ActionEvent e) {
+      selectLast();
+      shiftFocus(-1);
+    }
+  });
+  private InplaceButton myRightButton = new InplaceButton(new IconButton("Scroll Right", RIGHT_ICON), new ActionListener() {
+    public void actionPerformed(final ActionEvent e) {
+      selectLast();
+      shiftFocus(1);
+    }
+  });
   private JPanel myScrollablePanel = new JPanel(new GridBagLayout());
   private int myPreferredWidth;
   private NavBarModel myModel;
@@ -124,30 +137,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myModel = new NavBarModel(myProject);
     setLayout(new BorderLayout());
     setBackground(UIUtil.getListBackground());
-    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
     myScrollablePanel.setBackground(UIUtil.getListBackground());
-    myScrollablePanel.setBorder(BorderFactory.createEtchedBorder());
 
     add(myScrollablePanel, BorderLayout.CENTER);
+
     add(myLeftButton, BorderLayout.WEST);
+    myLeftButton.setVisible(false);
+    myLeftButton.setBorder(new EmptyBorder(0, 2, 0, 2));
     add(myRightButton, BorderLayout.EAST);
-
-    myLeftButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        selectLast();
-        shiftFocus(-1);
-      }
-    });
-    myLeftButton.setBorder(null);
-
-    myRightButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        selectLast();
-        shiftFocus(1);
-      }
-    });
-    myRightButton.setBorder(null);
+    myRightButton.setVisible(false);
+    myRightButton.setBorder(new EmptyBorder(0, 2, 0, 2));
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
 
@@ -232,12 +232,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       }
     });
 
+    installBorder(-1);
+
     updateList();
   }
 
   private void processFocusLost(final FocusEvent e) {
     final boolean nodePopupInactive = myNodePopup == null || !myNodePopup.isVisible() || !myNodePopup.isFocused();
-    if (nodePopupInactive) {
+    final JBPopup child = JBPopupFactory.getInstance().getChildPopup(this);
+    final boolean childPopupInactive = child == null || !child.isFocused();
+    if (nodePopupInactive && childPopupInactive) {
       final Component opposite = e.getOppositeComponent();
       if (opposite != null && opposite != this && !isAncestorOf(opposite)) {
         hideHint();
@@ -296,7 +300,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     final DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
-    if (focusedComponent == null || focusedComponent == this || isAncestorOf(focusedComponent) || (myNodePopup != null && myNodePopup.isVisible())) {
+    final JBPopup childPopup = JBPopupFactory.getInstance().getChildPopup(this);
+
+    final boolean nodePopupShowing = focusedComponent == null ||
+                                     focusedComponent == this ||
+                                     isAncestorOf(focusedComponent) ||
+                                     (myNodePopup != null && myNodePopup.isVisible());
+    if (nodePopupShowing || (childPopup != null && childPopup.isFocused())) {
       immediateUpdateList(false);
     }
     else {
@@ -769,12 +779,21 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myUpdateAlarm.cancelAllRequests();
   }
 
-  public void cutBorder(final int rightOffset) {
-    myScrollablePanel.setBorder(new Border() {
+  public void installBorder(final int rightOffset) {
+    setBorder(new Border() {
       public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
         g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
-        g.drawLine(0, 0, width - rightOffset + 3, 0);
+        if (rightOffset == -1) {
+          g.drawLine(0, 0, width - 1, 0);
+        } else {
+          g.drawLine(0, 0, width - rightOffset + 3, 0);
+        }
         g.drawLine(0, height - 1 , width, height - 1);
+
+        if (rightOffset == -1) {
+          g.drawLine(0, 0, 0, height);
+          g.drawLine(width - 1, 0, width - 1, height - 1);
+        }
       }
 
       public Insets getBorderInsets(final Component c) {

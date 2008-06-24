@@ -30,7 +30,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       myNavigationBar = new NavBarPanel(project);
       final int iconWidth = CROSS_ICON.getIconWidth();
       final int iconHeight = CROSS_ICON.getIconHeight();
-      myNavigationBar.cutBorder(2 * iconWidth + 2);
+      myNavigationBar.installBorder(2 * iconWidth + 2);
       northPanel.add(myNavigationBar, new GridBagConstraints(0, 1, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
       myCloseNavBarLabel = new JLabel(new Icon() {
         public void paintIcon(final Component c, final Graphics g, final int x, final int y) {

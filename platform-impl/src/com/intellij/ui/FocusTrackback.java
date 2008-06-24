@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,8 @@ public class FocusTrackback {
   private Component myFocusOwner;
 
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
-  private static final Map<Window, WeakReference<Component>> ourRootWindowToFocusedMap = new WeakHashMap<Window, WeakReference<Component>>();
+  private static final Map<Window, WeakReference<Component>> ourRootWindowToFocusedMap =
+      new WeakHashMap<Window, WeakReference<Component>>();
 
   private String myRequestorName;
   private ComponentQuery myFocusedComponentQuery;
@@ -69,13 +71,15 @@ public class FocusTrackback {
           }
         }
       }
-    } else {
+    }
+    else {
       setFocusOwner(stack.get(0).getFocusOwner());
     }
 
     if (stack.size() == 1 && getFocusOwner() == null) {
       setFocusOwner(getFocusFor(myRoot));
-    } else if (stack.indexOf(this) == 0 && getFocusOwner() != null) {
+    }
+    else if (stack.indexOf(this) == 0 && getFocusOwner() != null) {
       setFocusFor(myRoot, getFocusOwner());
     }
   }
@@ -85,7 +89,7 @@ public class FocusTrackback {
     return ref != null ? ref.get() : null;
   }
 
-  private  void setFocusFor(Window parent, Component focus) {
+  private void setFocusFor(Window parent, Component focus) {
     ourRootWindowToFocusedMap.put(parent, new WeakReference<Component>(focus));
   }
 
@@ -138,7 +142,8 @@ public class FocusTrackback {
     consume();
 
     Project project = null;
-    DataContext context = myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
+    DataContext context =
+        myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
     if (context != null) {
       project = (Project)context.getData(DataConstants.PROJECT);
     }
@@ -155,7 +160,8 @@ public class FocusTrackback {
           return "focus trackback";
         }
       }, false);
-    } else {
+    }
+    else {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           _restoreFocus();
@@ -192,7 +198,8 @@ public class FocusTrackback {
     if (index > 0) {
       final ComponentQuery query = stack.get(index - 1).myFocusedComponentQuery;
       toFocus = query != null ? query.getComponent() : null;
-    } else {
+    }
+    else {
       toFocus = trackback.getFocusOwner();
     }
 
@@ -264,8 +271,11 @@ public class FocusTrackback {
     if (myConsumed) return true;
 
     if (myMustBeShown) {
-      return myFocusedComponentQuery != null && myFocusedComponentQuery.getComponent() != null && !myFocusedComponentQuery.getComponent().isShowing();
-    } else {
+      return myFocusedComponentQuery != null &&
+             myFocusedComponentQuery.getComponent() != null &&
+             !myFocusedComponentQuery.getComponent().isShowing();
+    }
+    else {
       return myParentWindow == null || !myParentWindow.isShowing();
     }
   }
@@ -308,5 +318,30 @@ public class FocusTrackback {
   public static interface ComponentQuery {
     Component getComponent();
   }
+
+  @Nullable
+  public static JBPopup getChildPopup(@NotNull final Component component) {
+    final Window window = SwingUtilities.windowForComponent(component);
+    if (window == null) return null;
+
+    final List<FocusTrackback> stack = getCleanStackForRoot(findUtlimateParent(window));
+
+    for (FocusTrackback each : stack) {
+      if (each.isChildFor(component) && each.getRequestor() instanceof JBPopup) {
+        return (JBPopup)each.getRequestor();
+      }
+    }
+
+    return null;
+  }
+
+  private boolean isChildFor(final Component parent) {
+    final Component toFocus = queryToFocus(getCleanStack(), this);
+    if (toFocus == null) return false;
+    if (parent == toFocus) return true;
+
+    return SwingUtilities.isDescendingFrom(toFocus, parent);
+  }
+
 
 }
