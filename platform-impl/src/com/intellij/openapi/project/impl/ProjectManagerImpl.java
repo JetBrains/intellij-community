@@ -85,7 +85,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           MessageBusConnection connection = messageBus.connect(project);
           connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
-              saveChangedProjectFile(event.getFile(), project, storage);
+              VirtualFile file = event.getFile();
+              if (!file.isDirectory()) {
+                saveChangedProjectFile(file, project, storage);
+              }
             }
           });
 

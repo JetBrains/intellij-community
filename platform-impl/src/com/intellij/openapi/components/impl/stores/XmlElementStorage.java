@@ -34,7 +34,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   private @NotNull final String myRootElementName;
   private Object mySession;
   private StorageData myLoadedData;
-  private static StringInterner ourInterner = new StringInterner();
+  protected static StringInterner ourInterner = new StringInterner();
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
@@ -62,7 +62,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   protected abstract Document loadDocument() throws StateStorage.StateStorageException;
 
   @Nullable
-  private synchronized Element getState(final String componentName) throws StateStorage.StateStorageException {
+  protected synchronized Element getState(final String componentName) throws StateStorage.StateStorageException {
     final StorageData storageData = getStorageData();
     final Element state = storageData.getState(componentName);
 
@@ -452,7 +452,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       return e;
     }
 
-    private void removeState(final String componentName) {
+    public void removeState(final String componentName) {
       myComponentStates.remove(componentName);
       clearHash();
     }

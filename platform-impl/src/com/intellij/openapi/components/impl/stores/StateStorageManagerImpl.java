@@ -142,7 +142,12 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       return null;
     }
 
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec),this,expandedFile,fileSpec, myRootTagName, this, myPicoContainer,
+    return createFileStateStorage(fileSpec, expandedFile, myRootTagName, myPicoContainer);
+  }
+
+  protected StateStorage createFileStateStorage(final String fileSpec, final String expandedFile, final String rootTagName,
+                                                final PicoContainer picoContainer) {
+    return new FileBasedStorage(getMacroSubstitutor(fileSpec),this,expandedFile,fileSpec, rootTagName, this, picoContainer,
                                 ComponentRoamingManager.getInstance()) {
       @NotNull
       protected StorageData createStorageData() {
