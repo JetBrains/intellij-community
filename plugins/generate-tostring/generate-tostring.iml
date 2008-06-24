@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntryProperties />
   </component>
 </module>
