@@ -36,8 +36,10 @@ public abstract class JavaUnwrapper implements Unwrapper {
     }
   }
 
-  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
-    doUnwrap(element, new Context(true));
+  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+    Context c = new Context(true);
+    doUnwrap(element, c);
+    return c.myElementsToExtract;
   }
 
   protected abstract void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException;
@@ -89,10 +91,14 @@ public abstract class JavaUnwrapper implements Unwrapper {
       // nothing to extract
       if (first == last && last instanceof PsiWhiteSpace) return;
 
-      if (myIsEffective) from.getParent().addRangeBefore(first, last, from);
+      PsiElement toExtract = first;
+      if (myIsEffective) {
+        toExtract = from.getParent().addRangeBefore(first, last, from);
+      }
 
       do {
-        addElementToExtract(first);
+        addElementToExtract(toExtract);
+        toExtract = toExtract.getNextSibling();
         first = first.getNextSibling();
       }
       while (first != null && first.getPrevSibling() != last);
@@ -111,8 +117,12 @@ public abstract class JavaUnwrapper implements Unwrapper {
     }
 
     public void setElseBranch(PsiIfStatement ifStatement, PsiStatement elseBranch) throws IncorrectOperationException {
-      if (myIsEffective) ifStatement.setElseBranch(copyElement(elseBranch));
-      addElementToExtract(elseBranch);
+      PsiStatement toExtract = elseBranch;
+      if (myIsEffective) {
+        ifStatement.setElseBranch(copyElement(elseBranch));
+        toExtract = ifStatement.getElseBranch();
+      }
+      addElementToExtract(toExtract);
     }
 
     private PsiStatement copyElement(PsiStatement e) throws IncorrectOperationException {

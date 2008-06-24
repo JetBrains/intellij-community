@@ -11,6 +11,7 @@ import com.intellij.lang.ASTNode;
 
 import java.util.Set;
 import java.util.List;
+import java.util.Collections;
 
 public class XmlEnclosingTagUnwrapper implements Unwrapper {
   public boolean isApplicableTo(PsiElement e) {
@@ -28,7 +29,7 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
     return e;
   }
 
-  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
     final TextRange range = element.getTextRange();
     final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
     final ASTNode endTagNameStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(element.getNode());
@@ -40,5 +41,6 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
     else {
       editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
     }
+    return Collections.emptyList();
   }
 }

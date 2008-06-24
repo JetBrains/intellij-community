@@ -3,6 +3,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UnwrapHandler implements CodeInsightActionHandler {
+  private static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
+
   public boolean startInWriteAction() {
     return true;
   }
@@ -101,30 +104,38 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
     builder
-      .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
-      .setMovable(false)
-      .setResizable(false)
-      .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        public void run() {
-          MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
-          a.actionPerformed(null);
-        }
-      })
-      .addListener(new JBPopupAdapter() {
-        @Override
-        public void onClosed(JBPopup popup) {
-          highlighter.dropHighlight();
-        }
-      });
+        .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
+        .setMovable(false)
+        .setResizable(false)
+        .setRequestFocus(true)
+        .setItemChoosenCallback(new Runnable() {
+          public void run() {
+            MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
+            a.actionPerformed(null);
+          }
+        })
+        .addListener(new JBPopupAdapter() {
+          @Override
+          public void onClosed(JBPopup popup) {
+            highlighter.dropHighlight();
+          }
+        });
 
     JBPopup popup = builder.createPopup();
     popup.showInBestPositionFor(editor);
   }
 
-  private static class MyScopeHighlighter {
-    private static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
+  private static TextAttributes getTestAttributesForRemoval() {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    return manager.getGlobalScheme().getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES);
+  }
 
+  private static TextAttributes getTestAttributesForExtract() {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+  }
+
+  private static class MyScopeHighlighter {
     private Editor myEditor;
     private List<RangeHighlighter> myActiveHighliters = new ArrayList<RangeHighlighter>();
 
@@ -166,16 +177,6 @@ public class UnwrapHandler implements CodeInsightActionHandler {
           r.getStartOffset(), r.getEndOffset(), level, attr, HighlighterTargetArea.EXACT_RANGE));
     }
 
-    private TextAttributes getTestAttributesForRemoval() {
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      return manager.getGlobalScheme().getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES);
-    }
-
-    private TextAttributes getTestAttributesForExtract() {
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    }
-
     public void dropHighlight() {
       for (RangeHighlighter h : myActiveHighliters) {
         myEditor.getMarkupModel().removeHighlighter(h);
@@ -211,10 +212,14 @@ public class UnwrapHandler implements CodeInsightActionHandler {
               try {
                 UnwrapDescriptor d = getUnwrapDescription(file);
                 if (d.shouldTryToRestoreCaretPosition()) saveCaretPosition(file);
+                int scrollOffset = myEditor.getScrollingModel().getVerticalScrollOffset();
 
-                myUnwrapper.unwrap(myEditor, myElement);
-                
+                List<PsiElement> extractedElements = myUnwrapper.unwrap(myEditor, myElement);
+
                 if (d.shouldTryToRestoreCaretPosition()) restoreCaretPosition(file);
+                myEditor.getScrollingModel().scrollVertically(scrollOffset);
+
+                highlightExtractedElements(extractedElements);
               }
               catch (IncorrectOperationException ex) {
                 throw new RuntimeException(ex);
@@ -247,6 +252,19 @@ public class UnwrapHandler implements CodeInsightActionHandler {
           return false;
         }
       });
+    }
+
+    private void highlightExtractedElements(final List<PsiElement> extractedElements) {
+      for (PsiElement each : extractedElements) {
+        HighlightManager.getInstance(myProject).addRangeHighlight(
+            myEditor,
+            each.getTextOffset(),
+            each.getTextOffset() + each.getTextLength(),
+            getTestAttributesForExtract(),
+            false,
+            true,
+            null);
+      }
     }
 
     public String getName() {

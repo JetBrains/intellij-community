@@ -20,5 +20,5 @@ public interface Unwrapper {
    */
   PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract);
 
-  void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException;
+  List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException;
 }
