@@ -127,8 +127,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           returnType1 = info.getSubstitutor().substitute(returnType1);
           returnType2 = existing.getSubstitutor().substitute(returnType2);
           if (returnType1.isAssignableFrom(returnType2)
-              && (class1.isInheritor(class2, true) || class2.isInheritor(class1, true))
-              
+              && (InheritanceUtil.isInheritorOrSelf(class1, class2, true) || InheritanceUtil.isInheritorOrSelf(class2, class1, true))
               ) iterator.remove();
         }
         continue;
