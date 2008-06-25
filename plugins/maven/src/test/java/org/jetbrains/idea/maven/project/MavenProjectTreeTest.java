@@ -8,7 +8,7 @@ import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectModelManagerTest extends MavenImportingTestCase {
+public class MavenProjectTreeTest extends MavenImportingTestCase {
   MavenProjectsTree model = new MavenProjectsTree();
 
   public void testTwoRootProjects() throws Exception {

@@ -107,10 +107,12 @@ public class MavenIndicesManager implements ApplicationComponent {
       }
 
       public void projectAdded(MavenProjectModel n) {
+        if (!myMavenProjectIndices.containsKey(p)) return;
         addArtifact(myMavenProjectIndices.get(p), n.getMavenId());
       }
 
       public void projectRemoved(MavenProjectModel n) {
+        if (!myMavenProjectIndices.containsKey(p)) return;
         myMavenProjectIndices.get(p).removeArtifact(n.getMavenId());
       }
 

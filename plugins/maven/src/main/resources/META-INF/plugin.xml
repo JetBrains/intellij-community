@@ -139,10 +139,6 @@
               text="Show ignored"
               description="Show ignored projects"
               icon="/actions/showHiddens.png"/>
-      <action id="Maven.FilterPhases"
-              class="org.jetbrains.idea.maven.navigator.action.FilterPhasesAction" text="Filter standard goals"
-              description="Filter standard goals"
-              icon="/images/filterPhases.png"/>
     </group>
 
     <action id="Maven.Run"
@@ -182,7 +178,7 @@
       </action>
       <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.action.UpdateFoldersAction"
               text="Update Folders" description="Generate sources and update project folders"
-              icon="/actions/sync.png">
+              icon="/images/updateFolders.png">
       </action>
       <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.action.DownloadArtifactsAction"
               text="Download artifacts" description="Download artifacts (sources, javadoc, plugins)"
@@ -212,8 +208,6 @@
 
     <group id="Maven.PomTreeToolbar" description="Pom Tree toolbar">
       <reference id="Maven.PomTreeView"/>
-      <separator/>
-      <reference id="Maven.Run"/>
       <separator/>
       <reference id="Maven.AddManagedFile"/>
       <reference id="Maven.RemoveManagedFiles"/>
