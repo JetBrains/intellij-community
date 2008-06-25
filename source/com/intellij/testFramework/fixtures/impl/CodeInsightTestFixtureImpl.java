@@ -157,6 +157,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return file;
   }
 
+  public VirtualFile copyDirectoryToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) throws IOException {
+    final File destFile = new File(getTempDirPath() + "/" + targetPath);
+    final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+    FileUtil.copyDir(fromFile, destFile);
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+    Assert.assertNotNull(file);
+    file.refresh(false, true);
+    return file;
+  }
+
   public VirtualFile copyFileToProject(@NonNls final String sourceFilePath) throws IOException {
     return copyFileToProject(sourceFilePath, sourceFilePath);
   }
@@ -693,6 +703,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         configureByFilesInner(files);
       }
     }.execute();
+  }
+
+  public void configureByDirectory(final String dir) {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {

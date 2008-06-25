@@ -72,6 +72,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   VirtualFile copyFileToProject(@NonNls String sourceFilePath, @NonNls String targetPath) throws IOException;
 
+  VirtualFile copyDirectoryToProject(@NonNls String sourceFilePath, @NonNls String targetPath) throws IOException;
+
   VirtualFile copyFileToProject(@NonNls String sourceFilePath) throws IOException;
 
   /**
