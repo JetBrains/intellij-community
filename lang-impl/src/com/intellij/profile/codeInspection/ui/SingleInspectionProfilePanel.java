@@ -188,6 +188,10 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void resetToBaseAction() {
     mySelectedProfile.resetToBase();
+    postProcessModification();
+  }
+
+  private void postProcessModification() {
     wereToolSettingsModified();
     //resetup configs
     for (Descriptor descriptor : myDescriptors) {
@@ -196,6 +200,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     fillTreeData(myProfileFilter.getFilter(), true);
     repaintTableData();
     updateOptionsAndDescriptionPanel(myTree.getSelectionPath());
+  }
+
+  public void resetToEmptyAction() {
+    mySelectedProfile.resetToEmpty();
+    postProcessModification();
   }
 
   @Nullable

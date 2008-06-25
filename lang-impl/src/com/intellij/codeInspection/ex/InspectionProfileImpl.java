@@ -189,6 +189,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
+  public void resetToEmpty() {
+    final InspectionProfileEntry[] profileEntries = getInspectionTools();
+    for (InspectionProfileEntry entry : profileEntries) {
+      disableTool(entry.getShortName());
+    }
+  }
+
   public String getName() {
     return myName;
   }

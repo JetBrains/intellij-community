@@ -56,6 +56,8 @@ public interface ModifiableModel extends Profile {
 
   void resetToBase();
 
+  void resetToEmpty();
+
   InspectionProfileEntry getInspectionTool(String shortName);
 
   InspectionProfileEntry[] getInspectionTools();
