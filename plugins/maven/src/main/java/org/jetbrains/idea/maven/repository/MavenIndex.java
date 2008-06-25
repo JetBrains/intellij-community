@@ -171,8 +171,13 @@ public abstract class MavenIndex {
   }
 
   private synchronized IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
-    return indexer.addIndexingContext(getId(),
-                                      getId(),
+    File targetDir = getContextDir();
+
+    // Nexus cannot update index if the id does not equal to the stored one.
+    String id = targetDir.exists() ? null : getId();
+
+    return indexer.addIndexingContext(id,
+                                      id,
                                       getRepositoryFile(),
                                       getContextDir(),
                                       getRepositoryUrl(),

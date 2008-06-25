@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenPathsForm;
-import org.jetbrains.idea.maven.project.ImporterSettingsForm;
-import org.jetbrains.idea.maven.project.MavenImporterSettings;
+import org.jetbrains.idea.maven.project.MavenImportSettingsForm;
+import org.jetbrains.idea.maven.project.MavenImportSettings;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import javax.swing.*;
@@ -29,16 +29,16 @@ class MavenImportRootStep extends ProjectImportWizardStep {
 
   private MavenCoreSettings myCoreSettings;
   private MavenImportBuilder myImportContext;
-  private MavenImporterSettings myImporterSettings;
+  private MavenImportSettings myImporterSettings;
 
   private final JPanel myPanel;
   private NamePathComponent myRootPathComponent;
-  private final ImporterSettingsForm myImporterSettingsForm;
+  private final MavenImportSettingsForm myImporterSettingsForm;
 
   public MavenImportRootStep(WizardContext wizardContext) {
     super(wizardContext);
 
-    myImporterSettingsForm = new ImporterSettingsForm(true) {
+    myImporterSettingsForm = new MavenImportSettingsForm(true) {
       public String getDefaultModuleDir() {
         return myRootPathComponent.getPath();
       }
@@ -76,7 +76,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
   }
 
   public void updateDataModel() {
-    final MavenImporterSettings settings = getImporterSettings();
+    final MavenImportSettings settings = getImporterSettings();
     myImporterSettingsForm.getData(settings);
     suggestProjectNameAndPath(settings.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
@@ -122,7 +122,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     return myImportContext;
   }
 
-  public MavenImporterSettings getImporterSettings() {
+  public MavenImportSettings getImporterSettings() {
     if (myImporterSettings == null) {
       myImporterSettings = ((MavenImportBuilder)getBuilder()).getImporterPreferences();
     }

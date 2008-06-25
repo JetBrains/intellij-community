@@ -34,7 +34,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   private Project myProjectToUpdate;
 
   private MavenCoreSettings myCoreSettings;
-  private MavenImporterSettings myImporterSettings;
+  private MavenImportSettings myImporterSettings;
   private MavenArtifactSettings myArtifactSettings;
 
   private VirtualFile myImportRoot;
@@ -221,7 +221,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     return myCoreSettings;
   }
 
-  public MavenImporterSettings getImporterPreferences() {
+  public MavenImportSettings getImporterPreferences() {
     if (myImporterSettings == null) {
       myImporterSettings = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState()
           .myImporterSettings.clone();

@@ -25,7 +25,7 @@ public class MavenProjectConfigurator {
   private ModifiableModuleModel myModuleModel;
   private MavenProjectsTree myMavenTree;
   private Map<VirtualFile, Module> myFileToModuleMapping;
-  private MavenImporterSettings myImporterSettings;
+  private MavenImportSettings myImporterSettings;
   private List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
 
   private Map<MavenProjectModel, Module> myMavenProjectToModule = new HashMap<MavenProjectModel, Module>();
@@ -36,7 +36,7 @@ public class MavenProjectConfigurator {
   public MavenProjectConfigurator(Project p,
                                   MavenProjectsTree projectsTree,
                                   Map<VirtualFile, Module> fileToModuleMapping,
-                                  MavenImporterSettings importerSettings) {
+                                  MavenImportSettings importerSettings) {
     myProject = p;
     myMavenTree = projectsTree;
     myFileToModuleMapping = fileToModuleMapping;

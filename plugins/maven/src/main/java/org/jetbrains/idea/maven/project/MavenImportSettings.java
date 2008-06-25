@@ -8,13 +8,14 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImporterSettings implements Cloneable {
+public class MavenImportSettings implements Cloneable {
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
   private boolean autoSync = false;
   private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
+  private boolean updateFoldersOnImport = true;
   private List<String> myIgnoredDependencies = new ArrayList<String>();
 
   @NotNull
@@ -66,6 +67,14 @@ public class MavenImporterSettings implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
+  public boolean isUpdateFoldersOnImport() {
+    return updateFoldersOnImport;
+  }
+
+  public void setUpdateFoldersOnImport(boolean updateFoldersOnImport) {
+    this.updateFoldersOnImport = updateFoldersOnImport;
+  }
+
   public List<String> getIgnoredDependencies() {
     return myIgnoredDependencies;
   }
@@ -78,12 +87,13 @@ public class MavenImporterSettings implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final MavenImporterSettings that = (MavenImporterSettings)o;
+    final MavenImportSettings that = (MavenImportSettings)o;
 
     if (createModuleGroups != that.createModuleGroups) return false;
     if (lookForNested != that.lookForNested) return false;
     if (autoSync != that.autoSync) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
+    if (updateFoldersOnImport != that.updateFoldersOnImport) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (myIgnoredDependencies != null ? !myIgnoredDependencies.equals(that.myIgnoredDependencies) : that.myIgnoredDependencies != null) {
@@ -99,6 +109,7 @@ public class MavenImporterSettings implements Cloneable {
     result = 31 * result + (lookForNested ? 1 : 0);
     result = 31 * result + (autoSync ? 1 : 0);
     result = 31 * result + (createModulesForAggregators ? 1 : 0);
+    result = 31 * result + (updateFoldersOnImport ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (myIgnoredDependencies != null ? myIgnoredDependencies.hashCode() : 0);
@@ -106,9 +117,9 @@ public class MavenImporterSettings implements Cloneable {
   }
 
   @Override
-  public MavenImporterSettings clone() {
+  public MavenImportSettings clone() {
     try {
-      return (MavenImporterSettings)super.clone();
+      return (MavenImportSettings)super.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new Error(e);

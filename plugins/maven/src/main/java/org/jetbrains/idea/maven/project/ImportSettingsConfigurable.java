@@ -11,13 +11,13 @@ import javax.swing.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class ImporterSettingsConfigurable implements Configurable {
-  private MavenImporterSettings myImporterSettings;
+public class ImportSettingsConfigurable implements Configurable {
+  private MavenImportSettings myImporterSettings;
 
   private JPanel panel;
-  private ImporterSettingsForm mySettingsForm;
+  private MavenImportSettingsForm mySettingsForm;
 
-  public ImporterSettingsConfigurable(MavenImporterSettings importerSettings) {
+  public ImportSettingsConfigurable(MavenImportSettings importerSettings) {
     myImporterSettings = importerSettings;
   }
 

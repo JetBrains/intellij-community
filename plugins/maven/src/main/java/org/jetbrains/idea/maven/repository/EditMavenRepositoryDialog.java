@@ -31,4 +31,9 @@ public class EditMavenRepositoryDialog extends DialogWrapper {
     }
     return result;
   }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myUrlField;
+  }
 }

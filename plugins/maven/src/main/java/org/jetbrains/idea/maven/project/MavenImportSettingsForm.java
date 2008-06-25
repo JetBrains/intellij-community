@@ -13,25 +13,26 @@ import java.awt.event.ActionListener;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class ImporterSettingsForm {
+public class MavenImportSettingsForm {
 
   private JPanel panel;
   private JCheckBox myModuleDirCheckBox;
   private TextFieldWithBrowseButton myModuleDirControl;
-  private JCheckBox myLookForNestedCheckBox;
+  private JCheckBox myUseExhaustiveSearchCheckBox;
   private JCheckBox myAutoSyncCheckBox;
   private JCheckBox myCreateModulesForAggregators;
   private JCheckBox myCreateGroupsCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
-  private JTextArea myIgnoreDependenciesTextArea;
+  private JCheckBox myUpdateFoldersOnImportCheckBox;
 
+  private JTextArea myIgnoreDependenciesTextArea;
   private JPanel myIgnorePanel;
 
-  public ImporterSettingsForm() {
+  public MavenImportSettingsForm() {
     this(false);
   }
 
-  public ImporterSettingsForm(boolean minimal) {
+  public MavenImportSettingsForm(boolean isImportStep) {
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -43,11 +44,15 @@ public class ImporterSettingsForm {
     myModuleDirControl.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
                                                new FileChooserDescriptor(false, true, false, false, false, false));
 
-    if(minimal){
+    if(isImportStep){
       myCreateGroupsCheckBox.setVisible(false);
       myUseMavenOutputCheckBox.setVisible(false);
+      myUpdateFoldersOnImportCheckBox.setVisible(false);
+
       myIgnorePanel.setVisible(false);
       myIgnoreDependenciesTextArea.setVisible(false);
+    } else {
+      myUseExhaustiveSearchCheckBox.setVisible(false);
     }
   }
 
@@ -67,32 +72,34 @@ public class ImporterSettingsForm {
     return panel;
   }
 
-  public void getData(MavenImporterSettings data) {
+  public void getData(MavenImportSettings data) {
     data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
     data.setAutoSync(myAutoSyncCheckBox.isSelected());
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
-    data.setLookForNested(myLookForNestedCheckBox.isSelected());
+    data.setLookForNested(myUseExhaustiveSearchCheckBox.isSelected());
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
+    data.setUpdateFoldersOnImport(myUpdateFoldersOnImportCheckBox.isSelected());
     data.setIgnoredDependencies(Strings.tokenize(myIgnoreDependenciesTextArea.getText(), Strings.WHITESPACE + ",;"));
   }
 
-  public void setData(final MavenImporterSettings data) {
+  public void setData(final MavenImportSettings data) {
     myModuleDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     myModuleDirControl.setText(data.getDedicatedModuleDir());
 
     myAutoSyncCheckBox.setSelected(data.isAutoSync());
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
-    myLookForNestedCheckBox.setSelected(data.isLookForNested());
+    myUseExhaustiveSearchCheckBox.setSelected(data.isLookForNested());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+    myUpdateFoldersOnImportCheckBox.setSelected(data.isUpdateFoldersOnImport());
     myIgnoreDependenciesTextArea.setText(Strings.detokenize(data.getIgnoredDependencies(), ','));
 
     enableControls();
   }
 
-  public boolean isModified(MavenImporterSettings settings) {
-    MavenImporterSettings formData = new MavenImporterSettings();
+  public boolean isModified(MavenImportSettings settings) {
+    MavenImportSettings formData = new MavenImportSettings();
     getData(formData);
     return !formData.equals(settings);
   }

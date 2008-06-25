@@ -106,10 +106,21 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "junit");
   }
 
+  public void testUpdatingRemote() throws Exception {
+    if (ignore()) return;
+    
+    MavenIndex i = new RemoteMavenIndex("file:///" + myDataTestFixture.getTestDataPath("remote"));
+    myIndices.add(i);
+    myIndices.update(i, myProject, new EmptyProgressIndicator());
+
+    //shouldn't throw 'The existing index is for repository [remote] and not for repository [xxx]'
+    myIndices.update(i, myProject, new EmptyProgressIndicator());
+  }
+
   public void testAddingProjectIndex() throws Exception {
     createProjectPom("<groupId>group</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>version</version>");
+                     "<artifactId>project</artifactId>" +
+                     "<version>version</version>");
 
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>group1</groupId>" +
@@ -238,7 +249,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     File listFile = new File(myIndexDir, MavenIndices.INDICES_LIST_FILE);
     byte[] bytes = FileUtil.loadFileBytes(listFile);
     FileOutputStream s = new FileOutputStream(listFile);
-    s.write(bytes, 0,  (int)(bytes.length / 1.5));
+    s.write(bytes, 0, (int)(bytes.length / 1.5));
     s.close();
 
     initIndex();
@@ -262,7 +273,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     myIndices.save();
     shutdownIndex();
 
-    File cachesDir =  i1.getCurrentDataDir();
+    File cachesDir = i1.getCurrentDataDir();
     File groupIds = new File(cachesDir, "groupIds.dat");
     assertTrue(groupIds.exists());
 
@@ -286,7 +297,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
 
     myIndices.save();
     shutdownIndex();
-    
+
     initIndex();
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
@@ -325,7 +336,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     shutdownIndex();
     initIndex();
     myIndices.load();
-    
+
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "junit");
   }
 

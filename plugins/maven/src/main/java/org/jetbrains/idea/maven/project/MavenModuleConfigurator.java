@@ -26,7 +26,7 @@ public class MavenModuleConfigurator {
   private MavenProjectsTree myMavenTree;
   private MavenProjectModel myMavenProject;
   private Map<MavenProjectModel, String> myMavenProjectToModuleName;
-  private MavenImporterSettings mySettings;
+  private MavenImportSettings mySettings;
   private Pattern myIgnorePatternCache;
   private RootModelAdapter myRootModelAdapter;
 
@@ -35,7 +35,7 @@ public class MavenModuleConfigurator {
                                  MavenProjectsTree mavenTree,
                                  MavenProjectModel mavenProject,
                                  Map<MavenProjectModel, String> mavenProjectToModuleName,
-                                 MavenImporterSettings settings) {
+                                 MavenImportSettings settings) {
     myModule = module;
     myModuleModel = moduleModel;
     myMavenTree = mavenTree;
