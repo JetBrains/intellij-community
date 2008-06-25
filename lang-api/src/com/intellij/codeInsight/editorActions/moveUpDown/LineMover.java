@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 class LineMover extends StatementUpDownMover {
 
   public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
-    LineRange range = getLineRangeFromSelection(editor);
+    LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
 
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
     if (range.startLine == 0 && !down) return false;
