@@ -17,6 +17,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class CopyClassesHandler implements CopyHandlerDelegate {
   public boolean canCopy(PsiElement[] elements) {
     elements = convertToTopLevelClass(elements);
@@ -85,22 +88,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
         final Runnable action = new Runnable() {
           public void run() {
             try {
-              PsiElement elementToCopy = aClass.getNavigationElement();
-              ChangeContextUtil.encodeContextInfo(elementToCopy, true);
-              PsiClass classCopy = (PsiClass)elementToCopy.copy();
-              ChangeContextUtil.clearContextInfo(aClass);
-              classCopy.setName(copyClassName);
-              final String fileName = copyClassName + "." + StdFileTypes.JAVA.getDefaultExtension();
-              final PsiFile createdFile = targetDirectory.copyFileFrom(fileName, elementToCopy.getContainingFile());
-              PsiElement newElement = createdFile;
-              if (createdFile instanceof PsiJavaFile) {
-                final PsiClass[] classes = ((PsiJavaFile)createdFile).getClasses();
-                assert classes.length > 0 : createdFile.getText();
-                createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
-                PsiClass newClass = (PsiClass)createdFile.add(classCopy);
-                ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
-                newElement = newClass;
-              }
+              PsiElement newElement = doCopyClass(aClass, copyClassName, targetDirectory);
               CopyHandler.updateSelectionInActiveProjectView(newElement, project, selectInActivePanel);
               EditorHelper.openInEditor(newElement);
 
@@ -127,6 +115,45 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
           ToolWindowManager.getInstance(project).activateEditorComponent();
         }
       });
+    }
+  }
+
+  public static PsiElement doCopyClass(final PsiClass aClass, final String copyClassName, final PsiDirectory targetDirectory)
+      throws IncorrectOperationException {
+    PsiElement elementToCopy = aClass.getNavigationElement();
+    ChangeContextUtil.encodeContextInfo(elementToCopy, true);
+    PsiClass classCopy = (PsiClass)elementToCopy.copy();
+    ChangeContextUtil.clearContextInfo(aClass);
+    classCopy.setName(copyClassName);
+    final String fileName = copyClassName + "." + StdFileTypes.JAVA.getDefaultExtension();
+    final PsiFile createdFile = targetDirectory.copyFileFrom(fileName, elementToCopy.getContainingFile());
+    PsiElement newElement = createdFile;
+    if (createdFile instanceof PsiJavaFile) {
+      final PsiClass[] classes = ((PsiJavaFile)createdFile).getClasses();
+      assert classes.length > 0 : createdFile.getText();
+      createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
+      PsiClass newClass = (PsiClass)createdFile.add(classCopy);
+      ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
+      replaceClassOccurrences(newClass, (PsiClass) elementToCopy);
+      newElement = newClass;
+    }
+    return newElement;
+  }
+
+  private static void replaceClassOccurrences(final PsiClass newClass, final PsiClass oldClass) throws IncorrectOperationException {
+    final List<PsiJavaCodeReferenceElement> selfReferences = new ArrayList<PsiJavaCodeReferenceElement>();
+    newClass.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        final PsiElement target = reference.resolve();
+        if (target == oldClass) {
+          selfReferences.add(reference);
+        }
+      }
+    });
+    for (PsiJavaCodeReferenceElement selfReference : selfReferences) {
+      selfReference.bindToElement(newClass);
     }
   }
 
