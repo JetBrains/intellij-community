@@ -4,6 +4,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -13,17 +14,18 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Author: msk
@@ -283,7 +285,8 @@ public class EditorWindow {
 
     public Object getData(String dataId) {
       if (dataId.equals(DataConstants.VIRTUAL_FILE)){
-        return myEditor.getFile();
+        final VirtualFile virtualFile = myEditor.getFile();
+        return virtualFile.isValid() ? virtualFile : null;
       }
       else if (dataId.equals(DataConstants.PROJECT)) {
         return myEditor.getFileEditorManager().getProject();
