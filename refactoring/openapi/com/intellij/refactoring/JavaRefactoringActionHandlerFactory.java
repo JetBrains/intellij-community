@@ -177,4 +177,12 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * or 1 <code>PsiLocalVariable</code>, that will be replaced with introduced constant.
    */
   public abstract RefactoringActionHandler createIntroduceConstantHandler();
+
+  /**
+   * Creates handler for Invert Boolean refactoring.<p>
+   *
+   * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
+   * accepts 1 <code>PsiMethod</code>, that will be inverted
+   */
+  public abstract RefactoringActionHandler createInvertBooleanHandler();
 }

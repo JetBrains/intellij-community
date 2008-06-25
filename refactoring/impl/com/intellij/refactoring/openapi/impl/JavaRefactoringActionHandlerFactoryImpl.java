@@ -2,27 +2,28 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
-import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
-import com.intellij.refactoring.inline.JavaInlineHandler;
-import com.intellij.refactoring.typeCook.TypeCookHandler;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
+import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
-import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
-import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
-import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
-import com.intellij.refactoring.makeStatic.MakeStaticHandler;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
+import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
+import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
+import com.intellij.refactoring.inline.JavaInlineHandler;
+import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
+import com.intellij.refactoring.makeStatic.MakeStaticHandler;
+import com.intellij.refactoring.memberPullUp.PullUpHandler;
+import com.intellij.refactoring.memberPushDown.PushDownHandler;
+import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
 import com.intellij.refactoring.tempWithQuery.TempWithQueryHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
-import com.intellij.refactoring.memberPushDown.PushDownHandler;
-import com.intellij.refactoring.memberPullUp.PullUpHandler;
-import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
+import com.intellij.refactoring.typeCook.TypeCookHandler;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 
 public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
   public RefactoringActionHandler createAnonymousToInnerHandler() {
@@ -107,5 +108,9 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
 
   public RefactoringActionHandler createIntroduceConstantHandler() {
     return new IntroduceConstantHandler();
+  }
+
+  public RefactoringActionHandler createInvertBooleanHandler() {
+    return new InvertBooleanHandler();
   }
 }
