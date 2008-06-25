@@ -18,4 +18,12 @@ public class SameParameterValueTest extends InspectionTestCase {
   public void testWithoutDeadCode() throws Exception {
     doTest(getTestDir(), myTool, false, false);
   }
+
+  public void testVarargs() throws Exception {
+    doTest(getTestDir(), myTool, false, true);
+  }
+
+  public void testSimpleVararg() throws Exception {
+    doTest(getTestDir(), myTool, false, true);
+  }
 }
