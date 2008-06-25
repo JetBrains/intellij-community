@@ -38,7 +38,7 @@
   <tip file="HighlightUsagesInFile.html"/>
   <tip file="LayoutCode.html"/>
   <tip file="LocalVCS.html"/>
-  <tip file="IncrementalSearch.html"/>
+  <!--<tip file="IncrementalSearch.html"/>-->
   <tip file="ContextInfo.html"/>
   <tip file="RecentFiles.html"/>            <!--covered-->
   <tip file="NextPrevError.html"/>
