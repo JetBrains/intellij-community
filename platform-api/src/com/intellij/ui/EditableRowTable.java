@@ -142,17 +142,20 @@ public class EditableRowTable {
                                     final JButton removeButton,
                                     final JButton upButton,
                                     final JButton downButton) {
-    int index = table.getSelectedRow();
-    if (0 <= index && index < tableModel.getRowCount()) {
-      removeButton.setEnabled(true);
-      upButton.setEnabled(index > 0);
-      downButton.setEnabled(index < tableModel.getRowCount() - 1);
+    if (table.isEnabled()) {
+      int index = table.getSelectedRow();
+      if (0 <= index && index < tableModel.getRowCount()) {
+        removeButton.setEnabled(true);
+        upButton.setEnabled(index > 0);
+        downButton.setEnabled(index < tableModel.getRowCount() - 1);
+      }
+      else {
+        removeButton.setEnabled(false);
+        upButton.setEnabled(false);
+        downButton.setEnabled(false);
+      }
+      
+      addButton.setEnabled(true);
     }
-    else {
-      removeButton.setEnabled(false);
-      upButton.setEnabled(false);
-      downButton.setEnabled(false);
-    }
-    addButton.setEnabled(true);
   }
 }
