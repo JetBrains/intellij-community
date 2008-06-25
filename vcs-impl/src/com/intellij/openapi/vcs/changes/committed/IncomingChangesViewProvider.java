@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -40,7 +41,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
     final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null);
     myBrowser.addToolBar(toolbar.getComponent());
-    myBrowser.setTableContextMenu(group);
+    myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
     myConnection = myBus.connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     loadChangesToBrowser();

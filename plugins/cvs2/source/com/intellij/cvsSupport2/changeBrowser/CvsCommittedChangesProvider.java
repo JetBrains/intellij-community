@@ -11,6 +11,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,8 +19,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -29,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
+import javax.swing.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -73,6 +77,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
+  }
+
+  @Nullable
+  public Pair<JPanel,List<AnAction>> createActionPanel(final DecoratorManager manager) {
+    return null;
   }
 
   public int getUnlimitedCountValue() {

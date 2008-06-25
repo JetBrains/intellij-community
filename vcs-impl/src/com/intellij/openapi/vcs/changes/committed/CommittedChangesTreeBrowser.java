@@ -11,11 +11,13 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -55,7 +57,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable {
+public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable, DecoratorManager {
   private static final Object MORE_TAG = new Object();
 
   private final Project myProject;
@@ -67,11 +69,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private ChangeListFilteringStrategy myFilteringStrategy = ChangeListFilteringStrategy.NONE;
   private final Splitter myFilterSplitter;
   private final JPanel myLeftPanel;
+  private final JPanel myToolbarPanel;
   private final FilterChangeListener myFilterChangeListener = new FilterChangeListener();
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
   private final CopyProvider myCopyProvider;
   private final TreeExpander myTreeExpander;
   private String myHelpId;
+
+  private List<CommittedChangeListDecorator> myDecorators;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
@@ -79,11 +84,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     super(new BorderLayout());
 
     myProject = project;
+    myDecorators = new LinkedList<CommittedChangeListDecorator>();
     myChangeLists = changeLists;
     myChangesTree = new ChangesBrowserTree();
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
-    myChangesTree.setCellRenderer(new CommittedChangeListRenderer(project));
+    myChangesTree.setCellRenderer(new CommittedChangeListRenderer(project, myDecorators));
     TreeUtil.expandAll(myChangesTree);
 
     myChangesView = new RepositoryChangesBrowser(project, changeLists);
@@ -95,7 +101,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     });
 
-    final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project)) {
+    final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project, myDecorators)) {
       @Override
       protected void handleTagClick(final Object tag) {
         if (tag == MORE_TAG) {
@@ -109,6 +115,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     linkMouseListener.install(myChangesTree);
 
     myLeftPanel = new JPanel(new BorderLayout());
+    myToolbarPanel = new JPanel(new BorderLayout());
+    myLeftPanel.add(myToolbarPanel, BorderLayout.NORTH);
     myFilterSplitter = new Splitter(false, 0.5f);
     myFilterSplitter.setSecondComponent(new JScrollPane(myChangesTree));
     myLeftPanel.add(myFilterSplitter, BorderLayout.CENTER);
@@ -175,7 +183,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void addToolBar(JComponent toolBar) {
-    myLeftPanel.add(toolBar, BorderLayout.NORTH);
+    myToolbarPanel.add(toolBar, BorderLayout.NORTH);
+  }
+
+  public void addAuxiliaryToolbar(JComponent bar) {
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(bar, BorderLayout.WEST);
+    myToolbarPanel.add(panel, BorderLayout.SOUTH);
   }
 
   public void dispose() {
@@ -258,9 +272,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return TreeUtil.collectSelectedObjectsOfType(myChangesTree, CommittedChangeList.class);
   }
 
-  public void setTableContextMenu(final ActionGroup group) {
+  public void setTableContextMenu(final ActionGroup group, final List<AnAction> auxiliaryActions) {
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(group);
+    for (AnAction action : auxiliaryActions) {
+      menuGroup.add(action);
+    }
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
@@ -334,13 +351,42 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return myTreeExpander;
   }
 
+  public void repaintTree() {
+    myChangesTree.revalidate();
+    myChangesTree.repaint();
+  }
+
+  public void install(final CommittedChangeListDecorator decorator) {
+    myDecorators.add(decorator);
+    repaintTree();
+  }
+
+  public void remove(final CommittedChangeListDecorator decorator) {
+    myDecorators.remove(decorator);
+    repaintTree();
+  }
+
+  public void reportLoadedLists(final CommittedChangeListsListener listener) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        listener.onBeforeStartReport();
+        for (CommittedChangeList list : myChangeLists) {
+          listener.report(list);
+        }
+        listener.onAfterEndReport();
+      }
+    });
+  }
+
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     private final DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
     private final IssueLinkRenderer myRenderer;
+    private final List<CommittedChangeListDecorator> myDecorators;
 
-    public CommittedChangeListRenderer(final Project project) {
+    public CommittedChangeListRenderer(final Project project, final List<CommittedChangeListDecorator> decorators) {
       myRenderer = new IssueLinkRenderer(project, this);
+      myDecorators = decorators;
     }
 
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -362,6 +408,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         if (pos >= 0) {
           description = description.substring(0, pos).trim();
           truncated = true;
+        }
+
+        for (CommittedChangeListDecorator decorator : myDecorators) {
+          final List<Pair<String,SimpleTextAttributes>> pairs = decorator.decorate(changeList);
+
+          if (pairs != null) {
+            for (Pair<String, SimpleTextAttributes> pair : pairs) {
+              append(pair.first + ' ', pair.second);
+            }
+          }
         }
 
         int descMaxWidth = parentWidth - size - 8;

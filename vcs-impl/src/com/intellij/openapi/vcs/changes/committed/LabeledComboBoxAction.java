@@ -7,18 +7,21 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author yole
  */
 public abstract class LabeledComboBoxAction extends AnAction implements CustomComponentAction {
-  private String myLabel;
+  private JLabel myLabel;
   private JPanel myPanel;
+  private JComboBox myComboBox;
 
   protected LabeledComboBoxAction(String label) {
-    myLabel = label;
+    final String labelString = label;
+    myComboBox = new JComboBox();
+    myLabel = new JLabel(labelString);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -28,16 +31,41 @@ public abstract class LabeledComboBoxAction extends AnAction implements CustomCo
     if (myPanel == null) {
       myPanel = new JPanel(new BorderLayout());
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
-      myPanel.add(new JLabel(myLabel), BorderLayout.WEST);
-      final JComboBox comboBox = new JComboBox(createModel());
-      comboBox.addActionListener(new ActionListener() {
+      myPanel.add(myLabel, BorderLayout.WEST);
+      myComboBox.setModel(createModel());
+      myComboBox.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          selectionChanged(comboBox.getSelectedItem());
+          selectionChanged(myComboBox.getSelectedItem());
         }
       });
-      myPanel.add(comboBox, BorderLayout.CENTER);
+      myPanel.add(myComboBox, BorderLayout.CENTER);
     }
     return myPanel;
+  }
+
+  protected void setModel(final ComboBoxModel model) {
+    myComboBox.setModel(model);
+  }
+
+  protected void enableSelf(final boolean enable) {
+    myComboBox.setEnabled(enable);
+    myLabel.setEnabled(enable);
+  }
+
+  protected boolean isEnabled() {
+    return myComboBox.isEnabled();
+  }
+
+  protected Object getSelected() {
+    return myComboBox.getSelectedItem();
+  }
+
+  protected ComboBoxModel getModel() {
+    return myComboBox.getModel();
+  }
+
+  protected void setRenderer(final ListCellRenderer renderer) {
+    myComboBox.setRenderer(renderer);
   }
 
   protected abstract void selectionChanged(Object selection);

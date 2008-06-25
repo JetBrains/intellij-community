@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
@@ -63,9 +65,17 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
     ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group, extraActions);
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);
+
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
-    myBrowser.setTableContextMenu(group);
+
+    final Pair<JPanel, List<AnAction>> pair = provider.createActionPanel(myBrowser);
+
+    /*if (pair != null) {
+      myBrowser.addAuxiliaryToolbar(pair.first);
+    }*/
+    
+    myBrowser.setTableContextMenu(group, (pair == null) ? Collections.<AnAction>emptyList() : pair.second);
     final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");
     anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }

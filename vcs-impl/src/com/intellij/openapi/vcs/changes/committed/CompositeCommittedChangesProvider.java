@@ -4,7 +4,9 @@
 
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -82,6 +84,32 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       }
     }
     return columns.toArray(new ChangeListColumn[columns.size()]);
+  }
+
+  @Nullable
+  public Pair<JPanel,List<AnAction>> createActionPanel(final DecoratorManager manager) {
+    JTabbedPane tabbedPane = null;
+    List<AnAction> actions = null;
+    for (AbstractVcs baseVcs : myBaseVcss) {
+      final CommittedChangesProvider provider = baseVcs.getCommittedChangesProvider();
+      if (provider != null) {
+        final Pair<JPanel, List<AnAction>> pair = provider.createActionPanel(manager);
+        if (pair != null) {
+          if (tabbedPane == null) {
+            tabbedPane = new JTabbedPane();
+            actions = new ArrayList<AnAction>();
+          }
+          tabbedPane.add(baseVcs.getDisplayName(), pair.first);
+          actions.addAll(pair.second);
+        }
+      }
+    }
+    if (tabbedPane != null) {
+      final JPanel panel = new JPanel();
+      panel.add(tabbedPane);
+      return new Pair<JPanel, List<AnAction>>(panel, actions);
+    }
+    return null;
   }
 
   public int getUnlimitedCountValue() {
