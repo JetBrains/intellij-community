@@ -26,6 +26,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -174,7 +175,7 @@ class AssociationsEditor {
 
     public void dispose() {
         DimensionService.getInstance().setExtendedState(KEY, mySplitPane.getDividerLocation());
-        myBuilder.dispose();
+        Disposer.dispose(myBuilder);
         myManager.dispose();
     }
 
