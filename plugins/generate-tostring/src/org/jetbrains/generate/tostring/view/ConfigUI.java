@@ -488,7 +488,7 @@ public class ConfigUI extends JPanel {
 
     @Nullable
     private static String emptyToNull(final String s) {
-        if (s != null && s.isEmpty()) return null;
+        if (s != null && s.length() == 0) return null;
         return s;
     }
 
