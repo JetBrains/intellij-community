@@ -1,22 +1,10 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author yole
  */
 public class SvnAddTest extends SvnTestCase {
-  @Test
+  /*@Test
   public void testCopy() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
@@ -68,5 +56,5 @@ public class SvnAddTest extends SvnTestCase {
     undo();
     verify(runSvn("status"), "D a.txt");
     Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
-  }
+  }*/
 }
