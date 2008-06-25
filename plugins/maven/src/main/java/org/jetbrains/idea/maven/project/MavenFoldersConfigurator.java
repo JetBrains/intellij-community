@@ -48,7 +48,7 @@ public class MavenFoldersConfigurator {
           }
 
           RootModelAdapter a = new RootModelAdapter(each);
-          new MavenFoldersConfigurator(project, settings, a).config();
+          new MavenFoldersConfigurator(project, settings, a).config(false);
 
           ModifiableRootModel model = a.getRootModel();
           if (model.isChanged()) {
@@ -74,8 +74,12 @@ public class MavenFoldersConfigurator {
   }
 
   public void config() {
+    config(true);
+  }
+
+  private void config(boolean configOutputFolders) {
     configSourceFolders();
-    configOutputFolders();
+    if (configOutputFolders) configOutputFolders();
     configFoldersUnderTargetDir();
   }
 
@@ -101,7 +105,6 @@ public class MavenFoldersConfigurator {
                               myMavenProject.getTestOutputDirectory());
     }
     else {
-      myModel.useProjectOutput();
       myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
       myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
     }

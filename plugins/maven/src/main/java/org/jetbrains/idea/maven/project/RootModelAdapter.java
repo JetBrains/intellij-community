@@ -115,10 +115,6 @@ public class RootModelAdapter {
     findOrCreateContentRoot(url).addExcludeFolder(url.getUrl());
   }
 
-  public void useProjectOutput() {
-    getCompilerExtension().inheritCompilerOutputPath(true);
-  }
-
   public void useModuleOutput(String production, String test) {
     getCompilerExtension().inheritCompilerOutputPath(false);
     getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());

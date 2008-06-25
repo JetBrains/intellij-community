@@ -1,8 +1,10 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -115,6 +117,24 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     createModule("userModule");
     updateFolders(); // shouldn't throw exceptions
+  }
+
+  public void testDoNotUpdateOutputFolders() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    RootModelAdapter adapter = new RootModelAdapter(getModule("project"));
+    adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
+                            new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
+    adapter.getRootModel().commit();
+    
+    updateFolders();
+
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule("project"));
+    CompilerModuleExtension compiler = rootManager.getModuleExtension(CompilerModuleExtension.class);
+    assertTrue(compiler.getCompilerOutputUrl(), compiler.getCompilerOutputUrl().endsWith("my-classes"));
+    assertTrue(compiler.getCompilerOutputUrlForTests(), compiler.getCompilerOutputUrlForTests().endsWith("my-test-classes"));
   }
 
   public void testDoNotCommitIfFoldersWasNotChanged() throws Exception {
