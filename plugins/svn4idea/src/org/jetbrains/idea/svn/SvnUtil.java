@@ -377,4 +377,15 @@ public class SvnUtil {
       return null;
     }
   }
+
+  @Nullable
+  public static String getPathForProgress(final SVNEvent event) {
+    if (event.getFile() != null) {
+      return event.getFile().getName();
+    }
+    if (event.getURL() != null) {
+      return event.getURL().toString();
+    }
+    return null;
+  }
 }

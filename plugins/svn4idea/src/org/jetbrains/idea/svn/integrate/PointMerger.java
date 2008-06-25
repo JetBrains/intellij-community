@@ -2,6 +2,7 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -11,6 +12,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -88,7 +91,9 @@ public class PointMerger extends Merger {
     final String afterUrl = after.getFullPath();
     final File afterPath = SvnUtil.fileFromUrl(myTarget, path, afterUrl);
 
-    myCopyClient.doCopy(SVNURL.parseURIEncoded(afterUrl), ((SvnRevisionNumber) after.getRevisionNumber()).getRevision(), afterPath);
+    final SVNRevision revision = ((SvnRevisionNumber)after.getRevisionNumber()).getRevision();
+    final SVNCopySource[] copySource = new SVNCopySource[]{new SVNCopySource(revision, revision, SVNURL.parseURIEncoded(afterUrl))};
+    myCopyClient.doCopy(copySource, afterPath, false, true, true);
   }
 
   private static class ChangesComparator implements Comparator<Change> {
@@ -118,8 +123,14 @@ public class PointMerger extends Merger {
         return -1;
       }
 
-      final String ancestor = SVNPathUtil.getCommonURLAncestor(path1, path2);
+      final String ancestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
       return (path1.equals(ancestor)) ? -1 : 1;
     }
+  }
+
+  @Nullable
+  @Override
+  public File getMergeInfoHolder() {
+    return null;
   }
 }

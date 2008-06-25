@@ -516,4 +516,16 @@ public class SvnChangeList implements CommittedChangeList {
       myVcsRoot = null;
     }
   }
+
+  public Set<String> getChangedPaths() {
+    return myChangedPaths;
+  }
+
+  public Set<String> getAddedPaths() {
+    return myAddedPaths;
+  }
+
+  public Set<String> getDeletedPaths() {
+    return myDeletedPaths;
+  }
 }

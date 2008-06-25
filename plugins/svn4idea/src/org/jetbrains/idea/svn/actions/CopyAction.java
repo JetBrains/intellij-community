@@ -132,13 +132,9 @@ public class CopyAction extends BasicAction {
               client.setEventHandler(new CopyEventHandler(progress));
             }
             checkCreateDir(parentUrl, activeVcs, comment);
-            SVNCommitInfo result;
-            if (isSrcFile) {
-              result = client.doCopy(srcFile, revision, dstSvnUrl, comment);
-            }
-            else {
-              result = client.doCopy(srcUrl, revision, dstSvnUrl, false, comment);
-            }
+            final SVNCopySource[] copySource = new SVNCopySource[] {isSrcFile ? new SVNCopySource(revision, revision, srcFile) :
+                                                         new SVNCopySource(revision, revision, srcUrl)};
+            SVNCommitInfo result = client.doCopy(copySource, dstSvnUrl, false, true, true, comment, null);
             if (result != null && result != SVNCommitInfo.NULL) {
               WindowManager.getInstance().getStatusBar(project)
                 .setInfo(SvnBundle.message("status.text.comitted.revision", result.getNewRevision()));

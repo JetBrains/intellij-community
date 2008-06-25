@@ -13,6 +13,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -103,7 +104,10 @@ public class PropertiesComponent extends JPanel {
       try {
         vcs.createWCClient().doGetProperty(file, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, false, new ISVNPropertyHandler() {
           public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-            props.put(property.getName(), property.getValue());
+            final SVNPropertyValue value = property.getValue();
+            if (value != null) {
+              props.put(property.getName(), value.getString());
+            }
           }
           public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
           }
@@ -250,12 +254,14 @@ public class PropertiesComponent extends JPanel {
       } catch (SVNException e1) {
         // show error message
       }
-      SetKeywordsDialog dialog = new SetKeywordsDialog(project, propValue != null ? propValue.getValue() : null);
+      
+      SetKeywordsDialog dialog = new SetKeywordsDialog(project,
+                                                       propValue != null ? SVNPropertyValue.getPropertyAsString(propValue.getValue()) : null);
       dialog.show();
       if (dialog.isOK()) {
         String value = dialog.getKeywords();
         try {
-          wcClient.doSetProperty(myFile, SVNProperty.KEYWORDS, value, false, false, null);
+          wcClient.doSetProperty(myFile, SVNProperty.KEYWORDS, SVNPropertyValue.create(value), false, false, null);
         }
         catch (SVNException err) {
           // show error message
@@ -310,7 +316,7 @@ public class PropertiesComponent extends JPanel {
         recursive = dialog.isRecursive();
         SVNWCClient wcClient = myVcs.createWCClient();
         try {
-          wcClient.doSetProperty(myFile, name, value, false, recursive, null);
+          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive, null);
         }
         catch (SVNException err) {
           // show error message
@@ -342,7 +348,7 @@ public class PropertiesComponent extends JPanel {
         recursive = dialog.isRecursive();
         SVNWCClient wcClient = myVcs.createWCClient();
         try {
-          wcClient.doSetProperty(myFile, name, value, false, recursive, null);
+          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive, null);
         }
         catch (SVNException err) {
           // show error message

@@ -59,6 +59,19 @@ public class SvnBranchConfiguration {
     myBranchUrls = branchUrls;
     
     Collections.sort(myBranchUrls);
+    
+    checkMapConsistency();
+  }
+
+  private void checkMapConsistency() {
+    final Map<String, List<SvnBranchItem>> map = new HashMap<String, List<SvnBranchItem>>();
+    for (String branchUrl : myBranchUrls) {
+      final List<SvnBranchItem> items = myBranchMap.get(branchUrl);
+      if (items != null) {
+        map.put(branchUrl, items);
+      }
+    }
+    myBranchMap = map;
   }
 
   public String getTrunkUrl() {
@@ -75,6 +88,8 @@ public class SvnBranchConfiguration {
 
   public void setBranchMap(final Map<String, List<SvnBranchItem>> branchMap) {
     myBranchMap = branchMap;
+    
+    checkMapConsistency();
   }
 
   public SvnBranchConfiguration copy() {
@@ -330,13 +345,17 @@ public class SvnBranchConfiguration {
                                final boolean underProgress) throws SVNException {
     final SVNLogClient logClient;
       logClient = SvnVcs.getInstance(project).createLogClient();
-      logClient.doList(SVNURL.parseURIEncoded(url), SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
+    final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
+    logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
         public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
           if (underProgress) {
             ProgressManager.getInstance().checkCanceled();
           }
-          final String url = dirEntry.getURL().toString();
-          result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
+          final SVNURL currentUrl = dirEntry.getURL();
+          if (! branchesUrl.equals(currentUrl)) {
+            final String url = currentUrl.toString();
+            result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
+          }
         }
       });
       Collections.sort(result);

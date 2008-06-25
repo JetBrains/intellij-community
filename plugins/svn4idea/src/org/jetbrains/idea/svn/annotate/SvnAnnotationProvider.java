@@ -76,6 +76,29 @@ public class SvnAnnotationProvider implements AnnotationProvider {
             public void handleLine(Date date, long revision, String author, String line) {
               result.appendLineInfo(date, revision, author, line);
             }
+
+            public void handleLine(final Date date,
+                                   final long revision,
+                                   final String author,
+                                   final String line,
+                                   final Date mergedDate,
+                                   final long mergedRevision,
+                                   final String mergedAuthor,
+                                   final String mergedPath,
+                                   final int lineNumber) throws SVNException {
+              // todo merge info can be used
+              handleLine(date, revision, author, line);
+            }
+
+            public boolean handleRevision(final Date date, final long revision, final String author, final File contents)
+                throws SVNException {
+              // todo check that false is ok
+              return false;
+            }
+
+            public void handleEOF() {
+              
+            }
           });
 
           client.doLog(new File[]{ioFile}, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,

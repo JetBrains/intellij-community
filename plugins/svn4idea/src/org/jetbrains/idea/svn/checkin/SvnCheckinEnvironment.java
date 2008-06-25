@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -46,12 +48,11 @@ import org.tmatesoft.svn.core.wc.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 
 public class SvnCheckinEnvironment implements CheckinEnvironment {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment");
   private final SvnVcs mySvnVcs;
 
   public SvnCheckinEnvironment(SvnVcs svnVcs) {
@@ -84,7 +85,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (progress != null) {
       committer.setEventHandler(new ISVNEventHandler() {
         public void handleEvent(SVNEvent event, double p) {
-          String path = event.getFile() != null ? event.getFile().getName() : event.getPath();
+          final String path = SvnUtil.getPathForProgress(event);
           if (path == null) {
             return;
           }
@@ -172,6 +173,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     catch (SVNException e) {
       // exception on collecting commitables.
       exception.add(new VcsException(e));
+      LOG.info(e);
       return;
     }
     finally {
@@ -276,19 +278,45 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
     final SVNWCClient wcClient = mySvnVcs.createWCClient();
+    final List<SVNException> exceptionList = scheduleUnversionedFilesForAddition(wcClient, files);
+    if (exceptionList.isEmpty()) {
+      return Collections.emptyList();
+    }
+    final List<VcsException> result = new ArrayList<VcsException>();
+    for (SVNException svnException : exceptionList) {
+      result.add(new VcsException(svnException));
+    }
+    return result;
+  }
+
+  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files) {
+    List<SVNException> exceptions = new ArrayList<SVNException>();
+
+    Collections.sort(files, FileComparator.getInstance());
 
     for (VirtualFile file : files) {
       try {
         wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, false);
       }
       catch (SVNException e) {
-        exceptions.add(new VcsException(e));
+        exceptions.add(e);
       }
     }
 
     return exceptions;
+  }
+
+  private final static class FileComparator implements Comparator<VirtualFile> {
+    private static final FileComparator ourInstance = new FileComparator();
+
+    public static FileComparator getInstance() {
+      return ourInstance;
+    }
+
+    public int compare(final VirtualFile o1, final VirtualFile o2) {
+      return o1.getPath().compareTo(o2.getPath());
+    }
   }
 
   public boolean keepChangeListAfterCommit(ChangeList changeList) {

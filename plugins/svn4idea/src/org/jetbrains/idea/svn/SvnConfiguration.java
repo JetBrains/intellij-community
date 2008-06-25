@@ -43,7 +43,7 @@ import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -61,7 +61,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private final static String SERVERS_FILE_NAME = "servers";
   
   public static final String UPGRADE_AUTO = "auto";
-  public static final String UPGRADE_NONE = "none"; 
+  public static final String UPGRADE_AUTO_15 = "auto1.5";
+  public static final String UPGRADE_NONE = "none";
 
   public String USER = "";
   public String PASSWORD = "";

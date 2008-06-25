@@ -24,6 +24,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -157,7 +158,7 @@ public class SetPropertyDialog extends DialogWrapper {
       property = null;
     }
     if (property != null) {
-      myValueText.setText(property.getValue());
+      myValueText.setText(SVNPropertyValue.getPropertyAsString(property.getValue()));
       myValueText.selectAll();
     }
     else {

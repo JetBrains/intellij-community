@@ -225,6 +225,10 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         files.add(file);
       }
     });
+    final File mergeInfoHolder = myMerger.getMergeInfoHolder();
+    if (mergeInfoHolder != null) {
+      files.add(FilePathImpl.create(mergeInfoHolder));
+    }
 
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
@@ -245,6 +249,10 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         dirtyScope.addDirtyFile(file);
       }
     });
+    final File mergeInfoHolder = myMerger.getMergeInfoHolder();
+    if (mergeInfoHolder != null) {
+      dirtyScope.addDirtyFile(FilePathImpl.create(mergeInfoHolder));
+    }
 
     final SvnChangeProvider provider = new SvnChangeProvider(myVcs);
     final GatheringChangelistBuilder clb = new GatheringChangelistBuilder();

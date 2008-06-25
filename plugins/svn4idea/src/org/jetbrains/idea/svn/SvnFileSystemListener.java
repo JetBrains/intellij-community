@@ -549,7 +549,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
                 new ActionWithTempFile(ioFile) {
                   protected void executeInternal() throws VcsException {
                     try {
-                      copyClient.doCopy(copyFrom, SVNRevision.WORKING, ioFile, false, false);
+                      final SVNCopySource[] copySource = new SVNCopySource[]
+                          {new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, copyFrom)};
+                      copyClient.doCopy(copySource, ioFile, false, true, true);
                     }
                     catch (SVNException e) {
                       throw new VcsException(e);

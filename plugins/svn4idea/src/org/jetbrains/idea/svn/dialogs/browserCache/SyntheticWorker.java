@@ -42,14 +42,14 @@ public class SyntheticWorker {
     myCache.put(parentUrl, children);
   }
 
-  public void addSyntheticChildToSelf(final SVNURL newUrl, final String name, final boolean isDir) {
+  public void addSyntheticChildToSelf(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
     final String currentUrlAsString = myUrl.toString();
 
     final List<SVNDirEntry> children = myCache.getChildren(currentUrlAsString);
     if (children == null) {
       return;
     }
-    children.add(createSyntheticEntry(newUrl, name, isDir));
+    children.add(createSyntheticEntry(newUrl, repositoryUrl, name, isDir));
 
     Collections.sort(children, new Comparator<SVNDirEntry>() {
       public int compare(final SVNDirEntry o1, final SVNDirEntry o2) {
@@ -76,8 +76,8 @@ public class SyntheticWorker {
     node.doOnSubtree(new Remover());
   }
 
-  public static SVNDirEntry createSyntheticEntry(final SVNURL newUrl, final String name, final boolean isDir) {
-    return new SVNDirEntry(newUrl, name, isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, 0, false, SVNRevision.UNDEFINED.getNumber(), null, null);
+  public static SVNDirEntry createSyntheticEntry(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
+    return new SVNDirEntry(newUrl, repositoryUrl, name, isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, 0, false, SVNRevision.UNDEFINED.getNumber(), null, null);
   }
 
   private static class Remover implements NotNullFunction<RepositoryTreeNode, Object> {
@@ -109,7 +109,7 @@ public class SyntheticWorker {
 
       try {
         for (SVNDirEntry child : children) {
-          newChildren.add(createSyntheticEntry(convertUrl(child.getURL()), child.getName(), SVNNodeKind.DIR.equals(child.getKind())));
+          newChildren.add(createSyntheticEntry(convertUrl(child.getURL()), child.getRepositoryRoot(), child.getName(), SVNNodeKind.DIR.equals(child.getKind())));
         }
         myCache.put(convertUrl(repositoryTreeNode.getURL()).toString(), newChildren);
       }

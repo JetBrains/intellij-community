@@ -92,6 +92,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
           String url = (String) urlObj;
           int index = configuration.getBranchUrls().indexOf(url);
           configuration.getBranchUrls().remove(index);
+          configuration.getBranchMap().remove(url);
           listModel.fireItemRemoved(index);
         }
         if (listModel.getSize() > 0) {

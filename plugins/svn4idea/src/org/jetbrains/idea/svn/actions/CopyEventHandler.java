@@ -2,6 +2,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -14,7 +15,7 @@ public class CopyEventHandler implements ISVNEventHandler {
   }
 
   public void handleEvent(SVNEvent event, double p) {
-    String path = event.getFile() != null ? event.getFile().getName() : event.getPath();
+    final String path = SvnUtil.getPathForProgress(event);
     if (path == null) {
       return;
     }

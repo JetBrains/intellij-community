@@ -13,16 +13,18 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="idea-tests" />
+    <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/javasvn.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/svnkit.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/svnkitsrc.zip!/" />
+        </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="vcs-impl" />
     <orderEntryProperties />
   </component>
 </module>

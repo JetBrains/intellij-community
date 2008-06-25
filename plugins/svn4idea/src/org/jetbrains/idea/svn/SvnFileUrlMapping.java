@@ -5,9 +5,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
+import java.io.File;
+import java.util.Map;
+
 public interface SvnFileUrlMapping {
   @Nullable
-  SVNURL getUrlForFile(final String path);
+  SVNURL getUrlForFile(final File file);
 
   @Nullable
   String getLocalPath(final String url);
@@ -16,10 +19,12 @@ public interface SvnFileUrlMapping {
   VirtualFile getVcRootByUrl(final String url);
 
   @Nullable
-  SvnFileUrlMappingRefresher.RootMixedInfo getWcRootForUrl(final String url);
+  RootMixedInfo getWcRootForUrl(final String url);
+
+  Map<String,RootUrlInfo> getAllWcInfos();
 
   @Nullable
-  Pair<String, SvnFileUrlMappingRefresher.RootUrlInfo> getWcRootForFilePath(final String filePath);
+  Pair<String, RootUrlInfo> getWcRootForFilePath(final File file);
 
   class RootUrlInfo {
     private final String myRepositoryUrl;
@@ -43,27 +48,4 @@ public interface SvnFileUrlMapping {
     }
   }
 
-  class RootMixedInfo {
-    private final String myFilePath;
-    private final SVNURL myUrl;
-    private final VirtualFile myParentVcsRoot;
-
-    public RootMixedInfo(final String filePath, final SVNURL url, final VirtualFile parentVcsRoot) {
-      myFilePath = filePath;
-      myUrl = url;
-      myParentVcsRoot = parentVcsRoot;
-    }
-
-    public String getFilePath() {
-      return myFilePath;
-    }
-
-    public SVNURL getUrl() {
-      return myUrl;
-    }
-
-    public VirtualFile getParentVcsRoot() {
-      return myParentVcsRoot;
-    }
-  }
 }

@@ -17,6 +17,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -119,7 +120,7 @@ public class SvnDiffEditor implements ISVNEditor {
 
   public void openDir(String path, long revision) throws SVNException {
   }
-  public void changeDirProperty(String name, String value) throws SVNException {
+  public void changeDirProperty(final String name, final SVNPropertyValue value) throws SVNException {
   }
   public void closeDir() throws SVNException {
   }
@@ -140,7 +141,7 @@ public class SvnDiffEditor implements ISVNEditor {
     myChanges.put(path, change);
   }
 
-  public void changeFileProperty(String path, String name, String value) throws SVNException {
+  public void changeFileProperty(final String path, final String propertyName, final SVNPropertyValue propertyValue) throws SVNException {
   }
   public void closeFile(String path, String textChecksum) throws SVNException {
   }

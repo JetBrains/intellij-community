@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
@@ -22,37 +23,27 @@ import java.util.List;
 public class Merger {
   private final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-
   protected final boolean myDryRun;
-
   protected final SVNDiffClient myDiffClient;
-
   protected int myCount;
   private final ProgressIndicator myProgressIndicator;
-
   protected CommittedChangeList myLatestProcessed;
-
   protected final SVNURL myCurrentBranchUrl;
-
   private StringBuilder myCommitMessage;
 
   public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target,
                 final boolean dryRun, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
     myCurrentBranchUrl = currentBranchUrl;
-    
     myDiffClient = vcs.createDiffClient();
-
     myChangeLists = changeLists;
+
     Collections.sort(myChangeLists, ByNumberChangeListComparator.getInstance());
 
     myTarget = target;
     myDryRun = dryRun;
-
     myCount = 0;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-
     myDiffClient.setEventHandler(handler);
-
     myCommitMessage = new StringBuilder();
   }
 
@@ -123,5 +114,10 @@ public class Merger {
 
   public String getComment() {
     return myCommitMessage.toString();
+  }
+
+  @Nullable
+  public File getMergeInfoHolder() {
+    return myTarget;
   }
 }

@@ -25,7 +25,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   private final Project myProject;
   private final SvnVcs myVcs;
 
-  private final Map<String, SvnFileUrlMappingRefresher.RootUrlInfo> myFile2UrlMap;
+  private final Map<String, RootUrlInfo> myFile2UrlMap;
   private final Map<String, String> myUrl2FileMap;
   private final Map<String, VirtualFile> myFileRootsMap;
 
@@ -39,13 +39,13 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   }
 
   @Nullable
-  public SVNURL getUrlForFile(final String path) {
-    final Pair<String, SvnFileUrlMappingRefresher.RootUrlInfo> rootInfo = getWcRootForFilePath(path);
+  public SVNURL getUrlForFile(final File file) {
+    final Pair<String, SvnFileUrlMappingRefresher.RootUrlInfo> rootInfo = getWcRootForFilePath(file);
 
     if (rootInfo == null) {
       return null;
     }
-    final String relativePath = path.substring(rootInfo.first.length());
+    final String relativePath = file.getAbsolutePath().substring(rootInfo.first.length());
     try {
       return rootInfo.second.getAbsoluteUrlAsUrl().appendPath(relativePath, true);
     }
@@ -76,8 +76,8 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   }
 
   @Nullable
-  public Pair<String, RootUrlInfo> getWcRootForFilePath(final String filePath) {
-    final String root = getRootForPath(filePath);
+  public Pair<String, RootUrlInfo> getWcRootForFilePath(final File file) {
+    final String root = getRootForPath(file);
     if (root == null) {
       return null;
     }
@@ -95,6 +95,10 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     final String file = myUrl2FileMap.get(rootUrl);
     final SVNURL rootUrlUrl = myFile2UrlMap.get(file).getAbsoluteUrlAsUrl();
     return new RootMixedInfo(file, rootUrlUrl, myFileRootsMap.get(rootUrl));
+  }
+
+  public Map<String, RootUrlInfo> getAllWcInfos() {
+    return Collections.unmodifiableMap(myFile2UrlMap);
   }
 
   private class FileUrlMappingCrawler implements SvnWCRootCrawler {
@@ -159,9 +163,12 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   }
 
   @Nullable
-  public String getRootForPath(final String currentPath) {
+  public String getRootForPath(final File currentPath) {
+    String convertedPath = currentPath.getAbsolutePath();
+    convertedPath = (currentPath.isDirectory() && (! convertedPath.endsWith(File.separator))) ? convertedPath + File.separator :
+        convertedPath;
     for (String path : myFile2UrlMap.keySet()) {
-      if (FileUtil.startsWith(currentPath, path)) {
+      if (FileUtil.startsWith(convertedPath, path)) {
         return path;
       }
     }

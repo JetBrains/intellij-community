@@ -35,7 +35,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +42,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SetPropertyDialog;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -90,7 +90,7 @@ public class SetPropertyAction extends BasicAction {
       for (int i = 0; i < ioFiles.length; i++) {
         File ioFile = ioFiles[i];
         try {
-          wcClient.doSetProperty(ioFile, name, value, false, recursive, null);
+          wcClient.doSetProperty(ioFile, name, SVNPropertyValue.create(value), false, recursive, null);
         }
         catch (SVNException e) {
           throw new VcsException(e);

@@ -29,9 +29,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnFormatSelector;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
@@ -56,15 +59,22 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
 
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
-                                                                               SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
+                     SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
+        // allow to select working copy format
+        String formatMode = null;
+        while (formatMode == null) {
+          formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnWorkingCopyFormatHolder.getFormatGlobalDefault());
+          SvnWorkingCopyFormatHolder.setPresetFormat(formatMode);
+        }
+
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
         client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
         client.setIgnoreExternals(ignoreExternals);
         try {
           progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
-          client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, recursive);
+          client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, recursive ? SVNDepth.INFINITY : SVNDepth.FILES, true);
           progressIndicator.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }

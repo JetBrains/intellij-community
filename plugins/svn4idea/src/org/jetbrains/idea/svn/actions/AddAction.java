@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -53,6 +54,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class AddAction extends BasicAction {
@@ -76,20 +78,17 @@ public class AddAction extends BasicAction {
     throws VcsException {
     log.debug("enter: batchPerform");
 
-    Collection<String> exceptions = new ArrayList<String>();
     SvnVcs vcs = SvnVcs.getInstance(project);
-    for (VirtualFile file : files) {
-      try {
-        SVNWCClient wcClient = vcs.createWCClient();
-        wcClient.setEventHandler(new AddEventListener(project));
-        wcClient.doAdd(new File(file.getPath()), true, false, true, true);
+    SVNWCClient wcClient = vcs.createWCClient();
+    wcClient.setEventHandler(new AddEventListener(project));
+
+    Collection<SVNException> exceptions = SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(files));
+    if (! exceptions.isEmpty()) {
+      final Collection<String> messages = new ArrayList<String>(exceptions.size());
+      for (SVNException exception : exceptions) {
+        messages.add(exception.getMessage());
       }
-      catch (SVNException e) {
-        exceptions.add(e.getMessage());
-      }
-    }
-    if (!exceptions.isEmpty()) {
-      throw new VcsException(exceptions);
+      throw new VcsException(messages);
     }
   }
 

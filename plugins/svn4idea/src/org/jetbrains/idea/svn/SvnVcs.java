@@ -54,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
+import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
@@ -81,7 +82,9 @@ import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -542,27 +545,63 @@ public class SvnVcs extends AbstractVcs {
       myLog = log;
     }
 
-    public void info(String message) {
+    public void logError(final String message) {
       if (myLoggingEnabled) {
         myLog.info(message);
       }
     }
 
-    public void error(String message) {
+    public void logError(final Throwable th) {
+      if (myLoggingEnabled) {
+        myLog.info(th);
+      }
+    }
+
+    public void logSevere(final Throwable th) {
+      if (myLoggingEnabled) {
+        myLog.info(th);
+      }
+    }
+
+    public void logSevere(final String message) {
       if (myLoggingEnabled) {
         myLog.info(message);
       }
     }
 
-    public void info(Throwable th) {
+    public void logFine(final Throwable th) {
       if (myLoggingEnabled) {
         myLog.info(th);
       }
     }
 
-    public void error(Throwable th) {
+    public void logFine(final String message) {
+      if (myLoggingEnabled) {
+        myLog.info(message);
+      }
+    }
+
+    public void logFiner(final Throwable th) {
       if (myLoggingEnabled) {
         myLog.info(th);
+      }
+    }
+
+    public void logFiner(final String message) {
+      if (myLoggingEnabled) {
+        myLog.info(message);
+      }
+    }
+
+    public void logFinest(final Throwable th) {
+      if (myLoggingEnabled) {
+        myLog.info(th);
+      }
+    }
+
+    public void logFinest(final String message) {
+      if (myLoggingEnabled) {
+        myLog.info(message);
       }
     }
 
@@ -630,5 +669,18 @@ public class SvnVcs extends AbstractVcs {
 
   public SvnFileUrlMapping getSvnFileUrlMapping() {
     return myRootsInfo;
+  }
+
+  public List<WCInfo> getAllWcInfos() {
+    final SvnFileUrlMapping urlMapping = getSvnFileUrlMapping();
+
+    final Map<String,SvnFileUrlMapping.RootUrlInfo> wcInfos = urlMapping.getAllWcInfos();
+    final List<WCInfo> infos = new ArrayList<WCInfo>();
+    for (Map.Entry<String, SvnFileUrlMapping.RootUrlInfo> entry : wcInfos.entrySet()) {
+      final SvnFileUrlMapping.RootUrlInfo value = entry.getValue();
+      infos.add(new WCInfo(entry.getKey(), value.getAbsoluteUrlAsUrl(),
+                           SvnFormatSelector.getWorkingCopyFormat(new File(entry.getKey())), value.getRepositoryUrl()));
+    }
+    return infos;
   }
 }

@@ -30,7 +30,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 
 import java.io.File;
@@ -93,7 +93,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
       LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(myVFSHandler);
       CommandProcessor.getInstance().removeCommandListener(myVFSHandler);
       myVFSHandler = null;
-      SVNGanymedSession.shutdown();
+      SVNSSHSession.shutdown();
     }
   }
 

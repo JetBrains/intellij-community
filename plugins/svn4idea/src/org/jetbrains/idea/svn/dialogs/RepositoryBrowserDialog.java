@@ -68,6 +68,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -443,8 +444,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         String message = dialog.getCommitMessage();
         doMkdir(url, message);
 
+        final SVNURL repositoryUrl = (node.getSVNDirEntry() == null) ? node.getURL() : node.getSVNDirEntry().getRepositoryRoot();
         final SyntheticWorker worker = new SyntheticWorker(node.getURL());
-        worker.addSyntheticChildToSelf(url, dialog.getName(), true);
+        worker.addSyntheticChildToSelf(url, repositoryUrl, dialog.getName(), true);
 
         node.reload(false);
       }
@@ -596,7 +598,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     public void doSynthetic() {
       final SyntheticWorker parentWorker = new SyntheticWorker(myDialogParent.getURL());
-      parentWorker.addSyntheticChildToSelf(myDst, myNewName, ! mySourceNode.isLeaf());
+      parentWorker.addSyntheticChildToSelf(myDst, myRoot.getURL(), myNewName, ! mySourceNode.isLeaf());
       parentWorker.copyTreeToSelf(mySourceNode);
     }
 
@@ -906,7 +908,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
           SVNCopyClient committer = vcs.createCopyClient();
-          committer.doCopy(src, SVNRevision.HEAD, dst, move, comment);
+          final SVNCopySource[] copySource = new SVNCopySource[] {new SVNCopySource(SVNRevision.HEAD, SVNRevision.HEAD, src)};
+          committer.doCopy(copySource, dst, move, true, true, comment, null);
         }
         catch (SVNException e) {
           exception[0] = e;

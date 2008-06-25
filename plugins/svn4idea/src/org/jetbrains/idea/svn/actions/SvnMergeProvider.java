@@ -29,10 +29,11 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -129,7 +130,7 @@ public class SvnMergeProvider implements MergeProvider {
       File ioFile = new File(file.getPath());
       SVNPropertyData svnPropertyData = client.doGetProperty(ioFile, SVNProperty.MIME_TYPE, SVNRevision.UNDEFINED,
                                                              SVNRevision.WORKING, false);
-      if (svnPropertyData != null && SVNProperty.isBinaryMimeType(svnPropertyData.getValue())) {
+      if (svnPropertyData != null && SVNProperty.isBinaryMimeType(SVNPropertyValue.getPropertyAsString(svnPropertyData.getValue()))) {
         return true;
       }
     }

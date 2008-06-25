@@ -151,7 +151,7 @@ public class CompareWithBranchAction extends AnAction {
 
               SVNURL anchorURL = anchorEntry.getSVNURL();
               SVNRepository repository = vcs.createRepository(anchorURL.toString());
-              SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, null);
+              SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY, null);
               long rev = repository.getLatestRevision();
               SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile,
                                                            vcs.createRepository(url.removePathTail().toString()), rev, true);
