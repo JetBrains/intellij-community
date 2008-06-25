@@ -159,11 +159,6 @@ public class ResolveImportUtil {
       return psi_mgr.findDirectory(childDir);
     }
 
-    // NOTE: a preliminary attempt to resolve to a C lib
-    VirtualFile clib_file = root.findChild(referencedName + ".so"); // XXX: platform-dependent choice of .so | .pyd
-    if (clib_file != null) {
-      return psi_mgr.findFile(clib_file);
-    }
     return null;
   }
 

@@ -34,8 +34,9 @@ public class SdkUtil {
   public static class ProcessCallInfo {
     private List<String> myStdoutLines;
     private List<String> myStderrLines;
+    private int exit_code;
 
-    protected ProcessCallInfo(List<String> stdout_lines, List<String> stderr_lines) {
+    protected ProcessCallInfo(List<String> stdout_lines, List<String> stderr_lines, int exit_code) {
       myStdoutLines = stdout_lines;
       myStderrLines = stderr_lines;
     }
@@ -46,6 +47,10 @@ public class SdkUtil {
 
     public List<String> getStderr() {
       return myStderrLines;
+    }
+    
+    public int exitValue() {
+      return exit_code;
     }
   }
 
@@ -58,10 +63,11 @@ public class SdkUtil {
   @NotNull
   public static ProcessCallInfo getProcessOutput(String homePath, @NonNls String[] command) {
     if (homePath == null || !new File(homePath).exists()) {
-      return new ProcessCallInfo(null, null);
+      return new ProcessCallInfo(null, null, -1);
     }
     List<String> stdout = null;
     List<String> stderr = null;
+    int exit_code = -1;
     try {
       //noinspection HardCodedStringLiteral
       Application app = ApplicationManager.getApplication();
@@ -88,6 +94,7 @@ public class SdkUtil {
           stderr_future.get();
           stdout = stdout_thread.getResult();
           stderr = stderr_thread.getResult();
+          exit_code = process.exitValue();
         }
         catch (Exception e) {
           LOG.info(e);
@@ -97,7 +104,7 @@ public class SdkUtil {
     catch (IOException ex) {
       LOG.info(ex);
     }
-    return new ProcessCallInfo(stdout, stderr);
+    return new ProcessCallInfo(stdout, stderr, exit_code);
   }
 
   public static class ReadLinesThread implements Runnable {

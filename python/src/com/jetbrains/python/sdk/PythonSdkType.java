@@ -34,7 +34,7 @@ public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
 
   public static PythonSdkType getInstance() {
-    return SdkType.findInstance(PythonSdkType.class);
+    return SdkType.findInstance(PythonSdkType.class);    
   }
 
   public PythonSdkType() {
@@ -169,18 +169,22 @@ public class PythonSdkType extends SdkType {
     for (String url : urls) {
       if (url.contains("python_stubs")) {
         final String path = VfsUtil.urlToPath(url);
-        if (!new File(path).exists()) {
-          generateStubs(currentSdk.getHomePath(), path);
+        File stubs_dir = new File(path);
+        if (!stubs_dir.exists()) {
+          generateBuiltinStubs(currentSdk.getHomePath(), path);
         }
+        generateBinaryStubs(currentSdk.getHomePath(), path);
         break;
       }
     }
     return null;
   }
 
+  
   public String getPresentableName() {
     return "Python SDK";
   }
+  
 
   public void setupSdkPaths(final Sdk sdk) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
@@ -188,7 +192,7 @@ public class PythonSdkType extends SdkType {
     String bin_path = getInterpreterPath(sdk_path);
     final String stubs_path =
         PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk_path.hashCode() + File.separator;
-    // we have a number of lib dirs, those listed in pyton's sys.path
+    // we have a number of lib dirs, those listed in python's sys.path
     String script = // a script printing sys.path
       "import sys\n"+
       "for x in sys.path:\n"+
@@ -198,7 +202,7 @@ public class PythonSdkType extends SdkType {
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path: paths) {
-        if (path.indexOf(File.separator) < 0) continue; // TODO: interpret 'specail' paths reasonably
+        if (path.indexOf(File.separator) < 0) continue; // TODO: interpret 'special' paths reasonably
         VirtualFile child = LocalFileSystem.getInstance().findFileByPath(path);
         if (child != null) {
           // NOTE: maybe handle .zip / .egg files specially?
@@ -207,9 +211,10 @@ public class PythonSdkType extends SdkType {
         }
         else LOG.info("Bogus sys.path entry "+path);
       }
-      generateStubs(sdk_path, stubs_path);
+      generateBuiltinStubs(sdk_path, stubs_path);
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), OrderRootType.SOURCES);
     }
+    generateBinaryStubs(sdk_path, stubs_path);
     
     sdkModificator.commitChanges();
   }
@@ -239,10 +244,10 @@ public class PythonSdkType extends SdkType {
     return getPythonBinaryPath(sdkHome).getPath();
   }
 
-  public static void generateStubs(String sdkPath, final String stubsRoot) {
+  public static void generateBuiltinStubs(String sdkPath, final String stubsRoot) {
     new File(stubsRoot).mkdirs();
     try {
-      final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator.py")));
+      final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator3.py")));
       final File tempFile = FileUtil.createTempFile("gen", "");
 
       FileWriter out = new FileWriter(tempFile);
@@ -250,10 +255,12 @@ public class PythonSdkType extends SdkType {
       out.close();
 
       GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(getInterpreterPath(sdkPath));
+      commandLine.setExePath(getInterpreterPath(sdkPath));    // python
 
-      commandLine.addParameter(tempFile.getAbsolutePath());
-      commandLine.addParameter(stubsRoot);
+      commandLine.addParameter(tempFile.getAbsolutePath());   // gen.py
+
+      commandLine.addParameter("-d"); commandLine.addParameter(stubsRoot); // -d stubs_root
+      commandLine.addParameter("-b"); // for builtins
       try {
         final OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         handler.startNotify();
@@ -268,6 +275,65 @@ public class PythonSdkType extends SdkType {
       LOG.error(e);
     }
 
+  }
+
+  /**
+   * (Re-)generates skeletons for all binary python modules. Up-to-date stubs not regenerated.
+   * Does one module at a time: slower, but avoids certain conflicts.
+   * TODO: Show a modal progress window.
+   * @param sdkPath where to find interpreter.
+   * @param stubsRoot where to put results (expected to exist).
+   */
+  public void generateBinaryStubs(final String sdkPath, final String stubsRoot) {
+    if (!new File(stubsRoot).exists()) return; 
+    try {
+      final String bin_path = getInterpreterPath(sdkPath);
+      String text;
+      FileWriter out;
+      
+      text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("find_binaries.py")));
+      final File find_bin_file = FileUtil.createTempFile("find_bin", "");
+      out = new FileWriter(find_bin_file);
+      out.write(text);
+      out.close();
+
+      text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator3.py")));
+      final File gen3_file = FileUtil.createTempFile("gen3", "");
+      out = new FileWriter(gen3_file);
+      out.write(text);
+      out.close();
+
+      final SdkUtil.ProcessCallInfo run_result = SdkUtil.getProcessOutput(sdkPath, new String[] {bin_path, find_bin_file.getPath()});
+      
+      if (run_result.exitValue() == 0) {
+        for (String line : run_result.getStdout()) {
+          // line = "mod_name path"
+          int cutpos = line.indexOf(' ');
+          String modname = line.substring(0, cutpos);
+          String mod_fname = modname.replace(".", File.separator); // "a.b.c" -> "a/b/c", no ext 
+          String fname = line.substring(cutpos+1);
+          //String ext = fname.substring(fname.lastIndexOf('.')); // no way ext is absent 
+          // check if it's fresh
+          File f_orig = new File(fname);
+          File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
+          if (f_orig.lastModified() >= f_skel.lastModified()) {
+            // skeleton stale, rebuild
+            LOG.info("Skeleton for " + modname);
+            final SdkUtil.ProcessCallInfo gen_result = SdkUtil.getProcessOutput(sdkPath, 
+              new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}
+            );
+            if (gen_result.exitValue() != 0) {
+              for (String err_line : gen_result.getStderr()) {
+                LOG.error(err_line);
+              }
+            }
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   public static List<Sdk> getAllSdks() {
