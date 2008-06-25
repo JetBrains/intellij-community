@@ -6,13 +6,13 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class LineRange {
+public class LineRange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.LineRange");
-  final int startLine;
-  final int endLine;
+  public final int startLine;
+  public final int endLine;
 
-  PsiElement firstElement;
-  PsiElement lastElement;
+  public PsiElement firstElement;
+  public PsiElement lastElement;
 
   public LineRange(final int startLine, final int endLine) {
     this.startLine = startLine;
