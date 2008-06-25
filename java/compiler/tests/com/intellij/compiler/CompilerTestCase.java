@@ -336,7 +336,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       }
     });
     // need this to emulate project opening
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots()));
+    final List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots());
+    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size());
     if (ex[0] != null) {
       throw ex[0];
     }
