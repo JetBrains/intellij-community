@@ -90,6 +90,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
       }
 
       final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
+      if (child == null) return;
       final int offset = child.getTextRange().getStartOffset();
       OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, tag.getContainingFile().getVirtualFile(), offset);
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, true);
