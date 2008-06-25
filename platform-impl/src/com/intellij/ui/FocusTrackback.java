@@ -41,6 +41,7 @@ public class FocusTrackback {
 
   private boolean myConsumed;
   private WeakReference myRequestor;
+  private boolean mySheduledForRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
     this(requestor, SwingUtilities.getWindowAncestor(parent), mustBeShown);
@@ -139,13 +140,21 @@ public class FocusTrackback {
     final Application app = ApplicationManager.getApplication();
     if (app == null || wrongOS() || myConsumed) return;
 
-    consume();
-
     Project project = null;
     DataContext context =
         myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
     if (context != null) {
       project = (Project)context.getData(DataConstants.PROJECT);
+    }
+
+    mySheduledForRestore = true;
+    final List<FocusTrackback> stack = getCleanStackForRoot();
+    final int index = stack.indexOf(this);
+    for (int i = index - 1; i >=0; i--) {
+      if (stack.get(i).isSheduledForRestore()) {
+        dispose();
+        return;
+      }
     }
 
     if (project != null && !project.isDisposed()) {
@@ -159,12 +168,17 @@ public class FocusTrackback {
         public String toString() {
           return "focus trackback";
         }
-      }, false);
+      }, false).doWhenProcessed(new Runnable() {
+        public void run() {
+          dispose();
+        }
+      });
     }
     else {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           _restoreFocus();
+          dispose();
         }
       });
     }
@@ -261,7 +275,9 @@ public class FocusTrackback {
   }
 
   public void dispose() {
+    consume();
     getStackForRoot(myRoot).remove(this);
+    mySheduledForRestore = false;
     myParentWindow = null;
     myRoot = null;
     myFocusOwner = null;
@@ -271,9 +287,10 @@ public class FocusTrackback {
     if (myConsumed) return true;
 
     if (myMustBeShown) {
-      return myFocusedComponentQuery != null &&
-             myFocusedComponentQuery.getComponent() != null &&
-             !myFocusedComponentQuery.getComponent().isShowing();
+      return !isSheduledForRestore()
+             && myFocusedComponentQuery != null
+             && myFocusedComponentQuery.getComponent() != null
+             && !myFocusedComponentQuery.getComponent().isShowing();
     }
     else {
       return myParentWindow == null || !myParentWindow.isShowing();
@@ -309,6 +326,10 @@ public class FocusTrackback {
 
   public Object getRequestor() {
     return myRequestor.get();
+  }
+
+  public boolean isSheduledForRestore() {
+    return mySheduledForRestore;
   }
 
   public static interface Provider {
