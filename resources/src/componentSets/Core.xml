@@ -68,18 +68,11 @@
       <implementation-class>com.intellij.psi.impl.JavaPsiFacadeImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.PsiIncludeManager</interface-class>
-      <implementation-class>com.intellij.psi.impl.PsiIncludeManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTable</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable</implementation-class>
       <skipForDummyProject/>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.psi.impl.IncludeAspectImpl</implementation-class>
-    </component>
     <component>
       <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
       <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
