@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -177,7 +178,13 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedClassesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiClass psiClass = (PsiClass)sortedID.getElement();
-        ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
+        ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
+            new Computable<String>() {
+              public String compute() {
+                return psiClass.getQualifiedName();
+              }
+            }
+        ));
 
         final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
         ClassInheritorsSearch.search(psiClass, searchScope, false)
@@ -249,7 +256,13 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final PsiClass psiClass = (PsiClass)sortedID.getElement();
         final List<UsagesProcessor> processors = myClassUsagesRequests.get(sortedID);
 
-        ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
+        ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
+            new Computable<String>() {
+              public String compute() {
+                return psiClass.getQualifiedName();
+              }
+            }
+        ));
 
         ReferencesSearch.search(psiClass, searchScope, false)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
