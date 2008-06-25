@@ -97,7 +97,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     synchronized (PsiLock.LOCK) {
       final XmlTag se = getSourceElement();
       final String tagName = se.getName();
-      if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName)) {
+      if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName) || "condition".equals(tagName)) { // todo: support conditions separately
         String value = getPropertyValue();
         if (value == null && propName != null) {
           final PropertiesFile propertiesFile = getPropertiesFile();
