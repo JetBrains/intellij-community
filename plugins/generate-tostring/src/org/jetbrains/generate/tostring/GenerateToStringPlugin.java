@@ -18,8 +18,6 @@ package org.jetbrains.generate.tostring;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -30,16 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.config.Config;
 import org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection;
 import org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection;
-import org.jetbrains.generate.tostring.view.ConfigUI;
-
-import javax.swing.*;
 
 /**
  * The IDEA component for this plugin.
  */
-public class GenerateToStringPlugin implements ApplicationComponent, Configurable, JDOMExternalizable, InspectionToolProvider, ProjectManagerListener {
+public class GenerateToStringPlugin implements ApplicationComponent, JDOMExternalizable, InspectionToolProvider, ProjectManagerListener {
     private static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringPlugin"); 
-    private ConfigUI configUI;
     public Config config = new Config();
 
     @NotNull
@@ -63,50 +57,6 @@ public class GenerateToStringPlugin implements ApplicationComponent, Configurabl
 
     public void disposeComponent() {
         ProjectManager.getInstance().removeProjectManagerListener(this);
-    }
-
-    public String getDisplayName() {
-        return "GenerateToString";
-    }
-
-    public Icon getIcon() {
-        java.net.URL resource = getClass().getResource("/resources/configurableToStringPlugin.png");
-        if (resource != null) {
-            return new ImageIcon(resource);
-        }
-        return null;
-    }
-
-    public String getHelpTopic() {
-        return null;
-    }
-
-    public JComponent createComponent() {
-        return configUI = new ConfigUI(config);
-    }
-
-    public boolean isModified() {
-        return ! config.equals(configUI.getConfig());
-    }
-
-    public void apply() throws ConfigurationException {
-        config = configUI.getConfig();
-
-        if (config.isEnableTemplateQuickList() && config.getSelectedQuickTemplates() == null) {
-            throw new ConfigurationException("At least one template should be selected in the Template Quick Selection List");
-        }
-
-        GenerateToStringContext.setConfig(config); // update context
-
-        if (log.isDebugEnabled()) log.debug("Config updated:\n" + config);
-    }
-
-    public void reset() {
-        configUI.setConfig(config);
-    }
-
-    public void disposeUIResources() {
-        configUI = null;
     }
 
     public Config getConfig() {

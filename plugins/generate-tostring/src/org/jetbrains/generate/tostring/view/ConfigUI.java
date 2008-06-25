@@ -18,6 +18,9 @@ package org.jetbrains.generate.tostring.view;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.HyperlinkLabel;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.exception.ParseErrorException;
 import org.jetbrains.generate.tostring.GenerateToStringUtils;
 import org.jetbrains.generate.tostring.config.Config;
 import org.jetbrains.generate.tostring.config.ConflictResolutionPolicy;
@@ -30,9 +33,7 @@ import org.jetbrains.generate.tostring.template.TemplateResourceLocator;
 import org.jetbrains.generate.tostring.util.FileUtil;
 import org.jetbrains.generate.tostring.util.StringUtil;
 import org.jetbrains.generate.tostring.velocity.VelocityFactory;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.exception.ParseErrorException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -485,7 +486,13 @@ public class ConfigUI extends JPanel {
         }
     }
 
-    /**
+    @Nullable
+    private static String emptyToNull(final String s) {
+        if (s != null && s.isEmpty()) return null;
+        return s;
+    }
+
+  /**
      * Get's the configuration that the GUI controls represent right now.
      *
      * @return the configuration.
@@ -508,7 +515,10 @@ public class ConfigUI extends JPanel {
         }
         // only set text if selected template is on the active template (index 0)
         if (templates.getSelectedIndex() == 0) {
-            config.setMethodBody(methodBody.getText());
+            // don't store default text in config, so that isModified() check works correctly
+            if (!methodBody.getText().equals(TemplateResourceLocator.getDefaultTemplateBody())) {
+                config.setMethodBody(methodBody.getText());
+            }
             activeTemplate.setTemplate(methodBody.getText());
         }
         config.setFilterConstantField(filterConstant.isSelected());
@@ -516,10 +526,10 @@ public class ConfigUI extends JPanel {
         config.setFilterTransientModifier(filterTransient.isSelected());
         config.setFilterLoggers(filterLoggers.isSelected());
         config.setFilterStaticModifier(filterStatic.isSelected());
-        config.setFilterFieldName(filterFieldName.getText());
-        config.setFilterFieldType(filterFieldType.getText());
-        config.setFilterMethodName(filterMethodName.getText());
-        config.setFilterMethodType(filterMethodType.getText());
+        config.setFilterFieldName(emptyToNull(filterFieldName.getText()));
+        config.setFilterFieldType(emptyToNull(filterFieldType.getText()));
+        config.setFilterMethodName(emptyToNull(filterMethodName.getText()));
+        config.setFilterMethodType(emptyToNull(filterMethodType.getText()));
 
         config.setAddImplementSerializable(autoAddImplementsSerializable.isSelected());
         config.setAutoImportsPackages(autoImportPackages.getText());
