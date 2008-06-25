@@ -159,6 +159,14 @@
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="Back"/>
     </group>
 
+    <group id="GoToMenuEx">
+      <separator/>
+      <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
+      <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
+      <separator/>
+      <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToPreviousError"/>
+    </group>
+
     <group id="GoToCodeGroup">
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>

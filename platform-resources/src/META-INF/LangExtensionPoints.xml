@@ -309,4 +309,7 @@
                   beanClass="com.intellij.openapi.module.ModuleTypeEP"/>
   <extensionPoint name="facetType"
                   interface="com.intellij.facet.FacetType"/>
+
+  <extensionPoint name="methodNavigationOffsetProvider"
+                  interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
 </extensionPoints>

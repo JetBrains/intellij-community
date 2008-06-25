@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -10,8 +9,6 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.xml.XmlFile;
 
 /**
  *
@@ -26,9 +23,6 @@ public class MethodUpAction extends BaseCodeInsightAction {
   }
 
   static boolean checkValidForFile(final PsiFile file) {
-    if (file instanceof PsiJavaFile || file instanceof XmlFile) {
-      return true;
-    }
     final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       return true;

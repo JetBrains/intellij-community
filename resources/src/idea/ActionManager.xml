@@ -128,14 +128,6 @@
       <add-to-group group-id="LanguageSpecificCollapseGroup" anchor="last"/>
     </group>
 
-    <group id="GoToMenuEx">
-      <separator/>
-      <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
-      <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
-      <separator/>
-      <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToPreviousError"/>
-    </group>
-
     <group id="CodeMenu1">
       <reference ref="DelegateMethods"/>
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
