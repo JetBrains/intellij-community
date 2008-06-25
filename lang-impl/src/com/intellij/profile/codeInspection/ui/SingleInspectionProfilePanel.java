@@ -450,7 +450,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       public void treeCollapsed(TreeExpansionEvent event) {
         InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
         String nodeTitle = getExpandedString(event.getPath());
-        ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().expandNode(nodeTitle);
+        ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().collapseNode(nodeTitle);
         selected.getExpandedNodes().collapseNode(nodeTitle);
       }
 

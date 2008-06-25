@@ -643,7 +643,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
           actionElement.addContent(element);
         }
         else {
-          throw new IllegalStateException("unknown shortcut class: " + shortcut);
+          //TODO kirillk
+          //throw new IllegalStateException("unknown shortcut class: " + shortcut);
         }
       }
       keymapElement.addContent(actionElement);
