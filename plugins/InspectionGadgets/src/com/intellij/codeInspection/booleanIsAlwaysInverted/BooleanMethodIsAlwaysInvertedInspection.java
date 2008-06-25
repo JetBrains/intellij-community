@@ -6,10 +6,13 @@ package com.intellij.codeInspection.booleanIsAlwaysInverted;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +58,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
       if (psiIdentifier != null) {
         return new ProblemDescriptor[] { manager.createProblemDescriptor(psiIdentifier,
                                                                          InspectionsBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
-                                                                         (LocalQuickFix [])null,
+                                                                         new InvertMethodFix(),
                                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
       }
     }
@@ -148,6 +151,32 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
 
     public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
       checkMethodCall(refWhat, refFrom.getElement());
+    }
+  }
+
+  @Override
+  public QuickFix getQuickFix(final String hint) {
+    return new InvertMethodFix();
+  }
+
+  private static class InvertMethodFix implements LocalQuickFix {
+
+    @NotNull
+    public String getName() {
+      return "Invert method";
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      assert psiMethod != null;
+      final RefactoringActionHandler invertBooleanHandler = JavaRefactoringActionHandlerFactory.getInstance().createInvertBooleanHandler();
+      invertBooleanHandler.invoke(project, new PsiElement[]{psiMethod}, null);
     }
   }
 }
