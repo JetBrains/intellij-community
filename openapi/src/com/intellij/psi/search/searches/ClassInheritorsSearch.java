@@ -187,9 +187,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       ProgressManager.getInstance().checkCanceled();
 
       final PsiClass psiClass = stack.pop();
-      if (processed.contains(psiClass)) continue;
-      processed.add(psiClass);
-      
+      if (!processed.add(psiClass)) continue;
+
       currentBase.set(psiClass);
       if (!DirectClassInheritorsSearch.search(psiClass, scope, includeAnonymous).forEach(processor)) return false;
     }

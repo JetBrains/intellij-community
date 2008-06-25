@@ -89,7 +89,7 @@ public class ConstructorReferencesSearchHelper {
 
     final boolean constructorCanBeCalledImplicitly = constructor.getParameterList().getParametersCount() == 0;
     // search usages like "this(..)"
-    if (!processConstructorReferencesViaSuperOrThis(processor, aClass, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
+    if (!processSuperOrThis(processor, aClass, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
                                                     PsiKeyword.THIS)) {
       return false;
     }
@@ -97,7 +97,7 @@ public class ConstructorReferencesSearchHelper {
     // search usages like "super(..)"
     Processor<PsiClass> processor2 = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
-        return processConstructorReferencesViaSuperOrThis(processor, inheritor, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
+        return processSuperOrThis(processor, inheritor, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
                                                           PsiKeyword.SUPER);
       }
     };
@@ -105,20 +105,20 @@ public class ConstructorReferencesSearchHelper {
     return ClassInheritorsSearch.search(aClass, searchScope, false).forEach(processor2);
   }
 
-  private boolean processConstructorReferencesViaSuperOrThis(final Processor<PsiReference> processor,
+  private boolean processSuperOrThis(final Processor<PsiReference> processor,
                                                              final PsiClass inheritor,
                                                              final PsiMethod constructor, final boolean constructorCanBeCalledImplicitly, final SearchScope searchScope,
                                                              final boolean isStrictSignatureSearch,
                                                              final String superOrThisKeyword) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        return processInReadAction(inheritor, searchScope, superOrThisKeyword, isStrictSignatureSearch, constructor,
+        return processSuperOrThisInReadAction(inheritor, searchScope, superOrThisKeyword, isStrictSignatureSearch, constructor,
                                    constructorCanBeCalledImplicitly, processor);
       }
     });
   }
 
-  private boolean processInReadAction(final PsiClass inheritor,
+  private boolean processSuperOrThisInReadAction(final PsiClass inheritor,
                                       final SearchScope searchScope,
                                       final String superOrThisKeyword,
                                       final boolean isStrictSignatureSearch,
@@ -126,8 +126,8 @@ public class ConstructorReferencesSearchHelper {
                                       final boolean constructorCanBeCalledImplicitly,
                                       final Processor<PsiReference> processor) {
     PsiMethod[] constructors = inheritor.getConstructors();
-    if (constructors.length == 0) {
-      processImplicitConstructorCall(constructorCanBeCalledImplicitly, inheritor, processor, constructor, inheritor);
+    if (constructors.length == 0 && constructorCanBeCalledImplicitly) {
+      processImplicitConstructorCall(inheritor, processor, constructor, inheritor);
     }
     for (PsiMethod method : constructors) {
       PsiCodeBlock body = method.getBody();
@@ -146,36 +146,33 @@ public class ConstructorReferencesSearchHelper {
                 PsiElement referencedElement = refExpr.resolve();
                 if (referencedElement instanceof PsiMethod) {
                   PsiMethod constructor1 = (PsiMethod)referencedElement;
-                  if (isStrictSignatureSearch) {
-                    if (myManager.areElementsEquivalent(constructor1, constructor)) {
-                      if (!processor.process(refExpr)) return false;
-                      continue;
-                    }
-                  }
-                  else {
-                    if (myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass())) {
-                      if (!processor.process(refExpr)) return false;
-                      continue;
-                    }
-                  }
+                  boolean match = isStrictSignatureSearch
+                                  ? myManager.areElementsEquivalent(constructor1, constructor)
+                                  : myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass());
+                  if (match && !processor.process(refExpr)) return false;
                 }
+                //as long as we've encountered super/this keyword, no implicit ctr calls are possible here
+                continue;
               }
             }
           }
         }
       }
-      processImplicitConstructorCall(constructorCanBeCalledImplicitly, method, processor, constructor,inheritor);
+      if (constructorCanBeCalledImplicitly) {
+        processImplicitConstructorCall(method, processor, constructor, inheritor);
+      }
     }
 
     return true;
   }
 
-  private void processImplicitConstructorCall(final boolean constructorCanBeCalledImplicitly, final PsiMember usage, final Processor<PsiReference> processor,
+  private void processImplicitConstructorCall(final PsiMember usage,
+                                              final Processor<PsiReference> processor,
                                               final PsiMethod constructor,
                                               final PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) return;
     PsiClass superClass = containingClass.getSuperClass();
-    if (constructorCanBeCalledImplicitly && myManager.areElementsEquivalent(constructor.getContainingClass(), superClass)) {
+    if (myManager.areElementsEquivalent(constructor.getContainingClass(), superClass)) {
       processor.process(new LightMemberReference(myManager, usage, PsiSubstitutor.EMPTY) {
         public PsiElement getElement() {
           return usage;
