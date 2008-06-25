@@ -10,6 +10,9 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -523,12 +526,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   // made public for tests
-  public void scanSourceContent(final Project project, final Collection<VirtualFile> roots) {
+  public void scanSourceContent(final Project project, final Collection<VirtualFile> roots, final int totalRootCount) {
     final String projectId = getProjectId(project);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final List<String> projectIds = Collections.singletonList(projectId);
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    int processed = 0;
     for (VirtualFile srcRoot : roots) {
+      if (indicator != null) {
+        indicator.setText2(srcRoot.getPresentableUrl());
+        indicator.setFraction((++processed) / (double)totalRootCount);
+      }
       fileIndex.iterateContentUnderDirectory(srcRoot, new ContentIterator() {
         public boolean processFile(final VirtualFile file) {
           if (!file.isDirectory()) {
@@ -568,51 +577,62 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             roots.removeAll(Arrays.asList(myRootsBefore));
             myRootsBefore = null;
           }
-          scanSourceContent(project, roots);
+          scanSourceContent(project, roots, roots.size());
         }
       });
 
       StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
         public void run() {
-          scanSourceContent(project, Arrays.asList(ProjectRootManager.getInstance(project).getContentSourceRoots()));
+          new Task.Modal(project, CompilerBundle.message("compiler.content.name.make"), false) {
+            public void run(@NotNull final ProgressIndicator indicator) {
+              indicator.setText(CompilerBundle.message("compiler.initial.scanning.progress.text"));
       
-          final IntermediateOutputCompiler[] compilers =
-              CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
+              final IntermediateOutputCompiler[] compilers =
+                  CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
 
-          if (compilers.length > 0) {
-            final Set<VirtualFile> intermediateRoots = new HashSet<VirtualFile>();
-            final Module[] modules = ModuleManager.getInstance(project).getModules();
-            for (IntermediateOutputCompiler compiler : compilers) {
-              for (Module module : modules) {
-                final VirtualFile outputRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(CompilerPaths.getGenerationOutputPath(compiler, module, false));
-                if (outputRoot != null) {
-                  intermediateRoots.add(outputRoot);
-                }
-                final VirtualFile testsOutputRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(CompilerPaths.getGenerationOutputPath(compiler, module, true));
-                if (testsOutputRoot != null) {
-                  intermediateRoots.add(testsOutputRoot);
-                }
-              }
-            }
-        
-            if (intermediateRoots.size() > 0) {
-              final String projectId = getProjectId(project);
-              final FileProcessor processor = new FileProcessor() {
-                final List<String> projects = Collections.singletonList(projectId);
-                public void execute(final VirtualFile file) {
-                  if (!isMarkedForRecompilation(projectId, getFileId(file))) {
-                    final SourceFileInfo srcInfo = loadSourceInfo(file);
-                    if (srcInfo == null || (srcInfo.getTimestamp(projectId) != file.getTimeStamp())) {
-                      addSourceForRecompilation(projects, file, srcInfo);
+              final Set<VirtualFile> intermediateRoots = new HashSet<VirtualFile>();
+              if (compilers.length > 0) {
+                final Module[] modules = ModuleManager.getInstance(project).getModules();
+                for (IntermediateOutputCompiler compiler : compilers) {
+                  for (Module module : modules) {
+                    final VirtualFile outputRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(CompilerPaths.getGenerationOutputPath(compiler, module, false));
+                    if (outputRoot != null) {
+                      intermediateRoots.add(outputRoot);
+                    }
+                    final VirtualFile testsOutputRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(CompilerPaths.getGenerationOutputPath(compiler, module, true));
+                    if (testsOutputRoot != null) {
+                      intermediateRoots.add(testsOutputRoot);
                     }
                   }
                 }
-              };
-              for (VirtualFile root : intermediateRoots) {
-                processRecursively(root, processor);
+              }
+
+              final List<VirtualFile> projectRoots = Arrays.asList(ProjectRootManager.getInstance(project).getContentSourceRoots());
+              final int totalRootsCount = projectRoots.size() + intermediateRoots.size(); 
+              scanSourceContent(project, projectRoots, totalRootsCount);
+              
+              if (intermediateRoots.size() > 0) {
+                final String projectId = getProjectId(project);
+                final FileProcessor processor = new FileProcessor() {
+                  final List<String> projects = Collections.singletonList(projectId);
+                  public void execute(final VirtualFile file) {
+                    if (!isMarkedForRecompilation(projectId, getFileId(file))) {
+                      final SourceFileInfo srcInfo = loadSourceInfo(file);
+                      if (srcInfo == null || (srcInfo.getTimestamp(projectId) != file.getTimeStamp())) {
+                        addSourceForRecompilation(projects, file, srcInfo);
+                      }
+                    }
+                  }
+                };
+                int processed = projectRoots.size();
+                for (VirtualFile root : intermediateRoots) {
+                  indicator.setText2(root.getPresentableUrl());
+                  indicator.setFraction((++processed) / (double)totalRootsCount);
+                  processRecursively(root, processor);
+                }
               }
             }
-          }
+          }.queue();
         }
       });
     }
