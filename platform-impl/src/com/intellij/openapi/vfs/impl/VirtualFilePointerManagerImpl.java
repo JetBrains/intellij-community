@@ -24,10 +24,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent{
   private Map<VirtualFilePointerListener, Set<VirtualFilePointer>> myListenerToPointersMap;
@@ -185,7 +182,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     for (Map.Entry<VirtualFilePointerListener, Set<VirtualFilePointer>> entry : myListenerToPointersMap.entrySet()) {
       VirtualFilePointerListener listener = entry.getKey();
       Set<VirtualFilePointer> pointerSet = entry.getValue();
-      System.err.println("Not disposed pointer: listener="+listener+"; urls: "+pointerSet);
+      System.err.println("Not disposed pointer: listener="+listener+"; urls: "+new HashSet(pointerSet));
     }
     //if (myListenerToPointersMap.isEmpty()) {
     //  System.err.println("All pointers are disposed");

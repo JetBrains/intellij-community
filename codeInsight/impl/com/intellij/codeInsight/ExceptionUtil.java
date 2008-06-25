@@ -18,7 +18,7 @@ import java.util.*;
  * @author mike
  */
 public class ExceptionUtil {
-  private static final @NonNls String CLONE_METHOD_NAME = "clone";
+  @NonNls private static final String CLONE_METHOD_NAME = "clone";
 
   private ExceptionUtil() {}
 
@@ -82,9 +82,7 @@ public class ExceptionUtil {
       List<PsiClassType> array = new ArrayList<PsiClassType>();
       if (tryBlock != null) {
         PsiClassType[] exceptions = getThrownExceptions(tryBlock);
-        for (PsiClassType exception : exceptions) {
-          array.add(exception);
-        }
+        array.addAll(Arrays.asList(exceptions));
       }
 
       PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
@@ -230,9 +228,7 @@ public class ExceptionUtil {
       if (foundExceptions == null) {
         foundExceptions = new HashSet<PsiClassType>();
       }
-      for (PsiClassType unhandledException : unhandledExceptions) {
-        foundExceptions.add(unhandledException);
-      }
+      foundExceptions.addAll(Arrays.asList(unhandledExceptions));
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {

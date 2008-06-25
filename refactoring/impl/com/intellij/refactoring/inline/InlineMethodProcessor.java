@@ -1204,7 +1204,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected Collection<? extends PsiElement> getElementsToWrite(final UsageViewDescriptor descriptor) {
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     if (myInlineThisOnly) {
       return Collections.singletonList(myReference);
     }

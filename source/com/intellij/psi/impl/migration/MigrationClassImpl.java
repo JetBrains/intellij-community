@@ -228,7 +228,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
-  public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
+  public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 

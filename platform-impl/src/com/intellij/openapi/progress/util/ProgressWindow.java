@@ -77,10 +77,10 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     if (parent != null) {
-      myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, parent, myCancelText);
+      myDialog = new MyDialog(shouldShowBackground, parent, myCancelText);
     }
     else {
-      myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, myProject, myCancelText);
+      myDialog = new MyDialog(shouldShowBackground, myProject, myCancelText);
     }
 
     Disposer.register(this, myDialog);
@@ -98,6 +98,10 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     myStarted = true;
+  }
+
+  private synchronized boolean isStarted() {
+    return myStarted;
   }
 
   protected void prepareShowDialog() {
@@ -124,7 +128,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 }
               });
               showDialog();
-            } else {
+            }
+            else {
               Disposer.dispose(ProgressWindow.this);
             }
           }
@@ -153,7 +158,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
             }
           });
         }
-        return myStarted && !isRunning();
+        return isStarted() && !isRunning();
       }
     });
 
@@ -282,7 +287,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   protected class MyDialog implements Disposable {
     private long myLastTimeDrawn = -1;
-    private boolean myShouldShowCancel;
     private boolean myShouldShowBackground;
 
     private Runnable myRepaintRunnable = new Runnable() {
@@ -348,23 +352,23 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private Window myParentWindow;
     private Point myLastClicked;
 
-    public MyDialog(boolean shouldShowCancel, boolean shouldShowBackground, Project project, String cancelText) {
+    public MyDialog(boolean shouldShowBackground, Project project, String cancelText) {
       myParentWindow = WindowManager.getInstance().suggestParentWindow(project);
       if (myParentWindow == null) {
         myParentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
       }
 
-      initDialog(shouldShowCancel, shouldShowBackground, cancelText);
+      initDialog(shouldShowBackground, cancelText);
     }
 
-    public MyDialog(boolean shouldShowCancel, boolean shouldShowBackground, Component parent, String cancelText) {
+    public MyDialog(boolean shouldShowBackground, Component parent, String cancelText) {
       myParentWindow = parent instanceof Window
                        ? (Window)parent
                        : (Window)SwingUtilities.getAncestorOfClass(Window.class, parent);
-      initDialog(shouldShowCancel, shouldShowBackground, cancelText);
+      initDialog(shouldShowBackground, cancelText);
     }
 
-    private void initDialog(boolean shouldShowCancel, boolean shouldShowBackground, String cancelText) {
+    private void initDialog(boolean shouldShowBackground, String cancelText) {
       myFunPanel.setLayout(new BorderLayout());
       myCancelButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -380,7 +384,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-      myShouldShowCancel = shouldShowCancel;
       myShouldShowBackground = shouldShowBackground;
       if (cancelText != null) {
         setCancelButtonText(cancelText);

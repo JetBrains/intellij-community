@@ -794,7 +794,7 @@ public class PsiClassImplUtil {
     if (!(another instanceof PsiClass)) return false;
     String name1 = aClass.getName();
     if (name1 == null) return false;
-    String name2 = ((PsiClass)another).getName();
+    String name2 = ((PsiClass)another).getName(); 
     if (name2 == null) return false;
     if (name1.hashCode() != name2.hashCode()) return false;
     if (!name1.equals(name2)) return false;

@@ -126,7 +126,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @NotNull
-  protected Collection<? extends PsiElement> getElementsToWrite(final UsageViewDescriptor descriptor) {
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     return Collections.emptyList(); // neither myClass nor mySuper are subject to change, it's just references that are going to change
   }
 }

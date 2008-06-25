@@ -126,8 +126,7 @@ public abstract class BaseRefactoringProcessor {
       }
     };
 
-    if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) {
       return;
     }
 
