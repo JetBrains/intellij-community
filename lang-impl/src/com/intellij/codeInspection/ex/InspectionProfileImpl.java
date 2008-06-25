@@ -10,8 +10,8 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.ExternalInfo;
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -181,6 +181,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void resetToBase() {
     myDisplayLevelMap.clear();
     copyToolsConfigurations(myBaseProfile);
+    if (myLockedProfile && myBaseProfile != null) { //store whole state for locked profiles
+      for (InspectionProfileEntry entry : myBaseProfile.getInspectionTools()) {
+        final HighlightDisplayKey displayKey = HighlightDisplayKey.find(entry.getShortName());
+        myDisplayLevelMap.put(displayKey, myBaseProfile.getToolState(displayKey));
+      }
+    }
   }
 
   public String getName() {
