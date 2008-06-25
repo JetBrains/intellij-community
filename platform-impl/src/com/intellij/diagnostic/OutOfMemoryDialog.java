@@ -58,9 +58,11 @@ public class OutOfMemoryDialog extends DialogWrapper {
     };
     myShutdownAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
 
+    myHeapSizeLabel.setText(VMOptions.XMX_OPTION_NAME);
     myHeapSizeField.setText(String.valueOf(VMOptions.readXmx()));
     myHeapCurrentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", VMOptions.readXmx()));
 
+    myPermGenSizeLabel.setText(VMOptions.PERM_GEN_OPTION_NAME);
     myPermGenSizeField.setText(String.valueOf(VMOptions.readMaxPermGen()));
     myPermGenCurrentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", VMOptions.readMaxPermGen()));
 
