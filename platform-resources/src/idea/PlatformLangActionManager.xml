@@ -31,6 +31,7 @@
     </group>
 
     <group id="PlatformOpenProjectGroup">
+      <action id="NewDirectoryProject" class="com.intellij.platform.NewDirectoryProjectAction"/>
       <action id="OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
