@@ -167,18 +167,6 @@ import java.util.Map;
     return LIGHT_VIRTUAL_FILE;
   }
 
-  public boolean hasTabGroups() {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean isFilePinned(VirtualFile file) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void setFilePinned(VirtualFile file, boolean pinned) {
-    throw new UnsupportedOperationException();
-  }
-
   public void unsplitWindow() {
     //To change body of implemented methods use File | Settings | File Templates.
   }
@@ -190,18 +178,6 @@ import java.util.Map;
   @NotNull
   public EditorWindow[] getWindows() {
     return new EditorWindow[0];  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  public int getTabGroupsOrientation() {
-    throw new UnsupportedOperationException();
-  }
-
-  public void setTabGroupsOrientation(int orientation) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void moveToOppositeTabGroup(VirtualFile file) {
-    throw new UnsupportedOperationException();
   }
 
   public FileEditor getSelectedEditor(@NotNull VirtualFile file) {

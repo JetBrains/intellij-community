@@ -96,7 +96,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
 
   @NotNull
   public final GlobalSearchScope getResolveScope() {
-    return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
+    return ((PsiManagerEx)getManager()).getFileManager().getResolveScope(this);
   }
 
   @NotNull

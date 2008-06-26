@@ -60,7 +60,7 @@ public class OpenFileDescriptor implements Navigatable {
     this(project, file, -1, -1, -1);
   }
 
-  private OpenFileDescriptor(Project project, VirtualFile file, int line, int col, int offset) {
+  private OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col, int offset) {
     myProject = project;
 
     myFile = file;
@@ -107,12 +107,10 @@ public class OpenFileDescriptor implements Navigatable {
 
   private boolean navigateInEditor(Project project, boolean focusEditor) {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile);
-    if (type == null || myFile == null || !myFile.isValid()) return false;
+    if (type == null || !myFile.isValid()) return false;
 
-    if (navigateInRequestedEditor()) return true;
-    if (navigateInAnyFileEditor(project, focusEditor)) return true;
+    return navigateInRequestedEditor() || navigateInAnyFileEditor(project, focusEditor);
 
-    return false;
   }
 
   private boolean navigateInRequestedEditor() {

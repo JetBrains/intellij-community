@@ -157,7 +157,7 @@ public class InjectedLanguageUtil {
       if (context == null) return;
 
       final PsiFile file = context.getContainingFile();
-      if (file == null || (!file.isPhysical() && file.getOriginalFile() == null)) return;
+      if (file == null || !file.isPhysical() && file.getOriginalFile() == null) return;
     }
     Places places = probeElementsUp(host, containingFile, probeUp);
     if (places == null) return;
@@ -257,8 +257,6 @@ public class InjectedLanguageUtil {
         catLeafs.append(leafText);
         TextRange range = leaf.getTextRange();
         int prefixLength;
-        int start;
-        int end;
         int startOffsetInHost;
         while (true) {
           prefixLength = shredHostRange.getStartOffset();
@@ -273,9 +271,9 @@ public class InjectedLanguageUtil {
             //          "Parsed text is '"+leaf.getText()+"'");
           }
 
-          start = range.getStartOffset() - prevHostsCombinedLength;
+          int start = range.getStartOffset() - prevHostsCombinedLength;
           if (start < prefixLength) return;
-          end = range.getEndOffset() - prevHostsCombinedLength;
+          int end = range.getEndOffset() - prevHostsCombinedLength;
           if (end > shred.range.getEndOffset() - shred.suffix.length() && end <= shred.range.getEndOffset()) return;
           startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
 
@@ -291,7 +289,7 @@ public class InjectedLanguageUtil {
         String leafEncodedText = "";
         while (true) {
           if (range.getEndOffset() <= shred.range.getEndOffset()) {
-            end = range.getEndOffset() - prevHostsCombinedLength;
+            int end = range.getEndOffset() - prevHostsCombinedLength;
             int endOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(end - prefixLength, rangeInsideHost);
             assert endOffsetInHost != -1;
             leafEncodedText += hostText.substring(startOffsetInHost, endOffsetInHost);
@@ -575,7 +573,7 @@ public class InjectedLanguageUtil {
         FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
         myHostVirtualFile = viewProvider.getVirtualFile();
         myHostDocument = (DocumentEx)viewProvider.getDocument();
-
+        assert myHostDocument != null : myHostPsiFile + "; " + viewProvider;
         return this;
       }
 
@@ -788,7 +786,7 @@ public class InjectedLanguageUtil {
       assert injectedNode != null;
       assert oldFileNode != null;
       if (oldDocument.areRangesEqual(documentWindow)) {
-        if (oldFile.getFileType() != injectedPsi.getFileType()) {
+        if (oldFile.getFileType() != injectedPsi.getFileType() || oldFile.getLanguage() != injectedPsi.getLanguage()) {
           injected.remove(i);
           oldDocument.dispose();
           continue;
@@ -796,7 +794,7 @@ public class InjectedLanguageUtil {
         oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
         if (!injectedNode.getText().equals(oldFileNode.getText())) {
           // replace psi
-          FileElement newFileElement = (FileElement)injectedNode;//.copyElement();
+          FileElement newFileElement = (FileElement)injectedNode;
           FileElement oldFileElement = oldFile.getTreeElement();
 
           if (oldFileElement.getFirstChildNode() != null) {

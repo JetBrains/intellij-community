@@ -109,7 +109,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
 
   public final StructureViewTreeElement[] getChildren() {
     final T element = getElement();
-    if (element == null) return StructureViewTreeElement.EMPTY_ARRAY;
+    if (element == null) return EMPTY_ARRAY;
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
     result.addAll(baseChildren);
