@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 
 /**
  * @author Hani Suleiman Date: Jul 21, 2005 Time: 12:56:02 PM

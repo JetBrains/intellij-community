@@ -2,7 +2,7 @@ package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.psi.PsiPackage;
 import com.intellij.openapi.project.Project;
-import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.ide.util.PackageChooserDialog;
 
 /**

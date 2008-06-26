@@ -4,7 +4,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
 
 /**

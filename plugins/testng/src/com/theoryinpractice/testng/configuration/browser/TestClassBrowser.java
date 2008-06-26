@@ -1,7 +1,7 @@
 package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
