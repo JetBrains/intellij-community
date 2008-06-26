@@ -15,10 +15,10 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -63,7 +63,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   public boolean isToBeShown(String featureId, Project project) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
-    if (!descriptor.isUnused()) return false;
+    if (descriptor == null || !descriptor.isUnused()) return false;
 
     String[] dependencyFeatures = descriptor.getDependencyFeatures();
     boolean locked = dependencyFeatures.length > 0;
@@ -75,8 +75,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
     if (locked) return false;
 
     ApplicabilityFilter[] filters = registry.getMatchingFilters(featureId);
-    for (int i = 0; i < filters.length; i++) {
-      ApplicabilityFilter filter = filters[i];
+    for (ApplicabilityFilter filter: filters) {
       if (!filter.isApplicable(featureId, project)) return false;
     }
 
@@ -132,8 +131,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   public void writeExternal(Element element) throws WriteExternalException {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     Set<String> ids = registry.getFeatureIds();
-    for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
-      String id = iterator.next();
+    for (String id: ids) {
       Element featureElement = new Element(FEATURE_TAG);
       featureElement.setAttribute(ATT_ID, id);
       FeatureDescriptor descriptor = (FeatureDescriptor)registry.getFeatureDescriptor(id);
@@ -166,6 +164,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   }
 
   private final class ProgressFunProvider implements ProgressFunComponentProvider {
+    @Nullable
     public JComponent getProgressFunComponent(Project project, String processId) {
       if (ProgressFunProvider.COMPILATION_ID.equals(processId)) {
         if (!SHOW_IN_COMPILATION_PROGRESS) return null;

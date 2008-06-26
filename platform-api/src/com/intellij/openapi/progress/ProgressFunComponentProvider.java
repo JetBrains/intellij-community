@@ -17,11 +17,13 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public interface ProgressFunComponentProvider {
   @NonNls String COMPILATION_ID = "compilation";
 
+  @Nullable
   JComponent getProgressFunComponent(Project project, @NonNls String processId);
 }
