@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.apache.maven.artifact.Artifact;
@@ -45,13 +46,26 @@ public class MavenArtifactDownloader {
         downloadPlugins(mavenProjects);
       }
     }
-    catch (CanceledException e) {
-      LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
-      throw e;
+    finally {
+      scheduleFilesRefresh(downloadedFiles);
     }
-    LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
   }
 
+  private void scheduleFilesRefresh(final List<File> downloadedFiles) {
+    Runnable r = new Runnable() {
+      public void run() {
+        LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
+      }
+    };
+
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        || ApplicationManager.getApplication().isDispatchThread()) {
+      r.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(r);
+    }
+  }
 
   private boolean isEnabled(MavenArtifactSettings.UPDATE_MODE level, boolean demand) {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);

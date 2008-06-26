@@ -42,7 +42,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   private List<String> myProfiles = new ArrayList<String>();
   private List<String> mySelectedProfiles = new ArrayList<String>();
 
-  private MavenProjectsTree myMavenProjectModelManager;
+  private MavenProjectsTree myMavenProjectTree;
 
   private boolean myOpenModulesConfigurator;
 
@@ -56,7 +56,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
 
   public void cleanup() {
     super.cleanup();
-    myMavenProjectModelManager = null;
+    myMavenProjectTree = null;
     myImportRoot = null;
     myProjectToUpdate = null;
   }
@@ -75,7 +75,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
 
     manager.setManagedFiles(myFiles);
     manager.setActiveProfiles(mySelectedProfiles);
-    manager.setImportedMavenProjectModelManager(myMavenProjectModelManager);
+    manager.setImportedMavenProjectModelManager(myMavenProjectTree);
     manager.commit();
 
     enusreRepositoryPathMacro();
@@ -110,7 +110,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   public boolean setRootDirectory(final String root) throws ConfigurationException {
     myFiles = null;
     myProfiles.clear();
-    myMavenProjectModelManager = null;
+    myMavenProjectTree = null;
 
     myImportRoot = FileFinder.refreshRecursively(root);
     if (getImportRoot() == null) return false;
@@ -126,7 +126,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
         collectProfiles();
 
         if (myProfiles.isEmpty()) {
-          createMavenProjectModel(p);
+          readMavenProjectTree(p);
         }
 
         p.setText2("");
@@ -162,12 +162,12 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   }
 
   public boolean setSelectedProfiles(List<String> profiles) throws ConfigurationException {
-    myMavenProjectModelManager = null;
+    myMavenProjectTree = null;
     mySelectedProfiles = profiles;
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
       public void run(MavenProcess p) throws CanceledException {
-        createMavenProjectModel(p);
+        readMavenProjectTree(p);
         p.setText2("");
       }
     });
@@ -184,16 +184,16 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     return true;
   }
 
-  private void createMavenProjectModel(MavenProcess p) throws CanceledException {
-    myMavenProjectModelManager = new MavenProjectsTree();
-    myMavenProjectModelManager.read(myFiles,
-                                    mySelectedProfiles,
-                                    getCoreState(),
-                                    p);
+  private void readMavenProjectTree(MavenProcess p) throws CanceledException {
+    myMavenProjectTree = new MavenProjectsTree();
+    myMavenProjectTree.read(myFiles,
+                            mySelectedProfiles,
+                            getCoreState(),
+                            p);
   }
 
   public List<MavenProjectModel> getList() {
-    return myMavenProjectModelManager.getRootProjects();
+    return myMavenProjectTree.getRootProjects();
   }
 
   public boolean isMarked(final MavenProjectModel element) {
@@ -201,7 +201,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   }
 
   public void setList(List<MavenProjectModel> nodes) throws ConfigurationException {
-    for (MavenProjectModel node : myMavenProjectModelManager.getRootProjects()) {
+    for (MavenProjectModel node : myMavenProjectTree.getRootProjects()) {
       node.setIncluded(nodes.contains(node));
     }
   }
@@ -264,7 +264,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   }
 
   public String getSuggestedProjectName() {
-    final List<MavenProjectModel> list = myMavenProjectModelManager.getRootProjects();
+    final List<MavenProjectModel> list = myMavenProjectTree.getRootProjects();
     if (list.size() == 1) {
       return list.get(0).getMavenId().artifactId;
     }
