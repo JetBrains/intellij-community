@@ -20,11 +20,11 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -79,7 +79,7 @@ public class TestMethods extends TestMethod {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (AbstractTestProxy failedTest : myFailedTests) {
       Location location = failedTest.getLocation(project);
-      if (location == null) continue;
+      if (!(location instanceof MethodLocation)) continue;
       PsiElement psiElement = location.getPsiElement();
       LOG.assertTrue(psiElement instanceof PsiMethod);
       PsiMethod method = (PsiMethod)psiElement;
