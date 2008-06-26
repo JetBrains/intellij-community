@@ -587,6 +587,7 @@ class FormatProcessor {
     final int endOffset = dependance.getEndOffset();
     while (child.getEndOffset() < endOffset) {
       child = child.getNextBlock();
+      if (child == null) return false;
       if (child.getWhiteSpace().containsLineFeeds()) return true;
       if (child.containsLineFeeds()) return true;
     }
