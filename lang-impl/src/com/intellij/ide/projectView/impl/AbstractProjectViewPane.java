@@ -56,7 +56,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   private Runnable myTreeChangeListener;
   protected DnDAwareTree myTree;
   protected AbstractTreeStructure myTreeStructure;
-  protected AbstractTreeBuilder myTreeBuilder;
+  private AbstractTreeBuilder myTreeBuilder;
   // subId->Tree state; key may be null
   private final Map<String,TreeState> myReadTreeState = new HashMap<String, TreeState>();
   private String mySubId;
@@ -65,6 +65,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   protected AbstractProjectViewPane(Project project) {
     myProject = project;
+    Disposer.register(project, this);
   }
 
   protected final void fireTreeChangeListener() {
@@ -107,10 +108,10 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     return myTree;
   }
   public void expand(@Nullable final Object[] path, final boolean requestFocus){
-    if (myTreeBuilder == null || path == null) return;
-    myTreeBuilder.buildNodeForPath(path);
+    if (getTreeBuilder() == null || path == null) return;
+    getTreeBuilder().buildNodeForPath(path);
 
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForPath(path);
+    DefaultMutableTreeNode node = getTreeBuilder().getNodeForPath(path);
     if (node == null) {
       return;
     }
@@ -123,10 +124,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public void dispose() {
-    if (myTreeBuilder != null) {
-      Disposer.dispose(myTreeBuilder);
-      myTreeBuilder = null;
-    }
+    setTreeBuilder(null);
     myTree = null;
     myTreeStructure = null;
   }
@@ -145,7 +143,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
         if (requestFocus) {
           projectView.changeView(getId(), getSubId());
         }
-        ((BaseProjectTreeBuilder)myTreeBuilder).selectInWidth(toSelect, requestFocus, new Condition<AbstractTreeNode>(){
+        ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, new Condition<AbstractTreeNode>(){
           public boolean value(final AbstractTreeNode node) {
             return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
           }
@@ -384,7 +382,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public void installComparator() {
     final ProjectView projectView = ProjectView.getInstance(myProject);
-    myTreeBuilder.setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
+    getTreeBuilder().setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
   }
 
   protected void installTreePopupHandler(final String place, final String groupName) {
@@ -437,6 +435,13 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       }, myTree, myProject, FLAVORS[0]));
 
       myTree.enableDnd(this);
+    }
+  }
+
+  public void setTreeBuilder(final AbstractTreeBuilder treeBuilder) {
+    myTreeBuilder = treeBuilder;
+    if (treeBuilder != null) {
+      Disposer.register(myProject, treeBuilder);
     }
   }
 

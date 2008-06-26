@@ -53,7 +53,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     enableDnD();
     myComponent = new JScrollPane(myTree);
     myTreeStructure = createStructure();
-    myTreeBuilder = createBuilder(treeModel);
+    setTreeBuilder(createBuilder(treeModel));
 
     installComparator();
     initTree();
@@ -135,23 +135,23 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     final ArrayList<Object> selectionPaths = new ArrayList<Object>();
     Runnable expandPaths = null;
     if (restoreExpandedPaths) {
-      TreeBuilderUtil.storePaths(myTreeBuilder, (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
+      TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
       expandPaths = new Runnable() {
         public void run() {
-          if (myTree != null && myTreeBuilder != null && !myTreeBuilder.isDisposed()) {
+          if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
             myTree.setSelectionPaths(new TreePath[0]);
-            TreeBuilderUtil.restorePaths(myTreeBuilder, pathsToExpand, selectionPaths, true);
+            TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
           }
         }
       };
     }
-    myTreeBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTreeBuilder.getTreeModel().getRoot(), expandPaths);
+    getTreeBuilder().addSubtreeToUpdate((DefaultMutableTreeNode)getTreeBuilder().getTreeModel().getRoot(), expandPaths);
     //myTreeBuilder.updateFromRoot();
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      ((BaseProjectTreeBuilder)myTreeBuilder).select(element, file, requestFocus);
+      ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus);
     }
   }
 

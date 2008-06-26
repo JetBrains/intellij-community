@@ -87,6 +87,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     myOccurenceNavigator = new MyOccurenceNavigator();
     initUI();
     myTodoTreeBuilder = createTreeBuilder(myTree, model, myProject);
+    Disposer.register(myProject, myTodoTreeBuilder);
     updateTodoFilter();
     myTodoTreeBuilder.setShowPackages(mySettings.arePackagesShown());
     myTodoTreeBuilder.setShowModules(mySettings.areModulesShown());
@@ -184,7 +185,6 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   }
 
   void dispose() {
-    Disposer.dispose(myTodoTreeBuilder);
     myVisibilityWatcher.deinstall(this);
     myVisibilityWatcher = null;
     myProject = null;

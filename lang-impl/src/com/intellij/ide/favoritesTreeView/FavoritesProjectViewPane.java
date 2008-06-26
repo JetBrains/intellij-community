@@ -73,7 +73,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   public void installComparator() {
     final ProjectView projectView = ProjectView.getInstance(myProject);
-    myTreeBuilder.setNodeDescriptorComparator(new FavoritesComparator(projectView.isSortByType(ID), myProject));
+    getTreeBuilder().setNodeDescriptorComparator(new FavoritesComparator(projectView.isSortByType(ID), myProject));
   }
 
   public JComponent createComponent() {
@@ -83,7 +83,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
     myViewPanel = new FavoritesTreeViewPanel(myProject, null, getSubId());
     myTree = myViewPanel.getTree();
-    myTreeBuilder = myViewPanel.getBuilder();
+    setTreeBuilder(myViewPanel.getBuilder());
     myTreeStructure = myViewPanel.getFavoritesTreeStructure();
     installComparator();
     return myViewPanel;
@@ -105,7 +105,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   }
 
   public void updateFromRoot(boolean restoreExpandedPaths) {
-    myTreeBuilder.updateFromRoot();
+    getTreeBuilder().updateFromRoot();
   }
 
   public void select(Object object, VirtualFile file, boolean requestFocus) {
