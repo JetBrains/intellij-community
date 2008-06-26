@@ -33,6 +33,10 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
       return factories;
     }
 
+    if (! writeAccess) {
+      return factories;
+    }
+
     // get project for path.
     Project project = findProject(path);
     if (project == null) {
