@@ -315,6 +315,7 @@ public class AnalysisScope {
 
   private static boolean processFile(final VirtualFile fileOrDir, final PsiElementVisitor visitor, final PsiManager psiManager,
                                      final boolean needReadAction) {
+    if (!fileOrDir.isValid()) return false;
     final PsiFile file = getPsiFileInReadAction(psiManager, fileOrDir);
     if (file == null){
       //skip .class files under src directory
