@@ -234,7 +234,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
           new DefaultCoverageFileProvider(coverageFileName),
           getPatterns(),
           lastCoverageTime,
-          getSuiteToMergeWith(), getCoverageRunner(), isTrackPerTestCoverage() && !isSampling());
+          getSuiteToMergeWith(), getCoverageRunner(), isTrackPerTestCoverage() && !isSampling(), !isSampling());
         appendCoverageArgument(params);
       }
 
