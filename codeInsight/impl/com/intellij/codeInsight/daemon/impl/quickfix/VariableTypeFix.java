@@ -7,21 +7,14 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableTypeFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
+  static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
 
   private final PsiVariable myVariable;
   private final PsiType myReturnType;
@@ -34,8 +27,8 @@ public class VariableTypeFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
-                                  myVariable.getName(),
-                                  myReturnType.getCanonicalText());
+                                  getVariable().getName(),
+                                  getReturnType().getCanonicalText());
   }
 
   @NotNull
@@ -44,24 +37,22 @@ public class VariableTypeFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myVariable != null
-        && myVariable.isValid()
-        && myVariable.getManager().isInProject(myVariable)
-        && myReturnType != null
-        && myReturnType.isValid()
-        && !TypeConversionUtil.isNullType(myReturnType)
-        && !TypeConversionUtil.isVoidType(myReturnType);
+    return getVariable() != null
+        && getVariable().isValid()
+        && getVariable().getManager().isInProject(getVariable())
+        && getReturnType() != null
+        && getReturnType().isValid()
+        && !TypeConversionUtil.isNullType(getReturnType())
+        && !TypeConversionUtil.isVoidType(getReturnType());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(getVariable().getContainingFile())) return;
     try {
-      myVariable.normalizeDeclaration();
-      final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(myVariable));
-      rules.setMigrationRootType(myReturnType);
-      rules.setBoundScope(GlobalSearchScope.projectScope(project));
-      new TypeMigrationProcessor(project, myVariable, rules).run();
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
+      getVariable().normalizeDeclaration();
+      getVariable().getTypeElement().replace(JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(
+          getReturnType()));
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(getVariable());
       UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -72,4 +63,11 @@ public class VariableTypeFix implements IntentionAction {
     return true;
   }
 
+  protected PsiVariable getVariable() {
+    return myVariable;
+  }
+
+  protected PsiType getReturnType() {
+    return myReturnType;
+  }
 }

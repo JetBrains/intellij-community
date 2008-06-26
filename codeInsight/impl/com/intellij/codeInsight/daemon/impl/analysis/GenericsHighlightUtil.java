@@ -667,6 +667,7 @@ public class GenericsHighlightUtil {
     HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
     if (highlightInfo != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new TypeMigrationFix(parameter, itemType), null);
     } else {
       highlightInfo = checkRawToGenericAssignment(parameterType, itemType, statement.getIterationParameter());
     }

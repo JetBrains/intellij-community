@@ -426,6 +426,7 @@ public class HighlightUtil {
       }
       if (leftVar != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(leftVar, rType));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new TypeMigrationFix(leftVar, rType));
       }
     }
     return highlightInfo;
@@ -458,6 +459,7 @@ public class HighlightUtil {
     HighlightInfo highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end));
     if (highlightInfo != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(variable, rType));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new TypeMigrationFix(variable, rType));
     }
     return highlightInfo;
   }
