@@ -86,6 +86,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs {
@@ -543,6 +544,18 @@ public class SvnVcs extends AbstractVcs {
     public JavaSVNDebugLogger(boolean loggingEnabled, Logger log) {
       myLoggingEnabled = loggingEnabled;
       myLog = log;
+    }
+
+    public void log(final Throwable th, final Level logLevel) {
+      if (myLoggingEnabled) {
+        myLog.info(th);
+      }
+    }
+
+    public void log(final String message, final Level logLevel) {
+      if (myLoggingEnabled) {
+        myLog.info(message);
+      }
     }
 
     public void logError(final String message) {
