@@ -7,24 +7,27 @@ package com.intellij.ide.impl.convert;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.convert.ui.ProjectConversionWizard;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author nik
  */
 public class ProjectConversionUtil {
+  private static enum ProjectConversionAction {
+    DO_NOTHING, LEAVE_UNCONVERTED, ASK_TO_CONVERT, FORCE_CONVERSION
+  }
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectConversionUtil");
   @NonNls private static final String PROJECT_FILES_BACKUP = "projectFilesBackup";
   @NonNls private static final String BACKUP_EXTENSION = "backup";
@@ -32,8 +35,39 @@ public class ProjectConversionUtil {
   private ProjectConversionUtil() {
   }
 
-  private static boolean isConverted(Element versionComponent) {
-    return Boolean.parseBoolean(versionComponent.getAttributeValue(ProjectFileVersionImpl.CONVERTED_ATTRIBUTE));
+  private static ProjectConversionAction getAction(String projectFilePath) throws IOException, QualifiedJDomException {
+    Element versionComponent = JDomConvertingUtil.findComponent(loadProjectFileRoot(projectFilePath), ProjectFileVersionImpl.COMPONENT_NAME);
+    if (versionComponent == null) {
+      return ProjectConversionAction.ASK_TO_CONVERT;
+    }
+
+    Set<String> registeredConvertors = CompositeConverterFactory.getConvertorIds();
+    Set<String> convertors = getConvertors(versionComponent, registeredConvertors);
+
+    if (Boolean.parseBoolean(versionComponent.getAttributeValue(ProjectFileVersionImpl.CONVERTED_ATTRIBUTE))) {
+      if (registeredConvertors.equals(convertors)) {
+        return ProjectConversionAction.DO_NOTHING;
+      }
+      return ProjectConversionAction.FORCE_CONVERSION;
+    }
+
+    if (registeredConvertors.equals(convertors)) {
+      return ProjectConversionAction.LEAVE_UNCONVERTED;
+    }
+    return ProjectConversionAction.ASK_TO_CONVERT;
+  }
+
+  private static Set<String> getConvertors(final Element versionComponent, final Set<String> registeredConvertors) {
+    Set<String> convertors = new HashSet<String>();
+    @SuppressWarnings({"unchecked"})
+    List<Element> children = versionComponent.getChildren(ProjectFileVersionImpl.CONVERTER_TAG);
+    for (Element child : children) {
+      convertors.add(child.getAttributeValue(ProjectFileVersionImpl.CONVERTER_ID_ATTRIBUTE));
+    }
+    if (convertors.isEmpty() && registeredConvertors.size() == 1) {
+      convertors = registeredConvertors;
+    }
+    return convertors;
   }
 
   private static Element loadProjectFileRoot(String path) throws QualifiedJDomException, IOException {
@@ -45,10 +79,10 @@ public class ProjectConversionUtil {
     try {
       if (new File(projectFilePath).isDirectory()) return true;
 
-      Element versionComponent = getVersionComponent(projectFilePath);
-      if (versionComponent != null && isConverted(versionComponent)) return true;
+      ProjectConversionAction action = getAction(projectFilePath);
+      if (action == ProjectConversionAction.DO_NOTHING) return true;
 
-      final ProjectConverter converter = getConverter(projectFilePath);
+      final ProjectConverter converter = CompositeConverterFactory.getCompositeProjectConverter(projectFilePath);
       if (converter == null) return true;
 
       converter.prepare();
@@ -77,12 +111,12 @@ public class ProjectConversionUtil {
   @NotNull
   public static ProjectConversionResult convertProject(String projectFilePath) {
     try {
-      final Element versionComponent = getVersionComponent(projectFilePath);
-      if (versionComponent != null && isConverted(versionComponent)) {
+      ProjectConversionAction action = getAction(projectFilePath);
+      if (action == ProjectConversionAction.DO_NOTHING) {
         return ProjectConversionResult.OK;
       }
 
-      final ProjectConverter converter = getConverter(projectFilePath);
+      final ProjectConverter converter = CompositeConverterFactory.getCompositeProjectConverter(projectFilePath);
       if (converter == null) {
         return ProjectConversionResult.OK;
       }
@@ -92,13 +126,12 @@ public class ProjectConversionUtil {
         return ProjectConversionResult.OK;
       }
 
-      if (versionComponent != null) {
-        LOG.assertTrue(!isConverted(versionComponent));
+      if (action == ProjectConversionAction.LEAVE_UNCONVERTED) {
         return new ProjectConversionResult(converter.createHelper());
       }
 
       String projectName = FileUtil.getNameWithoutExtension(new File(projectFilePath));
-      ProjectConversionWizard wizard = new ProjectConversionWizard(converter, projectName);
+      ProjectConversionWizard wizard = new ProjectConversionWizard(converter, projectName, action == ProjectConversionAction.FORCE_CONVERSION);
       wizard.show();
       if (!wizard.isOK()) {
         return ProjectConversionResult.DO_NOT_OPEN;
@@ -122,33 +155,6 @@ public class ProjectConversionUtil {
       return ProjectConversionResult.DO_NOT_OPEN;
     }
 
-  }
-
-  @Nullable
-  private static Element getVersionComponent(final String projectFilePath) throws QualifiedJDomException, IOException {
-    return JDomConvertingUtil.findComponent(loadProjectFileRoot(projectFilePath), ProjectFileVersionImpl.COMPONENT_NAME);
-  }
-
-  @Nullable
-  private static ProjectConverter getConverter(final String projectFilePath) {
-    for (ConverterFactory converterFactory : Extensions.getExtensions(ConverterFactory.EXTENSION_POINT)) {
-      final ProjectConverter converter = converterFactory.createConverter(projectFilePath);
-      if (converter != null) {
-        return converter;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static ModuleConverter getModuleConverter() {
-    for (ConverterFactory converterFactory : Extensions.getExtensions(ConverterFactory.EXTENSION_POINT)) {
-      final ModuleConverter converter = converterFactory.createModuleConverter();
-      if (converter != null) {
-        return converter;
-      }
-    }
-    return null;
   }
 
   public static File backupFile(File file) throws IOException {

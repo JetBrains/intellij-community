@@ -22,6 +22,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.convert.ModuleConverter;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.ide.impl.convert.ProjectFileVersion;
+import com.intellij.ide.impl.convert.CompositeConverterFactory;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -111,7 +112,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
   }
 
   private static boolean convertModule(final Project current, final File file, final Document document, final Element root) throws IOException {
-    final ModuleConverter converter = ProjectConversionUtil.getModuleConverter();
+    final ModuleConverter converter = CompositeConverterFactory.getCompositeModuleConverter();
     if (converter != null && converter.isConversionNeeded(root)) {
       if (current != null && !ProjectFileVersion.getInstance(current).isConverted()) {
         ProjectFileVersion.getInstance(current).showNotAllowedMessage();

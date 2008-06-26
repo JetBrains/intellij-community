@@ -12,20 +12,26 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
+ *
+ * DO NOT CONVERT THIS COMPONENT TO SERVICE. ITS CONFIGURATION IS ACCESSED VIA JDOM BEFORE PROJECT OPENING
  */
 @State(
   name = ProjectFileVersionImpl.COMPONENT_NAME,
@@ -39,6 +45,8 @@ import java.io.IOException;
 public class ProjectFileVersionImpl extends ProjectFileVersion implements ProjectComponent, PersistentStateComponent<ProjectFileVersionImpl.ProjectFileVersionState> {
   @NonNls public static final String COMPONENT_NAME = "ProjectFileVersion";
   @NonNls public static final String CONVERTED_ATTRIBUTE = "converted";
+  @NonNls public static final String CONVERTER_TAG = "converter";
+  @NonNls public static final String CONVERTER_ID_ATTRIBUTE = "id";
   private ProjectFileVersionState myState = new ProjectFileVersionState();
   private Project myProject;
 
@@ -51,6 +59,10 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   public ProjectFileVersionImpl(final Project project) {
     myProject = project;
     myState.myConverted = Boolean.toString(project.getPicoContainer().getComponentInstance(ProjectConversionHelper.class) == null);
+    Set<String> convertors = CompositeConverterFactory.getConvertorIds();
+    if (convertors.size() > 1) {
+      myState.myConverters.addAll(convertors);
+    }
   }
 
   @NonNls
@@ -67,14 +79,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     if (isConverted()) {
       return AllowedFeaturesFilter.ALL_ALLOWED;
     }
-    final ConverterFactory[] extensions = Extensions.getExtensions(ConverterFactory.EXTENSION_POINT);
-    for (ConverterFactory converterFactory : extensions) {
-      final AllowedFeaturesFilter filter = converterFactory.getUnconvertedProjectFeaturesFilter();
-      if (filter != null) {
-        return filter;
-      }
-    }
-    return AllowedFeaturesFilter.ALL_ALLOWED;
+    return CompositeConverterFactory.getCompositeUnconvertedProjectFeaturesFilter();
   }
 
   public void disposeComponent() {
@@ -141,7 +146,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   }
 
   public void loadState(final ProjectFileVersionState object) {
-    myState = object;
+    //state is set in constructor and must not be loaded from ipr
   }
 
   public void showNotAllowedMessage() {
@@ -152,5 +157,8 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     @Attribute(CONVERTED_ATTRIBUTE)
     public String myConverted;
 
+    @Property(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false, elementTag = CONVERTER_TAG, elementValueAttribute = CONVERTER_ID_ATTRIBUTE)
+    public List<String> myConverters = new ArrayList<String>();
   }
 }
