@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -18,6 +19,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -98,7 +100,7 @@ public class CreateTestDialog extends DialogWrapper {
       if (p.getName().equals(defaultLibrary)) {
         myDefaultLibraryButton = b;
       }
-      
+
       b.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           if (b.isSelected()) onLibrarySelected(p);
@@ -128,6 +130,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     mySuperClassField = JavaReferenceEditorUtil
         .createReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", PsiManager.getInstance(myProject), true);
+    mySuperClassField.setMinimumSize(mySuperClassField.getPreferredSize());
 
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";
     myTargetPackageField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
@@ -143,8 +146,8 @@ public class CreateTestDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
                                 myTargetPackageField.getChildComponent());
 
-    myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.generate", "setUp/@Before"));
-    myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.generate", "tearDown/@After"));
+    myGenerateBeforeBox = new JCheckBox("setUp/@Before");
+    myGenerateAfterBox = new JCheckBox("tearDown/@After");
 
     myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
     myShowInheritedMethodsBox.addActionListener(new ActionListener() {
@@ -187,9 +190,10 @@ public class CreateTestDialog extends DialogWrapper {
         }
       }, false);
       c = c.getSuperClass();
-    } while(c != null
-            && c.getSuperClass() != null // not the Object
-            && myShowInheritedMethodsBox.isSelected());
+    }
+    while (c != null
+           && c.getSuperClass() != null // not the Object
+           && myShowInheritedMethodsBox.isSelected());
 
     myMethodsTable.setMemberInfos(methods.toArray(new MemberInfo[methods.size()]));
   }
@@ -242,7 +246,7 @@ public class CreateTestDialog extends DialogWrapper {
     panel.setBorder(IdeBorderFactory.createBorder());
 
     GridBagConstraints constr = new GridBagConstraints();
-    constr.insets = new Insets(4, 8, 4, 8);
+
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
 
@@ -254,6 +258,8 @@ public class CreateTestDialog extends DialogWrapper {
       librariesPanel.add(b);
     }
 
+    constr.insets = insets(4);
+    constr.gridy = 1;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.testing.library")), constr);
@@ -265,15 +271,19 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryPanel = new JPanel(new BorderLayout());
     myFixLibraryLabel = new JLabel();
-    myFixLibraryLabel.setIcon(Messages.getWarningIcon());
+    myFixLibraryLabel.setIcon(IconLoader.getIcon("/actions/intentionBulb.png"));
     myFixLibraryPanel.add(myFixLibraryLabel, BorderLayout.CENTER);
     myFixLibraryPanel.add(myFixLibraryButton, BorderLayout.EAST);
 
+    constr.insets = insets(1);
+    constr.gridy = 2;
     constr.gridx = 0;
     panel.add(myFixLibraryPanel, constr);
 
     constr.gridheight = 1;
 
+    constr.insets = insets(6);
+    constr.gridy = 3;
     constr.gridx = 0;
     constr.weightx = 0;
     constr.gridwidth = 1;
@@ -283,6 +293,8 @@ public class CreateTestDialog extends DialogWrapper {
     constr.weightx = 1;
     panel.add(myTargetClassNameField, constr);
 
+    constr.insets = insets(1);
+    constr.gridy = 4;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.super.class")), constr);
@@ -291,6 +303,8 @@ public class CreateTestDialog extends DialogWrapper {
     constr.weightx = 1;
     panel.add(mySuperClassField, constr);
 
+    constr.insets = insets(1);
+    constr.gridy = 5;
     constr.gridx = 0;
     constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label")), constr);
@@ -302,20 +316,32 @@ public class CreateTestDialog extends DialogWrapper {
     targetPackagePanel.add(myTargetPackageField, BorderLayout.CENTER);
     panel.add(targetPackagePanel, constr);
 
-    constr.gridx = 0;
-    constr.gridwidth = GridBagConstraints.REMAINDER;
-    panel.add(myGenerateBeforeBox, constr);
-    panel.add(myGenerateAfterBox, constr);
-
+    constr.insets = insets(6);
+    constr.gridy = 6;
     constr.gridx = 0;
     constr.weightx = 0;
-    constr.gridwidth = 1;
+    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.generate")), constr);
+
+    constr.gridx = 1;
+    constr.weightx = 1;
+    panel.add(myGenerateBeforeBox, constr);
+
+    constr.insets = insets(1);
+    constr.gridy = 7;
+    panel.add(myGenerateAfterBox, constr);
+
+    constr.insets = insets(6);
+    constr.gridy = 8;
+    constr.gridx = 0;
+    constr.weightx = 0;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.select.methods")), constr);
 
     constr.gridx = 1;
     constr.weightx = 1;
     panel.add(myShowInheritedMethodsBox, constr);
 
+    constr.insets = insets(1, 8);
+    constr.gridy = 9;
     constr.gridx = 0;
     constr.gridwidth = GridBagConstraints.REMAINDER;
     constr.fill = GridBagConstraints.BOTH;
@@ -323,6 +349,13 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(new JScrollPane(myMethodsTable), constr);
 
     return panel;
+  }
+
+  private static Insets insets(int top) {
+    return insets(top, 0);
+  }
+  private static Insets insets(int top, int bottom) {
+    return new Insets(top, 8, bottom, 8);
   }
 
   public String getClassName() {
@@ -396,7 +429,8 @@ public class CreateTestDialog extends DialogWrapper {
     VirtualFile selectedRoot;
     if (roots.length == 1) {
       selectedRoot = roots[0];
-    } else {
+    }
+    else {
       PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
       selectedRoot = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
       if (selectedRoot == null) return null;
@@ -421,10 +455,16 @@ public class CreateTestDialog extends DialogWrapper {
     return name != null ? name.trim() : "";
   }
 
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("reference.dialogs.createTest");
+  }
+
   private class MyChooseSuperClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
       TreeClassChooserFactory f = TreeClassChooserFactory.getInstance(myProject);
-      TreeClassChooser dialog = f.createAllProjectScopeChooser(CodeInsightBundle.message("intention.create.test.dialog.choose.super.class"));
+      TreeClassChooser dialog =
+          f.createAllProjectScopeChooser(CodeInsightBundle.message("intention.create.test.dialog.choose.super.class"));
       dialog.showDialog();
       PsiClass aClass = dialog.getSelectedClass();
       if (aClass != null) {
