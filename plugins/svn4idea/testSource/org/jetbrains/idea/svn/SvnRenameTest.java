@@ -1,6 +1,24 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -8,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 public class SvnRenameTest extends SvnTestCase {
   @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\r\n";
 
-  /*@Test
+  @Test
   public void testSimpleRename() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "test");
@@ -288,5 +306,5 @@ public class SvnRenameTest extends SvnTestCase {
 
       }
     }.execute().throwException();
-  }*/
+  }
 }

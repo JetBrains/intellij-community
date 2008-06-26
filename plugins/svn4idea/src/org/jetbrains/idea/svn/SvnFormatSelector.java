@@ -29,6 +29,10 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
   }
 
   public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return factories;
+    }
+
     // get project for path.
     Project project = findProject(path);
     if (project == null) {
@@ -119,6 +123,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
   }
 
   public static String showUpgradeDialog(final File path, final Project project, final boolean display13format, final String mode) {
+    assert ! ApplicationManager.getApplication().isUnitTestMode();
     final String[] newMode = new String[] {mode};
     try {
       if (SwingUtilities.isEventDispatchThread()) {

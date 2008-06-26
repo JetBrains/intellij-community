@@ -15,10 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -217,7 +214,8 @@ public class SvnChangeProvider implements ChangeProvider {
     }
     try {
       if (path.isDirectory()) {
-        statusClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
+        statusClient.doStatus(path.getIOFile(), SVNRevision.WORKING, recursively ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES,
+                              false, true, true, false, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
             if (context.isCanceled()) {
               throw new ProcessCanceledException();
@@ -240,7 +238,7 @@ public class SvnChangeProvider implements ChangeProvider {
               }
             }
           }
-        });
+        }, null);
       } else {
         processFile(path, context, parentStatus);
       }
@@ -291,9 +289,7 @@ public class SvnChangeProvider implements ChangeProvider {
       if (parentCopyFromURL != null) {
         context.addCopiedFile(filePath, status, parentCopyFromURL);
       }
-      else {
-        processStatus(filePath, status, context.getBuilder(), parentStatus);
-      }
+      processStatus(filePath, status, context.getBuilder(), parentStatus);
     }
   }
 

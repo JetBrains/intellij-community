@@ -1,6 +1,5 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
@@ -13,7 +12,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
-@Bombed(user = "Irina", month = Calendar.JUNE, day = 27)
 public class SvnCachingRevisionsTest extends IdeaTestCase {
   private SvnRepositoryLocation myLocation;
   private LoadedRevisionsCache myInternalManager;
