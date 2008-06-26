@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -21,35 +22,51 @@ public class AddTestProcessAction extends AnAction {
         try {
           Thread.currentThread().sleep(6000);
 
-          countTo(1000, new Count() {
-            public void onCount(int each) throws InterruptedException {
-              indicator.setText("Found: " + each / 20 + 1);
-              if (each / 10.0 == Math.round(each / 10.0)) {
-                indicator.setText(null);
+            countTo(1000, new Count() {
+              public void onCount(int each) {
+                indicator.setText("Found: " + each / 20 + 1);
+                if (each / 10.0 == Math.round(each / 10.0)) {
+                  indicator.setText(null);
+                }
+                indicator.setFraction(each / 1000.0);
+
+                try {
+                  Thread.currentThread().sleep(100);
+                }
+                catch (InterruptedException e1) {
+                  e1.printStackTrace();
+                }
+
+                indicator.checkCanceled();
+                indicator.setText2("bla bla bla");
               }
-              indicator.setFraction(each / 1000.0);
-              Thread.currentThread().sleep(100);
-              indicator.checkCanceled();
-              indicator.setText2("bla bla bla");
-            }
-          });
+            });
           indicator.stop();
         }
-        catch (Exception e1) {
-          indicator.stop();
+        catch (ProcessCanceledException e1) {
+          try {
+            Thread.currentThread().sleep(10000);
+            indicator.stop();
+          }
+          catch (InterruptedException e2) {
+            e2.printStackTrace();
+          }
           return;
+        }
+        catch (InterruptedException e1) {
+          e1.printStackTrace();
         }
       }
     }.queue();
   }
 
-  private void countTo(int top, Count count) throws Exception {
+  private void countTo(int top, Count count)  {
     for (int i = 0; i < top; i++) {
       count.onCount(i);
     }
   }
 
   private static interface Count {
-    void onCount(int each) throws InterruptedException;
+    void onCount(int each);
   }
 }

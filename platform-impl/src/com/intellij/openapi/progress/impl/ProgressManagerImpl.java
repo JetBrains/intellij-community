@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.Nls;
@@ -174,7 +175,7 @@ public class ProgressManagerImpl extends ProgressManager {
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
         .runProcessWithProgressSynchronously(new Runnable() {
           public void run() {
-            task.run(ProgressManager.getInstance().getProgressIndicator());
+            getRunTaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
           }
         }, task.getTitle(), task.isCancellable(), task.getProject());
     if (result) {
@@ -192,6 +193,19 @@ public class ProgressManagerImpl extends ProgressManager {
       task.onCancel();
     }
     return result;
+  }
+
+  private static Runnable getRunTaskRunnable(final Task task, final ProgressIndicator indicator) {
+    return new Runnable() {
+      public void run() {
+        try {
+          task.run(indicator);
+        }
+        finally {
+          ((ProgressIndicatorEx)indicator).finish(task);
+        }
+      }
+    };
   }
 
   private static void systemNotify(final Task.NotificationInfo notificationInfo) {
@@ -240,11 +254,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
     Disposer.register(ApplicationManager.getApplication(), progressIndicator);
 
-    final Runnable process = new Runnable() {
-      public void run() {
-        task.run(progressIndicator);
-      }
-    };
+    final Runnable process = getRunTaskRunnable(task, progressIndicator);
 
     Runnable action = new Runnable() {
       public void run() {
@@ -294,7 +304,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
   public void run(@NotNull final Task task) {
     if (task.isHeadless()) {
-      task.run(new EmptyProgressIndicator());
+      getRunTaskRunnable(task, new EmptyProgressIndicator()).run();
       return;
     }
 

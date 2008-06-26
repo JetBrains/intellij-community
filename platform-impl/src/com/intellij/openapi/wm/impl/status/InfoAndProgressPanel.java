@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.StatusBar;
@@ -339,15 +340,34 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
 
   private class MyInlineProgressIndicator extends InlineProgressIndicator {
     private final ProgressIndicatorEx myOriginal;
+    private TaskInfo myTask;
 
-    public MyInlineProgressIndicator(final boolean compact, final TaskInfo info, final ProgressIndicatorEx original) {
-      super(compact, info);
+    public MyInlineProgressIndicator(final boolean compact, final TaskInfo task, final ProgressIndicatorEx original) {
+      super(compact, task);
       myOriginal = original;
+      myTask = task;
       original.addStateDelegate(this);
     }
 
     public void cancel() {
       super.cancel();
+      updateProgress();
+    }
+
+    @Override
+    public void stop() {
+      super.stop();
+      updateProgress();
+    }
+
+    @Override
+    protected boolean isFinished() {
+      return isFinished(myTask);
+    }
+
+    @Override
+    public void finish(final Task task) {
+      super.finish(task);
       queueRunningUpdate(new Runnable() {
         public void run() {
           removeProgress(MyInlineProgressIndicator.this);
@@ -358,16 +378,6 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
 
     protected void cancelRequest() {
       myOriginal.cancel();
-    }
-
-    public void stop() {
-      super.stop();
-      queueRunningUpdate(new Runnable() {
-        public void run() {
-          removeProgress(MyInlineProgressIndicator.this);
-          dispose();
-        }
-      });
     }
 
     protected void queueProgressUpdate(final Runnable update) {

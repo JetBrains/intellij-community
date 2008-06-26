@@ -127,10 +127,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     cancel();
   }
 
-  public void setText(String text) {
-    super.setText(text);
-  }
-
   private void updateRunning() {
     queueRunningUpdate(new Runnable() {
       public void run() {
@@ -199,6 +195,29 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     } else {
       myLastTimeProgressWasZero = false;
     }
+
+    final boolean isStopping = wasStarted() && (isCanceled() || !isRunning()) && !isFinished();
+    if (isStopping) {
+      if (myCompact) {
+        myText.setText("Stopping - " + myText.getText());
+      } else {
+        myProcessName.setText("Stopping - " + myInfo.getTitle());
+      }
+      myText.setEnabled(false);
+      myText2.setEnabled(false);
+      myProgress.setEnabled(false);
+
+      myCancelButton.setPainting(false);
+    } else {
+      myText.setEnabled(true);
+      myText2.setEnabled(true);
+      myProgress.setEnabled(true);
+      myCancelButton.setPainting(true);
+    }
+  }
+
+  protected boolean isFinished() {
+    return false;
   }
 
   protected void queueProgressUpdate(Runnable update) {
@@ -208,6 +227,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   protected void queueRunningUpdate(Runnable update) {
     update.run();
   }
+
 
   private void updateVisibility(MyProgressBar bar, boolean holdsValue) {
     if (holdsValue && !bar.isActive()) {
@@ -330,7 +350,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
       int arc = 8;
 
-      final Color bg = getBackground().darker();
+      Color bg = getBackground().darker().darker();
+      bg = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230);
+
       g.setColor(bg);
 
       final Rectangle bounds = myProcessName.getBounds();

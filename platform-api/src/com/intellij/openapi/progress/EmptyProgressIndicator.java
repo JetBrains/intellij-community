@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 public class EmptyProgressIndicator implements ProgressIndicator {
   private boolean myIsRunning = false;
   private volatile boolean myIsCanceled = false;
+  private boolean myFinished;
 
   public void start() {
     myIsRunning = true;
@@ -88,6 +89,15 @@ public class EmptyProgressIndicator implements ProgressIndicator {
 
   public boolean isIndeterminate() {
     return false;
+  }
+
+
+  public void finish(final Task task) {
+    myFinished = true;
+  }
+
+  public boolean isFinished(final Task task) {
+    return myFinished;
   }
 
   public void setIndeterminate(boolean indeterminate) {

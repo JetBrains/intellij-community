@@ -7,9 +7,12 @@ import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.WeakList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +41,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   private boolean myModalityEntered = false;
 
   private final Set<ProgressIndicatorEx> myStateDelegates = new HashSet<ProgressIndicatorEx>();
+  private boolean myStoppingNow;
+  private WeakList<TaskInfo> myFinished = new WeakList<TaskInfo>();
+  private boolean myWasStarted;
 
   public void start() {
     synchronized (this) {
@@ -47,6 +53,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
       myText2 = "";
       myCanceled = false;
       myRunning = true;
+      myWasStarted = true;
 
       delegateRunningChange(new IndicatorAction() {
         public void execute(final ProgressIndicatorEx each) {
@@ -126,6 +133,22 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
         each.cancel();
       }
     });
+  }
+
+  public void finish(final Task task) {
+    if (myFinished.contains(task)) return;
+
+    myFinished.add(task);
+
+    delegateRunningChange(new IndicatorAction() {
+      public void execute(final ProgressIndicatorEx each) {
+        each.finish(task);
+      }
+    });
+  }
+
+  public boolean isFinished(final TaskInfo task) {
+    return myFinished.contains(task);
   }
 
   public boolean isCanceled() {
@@ -326,6 +349,10 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   public boolean isModalityEntered() {
     return myModalityEntered;
+  }
+
+  public boolean wasStarted() {
+    return myWasStarted;
   }
 
   public synchronized void initStateFrom(final ProgressIndicatorEx indicator) {
