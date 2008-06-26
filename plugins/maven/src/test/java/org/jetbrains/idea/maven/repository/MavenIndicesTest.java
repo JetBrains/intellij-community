@@ -107,8 +107,9 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testUpdatingRemote() throws Exception {
+    // for some reason nexus holds 'timestamp' file and tearDown cannot delete it and fails.
     if (ignore()) return;
-    
+
     MavenIndex i = new RemoteMavenIndex("file:///" + myDataTestFixture.getTestDataPath("remote"));
     myIndices.add(i);
     myIndices.update(i, myProject, new EmptyProgressIndicator());
