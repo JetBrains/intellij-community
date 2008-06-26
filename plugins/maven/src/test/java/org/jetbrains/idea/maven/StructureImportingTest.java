@@ -1,11 +1,15 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 import org.apache.maven.project.MavenProject;
+import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 
 import java.io.File;
 
@@ -26,6 +30,31 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertTrue(getModule("project").isSavePathsRelative());
+  }
+
+  public void testInheritProjectJdkForModules() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
+  }
+
+  public void testDoNotResetSomeSettingsAfterReimport() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    getModule("project").setSavePathsRelative(false);
+    ModifiableRootModel m = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+    Sdk sdk = JavaSdkImpl.getMockJdk15("java 1.5");
+    m.setSdk(sdk);
+    m.commit();
+
+    importProject();
+    assertFalse(getModule("project").isSavePathsRelative());
+    assertFalse(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
+    assertEquals(sdk, ModuleRootManager.getInstance(getModule("project")).getSdk());
   }
 
   public void testModulesWithSlashesRegularAndBack() throws Exception {

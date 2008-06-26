@@ -24,10 +24,16 @@ public class RootModelAdapter {
     myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
-  public void init(MavenProjectModel p) {
+  public void init(MavenProjectModel p, boolean isNewlyCreatedModule) {
+    if (isNewlyCreatedModule) setupInitialValues();
     initContentRoots(p);
     initOrderEntries();
-    configure();
+  }
+
+  private void setupInitialValues() {
+    myRootModel.inheritSdk();
+    myRootModel.getModule().setSavePathsRelative(true);
+    getCompilerExtension().setExcludeOutput(true);
   }
 
   private void initContentRoots(MavenProjectModel p) {
@@ -39,12 +45,6 @@ public class RootModelAdapter {
       if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
       myRootModel.removeOrderEntry(e);
     }
-  }
-
-  private void configure() {
-    myRootModel.inheritSdk();
-    myRootModel.getModule().setSavePathsRelative(true);
-    getCompilerExtension().setExcludeOutput(true);
   }
 
   public ModifiableRootModel getRootModel() {

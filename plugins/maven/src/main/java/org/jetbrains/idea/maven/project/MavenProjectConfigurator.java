@@ -131,20 +131,24 @@ public class MavenProjectConfigurator {
 
   private void configModules() {
     List<MavenProjectModel> projects = getMavenProjectsToConfigure();
+    Set<MavenProjectModel> projectsWithNewlyCreatedModules = new HashSet<MavenProjectModel>();
 
     for (MavenProjectModel each : projects) {
-      ensureModuleCreated(each);
+      if (ensureModuleCreated(each)) {
+        projectsWithNewlyCreatedModules.add(each);
+      }
     }
 
     LinkedHashMap<Module, ModifiableRootModel> rootModels = new LinkedHashMap<Module, ModifiableRootModel>();
     for (MavenProjectModel each : projects) {
       Module module = myMavenProjectToModule.get(each);
-      rootModels.put(module, createModuleConfigurator(module, each).config());
+      MavenModuleConfigurator c = createModuleConfigurator(module, each);
+      rootModels.put(module, c.config(projectsWithNewlyCreatedModules.contains(each)));
     }
 
     for (MavenProjectModel each : projects) {
       Module module = myMavenProjectToModule.get(each);
-      createModuleConfigurator(module, each).preConfigFacets(rootModels.get(module));
+      createModuleConfigurator(module, each).preConfigFacets();
     }
 
     for (MavenProjectModel each : projects) {
@@ -167,14 +171,15 @@ public class MavenProjectConfigurator {
     return result;
   }
 
-  private void ensureModuleCreated(MavenProjectModel project) {
-    if (myMavenProjectToModule.get(project) != null) return;
+  private boolean ensureModuleCreated(MavenProjectModel project) {
+    if (myMavenProjectToModule.get(project) != null) return false;
 
     String path = myMavenProjectToModulePath.get(project);
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.
     removeExistingIml(path);
     myMavenProjectToModule.put(project, myModuleModel.newModule(path, StdModuleTypes.JAVA));
+    return true;
   }
 
   private MavenModuleConfigurator createModuleConfigurator(Module module, MavenProjectModel mavenProject) {

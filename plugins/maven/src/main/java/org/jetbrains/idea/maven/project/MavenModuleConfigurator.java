@@ -17,6 +17,8 @@ import org.jetbrains.idea.maven.core.util.Strings;
 import org.jetbrains.idea.maven.web.FacetImporter;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -45,9 +47,9 @@ public class MavenModuleConfigurator {
     myIgnorePatternCache = Pattern.compile(Strings.translateMasks(settings.getIgnoredDependencies()));
   }
 
-  public ModifiableRootModel config() {
+  public ModifiableRootModel config(boolean isNewlyCreatedModule) {
     myRootModelAdapter = new RootModelAdapter(myModule);
-    myRootModelAdapter.init(myMavenProject);
+    myRootModelAdapter.init(myMavenProject, isNewlyCreatedModule);
 
     configFolders();
     configDependencies();
@@ -56,25 +58,31 @@ public class MavenModuleConfigurator {
     return myRootModelAdapter.getRootModel();
   }
 
-  public void preConfigFacets(ModuleRootModel rootModel) {
-    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
-      if (importer.isApplicable(myMavenProject)) {
-        importer.preProcess(myModule, myMavenProject);
-      }
+  public void preConfigFacets() {
+    for (FacetImporter importer : getSuitableFacetImporters()) {
+      importer.preProcess(myModule, myMavenProject);
     }
   }
 
   public void configFacets(ModuleRootModel rootModel) {
+    for (FacetImporter importer : getSuitableFacetImporters()) {
+      importer.process(myModuleModel,
+                       myModule,
+                       rootModel,
+                       myMavenTree,
+                       myMavenProject,
+                       myMavenProjectToModuleName);
+    }
+  }
+
+  private List<FacetImporter> getSuitableFacetImporters() {
+    List<FacetImporter> result = new ArrayList<FacetImporter>();
     for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
       if (importer.isApplicable(myMavenProject)) {
-        importer.process(myModuleModel,
-                         myModule,
-                         rootModel,
-                         myMavenTree,
-                         myMavenProject,
-                         myMavenProjectToModuleName);
+        result.add(importer);
       }
     }
+    return result;
   }
 
   private void configFolders() {
