@@ -1,4 +1,4 @@
-package com.intellij.execution.junit2.configuration;
+package com.intellij.execution.configuration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;

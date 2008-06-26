@@ -2,6 +2,7 @@ package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserDialog;
