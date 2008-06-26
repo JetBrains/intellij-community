@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
@@ -44,6 +45,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           pointer.fastenBelt();
           pointers.set(index++, reference);
         }
+      }
+
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+      for(Document document:InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+        PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
+        if (injectedfile == null) continue;
+        fastenBelts(injectedfile);
       }
 
       int size = pointers.size();
@@ -85,6 +93,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         pointer.documentAndPsiInSync();
         pointers.set(index++, reference);
       }
+    }
+
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+    for(Document document:InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+      PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
+      if (injectedfile == null) continue;
+      _synchronizePointers(injectedfile);
     }
 
     int size = pointers.size();

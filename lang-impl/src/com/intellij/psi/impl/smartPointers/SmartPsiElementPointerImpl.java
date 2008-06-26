@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -95,7 +96,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private SmartPointerElementInfo createElementInfo() {
     if (myElement instanceof PsiCompiledElement) return null;
 
-    if (myElement.getContainingFile() == null) return null;
+    final PsiFile containingFile = myElement.getContainingFile();
+    if (containingFile == null) return null;
     if (!myElement.isPhysical()) return null;
 
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
@@ -105,7 +107,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
-    return new SelfElementInfo(myElement);
+    return containingFile.getContext() != null ? new InjectedSelfElementInfo(myElement) : new SelfElementInfo(myElement);
   }
 
   private static boolean areElementKindEqual(PsiElement element1, PsiElement element2) {
@@ -123,6 +125,44 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     if (myElementInfo == null && myElement != null && myElement.isValid()) {
       myElementInfo = createElementInfo();
+    }
+  }
+
+  private static class InjectedSelfElementInfo extends SelfElementInfo {
+    private final RangeMarker myInjectedFileMarker;
+    private DocumentWindow myDocument;
+    private int myFileOffset = -1;
+
+    InjectedSelfElementInfo(PsiElement anchor) {
+      super(anchor);
+
+      assert myFile.getContext() != null;
+      myInjectedFileMarker = myDocument != null ? myDocument.createRangeMarker(0, myFile.getTextLength(), true) : null;
+    }
+
+    protected TextRange getPersistentAnchorRange(final PsiElement anchor, final Document document) {
+      if (myDocument == null) myDocument = ((DocumentWindow)document);
+      return myDocument.injectedToHost(super.getPersistentAnchorRange(anchor, document));
+    }
+
+    @Override
+    public void documentAndPsiInSync() {
+      super.documentAndPsiInSync();
+      if (myInjectedFileMarker != null && myInjectedFileMarker.isValid()) myFileOffset = myInjectedFileMarker.getStartOffset();
+    }
+
+    protected int getSyncEndOffset() {
+      return super.getSyncEndOffset() - myFileOffset;
+    }
+
+    protected int getSyncStartOffset() {
+      return super.getSyncStartOffset() - myFileOffset;
+    }
+
+    @Override
+    public PsiElement restoreElement() {
+      if (myInjectedFileMarker == null) return null;
+      return super.restoreElement();
     }
   }
 
@@ -150,12 +190,17 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
       else {
         myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+        range = getPersistentAnchorRange(anchor, document);
 
         mySyncStartOffset = range.getStartOffset();
         mySyncEndOffset = range.getEndOffset();
         mySyncMarkerIsValid = true;
         myType = anchor.getClass();
       }
+    }
+
+    protected TextRange getPersistentAnchorRange(final PsiElement anchor, final Document document) {
+      return anchor.getTextRange();
     }
 
     public Document getDocumentToSynchronize() {
@@ -176,26 +221,37 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       if (!mySyncMarkerIsValid) return null;
       if (!myFile.isValid()) return null;
 
-      PsiElement anchor = myFile.getViewProvider().findElementAt(mySyncStartOffset, myFile.getLanguage());
+      final int syncStartOffset = getSyncStartOffset();
+      final int syncEndOffset = getSyncEndOffset();
+
+      PsiElement anchor = myFile.getViewProvider().findElementAt(syncStartOffset, myFile.getLanguage());
       if (anchor == null) return null;
 
       TextRange range = anchor.getTextRange();
 
-      if (range.getStartOffset() != mySyncStartOffset) return null;
-      while (range.getEndOffset() < mySyncEndOffset) {
+      if (range.getStartOffset() != syncStartOffset) return null;
+      while (range.getEndOffset() < syncEndOffset) {
         anchor = anchor.getParent();
         if (anchor == null || anchor.getTextRange() == null) break;
         range = anchor.getTextRange();
       }
 
-      while (range.getEndOffset() == mySyncEndOffset && anchor != null && !myType.equals(anchor.getClass())) {
+      while (range.getEndOffset() == syncEndOffset && anchor != null && !myType.equals(anchor.getClass())) {
         anchor = anchor.getParent();
         if (anchor == null || anchor.getTextRange() == null) break;
         range = anchor.getTextRange();
       }
 
-      if (range.getEndOffset() == mySyncEndOffset) return anchor;
+      if (range.getEndOffset() == syncEndOffset) return anchor;
       return null;
+    }
+
+    protected int getSyncEndOffset() {
+      return mySyncEndOffset;
+    }
+
+    protected int getSyncStartOffset() {
+      return mySyncStartOffset;
     }
   }
 }
