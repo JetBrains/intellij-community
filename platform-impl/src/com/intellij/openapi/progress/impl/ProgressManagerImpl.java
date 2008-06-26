@@ -202,7 +202,9 @@ public class ProgressManagerImpl extends ProgressManager {
           task.run(indicator);
         }
         finally {
-          ((ProgressIndicatorEx)indicator).finish(task);
+          if (indicator instanceof ProgressIndicatorEx) {
+            ((ProgressIndicatorEx)indicator).finish(task);
+          }
         }
       }
     };
