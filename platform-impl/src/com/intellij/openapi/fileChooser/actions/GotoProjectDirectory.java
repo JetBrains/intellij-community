@@ -1,12 +1,12 @@
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public final class GotoProjectDirectory extends FileChooserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.GotoProjectDirectory");
@@ -27,9 +27,9 @@ public final class GotoProjectDirectory extends FileChooserAction {
     presentation.setEnabled(projectPath != null && fileSystemTree.isUnderRoots(projectPath));
   }
 
+  @Nullable
   private static VirtualFile getProjectPath(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final VirtualFile projectFileDir = (VirtualFile)dataContext.getData(DataConstantsEx.PROJECT_FILE_DIRECTORY);
+    final VirtualFile projectFileDir = e.getData(PlatformDataKeys.PROJECT_FILE_DIRECTORY);
     if (projectFileDir == null || !projectFileDir.isValid()) {
       return null;
     }

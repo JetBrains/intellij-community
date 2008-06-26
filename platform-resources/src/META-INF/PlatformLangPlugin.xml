@@ -53,6 +53,8 @@
                       serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
 
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
+
+    <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.platform.PlatformFileProjectDirectoryRule"/>
   </extensions>
   <project-components>
     <component>

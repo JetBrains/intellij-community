@@ -220,7 +220,6 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myDataConstantToRuleMap.put(DataConstants.COPY_PROVIDER, new CopyProviderRule());
     myDataConstantToRuleMap.put(DataConstants.CUT_PROVIDER, new CutProviderRule());
     myDataConstantToRuleMap.put(DataConstants.PASTE_PROVIDER, new PasteProviderRule());
-    myDataConstantToRuleMap.put(DataConstantsEx.PROJECT_FILE_DIRECTORY, new ProjectFileDirectoryRule());
     myDataConstantToRuleMap.put(DataConstants.FILE_TEXT, new FileTextRule());
     myDataConstantToRuleMap.put(DataConstants.FILE_EDITOR, new FileEditorRule());
     myDataConstantToRuleMap.put(DataConstants.NAVIGATABLE_ARRAY, new NavigatableArrayRule());

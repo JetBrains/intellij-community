@@ -42,5 +42,6 @@ public class PlatformDataKeys {
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
   public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create(DataConstantsEx.TREE_EXPANDER);
   public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create(DataConstants.EXPORTER_TO_TEXT_FILE);
+  public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create(DataConstantsEx.PROJECT_FILE_DIRECTORY);
 
 }
