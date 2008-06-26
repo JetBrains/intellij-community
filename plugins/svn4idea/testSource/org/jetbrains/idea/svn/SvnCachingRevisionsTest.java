@@ -1,9 +1,21 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.idea.Bombed;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.IdeaTestCase;
+import org.jetbrains.idea.svn.history.*;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
+import java.util.*;
+
+@Bombed(user = "Irina", month = Calendar.JUNE, day = 27)
 public class SvnCachingRevisionsTest extends IdeaTestCase {
-  /*private SvnRepositoryLocation myLocation;
+  private SvnRepositoryLocation myLocation;
   private LoadedRevisionsCache myInternalManager;
   private final static String URL = "file:///C:/repo/trunk";
   private final static String ROOT = "file:///C:/repo";
@@ -255,5 +267,5 @@ public class SvnCachingRevisionsTest extends IdeaTestCase {
 
   public void testThreeByOne() throws Exception {
     performTest(11, 2, new Pair<Long, Long>(11L, 11L), Collections.singletonList(new Pair<Long, Long>(13L, 13L)), 15);
-  }*/
+  }
 }
