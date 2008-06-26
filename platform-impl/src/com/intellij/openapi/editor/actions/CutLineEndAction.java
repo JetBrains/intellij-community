@@ -32,20 +32,30 @@ public class CutLineEndAction extends EditorAction {
       final Document doc = editor.getDocument();
       if (doc.getLineCount() == 0) return;
       int caretOffset = editor.getCaretModel().getOffset();
-      int lineEndOffset = doc.getLineEndOffset(doc.getLineNumber(caretOffset));
+      final int lineNumber = doc.getLineNumber(caretOffset);
+      int lineEndOffset = doc.getLineEndOffset(lineNumber);
 
-      if (caretOffset >= lineEndOffset) return;
+      if (caretOffset >= lineEndOffset) {
+        DeleteLineAtCaretAction.deleteLineAtCaret(editor);
+        return;
+      }
 
       copyToClipboard(doc, caretOffset, lineEndOffset, dataContext, editor);
 
-      doc.deleteString(caretOffset, lineEndOffset);
+      final int lineStartOffset = doc.getLineStartOffset(lineNumber);
+      if (StringUtil.isEmptyOrSpaces(doc.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString())) {
+        DeleteLineAtCaretAction.deleteLineAtCaret(editor);
+      }
+      else {
+        doc.deleteString(caretOffset, lineEndOffset);
+      }
     }
 
-    private void copyToClipboard(final Document doc,
-                                 int caretOffset,
-                                 int lineEndOffset,
-                                 DataContext dataContext,
-                                 Editor editor) {
+    private static void copyToClipboard(final Document doc,
+                                        int caretOffset,
+                                        int lineEndOffset,
+                                        DataContext dataContext,
+                                        Editor editor) {
       String s = doc.getCharsSequence().subSequence(caretOffset, lineEndOffset).toString();
 
       s = StringUtil.convertLineSeparators(s, "\n");
