@@ -102,9 +102,9 @@ public class TagNameReference implements PsiReference {
       final String namespacePrefix = element.getNamespacePrefix();
       if (namespacePrefix.length() > 0) {
         final PsiElement psiElement = resolve();
-        final int index = newElementName.lastIndexOf('.');
-        if (psiElement instanceof PsiFile && index > 0) {
-          newElementName = newElementName.substring(0, index);
+        if (psiElement instanceof PsiFile) {
+          final int index = newElementName.lastIndexOf('.');
+          if (index != -1) newElementName = newElementName.substring(0, index);
         }
         newElementName = namespacePrefix + ":" + newElementName;
       }
