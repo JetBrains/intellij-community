@@ -7,6 +7,6 @@ import com.intellij.psi.util.PsiUtil;
 
 public class JavaVetoRenameCondition implements Condition<PsiElement> {
   public boolean value(final PsiElement element) {
-    return element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element);
+    return element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element) && ((PsiJavaFile) element).getClasses().length > 0;
   }
 }
