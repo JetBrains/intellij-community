@@ -91,15 +91,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       public void run() {
         try {
           List<Location> locs = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
-          Location location = locs.size() > 0 ? locs.get(0) : null;
-          if (location != null) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Found location for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && location.method().isObsolete()));
-            }
-            BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(LineBreakpoint.this, location);
-            debugProcess.getRequestsManager().enableRequest(request);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex());
+          if (locs.size() > 0) {
+            for (final Location location : locs) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Found location for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && location.method().isObsolete()));
+              }
+              BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(LineBreakpoint.this, location);
+              debugProcess.getRequestsManager().enableRequest(request);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex());
+              }
             }
           }
           else {
