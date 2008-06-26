@@ -88,6 +88,8 @@ public class GroovyCompiler implements TranslatingCompiler {
 //      commandLine.addParameter("-Xdebug");
 //      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
 
+        //todo: check it
+      //commandLine.addParameter("-c UTF-8");     //charset ==  --encoding
       commandLine.addParameter("-cp");
 
       String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
