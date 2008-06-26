@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
@@ -236,6 +237,8 @@ public class ProgressManagerImpl extends ProgressManager {
 
   public static void runProcessWithProgressAsynchronously(final Task.Backgroundable task) {
     final BackgroundableProcessIndicator progressIndicator = new BackgroundableProcessIndicator(task);
+
+    Disposer.register(ApplicationManager.getApplication(), progressIndicator);
 
     final Runnable process = new Runnable() {
       public void run() {
