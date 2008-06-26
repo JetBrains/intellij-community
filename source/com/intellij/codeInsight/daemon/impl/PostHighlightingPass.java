@@ -183,6 +183,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     boolean unusedImportEnabled = profile.isToolEnabled(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME));
     LocalInspectionToolWrapper unusedSymbolTool = (LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME);
     final UnusedSymbolLocalInspection unusedSymbolInspection = unusedSymbolTool == null ? null : (UnusedSymbolLocalInspection)unusedSymbolTool.getTool();
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedSymbolInspection != null);
 
     if (unusedImportEnabled && PsiUtil.isInJspFile(myFile)) {
       final JspFile jspFile = PsiUtil.getJspFile(myFile);
