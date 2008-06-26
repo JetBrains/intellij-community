@@ -197,7 +197,7 @@ public class Javac2 extends Javac{
     classPathBuffer.append(getInternalClassPath());
 
     final String classPath = classPathBuffer.toString();
-    log("classpath=" + classPath, Project.MSG_INFO);
+    log("classpath=" + classPath, Project.MSG_VERBOSE);
 
     try {
       return createClassLoader(classPath);
