@@ -18,22 +18,19 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.Function;
 import org.intellij.plugins.intelliLang.inject.config.ui.ConfigurationPage;
 import org.intellij.plugins.intelliLang.util.ShiftTabAction;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -69,7 +66,7 @@ class SettingsUI implements PersistentStateComponent<MasterDetailsComponent.UISt
 
     myAnnotationField = new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
       public Document fun(String s) {
-        return createDocument(s, project);
+        return PsiUtilEx.createDocument(s, project);
       }
     }, myConfiguration.getLanguageAnnotationClass());
     myAnnotationField.addActionListener(new BrowseClassListener(project, myAnnotationField));
@@ -79,7 +76,7 @@ class SettingsUI implements PersistentStateComponent<MasterDetailsComponent.UISt
 
     myPatternField = new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
       public Document fun(String s) {
-        return createDocument(s, project);
+        return PsiUtilEx.createDocument(s, project);
       }
     }, myConfiguration.getPatternAnnotationClass());
     myPatternField.addActionListener(new BrowseClassListener(project, myPatternField));
@@ -89,7 +86,7 @@ class SettingsUI implements PersistentStateComponent<MasterDetailsComponent.UISt
 
     mySubstField = new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
       public Document fun(String s) {
-        return createDocument(s, project);
+        return PsiUtilEx.createDocument(s, project);
       }
     }, myConfiguration.getPatternAnnotationClass());
     mySubstField.addActionListener(new BrowseClassListener(project, mySubstField));
@@ -100,11 +97,6 @@ class SettingsUI implements PersistentStateComponent<MasterDetailsComponent.UISt
     myConfigurationPage = new ConfigurationPage(myConfiguration, project);
     myInjectionPanel.add(Box.createVerticalStrut(5), BorderLayout.NORTH);
     myInjectionPanel.add(myConfigurationPage.createComponent(), BorderLayout.CENTER);
-  }
-
-  private static Document createDocument(final String s, final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return new DocumentImpl(s);
-    return JavaReferenceEditorUtil.createTypeDocument(s, PsiManager.getInstance(project));
   }
 
   /**
