@@ -9,12 +9,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 
 public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
     final PsiDirectory parentDirectory = psiElement.getParentDirectory();
-    if (parentDirectory != null) {
+    if (parentDirectory != null && PsiManager.getInstance(parentDirectory.getProject()).isInProject(parentDirectory)) {
       final RefElementImpl refElement = (RefElementImpl)refManager.getReference(parentDirectory);
       if (refElement != null) {
         refElement.add(this);
