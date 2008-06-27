@@ -1,10 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.*;
@@ -37,15 +35,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@State(
-  name = "ProjectStructureConfigurable.UI",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$WORKSPACE_FILE$"
-    )}
-)
-public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, PersistentStateComponent<ProjectStructureConfigurable.UIState>, Place.Navigator, SortableConfigurable {
+public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, Place.Navigator, SortableConfigurable {
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
@@ -110,6 +100,13 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
     myFacetStructureConfigurable.init(myContext);
+
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
+    myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited");
+    final String proportion = propertiesComponent.getValue("project.structure.proportion");
+    myUiState.proportion = proportion != null ? Float.parseFloat(proportion) : 0;
+    final String sideProportion = propertiesComponent.getValue("project.structure.side.proportion");
+    myUiState.sideProportion = sideProportion != null ? Float.parseFloat(sideProportion) : 0;
   }
 
   @NonNls
@@ -279,16 +276,13 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
   }
 
-  public UIState getState() {
-    return myUiState;
-  }
-
-  public void loadState(final UIState state) {
-    myUiState = state;
-  }
-
   public void disposeUIResources() {
     if (!myWasIntialized) return;
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
+    propertiesComponent.setValue("project.structure.last.edited", myUiState.lastEditedConfigurable);
+    propertiesComponent.setValue("project.structure.proportion", String.valueOf(myUiState.proportion));
+    propertiesComponent.setValue("project.structure.side.proportion", String.valueOf(myUiState.sideProportion));
+
     myWasUiDisposed = true;
 
     myUiState.proportion = mySplitter.getProportion();
