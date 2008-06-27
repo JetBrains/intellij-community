@@ -351,7 +351,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       for(DefaultLiveTemplatesProvider provider: Extensions.getExtensions(DefaultLiveTemplatesProvider.EP_NAME)) {
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
           String templateName = getDefaultTemplateName(defTemplate);
-          readDefTemplateFile(DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate), templateName);
+          InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
+          if (inputStream != null) {
+            readDefTemplateFile(inputStream, templateName);
+          }
         }
       }
     } catch (Exception e) {
