@@ -335,6 +335,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       mySavedPaneId = null;
       mySavedPaneSubId = null;
     }
+
+    Disposer.register(myProject, newPane);
   }
 
   private void showPane(AbstractProjectViewPane newPane) {
@@ -354,8 +356,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           selectedModule = (Module)selected;
         }
       }
-
-      Disposer.dispose(currentPane);
     }
     removeLabelFocusListener();
     myViewContentPanel.removeAll();
