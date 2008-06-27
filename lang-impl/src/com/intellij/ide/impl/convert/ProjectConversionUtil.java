@@ -41,7 +41,7 @@ public class ProjectConversionUtil {
       return ProjectConversionAction.ASK_TO_CONVERT;
     }
 
-    Set<String> registeredConvertors = CompositeConverterFactory.getConvertorIds();
+    Set<String> registeredConvertors = CompositeConverterFactory.getConverterIds();
     Set<String> convertors = getConvertors(versionComponent, registeredConvertors);
 
     if (Boolean.parseBoolean(versionComponent.getAttributeValue(ProjectFileVersionImpl.CONVERTED_ATTRIBUTE))) {
@@ -64,7 +64,7 @@ public class ProjectConversionUtil {
     for (Element child : children) {
       convertors.add(child.getAttributeValue(ProjectFileVersionImpl.CONVERTER_ID_ATTRIBUTE));
     }
-    if (convertors.isEmpty() && registeredConvertors.size() == 1) {
+    if (convertors.isEmpty() && CompositeConverterFactory.containsOnlyOldConverter(registeredConvertors)) {
       convertors = registeredConvertors;
     }
     return convertors;

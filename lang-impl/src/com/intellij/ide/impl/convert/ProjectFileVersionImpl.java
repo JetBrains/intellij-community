@@ -59,8 +59,8 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   public ProjectFileVersionImpl(final Project project) {
     myProject = project;
     myState.myConverted = Boolean.toString(project.getPicoContainer().getComponentInstance(ProjectConversionHelper.class) == null);
-    Set<String> convertors = CompositeConverterFactory.getConvertorIds();
-    if (convertors.size() > 1) {
+    Set<String> convertors = CompositeConverterFactory.getConverterIds();
+    if (!CompositeConverterFactory.containsOnlyOldConverter(convertors)) {
       myState.myConverters.addAll(convertors);
     }
   }
