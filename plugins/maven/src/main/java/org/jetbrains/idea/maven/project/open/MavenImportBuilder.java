@@ -8,13 +8,13 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
-import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -137,8 +137,8 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   private void collectProfiles() {
     myProfiles = new ArrayList<String>();
 
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getCoreState());
     try {
-      MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(getCoreState());
       for (VirtualFile f : myFiles) {
         MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>());
         if (!holder.isValid) continue;
@@ -147,9 +147,11 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
         ProjectUtil.collectProfileIds(holder.mavenProject.getModel(), profiles);
         if (!profiles.isEmpty()) myProfiles.addAll(profiles);
       }
-      MavenEmbedderFactory.releaseEmbedder(e);
     }
-    catch (CanceledException e) {
+    catch (CanceledException ignore) {
+    }
+    finally {
+      e.release();
     }
   }
 

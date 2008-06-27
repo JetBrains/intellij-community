@@ -37,7 +37,7 @@ public class NexusIndexerTest extends MavenTestCase {
     myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
     myDataTestFixture.setUp();
 
-    embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings());
+    embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
 
     PlexusContainer p = embedder.getPlexusContainer();
     indexer = (NexusIndexer)p.lookup(NexusIndexer.class);

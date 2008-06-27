@@ -5,12 +5,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.Parent;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 
 import java.io.File;
 import java.util.*;
@@ -52,7 +52,7 @@ public class MavenProjectsTree {
 
   private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p, boolean force)
       throws CanceledException {
-    MavenEmbedder e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, this);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, this);
 
     try {
       Set<VirtualFile> readFiles = new HashSet<VirtualFile>();
@@ -68,11 +68,11 @@ public class MavenProjectsTree {
       }
     }
     finally {
-      MavenEmbedderFactory.releaseEmbedder(e);
+      e.release();
     }
   }
 
-  private void doAdd(final VirtualFile f, MavenEmbedder reader, Set<VirtualFile> readFiles, MavenProcess p, boolean force)
+  private void doAdd(final VirtualFile f, MavenEmbedderWrapper reader, Set<VirtualFile> readFiles, MavenProcess p, boolean force)
       throws CanceledException {
     MavenProjectModel newProject = new MavenProjectModel(f);
 
@@ -89,7 +89,7 @@ public class MavenProjectsTree {
 
   private void doUpdate(MavenProjectModel aggregator,
                         MavenProjectModel project,
-                        MavenEmbedder embedder,
+                        MavenEmbedderWrapper embedder,
                         boolean isNew,
                         Set<VirtualFile> readFiles,
                         MavenProcess p,
@@ -372,7 +372,7 @@ public class MavenProjectsTree {
   public void resolve(MavenCoreSettings coreSettings,
                       MavenArtifactSettings artifactSettings,
                       MavenProcess p) throws CanceledException {
-    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
 
     try {
       List<MavenProjectModel> projects = getProjects();
@@ -381,19 +381,19 @@ public class MavenProjectsTree {
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");
-        each.resolve(embedder);
+        each.resolve(e);
       }
 
-      doDownload(artifactSettings, p, embedder, projects, false);
+      doDownload(artifactSettings, p, e, projects, false);
     }
     finally {
-      MavenEmbedderFactory.releaseEmbedder(embedder);
+      e.release();
     }
   }
 
   public void generateSources(MavenCoreSettings coreSettings,
                               MavenProcess p) throws CanceledException {
-    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
 
     try {
       for (MavenProjectModel each : getProjects()) {
@@ -404,25 +404,25 @@ public class MavenProjectsTree {
       }
     }
     finally {
-      MavenEmbedderFactory.releaseEmbedder(embedder);
+      embedder.release();
     }
   }
 
   public void download(MavenCoreSettings coreSettings,
                        MavenArtifactSettings artifactSettings,
                        MavenProcess p) throws CanceledException {
-    MavenEmbedder e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings);
     try {
       doDownload(artifactSettings, p, e, getProjects(), true);
     }
     finally {
-      MavenEmbedderFactory.releaseEmbedder(e);
+      e.release();
     }
   }
 
   private void doDownload(MavenArtifactSettings artifactSettings,
                           MavenProcess p,
-                          MavenEmbedder embedder,
+                          MavenEmbedderWrapper embedder,
                           List<MavenProjectModel> projects, boolean demand) throws CanceledException {
     new MavenArtifactDownloader(artifactSettings, embedder, p).download(projects, demand);
   }

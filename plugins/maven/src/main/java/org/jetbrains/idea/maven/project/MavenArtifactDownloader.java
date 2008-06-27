@@ -5,12 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
-import org.apache.maven.artifact.resolver.ArtifactResolutionException;
-import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.embedder.MavenEmbedderAdapter;
 import org.apache.maven.model.Plugin;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 
 import java.io.File;
 import java.util.*;
@@ -19,10 +16,10 @@ public class MavenArtifactDownloader {
   static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenArtifactDownloader");
 
   private final MavenArtifactSettings mySettings;
-  private final MavenEmbedder myEmbedder;
+  private final MavenEmbedderWrapper myEmbedder;
   private final MavenProcess myProgress;
 
-  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedder embedder, MavenProcess p) {
+  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedderWrapper embedder, MavenProcess p) {
     mySettings = settings;
     myEmbedder = embedder;
     myProgress = p;
@@ -116,23 +113,14 @@ public class MavenArtifactDownloader {
       myProgress.setFraction(((double)step++) / libraryArtifacts.size());
       myProgress.setText2(id.toString());
 
-      try {
-        Artifact a = myEmbedder.createArtifactWithClassifier(id.groupId,
-                                                             id.artifactId,
-                                                             id.version,
-                                                             MavenConstants.JAR_TYPE,
-                                                             classifier);
-        List<ArtifactRepository> remoteRepos = new ArrayList<ArtifactRepository>(entry.getValue());
-        myEmbedder.resolve(a, remoteRepos, myEmbedder.getLocalRepository());
-        if (a.isResolved()) downloadedFiles.add(a.getFile());
-      }
-      catch (ArtifactResolutionException ignore) {
-      }
-      catch (ArtifactNotFoundException ignore) {
-      }
-      catch (Exception e) {
-        LOG.warn("Exception during artifact resolution", e);
-      }
+      Artifact a = myEmbedder.createArtifact(id.groupId,
+                                             id.artifactId,
+                                             id.version,
+                                             MavenConstants.JAR_TYPE,
+                                             classifier);
+      myEmbedder.resolve(a, new ArrayList<ArtifactRepository>(entry.getValue()));
+
+      if (a.isResolved()) downloadedFiles.add(a.getFile());
     }
   }
 
@@ -150,7 +138,7 @@ public class MavenArtifactDownloader {
         myProgress.checkCanceled();
         myProgress.setFraction(((double)step++) / pluginsCount);
         myProgress.setText2(eachPlugin.getKey());
-        MavenEmbedderAdapter.verifyPlugin(eachPlugin, eachProject.getMavenProject(), myEmbedder);
+        myEmbedder.resolvePlugin(eachPlugin, eachProject.getMavenProject());
       }
     }
   }

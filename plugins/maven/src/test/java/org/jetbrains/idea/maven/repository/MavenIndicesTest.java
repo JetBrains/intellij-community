@@ -39,7 +39,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   private void initIndex(String relativeDir) {
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings());
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
     myIndexDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myEmbedder, myIndexDir);
   }

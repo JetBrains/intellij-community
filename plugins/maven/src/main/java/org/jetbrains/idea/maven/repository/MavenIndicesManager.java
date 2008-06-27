@@ -83,7 +83,7 @@ public class MavenIndicesManager implements ApplicationComponent {
 
   private void initIndices(File indicesDir) {
     MavenCoreSettings settings = getSettings(ProjectManager.getInstance().getDefaultProject());
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings);
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings).getEmbedder();
     myIndices = new MavenIndices(myEmbedder, indicesDir);
 
     myIndices.load();

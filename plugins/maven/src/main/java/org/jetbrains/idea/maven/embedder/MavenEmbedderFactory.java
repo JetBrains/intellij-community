@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.embedder;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
@@ -26,8 +25,6 @@ import java.util.Map;
 import java.util.Properties;
 
 public class MavenEmbedderFactory {
-  private static final Logger LOG = Logger.getInstance("#" + MavenEmbedderFactory.class.getName());
-
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
   @NonNls private static final String PROP_USER_HOME = "user.home";
   @NonNls private static final String ENV_M2_HOME = "M2_HOME";
@@ -45,9 +42,9 @@ public class MavenEmbedderFactory {
 
   @NonNls private static final String[] standardPhases = {"clean", "compile", "test", "package", "install", "site"};
   @NonNls private static final String[] standardGoals = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
-    "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
-    "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
-    "verify", "install", "site", "deploy"};
+      "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
+      "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
+      "verify", "install", "site", "deploy"};
 
   private static volatile Properties mySystemPropertiesCache;
 
@@ -165,25 +162,25 @@ public class MavenEmbedderFactory {
     return Arrays.asList(standardGoals);
   }
 
-  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) {
+  public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings) {
     return createEmbedderForRead(settings, null);
   }
 
-  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings,
-                                                    MavenProjectsTree modelManager) {
+  public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
+                                                           MavenProjectsTree modelManager) {
     return createEmbedder(settings, new MyCustomizer(modelManager, false));
   }
 
-  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings,
-                                                       MavenProjectsTree modelManager) {
+  public static MavenEmbedderWrapper createEmbedderForResolve(MavenCoreSettings settings,
+                                                              MavenProjectsTree modelManager) {
     return createEmbedder(settings, new MyCustomizer(modelManager, true));
   }
 
-  public static MavenEmbedder createEmbedderForExecute(MavenCoreSettings settings) {
+  public static MavenEmbedderWrapper createEmbedderForExecute(MavenCoreSettings settings) {
     return createEmbedder(settings, null);
   }
 
-  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) {
+  private static MavenEmbedderWrapper createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) {
     return createEmbedder(settings.getMavenHome(),
                           settings.getEffectiveLocalRepository(),
                           settings.getMavenSettingsFile(),
@@ -191,11 +188,11 @@ public class MavenEmbedderFactory {
                           customizer);
   }
 
-  private static MavenEmbedder createEmbedder(String mavenHome,
-                                              File localRepo,
-                                              String userSettings,
-                                              ClassLoader classLoader,
-                                              ContainerCustomizer customizer) {
+  private static MavenEmbedderWrapper createEmbedder(String mavenHome,
+                                                     File localRepo,
+                                                     String userSettings,
+                                                     ClassLoader classLoader,
+                                                     ContainerCustomizer customizer) {
     Configuration configuration = new DefaultConfiguration();
 
     configuration.setConfigurationCustomizer(customizer);
@@ -223,10 +220,10 @@ public class MavenEmbedderFactory {
     System.setProperty(PROP_MAVEN_HOME, mavenHome);
 
     try {
-      return new MavenEmbedder(configuration);
+      return new MavenEmbedderWrapper(new MavenEmbedder(configuration));
     }
     catch (MavenEmbedderException e) {
-      LOG.info(e);
+      MavenLog.info(e);
       throw new RuntimeException(e);
     }
   }
@@ -248,7 +245,7 @@ public class MavenEmbedderFactory {
 
       mySystemPropertiesCache = result;
     }
-    
+
     return mySystemPropertiesCache;
   }
 
@@ -261,16 +258,6 @@ public class MavenEmbedderFactory {
       }
       if (result.getUserSettingsException() != null) {
         configuration.setUserSettingsFile(null);
-      }
-    }
-  }
-
-  public static void releaseEmbedder(MavenEmbedder mavenEmbedder) {
-    if (mavenEmbedder != null) {
-      try {
-        mavenEmbedder.stop();
-      }
-      catch (MavenEmbedderException ignore) {
       }
     }
   }
@@ -293,7 +280,7 @@ public class MavenEmbedderFactory {
       if (myModelManager != null) {
         c.getContext().put(CustomArtifactResolver.MAVEN_PROJECT_MODEL_MANAGER, myModelManager);
         c.getContext().put(CustomArtifactResolver.IS_ONLINE, isOnline);
-        
+
         d = c.getComponentDescriptor(ArtifactResolver.ROLE);
         d.setImplementation(CustomArtifactResolver.class.getName());
       }

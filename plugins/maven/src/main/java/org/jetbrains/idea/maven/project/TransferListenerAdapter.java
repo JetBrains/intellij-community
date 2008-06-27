@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.events.TransferEvent;
@@ -19,8 +21,13 @@ public class TransferListenerAdapter implements TransferListener {
   private long mySize;
   private long myProgress;
 
-  public TransferListenerAdapter(ProgressIndicator i) {
-    myIndicator = i;
+  public TransferListenerAdapter() {
+    myIndicator = getProgressIndicator();
+  }
+
+  private ProgressIndicator getProgressIndicator() {
+    ProgressIndicator i = ProgressManager.getInstance().getProgressIndicator();
+    return i == null ? new EmptyProgressIndicator() : i;
   }
 
   public void transferInitiated(TransferEvent event) {
