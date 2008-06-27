@@ -103,7 +103,8 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myEditor.getEditor().getContentComponent();
+    final Editor editor = myEditor.getEditor();
+    return editor != null? editor.getContentComponent() : myEditor;
   }
 
   public TextWithImports getText() {
