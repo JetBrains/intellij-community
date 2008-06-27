@@ -18,7 +18,7 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
-import org.apache.commons.collections.MultiHashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
   private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new HashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static final MultiHashMap ourAreaClass2instances = new MultiHashMap();
+  private static final MultiMap<String, AreaInstance> ourAreaClass2instances = new MultiMap<String, AreaInstance>();
   private static final Map<AreaInstance,String> ourAreaInstance2class = new HashMap<AreaInstance, String>();
   private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new HashMap<String, AreaClassConfiguration>();
 
@@ -95,7 +95,6 @@ public class Extensions {
   public static Object[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
     ExtensionPoint extensionPoint = area.getExtensionPoint(extensionPointName);
-    assert extensionPoint != null: "Unable to get extension point " + extensionPoint + " for " + areaInstance;
     return extensionPoint.getExtensions();
   }
 
@@ -113,7 +112,7 @@ public class Extensions {
     }
     ExtensionsAreaImpl area = new ExtensionsAreaImpl(areaClass, areaInstance, parentArea.getPicoContainer(), ourLogger);
     ourAreaInstance2area.put(areaInstance, area);
-    ourAreaClass2instances.put(areaClass, areaInstance);
+    ourAreaClass2instances.putValue(areaClass, areaInstance);
     ourAreaInstance2class.put(areaInstance, areaClass);
     AreaListener[] listeners = getAreaListeners();
     for (AreaListener listener : listeners) {
@@ -130,7 +129,7 @@ public class Extensions {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
       AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
       if (!equals(configuration.getParentClassName(), parentAreaClass)) {
-        throw new RuntimeException("Area class already registered: " + areaClass, (ourAreaClass2Configuration.get(areaClass)).getCreationPoint());
+        throw new RuntimeException("Area class already registered: " + areaClass, ourAreaClass2Configuration.get(areaClass).getCreationPoint());
       }
       else {
         return;
@@ -154,14 +153,14 @@ public class Extensions {
       }
     } finally {
       ourAreaInstance2area.remove(areaInstance);
-      ourAreaClass2instances.remove(ourAreaInstance2class.remove(areaInstance), areaInstance);
+      ourAreaClass2instances.removeValue(ourAreaInstance2class.remove(areaInstance), areaInstance);
       ourAreaInstance2class.remove(areaInstance);
     }
   }
 
   public static AreaInstance[] getAllAreas(String areaClass) {
-    Collection<AreaInstance> instances = (Collection<AreaInstance>) ourAreaClass2instances.get(areaClass);
-    return instances != null ? instances.toArray(new AreaInstance[instances.size()]) : new AreaInstance[0];
+    Collection<AreaInstance> instances = ourAreaClass2instances.get(areaClass);
+    return instances.toArray(new AreaInstance[instances.size()]);
   }
 
   private static boolean equals(Object object1, Object object2) {

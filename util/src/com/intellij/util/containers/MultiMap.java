@@ -32,7 +32,7 @@ public class MultiMap<K, V> {
   }
 
   protected Map<K, Collection<V>> createMap() {
-    return new java.util.HashMap<K, Collection<V>>();
+    return new HashMap<K, Collection<V>>();
   }
 
   protected Collection<V> createCollection() {
