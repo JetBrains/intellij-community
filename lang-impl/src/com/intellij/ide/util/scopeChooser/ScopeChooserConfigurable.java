@@ -8,18 +8,14 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -50,11 +46,6 @@ import java.util.*;
  * User: anna
  * Date: 01-Jul-2006
  */
-@State(
-  name = "ScopeChooserConfigurable.UI",
-  storages = {@Storage(
-    id = "other",
-    file = "$WORKSPACE_FILE$")})
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements NonDefaultProjectConfigurable, SearchableConfigurable {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
@@ -72,6 +63,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     myLocalScopesManager = NamedScopeManager.getInstance(project);
     mySharedScopesManager = DependencyValidationManager.getInstance(project);
     myProject = project;
+
+    ServiceManager.getService(project, MasterDetailsStateService.class).register("ScopeChooserConfigurable.UI", this);
     initTree();
   }
 

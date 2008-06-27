@@ -13,8 +13,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -24,6 +23,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Conditions;
@@ -43,14 +43,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-@State(
-  name = "ProjectJDKsConfigurable.UI",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$APP_CONFIG$/other.xml"
-    )}
-)
 public class ProjectJdksConfigurable extends MasterDetailsComponent implements Configurable.Assistant {
 
   private ProjectJdksModel myProjectJdksModel;
@@ -62,7 +54,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     super();
     myProject = project;
     myProjectJdksModel = ProjectJdksModel.getInstance(project);
-
+    ServiceManager.getService(project, MasterDetailsStateService.class).register("ProjectJDKs.UI", this);
     initTree();
   }
 

@@ -72,6 +72,7 @@
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
                   serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.ui.MasterDetailsStateService" serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
   <projectService serviceInterface="com.intellij.ide.SelectInManager" serviceImplementation="com.intellij.ide.SelectInManager"/>
 
   <projectService serviceInterface="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"

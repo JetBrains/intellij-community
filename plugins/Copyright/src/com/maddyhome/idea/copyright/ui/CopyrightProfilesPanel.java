@@ -2,12 +2,14 @@ package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.IconLoader;
@@ -32,6 +34,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
     private CopyrightManager myManager;
 
     public CopyrightProfilesPanel(Project project) {
+      ServiceManager.getService(project, MasterDetailsStateService.class).register("Copyright.UI", this);
         myProject = project;
         myManager = CopyrightManager.getInstance(project);
         initTree();
