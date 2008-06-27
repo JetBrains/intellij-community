@@ -312,4 +312,7 @@
 
   <extensionPoint name="methodNavigationOffsetProvider"
                   interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
+
+  <extensionPoint name="filePasteProvider"
+                  interface="com.intellij.ide.PasteProvider"/>
 </extensionPoints>

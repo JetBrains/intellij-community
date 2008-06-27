@@ -3,8 +3,13 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
@@ -13,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class CopyPasteDelegator implements CopyPasteSupport {
+  private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.filePasteProvider");
+
   private final Project myProject;
   private final JComponent myKeyReceiver;
   private final MyEditable myEditable;
@@ -82,9 +89,19 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
     }
 
     public void performPaste(DataContext dataContext) {
+      if (!performDefaultPaste(dataContext)) {
+        for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
+          if (provider.isPasteEnabled(dataContext)) {
+            provider.performPaste(dataContext);
+          }
+        }
+      }
+    }
+
+    private boolean performDefaultPaste(final DataContext dataContext) {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
-      if (elements == null) return;
+      if (elements == null) return false;
       try {
         PsiElement target = (PsiElement)dataContext.getData(DataConstantsEx.PASTE_TARGET_PSI_ELEMENT);
         if (isCopied[0]) {
@@ -99,14 +116,15 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
             CopyHandler.doCopy(elements, targetDirectory);
           }
         }
+        else if (MoveHandler.canMove(elements, target)) {
+          MoveHandler.doMove(myProject, elements, target, new MoveCallback() {
+            public void refactoringCompleted() {
+              PsiCopyPasteManager.getInstance().clear();
+            }
+          });
+        }
         else {
-          if (MoveHandler.canMove(elements, target)) {
-            MoveHandler.doMove(myProject, elements, target, new MoveCallback() {
-              public void refactoringCompleted() {
-                PsiCopyPasteManager.getInstance().clear();
-              }
-            });
-          }
+          return false;
         }
       }
       catch (RuntimeException ex) {
@@ -115,6 +133,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       finally {
         updateView();
       }
+      return true;
     }
 
     public boolean isPastePossible(DataContext dataContext) {
@@ -122,6 +141,18 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
     }
 
     public boolean isPasteEnabled(DataContext dataContext){
+      if (isDefaultPasteEnabled(dataContext)) {
+        return true;
+      }
+      for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
+        if (provider.isPasteEnabled(dataContext)) {
+          return true;
+        }
+      }
+      return false;      
+    }
+
+    private boolean isDefaultPasteEnabled(final DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         return false;
