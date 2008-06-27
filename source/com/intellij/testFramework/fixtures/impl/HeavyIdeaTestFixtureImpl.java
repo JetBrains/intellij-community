@@ -111,7 +111,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
     for (Editor editor : allEditors) {
       editorFactory.releaseEditor(editor);
     }
-    assert 0 == allEditors.length : "There are unrealeased editors";
+    assert 0 == editorFactory.getAllEditors().length : "There are unrealeased editors";
 
     super.tearDown();
   }
