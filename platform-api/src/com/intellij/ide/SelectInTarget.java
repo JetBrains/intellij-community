@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
 public interface SelectInTarget {
   ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<SelectInTarget>("com.intellij.selectInTarget");
@@ -30,9 +31,11 @@ public interface SelectInTarget {
   void selectIn(SelectInContext context, final boolean requestFocus);
 
   /** Tool window this target is supposed to select in */
+  @Nullable
   String getToolWindowId();
 
   /** aux view id specific for tool window, e.g. Project/Packages/J2EE tab inside project View */
+  @Nullable
   String getMinorViewId();
 
   /**
