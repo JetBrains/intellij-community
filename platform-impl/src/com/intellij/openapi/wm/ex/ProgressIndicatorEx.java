@@ -1,7 +1,6 @@
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -22,9 +21,11 @@ public interface ProgressIndicatorEx extends ProgressIndicator {
 
   boolean isModalityEntered();
 
-  void finish(final Task task);
+  void finish(final TaskInfo task);
   
   boolean isFinished(final TaskInfo task);
 
   boolean wasStarted();
+
+  void processFinish();
 }

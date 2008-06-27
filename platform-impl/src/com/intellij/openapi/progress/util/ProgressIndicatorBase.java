@@ -7,7 +7,6 @@ import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.DoubleArrayList;
@@ -44,6 +43,8 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   private boolean myStoppingNow;
   private WeakList<TaskInfo> myFinished = new WeakList<TaskInfo>();
   private boolean myWasStarted;
+
+  private TaskInfo myOwnerTask;
 
   public void start() {
     synchronized (this) {
@@ -135,7 +136,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public void finish(final Task task) {
+  public void finish(final TaskInfo task) {
     if (myFinished.contains(task)) return;
 
     myFinished.add(task);
@@ -149,6 +150,16 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   public boolean isFinished(final TaskInfo task) {
     return myFinished.contains(task);
+  }
+
+  protected void setOwnerTask(TaskInfo owner) {
+    myOwnerTask = owner;
+  }
+
+  public void processFinish() {
+    if (myOwnerTask != null) {
+      finish(myOwnerTask);
+    }
   }
 
   public boolean isCanceled() {

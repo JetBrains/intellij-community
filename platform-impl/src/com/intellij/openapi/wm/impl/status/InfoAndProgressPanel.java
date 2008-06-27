@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.StatusBar;
@@ -366,7 +365,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     }
 
     @Override
-    public void finish(final Task task) {
+    public void finish(final TaskInfo task) {
       super.finish(task);
       queueRunningUpdate(new Runnable() {
         public void run() {

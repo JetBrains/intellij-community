@@ -132,6 +132,9 @@ public class ProgressManagerImpl extends ProgressManager {
         finally {
           if (progress != null && progress.isRunning()) {
             progress.stop();
+            if (progress instanceof ProgressIndicatorEx) {
+              ((ProgressIndicatorEx)progress).processFinish();
+            }
           }
         }
       }
@@ -173,9 +176,9 @@ public class ProgressManagerImpl extends ProgressManager {
 
   private static boolean runProcessWithProgressSynchronously(final Task task) {
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
-        .runProcessWithProgressSynchronously(new Runnable() {
+        .runProcessWithProgressSynchronously(new TaskContainer(task) {
           public void run() {
-            getRunTaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
+            new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
           }
         }, task.getTitle(), task.isCancellable(), task.getProject());
     if (result) {
@@ -193,21 +196,6 @@ public class ProgressManagerImpl extends ProgressManager {
       task.onCancel();
     }
     return result;
-  }
-
-  private static Runnable getRunTaskRunnable(final Task task, final ProgressIndicator indicator) {
-    return new Runnable() {
-      public void run() {
-        try {
-          task.run(indicator);
-        }
-        finally {
-          if (indicator instanceof ProgressIndicatorEx) {
-            ((ProgressIndicatorEx)indicator).finish(task);
-          }
-        }
-      }
-    };
   }
 
   private static void systemNotify(final Task.NotificationInfo notificationInfo) {
@@ -256,9 +244,9 @@ public class ProgressManagerImpl extends ProgressManager {
 
     Disposer.register(ApplicationManager.getApplication(), progressIndicator);
 
-    final Runnable process = getRunTaskRunnable(task, progressIndicator);
+    final Runnable process = new TaskRunnable(task, progressIndicator);
 
-    Runnable action = new Runnable() {
+    TaskContainer action = new TaskContainer(task) {
       public void run() {
         boolean canceled = false;
         try {
@@ -268,7 +256,7 @@ public class ProgressManagerImpl extends ProgressManager {
           canceled = true;
         }
 
-        if (canceled) {
+        if (canceled || progressIndicator.isCanceled()) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               task.onCancel();
@@ -306,7 +294,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
   public void run(@NotNull final Task task) {
     if (task.isHeadless()) {
-      getRunTaskRunnable(task, new EmptyProgressIndicator()).run();
+      new TaskRunnable(task, new EmptyProgressIndicator()).run();
       return;
     }
 
@@ -323,4 +311,38 @@ public class ProgressManagerImpl extends ProgressManager {
       }
     }
   }
+
+  private abstract static class TaskContainer implements Runnable {
+    private Task myTask;
+
+    protected TaskContainer(final Task task) {
+      myTask = task;
+    }
+
+    public Task getTask() {
+      return myTask;
+    }
+  }
+
+  private static class TaskRunnable extends TaskContainer {
+    private final ProgressIndicator myIndicator;
+
+    public TaskRunnable(final Task task, final ProgressIndicator indicator) {
+      super(task);
+      myIndicator = indicator;
+    }
+
+    public void run() {
+      try {
+        getTask().run(myIndicator);
+      }
+      finally {
+        if (myIndicator instanceof ProgressIndicatorEx) {
+          ((ProgressIndicatorEx)myIndicator).finish(getTask());
+        }
+      }
+    }
+  }
+
+
 }
