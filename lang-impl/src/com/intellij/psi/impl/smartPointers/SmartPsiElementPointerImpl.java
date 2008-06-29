@@ -131,7 +131,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private static class InjectedSelfElementInfo extends SelfElementInfo {
     private final RangeMarker myInjectedFileMarker;
     private DocumentWindow myDocument;
-    private int myFileOffset = -1;
+    private int myFileOffset;
 
     InjectedSelfElementInfo(PsiElement anchor) {
       super(anchor);
@@ -141,8 +141,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     protected TextRange getPersistentAnchorRange(final PsiElement anchor, final Document document) {
-      if (myDocument == null) myDocument = ((DocumentWindow)document);
-      return myDocument.injectedToHost(super.getPersistentAnchorRange(anchor, document));
+      final TextRange textRange = super.getPersistentAnchorRange(anchor, document);
+      if (!(document instanceof DocumentWindow)) return textRange;
+      myDocument = ((DocumentWindow)document);
+      return myDocument.injectedToHost(textRange);
     }
 
     @Override
@@ -161,7 +163,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     @Override
     public PsiElement restoreElement() {
-      if (myInjectedFileMarker == null) return null;
+      if (myInjectedFileMarker == null && myDocument != null) return null;
       return super.restoreElement();
     }
   }
