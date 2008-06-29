@@ -26,7 +26,9 @@ public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, P
     if (processed.contains(superClass)) return true;
     processed.add(superClass);
     Project project = superClass.getProject();
-    final Collection<PyClass> candidates = StubIndex.getInstance().get(PySuperClassIndex.KEY, superClass.getName(), project,
+    final String superClassName = superClass.getName();
+    if (superClassName == null) return true;
+    final Collection<PyClass> candidates = StubIndex.getInstance().get(PySuperClassIndex.KEY, superClassName, project,
                                                                        ProjectScope.getAllScope(project));
     for(PyClass candidate: candidates) {
       final PyClass[] classes = candidate.getSuperClasses();
