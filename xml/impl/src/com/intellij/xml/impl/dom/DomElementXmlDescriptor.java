@@ -3,6 +3,7 @@ package com.intellij.xml.impl.dom;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
@@ -181,6 +182,11 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
     if (declaration != null) return declaration.getXmlElement();
 
     return new FakePsiElement() {
+      @Override
+      public PsiManager getManager() {
+        return PsiManager.getInstance(myManager.getProject());
+      }
+
       public PsiFile getContainingFile() {
         return null;
       }
