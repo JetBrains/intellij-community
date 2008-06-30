@@ -16,12 +16,10 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
@@ -287,46 +285,41 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     final String beforePath = file.BEFORE_PATH == null ? null : file.BEFORE_PATH.replace(File.separatorChar, '/');
     final String afterPath = file.AFTER_PATH == null ? null : file.AFTER_PATH.replace(File.separatorChar, '/');
     final boolean isNewFile = beforePath == null;
-    ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
-    final VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
-    if (patchTarget != null) {
-      final FilePath result = new FilePathImpl(patchTarget);
-      final Ref<IOException> ex = new Ref<IOException>();
-      final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
-      final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          VirtualFile fileToPatch = patchTarget;
-          try {
+    final Ref<FilePath> result = new Ref<FilePath>();
+    final Ref<IOException> ex = new Ref<IOException>();
+    final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
+    final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
+          VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
+          if (patchTarget != null) {
+            result.set(new FilePathImpl(patchTarget));
             if (shelvedFile == null) {
-              fileToPatch.delete(this);
+              patchTarget.delete(this);
             }
             else {
               if (isNewFile) {
-                fileToPatch = fileToPatch.createChildData(this, new File(afterPath).getName());
+                patchTarget = patchTarget.createChildData(this, new File(afterPath).getName());
               }
-              fileToPatch.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
-              patchedFileRef.set(fileToPatch);
+              patchTarget.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
+              patchedFileRef.set(patchTarget);
             }
           }
-          catch (IOException e) {
-            ex.set(e);
-          }
         }
-      });
-      if (!ex.isNull()) {
-        throw ex.get();
+        catch (IOException e) {
+          ex.set(e);
+        }
       }
-      if (shelvedFile != null) {
-        FileUtil.delete(shelvedFile);
-      }
-      return result;
+    });
+    if (!ex.isNull()) {
+      throw ex.get();
     }
-    else {
-      Messages.showErrorDialog(myProject, "Failed to unshelve binary file " + (afterPath != null ? afterPath : beforePath),
-                               VcsBundle.message("unshelve.changes.dialog.title"));
-      return null;
+    if (shelvedFile != null) {
+      FileUtil.delete(shelvedFile);
     }
+    return result.get();
   }
 
   private static boolean needUnshelve(final FilePatch patch, final List<ShelvedChange> changes) {
