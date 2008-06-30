@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
@@ -51,7 +52,12 @@ public final class XPathLanguage extends Language {
         super(ID);
     }
 
-    public static class XPathPairedBraceMatcher implements PairedBraceMatcher {
+  @Override
+  public FileType getAssociatedFileType() {
+    return XPathFileType.XPATH;
+  }
+
+  public static class XPathPairedBraceMatcher implements PairedBraceMatcher {
         private BracePair[] myBracePairs;
 
         public BracePair[] getPairs() {
