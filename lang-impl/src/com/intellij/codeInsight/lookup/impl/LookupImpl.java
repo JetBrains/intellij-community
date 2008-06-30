@@ -244,7 +244,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public final synchronized void updateList() {
-    int minPrefixLength = Integer.MAX_VALUE;
+    int minPrefixLength = myItems.isEmpty() ? 0 : Integer.MAX_VALUE;
     for (final LookupItem item : myItems) {
       minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
     }
