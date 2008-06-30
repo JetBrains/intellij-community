@@ -26,7 +26,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     });
   }
 
-  public VirtualFilePattern withName(final ElementPattern namePattern) {
+  public VirtualFilePattern withName(final ElementPattern<String> namePattern) {
     return with(new PatternCondition<VirtualFile>("withName") {
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
         return namePattern.getCondition().accepts(virtualFile.getName(), context);
@@ -34,7 +34,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     });
   }
 
-  public VirtualFilePattern xmlWithRootTag(final ElementPattern tagNamePattern) {
+  public VirtualFilePattern xmlWithRootTag(final ElementPattern<String> tagNamePattern) {
     return with(new PatternCondition<VirtualFile>("xmlWithRootTag") {
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
         String tagName = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();

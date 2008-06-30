@@ -1,7 +1,8 @@
 package com.intellij.patterns;
 
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +19,7 @@ public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePa
     super(condition);
   }
 
-  public Self withRootTag(final ElementPattern rootTag) {
+  public Self withRootTag(final ElementPattern<XmlTag> rootTag) {
     return with(new PatternCondition<XmlFile>("withRootTag") {
       public boolean accepts(@NotNull final XmlFile xmlFile, final ProcessingContext context) {
         XmlDocument document = xmlFile.getDocument();

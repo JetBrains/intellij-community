@@ -16,7 +16,7 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
     super(PsiAnnotation.class);
   }
 
-  public PsiAnnotationPattern qName(final ElementPattern pattern) {
+  public PsiAnnotationPattern qName(final ElementPattern<String> pattern) {
     return with(new PatternCondition<PsiAnnotation>("qName") {
       public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final ProcessingContext context) {
         return pattern.getCondition().accepts(psiAnnotation.getQualifiedName(), context);
