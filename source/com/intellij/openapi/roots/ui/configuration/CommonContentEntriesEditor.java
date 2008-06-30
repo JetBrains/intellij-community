@@ -2,7 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
 import com.intellij.ide.util.JavaUtil;
-import com.intellij.ide.util.projectWizard.ToolbarPanel;
+import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;

@@ -1,6 +1,5 @@
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.ui.roots;
 
-import com.intellij.util.ui.FilePathSplittingPolicy;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 
 import javax.swing.*;

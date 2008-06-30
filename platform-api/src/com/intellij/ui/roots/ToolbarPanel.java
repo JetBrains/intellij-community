@@ -1,4 +1,4 @@
-package com.intellij.ide.util.projectWizard;
+package com.intellij.ui.roots;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;

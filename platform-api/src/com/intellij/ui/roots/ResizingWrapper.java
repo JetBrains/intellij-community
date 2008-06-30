@@ -1,11 +1,11 @@
-/**
- * @author cdr
- */
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.ui.roots;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @author cdr
+ */
 public class ResizingWrapper extends JComponent {
   protected final JComponent myWrappedComponent;
   public ResizingWrapper(JComponent wrappedComponent) {

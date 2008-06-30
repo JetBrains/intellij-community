@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.util.projectWizard.ToolbarPanel;
+import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;

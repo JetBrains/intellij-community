@@ -1,4 +1,4 @@
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.ui.roots;
 
 import javax.swing.*;
 import java.awt.*;
