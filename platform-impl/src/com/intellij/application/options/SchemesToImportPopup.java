@@ -77,7 +77,7 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
       myNameLabel.setText(c.getScheme().getName());
 
       updateColors(isSelected);
-      myPanel.setToolTipText("Shared by " + c.getUserName() + "\n" + c.getDescription());
+      myPanel.setToolTipText("<html><p>Shared by <b>" + c.getUserName() + "</b><br>" + c.getDescription() + "</p></html>");
       return myPanel;
     }
 
