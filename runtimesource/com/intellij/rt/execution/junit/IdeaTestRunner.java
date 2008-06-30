@@ -56,13 +56,19 @@ public class IdeaTestRunner extends TestRunner {
           public void addFailure(final Test test, final AssertionFailedError t) {}
 
           public void startTest(final Test test) {
-            if (test instanceof TestCase) {
+            if (JUNIT4_API != null) {
+              ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(JUNIT4_API.getJUnit4MethodAdapterClassName(test) + "." +
+                                                                            JUNIT4_API.getJUnit4MethodAdapterMethodName(test));
+            } else if (test instanceof TestCase) {
               ((com.intellij.rt.coverage.data.ProjectData)data).testStarted(test.getClass().getName() + "." + ((TestCase)test).getName());
             }
           }
 
           public void endTest(final Test test) {
-            if (test instanceof TestCase) {
+            if (JUNIT4_API != null) {
+              ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(JUNIT4_API.getJUnit4MethodAdapterClassName(test) + "." +
+                                                                          JUNIT4_API.getJUnit4MethodAdapterMethodName(test));
+            } else if (test instanceof TestCase) {
               ((com.intellij.rt.coverage.data.ProjectData)data).testEnded(test.getClass().getName() + "." + ((TestCase)test).getName());
             }
           }
