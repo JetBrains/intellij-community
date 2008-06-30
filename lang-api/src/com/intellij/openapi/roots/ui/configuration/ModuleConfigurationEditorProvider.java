@@ -16,7 +16,10 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.ModuleConfigurationEditor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 public interface ModuleConfigurationEditorProvider {
+  ExtensionPointName<ModuleConfigurationEditorProvider> EP_NAME = ExtensionPointName.create("com.intellij.moduleConfigurationEditorProvider"); 
+
   ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state);
 }

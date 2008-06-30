@@ -4,6 +4,7 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
@@ -141,7 +142,7 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   private void createEditors(Module module) {
-    ModuleConfigurationEditorProvider[] providers = module.getComponents(ModuleConfigurationEditorProvider.class);
+    ModuleConfigurationEditorProvider[] providers = collectProviders(module);
     ModuleConfigurationState state = createModuleConfigurationState();
     List<ModuleLevelConfigurablesEditorProvider> moduleLevelProviders = new ArrayList<ModuleLevelConfigurablesEditorProvider>();
     for (ModuleConfigurationEditorProvider provider : providers) {
@@ -154,6 +155,13 @@ public class ModuleEditor implements Place.Navigator {
     for (ModuleLevelConfigurablesEditorProvider provider : moduleLevelProviders) {
       processEditorsProvider(provider, state);
     }
+  }
+
+  private static ModuleConfigurationEditorProvider[] collectProviders(final Module module) {
+    List<ModuleConfigurationEditorProvider> result = new ArrayList<ModuleConfigurationEditorProvider>();
+    result.addAll(Arrays.asList(module.getComponents(ModuleConfigurationEditorProvider.class)));
+    result.addAll(Arrays.asList(Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module)));
+    return result.toArray(new ModuleConfigurationEditorProvider[result.size()]);
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {
