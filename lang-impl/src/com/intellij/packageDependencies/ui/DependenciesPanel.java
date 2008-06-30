@@ -656,6 +656,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       if (DataConstants.NAVIGATABLE.equals(dataId)) {
         return node;
       }
+      if (DataConstants.PSI_ELEMENT.equals(dataId) && node != null)  {
+        return node.getPsiElement();
+      }
       return null;
     }
 
