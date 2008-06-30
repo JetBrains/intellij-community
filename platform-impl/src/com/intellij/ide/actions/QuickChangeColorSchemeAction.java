@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
@@ -27,13 +28,13 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     }
 
 
-    Collection<EditorColorsSchemeImpl> sharedSchemes = ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager().loadScharedSchemes();
+    Collection<SharedScheme<EditorColorsSchemeImpl>> sharedSchemes = ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager().loadScharedSchemes();
 
     if (!sharedSchemes.isEmpty()) {
       group.add(Separator.getInstance());
 
-      for (EditorColorsScheme sharedScheme : sharedSchemes) {
-        addScheme(group, current, sharedScheme);
+      for (SharedScheme<EditorColorsSchemeImpl> sharedScheme : sharedSchemes) {
+        addScheme(group, current, sharedScheme.getScheme());
       }
     }
 

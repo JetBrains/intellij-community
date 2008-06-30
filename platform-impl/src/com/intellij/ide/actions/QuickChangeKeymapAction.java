@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
+import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
@@ -24,12 +25,12 @@ public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
       addKeymapAction(group, manager, current, keymap);
     }
 
-    Collection<KeymapImpl> sharedSchemes = ((KeymapManagerEx)KeymapManagerEx.getInstance()).getSchemesManager().loadScharedSchemes();
+    Collection<SharedScheme<KeymapImpl>> sharedSchemes = ((KeymapManagerEx)KeymapManagerEx.getInstance()).getSchemesManager().loadScharedSchemes();
 
     if (!sharedSchemes.isEmpty()) {
       group.add(Separator.getInstance());
-      for (Keymap sharedScheme : sharedSchemes) {
-        addKeymapAction(group, manager,current, sharedScheme);
+      for (SharedScheme<KeymapImpl> sharedScheme : sharedSchemes) {
+        addKeymapAction(group, manager,current, sharedScheme.getScheme());
       }
     }
 

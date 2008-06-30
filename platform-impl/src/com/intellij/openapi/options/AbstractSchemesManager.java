@@ -153,7 +153,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
-  public Collection<E> loadScharedSchemes() {
+  public Collection<SharedScheme<E>> loadScharedSchemes() {
     return loadScharedSchemes(getAllSchemes());
   }
 

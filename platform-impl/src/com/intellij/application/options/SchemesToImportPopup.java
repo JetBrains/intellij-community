@@ -3,6 +3,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -21,7 +22,7 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
   }
 
   public void show(SchemesManager<T, E> schemesManager, Collection<T> currentSchemeNames) {
-    Collection<E> schemes = schemesManager.loadScharedSchemes(currentSchemeNames);
+    Collection<SharedScheme<E>> schemes = schemesManager.loadScharedSchemes(currentSchemeNames);
 
     if (schemes.isEmpty()) {
       Messages.showMessageDialog("There are no available schemes to import", "Import", Messages.getWarningIcon());
@@ -30,22 +31,22 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
 
     final JList list = new JList(createModel(schemes));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(new RecentChangesListCellRenderer());
+    list.setCellRenderer(new SchemesToImportListCellRenderer());
 
 
 
     Runnable selectAction = new Runnable() {
       public void run() {
-        onSchemeSelected((E)list.getSelectedValue());
+        onSchemeSelected(((SharedScheme<E>)list.getSelectedValue()).getScheme());
       }
     };
 
     showList(list, selectAction);
   }
 
-  private ListModel createModel(Collection<E> cc) {
+  private ListModel createModel(Collection<SharedScheme<E>> cc) {
     DefaultListModel m = new DefaultListModel();
-    for (Scheme c : cc) {
+    for (SharedScheme c : cc) {
       m.addElement(c);
     }
     return m;
@@ -63,19 +64,20 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
     return "Import Scheme";
   }
 
-  private static class RecentChangesListCellRenderer implements ListCellRenderer {
+  private static class SchemesToImportListCellRenderer implements ListCellRenderer {
     private JPanel myPanel = new JPanel(new BorderLayout());
     private JLabel myNameLabel = new JLabel("", JLabel.LEFT);
 
-    public RecentChangesListCellRenderer() {
+    public SchemesToImportListCellRenderer() {
       myPanel.add(myNameLabel, BorderLayout.CENTER);
     }
 
     public Component getListCellRendererComponent(JList l, Object val, int i, boolean isSelected, boolean cellHasFocus) {
-      Scheme c = (Scheme)val;
-      myNameLabel.setText(c.getName());
+      SharedScheme c = (SharedScheme)val;
+      myNameLabel.setText(c.getScheme().getName());
 
       updateColors(isSelected);
+      myPanel.setToolTipText(c.getDescription());
       return myPanel;
     }
 

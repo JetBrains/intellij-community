@@ -2,12 +2,13 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 
 import java.util.Collection;
 
@@ -35,14 +36,14 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
     }
 
 
-    Collection<CodeStyleSchemeImpl> sharedSchemes =
+    Collection<SharedScheme<CodeStyleSchemeImpl>> sharedSchemes =
         ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemesManager().loadScharedSchemes();
     if (!sharedSchemes.isEmpty()) {
       group.add(Separator.getInstance());
 
 
-      for (CodeStyleScheme scheme : sharedSchemes) {
-        addScheme(group, manager, currentScheme, scheme);
+      for (SharedScheme<CodeStyleSchemeImpl> scheme : sharedSchemes) {
+        addScheme(group, manager, currentScheme, scheme.getScheme());
       }
     }
   }

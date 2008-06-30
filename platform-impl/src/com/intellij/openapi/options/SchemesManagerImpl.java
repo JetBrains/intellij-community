@@ -45,7 +45,8 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
   private final StreamProvider[] myProviders;
   private final File myBaseDir;
   private static final String DESCRIPTION = "description";
-  private static final boolean EXPORT_IS_AVAILABLE = false;
+  private static final boolean EXPORT_IS_AVAILABLE = true;
+  private static final String USER = "user";
 
   public SchemesManagerImpl(final String fileSpec, final SchemeProcessor<E> processor, final RoamingType roamingType,
                             StreamProvider[] providers, File baseDir) {
@@ -330,12 +331,12 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     E scheme;
   }
 
-  public Collection<E> loadScharedSchemes(Collection<T> currentSchemeList) {
+  public Collection<SharedScheme<E>> loadScharedSchemes(Collection<T> currentSchemeList) {
     Collection<String> names = new HashSet<String>(getAllSchemeNames(currentSchemeList));
 
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
-    final HashMap<String, E> result = new HashMap<String, E>();
+    final HashMap<String, SharedScheme<E>> result = new HashMap<String, SharedScheme<E>>();
     if (providers != null) {
       for (StreamProvider provider : providers) {
         if (provider.isEnabled()) {
@@ -353,7 +354,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
                   schemeName = uniqueName;
                   scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
                   scheme.getExternalInfo().setIsImported(true);
-                  result.put(schemeName, scheme);
+                  result.put(schemeName, new SharedScheme<E>("unknown", original.description, scheme));
                 }
               }
             }
@@ -365,8 +366,8 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
       }
     }
 
-    for (E t : result.values()) {
-      myProcessor.initScheme(t);
+    for (SharedScheme<E> t : result.values()) {
+      myProcessor.initScheme(t.getScheme());
     }
 
     return result.values();
@@ -414,6 +415,10 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
       if (document != null) {
         Document wrapped = wrap(document, name, description);
         for (StreamProvider provider : providers) {
+          if (provider instanceof CurrentUserHolder) {
+            wrapped = (Document)wrapped.clone();
+            wrapped.getRootElement().setAttribute(USER, ((CurrentUserHolder)provider).getCurrentUserName());
+          }
           try {
             provider.saveContent(getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + EXT, wrapped, RoamingType.GLOBAL);
           }
@@ -426,7 +431,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
 
   }
 
-  private static Document wrap(final Document original, final String name, final String description) {
+  private Document wrap(final Document original, final String name, final String description) {
     Element sharedElement = new Element(SHARED_SCHEME_ORIGINAL);
     sharedElement.setAttribute(NAME, name);
     sharedElement.setAttribute(DESCRIPTION, description);
@@ -548,19 +553,26 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
       if (oldHash != null && newHash != oldHash.longValue()) {
         final byte[] text = StorageUtil.printDocument(document);
 
-        if (!file.isFile() || !Arrays.equals(FileUtil.loadFileBytes(file), text)) {
+        if (needsSave(file, text)) {
           FileUtil.writeToFile(file, text);        
         }
 
       }
       else {
-        JDOMUtil.writeDocument(document, file, "\n");
+        byte[] text = StorageUtil.printDocument(document);
+        if (needsSave(file, text)) {
+          FileUtil.writeToFile(file, text);
+        }
       }
       schemeKey.getExternalInfo().setHash(newHash);
       saveFileName(file, schemeKey);
 
       saveOnServer(file, document);
     }
+  }
+
+  private boolean needsSave(final File file, final byte[] text) throws IOException {
+    return !file.isFile() || !Arrays.equals(FileUtil.loadFileBytes(file), text);
   }
 
   private void saveOnServer(final File file, final Document document) {

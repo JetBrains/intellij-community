@@ -73,8 +73,8 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   Collection<E> loadSchemes();
 
-  Collection<E> loadScharedSchemes();
-  Collection<E> loadScharedSchemes(Collection<T> currentSchemeList);
+  Collection<SharedScheme<E>> loadScharedSchemes();
+  Collection<SharedScheme<E>> loadScharedSchemes(Collection<T> currentSchemeList);
 
   void exportScheme(final E scheme, final String name, final String description)
       throws WriteExternalException;
