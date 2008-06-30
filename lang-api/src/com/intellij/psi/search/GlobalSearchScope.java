@@ -180,7 +180,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     return new FileScope(psiFile);
   }
 
-  private static class IntersectionScope extends GlobalSearchScope {
+  public static class IntersectionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
     private final String myDisplayName;
