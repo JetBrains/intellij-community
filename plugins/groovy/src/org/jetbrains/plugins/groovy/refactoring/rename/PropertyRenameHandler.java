@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RenameRefactoring;
-import com.intellij.refactoring.openapi.impl.RenameRefactoringImpl;
+import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class PropertyRenameHandler implements RenameHandler {
     }
 
     private void doRename(String newName, boolean searchInComments) {
-      final RenameRefactoring rename = new RenameRefactoringImpl(myProperty.getProject(), myProperty, newName, searchInComments, false);
+      final RenameRefactoring rename = new JavaRenameRefactoringImpl(myProperty.getProject(), myProperty, newName, searchInComments, false);
 
       final PsiMethod setter = myProperty.getSetter();
       if (setter != null) {
@@ -84,7 +84,6 @@ public class PropertyRenameHandler implements RenameHandler {
     }
 
   }
-
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
     throw new RuntimeException("Should not call");

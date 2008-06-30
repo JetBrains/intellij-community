@@ -15,16 +15,17 @@
 
 package org.jetbrains.plugins.groovy.lang.findUsages;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiReferenceProcessor;
+import com.intellij.psi.search.PsiReferenceProcessorAdapter;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -33,6 +34,8 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.Query;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -49,7 +52,22 @@ public class FindUsagesTest extends IdeaTestCase {
     builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome()).addContentRoot(TestUtils.getTestDataPath() + "/findUsages" + "/" + getTestName(true)).addSourceRoot("");
     myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/findUsages");
     myFixture.setUp();
+
+    ApplicationManager.getApplication().runWriteAction(
+            new Runnable() {
+              public void run() {
+                try {
+                  String root = TestUtils.getTestDataPath() + "/findUsages" + "/" + getTestName(true);
+                  PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+                }
+                catch (Exception e) {
+                  LOG.error(e);
+                }
+              }
+            }
+    );
   }
+
 
   protected void tearDown() throws Exception {
     myFixture.tearDown();
@@ -85,15 +103,15 @@ public class FindUsagesTest extends IdeaTestCase {
   }
 
   public void testSetter1() throws Throwable {
-    doTest("setter1/A.groovy", 2);
+    doTestImpl("setter1/A.groovy", 2);
   }
 
   public void testGetter1() throws Throwable {
-    doTest("getter1/A.groovy", 1);
+    doTestImpl("getter1/A.groovy", 1);
   }
 
   public void testProperty1() throws Throwable {
-    doTest("property1/A.groovy", 1);
+    doTestImpl("property1/A.groovy", 1);
   }
 
   public void testProperty2() throws Throwable {
@@ -105,34 +123,40 @@ public class FindUsagesTest extends IdeaTestCase {
   }
 
   public void testEscapedReference() throws Throwable {
-    doTest("escapedReference/A.groovy", 1);
+    doTestImpl("escapedReference/A.groovy", 1);
   }
 
   public void testKeywordPropertyName() throws Throwable {
-    doTest("keywordPropertyName/A.groovy", 1);
+    doTestImpl("keywordPropertyName/A.groovy", 1);
   }
 
   public void testTypeAlias() throws Throwable {
-    doTest("typeAlias/A.groovy", 2);
+    doTestImpl("typeAlias/A.groovy", 2);
   }
 
   public void testForInParameter() throws Throwable {
-    doTest("forInParameter/A.groovy", 1);
+    doTestImpl("forInParameter/A.groovy", 1);
   }
 
   public void testSyntheticParameter() throws Throwable {
-    doTest("syntheticParameter/A.groovy", 1);
+    doTestImpl("syntheticParameter/A.groovy", 1);
   }
 
 
-  private void doTest(String filePath, int expectedUsagesCount) throws Throwable {
+  private void doTestImpl(String filePath, int expectedUsagesCount) throws Throwable {
 
-    final PsiReference ref = myFixture.getReferenceAtCaretPosition(filePath);
+    myFixture.configureByFile(filePath);
+    int offset = myFixture.getEditor().getCaretModel().getOffset();
+    final PsiReference ref = myFixture.getFile().findReferenceAt(offset);
     assertNotNull("Did not find reference", ref);
     final PsiElement resolved = ref.resolve();
     assertNotNull("Could not resolve reference", resolved);
 
-    doFind(expectedUsagesCount, resolved);
+    doTest(resolved);
+
+
+    System.out.println("preved");
+//    doFind(expectedUsagesCount, resolved);
   }
 
   private void doFind(int expectedUsagesCount, PsiElement resolved) {
@@ -163,5 +187,36 @@ public class FindUsagesTest extends IdeaTestCase {
     }
 
     assertEquals(1, query.findAll().size());
+  }
+
+
+  private void doTest(PsiElement element) throws Exception {
+    final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+    ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject), false).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
+      public boolean execute(PsiReference ref) {
+        addReference(ref, filesList);
+        return true;
+      }
+    }));
+
+    System.out.println("preved");
+
+//    checkResult(fileNames, filesList, starts, startsList, ends, endsList);
+
+  }
+
+  private void addReference(PsiReference ref, ArrayList<PsiFile> filesList) {
+    PsiElement element = ref.getElement();
+    filesList.add(element.getContainingFile());
+  }
+
+  private void doTest1(PsiMethod method) {
+    final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+    PsiReference[] refs =
+            MethodReferencesSearch.search(method, GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
+    for (PsiReference ref : refs) {
+      addReference(ref, filesList);
+    }
+//    checkResult(fileNames, filesList, starts, startsList, ends, endsList);
   }
 }
