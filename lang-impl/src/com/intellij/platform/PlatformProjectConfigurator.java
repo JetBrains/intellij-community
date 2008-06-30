@@ -20,7 +20,7 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
     if (modules.length == 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          String imlName = PlatformProjectOpenProcessor.getIprBaseName(baseDir) + ".iml";
+          String imlName = baseDir.getPath() + "/.idea/" + baseDir.getName() + ".iml";
           final Module module = moduleManager.newModule(imlName, ModuleType.EMPTY);
           ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
           rootModel.addContentEntry(baseDir);

@@ -1,6 +1,5 @@
 package com.intellij.platform;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -9,7 +8,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,50 +35,35 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, final Project projectToClose, final boolean forceOpenInNewFrame) {
-    VirtualFile baseDir = null;
-    if (virtualFile.isDirectory()) {
-      baseDir = virtualFile;
-    }
-
-    final File projectFile = new File(getIprBaseName(baseDir) + ".ipr");
+    VirtualFile baseDir = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
+    final File projectDir = new File(baseDir.getPath(), ".idea");
 
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
-    if (projectFile.exists()) {
+    if (projectDir.exists()) {
       try {
-        project = projectManager.loadProject(projectFile.getPath());
+        project = projectManager.loadProject(projectDir.getPath());
       }
       catch (Exception e) {
         // ignore
       }
     }
+    else {
+      projectDir.mkdirs();
+    }
     if (project == null) {
-      project = projectManager.newProject(projectFile.getPath(), true, false);
+      project = projectManager.newProject(projectDir.getParent(), true, false);
     }
     if (project == null) return null;
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
-    if (baseDir != null) {
-      for(DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
-        configurator.configureProject(project, baseDir);
-      }
+    for(DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
+      configurator.configureProject(project, baseDir);
     }
 
     openFileFromCommandLine(project, virtualFile);
     projectManager.openProject(project);
 
     return project;
-  }
-
-  public static String getIprBaseName(VirtualFile baseDir) {
-    @NonNls String projectsDir = PathManager.getConfigPath() + "/platform/projects/";
-    @NonNls String projectName;
-    if (baseDir != null && baseDir.isDirectory()) {
-      projectName = baseDir.getPath().replace(":", "_").replace("/", "_").replace("\\", "_");
-    }
-    else {
-      projectName = "dummy";
-    }
-    return new File(projectsDir, projectName).getPath();
   }
 
   private static void openFileFromCommandLine(final Project project, final VirtualFile virtualFile) {
