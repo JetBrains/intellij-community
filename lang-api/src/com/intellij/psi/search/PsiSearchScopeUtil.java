@@ -77,6 +77,8 @@ public class PsiSearchScopeUtil {
 
       PsiFile file = element.getContainingFile();
       if (file != null) {
+        final PsiElement context = file.getContext();
+        if (context != null) file = context.getContainingFile();
         if (file.getVirtualFile() == null) return true; //?
         return _scope.contains(file.getVirtualFile());
       }
