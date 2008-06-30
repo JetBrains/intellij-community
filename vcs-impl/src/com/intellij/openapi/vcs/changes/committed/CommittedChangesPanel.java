@@ -69,11 +69,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
 
-    final Pair<JPanel, List<AnAction>> pair = provider.createActionPanel(myBrowser);
+    final Pair<JPanel,List<AnAction>> pair = provider.createActionPanel(myBrowser);
 
-    /*if (pair != null) {
+    if (pair != null) {
       myBrowser.addAuxiliaryToolbar(pair.first);
-    }*/
+    }
     
     myBrowser.setTableContextMenu(group, (pair == null) ? Collections.<AnAction>emptyList() : pair.second);
     final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");

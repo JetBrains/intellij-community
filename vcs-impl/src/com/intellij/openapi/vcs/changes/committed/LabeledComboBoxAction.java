@@ -32,12 +32,12 @@ public abstract class LabeledComboBoxAction extends AnAction implements CustomCo
       myPanel = new JPanel(new BorderLayout());
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
       myPanel.add(myLabel, BorderLayout.WEST);
-      myComboBox.setModel(createModel());
       myComboBox.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           selectionChanged(myComboBox.getSelectedItem());
         }
       });
+      myComboBox.setModel(createModel());
       myPanel.add(myComboBox, BorderLayout.CENTER);
     }
     return myPanel;
@@ -71,4 +71,11 @@ public abstract class LabeledComboBoxAction extends AnAction implements CustomCo
   protected abstract void selectionChanged(Object selection);
 
   protected abstract ComboBoxModel createModel();
+  
+  public void setSelected(final int idx) {
+    final ComboBoxModel boxModel = getModel();
+    if (boxModel.getSize() > 0) {
+      boxModel.setSelectedItem(boxModel.getElementAt(idx));
+    }
+  }
 }

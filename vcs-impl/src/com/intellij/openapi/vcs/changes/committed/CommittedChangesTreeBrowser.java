@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -79,11 +80,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private List<CommittedChangeListDecorator> myDecorators;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
+  private final JPanel myAuxiliaryPanel;
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
 
     myProject = project;
+    myVisibilityGetters = new ArrayList<Getter<Boolean>>();
+    myAuxiliaryPanel = new JPanel(new BorderLayout());
     myDecorators = new LinkedList<CommittedChangeListDecorator>();
     myChangeLists = changeLists;
     myChangesTree = new ChangesBrowserTree();
@@ -187,9 +191,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void addAuxiliaryToolbar(JComponent bar) {
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(bar, BorderLayout.WEST);
-    myToolbarPanel.add(panel, BorderLayout.SOUTH);
+    myAuxiliaryPanel.add(bar, BorderLayout.WEST);
+    myToolbarPanel.add(myAuxiliaryPanel, BorderLayout.SOUTH);
   }
 
   public void dispose() {
@@ -375,7 +378,23 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         }
         listener.onAfterEndReport();
       }
-    });
+    }); 
+  }
+
+  private final Collection<Getter<Boolean>> myVisibilityGetters;
+
+  public void fireVisibilityCalculation() {
+    if (myAuxiliaryPanel != null) {
+      boolean visible = false;
+      for (Getter<Boolean> getter : myVisibilityGetters) {
+        visible |= Boolean.TRUE.equals(getter.get());
+      }
+      myAuxiliaryPanel.setVisible(visible);
+    }
+  }
+
+  public void registerCompositePart(final Getter<Boolean> visibilityGetter) {
+    myVisibilityGetters.add(visibilityGetter);
   }
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
