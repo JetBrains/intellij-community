@@ -256,4 +256,6 @@
 
   <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first" id="PlatformProjectConfigurator"/>
   <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectViewOpener"/>
+
+  <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
 </extensions>

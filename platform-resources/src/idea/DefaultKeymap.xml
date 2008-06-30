@@ -216,6 +216,9 @@
     <action id="GotoSuperMethod">
       <keyboard-shortcut first-keystroke="control U"/>
     </action>
+    <action id="GotoTestOrCode">
+      <keyboard-shortcut first-keystroke="control shift T"/>
+    </action>
     <action id="CloseActiveTab">
       <keyboard-shortcut first-keystroke="control shift F4"/>
     </action>
