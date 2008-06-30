@@ -7,6 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestFinderHelper {
+  public static PsiElement findSourceElement(PsiElement from) {
+    for (TestFinder each : getFinders()) {
+      PsiElement result = each.findSourceElement(from);
+      if (result != null) return result;
+    }
+    return null;
+  }
+
   public static List<PsiElement> findTestsForClass(PsiElement element) {
     List<PsiElement> result = new ArrayList<PsiElement>();
     for (TestFinder each : getFinders()) {

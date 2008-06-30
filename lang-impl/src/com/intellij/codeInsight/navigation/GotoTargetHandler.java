@@ -2,18 +2,18 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Pair;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import java.util.Arrays;

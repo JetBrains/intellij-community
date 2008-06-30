@@ -26,7 +26,8 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
       candidates = TestFinderHelper.findTestsForClass(selectedElement);
     }
 
-    return new Pair<PsiElement, PsiElement[]>(selectedElement, candidates.toArray(new PsiElement[candidates.size()]));
+    PsiElement sourceElement = TestFinderHelper.findSourceElement(selectedElement);
+    return new Pair<PsiElement, PsiElement[]>(sourceElement, candidates.toArray(new PsiElement[candidates.size()]));
   }
 
   protected String getChooserInFileTitleKey(PsiElement sourceElement) {
