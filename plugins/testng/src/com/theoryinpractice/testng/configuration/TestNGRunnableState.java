@@ -10,6 +10,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
+import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -159,7 +160,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     // Add plugin jars first...
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
         new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
-    if (config.isCoverageEnabled()) javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
+    if (config.isCoverageEnabled() && config.getCoverageRunner() instanceof IDEACoverageRunner) javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
@@ -173,7 +174,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
     // Append coverage parameters if appropriate
-    if (!(runnerSettings.getData() instanceof DebuggingRunnerData) && config.isCoverageEnabled()) {
+    if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || config.getCoverageRunner() instanceof IDEACoverageRunner) && config.isCoverageEnabled()) {
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
       DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(config.getCoverageFilePath());
       LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
