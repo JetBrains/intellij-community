@@ -123,7 +123,10 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
             if (subDocument != null) {
               checkFileNameIsFree(subpath);
               final File file = new File(myBaseDir, subpath);
-              JDOMUtil.writeDocument(subDocument, file, "\n");
+              byte[] text = JDOMUtil.writeDocument(subDocument, "\n").getBytes();
+              if (needsSave(file, text)) {
+                FileUtil.writeToFile(file, text);
+              }
               E scheme = readScheme(subDocument);
               if (scheme != null) {
                 loadScheme(file, scheme);
@@ -149,9 +152,9 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
         if (name != null) {
           String fileName = name + EXT;
           if (fileName.equals(subpath)) {
-            String uniqueFileName = createUniqueFileName(collectAllFileNames(), scheme.getName());
+            String uniqueFileName = createUniqueFileName(collectAllFileNames(), UniqueFileNamesProvider.convertName(scheme.getName()));
             File newFile = new File(myBaseDir, uniqueFileName + EXT);
-            File oldFile = new File(myBaseDir, subpath + EXT);
+            File oldFile = new File(myBaseDir, subpath);
             if (oldFile.isFile()) {
               FileUtil.copy(oldFile, newFile);
             }
@@ -327,6 +330,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
   class SharedSchemeData {
     Document original;
     String name;
+    String user;
     String description;
     E scheme;
   }
@@ -354,7 +358,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
                   schemeName = uniqueName;
                   scheme.getExternalInfo().setOriginalPath(getFileFullPath(subpath));
                   scheme.getExternalInfo().setIsImported(true);
-                  result.put(schemeName, new SharedScheme<E>("unknown", original.description, scheme));
+                  result.put(schemeName, new SharedScheme<E>(original.user == null ? "unknown" : original.user, original.description, scheme));
                 }
               }
             }
@@ -380,6 +384,7 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     if (rootElement.getName().equals(SHARED_SCHEME_ORIGINAL)) {
       result.name = rootElement.getAttributeValue(NAME);
       result.description = rootElement.getAttributeValue(DESCRIPTION);
+      result.user = rootElement.getAttributeValue(USER);
       result.original = new Document((Element)((Element)(rootElement.getChildren().iterator().next())).clone());
     }
     else {
@@ -417,7 +422,10 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
         for (StreamProvider provider : providers) {
           if (provider instanceof CurrentUserHolder) {
             wrapped = (Document)wrapped.clone();
-            wrapped.getRootElement().setAttribute(USER, ((CurrentUserHolder)provider).getCurrentUserName());
+            String userName = ((CurrentUserHolder)provider).getCurrentUserName();
+            if (userName != null) {
+              wrapped.getRootElement().setAttribute(USER, userName);
+            }
           }
           try {
             provider.saveContent(getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + EXT, wrapped, RoamingType.GLOBAL);

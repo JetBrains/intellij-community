@@ -1,7 +1,8 @@
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
   private String generateUniqueName(final T scheme) {
-    return UniqueNameGenerator.generateUniqueName(scheme.getName(), "", "", collectExistingNames(mySchemes));
+    return UniqueNameGenerator.generateUniqueName(UniqueFileNamesProvider.convertName(scheme.getName()), "", "", collectExistingNames(mySchemes));
   }
 
   private Collection<String> collectExistingNames(final Collection<T> schemes) {
