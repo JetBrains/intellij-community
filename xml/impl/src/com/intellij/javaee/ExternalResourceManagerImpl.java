@@ -96,12 +96,19 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
       final File extResourceFolder = new File(FetchExtResourceAction.getExternalResourcesPath());
 
       if (extResourceFolder.exists()) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        Runnable action = new Runnable() {
           public void run() {
-            final VirtualFile extResourceDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(extResourceFolder);
-            if (extResourceDir != null) LocalFileSystem.getInstance().addRootToWatch(extResourceDir.getPath(), true);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                final VirtualFile extResourceDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(extResourceFolder);
+                if (extResourceDir != null) LocalFileSystem.getInstance().addRootToWatch(extResourceDir.getPath(), true);
+              }
+            });
           }
-        });
+        };
+
+        if (ApplicationManager.getApplication().isDispatchThread()) action.run();
+        else ApplicationManager.getApplication().invokeLater(action);
       }
     }
   }
