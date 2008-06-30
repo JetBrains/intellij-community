@@ -68,7 +68,10 @@ public class PsiTreeUtil {
     while (true) {
       if (parent == null) return false;
       if (parent.equals(ancestor)) return true;
-      if (stopAtFileLevel && parent instanceof PsiFile) return false;
+      if (stopAtFileLevel && parent instanceof PsiFile) {
+        final PsiElement context = parent.getContext();
+        if (context == null) return false;
+      }
       parent = parent.getContext();
     }
   }
