@@ -97,11 +97,13 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
       editor.apply();
     }
-    new WriteAction() {
-      protected void run(final Result result) {
-        ((FacetAutodetectingManagerImpl)FacetAutodetectingManager.getInstance(myProject)).redetectFacets();
-      }
-    }.execute();
+    if (!myProject.isDefault()) {
+      new WriteAction() {
+        protected void run(final Result result) {
+          ((FacetAutodetectingManagerImpl)FacetAutodetectingManager.getInstance(myProject)).redetectFacets();
+        }
+      }.execute();
+    }
   }
 
   public boolean isModified() {
