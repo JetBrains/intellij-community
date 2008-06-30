@@ -26,13 +26,13 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    List<Pair<PsiClass, Integer>> classesWithWeights = new ArrayList<Pair<PsiClass, Integer>>();
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(getModule(element));
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
 
+    List<Pair<PsiClass, Integer>> classesWithWeights = new ArrayList<Pair<PsiClass, Integer>>();
     for (Pair<String, Integer> eachNameWithWeight : collectPossibleClassNamesWithWeights(klass.getName())) {
       for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
-        if (!TestUtil.isTestClass(eachClass)) {
+        if (isTestSubjectClass(eachClass)) {
           classesWithWeights.add(new Pair<PsiClass, Integer>(eachClass, eachNameWithWeight.second));
         }
       }
@@ -40,7 +40,11 @@ public class JavaTestFinder implements TestFinder {
 
     Collections.sort(classesWithWeights, new Comparator<Pair<PsiClass, Integer>>() {
       public int compare(Pair<PsiClass, Integer> o1, Pair<PsiClass, Integer> o2) {
-        return o2.second.compareTo(o1.second);
+        int result = o2.second.compareTo(o1.second);
+        if (result == 0) {
+          result = o1.first.getName().compareTo(o2.first.getName());
+        }
+        return result;
       }
     });
 
@@ -50,6 +54,16 @@ public class JavaTestFinder implements TestFinder {
     }
 
     return result;
+  }
+
+  private boolean isTestSubjectClass(PsiClass klass) {
+    if (klass.isEnum()
+        || klass.isInterface()
+        || klass.isAnnotationType()
+        || TestUtil.isTestClass(klass)) {
+      return false;
+    }
+    return true;
   }
 
   private List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
@@ -70,34 +84,37 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    // todo test scope
     GlobalSearchScope scope = GlobalSearchScope.moduleTestsWithDependentsScope(getModule(element));
+    PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
 
     String klassName = klass.getName();
     Pattern pattern = Pattern.compile(".*" + klassName + ".*");
 
-    List<Pair<PsiElement, Integer>> classesWithProximities = new ArrayList<Pair<PsiElement, Integer>>();
+    List<Pair<PsiClass, Integer>> classesWithProximities = new ArrayList<Pair<PsiClass, Integer>>();
 
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
     for (String eachName : cache.getAllClassNames()) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
           if (TestUtil.isTestClass(eachClass)) {
             classesWithProximities.add(
-                new Pair<PsiElement, Integer>(eachClass, calcTestNameProximity(klassName, eachName)));
+                new Pair<PsiClass, Integer>(eachClass, calcTestNameProximity(klassName, eachName)));
           }
         }
       }
     }
 
-    Collections.sort(classesWithProximities, new Comparator<Pair<PsiElement, Integer>>() {
-      public int compare(Pair<PsiElement, Integer> o1, Pair<PsiElement, Integer> o2) {
-        return o1.second.compareTo(o2.second);
+    Collections.sort(classesWithProximities, new Comparator<Pair<PsiClass, Integer>>() {
+      public int compare(Pair<PsiClass, Integer> o1, Pair<PsiClass, Integer> o2) {
+        int result = o1.second.compareTo(o2.second);
+        if (result == 0) {
+          result = o1.first.getName().compareTo(o2.first.getName());
+        }
+        return result;
       }
     });
 
     List<PsiElement> result = new ArrayList<PsiElement>();
-    for (Pair<PsiElement, Integer> each : classesWithProximities) {
+    for (Pair<PsiClass, Integer> each : classesWithProximities) {
       result.add(each.first);
     }
 

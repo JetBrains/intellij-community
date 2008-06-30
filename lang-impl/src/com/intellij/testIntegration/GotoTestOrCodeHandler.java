@@ -30,6 +30,11 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     return new Pair<PsiElement, PsiElement[]>(sourceElement, candidates.toArray(new PsiElement[candidates.size()]));
   }
 
+  @Override
+  protected boolean shouldSortResult() {
+    return false;
+  }
+
   protected String getChooserInFileTitleKey(PsiElement sourceElement) {
     if (TestFinderHelper.isTest(sourceElement)) {
       return "goto.code.in.file.chooser.title";

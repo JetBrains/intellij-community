@@ -62,7 +62,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       String name = ((PsiNamedElement)sourceElement).getName();
       String title = CodeInsightBundle.message(titleKey, name, elements.length);
 
-      Arrays.sort(elements, renderer.getComparator());
+      if (shouldSortResult()) Arrays.sort(elements, renderer.getComparator());
 
       final JList list = new JList(elements);
       list.setCellRenderer(renderer);
@@ -88,6 +88,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           setItemChoosenCallback(runnable).
           createPopup().showInBestPositionFor(editor);
     }
+  }
+
+  protected boolean shouldSortResult() {
+    return true;
   }
 
   protected abstract String getChooserInFileTitleKey(PsiElement sourceElement);
