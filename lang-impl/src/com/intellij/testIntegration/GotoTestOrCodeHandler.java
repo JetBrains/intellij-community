@@ -1,12 +1,11 @@
 package com.intellij.testIntegration;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
-import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 
 import java.util.Collection;
 
@@ -16,8 +15,8 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   }
 
   protected Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement selectedElement = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
+    PsiElement selectedElement = PsiUtilBase.getElementAtOffset(file,
+                                                                editor.getCaretModel().getOffset());
 
     Collection<PsiElement> candidates;
     if (TestFinderHelper.isTest(selectedElement)) {
@@ -26,6 +25,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     else {
       candidates = TestFinderHelper.findTestsForClass(selectedElement);
     }
+
     return new Pair<PsiElement, PsiElement[]>(selectedElement, candidates.toArray(new PsiElement[candidates.size()]));
   }
 

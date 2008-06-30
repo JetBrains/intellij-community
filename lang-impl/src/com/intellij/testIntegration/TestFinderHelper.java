@@ -12,7 +12,6 @@ public class TestFinderHelper {
     for (TestFinder each : getFinders()) {
       result.addAll(each.findTestsForClass(element));
     }
-    //result.add(element);
     return result;
   }
 
@@ -21,7 +20,6 @@ public class TestFinderHelper {
     for (TestFinder each : getFinders()) {
       result.addAll(each.findClassesForTest(element));
     }
-    //result.add(element);
     return result;
   }
 
