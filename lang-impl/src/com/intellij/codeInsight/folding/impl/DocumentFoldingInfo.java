@@ -82,6 +82,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
 
+    if (!myFile.isValid()) return;
     final PsiFile psiFile = psiManager.findFile(myFile);
     if (psiFile == null) return;
 
