@@ -265,9 +265,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           mySchemesManager.removeScheme(group);
         }
       }
-      else {
-        System.out.println("");
-      }
       myTemplatesById.remove(template.getId());
       myTemplates.remove(template.getKey());
     }

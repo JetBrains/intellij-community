@@ -130,7 +130,7 @@ public class DefUseUtil {
     }
     List<Instruction> instructions = flow.getInstructions();
     if (LOG.isDebugEnabled()) {
-      System.out.println(flow);
+      LOG.debug(flow.toString());
     }
 
     Set<PsiVariable> assignedVariables = new THashSet<PsiVariable>();
