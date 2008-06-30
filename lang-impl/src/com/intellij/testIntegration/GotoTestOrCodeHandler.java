@@ -15,8 +15,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   }
 
   protected Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file) {
-    PsiElement selectedElement = PsiUtilBase.getElementAtOffset(file,
-                                                                editor.getCaretModel().getOffset());
+    PsiElement selectedElement = getSelectedElement(editor, file);
 
     Collection<PsiElement> candidates;
     if (TestFinderHelper.isTest(selectedElement)) {
@@ -30,6 +29,10 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     return new Pair<PsiElement, PsiElement[]>(sourceElement, candidates.toArray(new PsiElement[candidates.size()]));
   }
 
+  public static PsiElement getSelectedElement(Editor editor, PsiFile file) {
+    return PsiUtilBase.getElementAtOffset(file, editor.getCaretModel().getOffset());
+  }
+
   @Override
   protected boolean shouldSortResult() {
     return false;
@@ -37,7 +40,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
   protected String getChooserInFileTitleKey(PsiElement sourceElement) {
     if (TestFinderHelper.isTest(sourceElement)) {
-      return "goto.code.in.file.chooser.title";
+      return "goto.test.subject.in.file.chooser.title";
     } else {
       return "goto.test.in.file.chooser.title";
     }
@@ -45,7 +48,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
   protected String getChooserTitleKey(PsiElement sourceElement) {
     if (TestFinderHelper.isTest(sourceElement)) {
-      return "goto.code.chooser.title";
+      return "goto.test.subject.chooser.title";
     } else {
       return "goto.test.chooser.title";
     }

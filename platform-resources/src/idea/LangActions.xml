@@ -173,7 +173,7 @@
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
-      <action id="GotoTestOrCode" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
+      <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>
@@ -468,7 +468,7 @@
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>
         <reference ref="GotoSuperMethod"/>
-        <reference ref="GotoTestOrCode"/>
+        <reference ref="GotoTest"/>
       </group>
       <reference ref="Generate"/>
       <separator/>
