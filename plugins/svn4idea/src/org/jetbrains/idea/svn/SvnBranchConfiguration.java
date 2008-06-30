@@ -16,11 +16,13 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
@@ -83,6 +85,11 @@ public class SvnBranchConfiguration {
   }
 
   public Map<String, List<SvnBranchItem>> getBranchMap() {
+    return myBranchMap;
+  }
+
+  public Map<String, List<SvnBranchItem>> getLoadedBranchMap(final Project project) {
+    loadBranches(project, false);
     return myBranchMap;
   }
 
@@ -291,9 +298,11 @@ public class SvnBranchConfiguration {
     }
   }
 
-  public List<SvnBranchItem> reloadBranches(final String url, final Project project) throws SVNException {
+  public List<SvnBranchItem> reloadBranches(final String url, final Project project, final VirtualFile vcsRoot) throws SVNException {
     final List<SvnBranchItem> result = getBranchesUnderProgress(url, project);
     myBranchMap.put(url, result);
+
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(project, vcsRoot);
 
     return result;
   }

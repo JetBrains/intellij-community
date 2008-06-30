@@ -1,17 +1,24 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -27,6 +34,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JComponent myToolbar;
   private JLabel mySourceInfoLabel;
   private JLabel myTargetInfoLabel;
+  private JLabel myWcListTitleLabel;
 
   private final Project myProject;
   private final String mySelectedBranchUrl;
@@ -35,8 +43,11 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private DefaultActionGroup myGroup;
 
+  private boolean myMustSelectBeforeOk;
+
   public IntegratedSelectedOptionsDialog(final Project project, final SVNURL currentBranch, final String selectedBranchUrl) {
     super(project, true);
+    myMustSelectBeforeOk = true;
     myProject = project;
     mySelectedBranchUrl = selectedBranchUrl;
     myVcs = SvnVcs.getInstance(myProject);
@@ -49,10 +60,10 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myWorkingCopiesList.setModel(new DefaultListModel());
     myWorkingCopiesList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        setOKActionEnabled(myWorkingCopiesList.getSelectedIndex() != -1);
+        setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
       }
     });
-    setOKActionEnabled(myWorkingCopiesList.getSelectedIndex() != -1);
+    setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
 
     final List<WorkingCopyInfo> workingCopyInfoList = new ArrayList<WorkingCopyInfo>();
     final Set<String> workingCopies = SvnBranchMapperManager.getInstance().get(mySelectedBranchUrl);
@@ -96,7 +107,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
           if ((mySelectedRepositoryUUID != null) && (! mySelectedRepositoryUUID.equals(repositoryUUID))) {
             if (OK_EXIT_CODE == Messages.showOkCancelDialog((repositoryUUID == null) ? SvnBundle.message("action.Subversion.integrate.changes.message.not.under.control.text")
                                                             : SvnBundle.message("action.Subversion.integrate.changes.message.another.wc.text"),
-                                                            SvnBundle.message("action.Subversion.integrate.changes.messages.title"), UIUtil.getWarningIcon())) {
+                                                            getTitle(), UIUtil.getWarningIcon())) {
               onOkToAdd(file);
             }
           }
@@ -131,6 +142,14 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
         }
       }
     });
+  }
+
+  public void selectWcopyRootOnly() {
+    myMustSelectBeforeOk = false;
+    setTitle(SvnBundle.message("dialog.Subversion.select.working.copy.title"));
+    myDryRunCheckbox.setVisible(false);
+    myStatusBox.setVisible(false);
+    myWcListTitleLabel.setText(SvnBundle.message("dialog.Subversion.select.working.copy.wcopy.list.title"));
   }
 
   private void createUIComponents() {
@@ -197,5 +216,55 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     }
   }
 
+  @Nullable
+  private static SVNURL realTargetUrl(final SvnVcs vcs, final WorkingCopyInfo info, final String targetBranchUrl) {
+    final SVNWCClient client = vcs.createWCClient();
+    try {
+      final SVNInfo svnInfo = client.doInfo(new File(info.getLocalPath()), SVNRevision.WORKING);
+      final SVNURL svnurl = svnInfo.getURL();
 
+      if ((svnurl != null) && (svnurl.toString().startsWith(targetBranchUrl))) {
+        return svnurl;
+      }
+    }
+    catch (SVNException e) {
+      // tracked by return value
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Pair<WorkingCopyInfo, SVNURL> selectWorkingCopy(final Project project, final SVNURL currentBranch, final String targetBranch,
+                                                                final boolean showIntegrationParameters) {
+    final IntegratedSelectedOptionsDialog dialog = new IntegratedSelectedOptionsDialog(project, currentBranch, targetBranch);
+    if (! showIntegrationParameters) {
+      dialog.selectWcopyRootOnly();
+    }
+    dialog.show();
+
+    if (dialog.isOK()) {
+      ApplicationManager.getApplication().saveAll();
+      dialog.saveOptions();
+
+      final WorkingCopyInfo info = dialog.getSelectedWc();
+      if (info != null) {
+        final File file = new File(info.getLocalPath());
+        if ((! file.exists()) || (! file.isDirectory())) {
+          Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.target.not.dir.text"),
+                                   SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
+          return null;
+        }
+
+        final SVNURL targetUrl = realTargetUrl(SvnVcs.getInstance(project), info, targetBranch);
+
+        if (targetUrl == null) {
+          Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.not.versioned.text"),
+                                   SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
+          return null;
+        }
+        return new Pair<WorkingCopyInfo, SVNURL>(info, targetUrl);
+      }
+    }
+    return null;
+  }
 }

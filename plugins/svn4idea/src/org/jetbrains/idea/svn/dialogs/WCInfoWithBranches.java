@@ -51,7 +51,7 @@ public class WCInfoWithBranches extends WCInfo {
 
     @Override
     public String toString() {
-      return myUrl;
+      return myName;
     }
 
     @Override

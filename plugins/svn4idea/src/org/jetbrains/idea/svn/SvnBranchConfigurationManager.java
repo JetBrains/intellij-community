@@ -144,7 +144,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     }
 
     myConfigurationBean.myConfigurationMap.put(key, configuration);
-    SvnBranchMapperManager.getInstance().notifyMappingChanged(myProject, vcsRoot, configuration);
+    SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration);
 
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(myProject, vcsRoot);

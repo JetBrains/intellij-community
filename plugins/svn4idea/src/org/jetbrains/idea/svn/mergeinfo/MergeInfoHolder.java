@@ -11,140 +11,162 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-// todo incomplete' to be used as controller
 public class MergeInfoHolder {
-  private final SvnVcs myVcs;
   private final DecoratorManager myManager;
-  private WCInfoWithBranches mySelectedRoot;
-  // todo needed?
-  public static final DefaultComboBoxModel EMPTY = new DefaultComboBoxModel();
-  private final SvnMergeInfoPersistentCache myMergeInfoCache;
-  private MyDecorator myDecorator;
+  private final SvnMergeInfoCache myMergeInfoCache;
 
   private final static String ourIntegratedText = SvnBundle.message("committed.changes.merge.status.integrated.text");
+  private final static String ourNotIntegratedText = SvnBundle.message("committed.changes.merge.status.not.integrated.text");
+  private final static SimpleTextAttributes ourNotIntegratedAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.RED);
   private final static SimpleTextAttributes ourIntegratedAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.GREEN);
   private final static SimpleTextAttributes ourRefreshAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.GRAY);
+  
   // used ONLY when refresh is triggered
-  private final Map<Pair<String, String>, Map<Long, SvnMergeInfoPersistentCache.MergeCheckResult>> myCachedMap;
+  private final Map<Pair<String, String>, Map<Long, SvnMergeInfoCache.MergeCheckResult>> myCachedMap;
 
   private Getter<WCInfoWithBranches> myRootGetter;
   private Getter<WCInfoWithBranches.Branch> myBranchGetter;
   private Getter<String> myWcPathGetter;
+  private Getter<Boolean> myEnabledHolder;
 
   public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCInfoWithBranches> rootGetter,
                          final Getter<WCInfoWithBranches.Branch> branchGetter,
-                         final Getter<String> wcPathGetter) {
+                         final Getter<String> wcPathGetter, Getter<Boolean> enabledHolder) {
     myRootGetter = rootGetter;
     myBranchGetter = branchGetter;
     myWcPathGetter = wcPathGetter;
-
+    myEnabledHolder = enabledHolder;
     myManager = manager;
-    myVcs = SvnVcs.getInstance(project);
-    myDecorator = new MyDecorator();
-    myMergeInfoCache = SvnMergeInfoPersistentCache.getInstance(project);
+    myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
+    myCachedMap = new HashMap<Pair<String, String>, Map<Long, SvnMergeInfoCache.MergeCheckResult>>();
 
-    myCachedMap = new HashMap<Pair<String, String>, Map<Long, SvnMergeInfoPersistentCache.MergeCheckResult>>();
+    myManager.install(new MyDecorator());
   }
 
-  private Map<Long, SvnMergeInfoPersistentCache.MergeCheckResult> getCurrentCache() {
-    //return myCachedMap.get(new Pair<String, String>(mySelectedRoot.getPath(), ((WCInfoWithBranches.Branch) getSelected()).getUrl()));
-    return null;
+  private Map<Long, SvnMergeInfoCache.MergeCheckResult> getCurrentCache() {
+    return myCachedMap.get(createKey(myRootGetter.get(), myBranchGetter.get()));
+  }
+
+  private boolean enabledAndGettersFilled() {
+    return (Boolean.TRUE.equals(myEnabledHolder.get())) && (myRootGetter.get() != null) && (myBranchGetter.get() != null) &&
+           (myWcPathGetter.get() != null);
+  }
+
+  public boolean refreshEnabled() {
+    return enabledAndGettersFilled() && (getCurrentCache() == null);
+  }
+
+  private static Pair<String, String> createKey(final WCInfoWithBranches root, final WCInfoWithBranches.Branch branch) {
+    return new Pair<String, String>(root.getPath(), branch.getUrl());
+  }
+
+  public void refresh() {
+    if (refreshEnabled()) {
+      // on awt thread
+      final Map<Long, SvnMergeInfoCache.MergeCheckResult> map =
+          myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
+      myCachedMap.put(createKey(myRootGetter.get(), myBranchGetter.get()),
+                      (map == null) ? new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>() : map);
+      myMergeInfoCache.clear(myRootGetter.get(), myBranchGetter.get());
+
+      // run refresher
+      myManager.reportLoadedLists(new MyRefresher());
+      myManager.repaintTree();
+    }
   }
 
   private class MyRefresher implements CommittedChangeListsListener {
     private final WCInfoWithBranches myRefreshedRoot;
     private final WCInfoWithBranches.Branch myRefreshedBranch;
 
-    private MyRefresher(final WCInfoWithBranches refreshedRoot, final WCInfoWithBranches.Branch refreshedBranch) {
-      myRefreshedRoot = refreshedRoot;
-      myRefreshedBranch = refreshedBranch;
+    private MyRefresher() {
+      myRefreshedRoot = myRootGetter.get();
+      myRefreshedBranch = myBranchGetter.get();
     }
 
     public void onBeforeStartReport() {
     }
 
     public boolean report(final CommittedChangeList list) {
-      // prepare state. must be in non awt thread
-      myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList) list, myRefreshedBranch);
-      // todo make batches - by 10
-      final long number = list.getNumber();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          final Map<Long, SvnMergeInfoPersistentCache.MergeCheckResult> map = myCachedMap.get(
-              new Pair<String, String>(myRefreshedRoot.getPath(), myRefreshedBranch.getUrl()));
-          if (map != null) {
-            map.remove(number);
+      if (list instanceof SvnChangeList) {
+        // prepare state. must be in non awt thread
+        myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList) list, myRefreshedBranch);
+        // todo make batches - by 10
+        final long number = list.getNumber();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final Map<Long, SvnMergeInfoCache.MergeCheckResult> map = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
+            if (map != null) {
+              map.remove(number);
+            }
+            myManager.repaintTree();
           }
-          myManager.repaintTree();
-        }
-      });
+        });
+      }
       return true;
     }
 
     public void onAfterEndReport() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          myCachedMap.remove(new Pair<String, String>(myRefreshedRoot.getPath(), myRefreshedBranch.getUrl()));
+          myCachedMap.remove(createKey(myRefreshedRoot, myRefreshedBranch));
           myManager.repaintTree();
         }
       });
     }
   }
 
-  private final static Color MERGED = new Color(0, 100, 0);
-  private final static Color DIRTY_MERGED = new Color(50, 100, 50);
-  private final static Color DIRTY = new Color(50, 50, 50);
-
   private class MyDecorator implements CommittedChangeListDecorator {
-    @Nullable
-    public java.util.List<Pair<String,SimpleTextAttributes>> decorate(final CommittedChangeList list) {
-      /*if ((! isEnabled()) || (getSelected() == null) || (mySelectedRoot == null)) {
-        return null;
-      }*/
-
-      final java.util.List<Pair<String,SimpleTextAttributes>> decoration = new ArrayList<Pair<String, SimpleTextAttributes>>();
-
-        final Map<Long, SvnMergeInfoPersistentCache.MergeCheckResult> map = getCurrentCache();
-        if (map != null) {
-          final SvnMergeInfoPersistentCache.MergeCheckResult result = map.get(list.getNumber());
-          if (result != null) {
-            String beforeText = getBeforeText(result);
-            if (beforeText != null) {
-              decoration.add(new Pair<String, SimpleTextAttributes>(beforeText, ourIntegratedAttributes));
-            }
-          }
-          decoration.add(new Pair<String, SimpleTextAttributes>(SvnBundle.message("committed.changes.merge.status.refreshing.text"), ourRefreshAttributes));
-          return decoration;
+    private void fromCached(final SvnMergeInfoCache.MergeCheckResult result,
+                            final List<Pair<String,SimpleTextAttributes>> decoration, final boolean refreshing) {
+      if (result != null) {
+        if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {
+          decoration.add(new Pair<String, SimpleTextAttributes>(ourIntegratedText, ourIntegratedAttributes));
+        } else {
+          decoration.add(new Pair<String, SimpleTextAttributes>(ourNotIntegratedText, ourNotIntegratedAttributes));
         }
-
-      if ((myVcs != null) && (myVcs.getName().equals(list.getVcs().getName()))) {
-        /*final SvnMergeInfoPersistentCache.MergeCheckResult state = myMergeInfoCache.getState(mySelectedRoot, (SvnChangeList) list, (WCInfoWithBranches.Branch) getSelected());
-
-        final String integrationText = getBeforeText(state);
-        if (integrationText != null) {
-          decoration.add(new Pair<String, SimpleTextAttributes>(integrationText, ourIntegratedAttributes));
-        }
-        return decoration;*/
       }
-      return null;
+      if (refreshing) {
+        decoration.add(new Pair<String, SimpleTextAttributes>(
+            SvnBundle.message("committed.changes.merge.status.refreshing.text"), ourRefreshAttributes));
+      }
     }
 
     @Nullable
-    private String getBeforeText(final SvnMergeInfoPersistentCache.MergeCheckResult result) {
-      if (SvnMergeInfoPersistentCache.MergeCheckResult.MERGED.equals(result)) {
-        return ourIntegratedText;
+    public List<Pair<String,SimpleTextAttributes>> decorate(final CommittedChangeList list) {
+      if (! enabledAndGettersFilled()) {
+        return null;
       }
-      return null;
+
+      if (! (list instanceof SvnChangeList)) {
+        return null;
+      }
+
+      final List<Pair<String,SimpleTextAttributes>> decoration = new ArrayList<Pair<String, SimpleTextAttributes>>();
+
+        final Map<Long, SvnMergeInfoCache.MergeCheckResult> map = getCurrentCache();
+        if (map != null) {
+          final SvnMergeInfoCache.MergeCheckResult result = map.get(list.getNumber());
+          fromCached(result, decoration, true);
+        } else {
+          final Map<Long, SvnMergeInfoCache.MergeCheckResult> state =
+              myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
+          if (state == null) {
+            refresh();
+          } else {
+            fromCached(state.get(list.getNumber()), decoration, false);
+          }
+        }
+      return decoration;
     }
   }
 }

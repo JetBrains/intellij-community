@@ -147,7 +147,7 @@ public class SelectBranchPopup {
     private List<SvnBranchItem> loadBranches(final String selectedBranchesHolder, final boolean cached) {
       try {
         return cached ? myConfiguration.getBranches(selectedBranchesHolder, myProject, true) :
-            myConfiguration.reloadBranches(selectedBranchesHolder, myProject);
+            myConfiguration.reloadBranches(selectedBranchesHolder, myProject, myVcsRoot);
       }
       catch (SVNException e) {
         Messages.showErrorDialog(myProject, e.getMessage(), SvnBundle.message("compare.with.branch.list.error"));

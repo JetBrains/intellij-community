@@ -16,16 +16,14 @@
 
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
@@ -36,6 +34,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -43,8 +42,8 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.actions.IntegrateChangeListsAction;
-import org.jetbrains.idea.svn.mergeinfo.HighlightBranchesAction;
-import org.jetbrains.idea.svn.mergeinfo.SelectWcRootAction;
+import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
+import org.jetbrains.idea.svn.mergeinfo.*;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -70,7 +69,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private final MessageBusConnection myConnection;
 
   public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
-  private HighlightBranchesAction myHighlightBranchesAction;
 
   public SvnCommittedChangesProvider(final Project project) {
     myProject = project;
@@ -189,38 +187,65 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     };
   }
 
+  private static class ChainConsumer implements Getter<Boolean>, Consumer<Boolean> {
+    private final JPanel myTargetPanel;
+    private Boolean myState;
+    private final DecoratorManager myManager;
+
+    private ChainConsumer(final JPanel targetPanel, final DecoratorManager manager) {
+      myTargetPanel = targetPanel;
+      myManager = manager;
+      myState = false;
+    }
+
+    public void consume(final Boolean aBoolean) {
+      myTargetPanel.setVisible(Boolean.TRUE.equals(aBoolean));
+      myState = aBoolean;
+      myManager.fireVisibilityCalculation();
+    }
+
+    public Boolean get() {
+      return myState;
+    }
+  }
+
   @Nullable
   public Pair<JPanel,List<AnAction>> createActionPanel(final DecoratorManager manager) {
     final JPanel panel = new JPanel(new BorderLayout());
+    final SelectWCopyComboAction selectWcCombo = new SelectWCopyComboAction();
 
-    // show merge info action is not ready and therefore is disabled
+    final DefaultActionGroup group = new DefaultActionGroup();
+    final SelectBranchAction highlightBranchesAction = new SelectBranchAction(manager, selectWcCombo);
 
-    /*final DefaultActionGroup group = new DefaultActionGroup();
-    myHighlightBranchesAction = new HighlightBranchesAction(myProject, manager);
+    final ChainConsumer visiblenessConsumer = new ChainConsumer(panel, manager);
+    manager.registerCompositePart(visiblenessConsumer);
 
-    final SelectWcRootAction selectRootAction = new SelectWcRootAction(myProject, myHighlightBranchesAction,
-                                                                       new Consumer<Boolean>() {
-                                                                         public void consume(final Boolean aBoolean) {
-                                                                           panel.setVisible(Boolean.TRUE.equals(aBoolean));
-                                                                         }
-                                                                       });
-    final MyUseBranchFilderCheckboxAction checkBoxAction = new MyUseBranchFilderCheckboxAction(myHighlightBranchesAction, selectRootAction);
-    myHighlightBranchesAction.enable(false);
-    selectRootAction.enable(false);
+    final SelectWcRootAction selectRootAction = new SelectWcRootAction(myProject, highlightBranchesAction, visiblenessConsumer);
+    final MyUseBranchFilterCheckboxAction checkBoxAction = new MyUseBranchFilterCheckboxAction(highlightBranchesAction);
+    final SelectWCopyDialogAction selectWcopyDialog =
+        new SelectWCopyDialogAction(selectRootAction, highlightBranchesAction, checkBoxAction, myProject);
+    final MergeInfoHolder mergeInfoHolder =
+        new MergeInfoHolder(myProject, manager, selectRootAction, highlightBranchesAction, selectWcCombo, checkBoxAction);
 
     group.add(checkBoxAction);
     group.add(selectRootAction);
-    group.add(myHighlightBranchesAction);
-    group.add(new Refresh(myHighlightBranchesAction, selectRootAction));
+    group.add(highlightBranchesAction);
+    group.add(selectWcCombo);
+    group.add(selectWcopyDialog);
+    group.add(new MyRefresh(mergeInfoHolder));
 
     final ActionToolbar customToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    panel.add(customToolbar.getComponent(), BorderLayout.WEST);*/
+    panel.add(customToolbar.getComponent(), BorderLayout.WEST);
+
+    selectRootAction.setSelected(0);
+    highlightBranchesAction.setSelected(0);
+    selectWcCombo.setSelected(0);
 
     final DefaultActionGroup popup = new DefaultActionGroup(myVcs.getDisplayName(), true);
     popup.add(new IntegrateChangeListsAction());
     popup.add(new ConfigureBranchesAction());
 
-    /*myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
+    myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
       public void execute(final Project project, final VirtualFile vcsRoot) {
         selectRootAction.reload();
       }
@@ -235,55 +260,54 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       public void directoryMappingChanged() {
         selectRootAction.reload();
       }
-    });*/
+    });
 
     return new Pair<JPanel, List<AnAction>>(panel, Collections.<AnAction>singletonList(popup));
   }
 
-  private static class Refresh extends AnAction {
-    private final HighlightBranchesAction myHighlightAction;
-    private final SelectWcRootAction mySelectRootAction;
+  private static class MyRefresh extends AnAction {
+    private final MergeInfoHolder myMergeInfoHolder;
 
-    private Refresh(final HighlightBranchesAction highlightAction, final SelectWcRootAction selectRootAction) {
+    private MyRefresh(final MergeInfoHolder mergeInfoHolder) {
       super(SvnBundle.message("committed.changes.action.merge.highlighting.refresh.text"),
             SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), IconLoader.findIcon("/actions/sync.png"));
-      myHighlightAction = highlightAction;
-      mySelectRootAction = selectRootAction;
+      myMergeInfoHolder = mergeInfoHolder;
     }
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(myHighlightAction.enablesRefresh());
+      e.getPresentation().setEnabled(myMergeInfoHolder.refreshEnabled());
     }
 
     public void actionPerformed(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
 
-      mySelectRootAction.reload();
-      myHighlightAction.refresh();
+      myMergeInfoHolder.refresh();
     }
   }
 
-  private static class MyUseBranchFilderCheckboxAction extends CheckboxAction {
-    private final HighlightBranchesAction myHighlightAction;
-    private final SelectWcRootAction mySelectRootAction;
+  private static class MyUseBranchFilterCheckboxAction extends CheckboxAction implements Getter<Boolean> {
+    private final SelectBranchAction myHighlightAction;
     private boolean mySelected;
 
-    private MyUseBranchFilderCheckboxAction(final HighlightBranchesAction highlightAction, final SelectWcRootAction selectRootAction) {
-      super(SvnBundle.message("committed.changes.action.enable.merge.highlighting"), "", null);   
+    private MyUseBranchFilterCheckboxAction(final SelectBranchAction highlightAction) {
+      super(SvnBundle.message("committed.changes.action.enable.merge.highlighting"),
+            SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"), null);   
       myHighlightAction = highlightAction;
-      mySelectRootAction = selectRootAction;
     }
 
     public boolean isSelected(final AnActionEvent e) {
       return mySelected;
     }
 
+    public Boolean get() {
+      return mySelected;
+    }
+
     public void setSelected(final AnActionEvent e, final boolean state) {
       mySelected = state;
       myHighlightAction.enable(mySelected);
-      mySelectRootAction.enable(mySelected);
     }
   }
 
@@ -331,9 +355,5 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public void deactivate() {
     myConnection.disconnect();
-    if (myHighlightBranchesAction != null) {
-      myHighlightBranchesAction.deactivate();
-      myHighlightBranchesAction = null;
-    }
   }
 }

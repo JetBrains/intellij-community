@@ -18,39 +18,23 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.util.*;
 
-/*@State(
-  name = "SvnMergeInfoPersistentCache",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$WORKSPACE_FILE$"
-    )}
-)*/
-public class SvnMergeInfoPersistentCache /*implements PersistentStateComponent<SvnMergeInfoPersistentCache.MyState>*/ {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoPersistentCache");
+public class SvnMergeInfoCache {
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache");
 
   private final Project myProject;
   private MyState myState;
   private SVNWCClient myClient;
 
-  private SvnMergeInfoPersistentCache(final Project project) {
+  private SvnMergeInfoCache(final Project project) {
     myProject = project;
     myState = new MyState();
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     myClient = vcs.createWCClient();
   }
 
-  public static SvnMergeInfoPersistentCache getInstance(final Project project) {
-    return ServiceManager.getService(project, SvnMergeInfoPersistentCache.class);
+  public static SvnMergeInfoCache getInstance(final Project project) {
+    return ServiceManager.getService(project, SvnMergeInfoCache.class);
   }
-
-  /*public MyState getState() {
-    return myState;
-  }
-
-  public void loadState(final MyState state) {
-    myState = state;
-  }*/
 
   public void clear(final WCInfoWithBranches info, final WCInfoWithBranches.Branch selectedBranch) {
     final String currentUrl = info.getUrl().toString();
@@ -226,7 +210,7 @@ public class SvnMergeInfoPersistentCache /*implements PersistentStateComponent<S
     }
 
     private MergeCheckResult checkOnePath(final long number, final String head, final String tail, final String branchPath) {
-      if (myNonExistingPaths.contains(head)) {
+      if ((myNonExistingPaths.contains(head)) || (head.length() == 0)) {
         return MergeCheckResult.NOT_EXISTS;
       }
       final Set<Long> mergeInfo = myPathMergedMap.get(head);
@@ -237,16 +221,20 @@ public class SvnMergeInfoPersistentCache /*implements PersistentStateComponent<S
         return goDown(number, head, tail, branchPath);
       }
 
+      LOG.debug("checking " + head + " tail: " + tail);
+
       // go and get manually
       try {
         final SVNPropertyData mergeinfoProperty =
             myClient.doGetProperty(SVNURL.parseURIEncoded(head), SVNProperty.MERGE_INFO, SVNRevision.HEAD, SVNRevision.HEAD, false);
+        boolean propertyFound = false;
         if (mergeinfoProperty != null) {
           final SVNPropertyValue value = mergeinfoProperty.getValue();
           if (value != null) {
             final Map<String, SVNMergeRangeList> map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
             for (String key : map.keySet()) {
               if ((key != null) && (key.startsWith(myRelativeTrunk))) {
+                propertyFound = true;
                 final Set<Long> revisions = new HashSet<Long>();
                 final SVNMergeRangeList rangesList = map.get(key);
                 boolean result = false;
@@ -269,6 +257,9 @@ public class SvnMergeInfoPersistentCache /*implements PersistentStateComponent<S
             }
           }
         }
+        if (! propertyFound) {
+          myPathMergedMap.put(head, Collections.<Long>emptySet());
+        }
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -283,13 +274,18 @@ public class SvnMergeInfoPersistentCache /*implements PersistentStateComponent<S
     }
 
     private MergeCheckResult goDown(final long number, final String head, final String tail, final String branchPath) {
-      final String newTail = SVNPathUtil.removeHead(tail);
+      final String fixedTail = (tail.startsWith("/")) ? tail.substring(1) : tail;
+      final String newTail = SVNPathUtil.removeHead(fixedTail);
       if (newTail.length() == 0) {
         return MergeCheckResult.NOT_MERGED;
       }
-      final String headOfTail = SVNPathUtil.head(tail);
+      final String headOfTail = SVNPathUtil.head(fixedTail);
+      if (headOfTail.length() == 0) {
+        return MergeCheckResult.NOT_MERGED;
+      }
       final String newHead = SVNPathUtil.append(head, headOfTail);
 
+      LOG.debug("goDown: newHead: " + newHead + " oldHead: " + head);
       return checkOnePath(number, newHead, newTail, branchPath);
     }
   }
