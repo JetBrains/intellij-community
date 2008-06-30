@@ -101,10 +101,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
           }
         }
       }
-      if (refElement instanceof PsiClass && refElement.getContainingFile().getVirtualFile() == null) { // in mirror file of compiled class
-        String qualifiedName = ((PsiClass)refElement).getQualifiedName();
-        if (qualifiedName == null) return null;
-        return JavaPsiFacade.getInstance(manager.getProject()).findClass(qualifiedName, refElement.getResolveScope());
+      if (refElement instanceof PsiClass) {
+        final PsiFile containingFile = refElement.getContainingFile();
+        if (containingFile != null && containingFile.getVirtualFile() == null) { // in mirror file of compiled class
+          String qualifiedName = ((PsiClass)refElement).getQualifiedName();
+          if (qualifiedName == null) return null;
+          return JavaPsiFacade.getInstance(manager.getProject()).findClass(qualifiedName, refElement.getResolveScope());
+        }
       }
       return refElement;
     }
