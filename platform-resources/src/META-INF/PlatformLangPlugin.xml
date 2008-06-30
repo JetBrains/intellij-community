@@ -49,8 +49,6 @@
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"/>
     <applicationService serviceInterface="com.intellij.codeEditor.printing.FileSeparatorProvider"
                         serviceImplementation="com.intellij.codeEditor.printing.FileSeparatorProvider"/>
-    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
-                      serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
 
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
 

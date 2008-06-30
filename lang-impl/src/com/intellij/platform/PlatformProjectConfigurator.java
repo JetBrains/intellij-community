@@ -3,7 +3,7 @@ package com.intellij.platform;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -21,7 +21,7 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           String imlName = baseDir.getPath() + "/.idea/" + baseDir.getName() + ".iml";
-          final Module module = moduleManager.newModule(imlName, ModuleType.EMPTY);
+          final Module module = moduleManager.newModule(imlName, ModuleTypeManager.getInstance().getDefaultModuleType());
           ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
           rootModel.addContentEntry(baseDir);
           rootModel.commit();
