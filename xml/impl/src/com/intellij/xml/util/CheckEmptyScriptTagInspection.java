@@ -52,6 +52,8 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
               }
 
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                final XmlTag tag = (XmlTag)descriptor.getPsiElement();
+                if (tag == null) return;
                 final StringBuilder builder = new StringBuilder(tag.getText());
                 builder.replace(builder.length() - 2, builder.length(), "></" + SCRIPT_TAG_NAME + ">");
 
