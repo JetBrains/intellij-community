@@ -8,11 +8,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface GotoImplementationRendererProvider {
-  ExtensionPointName<GotoImplementationRendererProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoImplementationRendererProvider");
+public interface GotoTargetRendererProvider {
+  ExtensionPointName<GotoTargetRendererProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoTargetRendererProvider");
 
   @Nullable
   PsiElementListCellRenderer getRenderer(PsiElement[] elements);
-
-  String getChooserTitle(String name, PsiElement[] elements);
 }

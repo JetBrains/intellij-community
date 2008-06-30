@@ -7,14 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 
 import java.util.Arrays;
 
 /**
  * @author yole
  */
-public class JavaGotoImplementationRendererProvider implements GotoImplementationRendererProvider {
+public class JavaGotoTargetRendererProvider implements GotoTargetRendererProvider {
   public PsiElementListCellRenderer getRenderer(final PsiElement[] elements) {
     boolean onlyMethods = true;
     boolean onlyClasses = true;
@@ -31,7 +30,4 @@ public class JavaGotoImplementationRendererProvider implements GotoImplementatio
     return null;
   }
 
-  public String getChooserTitle(final String name, final PsiElement[] elements) {
-    return CodeInsightBundle.message("goto.implementation.chooser.title", name, elements.length);
-  }
 }
