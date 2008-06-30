@@ -190,7 +190,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                               .replace('?', '_')
                                               .replace('<', '_')
                                               .replace('>', '_')
-                                              .replace('/', '_');
+                                              .replace('/', '_')
+                                              .replace('"', '_');
     if (defaultPath.length() == 0) {
       defaultPath = "unnamed";
     }
