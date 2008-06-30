@@ -4,6 +4,7 @@ import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -13,10 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
@@ -28,27 +26,40 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<Pair<PsiClass, Integer>> classesWithWeights = new ArrayList<Pair<PsiClass, Integer>>();
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(getModule(element));
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
-    for (String each : collectPossibleClassNames(klass.getName())) {
-      for (PsiClass eachClass : cache.getClassesByName(each, scope)) {
+
+    for (Pair<String, Integer> eachNameWithWeight : collectPossibleClassNamesWithWeights(klass.getName())) {
+      for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
         if (!TestUtil.isTestClass(eachClass)) {
-          result.add(eachClass);
+          classesWithWeights.add(new Pair<PsiClass, Integer>(eachClass, eachNameWithWeight.second));
         }
       }
+    }
+
+    Collections.sort(classesWithWeights, new Comparator<Pair<PsiClass, Integer>>() {
+      public int compare(Pair<PsiClass, Integer> o1, Pair<PsiClass, Integer> o2) {
+        return o2.second.compareTo(o1.second);
+      }
+    });
+
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    for (Pair<PsiClass, Integer> each : classesWithWeights) {
+      result.add(each.first);
     }
 
     return result;
   }
 
-  private List<String> collectPossibleClassNames(String testName) {
+  private List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
     String[] words = NameUtil.splitNameIntoWords(testName);
-    List<String> result = new ArrayList<String>();
+    List<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
 
     for (int from = 0; from < words.length; from++) {
       for (int to = from; to < words.length; to++) {
-        result.add(StringUtil.join(words, from, to + 1, ""));
+        result.add(new Pair<String, Integer>(StringUtil.join(words, from, to + 1, ""),
+                                             words.length - from + to));
       }
     }
 
@@ -62,20 +73,42 @@ public class JavaTestFinder implements TestFinder {
     // todo test scope
     GlobalSearchScope scope = GlobalSearchScope.moduleTestsWithDependentsScope(getModule(element));
 
-    Pattern pattern = Pattern.compile(".*"+ klass.getName() + ".*");
+    String klassName = klass.getName();
+    Pattern pattern = Pattern.compile(".*" + klassName + ".*");
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<Pair<PsiElement, Integer>> classesWithProximities = new ArrayList<Pair<PsiElement, Integer>>();
 
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
-    for (String each : cache.getAllClassNames()) {
-      if (pattern.matcher(each).matches()) {
-        for (PsiClass eachClass : cache.getClassesByName(each, scope)) {
-          if (TestUtil.isTestClass(eachClass)) result.add(eachClass);
+    for (String eachName : cache.getAllClassNames()) {
+      if (pattern.matcher(eachName).matches()) {
+        for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
+          if (TestUtil.isTestClass(eachClass)) {
+            classesWithProximities.add(
+                new Pair<PsiElement, Integer>(eachClass, calcTestNameProximity(klassName, eachName)));
+          }
         }
       }
     }
 
+    Collections.sort(classesWithProximities, new Comparator<Pair<PsiElement, Integer>>() {
+      public int compare(Pair<PsiElement, Integer> o1, Pair<PsiElement, Integer> o2) {
+        return o1.second.compareTo(o2.second);
+      }
+    });
+
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    for (Pair<PsiElement, Integer> each : classesWithProximities) {
+      result.add(each.first);
+    }
+
     return result;
+  }
+
+  private Integer calcTestNameProximity(String klassName, String testName) {
+    int posProximity = testName.indexOf(klassName);
+    int sizeProximity = testName.length() - klassName.length();
+
+    return posProximity + sizeProximity;
   }
 
   private static Module getModule(PsiElement element) {
