@@ -31,6 +31,8 @@
     <breadcrumbsInfoProvider implementation="com.intellij.lang.ant.config.impl.AntBreadcrumbsInfoProvider"/>
     <fileBasedIndex implementation="com.intellij.lang.ant.psi.impl.AntImportsIndex"/>
     <hectorComponentProvider implementation="com.intellij.lang.ant.validation.AntHectorPanelProvider"/>
+    <declarationRangeHandler key="com.intellij.lang.ant.psi.AntStructuredElement"
+                             implementationClass="com.intellij.lang.ant.AntDeclarationRangeHandler"/>
   </extensions>
 
   <application-components>
