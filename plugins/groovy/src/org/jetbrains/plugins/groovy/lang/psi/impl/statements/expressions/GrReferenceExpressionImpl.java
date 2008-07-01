@@ -577,6 +577,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return false;
   }
 
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (isReferenceTo(element)) return this;
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod) element;
+
+      //todo implement all appropriate logic
+      return this;
+    } else {
+      return super.bindToElement(element);
+    }
+  }
+
   public Object[] getVariants() {
     return CompleteReferenceExpression.getVariants(this);
   }
