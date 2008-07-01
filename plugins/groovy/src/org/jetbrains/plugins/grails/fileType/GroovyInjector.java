@@ -81,7 +81,9 @@ public class GroovyInjector implements ProjectComponent {
                     final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
                     registrar.startInjecting(groovyLanguage);
                     for (PsiElement operand : operands) {
-                      registrar.addPlace("", "", (PsiLanguageInjectionHost) operand, new TextRange(1, operand.getTextLength() - 1));
+                      registrar.addPlace("", "", (PsiLanguageInjectionHost) operand, operand.getTextLength() > 1 ?
+                              new TextRange(1, operand.getTextLength() - 1) :
+                              new TextRange(1, 1));
                     }
                     registrar.doneInjecting();
                   }
