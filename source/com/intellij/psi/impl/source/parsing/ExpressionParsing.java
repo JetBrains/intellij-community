@@ -35,7 +35,7 @@ public class ExpressionParsing extends Parsing {
     expression.putUserData(CharTable.CHAR_TABLE_KEY, table);
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(expression, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(expression, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     TreeUtil.addChildren(dummyRoot, expression);
     return expression;
@@ -68,7 +68,7 @@ public class ExpressionParsing extends Parsing {
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return dummyRoot.getFirstChildNode();
   }
 
@@ -97,7 +97,7 @@ public class ExpressionParsing extends Parsing {
       }
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE,
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), state, WhiteSpaceAndCommentsProcessor.INSTANCE,
                                   myContext);
     return dummyRoot.getFirstChildNode();
   }

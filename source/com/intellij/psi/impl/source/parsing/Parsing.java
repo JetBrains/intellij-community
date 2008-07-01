@@ -63,7 +63,7 @@ public class Parsing implements Constants{
       TreeUtil.addChildren(dummyRoot, errorElement);
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return dummyRoot.getFirstChildNode();
   }
 
@@ -167,7 +167,7 @@ public class Parsing implements Constants{
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     TreeUtil.addChildren(dummyRoot, type);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return type;
   }
 
@@ -293,7 +293,7 @@ public class Parsing implements Constants{
       lexer,
       startOffset,
       endOffset, state,
-      ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+      WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return dummyRoot.getFirstChildNode();
  }
 }

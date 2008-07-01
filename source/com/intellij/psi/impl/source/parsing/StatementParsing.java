@@ -65,7 +65,7 @@ public class StatementParsing extends Parsing {
     parseCodeBlockDeep(block, filterLexer, true);
     if (block.getFirstChildNode() == null) return null;
 
-    ParseUtil.insertMissingTokens(block, lexer, startOffset, endOffset, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(block, lexer, startOffset, endOffset, state, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return block;
   }
 
@@ -90,7 +90,7 @@ public class StatementParsing extends Parsing {
                                   startOffset,
                                   endOffset,
                                   state,
-                                  ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+                                  WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return dummyRoot.getFirstChildNode();
   }
 
@@ -256,7 +256,7 @@ public class StatementParsing extends Parsing {
     if (filterLexer.getTokenType() != null) return null;
 
     if(statement instanceof CompositeElement)
-      ParseUtil.insertMissingTokens((CompositeElement)statement, lexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+      ParseUtil.insertMissingTokens((CompositeElement)statement, lexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return statement;
   }
 
@@ -974,7 +974,7 @@ public class StatementParsing extends Parsing {
     if (catchSection == null) return null;
     if (filterLexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(catchSection, lexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(catchSection, lexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return catchSection;
   }
 }

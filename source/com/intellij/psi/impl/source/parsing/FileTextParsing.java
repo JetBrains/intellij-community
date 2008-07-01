@@ -69,7 +69,7 @@ public class FileTextParsing extends Parsing {
       filterLexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return dummyRoot.getFirstChildNode();
   }
 

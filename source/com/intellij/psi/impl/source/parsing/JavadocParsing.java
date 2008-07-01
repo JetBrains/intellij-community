@@ -67,7 +67,7 @@ public class JavadocParsing extends Parsing {
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length(), 0, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length(), 0, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return dummyRoot.getFirstChildNode();
   }
 

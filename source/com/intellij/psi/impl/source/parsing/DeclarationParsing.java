@@ -53,7 +53,7 @@ public class DeclarationParsing extends Parsing {
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return first;
   }
 
@@ -69,7 +69,7 @@ public class DeclarationParsing extends Parsing {
 
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return first;
   }
 
@@ -444,7 +444,7 @@ public class DeclarationParsing extends Parsing {
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, text.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, text.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return first;
   }
 
@@ -728,7 +728,7 @@ public class DeclarationParsing extends Parsing {
     if (typeParameter == null) return null;
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(typeParameter, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(typeParameter, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return typeParameter;
   }
 
@@ -999,7 +999,7 @@ public class DeclarationParsing extends Parsing {
     if (first == null || first.getElementType() != PARAMETER) return null;
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens((CompositeElement)first, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens((CompositeElement)first, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (CompositeElement)first;
   }
 

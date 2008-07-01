@@ -41,7 +41,7 @@ public class ClassBodyParsing extends Parsing {
     CharTable table = myContext.getCharTable();
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     parseClassBody(dummyRoot, filterLexer, context);
-    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
