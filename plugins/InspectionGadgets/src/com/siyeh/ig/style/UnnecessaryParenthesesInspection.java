@@ -29,18 +29,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryParenthesesInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.parentheses.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.parentheses.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryParenthesesVisitor();
     }
@@ -54,26 +57,16 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                     "unnecessary.parentheses.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiExpression expression =
                     (PsiExpression)descriptor.getPsiElement();
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiExpression) {
-                // the psi api will reinsert the parentheses we want to remove
-                // if the parent is an expression, this prevents that.
-                final PsiExpression parentExpression = (PsiExpression)parent;
-                final String newExpression =
-                        ParenthesesUtils.removeParentheses(parentExpression);
-                replaceExpression(parentExpression, newExpression);
-            } else {
-                final String newExpression =
-                        ParenthesesUtils.removeParentheses(expression);
-                replaceExpression(expression, newExpression);
-            }
+            ParenthesesUtils.removeParentheses(expression);
         }
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryParenthesesFix();
     }

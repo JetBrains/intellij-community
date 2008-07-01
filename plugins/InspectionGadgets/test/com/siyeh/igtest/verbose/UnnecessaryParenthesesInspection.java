@@ -38,4 +38,9 @@ public class UnnecessaryParenthesesInspection
     public int arg(int i,int j, int k) {
         return i + (j + k);
     }
+
+    public boolean is(int value) {
+        return value < 0 || value > 10
+                || (value != 5);
+    }
 }
