@@ -6,7 +6,6 @@ package com.intellij.psi.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -32,15 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Properties;
 
-public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
+public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJavaParserFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiJavaParserFacadeImpl");
 
-  protected final PsiManagerEx myManager;
   protected static final Map<String, PsiPrimitiveType> ourPrimitiveTypesMap = new HashMap<String, PsiPrimitiveType>();
   protected PsiJavaFile myDummyJavaFile;
 
   public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
-    myManager = manager;
+    super(manager);
   }
 
   @NotNull
@@ -59,14 +57,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       return LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel();
     }
     return PsiUtil.getLanguageLevel(context);
-  }
-
-  @NotNull
-  public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
-    final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, text, 0, text.length(), holderElement.getCharTable());
-    TreeUtil.addChildren(holderElement, newElement);
-    return newElement.getPsi();
   }
 
   @NotNull

@@ -2,6 +2,8 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.PsiParser;
+import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -11,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -247,6 +250,13 @@ public class PsiUtilBase {
       public boolean isEquivalentTo(final PsiElement another) {
         return this == another;
       }
+  };
+
+  public static final PsiParser NULL_PARSER = new PsiParser() {
+    @NotNull
+    public ASTNode parse(IElementType root, PsiBuilder builder) {
+      throw new IllegalAccessError();
+    }
   };
 
   public static int getRootIndex(PsiElement root) {

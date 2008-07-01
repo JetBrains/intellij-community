@@ -117,6 +117,9 @@
   <projectService serviceInterface="com.intellij.find.FindManager"
                   serviceImplementation="com.intellij.find.impl.FindManagerImpl"/>
 
+  <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
+                  serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 

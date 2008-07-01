@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public interface PsiJavaParserFacade {
+public interface PsiJavaParserFacade extends PsiParserFacade {
   /**
    * Creates a JavaDoc tag from the specified text.
    *
@@ -183,16 +183,6 @@ public interface PsiJavaParserFacade {
    */
   @NotNull
   PsiAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, PsiElement context) throws IncorrectOperationException;
-
-  /**
-   * Creates an PsiWhiteSpace with the specified text.
-   *
-   * @param s the text of whitespace
-   * @return the created whitespace instance.
-   * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid whitespace.
-   */
-  @NotNull
-  PsiElement createWhiteSpaceFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   @NotNull
   PsiEnumConstant createEnumConstantFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException;
