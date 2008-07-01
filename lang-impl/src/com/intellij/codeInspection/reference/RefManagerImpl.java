@@ -16,6 +16,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -409,7 +410,7 @@ public class RefManagerImpl extends RefManager {
     else if (SmartRefElementPointer.PROJECT.equals(type)) {
       return getRefProject();
     } else if (SmartRefElementPointer.DIR.equals(type)) {
-      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fqName);
+      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(PathMacroManager.getInstance(getProject()).expandPath(fqName));
       if (vFile != null) {
         final PsiDirectory dir = PsiManager.getInstance(getProject()).findDirectory(vFile);
         return getReference(dir);
