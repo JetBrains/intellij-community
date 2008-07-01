@@ -632,7 +632,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   private static List<VirtualFile> listDir(VirtualFile vfile) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     if (vfile != null && vfile.isDirectory()) {
-      vfile.refresh(false, true);
       VirtualFile[] children = vfile.getChildren();
       for (VirtualFile child : children) {
         if (!child.isDirectory()) {
