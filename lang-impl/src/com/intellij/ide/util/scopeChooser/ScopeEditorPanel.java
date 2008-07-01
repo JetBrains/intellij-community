@@ -314,33 +314,7 @@ public class ScopeEditorPanel {
   }
 
   private void updateTreeModel() throws ProcessCanceledException {
-    PanelProgressIndicator progress = new PanelProgressIndicator(new Consumer<JComponent>() {
-      public void consume(final JComponent component) {
-        setToComponent(component);
-      }
-    }) {
-      public void start() {
-        super.start();
-        myTextChanged = false;
-      }
-
-      public boolean isCanceled() {
-        return super.isCanceled() || myTextChanged || !myPanel.isShowing();
-      }
-
-      public void stop() {
-        super.stop();
-        setToComponent(myMatchingCountLabel);
-      }
-
-      public String getText() { //just show non-blocking progress
-        return null;
-      }
-
-      public String getText2() {
-        return null;
-      }
-    };
+    PanelProgressIndicator progress = createProgressIndicator();
     progress.setBordersVisible(false); 
     myCurrentProgress = progress;
     Runnable updateModel = new Runnable() {
@@ -382,6 +356,10 @@ public class ScopeEditorPanel {
       }
     };
     ProgressManager.getInstance().runProcess(updateModel, progress);
+  }
+
+  protected PanelProgressIndicator createProgressIndicator() {
+    return new MyPanelProgressIndicator(true);
   }
 
   public void cancelCurrentProgress(){
@@ -511,6 +489,41 @@ public class ScopeEditorPanel {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       UIUtil.setEnabled(myLegendPanel, !flag, true);
       myUpdate.run();
+    }
+  }
+
+  protected class MyPanelProgressIndicator extends PanelProgressIndicator {
+    private final boolean myCheckVisible;
+
+    public MyPanelProgressIndicator(final boolean checkVisible) {
+      super(new Consumer<JComponent>() {
+        public void consume(final JComponent component) {
+          setToComponent(component);
+        }
+      });
+      myCheckVisible = checkVisible;
+    }
+
+    public void start() {
+      super.start();
+      myTextChanged = false;
+    }
+
+    public boolean isCanceled() {
+      return super.isCanceled() || myTextChanged || (myCheckVisible && !myPanel.isShowing());
+    }
+
+    public void stop() {
+      super.stop();
+      setToComponent(myMatchingCountLabel);
+    }
+
+    public String getText() { //just show non-blocking progress
+      return null;
+    }
+
+    public String getText2() {
+      return null;
     }
   }
 }
