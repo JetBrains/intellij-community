@@ -62,7 +62,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     }
 
+    invokeCompletion(project, editor, psiFile, 1);
+  }
 
+  public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
     final Document document = editor.getDocument();
     if (editor.isViewer()) {
       document.fireReadOnlyModificationAttempt();
@@ -72,7 +75,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return;
     }
 
-    int time = 1;
     CompletionProgressIndicator indicator = CompletionProgressIndicator.getCurrentCompletion();
     if (indicator != null) {
       if (!indicator.isCanceled() && indicator.getHandler().getClass().equals(getClass())) {
@@ -454,8 +456,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   protected PsiFile createFileCopy(PsiFile file) {
-    final Key<PsiElement> originalKey = CompletionUtil.ORIGINAL_KEY;
-    return PsiUtilBase.copyElementPreservingOriginalLinks(file, originalKey);
+    return PsiUtilBase.copyElementPreservingOriginalLinks(file, CompletionUtil.ORIGINAL_KEY);
   }
 
 
