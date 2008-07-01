@@ -28,10 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnFormatSelector;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -64,8 +61,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         // allow to select working copy format
         String formatMode = null;
         while (formatMode == null) {
-          formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnWorkingCopyFormatHolder.getFormatGlobalDefault());
-          SvnWorkingCopyFormatHolder.setPresetFormat(formatMode);
+          formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_15);
+          SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(formatMode));
         }
 
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -86,6 +83,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         finally {
           client.setIgnoreExternals(false);
           client.setEventHandler(null);
+          SvnWorkingCopyFormatHolder.setPresetFormat(null);
         }
       }
 

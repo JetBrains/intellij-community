@@ -236,6 +236,17 @@ public class SvnUtil {
     }
   }
 
+  public static String formatRepresentation(final WorkingCopyFormat format) {
+    if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
+      return SvnBundle.message("dialog.show.svn.map.table.version15.text");
+    } else if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
+      return SvnBundle.message("dialog.show.svn.map.table.version14.text");
+    } else if (WorkingCopyFormat.ONE_DOT_THREE.equals(format)) {
+      return SvnBundle.message("dialog.show.svn.map.table.version13.text");
+    }
+    return "";
+  }
+
   private static class LocationsCrawler implements SvnWCRootCrawler {
     private SvnVcs myVcs;
     private Map<String, File> myLocations;

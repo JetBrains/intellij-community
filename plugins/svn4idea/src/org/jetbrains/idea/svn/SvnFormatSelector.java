@@ -2,15 +2,11 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
@@ -24,10 +20,6 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
-
-  public SvnFormatSelector() {
-  }
-
   public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return factories;
@@ -37,69 +29,32 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
       return factories;
     }
 
-    // get project for path.
-    Project project = findProject(path);
-    if (project == null) {
-      /*final WorkingCopyFormat format = getWorkingCopyFormat(path);
-      if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
-        return factories;
-      } else if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
-        return factoriesFor14(factories);
-      }
-      return factoriesFor13(factories);*/
+    final WorkingCopyFormat format = getWorkingCopyFormat(path);
+    Collection result = format2Factories(format, factories);
 
-      String newMode = SvnWorkingCopyFormatHolder.getPresetFormat();
-      newMode = (newMode == null) ? SvnWorkingCopyFormatHolder.getRecentlySelected() : newMode;
-      while (newMode == null) {
-        newMode = showUpgradeDialog(path, null, true, null);
-        SvnWorkingCopyFormatHolder.setRecentlySelected(newMode);
+    if (result == null) {
+      final WorkingCopyFormat presetFormat = SvnWorkingCopyFormatHolder.getPresetFormat();
+      if (presetFormat != null) {
+        result = format2Factories(presetFormat, factories);
       }
-      if (SvnConfiguration.UPGRADE_NONE.equals(newMode)) {
-        return factoriesFor13(factories);
-      } else if (SvnConfiguration.UPGRADE_AUTO.equals(newMode)) {
-        return factoriesFor14(factories);
-      }
-      return factories;
     }
-    // get project settings.
-    SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    String upgradeMode = configuration.getUpgradeMode();
-    return getFactories(upgradeMode, path, factories, project, configuration);
+
+    if (result == null) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
+    }
+    return result;
   }
 
-  private static Collection getFactories(String upgradeMode, final File path, Collection factories, final Project project, SvnConfiguration config) {
-    final WorkingCopyFormat format = getWorkingCopyFormat(path);
-
+  @Nullable
+  static Collection format2Factories(final WorkingCopyFormat format, final Collection factories) {
     if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
-      SvnWorkingCopyFormatHolder.setRecentlySelected(SvnConfiguration.UPGRADE_AUTO_15);
       return factories;
-    }
-
-    if (SvnConfiguration.UPGRADE_NONE.equals(upgradeMode)) {
-      if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
-        SvnWorkingCopyFormatHolder.setRecentlySelected(SvnConfiguration.UPGRADE_AUTO);
-        return factoriesFor14(factories);
-      }
-      SvnWorkingCopyFormatHolder.setRecentlySelected(SvnConfiguration.UPGRADE_NONE);
-      return factoriesFor13(factories);
-    } else if (SvnConfiguration.UPGRADE_AUTO_15.equals(upgradeMode)) {
-      SvnWorkingCopyFormatHolder.setRecentlySelected(SvnConfiguration.UPGRADE_AUTO_15);
-      return factories;
-    } else if (SvnConfiguration.UPGRADE_AUTO.equals(upgradeMode)) {
-      // 1-3 and 1-4
-      SvnWorkingCopyFormatHolder.setRecentlySelected(SvnConfiguration.UPGRADE_AUTO);
+    } else if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
       return factoriesFor14(factories);
-    } else if (upgradeMode == null) {
-      // ask user and change setting.
-
-      final boolean display13format = WorkingCopyFormat.ONE_DOT_THREE.equals(format);
-      final String newMode = showUpgradeDialog(path, project, display13format, null);
-      config.setUpgradeMode(newMode);
-      SvnWorkingCopyFormatHolder.setRecentlySelected(newMode);
-      return getFactories(newMode, path, factories, project, config);
+    } else if (WorkingCopyFormat.ONE_DOT_THREE.equals(format)) {
+      return factoriesFor13(factories);
     }
-    SvnWorkingCopyFormatHolder.setRecentlySelected(SvnConfiguration.UPGRADE_AUTO_15);
-    return factories;
+    return null;
   }
 
   private static Collection<SVNAdminAreaFactory> factoriesFor13(final Collection factories) {
@@ -164,11 +119,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
       //
     }
 
-    final WorkingCopyFormat workingCopyFormat = WorkingCopyFormat.getInstance(format);
-    /*if (WorkingCopyFormat.UNKNOWN.equals(workingCopyFormat)) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
-    }*/
-    return workingCopyFormat;
+    return WorkingCopyFormat.getInstance(format);
   }
 
   private static void displayUpgradeDialog(Project project, File path, final boolean dispay13format, String[] newMode) {
@@ -178,22 +129,5 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     if (dialog.isOK()) {
       newMode[0] = dialog.getUpgradeMode();
     }
-  }
-
-  private static Project findProject(final File path) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-      public Project compute() {
-        final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(path);
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        // a path that is above WC copy root may be asked = but it still be inside some project
-        for (Project project : projects) {
-          VirtualFile vFile = ChangesUtil.findValidParent(filePath);
-          if (ExcludedFileIndex.getInstance(project).isInContent(vFile)) {
-            return project;
-          }
-        }
-        return null;
-      }
-    });
   }
 }

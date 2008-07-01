@@ -32,9 +32,13 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -54,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
+import org.jetbrains.idea.svn.dialogs.SvnFormatWorker;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -164,6 +169,29 @@ public class SvnVcs extends AbstractVcs {
     myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
 
     myRootsInfo = new SvnFileUrlMappingRefresher(new SvnFileUrlMappingImpl(myProject, this));
+
+    if (! SvnBranchConfigurationManager.getInstance(myProject).upgradeTo15Asked()) {
+      final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
+
+      if (workingCopyChecker.upgradeNeeded()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            // ask for upgrade
+            final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to15.question.text",
+              SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
+              SvnBundle.message("upgrade.format.to15.question.title"), Messages.getWarningIcon());
+            if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
+              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                public void run() {
+                  workingCopyChecker.doUpgrade();
+                }
+              });
+            }
+          }
+        });
+      }
+    }
+
   }
 
   @Override
@@ -695,5 +723,28 @@ public class SvnVcs extends AbstractVcs {
                            SvnFormatSelector.getWorkingCopyFormat(new File(entry.getKey())), value.getRepositoryUrl()));
     }
     return infos;
+  }
+
+  private class SvnWorkingCopyChecker {
+    private List<WCInfo> myAllWcInfos;
+
+    public boolean upgradeNeeded() {
+      myAllWcInfos = getAllWcInfos();
+      for (WCInfo info : myAllWcInfos) {
+        if (! WorkingCopyFormat.ONE_DOT_FIVE.equals(info.getFormat())) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public void doUpgrade() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final SvnFormatWorker formatWorker = new SvnFormatWorker(myProject, WorkingCopyFormat.ONE_DOT_FIVE, myAllWcInfos);
+          ProgressManager.getInstance().run(formatWorker);
+        }
+      });
+    }
   }
 }

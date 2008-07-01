@@ -78,11 +78,6 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     topLabel.setUI(new MultiLineLabelUI());
     panel.add(topLabel, gb);
     gb.gridy += 1;
-    JLabel warningLabel = new JLabel(! adminPathIsDirectory ? SvnBundle.message("label.configure.create.warning") : SvnBundle.message("label.configure.upgrade.warning"));
-    warningLabel.setFont(warningLabel.getFont().deriveFont(Font.BOLD));
-    warningLabel.setUI(new MultiLineLabelUI());
-    panel.add(warningLabel, gb);
-    gb.gridy += 1;
 
     myUpgradeNoneButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".none").toString()));
     myUpgradeAutoButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto").toString()));
@@ -98,23 +93,6 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     gb.gridy += 1;
     panel.add(myUpgradeAuto15Button, gb);
     gb.gridy += 1;
-
-    if (showHints()) {
-      panel.add(new JSeparator(), gb);
-      gb.gridy += 1;
-      JLabel settingsLabel = new JLabel(SvnBundle.message("label.where.svn.format.settings.text"));
-      settingsLabel.setEnabled(false);
-      panel.add(settingsLabel, gb);
-      gb.gridy += 1;
-      panel.add(new JSeparator(), gb);
-      gb.gridy += 1;
-    }
-    JLabel changeFormatLabel = new JLabel(SvnBundle.message("label.where.svn.format.can.be.changed.text",
-                                                            SvnBundle.message("action.show.svn.map.text")));
-    changeFormatLabel.setEnabled(false);
-    panel.add(changeFormatLabel, gb);
-    gb.gridy += 1;
-    panel.add(new JSeparator(), gb);
 
     myUpgradeNoneButton.setSelected(true);
     return panel;

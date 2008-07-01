@@ -65,6 +65,21 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
   public static class ConfigurationBean {
     public Map<String, SvnBranchConfiguration> myConfigurationMap = new HashMap<String, SvnBranchConfiguration>();
+    /**
+     * version of "support SVN in IDEA". for features tracking. should grow
+     */
+    public Long myVersion;
+  }
+  private interface SvnSupportVersions {
+    long UPGRADE_TO_15_VERSION_ASKED = 123;
+  }
+
+  public boolean upgradeTo15Asked() {
+    final boolean asked = (myConfigurationBean.myVersion != null) &&
+                          (SvnSupportVersions.UPGRADE_TO_15_VERSION_ASKED <= myConfigurationBean.myVersion.longValue());
+    // false can be returned only once
+    myConfigurationBean.myVersion = SvnSupportVersions.UPGRADE_TO_15_VERSION_ASKED;
+    return asked;
   }
 
   private ConfigurationBean myConfigurationBean = new ConfigurationBean();
@@ -151,6 +166,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public ConfigurationBean getState() {
+    myConfigurationBean.myVersion = SvnSupportVersions.UPGRADE_TO_15_VERSION_ASKED;
     return myConfigurationBean;
   }
 

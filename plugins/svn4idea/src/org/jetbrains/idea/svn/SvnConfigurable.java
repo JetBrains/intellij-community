@@ -39,12 +39,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -67,10 +65,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
   private FileChooserDescriptor myBrowserDescriptor;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
-  private JRadioButton myUpgradeAskButton;
-  private JRadioButton myUpgradeAutoButton;
-  private JRadioButton myUpgradeAuto15Button;
-  private JRadioButton myUpgradeNoneButton;
 
   public SvnConfigurable(Project project) {
     myProject = project;
@@ -100,34 +94,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.gridwidth = 3;
     gb.insets = new Insets(5, 5, 1, 5);
 
-    myUpgradeAskButton = new JRadioButton(SvnBundle.message("radio.configure.upgrade.ask"));
-    myUpgradeNoneButton = new JRadioButton(SvnBundle.message("radio.configure.upgrade.none"));
-    myUpgradeAutoButton = new JRadioButton(SvnBundle.message("radio.configure.upgrade.auto"));
-    myUpgradeAuto15Button = new JRadioButton(SvnBundle.message("radio.configure.upgrade.auto.15format"));
-
-    ButtonGroup group = new ButtonGroup();
-    group.add(myUpgradeAskButton);
-    group.add(myUpgradeNoneButton);
-    group.add(myUpgradeAutoButton);
-    group.add(myUpgradeAuto15Button);
-    JLabel upgradeLabel = new JLabel(SvnBundle.message("label.configure.upgrade.strategy"));
-    JLabel warningLabel = new JLabel(SvnBundle.message("label.configure.upgrade.warning"));
-    warningLabel.setFont(warningLabel.getFont().deriveFont(Font.BOLD));
-    warningLabel.setUI(new MultiLineLabelUI());
-    add(warningLabel, gb);
-    gb.gridy += 1;
-    add(upgradeLabel, gb);
-    gb.gridy += 1;
-    add(myUpgradeAskButton, gb);
-    gb.gridy += 1;
-    add(myUpgradeNoneButton, gb);
-    gb.gridy += 1;
-    add(myUpgradeAutoButton, gb);
-    gb.gridy += 1;
-    add(myUpgradeAuto15Button, gb);
-    gb.gridy += 1;
     add(new JLabel(), gb);
-
 
     gb.gridy += 1;
     gb.fill = GridBagConstraints.HORIZONTAL;
@@ -237,12 +204,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
     if (configuration.isUseDefaultConfiguation() != myUseDefaultCheckBox.isSelected()) {
       return true;
     }
-    String upgradeMode = getUpgradeMode();
-    if (configuration.getUpgradeMode() == null && upgradeMode != null) {
-      return true;
-    } else if (configuration.getUpgradeMode() != null && !configuration.getUpgradeMode().equals(upgradeMode)) {
-      return true;
-    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -250,21 +211,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
     SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     configuration.setConfigurationDirectory(myConfigurationDirectoryText.getText());
     configuration.setUseDefaultConfiguation(myUseDefaultCheckBox.isSelected());
-
-    String upgradeMode = getUpgradeMode();
-    configuration.setUpgradeMode(upgradeMode);
-  }
-
-  @Nullable
-  private String getUpgradeMode() {
-    if (myUpgradeNoneButton.isSelected()) {
-      return SvnConfiguration.UPGRADE_NONE;
-    } else if (myUpgradeAutoButton.isSelected()) {
-      return SvnConfiguration.UPGRADE_AUTO;
-    } else if (myUpgradeAuto15Button.isSelected()) {
-      return SvnConfiguration.UPGRADE_AUTO_15;
-    }
-    return null;
   }
 
   public void reset() {
@@ -279,12 +225,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);
     myConfigurationDirectoryLabel.setEnabled(enabled);
-
-    String upgradeMode = configuration.getUpgradeMode();
-    myUpgradeAskButton.setSelected(upgradeMode == null);
-    myUpgradeNoneButton.setSelected(SvnConfiguration.UPGRADE_NONE.equals(upgradeMode));
-    myUpgradeAutoButton.setSelected(SvnConfiguration.UPGRADE_AUTO.equals(upgradeMode));
-    myUpgradeAuto15Button.setSelected(SvnConfiguration.UPGRADE_AUTO_15.equals(upgradeMode));
   }
 
   public void disposeUIResources() {

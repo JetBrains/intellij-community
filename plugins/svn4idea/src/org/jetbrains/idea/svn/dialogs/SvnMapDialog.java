@@ -1,26 +1,18 @@
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -56,7 +48,7 @@ public class SvnMapDialog extends DialogWrapper {
                                         (! ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()));
       }
     });
-    // todo separate class
+    
     myChangeFormatButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final Collection<WCInfo> selected = myTableView.getSelection();
@@ -75,58 +67,7 @@ public class SvnMapDialog extends DialogWrapper {
         final String newMode = dialog.getUpgradeMode();
         if (! wcInfo.getFormat().getOption().equals(newMode)) {
           final WorkingCopyFormat newFormat = WorkingCopyFormat.getInstance(newMode);
-          final Task.Backgroundable task = new Task.Backgroundable(project, SvnBundle.message("action.change.wcopy.format.task.title"), false,
-                                                                   PerformInBackgroundOption.DEAF) {
-            private Throwable myException;
-
-            @Override
-            public void onCancel() {
-              onSuccess();
-            }
-
-            @Override
-            public void onSuccess() {
-              ProjectLevelVcsManager.getInstance(project).stopBackgroundVcsOperation();
-
-              if (myException != null) {
-                AbstractVcsHelper.getInstance(myProject)
-                    .showErrors(Collections.singletonList(new VcsException(myException)), SvnBundle.message("action.change.wcopy.format.task.title"));
-              } else {
-                SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-                String upgradeMode = configuration.getUpgradeMode();
-                final WorkingCopyFormat configurationFormat = WorkingCopyFormat.getInstance(upgradeMode);
-
-                if (newFormat.getFormat() < configurationFormat.getFormat()) {
-                  final int result = Messages.showYesNoCancelDialog(SvnBundle.message("action.change.wcopy.format.after.change.settings",
-                                                                                      formatRepresentation(newFormat),
-                                                                                      formatRepresentation(wcInfo.getFormat())),
-                                                                    SvnBundle.message("action.change.wcopy.format.task.title"),
-                                                                    Messages.getWarningIcon());
-                  if (result == OK_EXIT_CODE) {
-                    configuration.setUpgradeMode(newFormat.getOption());
-                  }
-                }
-              }
-            }
-
-            public void run(@NotNull final ProgressIndicator indicator) {
-              ProjectLevelVcsManager.getInstance(project).startBackgroundVcsOperation();
-
-              indicator.setIndeterminate(true);
-              indicator.setText(SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
-                                                  formatRepresentation(wcInfo.getFormat()), formatRepresentation(newFormat)));
-
-              final SvnVcs vcs = SvnVcs.getInstance(project);
-              final SVNWCClient wcClient = vcs.createWCClient();
-              try {
-                wcClient.doSetWCFormat(path, newFormat.getFormat());
-              } catch (Throwable e) {
-                myException = e;
-              }
-
-              ApplicationManager.getApplication().getMessageBus().syncPublisher(WC_CONVERTED).run();
-            }
-          };
+          final Task.Backgroundable task = new SvnFormatWorker(project, newFormat, wcInfo);
           doOKAction();
           ProgressManager.getInstance().run(task);
         }
@@ -166,20 +107,8 @@ public class SvnMapDialog extends DialogWrapper {
 
     public String valueOf(final WCInfo info) {
       final WorkingCopyFormat format = info.getFormat();
-      return formatRepresentation(format);
+      return SvnUtil.formatRepresentation(format);
     }
   };
-
-  private static String formatRepresentation(final WorkingCopyFormat format) {
-    if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
-      // todo put into somewhere
-      return SvnBundle.message("dialog.show.svn.map.table.version15.text");
-    } else if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version14.text");
-    } else if (WorkingCopyFormat.ONE_DOT_THREE.equals(format)) {
-      return SvnBundle.message("dialog.show.svn.map.table.version13.text");
-    }
-    return "";
-  }
 
 }
