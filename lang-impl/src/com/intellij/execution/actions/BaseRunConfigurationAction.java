@@ -12,9 +12,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -54,7 +57,10 @@ public abstract class BaseRunConfigurationAction extends AnAction {
               return PopupStep.FINAL_CHOICE;
             }
           });
-        if (editor != null) {
+        final InputEvent event = e.getInputEvent();
+        if (event instanceof MouseEvent) {
+          popup.show(new RelativePoint((MouseEvent)event));
+        } else if (editor != null) {
           popup.showInBestPositionFor(editor);
         } else {
           popup.showInBestPositionFor(dataContext);
