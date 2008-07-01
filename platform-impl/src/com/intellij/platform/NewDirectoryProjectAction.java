@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.ide.GeneralSettings;
 
 import java.io.File;
@@ -29,15 +30,28 @@ public class NewDirectoryProjectAction extends AnAction {
       Messages.showErrorDialog(project, "Cannot create directory '" + location + "'", "Create Project");
       return;
     }
-    GeneralSettings.getInstance().setLastProjectLocation(location.getParent());
+
     VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
       }
     });
+    baseDir.refresh(false, true);
+
+    Object settings = null;
+    if (generator != null) {
+      try {
+        settings = generator.showGenerationSettings(baseDir);
+      }
+      catch (ProcessCanceledException e1) {
+        return;
+      }
+    }
+    GeneralSettings.getInstance().setLastProjectLocation(location.getParent());
     Project newProject = PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
     if (generator != null) {
-      generator.generateProject(newProject, baseDir);
+      //noinspection unchecked
+      generator.generateProject(newProject, baseDir, settings);
     }
   }
 }

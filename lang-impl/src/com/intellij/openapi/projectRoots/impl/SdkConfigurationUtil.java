@@ -83,10 +83,19 @@ public class SdkConfigurationUtil {
     if (existingSdk != null && existingSdk.getSdkType() == sdkType) {
       return;
     }
-    List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(sdkType);
 
+    Sdk sdk = findOrCreateSdk(sdkType);
+    if (sdk != null) {
+      setDirectoryProjectSdk(project, sdk);
+    }
+  }
+
+  @Nullable
+  public static Sdk findOrCreateSdk(final SdkType sdkType) {
+    Sdk sdk = null;
+    List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(sdkType);
     if (sdks.size() > 0) {
-      setDirectoryProjectSdk(project, sdks.get(0));
+      sdk = sdks.get(0);
     }
     else {
       final String suggestedHomePath = sdkType.suggestHomePath();
@@ -97,10 +106,10 @@ public class SdkConfigurationUtil {
           }
         });
         if (sdkHome != null) {
-          Sdk sdk = setupSdk(sdkHome, sdkType);
-          setDirectoryProjectSdk(project, sdk);
+          sdk = setupSdk(sdkHome, sdkType);
         }
       }
     }
+    return sdk;
   }
 }
