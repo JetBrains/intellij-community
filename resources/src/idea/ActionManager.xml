@@ -196,7 +196,6 @@
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
       <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
-      <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction"/>
       <separator/>
       <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
       <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
@@ -208,6 +207,10 @@
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
 
+    <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
+    </action>
+    
     <group id="BuildMenu" popup="true">
       <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="/actions/compile.png"/>
