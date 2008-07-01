@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemoveUnnecessaryParenthesesIntention extends Intention {
 
-    @NotNull
+    @Override @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new UnnecessaryParenthesesPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         PsiExpression expression = (PsiExpression)element;
         while (expression.getParent() instanceof PsiExpression) {
             expression = (PsiExpression)expression.getParent();
             assert expression != null;
         }
-        final String newExpression =
-                ParenthesesUtils.removeParentheses(expression);
-        replaceExpression(newExpression, expression);
+        ParenthesesUtils.removeParentheses(expression);
     }
 }
