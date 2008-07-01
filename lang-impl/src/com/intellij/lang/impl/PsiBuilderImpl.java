@@ -823,12 +823,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       final int start = myLexStarts[curToken];
       final int end = myLexEnds[curToken];
       if (start < end) { // Empty token. Most probably a parser directive like indent/dedent in phyton
-        TreeUtil.addChildren(curNode, createLeaf(myLexTypes[curToken], start, end));
+        final IElementType type = myLexTypes[curToken];
+        final LeafElement leaf = createLeaf(type, start, end);
+        TreeUtil.addChildren(curToken == myLexemCount - 1 && whitespaceOrComment(type) ? getRoot(curNode) : curNode, leaf);
       }
       curToken++;
     }
 
     return curToken;
+  }
+
+  private static CompositeElement getRoot(@NotNull CompositeElement curNode) {
+     while (true) {
+      CompositeElement parent = curNode.getTreeParent();
+      if (parent == null) return curNode;
+      curNode = parent;
+    }
   }
 
   private static CompositeElement createComposite(final StartMarker marker) {
