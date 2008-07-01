@@ -1,19 +1,28 @@
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.codeInsight.CodeInsightSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
+@State(
+  name="DaemonCodeAnalyzerSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/editor.codeinsight.xml"
+    )}
+)
+public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Element>, Cloneable, ExportableComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings");
   @NonNls private static final String ROOT_TAG = "root";
   @NonNls private static final String PROFILE_ATT = "profile";
@@ -27,12 +36,12 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   }
 
   public static DaemonCodeAnalyzerSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(DaemonCodeAnalyzerSettings.class);
+    return ServiceManager.getService(DaemonCodeAnalyzerSettings.class);
   }
 
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
   }
 
   @NotNull
@@ -64,20 +73,6 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     return false;
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "DaemonCodeAnalyzerSettings";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public String getExternalFileName() {
-    return CodeInsightSettings.EXTERNAL_FILE_NAME;
-  }
-
   public Object clone() {
     DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings(myManager);
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
@@ -85,6 +80,26 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     settings.SHOW_METHOD_SEPARATORS = SHOW_METHOD_SEPARATORS;
     settings.NO_AUTO_IMPORT_PATTERN = NO_AUTO_IMPORT_PATTERN;
     return settings;
+  }
+
+  public Element getState() {
+    Element e = new Element("state");
+    try {
+      writeExternal(e);
+    }
+    catch (WriteExternalException ex) {
+      LOG.error(ex);
+    }
+    return e;
+  }
+
+  public void loadState(final Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -105,5 +120,4 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public void setImportHintEnabled(boolean isImportHintEnabled) {
     SHOW_ADD_IMPORT_HINTS = isImportHintEnabled;
   }
-
 }
