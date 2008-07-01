@@ -1,14 +1,9 @@
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.components.*;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xml.XmlBundle;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,16 +12,20 @@ import java.io.File;
 /**
  * @author spleaner
  */
-public class XmlEditorOptions implements NamedJDOMExternalizable, ExportableApplicationComponent {
+@State(
+  name="XmlEditorOptions",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/editor.xml"
+    )}
+)
+public class XmlEditorOptions implements PersistentStateComponent<XmlEditorOptions>, ExportableComponent {
 
   private boolean myBreadcrumbsEnabled = true;
 
   public static XmlEditorOptions getInstance() {
-    return ApplicationManager.getApplication().getComponent(XmlEditorOptions.class);
-  }
-
-  public String getExternalFileName() {
-    return "editor.xml";
+    return ServiceManager.getService(XmlEditorOptions.class);
   }
 
   public void setBreadcrumbsEnabled(boolean b) {
@@ -37,36 +36,14 @@ public class XmlEditorOptions implements NamedJDOMExternalizable, ExportableAppl
     return myBreadcrumbsEnabled;
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
-    Element settingsElement = element.getChild(XmlEditorOptions.class.getSimpleName());
-    if (settingsElement != null) {
-      XmlSerializer.deserializeInto(this, settingsElement);
-    }
-  }
-
-  public void writeExternal(final Element element) throws WriteExternalException {
-    element.addContent(XmlSerializer.serialize(this));
-  }
-
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("editor")};
   }
 
   @NotNull
   public String getPresentableName() {
     return XmlBundle.message("xml.options");
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "XmlEditorOptions";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   @Nullable
@@ -77,5 +54,13 @@ public class XmlEditorOptions implements NamedJDOMExternalizable, ExportableAppl
     catch (CloneNotSupportedException e) {
       return null;
     }
+  }
+
+  public XmlEditorOptions getState() {
+    return this;
+  }
+
+  public void loadState(final XmlEditorOptions state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }
