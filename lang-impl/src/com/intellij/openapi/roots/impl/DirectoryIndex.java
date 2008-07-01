@@ -12,6 +12,8 @@ public abstract class DirectoryIndex {
     return ServiceManager.getService(project, DirectoryIndex.class);
   }
 
+  
+
   @TestOnly
   public abstract void checkConsistency();
 
@@ -20,4 +22,6 @@ public abstract class DirectoryIndex {
   @NotNull
   public abstract
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+
+  public abstract boolean isInitialized();
 }

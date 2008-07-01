@@ -141,6 +141,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
+  public boolean isInitialized() {
+    return myInitialized;
+  }
+
   public void initialize() {
     if (myInitialized) {
       LOG.error("Directory index is already initialized.");

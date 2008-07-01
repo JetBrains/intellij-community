@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.util.messages.MessageBusConnection;
@@ -34,7 +35,7 @@ public class VcsEventWatcher implements ProjectComponent {
       public void rootsChanged(ModuleRootEvent event) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (myProject.isDisposed() || DirectoryIndex.getInstance(myProject).isInitialized()) return;
             VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
           }
         }, ModalityState.NON_MODAL);
