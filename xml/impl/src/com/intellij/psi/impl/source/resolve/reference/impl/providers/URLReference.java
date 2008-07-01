@@ -14,6 +14,7 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -100,7 +101,13 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       final XmlDocument document = ((XmlFile)containingFile).getDocument();
       assert document != null;
       final XmlTag rootTag = document.getRootTag();
-      if (rootTag == null) return null;
+
+     if (rootTag == null) {
+        if (containingFile.getFileType() == StdFileTypes.DTD) {
+          return ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, null);
+        }
+        return null;
+      }
       final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
       if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
 
