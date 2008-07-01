@@ -58,6 +58,10 @@
   <applicationService serviceInterface="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"
                       serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
   <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
+
+  <applicationService serviceInterface="com.intellij.codeEditor.printing.PrintSettings"
+                      serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
+  <exportable serviceInterface="com.intellij.codeEditor.printing.PrintSettings"/>
   
   <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                       serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>

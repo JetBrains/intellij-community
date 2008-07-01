@@ -73,11 +73,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeEditor.printing.PrintSettings</interface-class>
-      <implementation-class>com.intellij.codeEditor.printing.PrintSettings</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</implementation-class>
     </component>

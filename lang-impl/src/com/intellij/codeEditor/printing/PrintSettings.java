@@ -1,13 +1,8 @@
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.openapi.components.*;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +11,15 @@ import java.io.File;
 /**
  *
  */
-public class PrintSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
+@State(
+  name="PrintSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/editor.xml"
+    )}
+)
+public class PrintSettings implements PersistentStateComponent<PrintSettings>, ExportableComponent {
   @NonNls public String PAPER_SIZE = "A4";
 
   public boolean COLOR_PRINTING = false;
@@ -62,37 +65,17 @@ public class PrintSettings implements NamedJDOMExternalizable, ExportableApplica
   @NonNls public static final String RIGHT = "Right";
 
   public static PrintSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(PrintSettings.class);
-  }
-
-  private PrintSettings(){
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public String getExternalFileName() {
-    return "print";
+    return ServiceManager.getService(PrintSettings.class);
   }
 
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("print")};
   }
 
   @NotNull
   public String getPresentableName() {
     return CodeEditorBundle.message("title.print.settings");
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   public int getPrintScope() {
@@ -111,8 +94,11 @@ public class PrintSettings implements NamedJDOMExternalizable, ExportableApplica
     myIncludeSubdirectories = includeSubdirectories;
   }
 
-  public String getComponentName() {
-    return "PrintSettings";
+  public PrintSettings getState() {
+    return this;
   }
 
+  public void loadState(final PrintSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
+  }
 }
