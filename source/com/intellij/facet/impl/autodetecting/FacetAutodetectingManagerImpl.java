@@ -139,12 +139,9 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void processFile(VirtualFile virtualFile) {
-    processFile(virtualFile, true);
-  }
-
-  public void processFile(VirtualFile virtualFile, final boolean notifyIfDetected) {
-    if (!virtualFile.isValid() || virtualFile.isDirectory() || myProject.isDisposed()) return;
-
+    if (!virtualFile.isValid() || virtualFile.isDirectory() || myProject.isDisposed()
+        || !myFileIndex.getProjectFileIndex().isInContent(virtualFile)) return;
+    
     FileType fileType = virtualFile.getFileType();
     Collection<FacetDetectorWrapper> detectors = myDetectors.get(fileType);
     if (detectors == null) return;

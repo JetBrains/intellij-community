@@ -119,7 +119,7 @@ public class EnableAutodetectionWorker {
 
   private void detectFacetsInFile(final FacetType<?, ?> type, final VirtualFile file) {
     //todo[nik] detect only facets of specified type
-    myFacetAutodetectingManager.processFile(file, false);
+    myFacetAutodetectingManager.processFile(file);
   }
 
   private void detectFacetsInFiles(final FacetType<?, ?> type, final Collection<VirtualFile> virtualFiles) {
