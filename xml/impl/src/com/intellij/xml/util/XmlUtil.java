@@ -14,6 +14,8 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -43,11 +45,11 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.*;
-import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -866,7 +868,20 @@ public class XmlUtil {
     }
 
     String namespace = getDtdUri(document);
-    if (namespace != null) return new String[][]{new String[]{"", namespace}};
+
+    if (namespace != null) {
+      boolean overrideNamespaceFromDocType = false;
+
+      if (file != null) {
+        final FileType fileType = file.getFileType();
+        overrideNamespaceFromDocType = fileType == StdFileTypes.HTML ||
+                                       fileType == StdFileTypes.XHTML ||
+                                       fileType == StdFileTypes.JSPX ||
+                                       fileType == StdFileTypes.JSP;
+      }
+      
+      if (!overrideNamespaceFromDocType) return new String[][]{new String[]{"", namespace}};
+    }
 
     if ("taglib".equals(tag.getName())) {
       return new String[][]{new String[]{"", TAGLIB_1_2_URI}};
