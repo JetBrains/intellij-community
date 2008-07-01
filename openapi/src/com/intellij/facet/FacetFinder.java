@@ -19,6 +19,7 @@ package com.intellij.facet;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,5 +38,7 @@ public abstract class FacetFinder {
   public abstract <F extends Facet & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type);
 
   @NotNull
-  public abstract <F extends Facet & FacetRootsProvider> Collection<F> findFacets(VirtualFile file, FacetTypeId<F> type); 
+  public abstract <F extends Facet & FacetRootsProvider> Collection<F> findFacets(VirtualFile file, FacetTypeId<F> type);
+
+  public abstract <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type);
 }
