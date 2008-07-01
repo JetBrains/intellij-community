@@ -16,7 +16,7 @@ import java.io.File;
   storages= {
     @Storage(
       id="other",
-      file = "$APP_CONFIG$/editor.xml"
+      file = "$APP_CONFIG$/print.xml"
     )}
 )
 public class PrintSettings implements PersistentStateComponent<PrintSettings>, ExportableComponent {
