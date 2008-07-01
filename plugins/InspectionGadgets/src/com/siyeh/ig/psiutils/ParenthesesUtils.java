@@ -28,9 +28,7 @@ import java.util.Map;
 
 public class ParenthesesUtils{
 
-    private ParenthesesUtils(){
-        super();
-    }
+    private ParenthesesUtils(){}
 
     private static final int PARENTHESIZED_PRECEDENCE = 0;
     private static final int LITERAL_PRECEDENCE = 0;
@@ -288,14 +286,10 @@ public class ParenthesesUtils{
                             parentBinaryExpression.getROperand();
                     if (!PsiTreeUtil.isAncestor(rhs, body, true) ||
                             isCommutativeBinaryOperator(bodyOperator)) {
-                        //final PsiElementFactory factory =
-                        //        JavaPsiFacade.getInstance(
-                        //                parenthesizedExpression.getProject())
-                        //                .getElementFactory();
-                        // todo workaround automatic insertion of parentheses by psi here
                         final PsiExpression newExpression =
                                 (PsiExpression)
-                                        parenthesizedExpression.replace(body);
+                                        parent.addAfter(body, parenthesizedExpression);
+                        parenthesizedExpression.delete();
                         removeParentheses(newExpression);
                         return;
                     }
