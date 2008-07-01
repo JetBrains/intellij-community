@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,7 +221,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromReferenceExpression(
             @NotNull PsiReferenceExpression referenceExpression)
             throws IncorrectOperationException {
@@ -233,7 +231,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromParenthesizedExpression(
             @NotNull PsiParenthesizedExpression parenthesizedExpression)
             throws IncorrectOperationException {
@@ -286,9 +283,10 @@ public class ParenthesesUtils{
                             parentBinaryExpression.getROperand();
                     if (!PsiTreeUtil.isAncestor(rhs, body, true) ||
                             isCommutativeBinaryOperator(bodyOperator)) {
-                        final PsiExpression newExpression =
-                                (PsiExpression)
-                                        parent.addAfter(body, parenthesizedExpression);
+                        // use addAfter() + delete() instead of replace() to
+                        // workaround automatic insertion of parentheses by psi
+                        final PsiExpression newExpression = (PsiExpression)
+                                parent.addAfter(body, parenthesizedExpression);
                         parenthesizedExpression.delete();
                         removeParentheses(newExpression);
                         return;
@@ -309,7 +307,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromConditionalExpression(
             @NotNull PsiConditionalExpression conditionalExpression)
             throws IncorrectOperationException {
@@ -327,7 +324,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromInstanceOfExpression(
             @NotNull PsiInstanceOfExpression instanceofExpression)
             throws IncorrectOperationException {
@@ -335,7 +331,6 @@ public class ParenthesesUtils{
         removeParentheses(operand);
     }
 
-    @NonNls
     private static void removeParensFromBinaryExpression(
             @NotNull PsiBinaryExpression binaryExpression)
             throws IncorrectOperationException {
@@ -347,7 +342,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromPostfixExpression(
             @NotNull PsiPostfixExpression postfixExpression)
             throws IncorrectOperationException {
@@ -355,7 +349,6 @@ public class ParenthesesUtils{
         removeParentheses(operand);
     }
 
-    @NonNls
     private static void removeParensFromPrefixExpression(
             @NotNull PsiPrefixExpression prefixExpression)
             throws IncorrectOperationException {
@@ -365,7 +358,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromArrayAccessExpression(
             @NotNull PsiArrayAccessExpression arrayAccessExpression)
             throws IncorrectOperationException {
@@ -379,7 +371,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromTypeCastExpression(
             @NotNull PsiTypeCastExpression typeCastExpression)
             throws IncorrectOperationException {
@@ -399,7 +390,6 @@ public class ParenthesesUtils{
         }
     }
 
-    @NonNls
     private static void removeParensFromAssignmentExpression(
             @NotNull PsiAssignmentExpression assignment)
             throws IncorrectOperationException {
