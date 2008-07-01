@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +38,8 @@ import java.util.List;
  */
 public class SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor");
-  private static final Fixer[] ourFixers;
-  private static final EnterProcessor[] ourEnterProcessors;
+  private static Fixer[] ourFixers;
+  private static EnterProcessor[] ourEnterProcessors;
   static {
     final List<Fixer> fixers = new ArrayList<Fixer>();
     fixers.add(new LiteralFixer());
@@ -89,6 +90,13 @@ public class SmartEnterProcessor {
   }
 
   public static class TooManyAttemptsException extends Exception {}
+
+  public static void addFixer(Fixer fixer) {
+    ourFixers = ArrayUtil.append(ourFixers, fixer);
+  }
+  public static void addProcessor(EnterProcessor processor) {
+    ourEnterProcessors = ArrayUtil.append(ourEnterProcessors, processor);
+  }
 
   public void process(final int attempt) throws TooManyAttemptsException {
     if (attempt > MAX_ATTEMPTS) throw new TooManyAttemptsException();
