@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.extractMethodObject.ExtractMethodObjectDialog">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="320" width="509" height="296"/>
+      <xy x="20" y="320" width="509" height="302"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -43,6 +43,7 @@
             </constraints>
             <properties>
               <labelFor value="5413c"/>
+              <minimumSize width="62" height="24"/>
               <text value="&amp;Class name:"/>
             </properties>
           </component>
@@ -141,6 +142,7 @@
             </constraints>
             <properties>
               <labelFor value="9dd26"/>
+              <minimumSize width="73" height="24"/>
               <text value="&amp;Method name:"/>
             </properties>
           </component>
@@ -166,12 +168,16 @@
           <grid row="9" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="5" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
-        <properties/>
+        <properties>
+          <minimumSize width="19" height="40"/>
+        </properties>
         <border type="none"/>
         <children>
           <component id="6c27c" class="javax.swing.JTextArea" binding="mySignatureArea">
             <constraints/>
-            <properties/>
+            <properties>
+              <minimumSize width="0" height="64"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
