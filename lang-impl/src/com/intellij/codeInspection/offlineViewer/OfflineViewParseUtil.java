@@ -9,8 +9,8 @@
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.InspectionApplication;
-import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
+import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -42,6 +42,7 @@ public class OfflineViewParseUtil {
       while(reader.hasMoreChildren()) {
         reader.moveDown(); //problem
         final OfflineProblemDescriptor descriptor = new OfflineProblemDescriptor();
+        boolean added = false;
         while(reader.hasMoreChildren()) {
           reader.moveDown();
           if (SmartRefElementPointerImpl.ENTRY_POINT.equals(reader.getNodeName())) {
@@ -94,23 +95,25 @@ public class OfflineViewParseUtil {
                 hints = new ArrayList<String>();
                 descriptor.setHints(hints);
               }
-              hints.add(reader.getValue());
+              hints.add(reader.getAttribute("value"));
               reader.moveUp();
             }
           }
           if (PACKAGE.equals(reader.getNodeName())) {
             appendDescriptor(package2Result, reader.getValue(), descriptor);
+            added = true;
           }
           while(reader.hasMoreChildren()) {
             reader.moveDown();
             if (PACKAGE.equals(reader.getNodeName())) {
               appendDescriptor(package2Result, reader.getValue(), descriptor);
+              added = true;
             }
             reader.moveUp();
           }
           reader.moveUp();
         }
-
+        if (!added) appendDescriptor(package2Result, "", descriptor);
         reader.moveUp();
       }
     }

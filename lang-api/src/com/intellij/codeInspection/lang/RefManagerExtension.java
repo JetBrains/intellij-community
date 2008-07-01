@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 public interface RefManagerExtension<T> {
@@ -40,4 +41,6 @@ public interface RefManagerExtension<T> {
   String getGroupName(final RefEntity entity);
 
   boolean belongsToScope(final PsiElement psiElement);
+
+  void export(final RefEntity refEntity, final Element element);
 }

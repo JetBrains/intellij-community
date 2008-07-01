@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 public class RefJavaManagerImpl extends RefJavaManager {
@@ -232,6 +233,25 @@ public class RefJavaManagerImpl extends RefJavaManager {
   public boolean belongsToScope(final PsiElement psiElement) {
     if (psiElement instanceof PsiTypeParameter) return false;
     return true;
+  }
+
+  public void export(final RefEntity refEntity, final Element element) {
+    if (refEntity instanceof RefElement) {
+      final PsiElement psiElement = ((RefElement)refEntity).getElement();
+      if (psiElement != null) {
+        final PsiFile psiFile = psiElement.getContainingFile();
+        if (psiFile instanceof PsiJavaFile) {
+          appendPackageElement(element, ((PsiJavaFile)psiFile).getPackageName());
+        }
+      }
+    }
+  }
+
+  private static void appendPackageElement(final Element element, final String packageName) {
+    final Element packageElement = new Element("package");
+    packageElement
+              .addContent(packageName.length() > 0 ? packageName : InspectionsBundle.message("inspection.export.results.default"));
+    element.addContent(packageElement);
   }
 
   public EntryPointsManager getEntryPointsManager() {

@@ -215,6 +215,11 @@ public class RefManagerImpl extends RefManager {
       problem.addContent(fileElement);
       appendModule(problem, refModule);
     }
+
+    for (RefManagerExtension extension : myExtensions.values()) {
+      extension.export(refEntity, problem);
+    }
+
     new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);
     element.addContent(problem);
     return problem;

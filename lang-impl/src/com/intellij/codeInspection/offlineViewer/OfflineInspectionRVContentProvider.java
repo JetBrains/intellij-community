@@ -169,7 +169,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     public OfflineProblemDescriptorContainer getOwner() {
       final OfflineProblemDescriptor descriptor = myDescriptor.getOwner();
       if (descriptor != null) {
-        return new OfflineProblemDescriptorContainer(descriptor);
+        final OfflineProblemDescriptorContainer container = new OfflineProblemDescriptorContainer(descriptor);
+        return container.supportStructure() ? container : null;
       }
       return null;
     }
@@ -199,7 +200,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     public boolean supportStructure() {
       return !Comparing.strEqual(myDescriptor.getType(), SmartRefElementPointer.MODULE) &&
-             !Comparing.strEqual(myDescriptor.getType(), "package");
+             !Comparing.strEqual(myDescriptor.getType(), "package") &&
+             !Comparing.strEqual(myDescriptor.getType(), SmartRefElementPointer.PROJECT);
     }
   }
 }
