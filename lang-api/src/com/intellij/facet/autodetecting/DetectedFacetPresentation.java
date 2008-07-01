@@ -17,6 +17,8 @@
 package com.intellij.facet.autodetecting;
 
 import com.intellij.facet.Facet;
+import com.intellij.facet.FacetType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,16 @@ public abstract class DetectedFacetPresentation {
     return null;
   }
 
+  @Nullable
+  public String getAutodetectionPopupText(@NotNull Module module, @NotNull FacetType facetType, @NotNull String facetName, @NotNull VirtualFile[] files) {
+    return null;
+  }
+
+
+  /**
+   * @deprecated override {@link DetectedFacetPresentation#getAutodetectionPopupText(com.intellij.openapi.module.Module, com.intellij.facet.FacetType, String, com.intellij.openapi.vfs.VirtualFile[])}
+   * instead
+   */
   @Nullable
   public String getAutodetectionPopupText(@NotNull Facet facet, @NotNull VirtualFile[] files) {
     return null;

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 public class FacetState {
   private String myFacetType;
   private String myName;
-  private boolean myImplicit = false;
   private Element myConfiguration;
   private List<FacetState> mySubFacets = new ArrayList<FacetState>();
 
@@ -29,11 +28,6 @@ public class FacetState {
   @Attribute(FacetManagerImpl.NAME_ATTRIBUTE)
   public String getName() {
     return myName;
-  }
-
-  @Attribute("implicit")
-  public boolean isImplicit() {
-    return myImplicit;
   }
 
   @Tag(FacetManagerImpl.CONFIGURATION_ELEMENT)
@@ -61,9 +55,5 @@ public class FacetState {
 
   public void setFacetType(final String type) {
     myFacetType = type;
-  }
-
-  public void setImplicit(final boolean implicit) {
-    myImplicit = implicit;
   }
 }

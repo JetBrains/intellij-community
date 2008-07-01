@@ -6,49 +6,38 @@ package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.FacetDetector;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.facet.impl.autodetecting.model.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
  */
 public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.FacetDetectorWrapper");
-  private final FileType myFileType;
   private final AutodetectionFilter myAutodetectionFilter;
   private final VirtualFileFilter myVirtualFileFilter;
   private final FacetDetector<S,C> myFacetDetector;
   private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
+  private final ProjectFacetInfoSet myDetectedFacetSet;
   private final FacetType<F,C> myFacetType;
 
-  protected FacetDetectorWrapper(final FileType fileType, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
+  protected FacetDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
                                  final FacetDetector<S, C> facetDetector,
                                  final UnderlyingFacetSelector<VirtualFile, U> selector) {
-    myFileType = fileType;
+    myDetectedFacetSet = projectFacetSet;
     myFacetType = facetType;
     myAutodetectionFilter = autodetectionFilter;
     myVirtualFileFilter = virtualFileFilter;
     myFacetDetector = facetDetector;
     myUnderlyingFacetSelector = selector;
-  }
-
-  public FileType getFileType() {
-    return myFileType;
   }
 
   public VirtualFileFilter getVirtualFileFilter() {
@@ -60,30 +49,31 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
   }
 
   @Nullable
-  protected Facet detectFacet(@NotNull final Module module, VirtualFile virtualFile, S source) {
-    if (!myAutodetectionFilter.isAutodetectionEnabled(module, myFacetType, virtualFile.getUrl())) {
+  protected FacetInfo2<Module> detectFacet(@NotNull final Module module, VirtualFile virtualFile, S source) {
+    String url = virtualFile.getUrl();
+    if (!myAutodetectionFilter.isAutodetectionEnabled(module, myFacetType, url)) {
       LOG.debug("Autodetection disabled for " + myFacetType.getPresentableName() + " facets in module " + module.getName());
       return null;
     }
 
-    Facet underlyingFacet = null;
+    FacetInfo2<Module> underlyingFacet = null;
     FacetTypeId underlyingFacetType = myFacetType.getUnderlyingFacetType();
     if (underlyingFacetType != null) {
       if (myUnderlyingFacetSelector != null) {
-        Map<U, ? extends Facet> underlyingFacets = collectFacets(module, underlyingFacetType);
+        Map<U, FacetInfo2<Module>> underlyingFacets = myDetectedFacetSet.getConfigurations(underlyingFacetType, module);
         FacetConfiguration undelyingConfiguration =
-            myUnderlyingFacetSelector.selectUnderlyingFacet(virtualFile, Collections.unmodifiableCollection(underlyingFacets.keySet()));
+            myUnderlyingFacetSelector.selectUnderlyingFacet(virtualFile, Collections.unmodifiableSet(underlyingFacets.keySet()));
         underlyingFacet = underlyingFacets.get(undelyingConfiguration);
       }
       if (underlyingFacet == null) {
-        LOG.debug("Underlying " + underlyingFacetType + " facet not found for " + virtualFile.getUrl());
+        LOG.debug("Underlying " + underlyingFacetType + " facet not found for " + url);
         return null;
       }
     }
 
-    Map<C, F> configurations = collectFacets(module, myFacetType.getId());
+    Map<C, FacetInfo2<Module>> configurations = myDetectedFacetSet.getConfigurations(myFacetType.getId(), module);
 
-    final C detectedConfiguration = myFacetDetector.detectFacet(source, Collections.unmodifiableCollection(configurations.keySet()));
+    final C detectedConfiguration = myFacetDetector.detectFacet(source, Collections.unmodifiableSet(configurations.keySet()));
     if (detectedConfiguration == null) {
       return null;
     }
@@ -92,53 +82,17 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
       return configurations.get(detectedConfiguration);
     }
 
-    final String name = generateName(module);
-
-    final Facet underlyingFacet1 = underlyingFacet;
-    return new WriteAction<Facet>() {
-      protected void run(final Result<Facet> result) {
-        final Facet facet = FacetManager.getInstance(module).createFacet(myFacetType, name, detectedConfiguration, underlyingFacet1);
-        facet.setImplicit(true);
-        ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        myFacetDetector.beforeFacetAdded(facet, model, rootModel);
-        model.addFacet(facet);
-        if (rootModel.isChanged()) {
-          rootModel.commit();
-        }
-        else {
-          rootModel.dispose();
-        }
-
-        model.commit();
-        myFacetDetector.afterFacetAdded(facet);
-
-        result.setResult(facet);
-      }
-    }.execute().getResultObject();
+    final String name = myDetectedFacetSet.generateName(module, myFacetType);
+    FacetInfo2<Module> detected = myDetectedFacetSet.createInfo(module, url, underlyingFacet, detectedConfiguration, name, myFacetType, myFacetDetector.getId());
+    myDetectedFacetSet.addFacetInfo(detected);
+    return detected;
   }
 
-  private static <C extends FacetConfiguration, F extends Facet<C>> Map<C, F> collectFacets(final Module module, final FacetTypeId<F> typeId) {
-    Collection<F> facets = FacetManager.getInstance(module).getFacetsByType(typeId);
-    Map<C, F> configurations = new HashMap<C, F>();
-    for (F facet : facets) {
-      configurations.put(facet.getConfiguration(), facet);
-    }
-    return configurations;
-  }
-
-  private String generateName(final Module module) {
-    String baseName = myFacetType.getDefaultFacetName();
-    FacetManager manager = FacetManager.getInstance(module);
-    int i = 2;
-    String name = baseName;
-    while (manager.findFacet(myFacetType.getId(), name) != null) {
-      name = baseName + i;
-      i++;
-    }
-    return name;
+  @Override
+  public String toString() {
+    return myFacetType.getStringId() + ": " + myFacetDetector.getId();
   }
 
   @Nullable
-  public abstract Facet detectFacet(final VirtualFile virtualFile, final PsiManager psiManager);
+  public abstract FacetInfo2<Module> detectFacet(final VirtualFile virtualFile, final PsiManager psiManager);
 }

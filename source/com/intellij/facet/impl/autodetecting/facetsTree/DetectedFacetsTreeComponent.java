@@ -21,10 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author nik
@@ -41,12 +39,12 @@ public class DetectedFacetsTreeComponent {
     return myMainPanel;
   }
 
-  public void addFacets(ModuleDescriptor moduleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>> root2Facets) {
+  public void addFacets(ModuleDescriptor moduleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>> root2Facets) {
     for (File root : root2Facets.keySet()) {
       ModuleDescriptorNode moduleNode = new ModuleDescriptorNode(moduleDescriptor, root);
 
       Map<FacetInfo, DetectedFacetsTree.FacetNode> facetInfos = new HashMap<FacetInfo, DetectedFacetsTree.FacetNode>();
-      for (FacetDetectionProcessor.DetectedFacetInfo detectedFacetInfo : root2Facets.get(root)) {
+      for (FacetDetectionProcessor.DetectedInWizardFacetInfo detectedFacetInfo : root2Facets.get(root)) {
         DetectedFacetsTree.FacetNode parent = null;
         FacetInfo underlyingFacet = detectedFacetInfo.getFacetInfo().getUnderlyingFacet();
         if (underlyingFacet != null) {
@@ -95,7 +93,7 @@ public class DetectedFacetsTreeComponent {
                                          final List<Pair<FacetDetector, Facet>> createdFacets, boolean createFacets) {
     for (DetectedFacetsTree.FacetNode facetNode : facets) {
       boolean createFacet = createFacets && facetNode.isChecked();
-      FacetDetectionProcessor.DetectedFacetInfo detectedFacetInfo = ((FacetInfoNode)facetNode).getDetectedFacetInfo();
+      FacetDetectionProcessor.DetectedInWizardFacetInfo detectedFacetInfo = ((FacetInfoNode)facetNode).getDetectedFacetInfo();
       FacetInfo facetInfo = detectedFacetInfo.getFacetInfo();
       FacetType type = facetInfo.getFacetType();
       Facet facet = null;
@@ -123,14 +121,14 @@ public class DetectedFacetsTreeComponent {
   }
 
   private static class FacetInfoNode extends DetectedFacetsTree.FacetNode {
-    private FacetDetectionProcessor.DetectedFacetInfo myDetectedFacetInfo;
+    private FacetDetectionProcessor.DetectedInWizardFacetInfo myDetectedFacetInfo;
 
-    private FacetInfoNode(final FacetDetectionProcessor.DetectedFacetInfo detectedFacetInfo, final VirtualFile root, @Nullable final DetectedFacetsTree.FacetNode parent) {
+    private FacetInfoNode(final FacetDetectionProcessor.DetectedInWizardFacetInfo detectedFacetInfo, final VirtualFile root, @Nullable final DetectedFacetsTree.FacetNode parent) {
       super(detectedFacetInfo.getFacetInfo(), detectedFacetInfo.getFacetInfo().getFacetType(), root, new VirtualFile[]{detectedFacetInfo.getFile()}, parent);
       myDetectedFacetInfo = detectedFacetInfo;
     }
 
-    public FacetDetectionProcessor.DetectedFacetInfo getDetectedFacetInfo() {
+    public FacetDetectionProcessor.DetectedInWizardFacetInfo getDetectedFacetInfo() {
       return myDetectedFacetInfo;
     }
   }

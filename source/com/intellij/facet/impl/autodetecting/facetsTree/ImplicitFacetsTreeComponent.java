@@ -4,13 +4,14 @@
 
 package com.intellij.facet.impl.autodetecting.facetsTree;
 
-import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
-import com.intellij.facet.impl.autodetecting.ImplicitFacetInfo;
-import com.intellij.facet.impl.autodetecting.ImplicitFacetManager;
+import com.intellij.facet.Facet;
+import com.intellij.facet.impl.autodetecting.DetectedFacetManager;
+import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
+import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
+import com.intellij.facet.impl.autodetecting.model.FacetInfoBackedByFacet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -20,45 +21,46 @@ import java.util.*;
  */
 public class ImplicitFacetsTreeComponent {
   private DetectedFacetsTree myTree;
-  private final ImplicitFacetManager myImplicitFacetManager;
+  private final DetectedFacetManager myDetectedFacetManager;
   private Collection<DetectedFacetsTree.FacetTypeNode> myFacetTypeNodes;
 
-  public ImplicitFacetsTreeComponent(ImplicitFacetManager implicitFacetManager, List<ImplicitFacetInfo> implicitFacets) {
-    myImplicitFacetManager = implicitFacetManager;
-    Map<Facet, ImplicitFacetInfo> facet2info = new HashMap<Facet, ImplicitFacetInfo>();
-    for (ImplicitFacetInfo implicitFacet : implicitFacets) {
-      facet2info.put(implicitFacet.getFacet(), implicitFacet);
-    }
+  public ImplicitFacetsTreeComponent(DetectedFacetManager detectedFacetManager, Collection<DetectedFacetInfo<Module>> detectedFacets, HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> files) {
+    myDetectedFacetManager = detectedFacetManager;
 
     Map<FacetType, DetectedFacetsTree.FacetTypeNode> facetTypeNodes = new HashMap<FacetType, DetectedFacetsTree.FacetTypeNode>();
-    Map<Module, ModuleNodeImpl> moduleNodes = new HashMap<Module, ModuleNodeImpl>();
 
-    Collection<ImplicitFacetInfo> sortedFacets = new LinkedHashSet<ImplicitFacetInfo>();
-    for (ImplicitFacetInfo facet : implicitFacets) {
-      addUnderlying(facet, sortedFacets, facet2info);
+    Collection<FacetInfo2<Module>> sortedFacets = new LinkedHashSet<FacetInfo2<Module>>();
+    for (FacetInfo2<Module> facet : detectedFacets) {
+      addUnderlying(facet, sortedFacets);
     }
 
-    Map<Facet, DetectedFacetsTree.FacetNode> facetNodes = new HashMap<Facet, DetectedFacetsTree.FacetNode>();
-    for (ImplicitFacetInfo implicitFacet : sortedFacets) {
-      FacetType facetType = getRootFacetType(implicitFacet, facet2info);
+    Map<FacetInfo2<Module>, DetectedFacetsTree.FacetNode> facetNodes = new HashMap<FacetInfo2<Module>, DetectedFacetsTree.FacetNode>();
+    for (FacetInfo2<Module> facetInfo : sortedFacets) {
+      FacetType facetType = getRootFacetType(facetInfo);
       DetectedFacetsTree.FacetTypeNode facetTypeNode = facetTypeNodes.get(facetType);
       if (facetTypeNode == null) {
         facetTypeNode = new DetectedFacetsTree.FacetTypeNode(facetType);
         facetTypeNodes.put(facetType, facetTypeNode);
       }
 
-      Facet facet = implicitFacet.getFacet();
-      Module module = facet.getModule();
+      Module module = facetInfo.getModule();
       ModuleNodeImpl moduleNode = findOrCreateModuleNode(facetTypeNode, module);
 
       DetectedFacetsTree.FacetNode parentNode = null;
-      Facet underlyingFacet = facet.getUnderlyingFacet();
+      FacetInfo2<Module> underlyingFacet = facetInfo.getUnderlyingFacetInfo();
       if (underlyingFacet != null) {
         parentNode = facetNodes.get(underlyingFacet);
       }
 
-      DetectedFacetsTree.FacetNode facetNode = new FacetNodeImpl(implicitFacet, implicitFacet.getFacet().getModule().getProject().getBaseDir(), parentNode);
-      facetNodes.put(facet, facetNode);
+      VirtualFile projectRoot = facetInfo.getModule().getProject().getBaseDir();
+      DetectedFacetsTree.FacetNode facetNode;
+      if (facetInfo instanceof DetectedFacetInfo) {
+        facetNode = new FacetNodeImpl((DetectedFacetInfo<Module>)facetInfo, projectRoot, parentNode, files.get(facetInfo));
+      }
+      else {
+        facetNode = new RealFacetNode((FacetInfoBackedByFacet)facetInfo, projectRoot, parentNode);
+      }
+      facetNodes.put(facetInfo, facetNode);
       if (parentNode == null) {
         moduleNode.addRootFacet(facetNode);
       }
@@ -68,52 +70,43 @@ public class ImplicitFacetsTreeComponent {
     myTree = new DetectedFacetsTree(myFacetTypeNodes);
   }
 
-  public void createAndDeleteFacets() {
+  public void createFacets() {
     for (DetectedFacetsTree.FacetTypeNode facetTypeNode : myFacetTypeNodes) {
       for (DetectedFacetsTree.ModuleNode moduleNode : facetTypeNode.getModuleNodes()) {
         boolean accept = facetTypeNode.isChecked() && moduleNode.isChecked();
         if (accept) {
-          processFacetNodes(moduleNode.getRootFacets(), true);
+          processFacetNodes(moduleNode.getRootFacets(), true, null);
         }
         else {
-          myImplicitFacetManager.disableDetectionInModule(facetTypeNode.getFacetType(), ((ModuleNodeImpl)moduleNode).myModule);
+          myDetectedFacetManager.disableDetectionInModule(facetTypeNode.getFacetType(), ((ModuleNodeImpl)moduleNode).myModule);
         }
       }
     }
-    myImplicitFacetManager.onImplicitFacetChanged();
   }
 
-  private void processFacetNodes(final List<DetectedFacetsTree.FacetNode> facetNodes, final boolean accept) {
+  private void processFacetNodes(final List<DetectedFacetsTree.FacetNode> facetNodes, final boolean accept, final Facet underlyingFacet) {
     for (DetectedFacetsTree.FacetNode facetNode : facetNodes) {
-      ImplicitFacetInfo implicitFacetInfo = ((FacetNodeImpl)facetNode).getImplicitFacetInfo();
-      if (accept && facetNode.isChecked()) {
-        myImplicitFacetManager.markExplicit(implicitFacetInfo.getFacet());
+      Facet facet = null;
+      if (facetNode instanceof FacetNodeImpl) {
+        DetectedFacetInfo<Module> detectedFacetInfo = ((FacetNodeImpl)facetNode).getDetectedFacetInfo();
+        if (accept && facetNode.isChecked()) {
+          facet = myDetectedFacetManager.createFacet(detectedFacetInfo, underlyingFacet);
+        }
+        else {
+          myDetectedFacetManager.disableDetectionInFile(detectedFacetInfo);
+        }
       }
       else {
-        myImplicitFacetManager.disableDetectionInFile(implicitFacetInfo);
+        facet = ((RealFacetNode)facetNode).myFacetInfo.getFacet();
       }
-      processFacetNodes(facetNode.getChildren(), accept && facetNode.isChecked());
+      processFacetNodes(facetNode.getChildren(), accept && facetNode.isChecked(), facet);
     }
   }
 
-  @Nullable
-  public Facet getSelectedFacet() {
-    CheckedTreeNode selectedNode = myTree.getSelectedNode();
-    if (!(selectedNode instanceof FacetNodeImpl)) {
-      return null;
-    }
-
-    return ((FacetNodeImpl)selectedNode).getImplicitFacetInfo().getFacet();
-  }
-
-  private static void addUnderlying(final ImplicitFacetInfo facet, final Collection<ImplicitFacetInfo> sortedFacets,
-                             final Map<Facet, ImplicitFacetInfo> facet2info) {
-    Facet underlying = facet.getFacet().getUnderlyingFacet();
-    if (underlying != null) {
-      ImplicitFacetInfo info = facet2info.get(underlying);
-      if (info != null && !sortedFacets.contains(info)) {
-        addUnderlying(info, sortedFacets, facet2info);
-      }
+  private static void addUnderlying(final FacetInfo2<Module> facet, final Collection<FacetInfo2<Module>> sortedFacets) {
+    FacetInfo2<Module> underlying = facet.getUnderlyingFacetInfo();
+    if (underlying != null && !sortedFacets.contains(underlying)) {
+      addUnderlying(underlying, sortedFacets);
     }
     sortedFacets.add(facet);
   }
@@ -130,13 +123,13 @@ public class ImplicitFacetsTreeComponent {
     return moduleNode;
   }
 
-  private static FacetType getRootFacetType(final ImplicitFacetInfo implicitFacet, final Map<Facet, ImplicitFacetInfo> facet2info) {
-    Facet facet = implicitFacet.getFacet();
-    Facet underlyingFacet;
-    while ((underlyingFacet = facet.getUnderlyingFacet()) != null && facet2info.containsKey(underlyingFacet)) {
+  private static FacetType getRootFacetType(final FacetInfo2<?> detectedFacet) {
+    FacetInfo2<?> facet = detectedFacet;
+    FacetInfo2<?> underlyingFacet;
+    while ((underlyingFacet = facet.getUnderlyingFacetInfo()) != null) {
       facet = underlyingFacet;
     }
-    return facet.getType();
+    return facet.getFacetType();
   }
 
   public DetectedFacetsTree getTree() {
@@ -144,19 +137,37 @@ public class ImplicitFacetsTreeComponent {
   }
 
   private static class FacetNodeImpl extends DetectedFacetsTree.FacetNode {
-    private final ImplicitFacetInfo myImplicitFacetInfo;
+    private final DetectedFacetInfo<Module> myDetectedFacetInfo;
 
-    private FacetNodeImpl(ImplicitFacetInfo implicitFacet, VirtualFile projectRoot, @Nullable final DetectedFacetsTree.FacetNode parent) {
-      super(implicitFacet.getFacet(), implicitFacet.getFacet().getType(), projectRoot, implicitFacet.getFiles(), parent);
-      myImplicitFacetInfo = implicitFacet;
+    private FacetNodeImpl(DetectedFacetInfo<Module> detectedFacet, VirtualFile projectRoot, @Nullable final DetectedFacetsTree.FacetNode parent,
+                          final List<VirtualFile> files) {
+      super(detectedFacet, detectedFacet.getFacetType(), projectRoot, files.toArray(new VirtualFile[files.size()]), parent);
+      myDetectedFacetInfo = detectedFacet;
     }
 
-    public ImplicitFacetInfo getImplicitFacetInfo() {
-      return myImplicitFacetInfo;
+    public DetectedFacetInfo<Module> getDetectedFacetInfo() {
+      return myDetectedFacetInfo;
     }
 
     public String getName() {
-      return myImplicitFacetInfo.getFacet().getName();
+      return myDetectedFacetInfo.getFacetName();
+    }
+  }
+
+  private static class RealFacetNode extends DetectedFacetsTree.FacetNode {
+    private final FacetInfoBackedByFacet myFacetInfo;
+
+    private RealFacetNode(final FacetInfoBackedByFacet facetInfo, final VirtualFile projectRoot, @Nullable final DetectedFacetsTree.FacetNode parent) {
+      super(facetInfo, facetInfo.getFacetType(), projectRoot, VirtualFile.EMPTY_ARRAY, parent);
+      myFacetInfo = facetInfo;
+    }
+
+    public String getDescription() {
+      return "";
+    }
+
+    public String getName() {
+      return myFacetInfo.getFacetName();
     }
   }
 

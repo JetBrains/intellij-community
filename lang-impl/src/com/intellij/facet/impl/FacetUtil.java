@@ -8,21 +8,17 @@ import com.intellij.facet.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @author nik
@@ -47,29 +43,6 @@ public class FacetUtil {
 
   public static boolean isRegistered(Facet facet) {
     return Arrays.asList(FacetManager.getInstance(facet.getModule()).getAllFacets()).contains(facet);
-  }
-
-  public static void deleteImplicitFacets(final Module module, final FacetTypeId typeId) {
-    new WriteAction() {
-      protected void run(final Result result) {
-        ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
-        //noinspection unchecked
-        Collection<Facet> facetsCollection = model.getFacetsByType(typeId);
-        Facet[] facets = facetsCollection.toArray(new Facet[facetsCollection.size()]);
-        for (Facet facet : facets) {
-          if (facet.isImplicit()) {
-            model.removeFacet(facet);
-          }
-        }
-        model.commit();
-      }
-    }.execute();
-  }
-
-  public static void deleteImplicitFacets(Project project, final FacetTypeId typeId) {
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      deleteImplicitFacets(module, typeId);
-    }
   }
 
   public static void loadFacetConfiguration(final @NotNull FacetConfiguration configuration, final @Nullable Element config)

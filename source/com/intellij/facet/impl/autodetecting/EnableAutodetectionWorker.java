@@ -103,7 +103,7 @@ public class EnableAutodetectionWorker {
       }
 
     }, ProjectBundle.message("progress.text.detecting.facets"), false, myProject);
-    myFacetAutodetectingManager.getImplicitFacetManager().computeImplicitFacetsAndShowDialog();
+    myFacetAutodetectingManager.getDetectedFacetManager().computeImplicitFacetsAndShowDialog();
   }
 
   private void detectFacetsInModules(final FacetType<?, ?> type, final Collection<Module> modules) {

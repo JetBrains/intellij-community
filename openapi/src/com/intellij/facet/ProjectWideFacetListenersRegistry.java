@@ -35,4 +35,7 @@ public abstract class ProjectWideFacetListenersRegistry {
                                                           @NotNull Disposable parentDisposable);
   public abstract <F extends Facet> void unregisterListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener);
 
+  public abstract void registerListener(@NotNull ProjectWideFacetListener<Facet> listener);
+  public abstract void unregisterListener(@NotNull ProjectWideFacetListener<Facet> listener);
+  public abstract void registerListener(@NotNull ProjectWideFacetListener<Facet> listener, @NotNull Disposable parentDisposable);
 }

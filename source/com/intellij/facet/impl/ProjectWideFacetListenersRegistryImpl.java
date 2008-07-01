@@ -30,6 +30,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
   private Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<FacetTypeId, WeakHashMap<Facet, Boolean>>();
   private Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
   private FacetManagerAdapter myFacetListener;
+  private EventDispatcher<ProjectWideFacetListener> myAllFacetsListener = EventDispatcher.create(ProjectWideFacetListener.class);
 
   public ProjectWideFacetListenersRegistryImpl(MessageBus messageBus) {
     myFacetListener = new MyFacetManagerAdapter();
@@ -103,21 +104,42 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
         }
       }
     }
+
+    if (before) {
+      getAllFacetsMulticaster().beforeFacetRemoved(facet);
+    }
+    else {
+      getAllFacetsMulticaster().facetRemoved(facet);
+      if (myFacetsByType.isEmpty()) {
+        getAllFacetsMulticaster().allFacetsRemoved();
+      }
+    }
+  }
+
+  private ProjectWideFacetListener<Facet> getAllFacetsMulticaster() {
+    //noinspection unchecked
+    return myAllFacetsListener.getMulticaster();
   }
 
   private void onFacetAdded(final Facet facet) {
+    boolean firstFacet = myFacetsByType.isEmpty();
     final FacetTypeId typeId = facet.getTypeId();
     WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
     if (facets == null) {
       facets = new WeakHashMap<Facet, Boolean>();
       myFacetsByType.put(typeId, facets);
     }
-    boolean firstFacet = facets.isEmpty();
+    boolean firstFacetOfType = facets.isEmpty();
     facets.put(facet, true);
 
+    if (firstFacet) {
+      getAllFacetsMulticaster().firstFacetAdded();
+    }
+    getAllFacetsMulticaster().facetAdded(facet);
+    
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
-      if (firstFacet) {
+      if (firstFacetOfType) {
         dispatcher.getMulticaster().firstFacetAdded();
       }
       //noinspection unchecked
@@ -131,6 +153,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
       //noinspection unchecked
       dispatcher.getMulticaster().facetConfigurationChanged(facet);
     }
+    getAllFacetsMulticaster().facetConfigurationChanged(facet);
   }
 
   public <F extends Facet> void registerListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
@@ -154,6 +177,18 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
         unregisterListener(typeId, listener);
       }
     });
+  }
+
+  public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
+    myAllFacetsListener.addListener(listener);
+  }
+
+  public void unregisterListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
+    myAllFacetsListener.removeListener(listener);
+  }
+
+  public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener, @NotNull final Disposable parentDisposable) {
+    myAllFacetsListener.addListener(listener, parentDisposable);
   }
 
   private class MyFacetManagerAdapter extends FacetManagerAdapter {

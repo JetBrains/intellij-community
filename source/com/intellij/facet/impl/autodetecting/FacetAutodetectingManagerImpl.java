@@ -4,11 +4,15 @@
 
 package com.intellij.facet.impl.autodetecting;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.autodetecting.FacetDetector;
-import com.intellij.facet.impl.FacetUtil;
-import com.intellij.facet.pointers.FacetPointer;
+import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
+import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -24,10 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.ide.impl.convert.ProjectFileVersion;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,15 +52,16 @@ import java.util.*;
 public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager implements AutodetectionFilter, ProjectComponent, PersistentStateComponent<DisabledAutodetectionInfo> {
   @NonNls public static final String COMPONENT_NAME = "FacetAutodetectingManager";
   private final MultiValuesMap<FileType, FacetDetectorWrapper> myDetectors = new MultiValuesMap<FileType, FacetDetectorWrapper>();
+  private final Map<String, FacetDetector<?,?>> myId2Detector = new HashMap<String, FacetDetector<?,?>>();
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final FacetPointersManager myFacetPointersManager;
   private FacetDetectionIndex myFileIndex;
   private MyPsiTreeChangeListener myPsiTreeChangeListener;
   private MergingUpdateQueue myMergingUpdateQueue;
-  private ImplicitFacetManager myImplicitFacetManager;
+  private ProjectFacetInfoSet myDetectedFacetSet;
+  private DetectedFacetManager myDetectedFacetManager;
   private DisabledAutodetectionInfo myDisabledAutodetectionInfo = new DisabledAutodetectionInfo();
-  private final EventDispatcher<ImplicitFacetListener> myImplicitFacetDispatcher = EventDispatcher.create(ImplicitFacetListener.class);
   private boolean myDetectionInProgress;
   private final Set<FacetType<?,?>> myFacetTypesWithDetectors = new THashSet<FacetType<?,?>>();
   private final EnableAutodetectionWorker myEnableAutodetectionWorker;
@@ -67,6 +70,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     myProject = project;
     myPsiManager = psiManager;
     myFacetPointersManager = facetPointersManager;
+    myDetectedFacetSet = new ProjectFacetInfoSet(project, project);
     myEnableAutodetectionWorker = new EnableAutodetectionWorker(project, this);
   }
 
@@ -75,14 +79,14 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        myImplicitFacetManager.initUI();
+        myDetectedFacetManager.initUI();
       }
     });
   }
 
   public void projectClosed() {
-    if (myImplicitFacetManager != null) {
-      myImplicitFacetManager.disposeUI();
+    if (myDetectedFacetManager != null) {
+      myDetectedFacetManager.disposeUI();
     }
   }
 
@@ -99,11 +103,12 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void initialize() {
-    myImplicitFacetManager = new ImplicitFacetManager(myProject, this);
+    myDetectedFacetManager = new DetectedFacetManager(myProject, this, myDetectedFacetSet);
     FacetType[] types = FacetTypeRegistry.getInstance().getFacetTypes();
     for (FacetType<?,?> type : types) {
       registerDetectors(type);
     }
+    myDetectedFacetSet.loadDetectedFacets(FacetDetectionIndex.getDetectedFacetsFile(myProject));
     myFileIndex = new FacetDetectionIndex(myProject, this, myDetectors.keySet());
     myFileIndex.initialize();
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
@@ -116,7 +121,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     type.registerDetectors(new FacetDetectorRegistryEx<C>(null, detectorRegistry));
     if (detectorRegistry.hasDetectors()) {
       myFacetTypesWithDetectors.add(type);
-      myImplicitFacetManager.registerListeners(type);
+      myDetectedFacetManager.registerListeners(type);
     }
   }
 
@@ -138,14 +143,13 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void processFile(VirtualFile virtualFile, final boolean notifyIfDetected) {
-    //todo[nik] do not detect facets if Project Structure dialog is opened. 
     if (!virtualFile.isValid() || virtualFile.isDirectory() || myProject.isDisposed()) return;
 
     FileType fileType = virtualFile.getFileType();
     Collection<FacetDetectorWrapper> detectors = myDetectors.get(fileType);
     if (detectors == null) return;
 
-    List<Facet> facets = null;
+    List<FacetInfo2<Module>> facets = null;
     for (FacetDetectorWrapper<?,?,?,?> detector : detectors) {
       facets = process(virtualFile, detector, facets);
     }
@@ -156,43 +160,40 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
       indexEntry = new FacetDetectionIndexEntry(virtualFile.getTimeStamp());
     }
 
-    Collection<FacetPointer> removed = indexEntry.update(myFacetPointersManager, facets);
+    Collection<Integer> removed = indexEntry.update(myFacetPointersManager, facets);
     myFileIndex.putIndexEntry(url, indexEntry);
 
     if (removed != null) {
       removeObsoleteFacets(removed);
     }
-
-    if (notifyIfDetected && facets != null && !facets.isEmpty()) {
-      myImplicitFacetManager.onImplicitFacetChanged();
-    }
   }
 
-  public void removeObsoleteFacets(final Collection<FacetPointer> removed) {
-    for (FacetPointer pointer : removed) {
-      Set<String> urls = myFileIndex.getFiles(pointer);
+  public void removeObsoleteFacets(final Collection<Integer> ids) {
+    for (Integer id : ids) {
+      Set<String> urls = myFileIndex.getFiles(id);
       if (urls == null || urls.isEmpty()) {
-        final Facet facet = pointer.getFacet();
-        if (facet != null && facet.isImplicit()) {
-          FacetUtil.deleteFacet(facet);
-        }
+        myDetectedFacetSet.removeDetectedFacetWithSubFacets(id);
       }
     }
   }
 
-  private List<Facet> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ?, ?,?> detector,
-                                                         List<Facet> facets) {
+  public ProjectFacetInfoSet getDetectedFacetSet() {
+    return myDetectedFacetSet;
+  }
+
+  private List<FacetInfo2<Module>> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ?, ?, ?> detector,
+                                                         List<FacetInfo2<Module>> facets) {
     if (!myDetectionInProgress && detector.getVirtualFileFilter().accept(virtualFile)) {
       try {
         myDetectionInProgress = true;
         if (!ProjectFileVersion.getInstance(myProject).isFacetAdditionEnabled(detector.getFacetType().getId(), false)) {
           return facets;
         }
-        Facet facet = detector.detectFacet(virtualFile, myPsiManager);
+        FacetInfo2<Module> facet = detector.detectFacet(virtualFile, myPsiManager);
 
         if (facet != null) {
           if (facets == null) {
-            facets = new SmartList<Facet>();
+            facets = new SmartList<FacetInfo2<Module>>();
           }
           facets.add(facet);
         }
@@ -211,10 +212,11 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void dispose() {
-    if (myImplicitFacetManager != null) {
-      Disposer.dispose(myImplicitFacetManager);
+    if (myDetectedFacetManager != null) {
+      Disposer.dispose(myDetectedFacetManager);
       myMergingUpdateQueue.dispose();
       myPsiManager.removePsiTreeChangeListener(myPsiTreeChangeListener);
+      myDetectedFacetSet.saveDetectedFacets(FacetDetectionIndex.getDetectedFacetsFile(myProject));
       myFileIndex.dispose();
     }
   }
@@ -298,14 +300,6 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     getState().addDisabled(type.getStringId(), module.getName(), fileUrls);
   }
 
-  public void addImplicitFacetListener(@NotNull ImplicitFacetListener listener) {
-    myImplicitFacetDispatcher.addListener(listener);
-  }
-
-  public void fireImplicitFacetAccepted(final @NotNull Facet facet) {
-    myImplicitFacetDispatcher.getMulticaster().implicitFacetAccepted(facet);
-  }
-
   public void setDisabledAutodetectionState(final FacetType<?, ?> facetType, final DisabledAutodetectionByTypeElement element) {
     String id = facetType.getStringId();
     DisabledAutodetectionByTypeElement oldElement = myDisabledAutodetectionInfo.findElement(id);
@@ -313,12 +307,17 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     myDisabledAutodetectionInfo.replaceElement(id, element);
   }
 
-  public ImplicitFacetManager getImplicitFacetManager() {
-    return myImplicitFacetManager;
+  public DetectedFacetManager getDetectedFacetManager() {
+    return myDetectedFacetManager;
   }
 
-  public interface ImplicitFacetListener extends EventListener {
-    void implicitFacetAccepted(@NotNull Facet facet);
+  @Nullable 
+  public FacetDetector<?,?> findDetector(final String detectorId) {
+    return myId2Detector.get(detectorId);
+  }
+
+  public FacetDetectionIndex getFileIndex() {
+    return myFileIndex;
   }
 
   private class FacetOnTheFlyDetectorRegistryImpl<C extends FacetConfiguration, F extends Facet<C>> implements FacetOnTheFlyDetectorRegistry<C> {
@@ -331,20 +330,21 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
 
     public void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
       myHasDetectors = true;
-      myDetectors.put(fileType, new FacetByVirtualFileDetectorWrapper<C, F, FacetConfiguration>(fileType, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector));
+      myId2Detector.put(facetDetector.getId(), facetDetector);
+      myDetectors.put(fileType, new FacetByVirtualFileDetectorWrapper<C, F, FacetConfiguration>(myDetectedFacetSet, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector));
     }
 
     public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,
                                                         @NotNull final Condition<PsiFile> psiFileFilter, @NotNull final FacetDetector<PsiFile, C> facetDetector,
                                                         final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;
-      myDetectors.put(fileType, new FacetByPsiFileDetectorWrapper<C, F, U>(fileType, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector, psiFileFilter, selector));
+      myId2Detector.put(facetDetector.getId(), facetDetector);
+      myDetectors.put(fileType, new FacetByPsiFileDetectorWrapper<C, F, U>(myDetectedFacetSet, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector, psiFileFilter, selector));
     }
 
     public boolean hasDetectors() {
       return myHasDetectors;
     }
-
   }
 
   private class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {

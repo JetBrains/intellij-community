@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class FacetDetectionProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetDetectionProcessor");
-  private final Map<FacetConfiguration, DetectedFacetInfo> myDetectedFacets = new LinkedHashMap<FacetConfiguration, DetectedFacetInfo>();
+  private final Map<FacetConfiguration, DetectedInWizardFacetInfo> myDetectedFacets = new LinkedHashMap<FacetConfiguration, DetectedInWizardFacetInfo>();
   private final Map<FacetTypeId, List<FacetConfiguration>> myDetectedConfigurations = new HashMap<FacetTypeId, List<FacetConfiguration>>();
   private final ProgressIndicator myProgressIndicator;
   private final FileTypeManager myFileTypeManager;
@@ -100,13 +100,13 @@ public class FacetDetectionProcessor {
     }
   }
 
-  public List<DetectedFacetInfo> getDetectedFacetsInfos() {
-    return new ArrayList<DetectedFacetInfo>(myDetectedFacets.values());
+  public List<DetectedInWizardFacetInfo> getDetectedFacetsInfos() {
+    return new ArrayList<DetectedInWizardFacetInfo>(myDetectedFacets.values());
   }
 
   public List<FacetInfo> getDetectedFacets() {
     List<FacetInfo> list = new ArrayList<FacetInfo>();
-    for (DetectedFacetInfo info : myDetectedFacets.values()) {
+    for (DetectedInWizardFacetInfo info : myDetectedFacets.values()) {
       list.add(info.getFacetInfo());
     }
     return list;
@@ -157,7 +157,7 @@ public class FacetDetectionProcessor {
 
       FacetInfo facetInfo = new FacetInfo(myFacetType, generateFacetName(), newConfiguration, underlyingFacet);
       configurations.add(newConfiguration);
-      myDetectedFacets.put(newConfiguration, new DetectedFacetInfo(facetInfo, file, myDetector));
+      myDetectedFacets.put(newConfiguration, new DetectedInWizardFacetInfo(facetInfo, file, myDetector));
     }
 
     private String generateFacetName() {
@@ -204,6 +204,7 @@ public class FacetDetectionProcessor {
         typeId = underlying.getUnderlyingFacetType();
         if (!parentTypes.add(typeId)) {
           LOG.error("Circular dependency between facets: " + parentTypes);
+          break;
         }
       }
     }
@@ -231,13 +232,13 @@ public class FacetDetectionProcessor {
     }
   }
 
-
-  public static class DetectedFacetInfo {
+  //todo[nik] use DetectedFacetInfo instead
+  public static class DetectedInWizardFacetInfo {
     private final FacetInfo myFacetInfo;
     private final VirtualFile myFile;
     private final FacetDetector myFacetDetector;
 
-    public DetectedFacetInfo(final FacetInfo facetInfo, final VirtualFile file, final FacetDetector facetDetector) {
+    public DetectedInWizardFacetInfo(final FacetInfo facetInfo, final VirtualFile file, final FacetDetector facetDetector) {
       myFacetInfo = facetInfo;
       myFile = file;
       myFacetDetector = facetDetector;

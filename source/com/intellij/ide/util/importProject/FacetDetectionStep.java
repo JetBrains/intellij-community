@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>>>
+public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>>>
   implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
   private final Icon myIcon;
   private final ModuleType myModuleType;
@@ -64,19 +64,19 @@ public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<Mo
     return myMainPanel;
   }
 
-  protected Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>> calculate() {
+  protected Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>> calculate() {
     myLastRoots = getRoots();
 
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-    Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>> result = new HashMap<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>>();
+    Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>> result = new HashMap<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>>();
     for (ModuleDescriptor moduleDescriptor : getModuleDescriptors()) {
 
-      Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>> root2Facets = new HashMap<File, List<FacetDetectionProcessor.DetectedFacetInfo>>();
+      Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>> root2Facets = new HashMap<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>();
       for (File root : moduleDescriptor.getContentRoots()) {
         FacetDetectionProcessor processor = new FacetDetectionProcessor(progressIndicator, myModuleType);
         processor.process(root);
-        List<FacetDetectionProcessor.DetectedFacetInfo> facets = processor.getDetectedFacetsInfos();
+        List<FacetDetectionProcessor.DetectedInWizardFacetInfo> facets = processor.getDetectedFacetsInfos();
         if (!facets.isEmpty()) {
           root2Facets.put(root, facets);
         }
@@ -100,7 +100,7 @@ public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<Mo
     return roots;
   }
 
-  protected void onFinished(final Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>> result, final boolean canceled) {
+  protected void onFinished(final Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedInWizardFacetInfo>>> result, final boolean canceled) {
     myDetectedFacetsComponent.clear();
     for (ModuleDescriptor moduleDescriptor : result.keySet()) {
       myDetectedFacetsComponent.addFacets(moduleDescriptor, result.get(moduleDescriptor));

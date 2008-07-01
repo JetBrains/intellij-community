@@ -67,10 +67,12 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return myModule;
   }
 
+  @Deprecated
   public final boolean isImplicit() {
     return myImplicit;
   }
 
+  @Deprecated
   public final void setImplicit(final boolean implicit) {
     myImplicit = implicit;
   }

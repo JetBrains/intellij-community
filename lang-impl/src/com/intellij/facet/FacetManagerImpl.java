@@ -206,7 +206,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     FacetUtil.loadFacetConfiguration(configuration, config);
     String name = state.getName();
     final Facet facet = createFacet(type, name, configuration, underlyingFacet);
-    facet.setImplicit(state.isImplicit());
     if (facet instanceof JDOMExternalizable) {
       //todo[nik] remove
       ((JDOMExternalizable)facet).readExternal(config);
@@ -238,7 +237,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       FacetState facetState = new FacetState();
       facetState.setFacetType(facet.getType().getStringId());
       facetState.setName(facet.getName());
-      facetState.setImplicit(facet.isImplicit());
       final Element config;
       try {
         FacetConfiguration configuration = facet.getConfiguration();

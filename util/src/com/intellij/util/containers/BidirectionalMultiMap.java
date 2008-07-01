@@ -80,6 +80,25 @@ public class BidirectionalMultiMap<K, V> {
     return true;
   }
 
+  public void remove(K key, V value) {
+    Set<V> vs = myKey2Values.get(key);
+    Set<K> ks = myValue2Keys.get(value);
+    if (ks != null && vs != null) {
+      ks.remove(key);
+      vs.remove(value);
+      if (ks.isEmpty()) {
+        myValue2Keys.remove(value);
+      }
+      if (vs.isEmpty()) {
+        myKey2Values.remove(key);
+      }
+    }
+  }
+
+  public boolean isEmpty() {
+    return myKey2Values.isEmpty() && myValue2Keys.isEmpty();
+  }
+
   public boolean removeValue(V value) {
     final Set<K> ks = myValue2Keys.get(value);
     if (ks == null) return false;

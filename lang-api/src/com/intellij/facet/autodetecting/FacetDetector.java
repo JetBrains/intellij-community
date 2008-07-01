@@ -22,6 +22,7 @@ import com.intellij.facet.FacetModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
@@ -29,6 +30,22 @@ import java.util.Collection;
  * @author nik
  */
 public abstract class FacetDetector<T, C extends FacetConfiguration> {
+  private final String myId;
+
+  protected FacetDetector(final @NotNull @NonNls String id) {
+    myId = id;
+  }
+
+  /**
+   * @deprecated use {@link FacetDetector#FacetDetector(String)} instead
+   */
+  protected FacetDetector() {
+    myId = getClass().getName();
+  }
+
+  public final String getId() {
+    return myId;
+  }
 
   @Nullable
   public abstract C detectFacet(T source, Collection<C> existentFacetConfigurations);

@@ -142,7 +142,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   public static <C extends FacetConfiguration> FacetDetector<PsiFile, C> convertDetector(final FacetDetector<VirtualFile, C> detector) {
-    return new FacetDetector<PsiFile, C>() {
+    return new FacetDetector<PsiFile, C>(detector.getId() + "-psi") {
       public C detectFacet(final PsiFile source, final Collection<C> existentFacetConfigurations) {
         VirtualFile virtualFile = source.getVirtualFile();
         return virtualFile != null ? detector.detectFacet(virtualFile, existentFacetConfigurations) : null;
@@ -159,8 +159,8 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   @NotNull
-  public static <C extends FacetConfiguration> DetectedFacetPresentation getDetectedFacetPresentation(@NotNull FacetType<?,C> facetType) {
-    FacetDetectorRegistryEx<C> registry = new FacetDetectorRegistryEx<C>(null, null);
+  public static DetectedFacetPresentation getDetectedFacetPresentation(@NotNull FacetType<?,?> facetType) {
+    FacetDetectorRegistryEx registry = new FacetDetectorRegistryEx(null, null);
     facetType.registerDetectors(registry);
     DetectedFacetPresentation presentation = registry.myPresentation;
     return presentation != null ? presentation : DefaultDetectedFacetPresentation.INSTANCE;

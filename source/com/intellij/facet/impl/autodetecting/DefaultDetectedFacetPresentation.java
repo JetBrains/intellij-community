@@ -4,9 +4,10 @@
 
 package com.intellij.facet.impl.autodetecting;
 
-import com.intellij.facet.Facet;
+import com.intellij.facet.FacetType;
 import com.intellij.facet.autodetecting.DetectedFacetPresentation;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,10 +30,24 @@ public class DefaultDetectedFacetPresentation extends DetectedFacetPresentation 
     return path != null ? path : file.getPresentableUrl();
   }
 
-  @NotNull
-  public String getAutodetectionPopupText(@NotNull final Facet facet, @NotNull final VirtualFile[] files) {
-    Module module = facet.getModule();
-    String fileUrl = ImplicitFacetInfo.getRelativeFileUrl(files[0], module.getProject());
-    return ProjectBundle.message("facet.autodetected.popup.default.text", fileUrl, module.getName(), facet.getType().getPresentableName(), facet.getName());
+  public String getAutodetectionPopupText(@NotNull final Module module, @NotNull final FacetType facetType, @NotNull final String facetName,
+                                          @NotNull final VirtualFile[] files) {
+    String fileUrl = getRelativeFileUrl(files[0], module.getProject());
+    return ProjectBundle.message("facet.autodetected.popup.default.text", fileUrl, module.getName(), facetType.getPresentableName(), facetName);
+  }
+
+  private static String getRelativeFileUrl(final @NotNull VirtualFile file, final Project project) {
+    String fileUrl = file.getPresentableUrl();
+
+    VirtualFile baseDir = project.getBaseDir();
+    if (baseDir == null) {
+      return fileUrl;
+    }
+
+    String prefix = baseDir.getPresentableUrl() + File.separator;
+    if (fileUrl.startsWith(prefix)) {
+      return fileUrl.substring(prefix.length());
+    }
+    return fileUrl;
   }
 }

@@ -5,17 +5,21 @@
 package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.Facet;
+import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
+import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
+import com.intellij.facet.impl.autodetecting.model.FacetInfoBackedByFacet;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.SmartList;
 import com.intellij.util.fileIndex.FileIndexEntry;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +27,8 @@ import java.util.Set;
  * @author nik
 */
 public class FacetDetectionIndexEntry extends FileIndexEntry {
-  private SmartList<FacetPointer> myDetectedFacets;
+  private SmartList<FacetPointer> myFacets;
+  private SmartList<Integer> myDetectedFacetIds;
 
   public FacetDetectionIndexEntry(final long timestamp) {
     super(timestamp);
@@ -33,70 +38,104 @@ public class FacetDetectionIndexEntry extends FileIndexEntry {
     super(stream);
     int size = stream.readInt();
     if (size > 0) {
-      myDetectedFacets = new SmartList<FacetPointer>();
       while (size-- > 0) {
-        myDetectedFacets.add(facetPointersManager.create(stream.readUTF()));
+        String id = stream.readUTF();
+        if (id.startsWith("/")) {
+          if (myDetectedFacetIds == null) {
+            myDetectedFacetIds = new SmartList<Integer>();
+          }
+          myDetectedFacetIds.add(Integer.parseInt(id.substring(1)));
+        }
+        else {
+          if (myFacets == null) {
+            myFacets = new SmartList<FacetPointer>();
+          }
+          myFacets.add(facetPointersManager.create(id));
+        }
       }
     }
   }
 
   @Nullable
-  public SmartList<FacetPointer> getDetectedFacets() {
-    return myDetectedFacets;
+  public SmartList<FacetPointer> getFacets() {
+    return myFacets;
+  }
+
+  @Nullable
+  public SmartList<Integer> getDetectedFacetIds() {
+    return myDetectedFacetIds;
   }
 
   public void write(final DataOutputStream stream) throws IOException {
     super.write(stream);
-    if (myDetectedFacets != null) {
-      stream.writeInt(myDetectedFacets.size());
-      for (FacetPointer facetPointer : myDetectedFacets) {
+    int number = (myFacets != null ? myFacets.size() : 0) + (myDetectedFacetIds != null ? myDetectedFacetIds.size() : 0);
+    stream.writeInt(number);
+    if (myFacets != null) {
+      for (FacetPointer facetPointer : myFacets) {
         stream.writeUTF(facetPointer.getId());
       }
     }
-    else {
-      stream.writeInt(0);
+    if (myDetectedFacetIds != null) {
+      for (Integer id : myDetectedFacetIds) {
+        stream.writeUTF("/" + id);
+      }
     }
-  }
-
-  public boolean isEmpty() {
-    return myDetectedFacets == null || myDetectedFacets.isEmpty();
   }
 
   @Nullable
-  public Collection<FacetPointer> update(final FacetPointersManager facetPointersManager, final @Nullable List<Facet> facets) {
-    if (facets == null || facets.isEmpty()) {
-      SmartList<FacetPointer> old = myDetectedFacets;
-      myDetectedFacets = null;
+  public Collection<Integer> update(final FacetPointersManager facetPointersManager, final @Nullable List<FacetInfo2<Module>> detectedFacets) {
+    if (detectedFacets == null || detectedFacets.isEmpty()) {
+      SmartList<Integer> old = myDetectedFacetIds;
+      myFacets = null;
+      myDetectedFacetIds = null;
       return old;
     }
 
-    if (myDetectedFacets == null) {
-      myDetectedFacets = new SmartList<FacetPointer>();
+    if (myFacets == null) {
+      myFacets = new SmartList<FacetPointer>();
+    }
+    else {
+      myFacets.clear();
     }
 
-    List<Facet> removeFacets = null;
-    Set<FacetPointer> toRemove = new THashSet<FacetPointer>(myDetectedFacets);
-    for (Facet facet : facets) {
-      FacetPointer<Facet> pointer = facetPointersManager.create(facet);
-      toRemove.remove(pointer);
-      if (!myDetectedFacets.contains(pointer)) {
-        if (removeFacets == null) {
-          removeFacets = new SmartList<Facet>();
+    if (myDetectedFacetIds == null) {
+      myDetectedFacetIds = new SmartList<Integer>();
+    }
+
+    Set<Integer> toRemove = new HashSet<Integer>(myDetectedFacetIds);
+    for (FacetInfo2<Module> info : detectedFacets) {
+      if (info instanceof FacetInfoBackedByFacet) {
+        FacetPointer<Facet> pointer = facetPointersManager.create(((FacetInfoBackedByFacet)info).getFacet());
+        myFacets.add(pointer);
+      }
+      else {
+        Integer id = ((DetectedFacetInfo)info).getId();
+        boolean removed = toRemove.remove(id);
+        if (!removed) {
+          myDetectedFacetIds.add(id);
         }
-        removeFacets.add(facet);
-        myDetectedFacets.add(pointer);
       }
     }
-
-    for (FacetPointer pointer : toRemove) {
-      myDetectedFacets.remove(pointer);
-    }
+    myDetectedFacetIds.removeAll(toRemove);
     return toRemove;
   }
 
   public void remove(final FacetPointer facetPointer) {
-    if (myDetectedFacets != null) {
-      myDetectedFacets.remove(facetPointer);
+    if (myFacets != null) {
+      myFacets.remove(facetPointer);
     }
+  }
+
+  public void remove(final Integer id) {
+    if (myDetectedFacetIds != null) {
+      myDetectedFacetIds.remove(id);
+    }
+  }
+
+  public void add(final FacetPointer<Facet> pointer) {
+    if (myFacets == null) {
+      myFacets = new SmartList<FacetPointer>();
+    }
+    myFacets.add(pointer);
   }
 }
