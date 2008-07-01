@@ -53,6 +53,14 @@ public class SystemInfo {
    */
   public static final boolean isMacOSTiger = isTiger();
 
+
+  /**
+   * Whether IDEA is running under MacOS X on an Intel Machine
+   *
+   * @since 5.0.2
+   */
+  public static final boolean isIntelMac = isIntelMac();
+
   /**
    * Running under MacOS X version 10.5 or later;
    *
@@ -72,6 +80,10 @@ public class SystemInfo {
            !OS_VERSION.startsWith("10.1") &&
            !OS_VERSION.startsWith("10.2") &&
            !OS_VERSION.startsWith("10.3");
+  }
+
+  private static boolean isIntelMac() {
+    return isMac && "i386".equals(OS_ARCH);
   }
 
   private static boolean isLeopard() {
