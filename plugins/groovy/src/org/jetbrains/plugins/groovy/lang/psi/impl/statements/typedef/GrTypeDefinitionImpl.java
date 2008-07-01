@@ -46,7 +46,10 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -143,8 +146,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           GroovyFile groovyFile = (GroovyFile) file;
 
           return groovyFile.getPackageName().length() > 0 ?
-              "(" + groovyFile.getPackageName() + ")" :
-              "";
+                  "(" + groovyFile.getPackageName() + ")" :
+                  "";
         }
         return "";
       }
@@ -265,8 +268,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                //todo [DIANA] look more carefully
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY)))
+                    //todo [DIANA] look more carefully
+                    isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY)))
               return false;
           }
         }
@@ -276,8 +279,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                //todo [DIANA] look more carefully
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY)))
+                    //todo [DIANA] look more carefully
+                    isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY)))
               return false;
           }
         }
@@ -330,8 +333,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           return args.length == 0;
         } else {
           return args.length == 1 &&
-              TypesUtil.isAssignableByMethodCallConversion(aField.getType(), args[0].getType(),
-                  place.getManager(), place.getResolveScope());
+                  TypesUtil.isAssignableByMethodCallConversion(aField.getType(), args[0].getType(),
+                          place.getManager(), place.getResolveScope());
         }
       }
     }
@@ -391,7 +394,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     if (!isInterface()) {
       return new PsiClassType[]{
-          JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope())
+              JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope())
       };
     }
 
@@ -891,7 +894,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final GrTypeDefinitionBody body = getBody();
-
     final PsiElement lBrace = body.getLBrace();
 
     if (lBrace == null) throw new IncorrectOperationException("L brace unfound");
@@ -912,10 +914,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       }
     } else {
       anchor = lBrace.getNextSibling();
-      assert psiElement instanceof GroovyPsiElement;
     }
 
-    if (GroovyElementTypes.mSEMI.equals(anchor.getNode().getElementType()))
+    assert anchor != null;
+    ASTNode node = anchor.getNode();
+    assert node != null;
+    if (GroovyElementTypes.mSEMI.equals(node.getElementType()))
       anchor = anchor.getNextSibling();
 
     final PsiElement lineTerminator = GroovyPsiElementFactory.getInstance(getProject()).createLineTerminator(1);
