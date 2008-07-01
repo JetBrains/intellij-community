@@ -92,7 +92,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     myPathMacros = pathMacros;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       final File extResourceFolder = new File(FetchExtResourceAction.getExternalResourcesPath());
 
       if (extResourceFolder.exists()) {
