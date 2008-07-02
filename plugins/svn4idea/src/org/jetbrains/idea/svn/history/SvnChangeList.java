@@ -192,7 +192,7 @@ public class SvnChangeList implements CommittedChangeList {
   @Nullable
   private FilePath getLocalPath(final String path, final NotNullFunction<File, Boolean> detector) {
     final String fullPath = myRepositoryRoot + path;
-    return myLocation.getLocalPath(fullPath, detector);
+    return myLocation.getLocalPath(fullPath, detector, myVcs);
   }
 
   private long getRevision(final boolean isBeforeRevision) {
