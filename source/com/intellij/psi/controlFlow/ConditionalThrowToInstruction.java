@@ -1,9 +1,15 @@
 package com.intellij.psi.controlFlow;
 
+import com.intellij.psi.PsiExpression;
+
 public class ConditionalThrowToInstruction extends ConditionalBranchingInstruction {
 
-  public ConditionalThrowToInstruction(int offset) {
-    super(offset);
+  public ConditionalThrowToInstruction(int offset, PsiExpression expression) {
+    super(offset, expression);
+  }
+
+  public ConditionalThrowToInstruction(final int offset) {
+    this(offset, null);
   }
 
   public String toString() {

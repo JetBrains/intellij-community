@@ -959,7 +959,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       description.accept(this);
     }
 
-    Instruction instruction = new ConditionalThrowToInstruction(0);
+    Instruction instruction = new ConditionalThrowToInstruction(0, statement.getAssertCondition());
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(myCodeFragment, false);
 

@@ -1,15 +1,18 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiExpression;
 
 /**
  * Author: msk
  */
 public abstract class ConditionalBranchingInstruction extends BranchingInstruction {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ConditionalGoToInstruction");
+  public final PsiExpression expression;
 
-  public ConditionalBranchingInstruction(int offset) {
+  public ConditionalBranchingInstruction(int offset, final PsiExpression expression) {
     super(offset);
+    this.expression = expression;
   }
 
   public int nNext() { return 2; }

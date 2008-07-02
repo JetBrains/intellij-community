@@ -8,7 +8,6 @@ public class ConditionalGoToInstruction extends ConditionalBranchingInstruction 
 
   public final int role;
   public final boolean isReturn; //true if goto has been generated as a result of return statement
-  public final PsiExpression expression;
 
   public ConditionalGoToInstruction(int offset, final PsiExpression expression) {
     this(offset,ControlFlow.JUMP_ROLE_GOTO_END, expression);
@@ -17,10 +16,9 @@ public class ConditionalGoToInstruction extends ConditionalBranchingInstruction 
     this(offset,role, false, expression);
   }
   public ConditionalGoToInstruction(int offset, int role, boolean isReturn, final PsiExpression expression) {
-    super(offset);
+    super(offset, expression);
     this.role = role;
     this.isReturn = isReturn;
-    this.expression = expression;
   }
 
   public String toString() {
