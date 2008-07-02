@@ -4,8 +4,11 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -88,6 +91,82 @@ public class ProjectUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static void saveInNewFormat(@NotNull final String path, final Runnable postRunnable) throws Exception {
+
+    File iprFile = new File(path);
+
+    File ideaDir = new File(iprFile.getParentFile(), ".idea");
+    File iwsFile = new File(iprFile.getParentFile(), getProjectName(iprFile) + ".iws");
+
+    ideaDir.mkdirs();
+
+    File convertXml = new File(ideaDir, "convert.xml");
+    FileUtil.copy(iprFile, convertXml);
+    if (iwsFile.isFile()) {
+      FileUtil.copy(iwsFile, new File(ideaDir, "workspace.xml"));
+    }
+
+    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
+
+    localFileSystem.refreshAndFindFileByIoFile(ideaDir);
+
+    if (virtualFile == null) return;
+
+    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+      final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+
+      System.setProperty("convert.project.mode", "on");
+
+      final Exception[] ex = new Exception[1];
+
+      try {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+          public void run() {
+            try {
+              final Project project = projectManager.loadProject(path);
+
+              ExtensionPoint[] points = Extensions.getRootArea().getExtensionPoints();
+              for (ExtensionPoint point : points) {
+                point.getExtensions();
+              }
+
+              ApplicationManager.getApplication().invokeLater(new Runnable(){
+                public void run() {
+                  project.save();
+                  projectManager.closeProject(project);
+
+                  if (postRunnable != null) postRunnable.run();
+                }
+              });
+
+            }
+            catch (Exception e1) {
+              ex[0] = e1;
+            }
+
+          }
+        }, "Converting Project", false, null);
+
+        if (ex[0] != null) throw ex[0];
+
+
+      }
+      finally {
+        System.setProperty("convert.project.mode", "off");
+
+        FileUtil.delete(convertXml);
+
+      }
+
+    }
+  }
+
+  private static String getProjectName(final File iprFile) {
+    return FileUtil.getNameWithoutExtension(iprFile.getName());
   }
 
   @Nullable
