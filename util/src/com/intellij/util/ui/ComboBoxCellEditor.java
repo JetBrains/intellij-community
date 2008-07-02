@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.javaee.module.view;
+package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Comparing;
 
