@@ -529,23 +529,25 @@ public class RunContentManagerImpl implements RunContentManager {
       if (processHandler == null || processHandler.isProcessTerminated()) {
         return true;
       }
-
-      final TerminateRemoteProcessDialog terminateDialog = new TerminateRemoteProcessDialog(myProject, myProcessDisplayName,
-                                                                                            processHandler.detachIsDefault());
-      terminateDialog.show();
-
-      if (terminateDialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        if (terminateDialog.forceTermination()) {
-          processHandler.destroyProcess();
-        }
-        else {
-          processHandler.detachProcess();
-        }
-        waitForProcess(descriptor);
-        return true;
+      final boolean destroyProcess;
+      if (Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
+        destroyProcess = true;
       }
-
-      return false;
+      else {
+        final TerminateRemoteProcessDialog terminateDialog = new TerminateRemoteProcessDialog(myProject, myProcessDisplayName,
+                                                                                              processHandler.detachIsDefault());
+        terminateDialog.show();
+        if (terminateDialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return false;
+        destroyProcess = terminateDialog.forceTermination();
+      }
+      if (destroyProcess) {
+        processHandler.destroyProcess();
+      }
+      else {
+        processHandler.detachProcess();
+      }
+      waitForProcess(descriptor);
+      return true;
     }
   }
 

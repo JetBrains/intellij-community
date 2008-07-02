@@ -32,6 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessHandler");
+  public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
+
   private final List<ProcessListener> myListeners = new CopyOnWriteArrayList<ProcessListener>();
 
   private static final int STATE_INITIAL     = 0;

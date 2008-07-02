@@ -18,6 +18,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,7 @@ public class RunContentDescriptor {
   }
 
   public void dispose() {
-    myExecutionConsole.dispose();
+    Disposer.dispose(myExecutionConsole);
   }
 
   @Nullable
