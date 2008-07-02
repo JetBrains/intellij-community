@@ -56,15 +56,24 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pr
 
       Runnable runnable = new Runnable() {
         public void run() {
-          Collection<FacetLoadingErrorDescription> toRemove =
-              RemoveInvalidElementsDialog.showDialog(myProject, ProjectBundle.message("dialog.title.cannot.load.facets"),
-                                                     ProjectBundle.message("error.message.cannot.load.facets"),
-                                                     ProjectBundle.message("confirmation.message.would.you.like.to.remove.facet"),
-                                                     myFacetLoadingErrors);
+          List<FacetLoadingErrorDescription> errorDescriptions = new ArrayList<FacetLoadingErrorDescription>();
+          for (FacetLoadingErrorDescription errorDescription : myFacetLoadingErrors) {
+            if (!errorDescription.getModule().isDisposed()) {
+              errorDescriptions.add(errorDescription);
+            }
+          }
           myFacetLoadingErrors.clear();
-          for (FacetLoadingErrorDescription errorDescription : toRemove) {
-            FacetManagerImpl manager = (FacetManagerImpl)FacetManagerImpl.getInstance(errorDescription.getModule());
-            manager.removeInvalidFacet(errorDescription.getUnderlyingFacet(), errorDescription.getState());
+
+          if (!errorDescriptions.isEmpty()) {
+            Collection<FacetLoadingErrorDescription> toRemove =
+                RemoveInvalidElementsDialog.showDialog(myProject, ProjectBundle.message("dialog.title.cannot.load.facets"),
+                                                       ProjectBundle.message("error.message.cannot.load.facets"),
+                                                       ProjectBundle.message("confirmation.message.would.you.like.to.remove.facet"),
+                                                       errorDescriptions);
+            for (FacetLoadingErrorDescription errorDescription : toRemove) {
+              FacetManagerImpl manager = (FacetManagerImpl)FacetManagerImpl.getInstance(errorDescription.getModule());
+              manager.removeInvalidFacet(errorDescription.getUnderlyingFacet(), errorDescription.getState());
+            }
           }
         }
       };
