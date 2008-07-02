@@ -30,6 +30,7 @@ import java.util.Set;
 
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "file";
+  @NonNls public static final String PROTOCOL_PREFIX = "file://";
 
   public static LocalFileSystem getInstance(){
 
