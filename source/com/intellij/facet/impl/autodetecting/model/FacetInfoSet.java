@@ -73,12 +73,21 @@ public class FacetInfoSet<M> {
   }
 
   public <C extends FacetConfiguration, F extends Facet<C>> Map<C, FacetInfo2<M>> getConfigurations(final FacetTypeId<F> typeId, final M module) {
-    Map<C, FacetInfo2<M>> configurations = new HashMap<C, FacetInfo2<M>>();
+    //todo[nik] cache?
+    Map<C, FacetInfo2<M>> configurations = new LinkedHashMap<C, FacetInfo2<M>>();
     Collection<FacetInfo2<M>> detectedFacets = myInfosByType.get(typeId).get(module);
     if (detectedFacets != null) {
       for (FacetInfo2 detected : detectedFacets) {
-        //noinspection unchecked
-        configurations.put((C)detected.getConfiguration(), detected);
+        if (detected instanceof FacetInfoBackedByFacet) {
+          //noinspection unchecked
+          configurations.put((C)detected.getConfiguration(), detected);
+        }
+      }
+      for (FacetInfo2 detected : detectedFacets) {
+        if (!(detected instanceof FacetInfoBackedByFacet)) {
+          //noinspection unchecked
+          configurations.put((C)detected.getConfiguration(), detected);
+        }
       }
     }
     return configurations;

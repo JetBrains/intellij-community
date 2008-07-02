@@ -9,6 +9,7 @@ import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsDialog;
 import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
+import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -275,7 +276,30 @@ public class DetectedFacetManager implements Disposable {
   }
 
   private class MyProjectWideFacetListener<F extends Facet<C>, C extends FacetConfiguration> extends ProjectWideFacetAdapter<F> {
+    @Override
+    public void facetAdded(final F facet) {
+      Map<C, FacetInfo2<Module>> map = myDetectedFacetSet.getConfigurations((FacetTypeId<F>)facet.getTypeId(), facet.getModule());
+      Collection<FacetInfo2<Module>> infos = map.values();
+      Set<VirtualFile> files = new HashSet<VirtualFile>();
+      for (FacetInfo2<Module> info : infos) {
+        if (info instanceof DetectedFacetInfo) {
+          Set<String> urls = myAutodetectingManager.getFileIndex().getFiles(((DetectedFacetInfo)info).getId());
+          if (urls != null) {
+            for (String url : urls) {
+              VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+              if (file != null) {
+                files.add(file);
+              }
+            }
+          }
+        }
+      }
+      for (VirtualFile file : files) {
+        myAutodetectingManager.processFile(file);
+      }
+    }
 
+    @Override
     public void beforeFacetRemoved(final F facet) {
       Set<String> files = myAutodetectingManager.getFiles(facet);
       if (files != null) {
