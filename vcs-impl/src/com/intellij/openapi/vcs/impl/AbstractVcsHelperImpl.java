@@ -4,6 +4,7 @@ import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -376,7 +377,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     if (ok) {
-      if (myProject.isDefault() || ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) {
+      if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
+          (! ModalityState.NON_MODAL.equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
         final List<VcsException> exceptions = new ArrayList<VcsException>();
         final Ref<CommittedChangesTableModel> tableModelRef = new Ref<CommittedChangesTableModel>();

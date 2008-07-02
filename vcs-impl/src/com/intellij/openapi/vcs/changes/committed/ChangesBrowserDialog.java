@@ -5,6 +5,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -40,7 +41,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
     myMode = mode;
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    if (mode != Mode.Choose) {
+    if ((mode != Mode.Choose) && (ModalityState.NON_MODAL.equals(ModalityState.current()))) {
       setModal(false);
     }
 
