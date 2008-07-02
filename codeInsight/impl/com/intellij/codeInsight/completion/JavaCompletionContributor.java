@@ -147,6 +147,13 @@ public class JavaCompletionContributor extends CompletionContributor {
           int lbraceOffset = expression.getParent().getTextRange().getStartOffset();
           new ShowParameterInfoHandler().invoke(project, editor, file, lbraceOffset, null);
         }
+
+        if (expression instanceof PsiInstanceOfExpression) {
+          final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
+          if (PsiTreeUtil.isAncestor(instanceOfExpression.getCheckType(), parameters.getPosition(), false)) {
+            return LangBundle.message("completion.no.suggestions") + suffix;
+          }
+        }
       }
 
       final ExpectedTypeInfo[] expectedTypes = JavaCompletionUtil.getExpectedTypes(parameters);
