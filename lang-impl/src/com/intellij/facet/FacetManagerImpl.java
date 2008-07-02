@@ -158,6 +158,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       if (!type.isSuitableModuleType(moduleType)) {
         registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.0.facets.are.not.allowed.in.1",
                                                                            type.getPresentableName(), moduleType.getName()));
+        continue;
       }
 
       FacetType<?,?> expectedUnderlyingType = null;
