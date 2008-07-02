@@ -10,7 +10,10 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -68,7 +71,11 @@ public class RemoveChangeListAction extends AnAction {
                                         Messages.getQuestionIcon());
     }
     else {
-      rc = Messages.showYesNoDialog(project,
+      boolean notEmpty = false;
+      for (ChangeList list : lists) {
+        notEmpty |= (list.getChanges().size() > 0);
+      }
+      rc = (! notEmpty) ? DialogWrapper.OK_EXIT_CODE : Messages.showYesNoDialog(project,
                                     VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.length),
                                     VcsBundle.message("changes.removechangelist.warning.title"),
                                     Messages.getQuestionIcon());
