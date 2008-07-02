@@ -15,6 +15,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class OpenRemoteFileAction extends AnAction {
+  @Override
+  public void update(final AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT)!=null);
+  }
+
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     String defaultUrl = "http://localhost:8080/index.html";
