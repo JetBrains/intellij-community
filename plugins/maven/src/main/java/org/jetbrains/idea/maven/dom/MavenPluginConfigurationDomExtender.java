@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
@@ -31,7 +30,7 @@ import java.util.*;
 public class MavenPluginConfigurationDomExtender extends DomExtender<Configuration> {
   public static final Key<Parameter> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
-  public Object[] registerExtensions(@NotNull Configuration c, @NotNull DomExtensionsRegistrar r) {
+  public void registerExtensions(@NotNull Configuration c, @NotNull DomExtensionsRegistrar r) {
     Project p = c.getXmlElement().getProject();
 
     DomElement parent = c.getParent();
@@ -47,13 +46,11 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     }
 
     MavenPluginModel pluginModel = getMavenPlugin(p, pluginElement);
-    if (pluginModel == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (pluginModel == null) return;
 
     for (Parameter each : collectParameters(pluginModel, executionElement)) {
       registerPluginParameter(r, each);
     }
-
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   private MavenPluginModel getMavenPlugin(Project p, Plugin pluginElement) {

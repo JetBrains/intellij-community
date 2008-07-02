@@ -1,7 +1,6 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
@@ -23,31 +22,22 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new GlobalScopePsiClassConverter();
 
 
-  public Object[] registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
+  public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = extensions.getXmlElement();
-    if (xmlElement == null) return new Object[0];
+    if (xmlElement == null) return;
     final PsiManager psiManager = xmlElement.getManager();
 
     IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
 
-    if (ideaPlugin == null) return new Object[0];
+    if (ideaPlugin == null) return;
 
     registerExtensions(extensions, ideaPlugin, registrar, psiManager);
-
-    List<Object> deps = new ArrayList<Object>();
 
     IdeaPlugin plugin = extensions.getDefaultExtensionNs().getValue();
     if (plugin == null) plugin = extensions.getXmlns().getValue();
     if (plugin != null) {
       registerExtensions(extensions, plugin, registrar, psiManager);
-      deps.add(plugin.<DomElement>getRoot());
     }
-
-    deps.add(ProjectRootManager.getInstance(xmlElement.getProject()));
-    deps.add(ideaPlugin.getRoot());
-
-    //dependencies
-    return deps.toArray(new Object[deps.size()]);
   }
 
   private static void registerExtensions(final Extensions extensions, final IdeaPlugin plugin, final DomExtensionsRegistrar registrar,
@@ -65,7 +55,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName), Extension.class);
       domExtension.putUserData(DomExtension.KEY_DECLARATION, extensionPoint);
       domExtension.addExtender(new DomExtender() {
-        public Object[] registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
+        public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
           final String interfaceName = extensionPoint.getInterface().getStringValue();
           if (interfaceName != null) {
             registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(
@@ -88,9 +78,6 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
               }
             }
           }
-
-
-          return new Object[]{};
         }
       });
     }
