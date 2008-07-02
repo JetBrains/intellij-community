@@ -136,6 +136,11 @@ public class ApplyPatchAction extends AnAction {
                                  VcsBundle.message("patch.apply.dialog.title"));
         return false;
       }
+      if ((fileToPatch == null) && (! patch.isNewFile())) {
+        Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(),
+                                 VcsBundle.message("patch.apply.dialog.title"));
+        return false;
+      }
       // security check to avoid overwriting system files with a patch
       if (fileToPatch != null && !ExcludedFileIndex.getInstance(project).isInContent(fileToPatch) &&
           ProjectLevelVcsManager.getInstance(project).getVcsRootFor(fileToPatch) == null) {
