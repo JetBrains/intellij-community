@@ -782,7 +782,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       SVNURL url = node.getURL();
       AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), 
                                                                   new SvnRepositoryLocation(url.toString()),
-                                                                  "Changes in " + url.toString(), getContentPane());
+                                                                  "Changes in " + url.toString(), null);
     }
 
     public void update(final AnActionEvent e) {
