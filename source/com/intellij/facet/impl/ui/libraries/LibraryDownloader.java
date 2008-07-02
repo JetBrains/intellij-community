@@ -99,7 +99,7 @@ public class LibraryDownloader {
     HttpConfigurable.getInstance().setAuthenticator();
     final List<Pair<LibraryDownloadInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryDownloadInfo, File>>();
     final List<VirtualFile> existingFiles = new ArrayList<VirtualFile>();
-    final Ref<Exception> exception = Ref.create(null);
+    final Ref<Exception> exceptionRef = Ref.create(null);
     final Ref<LibraryDownloadInfo> currentLibrary = new Ref<LibraryDownloadInfo>();
 
     String dialogTitle = IdeBundle.message("progress.download.libraries.title");
@@ -128,15 +128,16 @@ public class LibraryDownloader {
           }
         }
         catch (ProcessCanceledException e) {
-          exception.set(e);
+          exceptionRef.set(e);
         }
         catch (IOException e) {
-          exception.set(e);
+          exceptionRef.set(e);
         }
       }
     }, dialogTitle, true, myProject);
 
-    if (exception.get() == null) {
+    Exception exception = exceptionRef.get();
+    if (exception == null) {
       try {
         return moveToDir(existingFiles, downloadedFiles, dir);
       }
@@ -153,8 +154,8 @@ public class LibraryDownloader {
     }
 
     deleteFiles(downloadedFiles);
-    if (exception.get() instanceof IOException) {
-      String message = IdeBundle.message("error.library.download.failed");
+    if (exception instanceof IOException) {
+      String message = IdeBundle.message("error.library.download.failed", exception.getMessage());
       if (currentLibrary.get() != null) {
         message += ": " + myMirrorsMap.getDownloadingUrl(currentLibrary.get());
       }
