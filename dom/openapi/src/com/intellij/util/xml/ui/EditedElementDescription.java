@@ -27,6 +27,7 @@ public abstract class EditedElementDescription<T extends DomElement> {
   public XmlFile getEditedFile() {
     return null;
   }
+  @Nullable
   public abstract T find();
   public abstract void initialize(T element);
   public abstract T addElement();
