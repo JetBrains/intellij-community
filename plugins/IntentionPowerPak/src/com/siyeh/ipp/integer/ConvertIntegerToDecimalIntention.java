@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ipp.integer;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -27,39 +27,51 @@ import org.jetbrains.annotations.NotNull;
 import java.math.BigInteger;
 
 public class ConvertIntegerToDecimalIntention extends Intention {
+    
+    private static final BigInteger BINARY_ONES =
+            new BigInteger("ffffffffffffffff", 16);
 
-    @NotNull
+    @Override @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ConvertIntegerToDecimalPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiLiteralExpression exp = (PsiLiteralExpression)element;
-        final PsiType type = exp.getType();
+        final PsiExpression expression = (PsiExpression)element;
+        final PsiType type = expression.getType();
         if(PsiType.INT.equals(type) || PsiType.LONG.equals(type)){
-            @NonNls String textString = exp.getText();
+            @NonNls String textString = expression.getText();
             final int textLength = textString.length();
             final char lastChar = textString.charAt(textLength - 1);
             final boolean isLong = lastChar == 'l' || lastChar == 'L';
+            final int testBit;
             if (isLong) {
+                testBit = 63;
                 textString = textString.substring(0, textLength - 1);
+            } else {
+                testBit = 31;
             }
-            final BigInteger val;
+            BigInteger value;
             if (textString.startsWith("0x")) {
                 final String rawIntString = textString.substring(2);
-                val = new BigInteger(rawIntString, 16);
+                value = new BigInteger(rawIntString, 16);
             } else {
                 final String rawIntString = textString.substring(1);
-                val = new BigInteger(rawIntString, 8);
+                value = new BigInteger(rawIntString, 8);
             }
-            String decimalString = val.toString(10);
+            if (value.testBit(testBit)) {
+                // 2's complement
+                value = value.xor(BINARY_ONES).add(BigInteger.ONE).negate();
+            }
+            String decimalString = value.toString(10);
             if (isLong) {
                 decimalString += 'L';
             }
-            replaceExpression(decimalString, exp);
+            replaceExpression(decimalString, expression);
         } else {
-            String textString = exp.getText();
+            String textString = expression.getText();
             final int textLength = textString.length();
             final char lastChar = textString.charAt(textLength - 1);
             final boolean isFloat = lastChar == 'f' || lastChar == 'F';
@@ -69,11 +81,11 @@ public class ConvertIntegerToDecimalIntention extends Intention {
             if (isFloat) {
                 final float floatValue = Float.parseFloat(textString);
                 final String floatString = Float.toString(floatValue) + lastChar;
-                replaceExpression(floatString, exp);
+                replaceExpression(floatString, expression);
             } else {
                 final double floatValue = Double.parseDouble(textString);
                 final String floatString = Double.toString(floatValue);
-                replaceExpression(floatString, exp);
+                replaceExpression(floatString, expression);
             }
         }
     }
