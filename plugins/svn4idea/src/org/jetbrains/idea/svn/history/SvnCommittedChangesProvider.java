@@ -25,9 +25,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -67,6 +67,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private final Project myProject;
   private final SvnVcs myVcs;
   private final MessageBusConnection myConnection;
+  private List<SelectWcRootAction> myMergeInfoRefreshActions;
 
   public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
 
@@ -209,8 +210,40 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  private void refreshMergeInfo(final SelectWcRootAction action) {
+    if (myMergeInfoRefreshActions == null) {
+      myMergeInfoRefreshActions = new ArrayList<SelectWcRootAction>();
+      myMergeInfoRefreshActions.add(action);
+
+      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
+        public void execute(final Project project, final VirtualFile vcsRoot) {
+          callReloadMergeInfo();
+        }
+      });
+      myConnection.subscribe(SvnMapDialog.WC_CONVERTED, new Runnable() {
+        public void run() {
+          callReloadMergeInfo();
+        }
+      });
+
+      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
+        public void directoryMappingChanged() {
+          callReloadMergeInfo();
+        }
+      });
+    } else {
+      myMergeInfoRefreshActions.add(action);
+    }
+  }
+
+  private void callReloadMergeInfo() {
+    for (SelectWcRootAction action : myMergeInfoRefreshActions) {
+      action.reload();
+    }
+  }
+
   @Nullable
-  public Pair<JPanel,List<AnAction>> createActionPanel(final DecoratorManager manager) {
+  public VcsCommittedViewAuxiliary createActionPanel(final DecoratorManager manager, @Nullable final RepositoryLocation location) {
     final JPanel panel = new JPanel(new BorderLayout());
     final SelectWCopyComboAction selectWcCombo = new SelectWCopyComboAction();
 
@@ -220,7 +253,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final ChainConsumer visiblenessConsumer = new ChainConsumer(panel, manager);
     manager.registerCompositePart(visiblenessConsumer);
 
-    final SelectWcRootAction selectRootAction = new SelectWcRootAction(myProject, highlightBranchesAction, visiblenessConsumer);
+    final SelectWcRootAction selectRootAction = new SelectWcRootAction(myProject, highlightBranchesAction, visiblenessConsumer, location);
     final MyUseBranchFilterCheckboxAction checkBoxAction = new MyUseBranchFilterCheckboxAction(highlightBranchesAction);
     final SelectWCopyDialogAction selectWcopyDialog =
         new SelectWCopyDialogAction(selectRootAction, highlightBranchesAction, checkBoxAction, myProject);
@@ -245,24 +278,13 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     popup.add(new IntegrateChangeListsAction());
     popup.add(new ConfigureBranchesAction());
 
-    myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
-      public void execute(final Project project, final VirtualFile vcsRoot) {
-        selectRootAction.reload();
-      }
-    });
-    myConnection.subscribe(SvnMapDialog.WC_CONVERTED, new Runnable() {
+    refreshMergeInfo(selectRootAction);
+
+    return new VcsCommittedViewAuxiliary(panel, Collections.<AnAction>singletonList(popup), new Runnable() {
       public void run() {
-        selectRootAction.reload();
+        myMergeInfoRefreshActions.remove(selectRootAction);
       }
     });
-
-    ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
-      public void directoryMappingChanged() {
-        selectRootAction.reload();
-      }
-    });
-
-    return new Pair<JPanel, List<AnAction>>(panel, Collections.<AnAction>singletonList(popup));
   }
 
   private static class MyRefresh extends AnAction {
