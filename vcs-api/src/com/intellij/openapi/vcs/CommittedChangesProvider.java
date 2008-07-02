@@ -16,15 +16,13 @@
 
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -43,7 +41,7 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   ChangeListColumn[] getColumns();
 
   @Nullable
-  Pair<JPanel,List<AnAction>> createActionPanel(final DecoratorManager manager);
+  VcsCommittedViewAuxiliary createActionPanel(final DecoratorManager manager, final RepositoryLocation location);
 
   /**
    * since may be different for different VCSs

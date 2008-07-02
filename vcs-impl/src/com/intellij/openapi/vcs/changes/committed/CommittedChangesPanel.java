@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -46,6 +45,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private FilterComponent myFilterComponent = new MyFilterComponent();
   private List<CommittedChangeList> myChangesFromProvider;
   private JLabel myErrorLabel = new JLabel();
+  private final List<Runnable> myShouldBeCalledOnDispose;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
                                @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
@@ -54,6 +54,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myProject = project;
     myProvider = provider;
     myLocation = location;
+    myShouldBeCalledOnDispose = new ArrayList<Runnable>();
     myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
     add(myBrowser, BorderLayout.CENTER);
 
@@ -69,13 +70,16 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
 
-    final Pair<JPanel,List<AnAction>> pair = provider.createActionPanel(myBrowser);
+    final VcsCommittedViewAuxiliary auxiliary = provider.createActionPanel(myBrowser, location);
 
-    if (pair != null) {
-      myBrowser.addAuxiliaryToolbar(pair.first);
+    if (auxiliary != null) {
+      myBrowser.addAuxiliaryToolbar(auxiliary.getPanel());
+      myShouldBeCalledOnDispose.add(auxiliary.getCalledOnViewDispose());
+      myBrowser.setTableContextMenu(group, (auxiliary.getPopupActions() == null) ? Collections.<AnAction>emptyList() : auxiliary.getPopupActions());
+    } else {
+      myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
     }
     
-    myBrowser.setTableContextMenu(group, (pair == null) ? Collections.<AnAction>emptyList() : pair.second);
     final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");
     anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
@@ -203,6 +207,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void dispose() {
     myBrowser.dispose();
+    for (Runnable runnable : myShouldBeCalledOnDispose) {
+      runnable.run();
+    }
   }
 
   public void setErrorText(String text) {

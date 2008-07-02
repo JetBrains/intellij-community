@@ -6,7 +6,6 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -87,27 +86,35 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   @Nullable
-  public Pair<JPanel,List<AnAction>> createActionPanel(final DecoratorManager manager) {
+  public VcsCommittedViewAuxiliary createActionPanel(final DecoratorManager manager, final RepositoryLocation location) {
     JTabbedPane tabbedPane = null;
     List<AnAction> actions = null;
+    final List<Runnable> calledOnDispose = new ArrayList<Runnable>();
     for (AbstractVcs baseVcs : myBaseVcss) {
       final CommittedChangesProvider provider = baseVcs.getCommittedChangesProvider();
       if (provider != null) {
-        final Pair<JPanel, List<AnAction>> pair = provider.createActionPanel(manager);
-        if (pair != null) {
+        VcsCommittedViewAuxiliary auxiliary = provider.createActionPanel(manager, location);
+        if (auxiliary != null) {
           if (tabbedPane == null) {
             tabbedPane = new JTabbedPane();
             actions = new ArrayList<AnAction>();
           }
-          tabbedPane.add(baseVcs.getDisplayName(), pair.first);
-          actions.addAll(pair.second);
+          tabbedPane.add(baseVcs.getDisplayName(), auxiliary.getPanel());
+          actions.addAll(auxiliary.getPopupActions());
+          calledOnDispose.add(auxiliary.getCalledOnViewDispose());
         }
       }
     }
     if (tabbedPane != null) {
       final JPanel panel = new JPanel();
       panel.add(tabbedPane);
-      return new Pair<JPanel, List<AnAction>>(panel, actions);
+      return new VcsCommittedViewAuxiliary(panel, actions, new Runnable() {
+        public void run() {
+          for (Runnable runnable : calledOnDispose) {
+            runnable.run();
+          }
+        }
+      });
     }
     return null;
   }
