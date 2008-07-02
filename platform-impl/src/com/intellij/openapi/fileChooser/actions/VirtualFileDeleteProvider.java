@@ -3,13 +3,15 @@ package com.intellij.openapi.fileChooser.actions;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.Arrays;
 
 public final class VirtualFileDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider");
@@ -27,6 +29,8 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     int returnValue = Messages.showYesNoDialog(message, UIBundle.message("delete.dialog.title"), Messages.getQuestionIcon());
     if (returnValue != 0) return;
 
+    Arrays.sort(files, FileComparator.getInstance());
+    
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (final VirtualFile file : files) {
@@ -45,6 +49,19 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       }
     }
     );
+  }
+
+  private final static class FileComparator implements Comparator<VirtualFile> {
+    private static final FileComparator ourInstance = new FileComparator();
+
+    public static FileComparator getInstance() {
+      return ourInstance;
+    }
+
+    public int compare(final VirtualFile o1, final VirtualFile o2) {
+      // files first
+      return o2.getPath().compareTo(o1.getPath());
+    }
   }
 
   private static String createConfirmationMessage(VirtualFile[] filesToDelete) {
