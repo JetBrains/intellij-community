@@ -131,7 +131,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
       return new GetCompositeCollectionInvocation(qnames);
     }
 
-    if (myCustomDescription != null && myCustomDescription.getGetterMethod().equals(method)) {
+    if (myCustomDescription != null && method.equals(myCustomDescription.getGetterMethod())) {
       return new Invocation() {
         @Nullable
         public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {

@@ -12,14 +12,16 @@ import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
  */
 public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptionImpl implements CustomDomChildrenDescription, AbstractCollectionChildDescription {
-  private final JavaMethod myGetter;
+  @Nullable private final JavaMethod myGetter;
   private static final NotNullFunction<DomInvocationHandler,List<XmlTag>> CUSTOM_TAGS_GETTER = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
     @NotNull
     public List<XmlTag> fun(final DomInvocationHandler handler) {
@@ -28,11 +30,15 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   };
 
   public CustomDomChildrenDescriptionImpl(@NotNull final JavaMethod getter) {
-    super(DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()));
+    this(getter, DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()));
+  }
+
+  public CustomDomChildrenDescriptionImpl(@Nullable final JavaMethod getter, @NotNull Type type) {
+    super(type);
     myGetter = getter;
   }
 
-  public JavaMethod getGetterMethod() {
+  @Nullable public JavaMethod getGetterMethod() {
     return myGetter;
   }
 
@@ -45,6 +51,8 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) return getValues(handler);
+
+    assert myGetter != null;
     return (List<? extends DomElement>)myGetter.invoke(parent, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 

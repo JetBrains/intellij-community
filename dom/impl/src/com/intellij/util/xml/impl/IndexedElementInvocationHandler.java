@@ -22,14 +22,27 @@ import java.util.List;
 public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDescriptionImpl>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
+  private String myNamespace;
 
   public IndexedElementInvocationHandler(final EvaluatedXmlName tagName,
                                          final FixedChildDescriptionImpl description,
                                          final int index,
                                          final DomParentStrategy strategy,
-                                         final DomManagerImpl manager) {
+                                         final DomManagerImpl manager,
+                                         final String namespace) {
     super(description.getType(), strategy, tagName, description, manager, strategy.getXmlElement() != null);
     myIndex = index;
+    myNamespace = namespace;
+  }
+
+  @Override
+  public boolean isValid() {
+    final XmlTag tag = getXmlTag();
+    if (!super.isValid()) return false;
+    if (tag == null) return true;
+    final String localName = getXmlElementName();
+    if (localName.indexOf(':') > 0 && localName.equals(tag.getName())) return true;
+    return localName.equals(tag.getLocalName()) && myNamespace.equals(tag.getNamespace());
   }
 
   @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
@@ -48,7 +61,9 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     final List<XmlTag> tags = DomImplUtil.findSubTags(tag, getXmlName(), parentHandler.getFile());
     if (tags.size() <= myIndex) return null;
 
-    return tags.get(myIndex);
+    final XmlTag childTag = tags.get(myIndex);
+    myNamespace = childTag.getNamespace();
+    return childTag;
   }
 
   protected XmlTag setEmptyXmlTag() {
@@ -58,7 +73,9 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     parent.createFixedChildrenTags(getXmlName(), description, myIndex);
     final List<XmlTag> tags = DomImplUtil.findSubTags(parent.getXmlTag(), getXmlName(), xmlFile);
     if (tags.size() > myIndex) {
-      return tags.get(myIndex);
+      final XmlTag tag = tags.get(myIndex);
+      myNamespace = tag.getNamespace();
+      return tag;
     }
 
     final XmlTag[] newTag = new XmlTag[1];
@@ -73,6 +90,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
         }
       }
     });
+    myNamespace = newTag[0].getNamespace();
     return newTag[0];
   }
 

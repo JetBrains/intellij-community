@@ -17,6 +17,7 @@ import java.util.List;
  * @author peter
  */
 public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl>{
+  private final String myTagQName;
 
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
@@ -31,6 +32,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
         return getXmlElement().isValid();
       }
     }, description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
+    myTagQName = tag.getName();
   }
 
   protected Type narrowType(@NotNull final Type nominalType) {
@@ -41,6 +43,11 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called;" +
                                             "\nparent=" + getParent() + ";\n" +
                                             "xmlElementName=" + getXmlElementName());
+  }
+
+  @Override
+  public boolean isValid() {
+    return super.isValid() && myTagQName.equals(getXmlTag().getName());
   }
 
   public final void undefineInternal() {

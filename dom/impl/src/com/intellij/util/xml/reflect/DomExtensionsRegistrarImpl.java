@@ -24,6 +24,7 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   private final List<DomExtensionImpl> myFixeds = new SmartList<DomExtensionImpl>();
   private final List<DomExtensionImpl> myCollections = new SmartList<DomExtensionImpl>();
   private final Set<Object> myDependencies = new THashSet<Object>();
+  private DomExtensionImpl myCustomChildrenType;
 
   public List<DomExtensionImpl> getAttributes() {
     return myAttributes;
@@ -34,6 +35,10 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
 
   public List<DomExtensionImpl> getCollections() {
     return myCollections;
+  }
+
+  public DomExtensionImpl getCustomChildrenType() {
+    return myCustomChildrenType;
   }
 
   @NotNull
@@ -61,6 +66,12 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   public DomExtension registerAttributeChildExtension(@NotNull final XmlName name, @NotNull final Type type) {
     assert GenericAttributeValue.class.isAssignableFrom(ReflectionUtil.getRawType(type));
     return addExtension(myAttributes, name, type);
+  }
+
+  @NotNull
+  public DomExtension registerCustomChildrenExtension(@NotNull final Type type) {
+    assert myCustomChildrenType == null;
+    return myCustomChildrenType = new DomExtensionImpl(type, null);
   }
 
   private static DomExtensionImpl addExtension(final List<DomExtensionImpl> list, final XmlName name, final Type type) {

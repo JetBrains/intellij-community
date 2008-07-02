@@ -39,4 +39,11 @@ public interface DomExtensionsRegistrar {
    */
   @NotNull DomExtension registerAttributeChildExtension(@NotNull XmlName name, @NotNull final Type type);
 
+  /**
+   * @param type
+   * @return
+   * @see com.intellij.util.xml.CustomChildren
+   */
+  @NotNull DomExtension registerCustomChildrenExtension(@NotNull final Type type);
+
 }

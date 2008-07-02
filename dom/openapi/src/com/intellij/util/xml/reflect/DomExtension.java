@@ -30,8 +30,6 @@ import java.lang.reflect.Type;
  */
 public interface DomExtension {
   Key<DomElement> KEY_DECLARATION = new Key<DomElement>("DOM_DECLARATION");
-  @NotNull
-  XmlName getXmlName();
 
   @NotNull
   Type getType();

@@ -6,8 +6,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
@@ -34,12 +32,12 @@ import java.util.List;
 public class DynamicGenericInfo extends DomGenericInfoEx {
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
-  private final CachedValue<Object> myCachedValue;
   private final Project myProject;
   private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
+  private CustomDomChildrenDescriptionImpl myCustomChildren;
   private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
   private static final JBLock r = rwl.readLock();
   private static final JBLock w = rwl.writeLock();
@@ -48,7 +46,6 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     myInvocationHandler = handler;
     myStaticGenericInfo = staticGenericInfo;
     myProject = project;
-    myCachedValue = PsiManager.getInstance(myProject).getCachedValuesManager().createCachedValue(new MyCachedValueProvider(), false);
 
     myAttributes = staticGenericInfo.getAttributes();
     myFixeds = staticGenericInfo.getFixed();
@@ -70,15 +67,12 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
   private void _checkInitialized() {
     myStaticGenericInfo.buildMethodMaps();
-    if (myCachedValue.hasUpToDateValue()) return;
     if (myComputing.get() != null) return;
     r.unlock();
     boolean rlocked = false;
     try {
       w.lock();
       try {
-        if (myCachedValue.hasUpToDateValue()) return;
-
         myAttributes = myStaticGenericInfo.getAttributes();
         myFixeds = myStaticGenericInfo.getFixed();
         myCollections = myStaticGenericInfo.getCollections();
@@ -107,7 +101,6 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
       w.lock();
       try {
-        if (myCachedValue.hasUpToDateValue()) return;
         if (registrar != null) {
           final List<DomExtensionImpl> attributes = registrar.getAttributes();
           if (!attributes.isEmpty()) {
@@ -130,9 +123,11 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
               myCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(), Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST)));
             }
           }
+          final DomExtensionImpl extension = registrar.getCustomChildrenType();
+          if (extension != null) {
+            myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType());
+          }
         }
-        ((MyCachedValueProvider)myCachedValue.getValueProvider()).deps = registrar == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : registrar.getDependencies();
-        myCachedValue.getValue();
       }
       finally {
         myComputing.set(null);
@@ -159,6 +154,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
   @Nullable
   public CustomDomChildrenDescriptionImpl getCustomNameChildrenDescription() {
+    if (myCustomChildren != null) return myCustomChildren;
     return myStaticGenericInfo.getCustomNameChildrenDescription();
   }
 

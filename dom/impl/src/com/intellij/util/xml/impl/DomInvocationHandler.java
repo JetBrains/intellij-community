@@ -127,8 +127,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected final void checkIsValid() {
-    LOG.assertTrue(isValid());
-  }
+      LOG.assertTrue(isValid());
+    }
 
   @NotNull
   final DomInvocationHandler getParentHandler() {
@@ -516,13 +516,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         XmlTag childTag = tags.get(index);
         DomInvocationHandler handler = myManager.getCachedHandler(childTag);
         if (!(handler instanceof IndexedElementInvocationHandler)) {
-          handler = new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new PhysicalDomParentStrategy(childTag), myManager);
+          handler = new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new PhysicalDomParentStrategy(childTag), myManager, childTag.getNamespace());
           myManager.cacheHandler(childTag, handler);
         }
         return (IndexedElementInvocationHandler)handler;
       }
     }
-    return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager);
+    return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager, "");
   }
 
   @NotNull

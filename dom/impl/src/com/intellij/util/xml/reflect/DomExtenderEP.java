@@ -44,7 +44,7 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       if (registrar == null) {
         registrar = new DomExtensionsRegistrarImpl();
       }
-      registrar.addDependencies(myExtender.registerExtensions(element, registrar));
+      myExtender.registerExtensions(element, registrar);
     }
     return registrar;
   }

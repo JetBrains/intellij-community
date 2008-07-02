@@ -494,9 +494,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (tag == null) return null;
 
     DomInvocationHandler invocationHandler = getCachedHandler(tag);
-    if (invocationHandler != null && invocationHandler.isValid() && invocationHandler.getXmlTag() == tag) {
-      return invocationHandler;
-    }
+    if (invocationHandler != null) return invocationHandler;
 
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) {
@@ -515,8 +513,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (childDescription == null) return null;
 
     childDescription.getValues(parent.getProxy());
-    final DomInvocationHandler handler = getCachedHandler(tag);
-    return handler != null && handler.getXmlTag() == tag ? handler : null;
+    return getCachedHandler(tag);
   }
 
   @Nullable

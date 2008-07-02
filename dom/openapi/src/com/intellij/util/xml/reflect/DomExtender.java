@@ -31,7 +31,6 @@ public abstract class DomExtender<T extends DomElement> {
   /**
    * @param t DOM element where new children may be added to
    * @param registrar a place to register your own DOM children descriptions
-   * @return dependency items, whose change should trigger dynamic DOM rebuild for this element   
    */
-  public abstract Object[] registerExtensions(@NotNull T t, @NotNull final DomExtensionsRegistrar registrar);
+  public abstract void registerExtensions(@NotNull T t, @NotNull final DomExtensionsRegistrar registrar);
 }
