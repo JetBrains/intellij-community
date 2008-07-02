@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -67,8 +64,16 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     return myContainingClassName;
   }
 
+  @Override
+  public PsiFile getContainingFile() {
+    final PsiClass psiClass = getContainingClassElement();
+    if (psiClass == null) return null;
+
+    return psiClass.getContainingFile();
+  }
+
   public String getPresentableText() {
-    return null;
+    return getName();
   }
 
   @Nullable

@@ -92,8 +92,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   private static final int TYPE_COLUMN = 1;
 
   private static String[] myColumnNames = {
-      "Dynamic element",
-      "Type"
+          "Dynamic element",
+          "Type"
   };
 
   private MyTreeTable myTreeTable;
@@ -320,35 +320,35 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     myTreeTable.setDefaultEditor(String.class, typeCellEditor);
 
     myTreeTable.registerKeyboardAction(
-        new ActionListener() {
-          public void actionPerformed(ActionEvent event) {
-            deleteRow();
-          }
-        },
-        KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-        JComponent.WHEN_FOCUSED
+            new ActionListener() {
+              public void actionPerformed(ActionEvent event) {
+                deleteRow();
+              }
+            },
+            KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
+            JComponent.WHEN_FOCUSED
     );
 
     myTreeTable.registerKeyboardAction(
-        new ActionListener() {
-          public void actionPerformed(ActionEvent event) {
-            final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
-            myTreeTable.editCellAt(selectionRow, CLASS_OR_ELEMENT_NAME_COLUMN, event);
-          }
-        },
-        KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0),
-        JComponent.WHEN_FOCUSED
+            new ActionListener() {
+              public void actionPerformed(ActionEvent event) {
+                final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
+                myTreeTable.editCellAt(selectionRow, CLASS_OR_ELEMENT_NAME_COLUMN, event);
+              }
+            },
+            KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0),
+            JComponent.WHEN_FOCUSED
     );
 
     myTreeTable.registerKeyboardAction(
-        new ActionListener() {
-          public void actionPerformed(ActionEvent event) {
-            final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
-            myTreeTable.editCellAt(selectionRow, TYPE_COLUMN, event);
-          }
-        },
-        KeyStroke.getKeyStroke(KeyEvent.VK_F2, KeyEvent.CTRL_MASK),
-        JComponent.WHEN_FOCUSED
+            new ActionListener() {
+              public void actionPerformed(ActionEvent event) {
+                final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
+                myTreeTable.editCellAt(selectionRow, TYPE_COLUMN, event);
+              }
+            },
+            KeyStroke.getKeyStroke(KeyEvent.VK_F2, KeyEvent.CTRL_MASK),
+            JComponent.WHEN_FOCUSED
     );
 
     // todo use "myTreeTable.setAutoCreateRowSorter(true);" since 1.6
@@ -429,13 +429,13 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       int result;
       if (rowsCount > 1) {
         result = Messages.showOkCancelDialog(myBigPanel, GroovyBundle.message("are.you.sure.to.delete.elements",
-            String.valueOf(rowsCount)), GroovyBundle.message("dynamic.element.deletion"),
-            Messages.getQuestionIcon());
+                String.valueOf(rowsCount)), GroovyBundle.message("dynamic.element.deletion"),
+                Messages.getQuestionIcon());
 
       } else {
         result = Messages.showOkCancelDialog(myBigPanel, GroovyBundle.message("are.you.sure.to.delete.dynamic.property",
-            ((DNamedElement) namedElement).getName()), GroovyBundle.message("dynamic.property.deletion"),
-            Messages.getQuestionIcon());
+                ((DNamedElement) namedElement).getName()), GroovyBundle.message("dynamic.property.deletion"),
+                Messages.getQuestionIcon());
       }
 
       if (result != DialogWrapper.OK_EXIT_CODE) return false;
@@ -730,48 +730,59 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     @Nullable
     public Object getData(@NonNls String dataId) {
       if (DataConstantsEx.PSI_ELEMENT.equals(dataId)) {
-        final TreePath path = getTree().getSelectionPath();
+        return getSelectedElement();
 
-        if (path == null) return null;
-        final Object selectedObject = path.getLastPathComponent();
-        if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
+      } else if (DataConstantsEx.PSI_FILE.equals(dataId)) {
+        final PsiElement element = getSelectedElement();
 
-        final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selectedObject;
-        final Object userObject = selectedNode.getUserObject();
-        if (!(userObject instanceof DNamedElement)) return null;
-
-        if (userObject instanceof DClassElement) {
-          final DClassElement classElement = (DClassElement) userObject;
-
-          try {
-            final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(classElement.getName());
-            PsiType type = typeElement.getType();
-
-            if (type instanceof PsiPrimitiveType) {
-              type = ((PsiPrimitiveType) type).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
-            }
-
-            if (!(type instanceof PsiClassType)) return null;
-            return ((PsiClassType) type).resolve();
-
-          } catch (IncorrectOperationException e) {
-            return null;
-          }
-        } else if (userObject instanceof DItemElement) {
-          final DItemElement itemElement = (DItemElement) userObject;
-
-          final TreeNode parentNode = selectedNode.getParent();
-          if (!(parentNode instanceof DefaultMutableTreeNode)) return null;
-
-          final Object classObject = ((DefaultMutableTreeNode) parentNode).getUserObject();
-          if (!(classObject instanceof DClassElement)) return null;
-
-          final String className = ((DClassElement) classObject).getName();
-
-          return itemElement.getPsi(PsiManager.getInstance(myProject), className);
-        }
+        if (element == null) return null;
+        return element.getContainingFile();
       }
 
+      return null;
+    }
+
+    private PsiElement getSelectedElement() {
+      final TreePath path = getTree().getSelectionPath();
+
+      if (path == null) return null;
+      final Object selectedObject = path.getLastPathComponent();
+      if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
+
+      final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selectedObject;
+      final Object userObject = selectedNode.getUserObject();
+      if (!(userObject instanceof DNamedElement)) return null;
+
+      if (userObject instanceof DClassElement) {
+        final DClassElement classElement = (DClassElement) userObject;
+
+        try {
+          final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(classElement.getName());
+          PsiType type = typeElement.getType();
+
+          if (type instanceof PsiPrimitiveType) {
+            type = ((PsiPrimitiveType) type).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+          }
+
+          if (!(type instanceof PsiClassType)) return null;
+          return ((PsiClassType) type).resolve();
+
+        } catch (IncorrectOperationException e) {
+          return null;
+        }
+      } else if (userObject instanceof DItemElement) {
+        final DItemElement itemElement = (DItemElement) userObject;
+
+        final TreeNode parentNode = selectedNode.getParent();
+        if (!(parentNode instanceof DefaultMutableTreeNode)) return null;
+
+        final Object classObject = ((DefaultMutableTreeNode) parentNode).getUserObject();
+        if (!(classObject instanceof DClassElement)) return null;
+
+        final String className = ((DClassElement) classObject).getName();
+
+        return itemElement.getPsi(PsiManager.getInstance(myProject), className);
+      }
       return null;
     }
   }
