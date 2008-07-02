@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,11 +13,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Validator<T extends PsiElement> {
   interface ValidationHost {
-    int ERROR = 1;
     int WARNING = 0;
+    int ERROR = 1;
     int INFO = 2;
 
+    enum ErrorType {
+      WARNING, ERROR, INFO
+    }
+
     void addMessage(PsiElement context, String message, int type);
+    void addMessage(PsiElement context, String message, ErrorType type, IntentionAction... fixes);
   }
   
 

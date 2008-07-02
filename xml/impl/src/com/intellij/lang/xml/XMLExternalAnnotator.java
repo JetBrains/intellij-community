@@ -1,6 +1,8 @@
 package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.psi.PsiElement;
@@ -31,39 +33,53 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
     }
   }
 
+  private static final ErrorType[] types = ErrorType.values();
+
   public void addMessage(PsiElement context, String message, int type) {
+    addMessage(context, message, types[type]);
+  }
+
+  public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
     if (message != null && message.length() > 0) {
       if (context instanceof XmlTag) {
-        addMessagesForTag((XmlTag)context, message, type);
+        addMessagesForTag((XmlTag)context, message, type, fixes);
       }
       else {
-        if (type == Validator.ValidationHost.ERROR) {
-          myHolder.createErrorAnnotation(context, message);
+        if (type == Validator.ValidationHost.ErrorType.ERROR) {
+          appendFixes(myHolder.createErrorAnnotation(context, message), fixes);
         } else {
-          myHolder.createWarningAnnotation(context, message);
+          appendFixes(myHolder.createWarningAnnotation(context, message), fixes);
         }
       }
     }
   }
 
-
-  private void addMessagesForTag(XmlTag tag, String message, int type) {
+  private void addMessagesForTag(XmlTag tag, String message, ErrorType type, IntentionAction... actions) {
     XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
 
-    addMessagesForTreeChild(childByRole, type, message);
+    addMessagesForTreeChild(childByRole, type, message, actions);
 
     childByRole = XmlTagUtil.getEndTagNameElement(tag);
-    addMessagesForTreeChild(childByRole, type, message);
+    addMessagesForTreeChild(childByRole, type, message, actions);
   }
 
-  private void addMessagesForTreeChild(final XmlToken childByRole, final int type, final String message) {
+  private void addMessagesForTreeChild(final XmlToken childByRole, final ErrorType type, final String message, IntentionAction... actions) {
     if (childByRole != null) {
-      if (type == ERROR) {
-        myHolder.createErrorAnnotation(childByRole, message);
+      Annotation annotation;
+      if (type == ErrorType.ERROR) {
+        annotation = myHolder.createErrorAnnotation(childByRole, message);
       }
       else {
-        myHolder.createWarningAnnotation(childByRole, message);
+        annotation = myHolder.createWarningAnnotation(childByRole, message);
       }
+
+      appendFixes(annotation, actions);
+    }
+  }
+
+  private static void appendFixes(final Annotation annotation, final IntentionAction... actions) {
+    if (actions != null) {
+      for(IntentionAction action:actions) annotation.registerFix(action);
     }
   }
 }

@@ -599,6 +599,26 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
+  public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+    if (message != null && message.length() > 0) {
+      if (context instanceof XmlTag && XmlExtension.getExtension((XmlFile)context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
+        final HighlightInfoType infoType = type == ErrorType.ERROR
+                                           ? HighlightInfoType.ERROR
+                                           : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO;
+        addElementsForTagWithManyQuickFixes((XmlTag)context, message, infoType, fixes);
+      }
+      else {
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message);
+
+        for (final IntentionAction quickFixAction : fixes) {
+          if (quickFixAction == null) continue;
+          QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction);
+        }
+        addToResults(highlightInfo);
+      }
+    }
+  }
+
   public static void visitJspElement(OuterLanguageElement text) {
     PsiElement parent = text.getParent();
 

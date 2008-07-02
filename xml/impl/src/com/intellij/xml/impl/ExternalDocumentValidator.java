@@ -2,6 +2,7 @@ package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.Language;
@@ -101,6 +102,10 @@ public class ExternalDocumentValidator {
         o.element = context;
         o.message = message;
         o.type = type;
+      }
+
+      public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+        addMessage(context, message, type.ordinal());
       }
     };
 
