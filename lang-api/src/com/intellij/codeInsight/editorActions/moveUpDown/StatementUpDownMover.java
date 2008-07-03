@@ -62,6 +62,7 @@ public abstract class StatementUpDownMover {
     return range;
   }
 
+  @Nullable
   protected static Pair<PsiElement, PsiElement> getElementRange(Editor editor, PsiFile file, final LineRange range) {
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     PsiElement startingElement = firstNonWhiteElement(startOffset, file, true);
