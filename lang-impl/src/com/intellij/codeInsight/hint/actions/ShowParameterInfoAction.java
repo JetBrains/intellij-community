@@ -18,7 +18,8 @@ public class ShowParameterInfoAction extends BaseCodeInsightAction{
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return ShowParameterInfoHandler.getHandlers(PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset())) != null;
+    return ShowParameterInfoHandler.getHandlers(PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset())) != null ||
+        ShowParameterInfoHandler.getHandlers(file.getViewProvider().getBaseLanguage()) != null;
   }
 
   protected boolean isValidForLookup() {

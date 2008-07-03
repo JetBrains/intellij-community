@@ -49,6 +49,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
     final Language language = psiElement.getLanguage();
     ParameterInfoHandler[] handlers = getHandlers(language);
+    if (handlers == null) handlers = getHandlers(file.getViewProvider().getBaseLanguage());
     if (handlers == null) handlers = new ParameterInfoHandler[0];
 
     Lookup lookup = LookupManager.getInstance(project).getActiveLookup();

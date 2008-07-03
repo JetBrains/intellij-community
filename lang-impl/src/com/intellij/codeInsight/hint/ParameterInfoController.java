@@ -316,8 +316,9 @@ public class ParameterInfoController {
   @Nullable
   public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
     if (file == null) return null;
-    final ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(PsiUtilBase.getLanguageAtOffset(file, offset));
-    
+    ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(PsiUtilBase.getLanguageAtOffset(file, offset));
+    if (handlers == null) handlers = ShowParameterInfoHandler.getHandlers(file.getViewProvider().getBaseLanguage());
+
     if (handlers != null) {
       for(ParameterInfoHandler handler:handlers) {
         if (handler instanceof ParameterInfoHandlerWithTabActionSupport) {
