@@ -6,6 +6,7 @@ package com.intellij.lang.pratt;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Trinity;
@@ -48,6 +49,10 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
 
   public Lexer getLexer() {
     return ((PsiBuilderImpl) myBuilder).getLexer();
+  }
+
+  public void setTokenTypeRemapper(@Nullable final ITokenTypeRemapper remapper) {
+    myBuilder.setTokenTypeRemapper(remapper);
   }
 
   public MutableMarker mark() {

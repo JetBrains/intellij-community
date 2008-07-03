@@ -6,6 +6,7 @@ package com.intellij.lang.pratt;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ITokenTypeRemapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,8 @@ import java.util.ListIterator;
 public abstract class PrattBuilder {
 
   public abstract Lexer getLexer();
+
+  public abstract void setTokenTypeRemapper(@Nullable ITokenTypeRemapper remapper);
 
   public abstract MutableMarker mark();
 
