@@ -85,21 +85,21 @@ public class CompletionData {
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(final PsiReference reference, final Set<LookupItem> set, @NotNull final PsiElement position,
-                                final PrefixMatcher matcher, final PsiFile file, final int offset){
+  public void completeReference(final PsiReference reference, final Set<LookupItem> set, @NotNull final PsiElement position, final PsiFile file,
+                                final int offset){
     final CompletionVariant[] variants = findVariants(position, file);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         boolean hasApplicableVariants = false;
         for (CompletionVariant variant : variants) {
           if (variant.hasReferenceFilter()) {
-            variant.addReferenceCompletions(reference, position, set, matcher, file, CompletionData.this);
+            variant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
             hasApplicableVariants = true;
           }
         }
 
         if (!hasApplicableVariants) {
-          myGenericVariant.addReferenceCompletions(reference, position, set, matcher, file, CompletionData.this);
+          myGenericVariant.addReferenceCompletions(reference, position, set, file, CompletionData.this);
         }
       }
     });
@@ -157,9 +157,9 @@ public class CompletionData {
   }
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {
-    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PrefixMatcher matcher, final PsiFile file,
+    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PsiFile file,
                                         final CompletionData completionData) {
-      completeReference(reference, position, set, TailType.NONE, matcher, file, TrueFilter.INSTANCE, this);
+      completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
     }
   };
 
@@ -238,7 +238,7 @@ public class CompletionData {
 
 
   @Nullable
-  protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, PrefixMatcher matcher, final PsiFile file,
+  protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, final PsiFile file,
                                      final CompletionVariant variant) {
     LookupItem ret = objectToLookupItem(completion);
     if(ret == null) return null;
@@ -256,23 +256,18 @@ public class CompletionData {
       ret.setAttribute(key, itemProperties.get(key));
     }
 
-    if(ret.setPrefixMatcher(matcher)){
-      set.add(ret);
-      return ret;
-    }
-
-    return null;
+    set.add(ret);
+    return ret;
   }
 
   protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupItem> set, final TailType tailType,
-                                   final PrefixMatcher matcher,
                                    final PsiFile file,
                                    final ElementFilter filter,
                                    final CompletionVariant variant) {
     if (reference instanceof PsiMultiReference) {
       final PsiReference[] references = getReferences((PsiMultiReference)reference);
       for (PsiReference ref : references) {
-        completeReference(ref, position, set, tailType, matcher, file, filter, variant);
+        completeReference(ref, position, set, tailType, file, filter, variant);
       }
     }
     else{
@@ -286,7 +281,7 @@ public class CompletionData {
         if (completion instanceof PsiElement) {
           final PsiElement psiElement = (PsiElement)completion;
           if (filter.isClassAcceptable(psiElement.getClass()) && filter.isAcceptable(psiElement, position)) {
-            addLookupItem(set, tailType, completion, matcher, file, variant);
+            addLookupItem(set, tailType, completion, file, variant);
           }
         }
         else {
@@ -296,7 +291,7 @@ public class CompletionData {
               if (!filter.isClassAcceptable(o.getClass()) || !filter.isAcceptable(o, position)) continue;
             }
           }
-          addLookupItem(set, tailType, completion, matcher, file, variant);
+          addLookupItem(set, tailType, completion, file, variant);
         }
       }
     }
@@ -325,7 +320,7 @@ public class CompletionData {
       if (comp instanceof ContextGetter) {
         final Object[] elements = ((ContextGetter)comp).get(position, context);
         for (Object element : elements) {
-          addLookupItem(set, tailType, element, matcher, file, variant);
+          addLookupItem(set, tailType, element, file, variant);
         }
       }
       // TODO: KeywordChooser -> ContextGetter
@@ -346,6 +341,6 @@ public class CompletionData {
         return;
       }
     }
-    addLookupItem(set, tailType, comp, matcher, file, variant);
+    addLookupItem(set, tailType, comp, file, variant);
   }
 }

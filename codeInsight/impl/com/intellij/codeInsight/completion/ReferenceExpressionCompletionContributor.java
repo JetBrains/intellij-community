@@ -6,21 +6,20 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.filters.element.ModifierFilter;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -77,24 +76,29 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             }
 
             if (parameters.getInvocationCount() >= 2) {
-              for (final LookupItem qualifier : completeReference(element, reference, originalFile, tailType, TrueFilter.INSTANCE, result)) {
+              for (final LookupItem<?> qualifier : completeReference(element, reference, originalFile, tailType, TrueFilter.INSTANCE, result)) {
                 final String prefix = getItemText(qualifier.getObject());
                 if (prefix == null) continue;
+
+                final PsiSubstitutor substitutor = (PsiSubstitutor)qualifier.getAttribute(LookupItem.SUBSTITUTOR);
 
                 try {
                   final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
                   final PsiExpression ref = elementFactory.createExpressionFromText(prefix + ".xxx", element);
-                  if (ref instanceof PsiReferenceExpression) {
-                    for (final LookupItem item : completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, filter, result)) {
-                      try {
-                        final String itemText = getItemText(item.getObject());
-                        if (StringUtil.isNotEmpty(itemText)) {
-                          final PsiExpression expr = elementFactory.createExpressionFromText(prefix + "." + itemText, element);
-                          result.addElement(LookupItemUtil.objectToLookupItem(expr).setTailType(tailType).setIcon(item.getObject() instanceof PsiVariable ? Icons.VARIABLE_ICON : Icons.METHOD_ICON));
-                        }
+                  for (final LookupItem<?> item : completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, filter, result)) {
+                    if (item.getObject() instanceof PsiMethod) {
+                      final PsiMethod method = (PsiMethod)item.getObject();
+                      final QualifiedMethodLookupItem newItem = new QualifiedMethodLookupItem(method, prefix);
+                      final PsiSubstitutor newSubstitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+                      if (substitutor != null || newSubstitutor != null) {
+                        newItem.setAttribute(LookupItem.SUBSTITUTOR, substitutor == null ? newSubstitutor :
+                                                                     newSubstitutor == null ? substitutor : substitutor.putAll(newSubstitutor));
                       }
-                      catch (IncorrectOperationException e) {
-                      }
+                      result.addElement(newItem);
+                    } else {
+                      item.setAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, prefix + ".");
+                      item.setLookupString(prefix + "." + item.getLookupString());
+                      result.addElement(item);
                     }
                   }
                 }
@@ -116,7 +120,9 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       final PsiType type = method.getReturnType();
       if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
       if (method.getParameterList().getParametersCount() > 0) return null;
-      return method.getName() + "()";
+      return method.getName() + "(" +
+             (CodeStyleSettingsManager.getSettings(method.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES ? " " : "") +
+             ")";
     } else if (o instanceof PsiVariable) {
       return ((PsiVariable)o).getName();
     }
@@ -126,8 +132,38 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
   private static THashSet<LookupItem> completeReference(final PsiElement element, final PsiReference reference, final PsiFile originalFile,
                                                         final TailType tailType, final ElementFilter filter, final CompletionResultSet result) {
     final THashSet<LookupItem> set = new THashSet<LookupItem>();
-    JavaSmartCompletionContributor.SMART_DATA.completeReference(reference, element, set, tailType, result.getPrefixMatcher(),
-                                                                originalFile, filter, new CompletionVariant());
+    JavaSmartCompletionContributor.SMART_DATA.completeReference(reference, element, set, tailType, originalFile, filter, new CompletionVariant());
     return set;
+  }
+
+  private static class QualifiedMethodLookupItem extends LookupItem<PsiMethod> {
+    private final String myQualifier;
+
+    public QualifiedMethodLookupItem(final PsiMethod method, @NotNull final String qualifier) {
+      super(method, qualifier + "." + method.getName());
+      myQualifier = qualifier;
+      addLookupStrings(method.getName());
+      setAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, qualifier + ".");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof QualifiedMethodLookupItem)) return false;
+      if (!super.equals(o)) return false;
+
+      final QualifiedMethodLookupItem that = (QualifiedMethodLookupItem)o;
+
+      if (myQualifier != null ? !myQualifier.equals(that.myQualifier) : that.myQualifier != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (myQualifier != null ? myQualifier.hashCode() : 0);
+      return result;
+    }
   }
 }

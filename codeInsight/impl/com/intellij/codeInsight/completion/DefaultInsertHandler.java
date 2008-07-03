@@ -246,7 +246,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private void qualifyIfNeeded() {
     try{
-      if (myLookupItem.getObject() instanceof PsiField) {
+      if (myLookupItem.getObject() instanceof PsiField && myLookupItem.getAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) == null) {
         PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
         PsiReference reference = myFile.findReferenceAt(myContext.getStartOffset());
         if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {

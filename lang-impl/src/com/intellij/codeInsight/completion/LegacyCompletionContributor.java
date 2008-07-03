@@ -62,12 +62,15 @@ public class LegacyCompletionContributor extends CompletionContributor {
           for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
             int offsetInElement = offsetInFile - reference.getElement().getTextRange().getStartOffset();
             result.setPrefixMatcher(reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
-            completionData.completeReference(reference, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(),
-                                             offsetInFile);
+            completionData.completeReference(reference, lookupSet, insertedElement, parameters.getOriginalFile(), offsetInFile);
+            for (final LookupItem item : lookupSet) {
+              result.addElement(item);
+            }
+            lookupSet.clear();
           }
         }
         else if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(),
+          completionData.completeReference(ref, lookupSet, insertedElement, parameters.getOriginalFile(),
                                            offsetInFile);
         }
         for (final LookupItem item : lookupSet) {

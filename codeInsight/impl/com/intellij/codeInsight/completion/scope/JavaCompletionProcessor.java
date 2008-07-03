@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -27,7 +26,6 @@ import java.util.Set;
  */
 public class JavaCompletionProcessor extends BaseScopeProcessor
  implements ElementClassHint{
-  private final PrefixMatcher myMatcher;
   private boolean myStatic = false;
   private final Set<Object> myResultNames = new THashSet<Object>();
   private final List<CompletionElement> myResults;
@@ -39,9 +37,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
 
-  public JavaCompletionProcessor(PrefixMatcher matcher, PsiElement element, ElementFilter filter){
+  public JavaCompletionProcessor(PsiElement element, ElementFilter filter){
     mySettings = CodeInsightSettings.getInstance();
-    myMatcher = matcher;
     myResults = new ArrayList<CompletionElement>();
     myElement = element;
     myFilter = filter;
@@ -108,7 +105,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
     if(!(element instanceof PsiMember) || resolveHelper.isAccessible((PsiMember)element, myElement, myQualifierClass)){
       final String name = PsiUtil.getName(element);
-      if(name != null && myMatcher.prefixMatches(name)
+      if(name != null
          && myFilter.isClassAcceptable(element.getClass())
          && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement))
         add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY)));

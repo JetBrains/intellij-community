@@ -3,10 +3,11 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
@@ -34,17 +35,14 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     presentation.setTypeText(typeText != null ? typeText : "");
   }
 
-  private static String getName(final Object o, final LookupItem item) {
+  private static String getName(final Object o, final LookupItem<?> item) {
     String name = "";
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
         name = PsiUtilBase.getName(element);
 
-        if (element instanceof PsiAnonymousClass) {
-          name = null;
-        }
-        else if(element instanceof PsiClass){
+        if (element instanceof PsiClass) {
           PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
           if (substitutor != null && !substitutor.isValid()) {
             PsiType type = (PsiType)item.getAttribute(LookupItem.TYPE);
@@ -68,12 +66,19 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       name = ((PsiType)o).getPresentableText();
     }
 
-    if(item.getAttribute(LookupItem.FORCE_QUALIFY) != null){
+    if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {
       if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
         name = ((PsiMember)o).getContainingClass().getName() + "." + name;
       }
     }
-    return name == null ? "" : name;
+
+    if (StringUtil.isEmpty(name)) return "";
+
+    final String prefix = item.getAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE);
+    if (StringUtil.isNotEmpty(prefix)) {
+      return prefix + name;
+    }
+    return name;
   }
 
   @Nullable

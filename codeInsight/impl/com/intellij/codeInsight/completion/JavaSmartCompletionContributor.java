@@ -134,7 +134,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final Pair<ElementFilter, TailType> pair = getReferenceFilter(element);
           if (pair != null) {
             final THashSet<LookupItem> set = new THashSet<LookupItem>();
-            SMART_DATA.completeReference(reference, element, set, pair.second, result.getPrefixMatcher(), parameters.getOriginalFile(), pair.first, new CompletionVariant());
+            SMART_DATA.completeReference(reference, element, set, pair.second, parameters.getOriginalFile(), pair.first, new CompletionVariant());
             for (final LookupItem item : set) {
               if (AFTER_THROW_NEW.accepts(element)) {
                 item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");

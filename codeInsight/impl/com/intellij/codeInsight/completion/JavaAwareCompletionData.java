@@ -36,11 +36,10 @@ public class JavaAwareCompletionData extends CompletionData{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaAwareCompletionData");
 
   protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupItem> set, final TailType tailType,
-                                            final PrefixMatcher matcher,
-                                            final PsiFile file,
-                                            final ElementFilter filter,
-                                            final CompletionVariant variant) {
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(matcher, position, filter);
+                                   final PsiFile file,
+                                   final ElementFilter filter,
+                                   final CompletionVariant variant) {
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, filter);
 
     if (reference instanceof PsiMultiReference) {
       int javaReferenceStart = -1;
@@ -56,7 +55,7 @@ public class JavaAwareCompletionData extends CompletionData{
             if (newStart == javaReferenceStart) continue;
           }
         }
-        completeReference(ref, position, set, tailType, matcher, file, filter, variant);
+        completeReference(ref, position, set, tailType, file, filter, variant);
       }
     }
     else if(reference instanceof PsiJavaReference){
@@ -90,7 +89,7 @@ public class JavaAwareCompletionData extends CompletionData{
               continue;
             }
           }
-          addLookupItem(set, tailType, completion, matcher, file, variant);
+          addLookupItem(set, tailType, completion, file, variant);
         }
       }
     }
@@ -100,7 +99,7 @@ public class JavaAwareCompletionData extends CompletionData{
       for (CompletionElement element : results) {
         variant.setItemProperty(LookupItem.SUBSTITUTOR, element.getSubstitutor());
         variant.setItemProperty(JavaCompletionUtil.QUALIFIER_TYPE_ATTR, element.getQualifier());
-        addLookupItem(set, tailType, element.getElement(), matcher, file, variant);
+        addLookupItem(set, tailType, element.getElement(), file, variant);
         variant.setItemProperty(LookupItem.SUBSTITUTOR, null);
         variant.setItemProperty(JavaCompletionUtil.QUALIFIER_TYPE_ATTR, null);
       }
@@ -165,8 +164,7 @@ public class JavaAwareCompletionData extends CompletionData{
   }
 
   @Nullable
-  protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, PrefixMatcher matcher, final PsiFile file,
-                                         final CompletionVariant variant) {
+  protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
     LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
     if(ret == null) return null;
 
@@ -205,12 +203,8 @@ public class JavaAwareCompletionData extends CompletionData{
         ret.setAttribute(key, itemProperties.get(key));
       }
     }
-    if(matcher.prefixMatches(ret)){
-      set.add(ret);
-      return ret;
-    }
-
-    return null;
+    set.add(ret);
+    return ret;
   }
 
   public static LookupItem qualify(final LookupItem ret) {
@@ -236,7 +230,7 @@ public class JavaAwareCompletionData extends CompletionData{
       if (comp instanceof ContextGetter) {
         final Object[] elements = ((ContextGetter)comp).get(position, context);
         for (Object element : elements) {
-          addLookupItem(set, tailType, element, matcher, file, variant);
+          addLookupItem(set, tailType, element, file, variant);
         }
       }
       // TODO: KeywordChooser -> ContextGetter
@@ -258,15 +252,15 @@ public class JavaAwareCompletionData extends CompletionData{
       }
     }
     if(factory == null){
-      addLookupItem(set, tailType, comp, matcher, file, variant);
+      addLookupItem(set, tailType, comp, file, variant);
     }
     else{
       try{
         final PsiKeyword keyword = factory.createKeyword((String)comp);
-        addLookupItem(set, tailType, keyword, matcher, file, variant);
+        addLookupItem(set, tailType, keyword, file, variant);
       }
       catch(IncorrectOperationException e){
-        addLookupItem(set, tailType, comp, matcher, file, variant);
+        addLookupItem(set, tailType, comp, file, variant);
       }
     }
   }

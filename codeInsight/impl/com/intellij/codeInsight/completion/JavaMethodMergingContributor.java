@@ -40,7 +40,7 @@ public class JavaMethodMergingContributor extends CompletionContributor {
 
             allMethodItems.add(item);
             PsiMethod method = (PsiMethod)o;
-            String name = method.getName();
+            String name = method.getName() + "#" + item.getAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE);
             LookupItem<PsiMethod> existing = methodNameToItem.get(name);
             ArrayList<PsiMethod> allMethods;
             if (existing != null) {

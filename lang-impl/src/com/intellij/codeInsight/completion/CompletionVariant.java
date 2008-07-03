@@ -169,12 +169,12 @@ public class CompletionVariant {
     return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
-  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PrefixMatcher matcher, final PsiFile file,
+  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PsiFile file,
                                       final CompletionData completionData){
     for (final CompletionVariantItem ce : myCompletionsList) {
       if(ce.myCompletion instanceof ElementFilter){
         final ElementFilter filter = (ElementFilter)ce.myCompletion;
-        completionData.completeReference(reference, position, set, ce.myTailType, matcher, file, filter, this);
+        completionData.completeReference(reference, position, set, ce.myTailType, file, filter, this);
       }
     }
   }

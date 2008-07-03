@@ -103,6 +103,7 @@ public class JavaCompletionUtil {
     }
   });
   public static final Key<List<PsiMethod>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
+  public static final Key<String> QUALIFIER_PREFIX_ATTRIBUTE = Key.create("qualifierPrefix");
 
   public static void completeLocalVariableName(Set<LookupItem> set, PrefixMatcher matcher, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");

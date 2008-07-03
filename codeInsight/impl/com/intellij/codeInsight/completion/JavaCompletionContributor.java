@@ -57,7 +57,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       });
       if (ref != null) {
-        completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(), startOffset);
+        completionData.completeReference(ref, lookupSet, insertedElement, parameters.getOriginalFile(), startOffset);
       }
 
       final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
