@@ -41,6 +41,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
@@ -194,6 +196,14 @@ public class CreateTestDialog extends DialogWrapper {
     while (c != null
            && c.getSuperClass() != null // not the Object
            && myShowInheritedMethodsBox.isSelected());
+
+    Set<PsiMember> selectedMethods = new HashSet<PsiMember>();
+    for (MemberInfo each : myMethodsTable.getSelectedMemberInfos()) {
+      selectedMethods.add(each.getMember());
+    }
+    for (MemberInfo each : methods) {
+      each.setChecked(selectedMethods.contains(each.getMember()));
+    }
 
     myMethodsTable.setMemberInfos(methods.toArray(new MemberInfo[methods.size()]));
   }
