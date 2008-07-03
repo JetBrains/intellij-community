@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,14 +28,12 @@ public class MoveFilesOrDirectoriesUtil {
 
   // Does not process non-code usages!
   public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException {
-    FileReferenceContextUtil.encodeFileReferences(file);
     PsiManager manager = file.getManager();
     // the class is already there, this is true when multiple classes are defined in the same file
     if (!newDirectory.equals(file.getContainingDirectory())) {
       // do actual move
       manager.moveFile(file, newDirectory);
     }
-    FileReferenceContextUtil.decodeFileReferences(file);
   }
 
   /**

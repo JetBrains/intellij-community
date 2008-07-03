@@ -6,6 +6,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class FileReferenceContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.FileReferenceContextUtil");
   private static final Key<PsiFileSystemItem> REF_FILE_SYSTEM_ITEM_KEY = Key.create("REF_FILE_SYSTEM_ITEM_KEY");
@@ -34,8 +37,8 @@ public class FileReferenceContextUtil {
     });
   }
 
-  public static void decodeFileReferences(PsiElement element) {
-
+  public static List<PsiElement> decodeFileReferences(PsiElement element) {
+    final List<PsiElement> result = new ArrayList<PsiElement>();
     element.accept(new PsiRecursiveElementVisitor(true) {
       @Override public void visitElement(PsiElement element) {
         final PsiFileSystemItem item = element.getCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY);
@@ -47,6 +50,9 @@ public class FileReferenceContextUtil {
             if (ref != null) {
               try {
                 element = ref.bindToElement(item);
+                if (element != null) {
+                  result.add(element);
+                }
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
@@ -59,5 +65,7 @@ public class FileReferenceContextUtil {
         }
       }
     });
+
+    return result;
   }
 }

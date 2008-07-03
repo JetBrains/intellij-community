@@ -12,7 +12,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -84,17 +84,21 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     // Move files with correction of references.
 
     try {
-      for (final PsiElement element : myElementsToMove) {
 
+      final List<PsiFile> movedFiles = new ArrayList<PsiFile>();
+
+      for (final PsiElement element : myElementsToMove) {
         if (element instanceof PsiDirectory) {
           MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
         }
         else if (element instanceof PsiFile) {
+          FileReferenceContextUtil.encodeFileReferences(element);
+
           MoveFilesOrDirectoriesUtil.doMoveFile((PsiFile)element, myNewParent);
+          movedFiles.add((PsiFile) element);
         }
 
-        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
-        elementListener.elementMoved(element);
+        getTransaction().getElementListener(element).elementMoved(element);
       }
 
       for (UsageInfo usageInfo : usages) {
@@ -108,7 +112,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
             continue;  // already processed in MoveFilesOrDirectoriesUtil.doMoveFile
           }
         }
+
         info.myReference.bindToElement(element);
+      }
+
+      // fix references in moved files to outer files
+      for (PsiFile movedFile : movedFiles) {
+        FileReferenceContextUtil.decodeFileReferences(movedFile);
       }
 
       // Perform CVS "add", "remove" commands on moved files.
