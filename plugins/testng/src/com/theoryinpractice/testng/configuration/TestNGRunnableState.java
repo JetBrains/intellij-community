@@ -223,7 +223,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       }
     }
     if (buf.length() > 0) buf.append(";");
-    if (config.isCoverageEnabled()) buf.append(IDEACoverageListener.class.getName());
+    if (config.isCoverageEnabled() && config.getCoverageRunner() instanceof IDEACoverageRunner) buf.append(IDEACoverageListener.class.getName());
     if (buf.length() > 0) javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, buf.toString());
 
     // Always include the source paths - just makes things easier :)
