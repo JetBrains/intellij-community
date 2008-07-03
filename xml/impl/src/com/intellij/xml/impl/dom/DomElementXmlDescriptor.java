@@ -17,6 +17,7 @@ import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +68,11 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
       xmlElementDescriptors.add(new DomElementXmlDescriptor(childrenDescription, myManager));
     }
 
+    CustomDomChildrenDescription customDescription = domElement.getGenericInfo().getCustomNameChildrenDescription();
+    if (customDescription != null) {
+      xmlElementDescriptors.add(new AnyXmlElementDescriptor(this, getNSDescriptor()));
+    }
+
     return xmlElementDescriptors.toArray(new XmlElementDescriptor[xmlElementDescriptors.size()]);
   }
 
@@ -89,6 +95,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
     if (parent == null) return new DomElementXmlDescriptor(domElement);
 
     AbstractDomChildrenDescription description = domElement.getChildDescription();
+    if (description instanceof CustomDomChildrenDescription) return new AnyXmlElementDescriptor(this, getNSDescriptor());
     if (!(description instanceof DomChildrenDescription)) return null;
 
     return new DomElementXmlDescriptor((DomChildrenDescription)description, myManager);

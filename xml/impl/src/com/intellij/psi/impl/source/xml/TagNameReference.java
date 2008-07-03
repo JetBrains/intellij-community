@@ -18,6 +18,8 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
@@ -198,14 +200,12 @@ public class TagNameReference implements PsiReference {
       }
     }
 
-    final Iterator<XmlElementDescriptor> iterator = variants.iterator();
-    String[] ret = new String[variants.size()];
-    int index = 0;
-    while(iterator.hasNext()){
-      final XmlElementDescriptor descriptor = iterator.next();
-      ret[index++] = descriptor.getName(element);
-    }
-    return ret;
+    List<String> l = ContainerUtil.mapNotNull(variants, new NullableFunction<XmlElementDescriptor, String>() {
+      public String fun(XmlElementDescriptor descriptor) {
+        return descriptor instanceof AnyXmlElementDescriptor ? null : descriptor.getName(element);
+      }
+    });
+    return l.toArray(new String[l.size()]);
   }
 
   private static void processVariantsInNamespace(final String namespace, final XmlTag element, final List<XmlElementDescriptor> variants,
