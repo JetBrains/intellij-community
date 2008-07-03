@@ -246,7 +246,14 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
   }
 
   private static boolean shouldBeTestRoot(final File srcRoot) {
-    final String name = srcRoot.getName();
+    if (isTestRootName(srcRoot.getName())) {
+      return true;
+    }
+    final File parentFile = srcRoot.getParentFile();
+    return parentFile != null && isTestRootName(parentFile.getName());
+  }
+
+  private static boolean isTestRootName(final String name) {
     return "test".equalsIgnoreCase(name) || 
            "tests".equalsIgnoreCase(name) || 
            "testSource".equalsIgnoreCase(name) || 
