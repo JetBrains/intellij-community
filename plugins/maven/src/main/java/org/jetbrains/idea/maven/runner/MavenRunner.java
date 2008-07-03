@@ -202,6 +202,7 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   }
 
   private void updateProjectFolders(ArrayList<MavenProject> processedProjects) {
+    if (myProject.isDisposed()) return; // project was closed before task finished.
     MavenProjectsManager.getInstance(myProject).updateProjectFolders(processedProjects);
   }
 }
