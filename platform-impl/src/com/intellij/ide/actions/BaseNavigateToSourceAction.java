@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseNavigateToSourceAction extends AnAction {
   private final boolean myFocusEditor;
@@ -13,7 +14,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    OpenSourceUtil.openSourcesFrom(dataContext, myFocusEditor);
+    OpenSourceUtil.navigate(getNavigatables(dataContext), myFocusEditor);
   }
 
 
@@ -22,8 +23,8 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
     event.getPresentation().setEnabled(isEnabled(dataContext));
   }
 
-  private static boolean isEnabled(final DataContext dataContext) {
-    Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
+  private boolean isEnabled(final DataContext dataContext) {
+    Navigatable[] navigatables = getNavigatables(dataContext);
     if (navigatables != null) {
       for (Navigatable navigatable : navigatables) {
         if (navigatable.canNavigate()) return true;
@@ -32,4 +33,8 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
     return false;    
   }
 
+  @Nullable
+  protected Navigatable[] getNavigatables(final DataContext dataContext) {
+    return PlatformDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
+  }
 }

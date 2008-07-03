@@ -27,7 +27,7 @@ public class OpenRepositoryVersionAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     assert changes != null;
     for(Change change: changes) {
       ContentRevision revision = change.getAfterRevision();
@@ -40,7 +40,7 @@ public class OpenRepositoryVersionAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     e.getPresentation().setEnabled(project != null && changes != null &&
                                    (! CommittedChangesBrowserUseCase.IN_AIR.equals(e.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) &&
                                    hasValidChanges(changes));

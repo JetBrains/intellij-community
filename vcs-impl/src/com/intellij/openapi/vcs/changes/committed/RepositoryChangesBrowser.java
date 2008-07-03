@@ -4,15 +4,20 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,6 +50,14 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
           event.getPresentation().setEnabled(false);
         }
       }
+      protected Navigatable[] getNavigatables(final DataContext dataContext) {
+        Change[] changes = (Change[])dataContext.getData(VcsDataKeys.SELECTED_CHANGES.getName());
+        if (changes != null) {
+          Collection<Change> changeCollection = Arrays.asList(changes);
+          return ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changeCollection));
+        }
+        return null;
+      }
     });
     OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
     toolBarGroup.add(action);
@@ -63,6 +76,11 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   public Object getData(@NonNls final String dataId) {
     if (CommittedChangesBrowserUseCase.CONTEXT_NAME.equals(dataId)) {
       return myUseCase;
+    }
+
+    else if (VcsDataKeys.SELECTED_CHANGES.getName().equals(dataId)) {
+      final List<Change> list = myViewer.getSelectedChanges();
+      return list.toArray(new Change [list.size()]);
     }
     return null;
   }
