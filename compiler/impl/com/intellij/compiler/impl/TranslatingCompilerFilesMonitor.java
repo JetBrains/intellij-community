@@ -583,9 +583,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
       StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
         public void run() {
-          new Task.Modal(project, CompilerBundle.message("compiler.content.name.make"), false) {
+          new Task.Modal(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
             public void run(@NotNull final ProgressIndicator indicator) {
-              indicator.setText(CompilerBundle.message("compiler.initial.scanning.progress.text"));
       
               final IntermediateOutputCompiler[] compilers =
                   CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
