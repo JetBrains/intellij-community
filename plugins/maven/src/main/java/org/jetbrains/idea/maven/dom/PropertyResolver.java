@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.GenericDomValue;
 import org.apache.commons.beanutils.BeanAccessLanguageException;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.maven.model.Model;
@@ -18,6 +19,15 @@ import java.util.regex.Pattern;
 
 public class PropertyResolver {
   private static final Pattern PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
+
+  public static String resolve(GenericDomValue<String> value) {
+    String text = value.getStringValue();
+    if (text == null) return null;
+
+    DomFileElement<MavenModel> dom = value.getRoot();
+    VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
+    return resolve(text, virtualFile, dom);
+  }
 
   public static String resolve(String text, VirtualFile file, DomFileElement<MavenModel> dom) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(dom.getFile().getProject());

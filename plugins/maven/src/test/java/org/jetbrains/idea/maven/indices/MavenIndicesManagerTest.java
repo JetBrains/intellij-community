@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -34,10 +34,10 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertFalse(myIndicesFixture.getIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertFalse(myIndicesFixture.getIndicesManager().hasVersion(myProject, "junit", "junit", "4.0"));
 
     resolveProject();
 
-    assertTrue(myIndicesFixture.getIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertTrue(myIndicesFixture.getIndicesManager().hasVersion(myProject, "junit", "junit", "4.0"));
   }
 }

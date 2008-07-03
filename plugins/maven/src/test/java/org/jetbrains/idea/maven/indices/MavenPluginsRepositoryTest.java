@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.core.util.MavenId;

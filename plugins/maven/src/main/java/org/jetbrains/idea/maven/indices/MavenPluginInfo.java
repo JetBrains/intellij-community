@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jdom.Element;

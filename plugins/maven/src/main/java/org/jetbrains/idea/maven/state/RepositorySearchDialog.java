@@ -7,7 +7,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.repository.MavenIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import javax.swing.*;

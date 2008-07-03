@@ -1,8 +1,7 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -116,58 +115,6 @@ public class MavenIndicesTest extends MavenImportingTestCase {
 
     //shouldn't throw 'The existing index is for repository [remote] and not for repository [xxx]'
     myIndices.update(i, myProject, new EmptyProgressIndicator());
-  }
-
-  public void testAddingProjectIndex() throws Exception {
-    createProjectPom("<groupId>group</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>version</version>");
-
-    VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>group1</groupId>" +
-                                     "<artifactId>module1</artifactId>" +
-                                     "<version>version1</version>");
-
-    VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>group2</groupId>" +
-                                     "<artifactId>module2</artifactId>" +
-                                     "<version>version2</version>");
-
-    importSeveralProjects(myProjectPom, m1, m2);
-
-    MavenIndex i = new ProjectMavenIndex(myProject.getBaseDir().getPath());
-    myIndices.add(i);
-
-    assertTrue(myIndices.getGroupIds().isEmpty());
-
-    myIndices.update(i, myProject, new EmptyProgressIndicator());
-
-    assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "group", "group1", "group2");
-    assertUnorderedElementsAreEqual(myIndices.getArtifactIds("group"), "project");
-    assertUnorderedElementsAreEqual(myIndices.getArtifactIds("group1"), "module1");
-    assertUnorderedElementsAreEqual(myIndices.getArtifactIds("group2"), "module2");
-    assertUnorderedElementsAreEqual(myIndices.getVersions("group", "project"), "version");
-    assertUnorderedElementsAreEqual(myIndices.getVersions("group1", "module1"), "version1");
-    assertUnorderedElementsAreEqual(myIndices.getVersions("group2", "module2"), "version2");
-  }
-
-  public void testSavingAndRestoringProjectIndex() throws Exception {
-    importProject("<groupId>group</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>version</version>");
-
-    MavenIndex i = new ProjectMavenIndex(myProject.getBaseDir().getPath());
-    myIndices.add(i);
-    myIndices.update(i, myProject, new EmptyProgressIndicator());
-
-    myIndices.save();
-    shutdownIndex();
-    initIndex();
-    myIndices.load();
-
-    assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "group");
-    assertUnorderedElementsAreEqual(myIndices.getArtifactIds("group"), "project");
-    assertUnorderedElementsAreEqual(myIndices.getVersions("group", "project"), "version");
   }
 
   public void testChangingWithSameID() throws Exception {

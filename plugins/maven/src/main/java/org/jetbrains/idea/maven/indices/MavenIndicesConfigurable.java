@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -263,7 +263,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
         case 0:
           return i.getRepositoryPathOrUrl();
         case 1:
-          if (i instanceof ProjectMavenIndex) return "Project";
           if (i instanceof LocalMavenIndex) return "Local";
           return "Remote";
         case 2:

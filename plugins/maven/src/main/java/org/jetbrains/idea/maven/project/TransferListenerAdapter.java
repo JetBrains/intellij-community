@@ -8,7 +8,7 @@ import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.repository.MavenIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 
 import java.io.File;
 import java.util.List;

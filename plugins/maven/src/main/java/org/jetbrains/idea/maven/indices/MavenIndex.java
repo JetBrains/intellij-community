@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,7 +35,7 @@ public abstract class MavenIndex {
   protected static final String VERSIONS_MAP_FILE = "versions-map.dat";
 
   public enum Kind {
-    LOCAL(0), PROJECT(1), REMOTE(2);
+    LOCAL(0), REMOTE(1);
     private int code;
 
     Kind(int code) {
@@ -85,8 +85,6 @@ public abstract class MavenIndex {
         return new LocalMavenIndex(repo);
       case REMOTE:
         return new RemoteMavenIndex(repo);
-      case PROJECT:
-        return new ProjectMavenIndex(repo);
     }
     throw new RuntimeException("unexpected kind: " + kind);
   }
@@ -250,41 +248,24 @@ public abstract class MavenIndex {
   private void updateData(IndexingContext context, Project project, ProgressIndicator progress) throws IOException {
     progress.setText2("Updating caches...");
 
-    Set<String> groupIds = new HashSet<String>();
-    Set<String> artifactIds = new HashSet<String>();
-    Set<String> versions = new HashSet<String>();
-    Map<String, Set<String>> artifactIdsMap = new HashMap<String, Set<String>>();
-    Map<String, Set<String>> versionsMap = new HashMap<String, Set<String>>();
-
-    doUpdateIndexData(context, project, groupIds, artifactIds, versions, artifactIdsMap, versionsMap, progress);
-
-    IndexData oldData;
-    String oldDataDir;
-    synchronized (this) {
-      oldData = myData;
-      oldDataDir = myDataDir;
-    }
-
     String newDataDir = findAvailableDataDir();
     IndexData newData = openData(newDataDir);
-
-    progress.setText2("Saving caches...");
-
-    for (String each : groupIds) newData.groupIds.add(each);
-    for (String each : artifactIds) newData.artifactIds.add(each);
-    for (String each : versions) newData.versions.add(each);
-
-    for (Map.Entry<String, Set<String>> each : artifactIdsMap.entrySet()) {
-      newData.artifactIdsMap.put(each.getKey(), each.getValue());
+    try {
+      doUpdateIndexData(context, project, newData, progress);
+      newData.flush();
     }
+    catch (Throwable e) {
+      newData.close();
+      FileUtil.delete(getDataDir(newDataDir));
 
-    for (Map.Entry<String, Set<String>> each : versionsMap.entrySet()) {
-      newData.versionsMap.put(each.getKey(), each.getValue());
+      if (e instanceof IOException) throw (IOException)e;
+      throw new RuntimeException(e);
     }
-
-    newData.flush();
 
     synchronized (this) {
+      IndexData oldData = myData;
+      String oldDataDir = myDataDir;
+
       myData = newData;
       myDataDir = newDataDir;
 
@@ -295,12 +276,11 @@ public abstract class MavenIndex {
 
   protected void doUpdateIndexData(IndexingContext context,
                                    Project project,
-                                   Set<String> groupIds,
-                                   Set<String> artifactIds,
-                                   Set<String> versions,
-                                   Map<String, Set<String>> artifactIdsMap,
-                                   Map<String, Set<String>> versionsMap,
+                                   IndexData data,
                                    ProgressIndicator progress) throws IOException {
+    Map<String, Set<String>> artifactIdsMap = new HashMap<String, Set<String>>();
+    Map<String, Set<String>> versionsMap = new HashMap<String, Set<String>>();
+
     IndexReader r = context.getIndexReader();
     int total = r.numDocs();
     for (int i = 0; i < total; i++) {
@@ -317,12 +297,21 @@ public abstract class MavenIndex {
       String artifactId = parts.get(1);
       String version = parts.get(2);
 
-      groupIds.add(groupId);
-      artifactIds.add(groupId + ":" + artifactId);
-      versions.add(groupId + ":" + artifactId + ":" + version);
+      data.groupIds.add(groupId);
+      data.artifactIds.add(groupId + ":" + artifactId);
+      data.versions.add(groupId + ":" + artifactId + ":" + version);
 
       getOrCreate(artifactIdsMap, groupId).add(artifactId);
       getOrCreate(versionsMap, groupId + ":" + artifactId).add(version);
+    }
+
+    persist(artifactIdsMap, data.artifactIdsMap);
+    persist(versionsMap, data.versionsMap);
+  }
+
+  protected void persist(Map<String, Set<String>> map, PersistentHashMap<String, Set<String>> persistentMap) throws IOException {
+    for (Map.Entry<String, Set<String>> each : map.entrySet()) {
+      persistentMap.put(each.getKey(), each.getValue());
     }
   }
 
@@ -390,15 +379,44 @@ public abstract class MavenIndex {
   public synchronized void removeArtifact(MavenId id) {
   }
 
-  public synchronized <T> T process(DataProcessor<T> processor) throws Exception {
-    return processor.process(myData);
+  public synchronized Set<String> getGroupIds() throws MavenIndexException {
+    Set<String> result = myData.groupIds;
+    return result == null ? Collections.<String>emptySet() : result;
   }
 
-  public static interface DataProcessor<T> {
-    T process(IndexData data) throws Exception;
+  public synchronized Set<String> getArtifactIds(String groupId) throws MavenIndexException {
+    try {
+      Set<String> result = myData.artifactIdsMap.get(groupId);
+      return result == null ? Collections.<String>emptySet() : result;
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
   }
 
-  public static class IndexData {
+  public synchronized Set<String> getVersions(String groupId, String artifactId) throws MavenIndexException {
+    try {
+      Set<String> result = myData.versionsMap.get(groupId + ":" + artifactId);
+      return result == null ? Collections.<String>emptySet() : result;
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
+  }
+
+  public synchronized boolean hasGroupId(String groupId) throws MavenIndexException {
+    return myData.groupIds.contains(groupId);
+  }
+
+  public synchronized boolean hasArtifactId(String groupId, String artifactId) throws MavenIndexException {
+    return myData.artifactIds.contains(groupId + ":" + artifactId);
+  }
+
+  public synchronized boolean hasVersion(String groupId, String artifactId, String version) throws MavenIndexException {
+    return myData.versions.contains(groupId + ":" + artifactId + ":" + version);
+  }
+
+  protected static class IndexData {
     File myDir;
     Set<String> groupIds;
     Set<String> artifactIds;

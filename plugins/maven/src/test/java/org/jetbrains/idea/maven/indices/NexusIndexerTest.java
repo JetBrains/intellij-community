@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;

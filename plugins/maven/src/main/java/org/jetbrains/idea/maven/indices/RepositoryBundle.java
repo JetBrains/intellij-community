@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;

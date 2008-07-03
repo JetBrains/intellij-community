@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -19,6 +19,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class MavenPluginInfoReader extends DummyProjectComponent {
+  public static final String[] DEFAULT_GROUPS = new String[]
+      {"org.apache.maven.plugins", "org.codehaus.mojo"};
+
   public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
 
   @Nullable
@@ -36,11 +39,14 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
   @Nullable
   @NonNls
   public String findPluginPath(String repositoryPath, String groupId, String artifactId, String version) {
-    VirtualFile dir;
+    VirtualFile dir = null;
     if (StringUtil.isEmpty(groupId)) {
-      dir = findPluginDirectory(repositoryPath, "org.apache.maven.plugins", artifactId);
-      if (dir == null) dir = findPluginDirectory(repositoryPath, "org.codehaus.mojo", artifactId);
-    } else {
+      for (String each : DEFAULT_GROUPS) {
+        dir = findPluginDirectory(repositoryPath, each, artifactId);
+        if (dir != null) break;
+      }
+    }
+    else {
       dir = findPluginDirectory(repositoryPath, groupId, artifactId);
     }
 

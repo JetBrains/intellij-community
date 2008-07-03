@@ -1,15 +1,9 @@
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xml.CustomChildren;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -17,71 +11,33 @@ import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.Configuration;
-import org.jetbrains.idea.maven.dom.model.Plugin;
 import org.jetbrains.idea.maven.dom.model.PluginExecution;
 import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
 import org.jetbrains.idea.maven.dom.plugin.Mojo;
 import org.jetbrains.idea.maven.dom.plugin.Parameter;
-import org.jetbrains.idea.maven.repository.MavenPluginInfoReader;
-import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 
 import java.util.*;
 
 public class MavenPluginConfigurationDomExtender extends DomExtender<Configuration> {
   public static final Key<Parameter> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
-  public void registerExtensions(@NotNull Configuration c, @NotNull DomExtensionsRegistrar r) {
-    Project p = c.getXmlElement().getProject();
-
-    DomElement parent = c.getParent();
-
-    Plugin pluginElement;
-    PluginExecution executionElement = null;
-    if (parent instanceof PluginExecution) {
-      executionElement = (PluginExecution)parent;
-      pluginElement = (Plugin)parent.getParent().getParent();
-    }
-    else {
-      pluginElement = (Plugin)parent;
+  @Override
+  public void registerExtensions(@NotNull Configuration config, @NotNull DomExtensionsRegistrar r) {
+    MavenPluginModel pluginModel = MavenPluginDomUtil.getMavenPlugin(config);
+    if (pluginModel == null) {
+      r.registerCustomChildrenExtension(AnyParameter.class);
+      return;
     }
 
-    MavenPluginModel pluginModel = getMavenPlugin(p, pluginElement);
-    if (pluginModel == null) return;
-
-    for (Parameter each : collectParameters(pluginModel, executionElement)) {
+    for (Parameter each : collectParameters(pluginModel, config)) {
       registerPluginParameter(r, each);
     }
   }
 
-  private MavenPluginModel getMavenPlugin(Project p, Plugin pluginElement) {
-    VirtualFile pluginXmlFile = getPluginXmlFile(p, pluginElement);
-    if (pluginXmlFile == null) return null;
-    return getMavenPluginElement(p, pluginXmlFile);
-  }
-
-  private VirtualFile getPluginXmlFile(Project p, Plugin pluginElement) {
-    String groupId = pluginElement.getGroupId().getStringValue();
-    String artifactId = pluginElement.getArtifactId().getStringValue();
-    String version = pluginElement.getVersion().getStringValue();
-
-    String pluginPath = MavenPluginsRepository.getInstance(p).findPluginPath(groupId, artifactId, version);
-    if (pluginPath == null) return null;
-
-    VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByPath(pluginPath);
-    if (pluginFile == null) return null;
-
-    VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);
-    if (pluginJarRoot == null) return null;
-    return pluginJarRoot.findFileByRelativePath(MavenPluginInfoReader.MAVEN_PLUGIN_DESCRIPTOR);
-  }
-
-  private MavenPluginModel getMavenPluginElement(Project p, VirtualFile pluginXml) {
-    PsiFile psiFile = PsiManager.getInstance(p).findFile(pluginXml);
-    return DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenPluginModel.class).getRootElement();
-  }
-
-  private Collection<Parameter> collectParameters(MavenPluginModel pluginModel, PluginExecution executionElement) {
+  private Collection<Parameter> collectParameters(MavenPluginModel pluginModel, Configuration config) {
     List<String> selectedGoals = null;
+
+    PluginExecution executionElement = config.getParentOfType(PluginExecution.class, false);
     if (executionElement != null) {
       selectedGoals = new ArrayList<String>();
       for (GenericDomValue<String> goal : executionElement.getGoals().getGoals()) {
@@ -111,9 +67,44 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     return namesWithParameters.values();
   }
 
-  private void registerPluginParameter(DomExtensionsRegistrar r, Parameter each) {
-    DomExtension e = r.registerFixedNumberChildExtension(new XmlName(each.getName().getStringValue()), Parameter.class);
-    e.putUserData(DomExtension.KEY_DECLARATION, each);
-    each.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, each);
+  private void registerPluginParameter(DomExtensionsRegistrar r, final Parameter parameter) {
+    String paramName = parameter.getName().getStringValue();
+    String alias = parameter.getAlias().getStringValue();
+
+    registerPluginParameter(r, parameter, paramName);
+    if (alias != null) registerPluginParameter(r, parameter, alias);
+  }
+
+  private void registerPluginParameter(DomExtensionsRegistrar r, Parameter parameter, final String parameterName) {
+    DomExtension e;
+    if (isCollection(parameter)) {
+      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), DomElement.class);
+      e.addExtender(new DomExtender() {
+        public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
+          registrar.registerCollectionChildrenExtension(new XmlName(StringUtil.unpluralize(parameterName)), AnyParameter.class);
+        }
+      });
+    }
+    else {
+      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), AnyParameter.class);
+    }
+
+    e.putUserData(DomExtension.KEY_DECLARATION, parameter);
+    parameter.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, parameter);
+  }
+
+  private boolean isCollection(Parameter parameter) {
+    String type = parameter.getType().getStringValue();
+    if (type.endsWith("[]")) return true;
+
+    List<String> collectionClasses = Arrays.asList("java.util.List",
+                                                   "java.util.Set",
+                                                   "java.util.Collection");
+    return collectionClasses.contains(type);
+  }
+
+  public static interface AnyParameter extends DomElement {
+    @CustomChildren
+    List<AnyParameter> getChildren();
   }
 }

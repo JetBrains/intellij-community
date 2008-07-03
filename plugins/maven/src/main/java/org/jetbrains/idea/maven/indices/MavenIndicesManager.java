@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +41,7 @@ public class MavenIndicesManager implements ApplicationComponent {
   private MavenEmbedder myEmbedder;
   private MavenIndices myIndices;
 
-  private Map<Project, MavenIndex> myMavenProjectIndices = new HashMap<Project, MavenIndex>();
+  private Map<Project, ProjectMavenIndex> myMavenProjectIndices = new HashMap<Project, ProjectMavenIndex>();
   private Map<Project, MavenProjectsManager.Listener> myMavenProjectListeners = new HashMap<Project, MavenProjectsManager.Listener>();
 
   private final Object myUpdatingIndicesLock = new Object();
@@ -93,6 +93,7 @@ public class MavenIndicesManager implements ApplicationComponent {
   public void initProjectIndicesOnActivation(final Project p) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       doInitProjectIndices(p);
+      return;
     }
 
     MavenProjectsManager.Listener l = new MavenProjectsManager.Listener() {
@@ -107,21 +108,15 @@ public class MavenIndicesManager implements ApplicationComponent {
       }
 
       public void projectAdded(MavenProjectModel n) {
-        if (!myMavenProjectIndices.containsKey(p)) return;
-        addArtifact(myMavenProjectIndices.get(p), n.getMavenId());
       }
 
       public void projectRemoved(MavenProjectModel n) {
-        if (!myMavenProjectIndices.containsKey(p)) return;
-        myMavenProjectIndices.get(p).removeArtifact(n.getMavenId());
       }
 
       public void beforeProjectUpdate(MavenProjectModel n) {
-        projectRemoved(n);
       }
 
       public void projectUpdated(MavenProjectModel n) {
-        projectAdded(n);
       }
     };
     MavenProjectsManager.getInstance(p).addListener(l);
@@ -131,7 +126,7 @@ public class MavenIndicesManager implements ApplicationComponent {
   private void doInitProjectIndices(Project p) {
     try {
       checkLocalIndex(p);
-      checkProjectIndex(p);
+      createProjectIndex(p);
     }
     catch (MavenIndexException e) {
       showError(e);
@@ -200,23 +195,8 @@ public class MavenIndicesManager implements ApplicationComponent {
     scheduleUpdate(p, index);
   }
 
-  private void checkProjectIndex(Project p) throws MavenIndexException {
-    MavenIndex projectIndex = null;
-
-    for (MavenIndex i : myIndices.getIndices()) {
-      if (p.getBaseDir().getPath().equals(i.getRepositoryPathOrUrl())) {
-        projectIndex = i;
-        break;
-      }
-    }
-
-    if (projectIndex == null) {
-      projectIndex = new ProjectMavenIndex(p.getBaseDir().getPath());
-      myIndices.add(projectIndex);
-    }
-
-    myMavenProjectIndices.put(p, projectIndex);
-    scheduleUpdate(p, projectIndex);
+  private void createProjectIndex(Project p) throws MavenIndexException {
+    myMavenProjectIndices.put(p, new ProjectMavenIndex(p));
   }
 
   public Configurable createConfigurable(Project p) {
@@ -354,27 +334,40 @@ public class MavenIndicesManager implements ApplicationComponent {
     return myIndices.getIndices();
   }
 
-  public Set<String> getGroupIds() throws MavenIndexException {
-    return myIndices.getGroupIds();
+  public Set<String> getGroupIds(Project p) throws MavenIndexException {
+    Set<String> result = myIndices.getGroupIds();
+    result.addAll(getProjectIndex(p).getGroupIds());
+    return result;
   }
 
-  public boolean hasGroupId(String groupId) throws MavenIndexException {
-    return myIndices.hasGroupId(groupId);
+  public Set<String> getArtifactIds(Project p, String groupId) throws MavenIndexException {
+    Set<String> result = myIndices.getArtifactIds(groupId);
+    result.addAll(getProjectIndex(p).getArtifactIds(groupId));
+    return result;
   }
 
-  public Set<String> getArtifactIds(String groupId) throws MavenIndexException {
-    return myIndices.getArtifactIds(groupId);
+  public Set<String> getVersions(Project p, String groupId, String artifactId) throws MavenIndexException {
+    Set<String> result = myIndices.getVersions(groupId, artifactId);
+    result.addAll(getProjectIndex(p).getVersions(groupId, artifactId));
+    return result;
   }
 
-  public boolean hasArtifactId(String groupId, String artifactId) throws MavenIndexException {
-    return myIndices.hasArtifactId(groupId, artifactId);
+  public boolean hasGroupId(Project p, String groupId) throws MavenIndexException {
+    return getProjectIndex(p).hasGroupId(groupId)
+           || myIndices.hasGroupId(groupId);
   }
 
-  public Set<String> getVersions(String groupId, String artifactId) throws MavenIndexException {
-    return myIndices.getVersions(groupId, artifactId);
+  public boolean hasArtifactId(Project p, String groupId, String artifactId) throws MavenIndexException {
+    return getProjectIndex(p).hasArtifactId(groupId, artifactId)
+           || myIndices.hasArtifactId(groupId, artifactId);
   }
 
-  public boolean hasVersion(String groupId, String artifactId, String version) throws MavenIndexException {
-    return myIndices.hasVersion(groupId, artifactId, version);
+  public boolean hasVersion(Project p, String groupId, String artifactId, String version) throws MavenIndexException {
+    return getProjectIndex(p).hasVersion(groupId, artifactId, version)
+           || myIndices.hasVersion(groupId, artifactId, version);
+  }
+
+  private ProjectMavenIndex getProjectIndex(Project p) {
+    return myMavenProjectIndices.get(p);
   }
 }

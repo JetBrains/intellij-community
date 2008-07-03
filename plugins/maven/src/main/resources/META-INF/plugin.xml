@@ -32,6 +32,10 @@
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="last"/>
     <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
+
+    <intentionAction>
+      <className>org.jetbrains.idea.maven.dom.ChooseFileIntentionAction</className>
+    </intentionAction>
   </extensions>
 
   <application-components>
@@ -39,7 +43,7 @@
       <implementation-class>org.jetbrains.idea.maven.core.MavenApplicationComponent</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.repository.MavenIndicesManager</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.indices.MavenIndicesManager</implementation-class>
     </component>
   </application-components>
 
@@ -52,7 +56,7 @@
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.repository.MavenPluginsRepository</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.indices.MavenPluginsRepository</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectNavigator</implementation-class>

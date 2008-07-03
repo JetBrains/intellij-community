@@ -140,6 +140,7 @@
     <orderEntry type="module" module-name="EJB" />
     <orderEntry type="module" module-name="GwtStudio" />
     <orderEntry type="module" module-name="dom-impl" />
+    <orderEntry type="module" module-name="idea-tests" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

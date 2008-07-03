@@ -3,48 +3,53 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.ResolvingConverter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.repository.MavenIndexException;
-import org.jetbrains.idea.maven.repository.MavenIndicesManager;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
-public class MavenParentRelativePathConverter extends MavenArtifactConverter {
+public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> {
   @Override
-  protected boolean isValid(MavenIndicesManager manager, MavenId id, String specifiedPath) throws MavenIndexException {
-    return LocalFileSystem.getInstance().findFileByPath(specifiedPath) != null;
+  public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
+    if (s == null) return null;
+    VirtualFile f = context.getFile().getVirtualFile().getParent().findFileByRelativePath(s);
+    if (f == null) return null;
+    return PsiManager.getInstance(context.getXmlElement().getProject()).findFile(f);
+  }
+
+  @Override
+  public String toString(@Nullable PsiFile f, ConvertContext context) {
+    if (f == null) return null;
+    VirtualFile currentFile = context.getFile().getOriginalFile().getVirtualFile();
+    return MavenDomUtil.calcRelativePath(currentFile.getParent(), f.getVirtualFile());
   }
 
   @NotNull
   @Override
-  public Collection<String> getVariants(ConvertContext context) {
-    List<String> result = new ArrayList<String>();
-    VirtualFile currentFile = context.getFile().getOriginalFile().getVirtualFile();
+  public Collection<PsiFile> getVariants(ConvertContext context) {
+    List<PsiFile> result = new ArrayList<PsiFile>();
+    PsiFile currentFile = context.getFile().getOriginalFile();
     for (DomFileElement<MavenModel> each : PomDescriptor.collectProjectPoms(context.getFile().getProject())) {
-      VirtualFile file = each.getOriginalFile().getVirtualFile();
+      PsiFile file = each.getOriginalFile();
       if (file == currentFile) continue;
-      result.add(MavenDomUtil.calcRelativePath(currentFile.getParent(), file));
+      result.add(file);
     }
     return result;
-  }
-
-  @Override
-  protected Set<String> getVariants(MavenIndicesManager manager, MavenId id) throws MavenIndexException {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -71,8 +76,7 @@ public class MavenParentRelativePathConverter extends MavenArtifactConverter {
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       GenericDomValue el = (GenericDomValue)myContext.getInvocationElement();
-      MavenParent parent = getMavenParent(myContext);
-      MavenId id = getId(myContext);
+      MavenId id = MavenArtifactConverterHelper.getId(myContext);
 
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
       MavenProjectModel mavenProject = manager.findProject(id);

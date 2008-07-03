@@ -9,7 +9,7 @@ import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
+import org.jetbrains.idea.maven.indices.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;

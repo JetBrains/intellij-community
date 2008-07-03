@@ -1,8 +1,17 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.fileChooser.TestFileChooserFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
+import org.jetbrains.idea.maven.dom.model.Dependency;
+import org.jetbrains.idea.maven.dom.model.MavenModel;
 
 public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override
@@ -42,7 +51,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     assertCompletionVariants(myProjectPom, "junit");
   }
 
-  public void testDownNotCompleteArtifactIdOnUnknownGroup() throws Exception {
+  public void testDoNotCompleteArtifactIdOnUnknownGroup() throws Exception {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -412,6 +421,130 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     PsiReference ref = getReferenceAtCaret(m1);
     assertNotNull(ref);
     assertEquals(getPsiFile(m2), ref.resolve());
+  }
+
+  public void testDoNotHighlightSystemScopeDependencies() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version>xxx</version>" +
+                     "    <scope>system</system>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
+  public void testResolvingSystemScopeDependencies() throws Throwable {
+    String libPath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version><caret>xxx</version>" +
+                     "    <scope>system</system>" +
+                     "    <systemPath>" + libPath + "</systemPath>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    assertEquals(getPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)), ref.resolve());
+    checkHighlighting();
+  }
+
+  public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
+    String libPath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version>xxx</version>" +
+                     "    <scope>system</system>" +
+                     "    <systemPath><caret>" + libPath + "</systemPath>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    assertEquals(getPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)), ref.resolve());
+    checkHighlighting();
+  }
+
+  public void testChooseFileIntentionForSystemDependency() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency><caret>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version>xxx</version>" +
+                     "    <scope>system</system>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    IntentionAction action = getIntentionAtCaret("Choose File");
+    assertNotNull(action);
+
+    String libPath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+    VirtualFile libFile = LocalFileSystem.getInstance().findFileByPath(libPath);
+
+    TestFileChooserFactory factory = new TestFileChooserFactory();
+    factory.setFiles(new VirtualFile[] {libFile});
+    ((ChooseFileIntentionAction)action).setTestFileChooserFactory(factory);
+
+    int prevValue = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP;
+    try {
+      // prevent file path from wrapping.
+      CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+      myCodeInsightFixture.launchAction(action);
+    }
+    finally {
+      CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = prevValue;
+    }
+
+    DomFileElement<MavenModel> model =
+        DomManager.getDomManager(myProject).getFileElement((XmlFile)getPsiFile(myProjectPom), MavenModel.class);
+    Dependency dep = model.getRootElement().getDependencies().getDependencies().get(0);
+
+    assertEquals(getPsiFile(libFile), dep.getSystemPath().getValue());
+  }
+
+  public void testNoChooseFileIntentionForNonSystemDependency() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency><caret>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version>xxx</version>" +
+                     "    <scope>compile</system>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    IntentionAction action = getIntentionAtCaret("Choose File");
+    assertNull(action);
   }
 
   public void testTypeCompletion() throws Exception {

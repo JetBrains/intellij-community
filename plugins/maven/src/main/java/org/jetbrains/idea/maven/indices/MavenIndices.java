@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repository;
+package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -12,7 +12,10 @@ import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class MavenIndices {
   protected static final String INDICES_LIST_FILE = "list.dat";
@@ -153,76 +156,47 @@ public class MavenIndices {
   }
 
   public Set<String> getGroupIds() throws MavenIndexException {
-    return collect(new MavenIndex.DataProcessor<Collection<String>>() {
-      public Collection<String> process(final MavenIndex.IndexData data) throws Exception {
-        return data.groupIds;
-      }
-    });
+    Set<String> result = new HashSet<String>();
+    for (MavenIndex each : getIndices()) {
+      result.addAll(each.getGroupIds());
+    }
+    return result;
   }
 
   public Set<String> getArtifactIds(final String groupId) throws MavenIndexException {
-    return collect(new MavenIndex.DataProcessor<Collection<String>>() {
-      public Collection<String> process(MavenIndex.IndexData data) throws Exception {
-        return data.artifactIdsMap.get(groupId);
-      }
-    });
+    Set<String> result = new HashSet<String>();
+    for (MavenIndex each : getIndices()) {
+      result.addAll(each.getArtifactIds(groupId));
+    }
+    return result;
   }
 
   public Set<String> getVersions(final String groupId, final String artifactId) throws MavenIndexException {
-    return collect(new MavenIndex.DataProcessor<Collection<String>>() {
-      public Collection<String> process(MavenIndex.IndexData data) throws Exception {
-        return data.versionsMap.get(groupId + ":" + artifactId);
-      }
-    });
+    Set<String> result = new HashSet<String>();
+    for (MavenIndex each : getIndices()) {
+      result.addAll(each.getVersions(groupId, artifactId));
+    }
+    return result;
   }
 
   public boolean hasGroupId(final String groupId) throws MavenIndexException {
-    return process(new MavenIndex.DataProcessor<Boolean>() {
-      public Boolean process(MavenIndex.IndexData data) throws Exception {
-        return data.groupIds.contains(groupId);
-      }
-    });
+    for (MavenIndex each : getIndices()) {
+      if (each.hasGroupId(groupId)) return true;
+    }
+    return false;
   }
 
   public boolean hasArtifactId(final String groupId, final String artifactId) throws MavenIndexException {
-    return process(new MavenIndex.DataProcessor<Boolean>() {
-      public Boolean process(MavenIndex.IndexData data) throws Exception {
-        return data.artifactIds.contains(groupId + ":" + artifactId);
-      }
-    });
+    for (MavenIndex each : getIndices()) {
+      if (each.hasArtifactId(groupId, artifactId)) return true;
+    }
+    return false;
   }
 
   public boolean hasVersion(final String groupId, final String artifactId, final String version) throws MavenIndexException {
-    return process(new MavenIndex.DataProcessor<Boolean>() {
-      public Boolean process(MavenIndex.IndexData data) throws Exception {
-        return data.versions.contains(groupId + ":" + artifactId + ":" + version);
-      }
-    });
-  }
-
-  private Set<String> collect(MavenIndex.DataProcessor<Collection<String>> p) throws MavenIndexException {
-    try {
-      Set<String> result = new HashSet<String>();
-      for (MavenIndex each : getIndices()) {
-        Collection<String> values = each.process(p);
-        if (values != null) result.addAll(values);
-      }
-      return result;
+    for (MavenIndex each : getIndices()) {
+      if (each.hasVersion(groupId, artifactId, version)) return true;
     }
-    catch (Exception e) {
-      throw new MavenIndexException(e);
-    }
-  }
-
-  private boolean process(MavenIndex.DataProcessor<Boolean> p) throws MavenIndexException {
-    try {
-      for (MavenIndex each : myIndices) {
-        if (each.process(p)) return true;
-      }
-      return false;
-    }
-    catch (Exception e) {
-      throw new MavenIndexException(e);
-    }
+    return false;
   }
 }

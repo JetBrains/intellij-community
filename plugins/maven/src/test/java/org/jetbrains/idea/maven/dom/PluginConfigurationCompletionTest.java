@@ -1,28 +1,97 @@
 package org.jetbrains.idea.maven.dom;
 
+import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
+
 import java.io.IOException;
 import java.util.List;
 
-public class PluginConfigurationCompletionTest extends MavenCompletionAndResolutionTestCase {
+public class PluginConfigurationCompletionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+  @Override
+  protected MavenIndicesTestFixture createIndicesFicture() {
+    return new MavenIndicesTestFixture(myDir, myProject, "plugins");
+  }
+
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <version>2.0.2</version>" +
+                  "    </plugin>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-war-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
   }
 
-  public void testBasicCompletion() throws Exception {
+  public void testGroupIdCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId><caret></groupId>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "test", "org.apache.maven.plugins", "org.codehaus.mojo");
+  }
+
+  public void testArtifactIdCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId><caret></artifactId>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin");
+  }
+
+  public void testArtifactWithoutGroupCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId><caret></artifactId>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin");
+  }
+
+  public void testBasicConfigurationCompletion() throws Exception {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "source", "target");
   }
 
-  public void testIncludingPropertiesFromAllTheMojos() throws Exception {
+  public void testIncludingConfigurationParametersFromAllTheMojos() throws Exception {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
   }
 
-  public void testDoesNotIncludeNonEditableProperties() throws Exception {
+  public void testDoesNotIncludeNonEditableConfigurationParameters() throws Exception {
     putCaretInConfigurationSection();
     assertCompletionVariantsDoNotInclude(myProjectPom, "basedir", "buildDirectory");
   }
@@ -31,7 +100,6 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
 
                      "<build>" +
                      "  <plugins>" +
@@ -45,11 +113,10 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
                      "</build>");
   }
 
-  public void testNoPropertiesForUnknownPlugin() throws Exception {
+  public void testNoParametersForUnknownPlugin() throws Exception {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
 
                      "<build>" +
                      "  <plugins>" +
@@ -65,11 +132,10 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testNoPropertiesIfNothingIsSpecified() throws Exception {
+  public void testNoParametersIfNothingIsSpecified() throws Exception {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
 
                      "<build>" +
                      "  <plugins>" +
@@ -84,11 +150,117 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testPropertiesForSpecificGoal() throws Exception {
+  public void testGoalsCompletionAndHighlighting() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal><caret></goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "compile", "testCompile");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal><error>xxx</error></goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
+  }
+
+  public void testPhaseCompletionAndHighlighting() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <phase><caret></phases>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariantsInclude(myProjectPom, "clean", "compile", "package");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <phase><error>xxx</error></phases>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
+  }
+
+  public void testNoExecutionParametersIfGoalIsNotSpecified() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <configuration>" +
+                     "            <<caret>" +
+                     "          </configuration>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom);
+  }
+
+  public void testExecutionParametersForSpecificGoal() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
                      "<build>" +
                      "  <plugins>" +
@@ -113,11 +285,10 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     assertFalse(variants.toString(), variants.contains("testExcludes"));
   }
 
-  public void testPropertiesForSeveralSpecificGoals() throws Exception {
+  public void testExecutionParametersForSeveralSpecificGoals() throws Exception {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
 
                      "<build>" +
                      "  <plugins>" +
@@ -141,11 +312,98 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
   }
 
-  public void testDocumentationForProperty() throws Exception {
+  public void testAliasCompletion() throws Exception {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-war-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <<caret>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariantsInclude(myProjectPom, "warSourceExcludes", "excludes");
+  }
+
+  public void testListElementsCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <excludes>" +
+                     "          <exclude></exclude>" +
+                     "          <<caret>" +
+                     "        </excludes>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "exclude");
+  }
+
+  public void testArrayElementsCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-war-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <webResources>" +
+                     "          <webResource></webResource>" +
+                     "          <<caret>" +
+                     "        </webResources>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "webResource");
+  }
+
+  public void testCompletionInCustomObjects() throws Exception {
+    if (ignore()) return;
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-war-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <webResources>" +
+                     "          <webResource>" +
+                     "            <<caret>" +
+                     "          </webResource>" +
+                     "        </webResources>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom);
+  }
+
+  public void testDocumentationForParameter() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
                      "<build>" +
                      "  <plugins>" +
@@ -165,7 +423,6 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
 
                      "<ciManagement>" +
                      "  <system>foo</system>" +
@@ -182,22 +439,78 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     checkHighlighting();
   }
 
-  public void testDoNotHighlighInnerProperties() throws Throwable {
-    if (ignore()) return;
-    
+  public void testDoNotHighlighInnerParameters() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
 
                      "<build>" +
                      "  <plugins>" +
                      "    <plugin>" +
                      "      <artifactId>maven-compiler-plugin</artifactId>" +
                      "      <configuration>" +
-                     "        <includes>" +
-                     "          <include>*.java</include>" +
-                     "        </includes>" +
+                     "        <source>" +
+                     "          <foo>*.java</foo>" +
+                     "        </source>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
+  }
+
+  public void testWorksWithPropertiesInPluginId() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <plugin.groupId>org.apache.maven.plugins</plugin.groupId>" +
+                     "  <plugin.artifactId>maven-compiler-plugin</plugin.artifactId>" +
+                     "  <plugin.version>2.0.2</plugin.version>" +
+                     "</properties>");
+    importProject(); // let us recognize the properties first
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <plugin.groupId>org.apache.maven.plugins</plugin.groupId>" +
+                     "  <plugin.artifactId>maven-compiler-plugin</plugin.artifactId>" +
+                     "  <plugin.version>2.0.2</plugin.version>" +
+                     "</properties>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>${plugin.groupId}</groupId>" +
+                     "      <artifactId>${plugin.artifactId}</artifactId>" +
+                     "      <version>${plugin.version}</version>" +
+                     "      <configuration>" +
+                     "        <source></source>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
+  }
+
+  public void testDoNotHighlightPropertiesForUnknownPlugins() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId><error>foo.bar</error></artifactId>" +
+                     "      <configuration>" +
+                     "        <prop>" +
+                     "          <value>foo</value>" +
+                     "        </prop>" +
                      "      </configuration>" +
                      "    </plugin>" +
                      "  </plugins>" +
