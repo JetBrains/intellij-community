@@ -38,6 +38,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -122,9 +123,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     cacheLexems();
   }
 
-  /**
-   * For tests only!
-   */
+  @TestOnly
   public PsiBuilderImpl(final Lexer lexer, final TokenSet whitespaces, final TokenSet comments, CharSequence text) {
     myWhitespaces = whitespaces;
     myLexer = lexer;
@@ -134,6 +133,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     myFileLevelParsing = true;
     cacheLexems();
+  }
+
+  @TestOnly
+  public void setOriginalTree(final ASTNode originalTree) {
+    myOriginalTree = originalTree;
+    myCharTable = SharedImplUtil.findCharTableByTree(originalTree);
   }
 
   private void cacheLexems() {
@@ -486,6 +491,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public Marker mark() {
+    if (!myProduction.isEmpty()) {
+      skipWhitespace();
+    }
     StartMarker marker = createMarker(myCurrentLexem);
 
     myProduction.add(marker);
