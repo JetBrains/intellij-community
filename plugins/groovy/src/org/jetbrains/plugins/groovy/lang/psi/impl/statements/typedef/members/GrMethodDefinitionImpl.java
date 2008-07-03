@@ -175,12 +175,16 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public GrParameterList getParameterList() {
-    return findChildByClass(GrParameterList.class);
+    GrParameterList parameterList = findChildByClass(GrParameterList.class);
+    assert parameterList != null;
+    return parameterList;
   }
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return findChildByClass(GrThrowsClause.class);
+    GrThrowsClause clause = findChildByClass(GrThrowsClause.class);
+    assert clause != null;
+    return clause;
   }
 
   @Nullable

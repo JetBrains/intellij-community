@@ -91,6 +91,7 @@ public class VariableDefinitions implements GroovyElementTypes {
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         builder.error(GroovyBundle.message("rparen.expected"));
         varMarker.drop();
+        ThrowClause.parse(builder);
         return METHOD_DEFINITION;
       }
 
@@ -103,7 +104,7 @@ public class VariableDefinitions implements GroovyElementTypes {
         if (!AnnotationArguments.parseAnnotationMemberValueInitializer(builder)) {
           builder.error(GroovyBundle.message("annotation.initializer.expected"));
         }
-        
+
         defaultValueMarker.done(DEFAULT_ANNOTATION_VALUE);
         return DEFAULT_ANNOTATION_MEMBER;
       }

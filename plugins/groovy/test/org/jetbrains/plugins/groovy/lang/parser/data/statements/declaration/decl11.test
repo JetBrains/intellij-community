@@ -30,7 +30,9 @@ Groovy script
         PsiElement(identifier)('gory')
     PsiErrorElement:')' expected
       <empty list>
-  PsiWhiteSpace(' ')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
   PsiErrorElement:';' or new line expected
     PsiElement(identifier)('other')
     PsiElement())(')')

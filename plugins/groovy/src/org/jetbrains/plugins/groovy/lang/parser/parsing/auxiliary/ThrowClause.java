@@ -22,8 +22,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
+ * @date 26.03.2007
  */
 public class ThrowClause implements GroovyElementTypes {
   public static void parse(PsiBuilder builder) {
