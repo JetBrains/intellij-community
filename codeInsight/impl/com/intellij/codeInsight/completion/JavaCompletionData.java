@@ -392,6 +392,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(new TextFilter(PsiKeyword.RETURN)));
       variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
       variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
+      variant.addCompletion(PsiKeyword.TRUE, TailType.NONE);
+      variant.addCompletion(PsiKeyword.FALSE, TailType.NONE);
       registerVariant(variant);
     }
 
@@ -606,6 +608,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       // null completion
       final CompletionVariant variant = new CompletionVariant(new NotFilter(new LeftNeighbour(new TextFilter("."))));
       variant.addCompletion(PsiKeyword.NULL, TailType.NONE);
+      variant.addCompletion(PsiKeyword.TRUE, TailType.NONE);
+      variant.addCompletion(PsiKeyword.FALSE, TailType.NONE);
       variant.includeScopeClass(PsiExpressionList.class);
       registerVariant(variant);
     }
