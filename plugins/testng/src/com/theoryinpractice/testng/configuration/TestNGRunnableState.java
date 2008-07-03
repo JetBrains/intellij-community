@@ -160,7 +160,8 @@ public class TestNGRunnableState extends JavaCommandLineState
     // Add plugin jars first...
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
         new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
-    if (config.isCoverageEnabled() && config.getCoverageRunner() instanceof IDEACoverageRunner) javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
+    final boolean hasIDEACoverageEnabled = config.isCoverageEnabled() && config.getCoverageRunner() instanceof IDEACoverageRunner;
+    if (hasIDEACoverageEnabled) javaParameters.getClassPath().add(PathUtil.getJarPathForClass(IDEACoverageListener.class));
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
@@ -178,7 +179,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
       DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(config.getCoverageFilePath());
       LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
-      myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(config.getGeneratedName() + " Coverage Results", fileProvider,
+      myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(config.getName() + " Coverage Results", fileProvider,
                                                                     config.getPatterns(), new Date().getTime(),
                                                                     null, config.getCoverageRunner(), config.isTrackPerTestCoverage() && !config.isSampling(),
                                                                     !config.isSampling());
@@ -223,7 +224,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       }
     }
     if (buf.length() > 0) buf.append(";");
-    if (config.isCoverageEnabled() && config.getCoverageRunner() instanceof IDEACoverageRunner) buf.append(IDEACoverageListener.class.getName());
+    if (hasIDEACoverageEnabled) buf.append(IDEACoverageListener.class.getName());
     if (buf.length() > 0) javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, buf.toString());
 
     // Always include the source paths - just makes things easier :)
