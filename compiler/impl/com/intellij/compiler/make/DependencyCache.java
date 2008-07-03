@@ -6,8 +6,6 @@ package com.intellij.compiler.make;
 
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -141,58 +139,44 @@ public class DependencyCache {
     final Cache newCache = getNewClassesCache();
     final DependencyCacheNavigator navigator = getCacheNavigator();
 
-    final Job<Object> cleanJob = JobScheduler.getInstance().createJob("cleaning stuff", Job.DEFAULT_PRIORITY);
-
     // remove unnecesary dependencies
     final TIntHashSet toClean = new TIntHashSet();
     toClean.addAll(namesToUpdate);
     toClean.addAll(myClassesWithSourceRemoved.toArray());
-    final CacheCorruptedException[] exception = new CacheCorruptedException[]{null};
+
     for (final int qName : toClean.toArray()) {
       final int oldClassId = cache.getClassId(qName);
       if (oldClassId == Cache.UNKNOWN) {
         continue;
       }
       // process use-dependencies
-      Runnable runnable = new Runnable() {
-        public void run() {
-          try {
-            final int[] referencedClasses = cache.getReferencedClassQNames(oldClassId);
-            for (int referencedClassQName : referencedClasses) {
-              final int referencedClassDeclarationId = cache.getClassDeclarationId(referencedClassQName);
-              if (referencedClassDeclarationId == Cache.UNKNOWN) {
-                continue;
-              }
-              cache.removeClassReferencer(referencedClassDeclarationId, qName);
-
-              final int[] fieldIds = cache.getFieldIds(referencedClassDeclarationId);
-              for (int fieldId : fieldIds) {
-                cache.removeFieldReferencer(fieldId, qName);
-              }
-
-              final int[] methodIds = cache.getMethodIds(referencedClassDeclarationId);
-              for (int methodId : methodIds) {
-                cache.removeMethodReferencer(methodId, qName);
-              }
-            }
-            // process inheritance dependencies
-            navigator.walkSuperClasses(qName, new ClassInfoProcessor() {
-              public boolean process(int classQName) throws CacheCorruptedException {
-                final int classId = cache.getClassId(classQName);
-                cache.removeSubclass(classId, qName);
-                return true;
-              }
-            });
-          }
-          catch (CacheCorruptedException e) {
-            exception[0] = e;
-          }
+      final int[] referencedClasses = cache.getReferencedClassQNames(oldClassId);
+      for (int referencedClassQName : referencedClasses) {
+        final int referencedClassDeclarationId = cache.getClassDeclarationId(referencedClassQName);
+        if (referencedClassDeclarationId == Cache.UNKNOWN) {
+          continue;
         }
-      };
-      cleanJob.addTask(runnable);
-    }
+        cache.removeClassReferencer(referencedClassDeclarationId, qName);
 
-    scheduleNow(cleanJob, exception);
+        final int[] fieldIds = cache.getFieldIds(referencedClassDeclarationId);
+        for (int fieldId : fieldIds) {
+          cache.removeFieldReferencer(fieldId, qName);
+        }
+
+        final int[] methodIds = cache.getMethodIds(referencedClassDeclarationId);
+        for (int methodId : methodIds) {
+          cache.removeMethodReferencer(methodId, qName);
+        }
+      }
+      // process inheritance dependencies
+      navigator.walkSuperClasses(qName, new ClassInfoProcessor() {
+        public boolean process(int classQName) throws CacheCorruptedException {
+          final int classId = cache.getClassId(classQName);
+          cache.removeSubclass(classId, qName);
+          return true;
+        }
+      });
+    }
 
     // do update of classInfos
     for (final int qName : namesToUpdate) {
@@ -207,91 +191,44 @@ public class DependencyCache {
 
     final SymbolTable symbolTable = getSymbolTable();
 
-    final Job<Object> forwardJob = JobScheduler.getInstance().createJob("building forward deps", Job.DEFAULT_PRIORITY);
-
     for (final int qName : namesToUpdate) {
       final int newClassId = newCache.getClassId(qName);
       if (newClassId == Cache.UNKNOWN) {
         continue;
       }
-      forwardJob.addTask(new Runnable() {
-        public void run() {
-          try {
-            if (exception[0] != null) {
-              return;
-            }
-            buildForwardDependencies(qName, newCache.getReferences(newClassId));
-            boolean isRemote = false;
-            final int classId = cache.getClassId(qName);
-            // "remote objects" are classes that _directly_ implement remote interfaces
-            final int[] superInterfaces = cache.getSuperInterfaces(classId);
-            if (superInterfaces.length > 0) {
-              final int remoteInterfaceName = symbolTable.getId(REMOTE_INTERFACE_NAME);
-              for (int superInterface : superInterfaces) {
-                if (isRemoteInterface(cache, superInterface, remoteInterfaceName)) {
-                  isRemote = true;
-                  break;
-                }
-              }
-            }
-            final boolean wasRemote = cache.isRemote(classId);
-            if (wasRemote && !isRemote) {
-              synchronized (myPreviouslyRemoteClasses) {
-                myPreviouslyRemoteClasses.add(qName);
-              }
-            }
-            cache.setRemote(classId, isRemote);
-          }
-          catch (CacheCorruptedException e) {
-            if (exception[0] == null) {
-              exception[0] = e;
-              forwardJob.cancel();
-            }
-          }
-        }
-      });
-    }
-    scheduleNow(forwardJob, exception);
-    // building subclass dependencies
-    final Job<Object> subclassJob = JobScheduler.getInstance().createJob("building subclass deps", Job.DEFAULT_PRIORITY);
-    for (final int qName : namesToUpdate) {
+      buildForwardDependencies(qName, newCache.getReferences(newClassId));
+      boolean isRemote = false;
       final int classId = cache.getClassId(qName);
-      subclassJob.addTask(new Runnable() {
-        public void run() {
-          try {
-            if (exception[0] != null) {
-              return;
-            }
-            buildSubclassDependencies(getCache(), qName, classId);
-          }
-          catch (CacheCorruptedException e) {
-            if (exception[0] == null) {
-              exception[0] = e;
-              subclassJob.cancel();
-            }
+      // "remote objects" are classes that _directly_ implement remote interfaces
+      final int[] superInterfaces = cache.getSuperInterfaces(classId);
+      if (superInterfaces.length > 0) {
+        final int remoteInterfaceName = symbolTable.getId(REMOTE_INTERFACE_NAME);
+        for (int superInterface : superInterfaces) {
+          if (isRemoteInterface(cache, superInterface, remoteInterfaceName)) {
+            isRemote = true;
+            break;
           }
         }
-      });
+      }
+      final boolean wasRemote = cache.isRemote(classId);
+      if (wasRemote && !isRemote) {
+        synchronized (myPreviouslyRemoteClasses) {
+          myPreviouslyRemoteClasses.add(qName);
+        }
+      }
+      cache.setRemote(classId, isRemote);
     }
 
-    scheduleNow(subclassJob, exception);
+    // building subclass dependencies
+    for (final int qName : namesToUpdate) {
+      final int classId = cache.getClassId(qName);
+      buildSubclassDependencies(getCache(), qName, classId);
+    }
 
      myToUpdate = new TIntHashSet();
 
     //System.out.println("Dependency cache update took: " + (System.currentTimeMillis() - updateStart) + " ms");
     //pause();
-  }
-
-  private static void scheduleNow(final Job<Object> job, final CacheCorruptedException[] exception) throws CacheCorruptedException {
-    try {
-      job.scheduleAndWaitForResults();
-    }
-    catch (Throwable throwable) {
-      exception[0] = new CacheCorruptedException(throwable);
-    }
-    if (exception[0] != null) {
-      throw exception[0];
-    }
   }
 
   private void buildForwardDependencies(final int classQName, final Collection<ReferenceInfo> references) throws CacheCorruptedException {
@@ -674,7 +611,7 @@ public class DependencyCache {
       }
     }
     catch (CacheCorruptedException e) {
-      LOG.error(e); // todo
+      LOG.info(e); 
     }
     try {
       if (myCache != null) {
@@ -683,7 +620,7 @@ public class DependencyCache {
       }
     }
     catch (CacheCorruptedException e) {
-      LOG.error(e); // todo
+      LOG.info(e); 
     }
     try {
       if (mySymbolTable != null) {
@@ -692,7 +629,7 @@ public class DependencyCache {
       }
     }
     catch (CacheCorruptedException e) {
-      LOG.error(e); // todo
+      LOG.info(e);
     }
   }
 
