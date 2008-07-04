@@ -104,7 +104,7 @@ public class ParameterInfoUtils {
         }
         break;
       }
-      if (parent instanceof PsiFile) return null;
+      if (parent instanceof PsiFile || parent == null) return null;
       parent = parent.getParent();
     }
 
