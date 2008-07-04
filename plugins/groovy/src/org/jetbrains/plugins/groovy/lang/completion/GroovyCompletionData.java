@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
@@ -197,9 +196,9 @@ public class GroovyCompletionData extends CompletionData {
 
   {
     ourReferenceVariant = new CompletionVariant() {
-      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PrefixMatcher matcher, final PsiFile file,
+      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PsiFile file,
                                           final CompletionData completionData) {
-        completeReference(reference, position, set, TailType.NONE, matcher, file, TrueFilter.INSTANCE, this);
+        completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
       }
     };
     ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
@@ -208,20 +207,20 @@ public class GroovyCompletionData extends CompletionData {
 
   @Override
   public void completeReference(final PsiReference reference, final Set<LookupItem> set, @NotNull final PsiElement position,
-                                final PrefixMatcher matcher, final PsiFile file, final int offset) {
+                                final PsiFile file, final int offset) {
     final CompletionVariant[] variants = findVariants(position, file);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         boolean hasApplicableVariants = false;
         for (CompletionVariant variant : variants) {
           if (variant.hasReferenceFilter()) {
-            variant.addReferenceCompletions(reference, position, set, matcher, file, GroovyCompletionData.this);
+            variant.addReferenceCompletions(reference, position, set, file, GroovyCompletionData.this);
             hasApplicableVariants = true;
           }
         }
 
         if (!hasApplicableVariants) {
-          ourReferenceVariant.addReferenceCompletions(reference, position, set, matcher, file, GroovyCompletionData.this);
+          ourReferenceVariant.addReferenceCompletions(reference, position, set, file, GroovyCompletionData.this);
         }
       }
     });

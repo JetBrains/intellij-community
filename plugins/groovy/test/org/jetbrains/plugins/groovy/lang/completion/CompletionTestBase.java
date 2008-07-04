@@ -17,10 +17,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -140,7 +140,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
       }
       if (ref != null && addReferenceVariants(ref)) {
         assert insertedElement != null;
-        completionData.completeReference(ref, lookupSet, insertedElement, TRUE_MATCHER, myFile, myOffset + 1);
+        completionData.completeReference(ref, lookupSet, insertedElement, myFile, myOffset + 1);
       }
     }
 
