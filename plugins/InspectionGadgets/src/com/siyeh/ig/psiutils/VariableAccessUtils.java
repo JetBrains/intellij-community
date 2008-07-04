@@ -180,8 +180,8 @@ public class VariableAccessUtils{
         return visitor.isUsed();
     }
 
-    public static boolean variableIsIncremented(PsiLocalVariable variable,
-                                                 PsiStatement statement) {
+    public static boolean variableIsIncremented(PsiVariable variable,
+                                                PsiStatement statement) {
         if (!(statement instanceof PsiExpressionStatement)) {
             return false;
         }
