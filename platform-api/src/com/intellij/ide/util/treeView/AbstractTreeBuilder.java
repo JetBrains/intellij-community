@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.Alarm;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Time;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -47,6 +49,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
@@ -95,6 +99,13 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private WeakList<Object> myLoadingParents = new WeakList<Object>();
 
+  private long myClearOnHideDelay = -1;
+  private ScheduledExecutorService ourClearanceService;
+  private Map<AbstractTreeBuilder, Long> ourBuilder2Countdown = Collections.synchronizedMap(new WeakHashMap<AbstractTreeBuilder, Long>());
+
+  private final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
+  private final List<Runnable> myDeferredExpansions = new ArrayList<Runnable>();
+
   protected AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
   }
@@ -126,21 +137,90 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
     new UiNotifyConnector(tree, new Activatable() {
       public void showNotify() {
-        if (myWasEverShown && myUpdateFromRootRequested) {
-          updateFromRoot();
-        }
-        myWasEverShown = true;
+        processShowNotify();
       }
 
       public void hideNotify() {
-        if (!myWasEverShown) return;
-
-        if (!myBackgroundableNodeActions.isEmpty()) {
-          cancelBackgroundLoading();
-          myUpdateFromRootRequested = true;
-        }
+        processHideNotify();
       }
     });
+  }
+
+  public AbstractTreeBuilder setClearOnHideDelay(final long clearOnHideDelay) {
+    myClearOnHideDelay = clearOnHideDelay;
+    return this;
+  }
+
+  protected void processHideNotify() {
+    if (!myWasEverShown) return;
+
+    if (!myBackgroundableNodeActions.isEmpty()) {
+      cancelBackgroundLoading();
+      myUpdateFromRootRequested = true;
+    }
+
+    if (myClearOnHideDelay >= 0) {
+      ourBuilder2Countdown.put(this, System.currentTimeMillis() + myClearOnHideDelay);
+      initClearanceServiceIfNeeded();
+    }
+  }
+
+  private void initClearanceServiceIfNeeded() {
+    if (ourClearanceService != null) return;
+
+    ourClearanceService = ConcurrencyUtil.newSingleScheduledThreadExecutor("AbstractTreeBuilder's janitor");
+    ourClearanceService.scheduleWithFixedDelay(new Runnable() {
+      public void run() {
+        cleanUpAll();
+      }
+    }, getJanitorPollPeriod(), getJanitorPollPeriod(), TimeUnit.MILLISECONDS);
+  }
+
+  private void cleanUpAll() {
+    final long now = System.currentTimeMillis();
+    final AbstractTreeBuilder[] builders = ourBuilder2Countdown.keySet().toArray(new AbstractTreeBuilder[ourBuilder2Countdown.size()]);
+    for (AbstractTreeBuilder builder : builders) {
+      if (builder == null) continue;
+      final Long timeToCleanup = ourBuilder2Countdown.get(builder);
+      if (timeToCleanup == null) continue;
+      if (now >= timeToCleanup.longValue()) {
+        ourBuilder2Countdown.remove(builder);
+        cleanUp(builder);
+      }
+    }
+  }
+
+  protected void cleanUp(final AbstractTreeBuilder builder) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        builder.cleanUp();
+      }
+    });
+  }
+
+  private void disposeClearanceServiceIfNeeded() {
+    if (ourClearanceService != null && ourBuilder2Countdown.size() == 0) {
+      ourClearanceService.shutdown();
+      ourClearanceService = null;
+    }
+  }
+
+  protected long getJanitorPollPeriod() {
+    return Time.SECOND * 10;
+  }
+
+  protected void processShowNotify() {
+    ourBuilder2Countdown.remove(this);
+
+    if (!myWasEverShown || myUpdateFromRootRequested) {
+      if (wasRootNodeInitialized()) {
+        updateFromRoot();
+      } else {
+        initRootNodeNow();
+        updateFromRoot();
+      }
+    }
+    myWasEverShown = true;
   }
 
   /**
@@ -176,6 +256,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     if (myProgress != null) {
       myProgress.cancel();
     }
+    disposeClearanceServiceIfNeeded();
   }
 
   public boolean isDisposed() {
@@ -315,11 +396,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     Object rootElement = myTreeStructure.getRootElement();
     addNodeAction(rootElement, new NodeAction() {
       public void onReady(final DefaultMutableTreeNode node) {
-        final Runnable[] runnables = myDeferredSelections.toArray(new Runnable[myDeferredSelections.size()]);
-        myDeferredSelections.clear();
-        for (Runnable runnable : runnables) {
-          runnable.run();
-        }
+        processDeferredActions();
       }
     });
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
@@ -339,6 +416,21 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
     if (myRootNode.getChildCount() == 0) {
       myTreeModel.nodeChanged(myRootNode);
+    }
+
+    processDeferredActions();
+  }
+
+  private void processDeferredActions() {
+    processDeferredActions(myDeferredSelections);
+    processDeferredActions(myDeferredExpansions);
+  }
+
+  private void processDeferredActions(List<Runnable> actions) {
+    final Runnable[] runnables = actions.toArray(new Runnable[actions.size()]);
+    actions.clear();
+    for (Runnable runnable : runnables) {
+      runnable.run();
     }
   }
 
@@ -380,6 +472,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
     if (myUnbuiltNodes.contains(node)) {
       processUnbuilt(node, descriptor);
+      processNodeActionsIfReady(node);
       return;
     }
 
@@ -451,13 +544,19 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  private void processAllChildren(final DefaultMutableTreeNode node, final Map<Object, Integer> elementToIndexMap) {
+  private boolean processAllChildren(final DefaultMutableTreeNode node, final Map<Object, Integer> elementToIndexMap) {
     ArrayList<TreeNode> childNodes = TreeUtil.childrenToArray(node);
+    boolean containsLoading = false;
     for (TreeNode childNode1 : childNodes) {
       DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
-      if (isLoadingNode(childNode)) continue;
+      if (isLoadingNode(childNode)) {
+        containsLoading = true;
+        continue;
+      }
       processChildNode(childNode, (NodeDescriptor)childNode.getUserObject(), node, elementToIndexMap);
     }
+
+    return containsLoading;
   }
 
   private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor) {
@@ -553,16 +652,16 @@ public abstract class AbstractTreeBuilder implements Disposable {
         myTreeStructure.getChildElements(getTreeStructureElement(descriptor)); // load children
       }
     };
+
     Runnable postRunnable = new Runnable() {
       public void run() {
         myLoadingParents.remove(descriptor.getElement());
 
         updateNodeDescriptor(descriptor);
         Object element = descriptor.getElement();
+
         if (element != null) {
           myUnbuiltNodes.remove(node);
-          myUpdater.addSubtreeToUpdateByElement(element);
-          myUpdater.performUpdate();
 
           for (int i = 0; i < node.getChildCount(); i++) {
             TreeNode child = node.getChildAt(i);
@@ -571,10 +670,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
                 myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
               }
               myTreeModel.removeNodeFromParent((MutableTreeNode)child);
-              break;
+              i--;
             }
           }
-
 
           processNodeActionsIfReady(node);
         }
@@ -616,14 +714,14 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
 
-    boolean areChuldrenLoading = false;
+    int loadingNodes = 0;
     for (int i = 0; i < node.getChildCount(); i++) {
       TreeNode child = node.getChildAt(i);
-      if (isLoadingNode(child) && getLoadingNodeText().equals(((LoadingNode)child).getUserObject())) {
-        areChuldrenLoading = true;
+      if (isLoadingNode(child)) {
+        loadingNodes++;
       }
     }
-    return areChuldrenLoading;
+    return loadingNodes > 0 && loadingNodes == node.getChildCount();
   }
 
   private boolean isParentLoading(Object nodeObject) {
@@ -897,9 +995,18 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone) {
-    final int[] originalRows = myTree.getSelectionRows();
-    myTree.clearSelection();
-    addNext(elements, 0, onDone, originalRows);
+    if (wasRootNodeInitialized()) {
+      final int[] originalRows = myTree.getSelectionRows();
+      myTree.clearSelection();
+      addNext(elements, 0, onDone, originalRows);
+    } else {
+      myDeferredSelections.clear();
+      myDeferredSelections.add(new Runnable() {
+        public void run() {
+          select(elements, onDone);
+        }
+      });
+    }
   }
 
   private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows) {
@@ -921,10 +1028,14 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public void select(final Object element, @Nullable final Runnable onDone) {
-    _select(element, onDone, false);
+    select(element, onDone, false);
   }
 
-  private final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
+  public void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
+    _select(element, onDone, addToSelection);
+  }
+
+
   private void _select(final Object element, final Runnable onDone, final boolean addToSelection) {
     final Runnable _onDone = new Runnable() {
       public void run() {
@@ -937,44 +1048,43 @@ public abstract class AbstractTreeBuilder implements Disposable {
         }
       }
     };
-    if (wasRootNodeInitialized()) {
-      _expand(element, _onDone, true);
-    }
-    else {
-      myDeferredSelections.add(new Runnable() {
-        public void run() {
-          _expand(element, _onDone, true);
-        }
-      });
-    }
+    _expand(element, _onDone, true);
   }
 
   public void expand(final Object element, @Nullable final Runnable onDone) {
     _expand(element, onDone == null ? new EmptyRunnable() : onDone, false);
   }
 
-  private void _expand(final Object element, @NotNull Runnable onDone, boolean parentsOnly) {
-    List<Object> kidsToExpand = new ArrayList<Object>();
-    Object eachElement = element;
-    DefaultMutableTreeNode firstVisible;
-    while(true) {
-      firstVisible = getNodeForElement(eachElement);
-      if (eachElement != element || !parentsOnly) {
-        kidsToExpand.add(eachElement);
+  private void _expand(final Object element, @NotNull final Runnable onDone, final boolean parentsOnly) {
+    if (wasRootNodeInitialized()) {
+      List<Object> kidsToExpand = new ArrayList<Object>();
+      Object eachElement = element;
+      DefaultMutableTreeNode firstVisible;
+      while(true) {
+        firstVisible = getNodeForElement(eachElement);
+        if (eachElement != element || !parentsOnly) {
+          kidsToExpand.add(eachElement);
+        }
+        if (firstVisible != null) break;
+        eachElement = myTreeStructure.getParentElement(eachElement);
+        if (eachElement == null) {
+          firstVisible = null;
+          break;
+        }
       }
-      if (firstVisible != null) break;
-      eachElement = myTreeStructure.getParentElement(eachElement);
-      if (eachElement == null) {
-        firstVisible = null;
-        break;
+
+      if (firstVisible == null) {
+        onDone.run();
       }
-    }
 
-    if (firstVisible == null) {
-      onDone.run();
+      processExpand(firstVisible, kidsToExpand, kidsToExpand.size() - 1, onDone);
+    } else {
+      myDeferredExpansions.add(new Runnable() {
+        public void run() {
+          _expand(element, onDone, parentsOnly);
+        }
+      });
     }
-
-    processExpand(firstVisible, kidsToExpand, kidsToExpand.size() - 1, onDone);
   }
 
   private void processExpand(final DefaultMutableTreeNode toExpand, final List kidsToExpand, final int expandIndex, @NotNull final Runnable onDone) {
@@ -1043,7 +1153,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
       for (int i = 0; i < node.getChildCount(); i++) {
         if (isLoadingNode(node.getChildAt(i))) {
           myTreeModel.removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
-          break;
         }
       }
 
@@ -1222,4 +1331,80 @@ public abstract class AbstractTreeBuilder implements Disposable {
   interface NodeAction {
     void onReady(DefaultMutableTreeNode node);
   }
+
+  public void cleanUp() {
+    if (myDisposed) return;
+
+    final Object[] toSelect = addPaths(myTree.getSelectionPaths());
+    final Object[] toExpand = addPaths(myTree.getExpandedDescendants(new TreePath(myTreeModel.getRoot())));
+
+    myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
+    myRootNode.removeAllChildren();
+
+    myRootNodeWasInitialized = false;
+    myBackgroundableNodeActions.clear();
+    myElementToNodeMap.clear();
+    myDeferredSelections.clear();
+    myDeferredExpansions.clear();
+    myLoadingParents.clear();
+    myUnbuiltNodes.clear();
+    myUpdateFromRootRequested = true;
+
+    if (myWorker != null) {
+      Disposer.dispose(myWorker);
+      myWorker = null;
+    }
+
+    myTree.invalidate();
+
+    select(toSelect, new Runnable() {
+      public void run() {
+        for (Object each : toExpand) {
+          expand(each, null);
+        }
+      }
+    });
+  }
+
+  private Object[] addPaths(Object[] elements) {
+    ArrayList elementArray = new ArrayList();
+    if (elements != null) {
+      elementArray.addAll(Arrays.asList(elements));
+    }
+
+    return addPaths(elementArray);
+  }
+
+  private Object[] addPaths(Enumeration elements) {
+    ArrayList elementArray = new ArrayList();
+    if (elements != null) {
+      while (elements.hasMoreElements()) {
+        Object each = elements.nextElement();
+        elementArray.add(each);
+      }
+    }
+
+    return addPaths(elementArray);
+  }
+
+  private Object[] addPaths(Collection elements) {
+    ArrayList target = new ArrayList();
+
+    if (elements != null) {
+      for (Object each : elements) {
+        final Object node = ((TreePath)each).getLastPathComponent();
+        if (node instanceof DefaultMutableTreeNode) {
+          final Object descriptor = ((DefaultMutableTreeNode)node).getUserObject();
+          if (descriptor instanceof NodeDescriptor) {
+            final Object element = ((NodeDescriptor)descriptor).getElement();
+            if (element != null) {
+              target.add(element);
+            }
+          }
+        }
+      }
+    }
+    return target.toArray(new Object[target.size()]);
+  }
+
 }

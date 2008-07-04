@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.Time;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -439,10 +440,11 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public void setTreeBuilder(final AbstractTreeBuilder treeBuilder) {
-    myTreeBuilder = treeBuilder;
     if (treeBuilder != null) {
       Disposer.register(myProject, treeBuilder);
-    }
+      treeBuilder.setClearOnHideDelay(Time.SECOND * 120);
+    } 
+    myTreeBuilder = treeBuilder;
   }
 
   private static class MyTransferable implements Transferable {
