@@ -9,4 +9,4 @@ Groovy script
     PsiWhiteSpace(' ')
     Literal
       PsiElement(Integer)('42')
-    PsiWhiteSpace('   ')
+  PsiWhiteSpace('   ')

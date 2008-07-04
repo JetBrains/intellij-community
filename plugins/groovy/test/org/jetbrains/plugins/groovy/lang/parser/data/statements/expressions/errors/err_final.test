@@ -5,4 +5,4 @@ Groovy script
     PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(final)('final')
-    PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
