@@ -12,17 +12,17 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.AsyncProcessIcon;
 
 import java.awt.*;
 
@@ -70,8 +70,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 2000, true, myEditor.getContentComponent());
     Disposer.register(this, myQueue);
+    myQueue.queue(new Update("initialShow") {
+        public void run() {
+          final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
+          processIcon.setVisible(true);
+          processIcon.resume();
+          updateLookup();
+        }
+      });
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert ourCurrentCompletion == null;
@@ -125,14 +133,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.addItem(item);
     myCount++;
     if (myCount == 1) {
-      myQueue.queue(new Update("initialShow") {
-        public void run() {
-          final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
-          processIcon.setVisible(true);
-          processIcon.resume();
-          updateLookup();
-        }
-      });
+      myQueue.setMergingTimeSpan(200);
     } else {
       myQueue.queue(myUpdate);
     }
