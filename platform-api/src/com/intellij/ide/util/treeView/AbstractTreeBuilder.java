@@ -55,12 +55,12 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
 
-  protected final JTree myTree;
+  protected JTree myTree;
   // protected for TestNG
   @SuppressWarnings({"WeakerAccess"}) protected final DefaultTreeModel myTreeModel;
   protected AbstractTreeStructure myTreeStructure;
 
-  protected final AbstractTreeUpdater myUpdater;
+  protected AbstractTreeUpdater myUpdater;
 
   private Comparator<NodeDescriptor> myNodeDescriptorComparator;
   private final Comparator<TreeNode> myNodeComparator = new Comparator<TreeNode>() {
@@ -248,7 +248,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
     disposeNode(myRootNode);
     myElementToNodeMap.clear();
     myUpdater.cancelAllRequests();
-    myUpdater.dispose();
     if (myWorker != null) {
       myWorker.dispose(true);
     }
@@ -257,6 +256,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
       myProgress.cancel();
     }
     disposeClearanceServiceIfNeeded();
+
+    myTree = null;
+    myUpdater = null;
+    myWorker = null;
   }
 
   public boolean isDisposed() {

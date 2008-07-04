@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.*;
@@ -27,7 +28,7 @@ import java.awt.event.HierarchyListener;
 /**
  * @author Eugene Belyaev
  */
-public class StructureViewWrapperImpl implements StructureViewWrapper {
+public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private final Project myProject;
   private FileEditor myFileEditor;
 

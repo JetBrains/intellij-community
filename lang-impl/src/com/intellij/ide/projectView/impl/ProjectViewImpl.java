@@ -19,6 +19,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,7 +80,7 @@ import java.awt.event.FocusListener;
 import java.util.*;
 import java.util.List;
 
-public final class ProjectViewImpl extends ProjectView implements JDOMExternalizable, ProjectComponent {
+public final class ProjectViewImpl extends ProjectView implements JDOMExternalizable, ProjectComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
@@ -163,6 +164,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
+    Disposer.register(myProject, this);
     myFileEditorManager = fileEditorManager;
     mySelectInManager = selectInManager;
     myTreeChangeListener = new Runnable() {
@@ -336,7 +338,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       mySavedPaneSubId = null;
     }
 
-    Disposer.register(myProject, newPane);
+    Disposer.register(this, newPane);
   }
 
   private void showPane(AbstractProjectViewPane newPane) {
@@ -422,6 +424,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myCombo.setMinimumAndPreferredWidth(10);
 
     myStructureViewWrapper = new MyStructureViewWrapperImpl();
+    Disposer.register(this, myStructureViewWrapper);
     myStructureViewWrapper.setFileEditor(null);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewWrapper.getComponent(), BorderLayout.CENTER);
@@ -623,17 +626,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
-  private void dispose() {
+  public void dispose() {
     myConnection.disconnect();
-    final AbstractProjectViewPane view = getCurrentProjectViewPane();
-    if (view != null) {
-      Disposer.dispose(view);
-    }
-
-    if (myStructureViewWrapper != null) {
-      myStructureViewWrapper.dispose();
-      myStructureViewWrapper = null;
-    }
   }
 
   public void rebuildStructureViewPane() {
