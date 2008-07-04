@@ -83,6 +83,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
       if (conversionHelper != null) {
         conversionHelper.convertModuleRootToNewFormat(rootElement, myModule.getName());
+        PathMacroManager.getInstance(myModule).expandPaths(rootElement);
       }
 
       super.load(rootElement);
