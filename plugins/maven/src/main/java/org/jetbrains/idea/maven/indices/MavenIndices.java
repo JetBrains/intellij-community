@@ -111,11 +111,6 @@ public class MavenIndices {
     i.update(myEmbedder, myIndexer, myUpdater, progress);
   }
 
-  public void repair(MavenIndex i, ProgressIndicator progress) throws MavenIndexException,
-                                                                      ProcessCanceledException {
-    i.repair(myIndexer, progress);
-  }
-
   public synchronized List<MavenIndex> getIndices() {
     return new ArrayList<MavenIndex>(myIndices);
   }

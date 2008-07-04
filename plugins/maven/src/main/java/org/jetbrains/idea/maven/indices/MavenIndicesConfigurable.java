@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -16,30 +15,27 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MavenIndicesConfigurable extends BaseConfigurable {
   private Project myProject;
-  private MavenIndicesManager myManager;
+  private MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
   private JTable myTable;
-  private JButton myAddButton;
-  private JButton myEditButton;
-  private JButton myRemoveButton;
   private JButton myUpdateButton;
-  private JButton myUpdateAllButton;
 
   private Timer myRepaintTimer;
 
   private AnimatedIcon myUpdatingIcon;
   private Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
 
-  public MavenIndicesConfigurable(Project project, MavenIndicesManager m) {
+  public MavenIndicesConfigurable(Project project) {
     myProject = project;
-    myManager = m;
+    myManager = MavenProjectIndicesManager.getInstance(myProject);
 
     myUpdatingIcon = new AsyncProcessIcon(RepositoryBundle.message("maven.indices.updating"));
 
@@ -56,42 +52,9 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   private void configControls() {
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doAddRepository();
-      }
-    });
-
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doEditRepository();
-      }
-    });
-
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doRemoveRepository();
-      }
-    });
-
     myUpdateButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        doUpdateRepository();
-      }
-    });
-
-    myUpdateAllButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doUpdateAllRepositories();
-      }
-    });
-
-    myTable.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          doEditRepository();
-        }
+        doUpdateIndex();
       }
     });
 
@@ -104,77 +67,21 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   private void updateButtonsState() {
-    boolean canEdit = canEdit();
-    myEditButton.setEnabled(canEdit);
-    myRemoveButton.setEnabled(canEdit);
-
     boolean hasSelection = !myTable.getSelectionModel().isSelectionEmpty();
     myUpdateButton.setEnabled(hasSelection);
   }
 
-  private void doAddRepository() {
-    EditMavenRepositoryDialog d = new EditMavenRepositoryDialog();
-    d.show();
-    if (!d.isOK()) return;
-
-    try {
-      myManager.add(d.getUrl(), MavenIndex.Kind.REMOTE);
-      reset();
-      int lastIndex = myTable.getRowCount() - 1;
-      myTable.getSelectionModel().setSelectionInterval(lastIndex, lastIndex);
-    }
-    catch (MavenIndexException e) {
-      Messages.showErrorDialog(e.getMessage(), getDisplayName());
-    }
+  private void doUpdateIndex() {
+    myManager.scheduleUpdate(getSelectedIndices());
   }
 
-  private void doEditRepository() {
-    if (!canEdit()) return;
-
-    MavenIndex i = getSelectedIndexInfo();
-    EditMavenRepositoryDialog d = new EditMavenRepositoryDialog(i.getRepositoryPathOrUrl());
-
-    d.show();
-    if (!d.isOK()) return;
-
-    try {
-      myManager.change(i, d.getUrl());
-      myTable.repaint();
+  private List<MavenIndex> getSelectedIndices() {
+    List<MavenIndex> result = new ArrayList<MavenIndex>();
+    for (int i : myTable.getSelectedRows()) {
+      MyTableModel model = (MyTableModel)myTable.getModel();
+      result.add(model.getIndex(i));
     }
-    catch (MavenIndexException e) {
-      Messages.showErrorDialog(e.getMessage(), getDisplayName());
-    }
-  }
-
-  private void doRemoveRepository() {
-    if (!canEdit()) return;
-    try {
-      myManager.remove(getSelectedIndexInfo());
-      reset();
-    }
-    catch (MavenIndexException e) {
-      Messages.showErrorDialog(e.getMessage(), getDisplayName());
-    }
-  }
-
-  private void doUpdateRepository() {
-    MavenIndex i = getSelectedIndexInfo();
-    myManager.scheduleUpdate(myProject, i);
-  }
-
-  private void doUpdateAllRepositories() {
-    myManager.scheduleUpdateAll(myProject);
-  }
-
-  private boolean canEdit() {
-    MavenIndex sel = getSelectedIndexInfo();
-    return sel != null && sel.getKind() == MavenIndex.Kind.REMOTE;
-  }
-
-  private MavenIndex getSelectedIndexInfo() {
-    int sel = myTable.getSelectedRow();
-    if (sel < 0) return null;
-    return ((MyTableModel)myTable.getModel()).getIndex(sel);
+    return result;
   }
 
   public String getDisplayName() {
@@ -200,7 +107,8 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myTable.setModel(new MyTableModel(myManager.getIndices()));
     myTable.getColumnModel().getColumn(0).setPreferredWidth(400);
     myTable.getColumnModel().getColumn(1).setPreferredWidth(50);
-    myTable.getColumnModel().getColumn(2).setPreferredWidth(20);
+    myTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+    myTable.getColumnModel().getColumn(3).setPreferredWidth(20);
 
     myTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
                                new MyIconCellRenderer());
@@ -219,6 +127,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
         new String[]{
             RepositoryBundle.message("maven.index.url"),
             RepositoryBundle.message("maven.index.type"),
+            RepositoryBundle.message("maven.index.timestamp"),
             ""};
 
     private List<MavenIndex> myIndices;
@@ -242,7 +151,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      if (columnIndex == 2) return MavenIndicesManager.IndexUpdatingState.class;
+      if (columnIndex == 3) return MavenIndicesManager.IndexUpdatingState.class;
       return super.getColumnClass(columnIndex);
     }
 
@@ -255,6 +164,10 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
           if (i.getKind() == MavenIndex.Kind.LOCAL) return "Local";
           return "Remote";
         case 2:
+          long timestamp = i.getUpdateTimestamp();
+          if (timestamp == -1) return RepositoryBundle.message("maven.index.timestamp.unknown");
+          return SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(new Date(timestamp));
+        case 3:
           return myManager.getUpdatingState(i);
       }
       throw new RuntimeException();

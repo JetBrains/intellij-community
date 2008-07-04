@@ -13,7 +13,7 @@ public class MavenIndicesTestFixture {
   private String[] myExtraRepoDirs;
 
   private MavenWithDataTestFixture myDataTestFixture;
-  private MavenIndicesManager myIndicesManager;
+  private MavenProjectIndicesManager myIndicesManager;
 
   public MavenIndicesTestFixture(File dir, Project project) {
     this(dir, project, "local1", "local2");
@@ -37,16 +37,16 @@ public class MavenIndicesTestFixture {
 
     MavenCore.getInstance(myProject).getState().setLocalRepository(myDataTestFixture.getTestDataPath(myLocalRepoDir));
 
-    myIndicesManager = MavenIndicesManager.getInstance();
-    myIndicesManager.doInit(new File(myDir, "MavenIndices"));
-    myIndicesManager.initProjectIndicesOnActivation(myProject);
+    MavenIndicesManager.getInstance().doInit(new File(myDir, "MavenIndices"));
+    myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
+    myIndicesManager.doInit();
   }
 
   public void tearDown() throws Exception {
-    myIndicesManager.doShutdown();
+    MavenIndicesManager.getInstance().doShutdown();
   }
 
-  public MavenIndicesManager getIndicesManager() {
+  public MavenProjectIndicesManager getIndicesManager() {
     return myIndicesManager;
   }
 

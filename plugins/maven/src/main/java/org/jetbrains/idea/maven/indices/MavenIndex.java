@@ -32,46 +32,32 @@ import java.io.*;
 import java.util.*;
 
 public class MavenIndex {
-  protected static final String INDEX_INFO_FILE = "index.dat";
-  protected static final String CONTEXT_DIR = "context";
+  protected static final String INDEX_INFO_FILE = "index.properties";
+  private static final String KIND_KEY = "kind";
+  private static final String PATH_OR_URL_KEY = "pathOrUrl";
+  private static final String TIMESTAMP_KEY = "lastUpdate";
+  private static final String DATA_DIR_NAME_KEY = "dataDirName";
 
-  protected static final String DATA_DIR_PREFIX = "data";
-  protected static final String GROUP_IDS_FILE = "groupIds.dat";
-  protected static final String ARTIFACT_IDS_FILE = "artifactIds.dat";
+  private static final String CONTEXT_DIR = "context";
 
-  protected static final String VERSIONS_FILE = "versions.dat";
-  protected static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
-  protected static final String VERSIONS_MAP_FILE = "versions-map.dat";
+  private static final String DATA_DIR_PREFIX = "data";
+  private static final String GROUP_IDS_FILE = "groupIds.dat";
+  private static final String ARTIFACT_IDS_FILE = "artifactIds.dat";
 
-  public enum Kind {
-    LOCAL(0), REMOTE(1);
-    private int code;
+  private static final String VERSIONS_FILE = "versions.dat";
+  private static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
+  private static final String VERSIONS_MAP_FILE = "versions-map.dat";
 
-    Kind(int code) {
-      this.code = code;
-    }
-
-    public int getCode() {
-      return code;
-    }
-
-    public static Kind forCode(int code) {
-      for (Kind each : values()) {
-        if (each.code == code) return each;
-      }
-      throw new RuntimeException("Unknown index kind: " + code);
-    }
-  }
+  public enum Kind { LOCAL, REMOTE }
 
   private final File myDir;
 
   private String myRepositoryPathOrUrl;
   private final Kind myKind;
+  private Long myUpdateTimestamp;
 
   private String myDataDirName;
-
   private IndexData myData;
-  private boolean isDataBroken;
 
   public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind) throws MavenIndexException {
     myDir = dir;
@@ -85,13 +71,11 @@ public class MavenIndex {
   public MavenIndex(File dir) throws MavenIndexException {
     myDir = dir;
 
+    Properties props = new Properties();
     try {
-      FileInputStream fs = new FileInputStream(new File(dir, INDEX_INFO_FILE));
-      DataInputStream s = new DataInputStream(fs);
+      FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE));
       try {
-        myKind = Kind.forCode(s.readInt());
-        myRepositoryPathOrUrl = readStringOrNull(s);
-        myDataDirName = readStringOrNull(s);
+        props.load(s);
       }
       finally {
         s.close();
@@ -101,26 +85,35 @@ public class MavenIndex {
       throw new MavenIndexException(e);
     }
 
-    open();
-  }
+    myKind = Kind.valueOf(props.getProperty(KIND_KEY));
+    myRepositoryPathOrUrl = props.getProperty(PATH_OR_URL_KEY);
 
-  private static String readStringOrNull(DataInputStream s) throws IOException {
-    String result = null;
-    boolean hasRepo = s.readBoolean();
-    if (hasRepo) result = s.readUTF();
-    return result;
+    try {
+      String timestamp = props.getProperty(TIMESTAMP_KEY);
+      if (timestamp != null) myUpdateTimestamp = Long.parseLong(timestamp);
+    }
+    catch (Exception e) {
+    }
+
+    myDataDirName = props.getProperty(DATA_DIR_NAME_KEY);
+
+    open();
   }
 
   private synchronized void save() throws MavenIndexException {
     myDir.mkdirs();
 
+    Properties props = new Properties();
+
+    props.setProperty(KIND_KEY, myKind.toString());
+    props.setProperty(PATH_OR_URL_KEY, myRepositoryPathOrUrl);
+    if (myUpdateTimestamp != null) props.setProperty(TIMESTAMP_KEY, String.valueOf(myUpdateTimestamp));
+    props.setProperty(DATA_DIR_NAME_KEY, myDataDirName);
+
     try {
-      FileOutputStream fs = new FileOutputStream(new File(myDir, INDEX_INFO_FILE));
-      DataOutputStream s = new DataOutputStream(fs);
+      FileOutputStream s = new FileOutputStream(new File(myDir, INDEX_INFO_FILE));
       try {
-        s.writeInt(myKind.getCode());
-        writeStringOrNull(s, myRepositoryPathOrUrl);
-        writeStringOrNull(s, myDataDirName);
+        props.store(s, null);
       }
       finally {
         s.close();
@@ -129,12 +122,6 @@ public class MavenIndex {
     catch (IOException e) {
       throw new MavenIndexException(e);
     }
-  }
-
-  private void writeStringOrNull(DataOutputStream s, String string) throws IOException {
-    boolean has = string != null;
-    s.writeBoolean(has);
-    if (has) s.writeUTF(string);
   }
 
   public synchronized File getRepositoryFile() {
@@ -151,6 +138,10 @@ public class MavenIndex {
 
   public synchronized Kind getKind() {
     return myKind;
+  }
+
+  public long getUpdateTimestamp() {
+    return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
 
   private void open() throws MavenIndexException {
@@ -181,8 +172,7 @@ public class MavenIndex {
       }
       catch (Exception ignore) {
       }
-      isDataBroken = true;
-      FileUtil.delete(getCurrentDataDir());
+      delete();
       throw e;
     }
   }
@@ -218,28 +208,15 @@ public class MavenIndex {
                      IndexUpdater updater,
                      ProgressIndicator progress) throws MavenIndexException,
                                                         ProcessCanceledException {
-    if (myKind == Kind.LOCAL) {
-      FileUtil.delete(getContextDir());
-    }
-    doUpdate(embedder, indexer, updater, true, progress);
-  }
-
-  public void repair(NexusIndexer indexer,
-                     ProgressIndicator progress) throws MavenIndexException,
-                                                        ProcessCanceledException {
-    if (!isDataBroken) return;
-    doUpdate(null, indexer, null, false, progress);
-    isDataBroken = false;
-  }
-
-  private void doUpdate(MavenEmbedder embedder, NexusIndexer indexer, IndexUpdater updater, boolean updateContext,
-                        ProgressIndicator progress)
-      throws MavenIndexException {
     try {
+      if (myKind == Kind.LOCAL) {
+        FileUtil.delete(getContextDir());
+      }
       IndexingContext context = createContext(indexer);
       try {
-        if (updateContext) updateContext(context, embedder, indexer, updater, progress);
+        updateContext(context, embedder, indexer, updater, progress);
         updateData(context, progress);
+        myUpdateTimestamp = System.currentTimeMillis();
         save();
       }
       finally {
@@ -445,9 +422,6 @@ public class MavenIndex {
     if (values == null) values = new HashSet<String>();
     values.add(value);
     cache.put(key, values);
-  }
-
-  public synchronized void removeArtifact(MavenId id) {
   }
 
   public synchronized Set<String> getGroupIds() throws MavenIndexException {

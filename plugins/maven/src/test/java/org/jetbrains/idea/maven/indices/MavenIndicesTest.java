@@ -110,6 +110,12 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testUpdatingRemote() throws Exception {
+    // NexusIndexer holds 'timestamp' file and we cannot remove directory in tearDown
+    if (ignore()) {
+      System.out.println("Don't forget to unignore the test if you change MavenIndex class");
+      return;
+    }
+    
     MavenIndex i = myIndices.add("file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndices.update(i, new EmptyProgressIndicator());
 
@@ -201,11 +207,6 @@ public class MavenIndicesTest extends MavenImportingTestCase {
 
     assertEquals(2, myIndices.getIndices().size());
     assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "jmock");
-
-    myIndices.repair(myIndices.getIndices().get(0), new EmptyProgressIndicator());
-    myIndices.repair(myIndices.getIndices().get(1), new EmptyProgressIndicator());
-
-    assertUnorderedElementsAreEqual(myIndices.getGroupIds(), "junit", "jmock");
   }
   
   public void testAddingIndexWithExistingDirectoryDoesNotThrowException() throws Exception {

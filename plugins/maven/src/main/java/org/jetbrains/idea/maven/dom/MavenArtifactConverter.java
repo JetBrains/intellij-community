@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.indices.MavenIndexException;
-import org.jetbrains.idea.maven.indices.MavenIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -37,8 +37,9 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     }
 
     try {
-      return isValid(context.getFile().getProject(),
-                     MavenIndicesManager.getInstance(),
+      Project p = context.getFile().getProject();
+      return isValid(p,
+                     MavenProjectIndicesManager.getInstance(p),
                      MavenArtifactConverterHelper.getId(context),
                      context) ? s : null;
     }
@@ -48,7 +49,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     }
   }
 
-  protected abstract boolean isValid(Project project, MavenIndicesManager manager, MavenId id, ConvertContext context)
+  protected abstract boolean isValid(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context)
       throws MavenIndexException;
 
   public String toString(@Nullable String s, ConvertContext context) {
@@ -58,8 +59,9 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
     try {
-      return getVariants(context.getFile().getProject(),
-                         MavenIndicesManager.getInstance(),
+      Project p = context.getFile().getProject();
+      return getVariants(p,
+                         MavenProjectIndicesManager.getInstance(p),
                          MavenArtifactConverterHelper.getId(context),
                          context);
     }
@@ -69,7 +71,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     }
   }
 
-  protected abstract Set<String> getVariants(Project project, MavenIndicesManager manager, MavenId id, ConvertContext context)
+  protected abstract Set<String> getVariants(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context)
       throws MavenIndexException;
 
   @Override

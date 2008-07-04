@@ -73,6 +73,9 @@
       <implementation-class>org.jetbrains.idea.maven.runner.MavenRunner</implementation-class>
       <option name="workspace" value="true"/>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>
+    </component>
   </project-components>
 
   <actions>
