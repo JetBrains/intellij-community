@@ -185,7 +185,8 @@ public class FacetDetectionIndex extends AbstractFileIndex<FacetDetectionIndexEn
     FacetPointer<Facet> pointer = FacetPointersManager.getInstance(facet.getModule().getProject()).create(facet);
     Set<String> urls = myDetectedFacetIds.getKeys(info.getId());
     if (urls != null) {
-      for (String url : urls) {
+      String[] urlsArray = urls.toArray(new String[urls.size()]);
+      for (String url : urlsArray) {
         myDetectedFacetIds.remove(url, info.getId());
         myFacets.put(url, pointer);
         FacetDetectionIndexEntry indexEntry = getIndexEntry(url);
