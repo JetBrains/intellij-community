@@ -126,10 +126,14 @@ public class VariableInplaceRenamer {
 
             //move to old offset
             final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-            if (lookup != null && lookup.getLookupStart() < offset) {
+            final boolean lookupShown = lookup != null && lookup.getLookupStart() < offset;
+            if (lookupShown) {
               lookup.setAdditionalPrefix(myEditor.getDocument().getCharsSequence().subSequence(lookup.getLookupStart(), offset).toString());
             }
             myEditor.getCaretModel().moveToOffset(offset);
+            if (lookupShown) {
+              lookup.setAdditionalPrefix("");
+            }
 
             //add highlights
             addHighlights(rangesToHighlight, myEditor, myHighlighters, highlightManager);
