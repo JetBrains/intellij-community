@@ -87,4 +87,9 @@ public class TypeMayBeWeakened {
 
         }
     }
+
+    void construct() {
+        final TypeMayBeWeakened var = new TypeMayBeWeakened();
+        var.new Test();
+    }
 }

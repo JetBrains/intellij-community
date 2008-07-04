@@ -200,6 +200,26 @@ public class WeakestTypeFinder {
                 // only primitives and boxed types are the target of a postfix
                 // expression
                 return Collections.EMPTY_LIST;
+            } else if (referenceParent instanceof PsiNewExpression) {
+                final PsiNewExpression newExpression =
+                        (PsiNewExpression)referenceParent;
+                final PsiExpression qualifier = newExpression.getQualifier();
+                if (qualifier != null) {
+                    final PsiType type = newExpression.getType();
+                    if (!(type instanceof PsiClassType)) {
+                        return Collections.EMPTY_LIST;
+                    }
+                    final PsiClassType classType = (PsiClassType)type;
+                    final PsiClass innerClass = classType.resolve();
+                    if (innerClass == null) {
+                        return Collections.EMPTY_LIST;
+                    }
+                    final PsiClass outerClass =
+                            innerClass.getContainingClass();
+                    if (outerClass != null) {
+                        checkClass(outerClass, weakestTypeClasses);
+                    }
+                }
             }
             if (weakestTypeClasses.contains(variableOrMethodClass) ||
                     weakestTypeClasses.isEmpty()) {
