@@ -382,13 +382,14 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   private JavaPsiFacadeImpl getFacade() {
-    return ((JavaPsiFacadeImpl)JavaPsiFacade.getInstance(myManager.getProject()));
+    return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(myManager.getProject());
   }
 
-  private PsiClass findClassByName(String name, GlobalSearchScope scope) {
+  @NotNull
+  private PsiClass[] findClassByName(String name, GlobalSearchScope scope) {
     final String qName = getQualifiedName();
     final String classQName = qName.length() > 0 ? qName + "." + name : name;
-    return JavaPsiFacade.getInstance(myManager.getProject()).findClass(classQName, scope);
+    return JavaPsiFacade.getInstance(myManager.getProject()).findClasses(classQName, scope);
   }
 
   private PsiPackage findSubPackageByName(String name, GlobalSearchScope scope) {
@@ -413,10 +414,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       boolean isPlacePhysical = place.isPhysical();
       NameHint nameHint = processor.getHint(NameHint.class);
       if (nameHint != null) {
-        final PsiClass aClass = findClassByName(nameHint.getName(state), scope);
-        if (aClass != null &&
-            (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null))) {
-          if (!processor.execute(aClass, state)) return false;
+        final PsiClass[] classes = findClassByName(nameHint.getName(state), scope);
+        for (PsiClass aClass : classes) {
+          if (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null)) {
+            if (!processor.execute(aClass, state)) return false;
+          }
         }
       }
       else {
