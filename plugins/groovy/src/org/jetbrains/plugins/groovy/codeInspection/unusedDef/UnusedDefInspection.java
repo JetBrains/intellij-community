@@ -60,7 +60,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
   @NonNls
   @NotNull
   public String getShortName() {
-    return GroovyInspectionBundle.message("unused.assignment");
+    return "UnusedAssignment";
   }
 
 

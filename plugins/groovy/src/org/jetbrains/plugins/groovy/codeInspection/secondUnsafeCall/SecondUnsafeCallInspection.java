@@ -89,7 +89,7 @@ public class SecondUnsafeCallInspection extends LocalInspectionTool {
   @NonNls
   @NotNull
   public String getShortName() {
-    return GroovyInspectionBundle.message("second.unsafe.call");
+    return "SecondUnsafeCall";
   }
 
   public boolean isEnabledByDefault() {
