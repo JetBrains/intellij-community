@@ -151,19 +151,19 @@
       <pathelement path="${production.dest.groovy}"/>
     </path>
 
-    <touch>
+    <!--<touch>
       <fileset dir=".">
         <include name="**/*.groovy"/>
       </fileset>
-    </touch>
+    </touch>-->
 
-    <groovyc destdir="${production.dest.groovy}" srcDir=".">
+    <!--<groovyc destdir="${production.dest.groovy}" srcDir=".">
       <classpath>
         <path refid="idea.lib.path"/>
         <path refid="groovy.path"/>
         <path refid="output.path"/>
       </classpath>
-    </groovyc>
+    </groovyc>-->
 
     <replace file="${production.dest.groovy}/META-INF/plugin.xml" token="VERSION" value="${plugin.version}"/>
 
