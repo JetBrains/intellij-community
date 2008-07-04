@@ -6,6 +6,8 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
@@ -123,6 +125,10 @@ public class VariableInplaceRenamer {
             });
 
             //move to old offset
+            final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+            if (lookup != null && lookup.getLookupStart() < offset) {
+              lookup.setAdditionalPrefix(myEditor.getDocument().getCharsSequence().subSequence(lookup.getLookupStart(), offset).toString());
+            }
             myEditor.getCaretModel().moveToOffset(offset);
 
             //add highlights

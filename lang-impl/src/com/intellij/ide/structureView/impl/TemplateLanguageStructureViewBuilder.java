@@ -156,29 +156,29 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
     myFileEditor = fileEditor;
-    List<StructureViewComposite.StructureViewDescriptor> descriptors = new ArrayList<StructureViewComposite.StructureViewDescriptor>();
+    List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<StructureViewComposite.StructureViewDescriptor>();
     final TemplateLanguageFileViewProvider provider = getViewProvider();
     assert provider != null;
 
     final StructureViewComposite.StructureViewDescriptor structureViewDescriptor = createMainView(fileEditor, provider.getPsi(provider.getBaseLanguage()));
-    if (structureViewDescriptor != null) descriptors.add(structureViewDescriptor);
+    if (structureViewDescriptor != null) viewDescriptors.add(structureViewDescriptor);
 
     myBaseLanguageViewDescriptorIndex = -1;
     final Language dataLanguage = provider.getTemplateDataLanguage();
 
     updateTemplateDataFileView();
     if (myBaseStructureViewDescriptor != null) {
-      descriptors.add(myBaseStructureViewDescriptor);
-      myBaseLanguageViewDescriptorIndex = descriptors.size() - 1;
+      viewDescriptors.add(myBaseStructureViewDescriptor);
+      myBaseLanguageViewDescriptorIndex = viewDescriptors.size() - 1;
     }
 
     for (final Language language : getViewProvider().getLanguages()) {
       if (language != dataLanguage && language != getViewProvider().getBaseLanguage()) {
-        ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), descriptors);
+        ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), viewDescriptors);
       }
     }
 
-    StructureViewComposite.StructureViewDescriptor[] array = descriptors.toArray(new StructureViewComposite.StructureViewDescriptor[descriptors.size()]);
+    StructureViewComposite.StructureViewDescriptor[] array = viewDescriptors.toArray(new StructureViewComposite.StructureViewDescriptor[viewDescriptors.size()]);
     myStructureViewComposite = new StructureViewComposite(array){
       public void dispose() {
         removeBaseLanguageListener();

@@ -404,7 +404,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     );
   }
 
-  private int getLookupStart() {
+  public int getLookupStart() {
     return myLookupStartMarker != null ? myLookupStartMarker.getStartOffset() : calcLookupStart();
   }
 
