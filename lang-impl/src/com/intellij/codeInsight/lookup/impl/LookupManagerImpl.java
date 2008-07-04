@@ -95,7 +95,12 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   public Lookup showLookup(final Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
-    final LookupImpl lookup = createLookup(editor, items, "", itemPreferencePolicy, bottomText);
+    return showLookup(editor, items, "", itemPreferencePolicy, null);
+  }
+
+  public Lookup showLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
+                           @Nullable final String bottomText) {
+    final LookupImpl lookup = createLookup(editor, items, prefix, itemPreferencePolicy, bottomText);
     lookup.show();
     return lookup;
   }

@@ -363,7 +363,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);
     editor.getCaretModel().moveToOffset(prefix.length());
     editor.getSelectionModel().removeSelection();
-    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, null);
+    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, null);
   }
 
   private JComponent createSignaturePanel() {
