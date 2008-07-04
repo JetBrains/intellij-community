@@ -629,6 +629,12 @@ public final class PsiUtil extends PsiUtilBase {
   public static JspFile getJspFile(final PsiElement element) {
     final PsiFile psiFile = getTemplateLanguageFile(element);
     return psiFile instanceof JspFile ? (JspFile)psiFile : null;
+
+    /*final FileViewProvider provider = element.getContainingFile().getViewProvider();
+    PsiFile file = provider.getPsi(StdLanguages.JSP);
+    if (file instanceof JspFile) return (JspFile)file;
+    file = provider.getPsi(StdLanguages.JSPX);
+    return file instanceof JspFile ? (JspFile)file : null;*/
   }
 
   public static PsiType captureToplevelWildcards(final PsiType type, final PsiElement context) {
@@ -855,6 +861,29 @@ public final class PsiUtil extends PsiUtilBase {
       return superClass == null || hasDefaultConstructor(superClass);
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiType extractIterableTypeParameter(@Nullable PsiType psiType) {
+    if (psiType == null) return null;
+
+    if (!(psiType instanceof PsiClassType)) return null;
+
+    final PsiClassType classType = (PsiClassType)psiType;
+    final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = classResolveResult.getElement();
+    if (psiClass == null) return null;
+
+    final PsiClass iterable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_ITERABLE, psiClass.getResolveScope());
+    if (iterable == null) return null;
+
+    if (!psiClass.isEquivalentTo(iterable) && !psiClass.isInheritor(iterable, true)) return null;
+
+    final PsiTypeParameter[] parameters = iterable.getTypeParameters();
+    if (parameters.length != 1) return null;
+
+    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(iterable, psiClass, classResolveResult.getSubstitutor());
+    return substitutor.substitute(parameters[0]);
   }
 
   public static final Comparator<PsiElement> BY_POSITION = new Comparator<PsiElement>() {

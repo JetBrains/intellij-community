@@ -28,12 +28,14 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_ERROR = "java.lang.Error";
   @NonNls String JAVA_LANG_RUNTIME_EXCEPTION = "java.lang.RuntimeException";
   @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
+  @NonNls String JAVA_LANG_ITERABLE = "java.lang.Iterable";
 
   @NonNls String JAVA_LANG_DEPRECATED = "java.lang.Deprecated";
   @NonNls String JAVA_LANG_ANNOTATION_INHERITED = "java.lang.annotation.Inherited";
 
   @NonNls String JAVA_LANG_REFLECT_ARRAY = "java.lang.reflect.Array";
 
+  @NonNls String JAVA_UTIL_ARRAYS = "java.util.Arrays";
   @NonNls String JAVA_UTIL_COLLECTIONS = "java.util.Collections";
   @NonNls String JAVA_UTIL_COLLECTION = "java.util.Collection";
   @NonNls String JAVA_UTIL_MAP = "java.util.Map";

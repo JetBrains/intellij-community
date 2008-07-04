@@ -36,6 +36,11 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   }
 
   private static String getName(final Object o, final LookupItem<?> item) {
+    final String presentableText = item.getPresentableText();
+    if (presentableText != null) {
+      return presentableText;
+    }
+
     String name = "";
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
@@ -54,15 +59,15 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
             name = formatTypeName((PsiClass)element, substitutor);
           }
         }
-        else if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement){
+        else if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement) {
           name = element.getText();
         }
       }
     }
-    else if (o instanceof PsiArrayType){
+    else if (o instanceof PsiArrayType) {
       name = ((PsiArrayType)o).getDeepComponentType().getPresentableText();
     }
-    else if (o instanceof PsiType){
+    else if (o instanceof PsiType) {
       name = ((PsiType)o).getPresentableText();
     }
 
