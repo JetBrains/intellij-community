@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +31,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
@@ -766,5 +765,18 @@ public class FileUtil {
       stream.close();
     }
 
+  }
+
+  public static boolean processFilesRecursively(final File root, final Processor<File> processor) {
+    final LinkedList<File> queue = new LinkedList<File>();
+    queue.add(root);
+    while (!queue.isEmpty()) {
+      final File file = queue.removeFirst();
+      if (!processor.process(file)) return false;
+      if (file.isDirectory()) {
+        queue.addAll(Arrays.asList(file.listFiles()));
+      }
+    }
+    return true;
   }
 }
