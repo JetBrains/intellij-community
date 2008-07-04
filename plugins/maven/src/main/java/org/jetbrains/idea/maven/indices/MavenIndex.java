@@ -1,8 +1,9 @@
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
@@ -12,25 +13,33 @@ import com.intellij.util.io.PersistentHashMap;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.settings.Proxy;
+import org.apache.maven.wagon.proxy.ProxyInfo;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.project.TransferListenerAdapter;
+import org.sonatype.nexus.index.ArtifactContext;
 import org.sonatype.nexus.index.ArtifactInfo;
+import org.sonatype.nexus.index.ArtifactScanningListener;
 import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.context.UnsupportedExistingLuceneIndexException;
+import org.sonatype.nexus.index.scan.ScanningResult;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.*;
 import java.util.*;
 
-public abstract class MavenIndex {
+public class MavenIndex {
+  protected static final String INDEX_INFO_FILE = "index.dat";
   protected static final String CONTEXT_DIR = "context";
-  protected static final String DATA_DIR_PREFIX = "data";
 
+  protected static final String DATA_DIR_PREFIX = "data";
   protected static final String GROUP_IDS_FILE = "groupIds.dat";
   protected static final String ARTIFACT_IDS_FILE = "artifactIds.dat";
-  protected static final String VERSIONS_FILE = "versions.dat";
 
+  protected static final String VERSIONS_FILE = "versions.dat";
   protected static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
   protected static final String VERSIONS_MAP_FILE = "versions-map.dat";
 
@@ -54,39 +63,45 @@ public abstract class MavenIndex {
     }
   }
 
-  private File myIndicesDir;
+  private final File myDir;
 
   private String myRepositoryPathOrUrl;
-  private Kind myKind;
+  private final Kind myKind;
 
-  private String myDataDir;
+  private String myDataDirName;
 
   private IndexData myData;
+  private boolean isDataBroken;
 
-  public MavenIndex(String repositoryPathOrUrl, Kind kind) {
+  public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind) throws MavenIndexException {
+    myDir = dir;
     myRepositoryPathOrUrl = repositoryPathOrUrl;
     myKind = kind;
+
+    open();
+    save();
   }
 
-  public static MavenIndex read(DataInputStream s) throws IOException {
-    Kind kind = Kind.forCode(s.readInt());
-    String repo = readStringOrNull(s);
-    String dataDir = readStringOrNull(s);
+  public MavenIndex(File dir) throws MavenIndexException {
+    myDir = dir;
 
-    MavenIndex result = create(kind, repo);
-    result.myDataDir = dataDir;
-
-    return result;
-  }
-
-  private static MavenIndex create(Kind kind, String repo) {
-    switch (kind) {
-      case LOCAL:
-        return new LocalMavenIndex(repo);
-      case REMOTE:
-        return new RemoteMavenIndex(repo);
+    try {
+      FileInputStream fs = new FileInputStream(new File(dir, INDEX_INFO_FILE));
+      DataInputStream s = new DataInputStream(fs);
+      try {
+        myKind = Kind.forCode(s.readInt());
+        myRepositoryPathOrUrl = readStringOrNull(s);
+        myDataDirName = readStringOrNull(s);
+      }
+      finally {
+        s.close();
+      }
     }
-    throw new RuntimeException("unexpected kind: " + kind);
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
+
+    open();
   }
 
   private static String readStringOrNull(DataInputStream s) throws IOException {
@@ -96,10 +111,24 @@ public abstract class MavenIndex {
     return result;
   }
 
-  public synchronized void write(DataOutputStream s) throws IOException {
-    s.writeInt(myKind.getCode());
-    writeStringOrNull(s, myRepositoryPathOrUrl);
-    writeStringOrNull(s, myDataDir);
+  private synchronized void save() throws MavenIndexException {
+    myDir.mkdirs();
+
+    try {
+      FileOutputStream fs = new FileOutputStream(new File(myDir, INDEX_INFO_FILE));
+      DataOutputStream s = new DataOutputStream(fs);
+      try {
+        s.writeInt(myKind.getCode());
+        writeStringOrNull(s, myRepositoryPathOrUrl);
+        writeStringOrNull(s, myDataDirName);
+      }
+      finally {
+        s.close();
+      }
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
   }
 
   private void writeStringOrNull(DataOutputStream s, String string) throws IOException {
@@ -124,8 +153,7 @@ public abstract class MavenIndex {
     return myKind;
   }
 
-  public synchronized void open(File indicesDir) throws MavenIndexException {
-    myIndicesDir = indicesDir;
+  private void open() throws MavenIndexException {
     try {
       doOpen();
     }
@@ -140,59 +168,40 @@ public abstract class MavenIndex {
     }
   }
 
-  private synchronized void doOpen() throws Exception {
+  private void doOpen() throws Exception {
     try {
-      if (myDataDir == null) {
-        myDataDir = findAvailableDataDir();
+      if (myDataDirName == null) {
+        myDataDirName = findAvailableDataDir();
       }
-      myData = openData(myDataDir);
+      myData = openData(myDataDirName);
     }
     catch (Exception e) {
-      remove();
+      try {
+        close();
+      }
+      catch (Exception ignore) {
+      }
+      isDataBroken = true;
+      FileUtil.delete(getCurrentDataDir());
       throw e;
     }
   }
 
   public synchronized void change(String repositoryPathOrUrl) throws MavenIndexException {
-    remove();
+    delete();
     myRepositoryPathOrUrl = repositoryPathOrUrl;
-    open(myIndicesDir);
+    open();
+
+    save();
   }
 
-  public synchronized void remove() throws MavenIndexException {
+  public synchronized void delete() throws MavenIndexException {
     try {
       close();
     }
     finally {
-      clear();
+      FileUtil.delete(myDir);
     }
-  }
-
-  private synchronized IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
-    File targetDir = getContextDir();
-
-    // Nexus cannot update index if the id does not equal to the stored one.
-    String id = targetDir.exists() ? null : getId();
-
-    return indexer.addIndexingContext(id,
-                                      id,
-                                      getRepositoryFile(),
-                                      getContextDir(),
-                                      getRepositoryUrl(),
-                                      null, // repo update url
-                                      NexusIndexer.FULL_INDEX);
-  }
-
-  private String getId() {
-    return Integer.toHexString(myRepositoryPathOrUrl.hashCode());
-  }
-
-  private synchronized File getIndexDir() {
-    return new File(myIndicesDir, getId());
-  }
-
-  private synchronized File getContextDir() {
-    return new File(getIndexDir(), CONTEXT_DIR);
   }
 
   public synchronized void close() throws MavenIndexException {
@@ -204,24 +213,34 @@ public abstract class MavenIndex {
     }
   }
 
-  public synchronized void clear() {
-    FileUtil.delete(getIndexDir());
-  }
-
-  public void update(Project project,
-                     MavenEmbedder embedder,
+  public void update(MavenEmbedder embedder,
                      NexusIndexer indexer,
                      IndexUpdater updater,
                      ProgressIndicator progress) throws MavenIndexException,
                                                         ProcessCanceledException {
+    if (myKind == Kind.LOCAL) {
+      FileUtil.delete(getContextDir());
+    }
+    doUpdate(embedder, indexer, updater, true, progress);
+  }
+
+  public void repair(NexusIndexer indexer,
+                     ProgressIndicator progress) throws MavenIndexException,
+                                                        ProcessCanceledException {
+    if (!isDataBroken) return;
+    doUpdate(null, indexer, null, false, progress);
+    isDataBroken = false;
+  }
+
+  private void doUpdate(MavenEmbedder embedder, NexusIndexer indexer, IndexUpdater updater, boolean updateContext,
+                        ProgressIndicator progress)
+      throws MavenIndexException {
     try {
-      if (shouldClearBeforeUpdate()) {
-        FileUtil.delete(getContextDir());
-      }
       IndexingContext context = createContext(indexer);
       try {
-        updateContext(context, embedder, indexer, updater, progress);
-        updateData(context, project, progress);
+        if (updateContext) updateContext(context, embedder, indexer, updater, progress);
+        updateData(context, progress);
+        save();
       }
       finally {
         indexer.removeIndexingContext(context, false);
@@ -235,23 +254,75 @@ public abstract class MavenIndex {
     }
   }
 
-  protected boolean shouldClearBeforeUpdate() {
-    return false;
+  private synchronized IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
+    File targetDir = getContextDir();
+
+    // Nexus cannot update index if the id does not equal to the stored one.
+    String id = targetDir.exists() ? null : myDir.getName();
+
+    return indexer.addIndexingContext(id,
+                                      id,
+                                      getRepositoryFile(),
+                                      getContextDir(),
+                                      getRepositoryUrl(),
+                                      null, // repo update url
+                                      NexusIndexer.FULL_INDEX);
   }
 
-  protected abstract void updateContext(IndexingContext context, MavenEmbedder embedder,
-                                        NexusIndexer indexer,
-                                        IndexUpdater updater,
-                                        ProgressIndicator progress)
-      throws IOException, UnsupportedExistingLuceneIndexException, MavenIndexException;
+  private synchronized File getContextDir() {
+    return new File(myDir, CONTEXT_DIR);
+  }
 
-  private void updateData(IndexingContext context, Project project, ProgressIndicator progress) throws IOException {
+  private void updateContext(IndexingContext context,
+                             MavenEmbedder embedder,
+                             NexusIndexer indexer,
+                             IndexUpdater updater,
+                             ProgressIndicator progress) throws IOException, UnsupportedExistingLuceneIndexException {
+    switch (myKind) {
+      case LOCAL:
+        updateLocalContext(context, indexer, progress);
+        break;
+      case REMOTE:
+        updateRemoteContext(context, embedder, updater);
+        break;
+    }
+  }
+
+  protected void updateLocalContext(IndexingContext context,
+                                    NexusIndexer indexer,
+                                    ProgressIndicator progress) throws IOException {
+    progress.setIndeterminate(true);
+    try {
+      indexer.scan(context, new MyScanningListener(), false);
+    }
+    finally {
+      progress.setIndeterminate(true);
+    }
+  }
+
+  private void updateRemoteContext(IndexingContext context,
+                                   MavenEmbedder embedder,
+                                   IndexUpdater updater) throws IOException, UnsupportedExistingLuceneIndexException {
+    Proxy proxy = embedder.getSettings().getActiveProxy();
+    ProxyInfo proxyInfo = null;
+    if (proxy != null) {
+      proxyInfo = new ProxyInfo();
+      proxyInfo.setHost(proxy.getHost());
+      proxyInfo.setPort(proxy.getPort());
+      proxyInfo.setNonProxyHosts(proxy.getNonProxyHosts());
+      proxyInfo.setUserName(proxy.getUsername());
+      proxyInfo.setPassword(proxy.getPassword());
+    }
+    updater.fetchAndUpdateIndex(context, new TransferListenerAdapter(), proxyInfo);
+  }
+
+  private void updateData(IndexingContext context, ProgressIndicator progress) throws IOException {
     progress.setText2("Updating caches...");
 
     String newDataDir = findAvailableDataDir();
     IndexData newData = openData(newDataDir);
     try {
-      doUpdateIndexData(context, project, newData, progress);
+      doUpdateIndexData(context, newData, progress);
       newData.flush();
     }
     catch (Throwable e) {
@@ -264,10 +335,10 @@ public abstract class MavenIndex {
 
     synchronized (this) {
       IndexData oldData = myData;
-      String oldDataDir = myDataDir;
+      String oldDataDir = myDataDirName;
 
       myData = newData;
-      myDataDir = newDataDir;
+      myDataDirName = newDataDir;
 
       oldData.close();
       FileUtil.delete(getDataDir(oldDataDir));
@@ -275,7 +346,6 @@ public abstract class MavenIndex {
   }
 
   protected void doUpdateIndexData(IndexingContext context,
-                                   Project project,
                                    IndexData data,
                                    ProgressIndicator progress) throws IOException {
     Map<String, Set<String>> artifactIdsMap = new HashMap<String, Set<String>>();
@@ -321,21 +391,22 @@ public abstract class MavenIndex {
     return new IndexData(dir);
   }
 
-  private File getDataDir(String dataDir) {
-    return new File(getIndexDir(), dataDir);
+  @TestOnly
+  protected synchronized File getDir() {
+    return myDir;
   }
 
-  public synchronized File getCurrentDataDir() {
-    return getDataDir(myDataDir);
+  @TestOnly
+  protected synchronized File getCurrentDataDir() {
+    return getDataDir(myDataDirName);
+  }
+
+  private File getDataDir(String dataDir) {
+    return new File(myDir, dataDir);
   }
 
   private String findAvailableDataDir() {
-    for (int i = 0; i < 100; i++) {
-      String name = DATA_DIR_PREFIX + i;
-      File f = new File(getIndexDir(), name);
-      if (!f.exists()) return name;
-    }
-    throw new RuntimeException("No available data dir found");
+    return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
   }
 
   protected Set<String> getOrCreate(Map<String, Set<String>> map, String key) {
@@ -416,7 +487,7 @@ public abstract class MavenIndex {
     return myData.versions.contains(groupId + ":" + artifactId + ":" + version);
   }
 
-  protected static class IndexData {
+  private static class IndexData {
     File myDir;
     Set<String> groupIds;
     Set<String> artifactIds;
@@ -495,6 +566,33 @@ public abstract class MavenIndex {
         result.add(s.readUTF());
       }
       return result;
+    }
+  }
+
+  private class MyScanningListener implements ArtifactScanningListener {
+    private ProgressIndicator p;
+
+    public MyScanningListener() {
+      p = ProgressManager.getInstance().getProgressIndicator();
+      if (p == null) p = new EmptyProgressIndicator();
+    }
+
+    public void scanningStarted(IndexingContext ctx) {
+      p.checkCanceled();
+      p.setText2("Starting...");
+    }
+
+    public void scanningFinished(IndexingContext ctx, ScanningResult result) {
+      p.checkCanceled();
+      p.setText2("Done");
+    }
+
+    public void artifactError(ArtifactContext ac, Exception e) {
+    }
+
+    public void artifactDiscovered(ArtifactContext ac) {
+      p.checkCanceled();
+      p.setText2("Indexing " + ac.getArtifact());
     }
   }
 }

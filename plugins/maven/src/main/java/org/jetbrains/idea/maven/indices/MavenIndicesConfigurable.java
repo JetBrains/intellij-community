@@ -118,7 +118,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     if (!d.isOK()) return;
 
     try {
-      myManager.add(new RemoteMavenIndex(d.getUrl()));
+      myManager.add(d.getUrl(), MavenIndex.Kind.REMOTE);
       reset();
       int lastIndex = myTable.getRowCount() - 1;
       myTable.getSelectionModel().setSelectionInterval(lastIndex, lastIndex);
@@ -126,7 +126,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     catch (MavenIndexException e) {
       Messages.showErrorDialog(e.getMessage(), getDisplayName());
     }
-    setModified(true);
   }
 
   private void doEditRepository() {
@@ -145,8 +144,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     catch (MavenIndexException e) {
       Messages.showErrorDialog(e.getMessage(), getDisplayName());
     }
-
-    setModified(true);
   }
 
   private void doRemoveRepository() {
@@ -158,7 +155,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     catch (MavenIndexException e) {
       Messages.showErrorDialog(e.getMessage(), getDisplayName());
     }
-    setModified(true);
   }
 
   private void doUpdateRepository() {
@@ -172,7 +168,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
 
   private boolean canEdit() {
     MavenIndex sel = getSelectedIndexInfo();
-    return sel instanceof RemoteMavenIndex;
+    return sel != null && sel.getKind() == MavenIndex.Kind.REMOTE;
   }
 
   private MavenIndex getSelectedIndexInfo() {
@@ -198,13 +194,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    try {
-      myManager.save();
-      setModified(false);
-    }
-    catch (MavenIndexException e) {
-      throw new ConfigurationException("Cannot save indices: " + e.getMessage());
-    }
   }
 
   public void reset() {
@@ -263,7 +252,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
         case 0:
           return i.getRepositoryPathOrUrl();
         case 1:
-          if (i instanceof LocalMavenIndex) return "Local";
+          if (i.getKind() == MavenIndex.Kind.LOCAL) return "Local";
           return "Remote";
         case 2:
           return myManager.getUpdatingState(i);

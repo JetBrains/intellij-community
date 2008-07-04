@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.codehaus.plexus.PlexusContainer;
@@ -11,15 +10,13 @@ import org.jetbrains.idea.maven.core.MavenLog;
 import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
-import java.io.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class MavenIndices {
-  protected static final String INDICES_LIST_FILE = "list.dat";
-
   private MavenEmbedder myEmbedder;
   private NexusIndexer myIndexer;
   private IndexUpdater myUpdater;
@@ -40,76 +37,24 @@ public class MavenIndices {
     catch (ComponentLookupException ex) {
       throw new RuntimeException(ex);
     }
+
+    load();
   }
 
-  public synchronized void load() {
-    try {
-      File f = getListFile();
-      if (!f.exists()) return;
+  private void load() {
+    if (!myIndicesDir.exists()) return;
 
-      FileInputStream fs = new FileInputStream(f);
-
+    File[] indices = myIndicesDir.listFiles();
+    if (indices == null) return;
+    for (File each : indices) {
       try {
-        DataInputStream is = new DataInputStream(fs);
-        myIndices = new ArrayList<MavenIndex>();
-        int size = is.readInt();
-        while (size-- > 0) {
-          MavenIndex i = MavenIndex.read(is);
-          try {
-            add(i);
-          }
-          catch (MavenIndexException e) {
-            MavenLog.info(e);
-          }
-        }
+        myIndices.add(new MavenIndex(each));
       }
-      finally {
-        fs.close();
+      catch (Exception e) {
+        FileUtil.delete(each);
+        MavenLog.info(e);
       }
     }
-    catch (Exception e) {
-      MavenLog.info(e);
-
-      try {
-        try {
-          closeOpenIndices();
-        }
-        catch (MavenIndexException e1) {
-          MavenLog.info(e1);
-        }
-      }
-      finally {
-        clearIndices();
-      }
-    }
-  }
-
-  private void clearIndices() {
-    FileUtil.delete(myIndicesDir);
-  }
-
-  public synchronized void save() throws MavenIndexException {
-    try {
-      getListFile().getParentFile().mkdirs();
-      FileOutputStream fs = new FileOutputStream(getListFile());
-      try {
-        DataOutputStream os = new DataOutputStream(fs);
-        os.writeInt(myIndices.size());
-        for (MavenIndex i : myIndices) {
-          i.write(os);
-        }
-      }
-      finally {
-        fs.close();
-      }
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
-  }
-
-  private File getListFile() {
-    return new File(myIndicesDir, INDICES_LIST_FILE);
   }
 
   public synchronized void close() {
@@ -132,13 +77,28 @@ public class MavenIndices {
     }
   }
 
-  public synchronized void add(MavenIndex i) throws MavenIndexException {
-    i.open(myIndicesDir);
-    myIndices.add(i);
+  public synchronized MavenIndex add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
+    File dir = getAvailableIndexDir();
+    MavenIndex index = new MavenIndex(dir, repositoryPathOrUrl, kind);
+    myIndices.add(index);
+    return index;
+  }
+
+  private File getAvailableIndexDir() {
+    return findAvailableDir(myIndicesDir, "Index", 1000);
+  }
+
+  static File findAvailableDir(File parent, String prefix, int max) {
+    for (int i = 0; i < max; i++) {
+      String name = prefix + i;
+      File f = new File(parent, name);
+      if (!f.exists()) return f;
+    }
+    throw new RuntimeException("No available dir found");
   }
 
   public synchronized void remove(MavenIndex i) throws MavenIndexException {
-    i.remove();
+    i.delete();
     myIndices.remove(i);
   }
 
@@ -146,9 +106,14 @@ public class MavenIndices {
     i.change(repositoryPathOrUrl);
   }
 
-  public void update(MavenIndex i, Project project, ProgressIndicator progress) throws MavenIndexException,
-                                                                                       ProcessCanceledException {
-    i.update(project, myEmbedder, myIndexer, myUpdater, progress);
+  public void update(MavenIndex i, ProgressIndicator progress) throws MavenIndexException,
+                                                                      ProcessCanceledException {
+    i.update(myEmbedder, myIndexer, myUpdater, progress);
+  }
+
+  public void repair(MavenIndex i, ProgressIndicator progress) throws MavenIndexException,
+                                                                      ProcessCanceledException {
+    i.repair(myIndexer, progress);
   }
 
   public synchronized List<MavenIndex> getIndices() {

@@ -85,8 +85,6 @@ public class MavenIndicesManager implements ApplicationComponent {
     MavenCoreSettings settings = getSettings(ProjectManager.getInstance().getDefaultProject());
     myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings).getEmbedder();
     myIndices = new MavenIndices(myEmbedder, indicesDir);
-
-    myIndices.load();
   }
 
   @TestOnly
@@ -167,7 +165,6 @@ public class MavenIndicesManager implements ApplicationComponent {
   private void closeIndex() {
     try {
       if (myIndices != null) {
-        myIndices.save();
         myIndices.close();
       }
       if (myEmbedder != null) myEmbedder.stop();
@@ -190,8 +187,7 @@ public class MavenIndicesManager implements ApplicationComponent {
       if (f.getPath().equals(i.getRepositoryPathOrUrl())) return;
     }
 
-    MavenIndex index = new LocalMavenIndex(f.getPath());
-    myIndices.add(index);
+    MavenIndex index = myIndices.add(f.getPath(), MavenIndex.Kind.LOCAL);
     scheduleUpdate(p, index);
   }
 
@@ -203,12 +199,8 @@ public class MavenIndicesManager implements ApplicationComponent {
     return new MavenIndicesConfigurable(p, this);
   }
 
-  public void save() throws MavenIndexException {
-    myIndices.save();
-  }
-
-  public void add(MavenIndex i) throws MavenIndexException {
-    myIndices.add(i);
+  public void add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
+    myIndices.add(repositoryPathOrUrl, kind);
   }
 
   public void change(MavenIndex i, String repositoryPathOrUrl) throws MavenIndexException {
@@ -285,7 +277,13 @@ public class MavenIndicesManager implements ApplicationComponent {
           }
 
           try {
-            myIndices.update(each, p, indicator);
+            myIndices.update(each, indicator);
+
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                rehighlightAllPoms(p);
+              }
+            });
           }
           finally {
             synchronized (myUpdatingIndicesLock) {
@@ -301,12 +299,6 @@ public class MavenIndicesManager implements ApplicationComponent {
           myWaitingIndices.removeAll(remainingWaiting);
         }
       }
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          rehighlightAllPoms(p);
-        }
-      });
     }
     catch (MavenIndexException e) {
       showError(e);
