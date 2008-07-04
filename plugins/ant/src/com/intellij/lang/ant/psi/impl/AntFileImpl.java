@@ -397,38 +397,40 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   public AntProperty getProperty(final String name) {
-    if (name == null) {
+    return getPropertyRecursively(name, new HashSet<AntFile>());
+  }
+
+  @Nullable
+  private AntProperty getPropertyRecursively(final String name, final Set<AntFile> processed) {
+    if (name == null || processed.contains(this)) {
       return null;
     }
+    processed.add(this);
 
-    AntProperty antProperty;
+    try {
+      AntProperty antProperty;
 
-    synchronized (PsiLock.LOCK) {
-      antProperty = myProperties != null ? myProperties.get(name) : null;
-    }
-    
-    if (antProperty == null) {
-      antProperty = new Object() {
-        @Nullable
-        AntProperty searchImportedFiles(AntFile from) {
-          final AntProject antProject = from.getAntProject();
-          if (antProject != null) {
-            for (AntFile imported : antProject.getImportedFiles()) {
-              AntProperty prop = imported.getProperty(name);
-              if (prop == null) {
-                prop = searchImportedFiles(imported);
-              }
-              if (prop != null) {
-                return prop;
-              }
+      synchronized (PsiLock.LOCK) {
+        antProperty = myProperties != null ? myProperties.get(name) : null;
+      }
+
+      if (antProperty == null) {
+        final AntProject antProject = getAntProject();
+        if (antProject != null) {
+          for (AntFile imported : antProject.getImportedFiles()) {
+            antProperty = (imported instanceof AntFileImpl) ? ((AntFileImpl)imported).getPropertyRecursively(name, processed) : imported.getProperty(name);
+            if (antProperty != null) {
+              break;
             }
           }
-          return null;
         }
-      }.searchImportedFiles(this);
+      }
+
+      return antProperty;
     }
-    
-    return antProperty;
+    finally {
+      processed.remove(this);
+    }
   }
 
   public void buildPropertiesIfNeeded() {
