@@ -347,7 +347,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       final String grailsInstallPath = GrailsConfigUtils.getGrailsInstallPath(module);
       if (groovyInstallPath.length() == 0 &&
           (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
-        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet"), GroovyBundle.message("cannot.compile"));
+        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()), GroovyBundle.message("cannot.compile"));
         return false;
       }
     }

@@ -38,6 +38,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
@@ -144,8 +145,8 @@ public class GroovyConfigUtils {
       String path = file.getPath();
       if (path != null && "jar".equals(file.getExtension())) {
         path = StringUtil.trimEnd(path, "!/");
-        String name = file.getName();
-        if ((name.matches(GROOVY_JAR_PATTERN) || name.matches(GROOVY_LIB_PATTERN))) {
+        @NonNls String name = file.getName();
+        if (isGroovyAllJar(name) || name.matches(GROOVY_LIB_PATTERN)) {
           File realFile = new File(path);
           if (realFile.exists()) {
             try {
@@ -159,6 +160,10 @@ public class GroovyConfigUtils {
       }
     }
     return false;
+  }
+
+  public static boolean isGroovyAllJar(@NonNls final String name) {
+    return name.matches(GROOVY_JAR_PATTERN) || name.equals("groovy-all.jar");
   }
 
   public static boolean isGroovyJar(JarFile jarFile) {

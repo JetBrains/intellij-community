@@ -83,7 +83,7 @@ public abstract class LibrariesUtil {
   public static String getGroovyOrGrailsLibraryHome(Library library) {
     String path = "";
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-      if (file.getName().matches(GroovyConfigUtils.GROOVY_JAR_PATTERN)) {
+      if (GroovyConfigUtils.isGroovyAllJar(file.getName())) {
         String jarPath = file.getPresentableUrl();
         File realFile = new File(jarPath);
         if (realFile.exists()) {
