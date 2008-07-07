@@ -133,6 +133,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                           @NotNull String text,
                                           short searchContext,
                                           boolean caseSensitively) {
+    if (text.length() == 0) {
+      throw new IllegalArgumentException("Cannot search for elements with empty text");
+    }
     if (searchScope instanceof GlobalSearchScope) {
       StringSearcher searcher = new StringSearcher(text);
       searcher.setCaseSensitive(caseSensitively);
