@@ -26,6 +26,7 @@ import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -235,6 +236,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -248,6 +250,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistentData().getEnvs());
+    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   public void restoreOriginalModule(final Module originalModule) {

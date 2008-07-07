@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.SettingsEditor;
@@ -239,6 +240,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -302,6 +304,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
       listenersElement.addContent(listenerElement);
     }
 
+    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   @Nullable
