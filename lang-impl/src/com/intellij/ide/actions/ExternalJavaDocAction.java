@@ -58,7 +58,12 @@ public class ExternalJavaDocAction extends AnAction {
     boolean enabled = provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element, originalElement);
     if (editor != null) {
       presentation.setEnabled(enabled);
-      presentation.setVisible(enabled);
+      if (event.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+        presentation.setVisible(true);
+      }
+      else {
+        presentation.setVisible(enabled);
+      }
     }
     else{
       presentation.setEnabled(enabled);
