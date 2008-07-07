@@ -65,6 +65,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -87,7 +88,6 @@ public class CompileDriver {
 
   private final FileProcessingCompilerAdapterFactory myProcessingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myPackagingCompilerAdapterFactory;
-  private final FileProcessingCompilerAdapterFactory myFixedTimestampCompilerAdapterFactory;
 
   public CompileDriver(Project project) {
     myProject = project;
@@ -118,11 +118,6 @@ public class CompileDriver {
     myPackagingCompilerAdapterFactory = new FileProcessingCompilerAdapterFactory() {
       public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
         return new PackagingCompilerAdapter(context, (PackagingCompiler)compiler);
-      }
-    };
-    myFixedTimestampCompilerAdapterFactory = new FileProcessingCompilerAdapterFactory() {
-      public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
-        return new FixedTimestampCompilerAdapter(context, compiler);
       }
     };
   }
@@ -522,13 +517,13 @@ public class CompileDriver {
         didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, outputDirectories, onlyCheckStatus);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class,
-                                                      myFixedTimestampCompilerAdapterFactory, isRebuild, false, onlyCheckStatus);
+                                                      myProcessingCompilerAdapterFactory, isRebuild, false, onlyCheckStatus);
 
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class,
-                                                      myFixedTimestampCompilerAdapterFactory, isRebuild, false, onlyCheckStatus);
+                                                      myProcessingCompilerAdapterFactory, isRebuild, false, onlyCheckStatus);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory,
                                                       isRebuild, true, onlyCheckStatus);
@@ -753,18 +748,24 @@ public class CompileDriver {
     final FileProcessingCompiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass);
     if (compilers.length > 0) {
       try {
-        for (final FileProcessingCompiler compiler : compilers) {
-          if (context.getProgressIndicator().isCanceled()) {
-            throw new ExitException(ExitStatus.CANCELLED);
+        CacheDeferredUpdater cacheUpdater = new CacheDeferredUpdater();
+        try {
+          for (final FileProcessingCompiler compiler : compilers) {
+            if (context.getProgressIndicator().isCanceled()) {
+              throw new ExitException(ExitStatus.CANCELLED);
+            }
+  
+            final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope, onlyCheckStatus, cacheUpdater);
+  
+            if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+              throw new ExitException(ExitStatus.ERRORS);
+            }
+  
+            didSomething |= processedSomething;
           }
-
-          final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope, onlyCheckStatus);
-
-          if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-            throw new ExitException(ExitStatus.ERRORS);
-          }
-
-          didSomething |= processedSomething;
+        }
+        finally {
+          cacheUpdater.doUpdate();
         }
       }
       catch (IOException e) {
@@ -1303,7 +1304,7 @@ public class CompileDriver {
   private boolean processFiles(final FileProcessingCompilerAdapter adapter,
                                final boolean forceCompile,
                                final boolean checkScope,
-                               final boolean onlyCheckStatus) throws ExitException, IOException {
+                               final boolean onlyCheckStatus, final CacheDeferredUpdater cacheUpdater) throws ExitException, IOException {
     final CompileContext context = adapter.getCompileContext();
     final FileProcessingCompilerStateCache cache = getFileProcessingCompilerCache(adapter.getCompiler());
     final FileProcessingCompiler.ProcessingItem[] items = adapter.getProcessingItems();
@@ -1421,20 +1422,8 @@ public class CompileDriver {
           LOG.debug("\t" + file.getPresentableUrl() + "; ts=" + file.getTimeStamp());
         }
       }
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          try {
-            for (FileProcessingCompiler.ProcessingItem item : processed) {
-              cache.update(item.getFile(), item.getValidityState());
-            }
-          }
-          catch (IOException e) {
-            ex[0] = e;
-          }
-        }
-      });
-      if (ex[0] != null) {
-        throw ex[0];
+      for (FileProcessingCompiler.ProcessingItem item : processed) {
+        cacheUpdater.addFileForUpdate(item.getFile(), cache, item.getValidityState());
       }
     }
     return true;
@@ -1778,4 +1767,39 @@ public class CompileDriver {
     }
     return vFile;
   }
+
+  private static class CacheDeferredUpdater {
+    private Map<VirtualFile, List<Pair<FileProcessingCompilerStateCache, ValidityState>>> myData = new java.util.HashMap<VirtualFile, List<Pair<FileProcessingCompilerStateCache, ValidityState>>>();
+    
+    public void addFileForUpdate(@NotNull VirtualFile file, FileProcessingCompilerStateCache cache, ValidityState validityState) {
+      List<Pair<FileProcessingCompilerStateCache, ValidityState>> list = myData.get(file);
+      if (list == null) {
+        list = new ArrayList<Pair<FileProcessingCompilerStateCache, ValidityState>>();
+        myData.put(file, list);
+      }
+      list.add(new Pair<FileProcessingCompilerStateCache, ValidityState>(cache, validityState));
+    }
+    
+    public void doUpdate() throws IOException{
+      final IOException[] ex = new IOException[] {null};
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          try {
+            for (Map.Entry<VirtualFile, List<Pair<FileProcessingCompilerStateCache, ValidityState>>> entry : myData.entrySet()) {
+              for (Pair<FileProcessingCompilerStateCache, ValidityState> pair : entry.getValue()) {
+                pair.getFirst().update(entry.getKey(), pair.getSecond());
+              }
+            }
+          }
+          catch (IOException e) {
+            ex[0] = e;
+          }
+        }
+      });
+      if (ex[0] != null) {
+        throw ex[0];
+      }
+    }
+  }
+  
 }
