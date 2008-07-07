@@ -6,10 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumerator;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -33,6 +30,7 @@ import java.util.*;
 
 public class MavenIndex {
   protected static final String INDEX_INFO_FILE = "index.properties";
+
   private static final String KIND_KEY = "kind";
   private static final String PATH_OR_URL_KEY = "pathOrUrl";
   private static final String TIMESTAMP_KEY = "lastUpdate";
@@ -48,11 +46,13 @@ public class MavenIndex {
   private static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
   private static final String VERSIONS_MAP_FILE = "versions-map.dat";
 
-  public enum Kind { LOCAL, REMOTE }
+  public enum Kind {
+    LOCAL, REMOTE
+  }
 
   private final File myDir;
 
-  private String myRepositoryPathOrUrl;
+  private final String myRepositoryPathOrUrl;
   private final Kind myKind;
   private Long myUpdateTimestamp;
 
@@ -124,26 +124,6 @@ public class MavenIndex {
     }
   }
 
-  public synchronized File getRepositoryFile() {
-    return myKind == Kind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
-  }
-
-  public synchronized String getRepositoryUrl() {
-    return myKind == Kind.REMOTE ? myRepositoryPathOrUrl : null;
-  }
-
-  public synchronized String getRepositoryPathOrUrl() {
-    return myRepositoryPathOrUrl;
-  }
-
-  public synchronized Kind getKind() {
-    return myKind;
-  }
-
-  public long getUpdateTimestamp() {
-    return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
-  }
-
   private void open() throws MavenIndexException {
     try {
       doOpen();
@@ -172,26 +152,30 @@ public class MavenIndex {
       }
       catch (Exception ignore) {
       }
-      delete();
+      FileUtil.delete(getCurrentDataDir());
+      myUpdateTimestamp = null;
       throw e;
     }
   }
 
-  public synchronized void change(String repositoryPathOrUrl) throws MavenIndexException {
-    delete();
-    myRepositoryPathOrUrl = repositoryPathOrUrl;
-    open();
-
-    save();
+  public File getRepositoryFile() {
+    return myKind == Kind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
   }
 
-  public synchronized void delete() throws MavenIndexException {
-    try {
-      close();
-    }
-    finally {
-      FileUtil.delete(myDir);
-    }
+  public String getRepositoryUrl() {
+    return myKind == Kind.REMOTE ? myRepositoryPathOrUrl : null;
+  }
+
+  public String getRepositoryPathOrUrl() {
+    return myRepositoryPathOrUrl;
+  }
+
+  public Kind getKind() {
+    return myKind;
+  }
+
+  public synchronized long getUpdateTimestamp() {
+    return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
 
   public synchronized void close() throws MavenIndexException {
@@ -200,6 +184,15 @@ public class MavenIndex {
     }
     catch (IOException e) {
       throw new MavenIndexException(e);
+    }
+  }
+
+  public synchronized void delete() throws MavenIndexException {
+    try {
+      close();
+    }
+    finally {
+      FileUtil.delete(myDir);
     }
   }
 
@@ -216,7 +209,6 @@ public class MavenIndex {
       try {
         updateContext(context, embedder, indexer, updater, progress);
         updateData(context, progress);
-        myUpdateTimestamp = System.currentTimeMillis();
         save();
       }
       finally {
@@ -231,12 +223,9 @@ public class MavenIndex {
     }
   }
 
-  private synchronized IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
-    File targetDir = getContextDir();
-
+  private IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
     // Nexus cannot update index if the id does not equal to the stored one.
-    String id = targetDir.exists() ? null : myDir.getName();
-
+    String id = getContextDir().exists() ? null : myDir.getName();
     return indexer.addIndexingContext(id,
                                       id,
                                       getRepositoryFile(),
@@ -246,7 +235,7 @@ public class MavenIndex {
                                       NexusIndexer.FULL_INDEX);
   }
 
-  private synchronized File getContextDir() {
+  private File getContextDir() {
     return new File(myDir, CONTEXT_DIR);
   }
 
@@ -265,9 +254,9 @@ public class MavenIndex {
     }
   }
 
-  protected void updateLocalContext(IndexingContext context,
-                                    NexusIndexer indexer,
-                                    ProgressIndicator progress) throws IOException {
+  private void updateLocalContext(IndexingContext context,
+                                  NexusIndexer indexer,
+                                  ProgressIndicator progress) throws IOException {
     progress.setIndeterminate(true);
     try {
       indexer.scan(context, new MyScanningListener(), false);
@@ -294,7 +283,7 @@ public class MavenIndex {
   }
 
   private void updateData(IndexingContext context, ProgressIndicator progress) throws IOException {
-    progress.setText2("Updating caches...");
+    progress.setText2(IndicesBundle.message("maven.indices.updating.saving"));
 
     String newDataDir = findAvailableDataDir();
     IndexData newData = openData(newDataDir);
@@ -317,16 +306,22 @@ public class MavenIndex {
       myData = newData;
       myDataDirName = newDataDir;
 
+      myUpdateTimestamp = System.currentTimeMillis();
+
       oldData.close();
       FileUtil.delete(getDataDir(oldDataDir));
     }
   }
 
-  protected void doUpdateIndexData(IndexingContext context,
-                                   IndexData data,
-                                   ProgressIndicator progress) throws IOException {
-    Map<String, Set<String>> artifactIdsMap = new HashMap<String, Set<String>>();
-    Map<String, Set<String>> versionsMap = new HashMap<String, Set<String>>();
+  private void doUpdateIndexData(IndexingContext context,
+                                 IndexData data,
+                                 ProgressIndicator progress) throws IOException {
+    Set<String> groups = new HashSet<String>();
+    Set<String> groupsWithArtifacts = new HashSet<String>();
+    Set<String> groupsWithArtifactsWithVersions = new HashSet<String>();
+
+    Map<String, Set<String>> groupToArtifactMap = new HashMap<String, Set<String>>();
+    Map<String, Set<String>> groupWithArtifactToVersionMap = new HashMap<String, Set<String>>();
 
     IndexReader r = context.getIndexReader();
     int total = r.numDocs();
@@ -344,21 +339,40 @@ public class MavenIndex {
       String artifactId = parts.get(1);
       String version = parts.get(2);
 
-      data.groupIds.add(groupId);
-      data.artifactIds.add(groupId + ":" + artifactId);
-      data.versions.add(groupId + ":" + artifactId + ":" + version);
+      groups.add(groupId);
+      groupsWithArtifacts.add(groupId + ":" + artifactId);
+      groupsWithArtifactsWithVersions.add(groupId + ":" + artifactId + ":" + version);
 
-      getOrCreate(artifactIdsMap, groupId).add(artifactId);
-      getOrCreate(versionsMap, groupId + ":" + artifactId).add(version);
+      getOrCreate(groupToArtifactMap, groupId).add(artifactId);
+      getOrCreate(groupWithArtifactToVersionMap, groupId + ":" + artifactId).add(version);
     }
 
-    persist(artifactIdsMap, data.artifactIdsMap);
-    persist(versionsMap, data.versionsMap);
+    persist(groups, data.groups);
+    persist(groupsWithArtifacts, data.groupsWithArtifacts);
+    persist(groupsWithArtifactsWithVersions, data.groupsWithArtifactsWithVersions);
+
+    persist(groupToArtifactMap, data.groupToArtifactMap);
+    persist(groupWithArtifactToVersionMap, data.groupWithArtifactToVersionMap);
   }
 
-  protected void persist(Map<String, Set<String>> map, PersistentHashMap<String, Set<String>> persistentMap) throws IOException {
-    for (Map.Entry<String, Set<String>> each : map.entrySet()) {
+  private <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
+    Set<T> result = map.get(key);
+    if (result == null) {
+      result = new HashSet<T>();
+      map.put(key, result);
+    }
+    return result;
+  }
+
+  private <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
+    for (Map.Entry<String, T> each : map.entrySet()) {
       persistentMap.put(each.getKey(), each.getValue());
+    }
+  }
+
+  private void persist(Set<String> groups, PersistentStringEnumerator persistent) throws IOException {
+    for (String each : groups) {
+      persistent.enumerate(each);
     }
   }
 
@@ -369,7 +383,7 @@ public class MavenIndex {
   }
 
   @TestOnly
-  protected synchronized File getDir() {
+  protected File getDir() {
     return myDir;
   }
 
@@ -386,28 +400,26 @@ public class MavenIndex {
     return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
   }
 
-  protected Set<String> getOrCreate(Map<String, Set<String>> map, String key) {
-    Set<String> result = map.get(key);
-    if (result == null) {
-      result = new HashSet<String>();
-      map.put(key, result);
-    }
-    return result;
-  }
-
   public synchronized void addArtifact(MavenId id) throws MavenIndexException {
     if (id.groupId == null) return;
 
     try {
-      myData.groupIds.add(id.groupId);
+      myData.groups.enumerate(id.groupId);
+      myData.hasGroupCache.put(id.groupId, true);
 
       if (id.artifactId != null) {
-        myData.artifactIds.add(id.groupId + ":" + id.artifactId);
-        addToCache(myData.artifactIdsMap, id.groupId, id.artifactId);
+        String groupWithArtifact = id.groupId + ":" + id.artifactId;
+
+        myData.groupsWithArtifacts.enumerate(groupWithArtifact);
+        myData.hasArtifactCache.put(groupWithArtifact, true);
+        addToCache(myData.groupToArtifactMap, id.groupId, id.artifactId);
 
         if (id.version != null) {
-          myData.versions.add(id.groupId + ":" + id.artifactId + ":" + id.version);
-          addToCache(myData.versionsMap, id.groupId + ":" + id.artifactId, id.version);
+          String groupWithArtifactWithVersion = groupWithArtifact + ":" + id.version;
+
+          myData.groupsWithArtifactsWithVersions.enumerate(groupWithArtifactWithVersion);
+          myData.hasVersionCache.put(groupWithArtifactWithVersion, true);
+          addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
         }
       }
       myData.flush();
@@ -425,13 +437,23 @@ public class MavenIndex {
   }
 
   public synchronized Set<String> getGroupIds() throws MavenIndexException {
-    Set<String> result = myData.groupIds;
-    return result == null ? Collections.<String>emptySet() : result;
+    try {
+      final Set<String> result = new HashSet<String>();
+      myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+        public void process(int record) throws IOException {
+          result.add(myData.groups.valueOf(record));
+        }
+      });
+      return result;
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
   }
 
   public synchronized Set<String> getArtifactIds(String groupId) throws MavenIndexException {
     try {
-      Set<String> result = myData.artifactIdsMap.get(groupId);
+      Set<String> result = myData.groupToArtifactMap.get(groupId);
       return result == null ? Collections.<String>emptySet() : result;
     }
     catch (IOException e) {
@@ -441,7 +463,7 @@ public class MavenIndex {
 
   public synchronized Set<String> getVersions(String groupId, String artifactId) throws MavenIndexException {
     try {
-      Set<String> result = myData.versionsMap.get(groupId + ":" + artifactId);
+      Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
       return result == null ? Collections.<String>emptySet() : result;
     }
     catch (IOException e) {
@@ -450,46 +472,72 @@ public class MavenIndex {
   }
 
   public synchronized boolean hasGroupId(String groupId) throws MavenIndexException {
-    return myData.groupIds.contains(groupId);
+    return hasValue(myData.groups, myData.hasGroupCache, groupId);
   }
 
   public synchronized boolean hasArtifactId(String groupId, String artifactId) throws MavenIndexException {
-    return myData.artifactIds.contains(groupId + ":" + artifactId);
+    return hasValue(myData.groupsWithArtifacts,
+                    myData.hasArtifactCache,
+                    groupId + ":" + artifactId);
   }
 
   public synchronized boolean hasVersion(String groupId, String artifactId, String version) throws MavenIndexException {
-    return myData.versions.contains(groupId + ":" + artifactId + ":" + version);
+    return hasValue(myData.groupsWithArtifactsWithVersions,
+                    myData.hasVersionCache,
+                    groupId + ":" + artifactId + ":" + version);
+  }
+
+  private boolean hasValue(final PersistentStringEnumerator set, Map<String, Boolean> cache, final String value) throws MavenIndexException {
+    Boolean cached = cache.get(value);
+    if (cached != null) return cached;
+
+    class FoundException extends RuntimeException {
+    }
+
+    boolean result = false;
+
+    try {
+      set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+        public void process(int record) throws IOException {
+          if (value.equals(set.valueOf(record))) {
+            throw new FoundException();
+          }
+        }
+      });
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
+    catch (FoundException ignore) {
+      result = true;
+    }
+
+    cache.put(value, result);
+    return result;
   }
 
   private static class IndexData {
     File myDir;
-    Set<String> groupIds;
-    Set<String> artifactIds;
-    Set<String> versions;
-    PersistentHashMap<String, Set<String>> artifactIdsMap;
-    PersistentHashMap<String, Set<String>> versionsMap;
+
+    PersistentStringEnumerator groups;
+    PersistentStringEnumerator groupsWithArtifacts;
+    PersistentStringEnumerator groupsWithArtifactsWithVersions;
+
+    PersistentHashMap<String, Set<String>> groupToArtifactMap;
+    PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
+
+    Map<String, Boolean> hasGroupCache = new HashMap<String, Boolean>();
+    Map<String, Boolean> hasArtifactCache = new HashMap<String, Boolean>();
+    Map<String, Boolean> hasVersionCache = new HashMap<String, Boolean>();
 
     public IndexData(File dir) throws IOException {
       myDir = dir;
-      groupIds = read(GROUP_IDS_FILE);
-      artifactIds = read(ARTIFACT_IDS_FILE);
-      versions = read(VERSIONS_FILE);
+      groups = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
+      groupsWithArtifacts = new PersistentStringEnumerator(new File(dir, ARTIFACT_IDS_FILE));
+      groupsWithArtifactsWithVersions = new PersistentStringEnumerator(new File(dir, VERSIONS_FILE));
 
-      artifactIdsMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
-      versionsMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
-    }
-
-    private Set<String> read(String fileName) throws IOException {
-      File f = new File(myDir, fileName);
-      if (!f.exists()) return new HashSet<String>();
-
-      DataInputStream s = new DataInputStream(new FileInputStream(f));
-      try {
-        return new SetDescriptor().read(s);
-      }
-      finally {
-        s.close();
-      }
+      groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
+      groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(File f) throws IOException {
@@ -497,8 +545,12 @@ public class MavenIndex {
     }
 
     public void close() throws IOException {
-      safeClose(artifactIdsMap);
-      safeClose(versionsMap);
+      safeClose(groups);
+      safeClose(groupsWithArtifacts);
+      safeClose(groupsWithArtifactsWithVersions);
+
+      safeClose(groupToArtifactMap);
+      safeClose(groupWithArtifactToVersionMap);
     }
 
     private void safeClose(PersistentEnumerator enumerator) throws IOException {
@@ -506,22 +558,12 @@ public class MavenIndex {
     }
 
     public void flush() throws IOException {
-      save(GROUP_IDS_FILE, groupIds);
-      save(ARTIFACT_IDS_FILE, artifactIds);
-      save(VERSIONS_FILE, versions);
+      groups.flush();
+      groupsWithArtifacts.flush();
+      groupsWithArtifactsWithVersions.flush();
 
-      artifactIdsMap.flush();
-      versionsMap.flush();
-    }
-
-    private void save(String fileName, Set<String> values) throws IOException {
-      DataOutputStream s = new DataOutputStream(new FileOutputStream(new File(myDir, fileName)));
-      try {
-        new SetDescriptor().save(s, values);
-      }
-      finally {
-        s.close();
-      }
+      groupToArtifactMap.flush();
+      groupWithArtifactToVersionMap.flush();
     }
   }
 
@@ -553,12 +595,10 @@ public class MavenIndex {
 
     public void scanningStarted(IndexingContext ctx) {
       p.checkCanceled();
-      p.setText2("Starting...");
     }
 
     public void scanningFinished(IndexingContext ctx, ScanningResult result) {
       p.checkCanceled();
-      p.setText2("Done");
     }
 
     public void artifactError(ArtifactContext ac, Exception e) {
@@ -566,7 +606,7 @@ public class MavenIndex {
 
     public void artifactDiscovered(ArtifactContext ac) {
       p.checkCanceled();
-      p.setText2("Indexing " + ac.getArtifact());
+      p.setText2(IndicesBundle.message("maven.indices.updating.indexing", ac.getArtifact()));
     }
   }
 }

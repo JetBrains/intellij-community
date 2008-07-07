@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -15,7 +16,9 @@ import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
+import org.jetbrains.idea.maven.dom.model.Plugin;
 import org.jetbrains.idea.maven.indices.MavenIndexException;
+import org.jetbrains.idea.maven.indices.MavenPluginInfoReader;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -23,6 +26,7 @@ import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public abstract class MavenArtifactConverter extends ResolvingConverter<String> {
@@ -38,10 +42,20 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
 
     try {
       Project p = context.getFile().getProject();
-      return isValid(p,
-                     MavenProjectIndicesManager.getInstance(p),
-                     MavenArtifactConverterHelper.getId(context),
-                     context) ? s : null;
+      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
+      MavenId id = MavenArtifactConverterHelper.getId(context);
+
+      Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
+      if (StringUtil.isEmpty(id.groupId) && plugin != null) {
+        for (String each : MavenPluginInfoReader.DEFAULT_GROUPS) {
+          id.groupId = each;
+          if (isValid(p, manager, id, context)) return s;
+        }
+        return null;
+      }
+      else {
+        return isValid(p, manager, id, context) ? s : null;
+      }
     }
     catch (MavenIndexException e) {
       MavenLog.info(e);
@@ -60,10 +74,20 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
   public Collection<String> getVariants(ConvertContext context) {
     try {
       Project p = context.getFile().getProject();
-      return getVariants(p,
-                         MavenProjectIndicesManager.getInstance(p),
-                         MavenArtifactConverterHelper.getId(context),
-                         context);
+      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
+      MavenId id = MavenArtifactConverterHelper.getId(context);
+
+      Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
+      if (StringUtil.isEmpty(id.groupId) && plugin != null) {
+        Set<String> result = new HashSet<String>();
+        for (String each : MavenPluginInfoReader.DEFAULT_GROUPS) {
+          id.groupId = each;
+          result.addAll(getVariants(p, manager, id, context));
+        }
+        return result;
+      }
+
+      return getVariants(p, manager, id, context);
     }
     catch (MavenIndexException e) {
       MavenLog.info(e);
@@ -89,8 +113,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
       return PsiManager.getInstance(p).findFile(project.getFile());
     }
 
-    File file = new File(manager.getMavenCoreSettings().getEffectiveLocalRepository(),
-                         assembleArtifactFile(context, id));
+    File file = resolveArtifactFile(context, manager, id);
     VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (vf != null) {
       return PsiManager.getInstance(p).findFile(vf);
@@ -111,6 +134,18 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     }
 
     return null;
+  }
+
+  private File resolveArtifactFile(ConvertContext context, MavenProjectsManager manager, MavenId id) {
+    File repo = manager.getMavenCoreSettings().getEffectiveLocalRepository();
+
+    Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
+    if (plugin != null) {
+      String path = new MavenPluginInfoReader().findPluginPath(repo.getPath(), id.groupId, id.artifactId, id.version, "pom");
+      return path == null ? null : new File(path);
+    }
+
+    return new File(repo, assembleArtifactFile(context, id));
   }
 
   private String assembleArtifactFile(ConvertContext context, MavenId id) {

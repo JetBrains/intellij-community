@@ -8,13 +8,13 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
-public class RepositoryBundle {
+public class IndicesBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
-  private static final String BUNDLE = "RepositoryBundle";
+  private static final String BUNDLE = "IndicesBundle";
 
-  private RepositoryBundle() {
+  private IndicesBundle() {
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {

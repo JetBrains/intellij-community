@@ -37,7 +37,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myProject = project;
     myManager = MavenProjectIndicesManager.getInstance(myProject);
 
-    myUpdatingIcon = new AsyncProcessIcon(RepositoryBundle.message("maven.indices.updating"));
+    myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
 
     myRepaintTimer = new Timer(
         AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT,
@@ -85,7 +85,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   public String getDisplayName() {
-    return RepositoryBundle.message("maven.indices");
+    return IndicesBundle.message("maven.indices");
   }
 
   public Icon getIcon() {
@@ -125,9 +125,9 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   private class MyTableModel extends AbstractTableModel {
     private final String[] COLUMNS =
         new String[]{
-            RepositoryBundle.message("maven.index.url"),
-            RepositoryBundle.message("maven.index.type"),
-            RepositoryBundle.message("maven.index.timestamp"),
+            IndicesBundle.message("maven.index.url"),
+            IndicesBundle.message("maven.index.type"),
+            IndicesBundle.message("maven.index.timestamp"),
             ""};
 
     private List<MavenIndex> myIndices;
@@ -165,7 +165,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
           return "Remote";
         case 2:
           long timestamp = i.getUpdateTimestamp();
-          if (timestamp == -1) return RepositoryBundle.message("maven.index.timestamp.unknown");
+          if (timestamp == -1) return IndicesBundle.message("maven.index.timestamp.unknown");
           return SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(new Date(timestamp));
         case 3:
           return myManager.getUpdatingState(i);

@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.core.MavenCore;
 
 import java.io.File;
@@ -31,8 +30,7 @@ public class MavenIndicesTestFixture {
     myDataTestFixture.setUp();
 
     for (String each : myExtraRepoDirs) {
-      FileUtil.copyDir(new File(myDataTestFixture.getTestDataPath(each)),
-                       new File(myDataTestFixture.getTestDataPath(myLocalRepoDir)));
+      myDataTestFixture.copy(each, myLocalRepoDir);
     }
 
     MavenCore.getInstance(myProject).getState().setLocalRepository(myDataTestFixture.getTestDataPath(myLocalRepoDir));

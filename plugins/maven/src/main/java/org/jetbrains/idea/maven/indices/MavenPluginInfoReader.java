@@ -26,19 +26,19 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
 
   @Nullable
   public MavenPluginInfo loadPluginInfo(String repositoryPath, MavenId mavenId) {
-    String path = findPluginPath(repositoryPath, mavenId.groupId, mavenId.artifactId, mavenId.version);
+    String path = findPluginPath(repositoryPath, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar");
     if (path == null) return null;
 
     return createPluginDocument(path);
   }
 
   public boolean hasPlugin(String repositoryPath, MavenId id) {
-    return findPluginPath(repositoryPath, id.groupId, id.artifactId, id.version) != null;
+    return findPluginPath(repositoryPath, id.groupId, id.artifactId, id.version, "jar") != null;
   }
 
   @Nullable
   @NonNls
-  public String findPluginPath(String repositoryPath, String groupId, String artifactId, String version) {
+  public String findPluginPath(String repositoryPath, String groupId, String artifactId, String version, String ext) {
     VirtualFile dir = null;
     if (StringUtil.isEmpty(groupId)) {
       for (String each : DEFAULT_GROUPS) {
@@ -53,7 +53,7 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
     if (dir == null || !dir.isDirectory()) return null;
 
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);
-    return dir.getPath() + File.separator + version + File.separator + artifactId + "-" + version + ".jar";
+    return dir.getPath() + File.separator + version + File.separator + artifactId + "-" + version + "." + ext;
   }
 
   @Nullable
@@ -86,7 +86,7 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
       ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
       if (entry == null) {
-        MavenLog.info(RepositoryBundle.message("repository.plugin.corrupt", path));
+        MavenLog.info(IndicesBundle.message("repository.plugin.corrupt", path));
         return null;
       }
 

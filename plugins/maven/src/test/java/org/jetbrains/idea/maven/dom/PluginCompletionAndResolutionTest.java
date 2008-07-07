@@ -1,11 +1,17 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 
 import java.io.IOException;
 import java.util.List;
 
-public class PluginConfigurationCompletionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
+public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override
   protected MavenIndicesTestFixture createIndicesFicture() {
     return new MavenIndicesTestFixture(myDir, myProject, "plugins");
@@ -81,6 +87,28 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin");
   }
 
+  public void testResolvingPlugins() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId><caret>maven-compiler-plugin</artifactId>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.pom";
+    String filePath = myIndicesFixture.getDataTestFixture().getTestDataPath(pluginPath);
+    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
+    assertEquals(getPsiFile(f), ref.resolve());
+  }
+
   public void testBasicConfigurationCompletion() throws Exception {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "source", "target");
@@ -150,6 +178,72 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
     assertCompletionVariants(myProjectPom);
   }
 
+  public void testResolvingParamaters() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <<caret>includes></includes>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    String pluginPath =
+        "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
+    String filePath = myIndicesFixture.getDataTestFixture().getTestDataPath(pluginPath);
+    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
+
+    PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+    assertEquals(getPsiFile(f), resolved.getContainingFile());
+    assertTrue(resolved instanceof XmlTag);
+    assertEquals("parameter", ((XmlTag)resolved).getName());
+    assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
+  }
+
+  public void testResolvingInnerParamatersIntoOuter() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <includes>" +
+                     "          <<caret>include></include" +
+                     "        </includes>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    String pluginPath =
+        "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
+    String filePath = myIndicesFixture.getDataTestFixture().getTestDataPath(pluginPath);
+    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
+
+    PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+    assertEquals(getPsiFile(f), resolved.getContainingFile());
+    assertTrue(resolved instanceof XmlTag);
+    assertEquals("parameter", ((XmlTag)resolved).getName());
+    assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
+  }
+
   public void testGoalsCompletionAndHighlighting() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -192,6 +286,42 @@ public class PluginConfigurationCompletionTest extends MavenCompletionAndResolut
                      "</build>");
 
     checkHighlighting();
+  }
+
+  public void testGoalsResolution() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal><caret>compile</goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    String pluginPath =
+        "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
+    String filePath = myIndicesFixture.getDataTestFixture().getTestDataPath(pluginPath);
+    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
+
+    PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+    assertEquals(getPsiFile(f), resolved.getContainingFile());
+    assertTrue(resolved instanceof XmlTag);
+    assertEquals("mojo", ((XmlTag)resolved).getName());
+    assertEquals("compile", ((XmlTag)resolved).findFirstSubTag("goal").getValue().getText());
   }
 
   public void testPhaseCompletionAndHighlighting() throws Throwable {

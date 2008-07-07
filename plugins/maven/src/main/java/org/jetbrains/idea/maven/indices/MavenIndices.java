@@ -12,18 +12,16 @@ import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class MavenIndices {
-  private MavenEmbedder myEmbedder;
-  private NexusIndexer myIndexer;
-  private IndexUpdater myUpdater;
+  private final MavenEmbedder myEmbedder;
+  private final NexusIndexer myIndexer;
+  private final IndexUpdater myUpdater;
 
-  private File myIndicesDir;
+  private final File myIndicesDir;
 
-  private List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
+  private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
 
   public MavenIndices(MavenEmbedder e, File indicesDir) {
     myEmbedder = e;
@@ -77,6 +75,10 @@ public class MavenIndices {
     }
   }
 
+  public synchronized List<MavenIndex> getIndices() {
+    return new ArrayList<MavenIndex>(myIndices);
+  }
+
   public synchronized MavenIndex add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
     File dir = getAvailableIndexDir();
     MavenIndex index = new MavenIndex(dir, repositoryPathOrUrl, kind);
@@ -102,61 +104,8 @@ public class MavenIndices {
     myIndices.remove(i);
   }
 
-  public void change(MavenIndex i, String repositoryPathOrUrl) throws MavenIndexException {
-    i.change(repositoryPathOrUrl);
-  }
-
   public void update(MavenIndex i, ProgressIndicator progress) throws MavenIndexException,
                                                                       ProcessCanceledException {
     i.update(myEmbedder, myIndexer, myUpdater, progress);
-  }
-
-  public synchronized List<MavenIndex> getIndices() {
-    return new ArrayList<MavenIndex>(myIndices);
-  }
-
-  public Set<String> getGroupIds() throws MavenIndexException {
-    Set<String> result = new HashSet<String>();
-    for (MavenIndex each : getIndices()) {
-      result.addAll(each.getGroupIds());
-    }
-    return result;
-  }
-
-  public Set<String> getArtifactIds(final String groupId) throws MavenIndexException {
-    Set<String> result = new HashSet<String>();
-    for (MavenIndex each : getIndices()) {
-      result.addAll(each.getArtifactIds(groupId));
-    }
-    return result;
-  }
-
-  public Set<String> getVersions(final String groupId, final String artifactId) throws MavenIndexException {
-    Set<String> result = new HashSet<String>();
-    for (MavenIndex each : getIndices()) {
-      result.addAll(each.getVersions(groupId, artifactId));
-    }
-    return result;
-  }
-
-  public boolean hasGroupId(final String groupId) throws MavenIndexException {
-    for (MavenIndex each : getIndices()) {
-      if (each.hasGroupId(groupId)) return true;
-    }
-    return false;
-  }
-
-  public boolean hasArtifactId(final String groupId, final String artifactId) throws MavenIndexException {
-    for (MavenIndex each : getIndices()) {
-      if (each.hasArtifactId(groupId, artifactId)) return true;
-    }
-    return false;
-  }
-
-  public boolean hasVersion(final String groupId, final String artifactId, final String version) throws MavenIndexException {
-    for (MavenIndex each : getIndices()) {
-      if (each.hasVersion(groupId, artifactId, version)) return true;
-    }
-    return false;
   }
 }

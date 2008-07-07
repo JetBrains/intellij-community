@@ -18,8 +18,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectIndicesManager extends DummyProjectComponent {
-  private Project myProject;
-  private AtomicReference<List<MavenIndex>> myProjectIndices = new AtomicReference<List<MavenIndex>>(new ArrayList<MavenIndex>());
+  private final Project myProject;
+  private final AtomicReference<List<MavenIndex>> myProjectIndices = new AtomicReference<List<MavenIndex>>(new ArrayList<MavenIndex>());
 
   public static MavenProjectIndicesManager getInstance(Project p) {
     return p.getComponent(MavenProjectIndicesManager.class);

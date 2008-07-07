@@ -33,14 +33,14 @@ public class MavenIndicesManager implements ApplicationComponent {
 
   private volatile boolean isInitialized;
 
-  private MavenEmbedder myEmbedder;
-  private MavenIndices myIndices;
+  private volatile MavenEmbedder myEmbedder;
+  private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();
-  private List<MavenIndex> myWaitingIndices = new ArrayList<MavenIndex>();
+  private final List<MavenIndex> myWaitingIndices = new ArrayList<MavenIndex>();
   private MavenIndex myUpdatingIndex;
 
-  private BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(RepositoryBundle.message("maven.indices.updating"));
+  private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(IndicesBundle.message("maven.indices.updating"));
 
   public static MavenIndicesManager getInstance() {
     return ApplicationManager.getApplication().getComponent(MavenIndicesManager.class);
@@ -88,12 +88,12 @@ public class MavenIndicesManager implements ApplicationComponent {
     }
   }
 
-  public MavenIndex add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
-    return myIndices.add(repositoryPathOrUrl, kind);
+  public List<MavenIndex> getIndices() {
+    return myIndices.getIndices();
   }
 
-  public void change(MavenIndex i, String repositoryPathOrUrl) throws MavenIndexException {
-    myIndices.change(i, repositoryPathOrUrl);
+  public MavenIndex add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
+    return myIndices.add(repositoryPathOrUrl, kind);
   }
 
   public void remove(MavenIndex i) throws MavenIndexException {
@@ -128,7 +128,7 @@ public class MavenIndicesManager implements ApplicationComponent {
       myWaitingIndices.addAll(toSchedule);
     }
 
-    myUpdatingQueue.run(new Task.Backgroundable(null, RepositoryBundle.message("maven.indices.updating"), true) {
+    myUpdatingQueue.run(new Task.Backgroundable(null, IndicesBundle.message("maven.indices.updating"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         doUpdateIndices(toSchedule, p, indicator);
       }
@@ -143,7 +143,7 @@ public class MavenIndicesManager implements ApplicationComponent {
         for (MavenIndex each : indices) {
           if (indicator.isCanceled()) return;
 
-          indicator.setText(RepositoryBundle.message("maven.indices.updating.index", each.getRepositoryPathOrUrl()));
+          indicator.setText(IndicesBundle.message("maven.indices.updating.index", each.getRepositoryPathOrUrl()));
 
           synchronized (myUpdatingIndicesLock) {
             remainingWaiting.remove(each);
@@ -180,7 +180,7 @@ public class MavenIndicesManager implements ApplicationComponent {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showErrorDialog(e.getMessage(), RepositoryBundle.message("maven.indices"));
+          Messages.showErrorDialog(e.getMessage(), IndicesBundle.message("maven.indices"));
         }
       });
     }
@@ -201,9 +201,5 @@ public class MavenIndicesManager implements ApplicationComponent {
         DaemonCodeAnalyzer.getInstance(p).restart();
       }
     });
-  }
-
-  public List<MavenIndex> getIndices() {
-    return myIndices.getIndices();
   }
 }
