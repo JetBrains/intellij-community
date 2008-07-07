@@ -97,7 +97,7 @@ public class ConstructorReferencesSearchHelper {
     // search usages like "super(..)"
     Processor<PsiClass> processor2 = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
-        return processSuperOrThis(processor, inheritor, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
+        return processSuperOrThis(processor, (PsiClass)inheritor.getNavigationElement(), constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
                                                           PsiKeyword.SUPER);
       }
     };
