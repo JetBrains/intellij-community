@@ -211,7 +211,11 @@ public class EquivalenceChecker {
     }
     final GrFinallyClause finallyBlock1 = statement1.getFinallyClause();
     final GrFinallyClause finallyBlock2 = statement2.getFinallyClause();
-    if (!openBlocksAreEquivalent(finallyBlock1.getBody(), finallyBlock2.getBody())) {
+    if (finallyBlock1 != null) {
+      if (finallyBlock2 == null || !openBlocksAreEquivalent(finallyBlock1.getBody(), finallyBlock2.getBody())) {
+        return false;
+      }
+    } else if (finallyBlock2 != null) {
       return false;
     }
     final GrCatchClause[] catchBlocks1 = statement1.getCatchClauses();
