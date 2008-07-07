@@ -18,14 +18,21 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   private JRadioButton myUpgradeAutoButton;
   private JRadioButton myUpgradeAuto15Button;
 
-  private File myPath;
+  protected File myPath;
 
   public UpgradeFormatDialog(Project project, File path, boolean canBeParent) {
+    this(project, path, canBeParent, true);
+  }
+
+  protected UpgradeFormatDialog(Project project, File path, boolean canBeParent, final boolean initHere) {
     super(project, canBeParent);
     myPath = path;
     setResizable(false);
     setTitle(SvnBundle.message("dialog.upgrade.wcopy.format.title"));
-    init();
+
+    if (initHere) {
+      init();
+    }
   }
 
   protected Action[] createActions() {
@@ -51,6 +58,10 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     }
   }
 
+  protected String getTopMessage(final String label) {
+    return SvnBundle.message(new StringBuilder().append("label.configure.").append(label).append(".label").toString());
+  }
+
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
@@ -74,7 +85,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     final boolean adminPathIsDirectory = adminPath.isDirectory();
     final String label = getMiddlePartOfResourceKey(adminPathIsDirectory);
 
-    JLabel topLabel = new JLabel(SvnBundle.message(new StringBuilder().append("label.configure.").append(label).append(".label").toString()));
+    JLabel topLabel = new JLabel(getTopMessage(label));
     topLabel.setUI(new MultiLineLabelUI());
     panel.add(topLabel, gb);
     gb.gridy += 1;
@@ -95,7 +106,19 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     gb.gridy += 1;
 
     myUpgradeNoneButton.setSelected(true);
+
+    final JPanel auxiliaryPanel = getBottomAuxiliaryPanel();
+    if (auxiliaryPanel != null) {
+      panel.add(auxiliaryPanel, gb);
+      gb.gridy += 1;
+    }
+
     return panel;
+  }
+
+  @Nullable
+  protected JPanel getBottomAuxiliaryPanel() {
+    return null;
   }
 
   protected String getMiddlePartOfResourceKey(final boolean adminPathIsDirectory) {

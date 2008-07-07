@@ -8,12 +8,14 @@ public class WCInfo {
   private final SVNURL myUrl;
   private final WorkingCopyFormat myFormat;
   private final String myRepositoryRoot;
+  private final boolean myIsWcRoot;
 
-  public WCInfo(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot) {
+  public WCInfo(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot) {
     myPath = path;
     myUrl = url;
     myFormat = format;
     myRepositoryRoot = repositoryRoot;
+    myIsWcRoot = isWcRoot;
   }
 
   public String getPath() {
@@ -30,6 +32,10 @@ public class WCInfo {
 
   public String getRepositoryRoot() {
     return myRepositoryRoot;
+  }
+
+  public boolean isIsWcRoot() {
+    return myIsWcRoot;
   }
 
   @Override

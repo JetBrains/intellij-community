@@ -722,8 +722,9 @@ public class SvnVcs extends AbstractVcs {
     final List<WCInfo> infos = new ArrayList<WCInfo>();
     for (Map.Entry<String, SvnFileUrlMapping.RootUrlInfo> entry : wcInfos.entrySet()) {
       final SvnFileUrlMapping.RootUrlInfo value = entry.getValue();
+      final File file = new File(entry.getKey());
       infos.add(new WCInfo(entry.getKey(), value.getAbsoluteUrlAsUrl(),
-                           SvnFormatSelector.getWorkingCopyFormat(new File(entry.getKey())), value.getRepositoryUrl()));
+                           SvnFormatSelector.getWorkingCopyFormat(file), value.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file)));
     }
     return infos;
   }
@@ -745,7 +746,11 @@ public class SvnVcs extends AbstractVcs {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           final SvnFormatWorker formatWorker = new SvnFormatWorker(myProject, WorkingCopyFormat.ONE_DOT_FIVE, myAllWcInfos);
-          ProgressManager.getInstance().run(formatWorker);
+          // additionally ask about working copies with roots above the project root
+          formatWorker.checkForOutsideCopies();
+          if (formatWorker.haveStuffToConvert()) {
+            ProgressManager.getInstance().run(formatWorker);
+          }
         }
       });
     }

@@ -4,6 +4,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -18,6 +20,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Iterator;
 
 public class SvnFormatWorker extends Task.Backgroundable {
   private List<Throwable> myExceptions;
@@ -35,6 +38,34 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   public SvnFormatWorker(final Project project, final WorkingCopyFormat newFormat, final WCInfo wcInfo) {
     this(project, newFormat, Collections.singletonList(wcInfo));
+  }
+
+  public void checkForOutsideCopies() {
+    boolean canceled = false;
+    for (Iterator<WCInfo> iterator = myWcInfos.iterator(); iterator.hasNext();) {
+      final WCInfo wcInfo = iterator.next();
+      if (! wcInfo.isIsWcRoot()) {
+        File path = new File(wcInfo.getPath());
+        path = SvnUtil.getWorkingCopyRoot(path);
+        int result = Messages.showYesNoCancelDialog(SvnBundle.message("upgrade.format.to15.clarify.for.outside.copies.text", path),
+                                                    SvnBundle.message("action.change.wcopy.format.task.title"),
+                                                    Messages.getWarningIcon());
+        if (DialogWrapper.CANCEL_EXIT_CODE == result) {
+          canceled = true;
+          break;
+        } else if (DialogWrapper.OK_EXIT_CODE != result) {
+          // no - for this copy only. maybe other
+          iterator.remove();
+        }
+      }
+    }
+    if (canceled) {
+      myWcInfos.clear();
+    }
+  }
+
+  public boolean haveStuffToConvert() {
+    return ! myWcInfos.isEmpty();
   }
 
   @Override
@@ -62,17 +93,23 @@ public class SvnFormatWorker extends Task.Backgroundable {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
 
-    for (WCInfo wcInfo : myWcInfos) {
-      final File path = new File(wcInfo.getPath());
-      indicator.setText(SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
-                                          SvnUtil.formatRepresentation(wcInfo.getFormat()), SvnUtil.formatRepresentation(myNewFormat)));
-      try {
-        wcClient.doSetWCFormat(path, myNewFormat.getFormat());
-      } catch (Throwable e) {
-        myExceptions.add(e);
+    try {
+      for (WCInfo wcInfo : myWcInfos) {
+        File path = new File(wcInfo.getPath());
+        if (! wcInfo.isIsWcRoot()) {
+          path = SvnUtil.getWorkingCopyRoot(path);
+        }
+        indicator.setText(SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
+                                            SvnUtil.formatRepresentation(wcInfo.getFormat()), SvnUtil.formatRepresentation(myNewFormat)));
+        try {
+          wcClient.doSetWCFormat(path, myNewFormat.getFormat());
+        } catch (Throwable e) {
+          myExceptions.add(e);
+        }
       }
     }
-
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnMapDialog.WC_CONVERTED).run();
+    finally {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnMapDialog.WC_CONVERTED).run();
+    }
   }
 }

@@ -11,9 +11,9 @@ public class WCInfoWithBranches extends WCInfo {
   private final List<Branch> myBranches;
   private final VirtualFile myRoot;
 
-  public WCInfoWithBranches(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot,
+  public WCInfoWithBranches(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot,
                             final List<Branch> branches, final VirtualFile root) {
-    super(path, url, format, repositoryRoot);
+    super(path, url, format, repositoryRoot, isWcRoot);
     myBranches = branches;
     myRoot = root;
   }

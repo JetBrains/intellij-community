@@ -56,9 +56,12 @@ public class SvnMapDialog extends DialogWrapper {
           return;
         }
         final WCInfo wcInfo = selected.iterator().next();
-        final File path = new File(wcInfo.getPath());
+        File path = new File(wcInfo.getPath());
+        if (! wcInfo.isIsWcRoot()) {
+          path = SvnUtil.getWorkingCopyRoot(path);
+        }
 
-        ChangeFormatDialog dialog = new ChangeFormatDialog(project, path, false);
+        ChangeFormatDialog dialog = new ChangeFormatDialog(project, path, false, ! wcInfo.isIsWcRoot());
         dialog.setData(true, wcInfo.getFormat().getOption());
         dialog.show();
         if (! dialog.isOK()) {
@@ -85,7 +88,7 @@ public class SvnMapDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTableModel = new ListTableModel<WCInfo>(new ColumnInfo[]{WC_ROOT_PATH, WC_URL, WC_FORMAT}, Collections.<WCInfo>emptyList(), 0);
+    myTableModel = new ListTableModel<WCInfo>(new ColumnInfo[]{WC_ROOT_PATH, WC_URL, WC_COPY_ROOT, WC_FORMAT}, Collections.<WCInfo>emptyList(), 0);
     myTableView = new TableView<WCInfo>(myTableModel);
   }
 
@@ -97,6 +100,11 @@ public class SvnMapDialog extends DialogWrapper {
   private static final ColumnInfo<WCInfo, String> WC_URL = new ColumnInfo<WCInfo, String>(SvnBundle.message("dialog.show.svn.map.table.header.column.wcurl.title")) {
     public String valueOf(final WCInfo info) {
       return info.getUrl().toString();
+    }
+  };
+  private static final ColumnInfo<WCInfo, String> WC_COPY_ROOT = new ColumnInfo<WCInfo, String>(SvnBundle.message("dialog.show.svn.map.table.header.column.wcroot.title")) {
+    public String valueOf(final WCInfo info) {
+      return info.isIsWcRoot() ? "yes" : "no";
     }
   };
   private static final ColumnInfo<WCInfo, String> WC_FORMAT = new ColumnInfo<WCInfo, String>(SvnBundle.message("dialog.show.svn.map.table.header.column.format.title")) {
