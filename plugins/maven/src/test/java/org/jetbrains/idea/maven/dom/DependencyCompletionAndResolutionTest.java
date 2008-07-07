@@ -509,7 +509,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     VirtualFile libFile = LocalFileSystem.getInstance().findFileByPath(libPath);
 
     TestFileChooserFactory factory = new TestFileChooserFactory();
-    factory.setFiles(new VirtualFile[] {libFile});
+    factory.setFiles(new VirtualFile[]{libFile});
     ((ChooseFileIntentionAction)action).setTestFileChooserFactory(factory);
 
     int prevValue = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP;
@@ -781,5 +781,19 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                                     "</dependencies>");
 
     checkHighlighting(m);
+  }
+
+  public void testUpdateIndicesIntention() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId><caret>xxx</groupId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertNotNull(getIntentionAtCaret("Update Maven Indices"));
   }
 }

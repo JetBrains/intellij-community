@@ -139,6 +139,10 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     return new ArrayList<MavenIndex>(myProjectIndices.get());
   }
 
+  public void scheduleUpdateAll() {
+    MavenIndicesManager.getInstance().scheduleUpdate(myProject, myProjectIndices.get());
+  }
+
   public void scheduleUpdate(List<MavenIndex> indices) {
     MavenIndicesManager.getInstance().scheduleUpdate(myProject, indices);
   }

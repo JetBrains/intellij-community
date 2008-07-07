@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -7,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
@@ -163,5 +166,28 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     result += "/" + id.artifactId + "-" + id.version + "." + type;
 
     return result;
+  }
+
+  @Override
+  public LocalQuickFix[] getQuickFixes(ConvertContext context) {
+    return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
+  }
+
+
+
+  private class MyUpdateIndicesFix implements LocalQuickFix {
+    @NotNull
+    public String getFamilyName() {
+      return MavenDomBundle.message("inspection.group");
+    }
+
+    @NotNull
+    public String getName() {
+      return MavenDomBundle.message("fix.update.indices");
+    }
+
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      MavenProjectIndicesManager.getInstance(project).scheduleUpdateAll();
+    }
   }
 }
