@@ -3,6 +3,7 @@ package com.siyeh.igtest.performance;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 public class ManualArrayToCollectionCopy {
 
@@ -47,6 +48,27 @@ public class ManualArrayToCollectionCopy {
         for (int i = 2; i < args.length; ++i)
         {
             parameters.add(args[i]);
+        }
+    }
+
+    private static Random random = new Random();
+    private static final int N = 10;
+    public static int nextInt() {
+        return random.nextInt(N);
+    }
+
+    public static void main(String[] args) {
+        List<Integer>[] li = new List[N];
+        for (int i = 0; i < N; ++i) {
+            li[i] = new ArrayList<Integer>();
+        }
+        Integer[] values = new Integer[N];
+        for (int i = 0; i < N; ++i) {
+            values[i] = i;
+        }
+        //This loop is highlighted.
+        for (int i = 1; i < N; ++i) {
+            li[nextInt()].add(values[i]);
         }
     }
 }

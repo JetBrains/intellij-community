@@ -36,26 +36,24 @@ import org.jetbrains.annotations.Nullable;
 public class ManualArrayToCollectionCopyInspection
         extends BaseInspection {
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "manual.array.to.collection.copy.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "manual.array.to.collection.copy.problem.descriptor");
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ManualArrayToCollectionCopyVisitor();
-    }
-
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ManualArrayToCollectionCopyFix();
     }
@@ -69,6 +67,7 @@ public class ManualArrayToCollectionCopyInspection
                     "manual.array.to.collection.copy.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement forElement = descriptor.getPsiElement();
@@ -292,6 +291,11 @@ public class ManualArrayToCollectionCopyInspection
         }
     }
 
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+        return new ManualArrayToCollectionCopyVisitor();
+    }
+
     private static class ManualArrayToCollectionCopyVisitor
             extends BaseInspectionVisitor {
 
@@ -332,7 +336,8 @@ public class ManualArrayToCollectionCopyInspection
             registerStatementError(statement);
         }
 
-        @Override public void visitForeachStatement(PsiForeachStatement statement) {
+        @Override public void visitForeachStatement(
+                PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiExpression iteratedValue = statement.getIteratedValue();
             if (iteratedValue == null) {
@@ -380,27 +385,32 @@ public class ManualArrayToCollectionCopyInspection
         private static boolean expressionIsArrayToCollectionCopy(
                 PsiExpression expression, PsiVariable variable,
                 boolean shouldBeOffsetArrayAccess) {
-            final PsiExpression strippedExpression =
+            expression =
                     PsiUtil.deparenthesizeExpression(expression);
-            if (strippedExpression == null) {
+            if (expression == null) {
                 return false;
             }
-            if (!(strippedExpression instanceof PsiMethodCallExpression)) {
+            if (!(expression instanceof PsiMethodCallExpression)) {
                 return false;
             }
             final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression)strippedExpression;
+                    (PsiMethodCallExpression)expression;
             final PsiExpressionList argumentList =
                     methodCallExpression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             if (arguments.length != 1) {
                 return false;
             }
-            final PsiExpression argument = arguments[0];
-            final PsiType argumentType = argument.getType();
-            if (argumentType instanceof PsiPrimitiveType) {
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (!(qualifier instanceof PsiReferenceExpression) &&
+                    !(qualifier instanceof PsiThisExpression) &&
+                    !(qualifier instanceof PsiSuperExpression)) {
                 return false;
             }
+            final PsiExpression argument = arguments[0];
             if (SideEffectChecker.mayHaveSideEffects(argument)) {
                 return false;
             }
