@@ -142,11 +142,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  public Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
+  public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
     try {
-      return createAndInitProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
+      return createAndInitProject(projectName, filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
                               useDefaultProjectSettings ? getDefaultProject() : null, null);
     }
     catch (final Exception e) {
@@ -171,7 +171,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return message;
   }
 
-  private ProjectImpl createAndInitProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
+  private ProjectImpl createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
                                     @Nullable Project template, @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException {
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
@@ -204,6 +204,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     project.loadProjectComponents();
     project.init();
+
+    if (projectName != null) {
+      ProjectDetailsComponent.getInstance(project).setProjectName(projectName);
+    }
+
     return project;
   }
 
@@ -222,7 +227,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     filePath = canonicalize(filePath);
     ProjectImpl project = null;
     try {
-      project = createAndInitProject(filePath, false, false, false, null, additionalPicoContainerComponents);
+      project = createAndInitProject(null, filePath, false, false, false, null, additionalPicoContainerComponents);
     }
     catch (ProcessCanceledException e) {
       if (project != null) {
@@ -251,7 +256,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
       try {
-        myDefaultProject = createAndInitProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null, null);
+        myDefaultProject = createAndInitProject(null, null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null, null);
         myDefaultProjectRootElement = null;
       }
       catch (IOException e) {

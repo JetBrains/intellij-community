@@ -151,7 +151,7 @@ import java.util.HashSet;
     myFilesToDelete.add(projectFile);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    myProject = myProjectManager.newProject(projectFile.getPath(), false, false);
+    myProject = myProjectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
 
     setUpModule();

@@ -204,10 +204,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public String getName() {
-    if (isDefault()) return TEMPLATE_PROJECT_NAME;
-    if (isDummy()) return DUMMY_PROJECT_NAME;
-
-    return getStateStore().getProjectName();
+    return ProjectDetailsComponent.getInstance(this).getProjectName();
   }
 
   @Nullable
@@ -314,6 +311,13 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
+  }
+
+  public String getDefaultName() {
+    if (isDefault()) return TEMPLATE_PROJECT_NAME;
+    if (isDummy()) return DUMMY_PROJECT_NAME;
+
+    return getStateStore().getProjectName();    
   }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {

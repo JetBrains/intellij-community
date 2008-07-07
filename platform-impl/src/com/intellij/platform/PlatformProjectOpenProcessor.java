@@ -52,7 +52,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       projectDir.mkdirs();
     }
     if (project == null) {
-      project = projectManager.newProject(projectDir.getParent(), true, false);
+      project = projectManager.newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
     }
     if (project == null) return null;
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);

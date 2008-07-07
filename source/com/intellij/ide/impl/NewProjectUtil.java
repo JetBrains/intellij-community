@@ -59,7 +59,7 @@ public class NewProjectUtil {
 
     try {
       final Project newProject =
-        projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(projectFilePath, true, false) : projectToClose;
+        projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(dialog.getProjectName(), projectFilePath, true, false) : projectToClose;
 
       if (newProject == null) return;
 

@@ -19,7 +19,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   }
 
   @Nullable
-  public abstract Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy);
+  public abstract Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @Nullable
   public abstract Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException;

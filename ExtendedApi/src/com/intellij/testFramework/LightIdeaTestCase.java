@@ -197,7 +197,7 @@ import java.util.Map;
         }
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-        ourProject = ProjectManagerEx.getInstanceEx().newProject(projectFile.getPath(), false, false);
+        ourProject = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
         ourPsiManager = null;
         ourModule = createMainModule();
 

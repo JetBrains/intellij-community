@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -68,7 +69,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
     myFilesToDelete.add(projectFile);
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-    myProject = projectManager.newProject(projectFile.getPath(), false, false);
+    myProject = projectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
 
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().setUp();

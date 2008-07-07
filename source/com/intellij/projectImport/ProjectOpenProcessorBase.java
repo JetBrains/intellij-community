@@ -139,7 +139,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       }
     }
     else {
-      projectToOpen = ProjectManagerEx.getInstanceEx().newProject(projectPath, true, false);
+      projectToOpen = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectPath, true, false);
 
       if (projectToOpen == null || !getBuilder().validate(projectToClose, projectToOpen)) {
         return null;

@@ -12,7 +12,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 public class NewDummyProjectAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    Project project = projectManager.newProject(PathManager.getConfigPath() + "/dummy.ipr", true, false);
+    Project project = projectManager.newProject("dummy", PathManager.getConfigPath() + "/dummy.ipr", true, false);
     if (project == null) return;
     projectManager.openProject(project);
   }
