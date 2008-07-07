@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.dom.plugin.Mojo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Collections;
 
 public class MavenPluginGoalConverter extends ResolvingConverter<String> {
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
@@ -24,8 +25,10 @@ public class MavenPluginGoalConverter extends ResolvingConverter<String> {
 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    List<String> result = new ArrayList<String>();
     MavenPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
+    if (model == null) return Collections.emptyList();
+
+    List<String> result = new ArrayList<String>();
     for (Mojo each : model.getMojos().getMojos()) {
       String goal = each.getGoal().getStringValue();
       if (goal != null) result.add(goal);
@@ -36,6 +39,8 @@ public class MavenPluginGoalConverter extends ResolvingConverter<String> {
   @Override
   public PsiElement resolve(String text, ConvertContext context) {
     MavenPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
+    if (model == null) return null;
+    
     for (Mojo each : model.getMojos().getMojos()) {
       String goal = each.getGoal().getStringValue();
       if (text.equals(goal)) return each.getXmlElement();

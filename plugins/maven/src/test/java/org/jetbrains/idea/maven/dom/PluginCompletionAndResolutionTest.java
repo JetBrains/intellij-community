@@ -109,6 +109,26 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertEquals(getPsiFile(f), ref.resolve());
   }
 
+  public void testResolvingAbsentPlugins() throws Exception {
+    removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
+    
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId><caret>maven-compiler-plugin</artifactId>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    ref.resolve(); // shouldn't throw;
+  }
+
   public void testBasicConfigurationCompletion() throws Exception {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "source", "target");
@@ -322,6 +342,52 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertTrue(resolved instanceof XmlTag);
     assertEquals("mojo", ((XmlTag)resolved).getName());
     assertEquals("compile", ((XmlTag)resolved).findFirstSubTag("goal").getValue().getText());
+  }
+
+  public void testGoalsCompletionAndResolutionForUnknownPlugin() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>xxx</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal><caret></goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom);
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>xxx</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal><caret>compile</goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    assertNull(ref.resolve());
   }
 
   public void testPhaseCompletionAndHighlighting() throws Throwable {

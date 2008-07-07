@@ -117,9 +117,11 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     }
 
     File file = resolveArtifactFile(context, manager, id);
-    VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
-    if (vf != null) {
-      return PsiManager.getInstance(p).findFile(vf);
+    if (file != null) {
+      VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
+      if (vf != null) {
+        return PsiManager.getInstance(p).findFile(vf);
+      }
     }
 
     return super.resolve(o, context);
@@ -172,8 +174,6 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
   public LocalQuickFix[] getQuickFixes(ConvertContext context) {
     return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
   }
-
-
 
   private class MyUpdateIndicesFix implements LocalQuickFix {
     @NotNull
