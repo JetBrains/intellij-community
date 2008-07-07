@@ -523,6 +523,7 @@ public class CompilerTask extends Task.Backgroundable {
     private boolean myUserAcceptedCancel = false;
 
     public boolean canCloseProject(final Project project) {
+      assert project != null;
       if (shouldAskUser()) {
         int result = Messages.showOkCancelDialog(
           myProject,
