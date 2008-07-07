@@ -32,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * The base class for a version control system integrated with IDEA.
  *
@@ -296,6 +298,15 @@ public abstract class AbstractVcs {
   @Nullable
   public UnnamedConfigurable getRootConfigurable(VcsDirectoryMapping mapping) {
     return null;
+  }
+
+  @Nullable
+  public MappingToRootConvertor getCustomConvertor() {
+    return null;
+  }
+
+  public interface MappingToRootConvertor {
+    void fillRoots(final VcsDirectoryMapping mapping, List<VirtualFile> result);
   }
 }
 
