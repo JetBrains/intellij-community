@@ -16,6 +16,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -182,6 +183,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
+    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
@@ -193,6 +195,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
+    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   public Map<String, String> getEnvs() {

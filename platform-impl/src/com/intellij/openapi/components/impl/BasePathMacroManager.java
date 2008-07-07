@@ -60,6 +60,10 @@ public class BasePathMacroManager extends PathMacroManager {
     return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
   }
 
+  public void collapsePathsRecursively(final Element element) {
+    getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, null, true);
+  }
+
   public void expandPaths(final Element element) {
     getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, null);
   }

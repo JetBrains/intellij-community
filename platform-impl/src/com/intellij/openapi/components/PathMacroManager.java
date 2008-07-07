@@ -19,5 +19,7 @@ public abstract class PathMacroManager implements PathMacroSubstitutor {
   public abstract void expandPaths(Element element);
   public abstract void collapsePaths(Element element);
 
+  public abstract void collapsePathsRecursively(Element element);
+
   public abstract TrackingPathMacroSubstitutor createTrackingSubstitutor();
 }

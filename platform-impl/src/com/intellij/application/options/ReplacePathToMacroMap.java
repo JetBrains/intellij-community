@@ -37,7 +37,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   };
 
-  @NonNls private static final String[] PROTOCOLS = new String[] {"file", "jar"};
+  @NonNls private static final String[] PROTOCOLS = new String[]{"file", "jar"};
 
   public void addMacroReplacement(String path, String macroName) {
     final String p = quotePath(path);
@@ -59,7 +59,11 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return text;
   }
 
-  private static String replacePathMacro(String text, String path, final String macro, boolean caseSensitive, final Set<String> usedMacros) {
+  private static String replacePathMacro(String text,
+                                         String path,
+                                         final String macro,
+                                         boolean caseSensitive,
+                                         final Set<String> usedMacros) {
     if (text.length() < path.length() || path.length() == 0) {
       return text;
     }
@@ -80,7 +84,10 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       //check that this is complete path (ends with "/" or "!/")
       int endOfOccurence = path.length();
       final boolean isWindowsRoot = path.endsWith(":/");
-      if (!isWindowsRoot && endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/' && !text.substring(endOfOccurence).startsWith("!/")) {
+      if (!isWindowsRoot &&
+          endOfOccurence < text.length() &&
+          text.charAt(endOfOccurence) != '/' &&
+          !text.substring(endOfOccurence).startsWith("!/")) {
         return text;
       }
 
@@ -94,6 +101,64 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       StringBuilderSpinAllocator.dispose(newText);
     }
   }
+
+  @Override
+  public String substituteRecursively(String text, final boolean caseSensitive, final Set<String> usedMacros) {
+    for (final String path : getPathIndex()) {
+      final String macro = get(path);
+      text = replacePathMacroRecursively(text, path, macro, caseSensitive, usedMacros);
+    }
+    return text;
+  }
+
+  private static String replacePathMacroRecursively(String text,
+                                                    String path,
+                                                    final String macro,
+                                                    boolean caseSensitive,
+                                                    final Set<String> usedMacros) {
+    if (text.length() < path.length()) {
+      return text;
+    }
+
+    if (path.length() == 0) return text;
+
+    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
+    try {
+      final boolean isWindowsRoot = path.endsWith(":/");
+      int i = 0;
+      while (i < text.length()) {
+        int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
+        if (occurrenceOfPath >= 0) {
+          int endOfOccurence = occurrenceOfPath + path.length();
+          if (!isWindowsRoot &&
+              endOfOccurence < text.length() &&
+              text.charAt(endOfOccurence) != '/' &&
+              !text.substring(endOfOccurence).startsWith("!/")) {
+            i = endOfOccurence;
+            continue;
+          }
+        }
+        if (occurrenceOfPath < 0) {
+          if (newText.length() == 0) {
+            return text;
+          }
+          newText.append(text.substring(i));
+          break;
+        }
+        else {
+          newText.append(text.substring(i, occurrenceOfPath));
+          newText.append(macro);
+          logUsage(macro, usedMacros);
+          i = occurrenceOfPath + path.length();
+        }
+      }
+      return newText.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(newText);
+    }
+  }
+
 
   private static void logUsage(String macroReplacement, final Set<String> usedMacros) {
     if (usedMacros == null) return;

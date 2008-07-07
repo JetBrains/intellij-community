@@ -45,6 +45,10 @@ public abstract class PathMacroMap {
   public abstract String substitute(String text, boolean caseSensitive, @Nullable final Set<String> usedMacros);
 
   public final void substitute(Element e, boolean caseSensitive, @Nullable final Set<String> usedMacros) {
+    substitute(e, caseSensitive, usedMacros, false);
+  }
+
+  public final void substitute(Element e, boolean caseSensitive, @Nullable final Set<String> usedMacros, final boolean recursively) {
     List content = e.getContent();
     for (Object child : content) {
       if (child instanceof Element) {
@@ -60,11 +64,11 @@ public abstract class PathMacroMap {
             element.getAttributeValue("value") != null &&
             element.getChildren().isEmpty()) continue;
 
-        substitute(element, caseSensitive, usedMacros);
+        substitute(element, caseSensitive, usedMacros, recursively);
       }
       else if (child instanceof Text) {
         Text t = (Text)child;
-        t.setText(substitute(t.getText(), caseSensitive, usedMacros));
+        t.setText(recursively ? substituteRecursively(t.getText(), caseSensitive, usedMacros) : substitute(t.getText(), caseSensitive, usedMacros));
       }
       else if (child instanceof Comment) {
         /*do not substitute in comments
@@ -80,8 +84,12 @@ public abstract class PathMacroMap {
     List attributes = e.getAttributes();
     for (final Object attribute1 : attributes) {
       Attribute attribute = (Attribute)attribute1;
-      attribute.setValue(substitute(attribute.getValue(), caseSensitive, usedMacros));
+      attribute.setValue(recursively? substituteRecursively(attribute.getValue(), caseSensitive, usedMacros) : substitute(attribute.getValue(), caseSensitive, usedMacros));
     }
+  }
+
+  public String substituteRecursively(String text, boolean caseSensitive, Set<String> usedMacros) {
+    return substitute(text, caseSensitive, usedMacros);
   }
 
   public int size() {
