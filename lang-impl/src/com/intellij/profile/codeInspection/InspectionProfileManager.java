@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
@@ -107,20 +108,28 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       }
 
 
-      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.error(e);
-      }
-
       public Document writeScheme(final InspectionProfileImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
       }
 
-      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.error(e);
-      }
-
       public void initScheme(final InspectionProfileImpl scheme) {
         
+      }
+
+      public void onSchemeAdded(final InspectionProfileImpl scheme) {
+        updateProfileImpl(scheme);
+        fireProfileChanged(scheme);
+      }
+
+      public void onSchemeDeleted(final InspectionProfileImpl scheme) {
+      }
+
+      public void onCurrentSchemeChanged(final Scheme oldCurrentScheme) {
+        Profile current = mySchemesManager.getCurrentScheme();
+        if (current != null) {
+          fireProfileChanged((Profile)oldCurrentScheme, current,null);
+        }
+
       }
     };
 
@@ -234,6 +243,10 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public void updateProfile(Profile profile) {
     mySchemesManager.addNewScheme(profile, true);
+    updateProfileImpl(profile);
+  }
+
+  private void updateProfileImpl(final Profile profile) {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       InspectionProjectProfileManager.getInstance(project).initProfileWrapper(profile);

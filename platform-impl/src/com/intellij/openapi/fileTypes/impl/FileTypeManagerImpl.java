@@ -11,10 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
-import com.intellij.openapi.options.ExternalInfo;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
@@ -123,20 +120,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       }
 
-      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.debug(e);
-      }
-
-      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.debug(e);
-      }
-
       public Document writeScheme(final AbstractFileType fileType) throws WriteExternalException {
         Element root = new Element(ELEMENT_FILETYPE);
 
         writeHeader(root, fileType);
 
-        ((JDOMExternalizable)fileType).writeExternal(root);
+        fileType.writeExternal(root);
 
         Element map = new Element(AbstractFileType.ELEMENT_EXTENSIONMAP);
         root.addContent(map);
@@ -154,6 +143,24 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       public void initScheme(final AbstractFileType scheme) {
 
+      }
+
+      public void onSchemeAdded(final AbstractFileType scheme) {
+        fireBeforeFileTypesChanged();
+        if (scheme instanceof ReadFileType) {
+          loadFileType((ReadFileType)scheme);
+        }
+        fireFileTypesChanged();
+      }
+
+      public void onSchemeDeleted(final AbstractFileType scheme) {
+        fireBeforeFileTypesChanged();
+        myPatternsTable.removeAllAssociations(scheme);
+        fireFileTypesChanged();
+      }
+
+      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+        
       }
     }, RoamingType.PER_USER);
     for (final Pair<FileType, String> pair : ourStandardFileTypes.values()) {
@@ -419,7 +426,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         List children = e.getChildren(ELEMENT_FILETYPE);
         for (final Object aChildren : children) {
           Element element = (Element)aChildren;
-          loadFileType(element, true, null);
+          loadFileType(element, true, null, false);
         }
       }
       else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
@@ -635,7 +642,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     boolean res = false;
     for (AbstractFileType fileType : collection) {
       ReadFileType readFileType = (ReadFileType)fileType;
-      FileType loadedFileType = loadFileType(readFileType.getElement(), true, mySchemesManager.isShared(readFileType) ? readFileType.getExternalInfo() : null);
+      FileType loadedFileType = loadFileType(readFileType);
       res |= myInitialAssociations.hasAssociationsFor(loadedFileType);
     }
 
@@ -643,8 +650,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   }
 
+  private FileType loadFileType(final ReadFileType readFileType) {
+    return loadFileType(readFileType.getElement(), false, mySchemesManager.isShared(readFileType) ? readFileType.getExternalInfo() : null, true);
+  }
 
-  private FileType loadFileType(Element typeElement, boolean isDefaults, final ExternalInfo info) {
+
+  private FileType loadFileType(Element typeElement, boolean isDefaults, final ExternalInfo info, boolean ignoreExisting) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
     String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue(ATTRIBUTE_ICON);
@@ -653,7 +664,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     FileType type = getFileTypeByName(fileTypeName);
 
     List<FileNameMatcher> exts = parse(extensionsStr);
-    if (type != null) {
+    if (type != null && !ignoreExisting) {
       if (isDefaults) return type;
       if (extensionsStr != null) {
         removeAllAssociations(type);
@@ -673,6 +684,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
     else {
       type = loadCustomFile(typeElement, info);
+      if (type instanceof UserFileType) {
+        setFileTypeAttributes(fileTypeName, fileTypeDescr, iconPath, (UserFileType)type);
+      }
       registerFileTypeWithoutNotification(type, exts);
     }
 

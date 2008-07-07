@@ -3,7 +3,6 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -12,11 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
-import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -83,18 +78,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager
             return new Document(root);
           }
 
-          public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-            LOG.debug(e);
-          }
-
           public void renameScheme(final String name, final EditorColorsScheme scheme) {
             scheme.setName(name);
-          }
-
-          public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-            Messages.showErrorDialog(CommonBundle.message("error.reading.color.scheme.from.file.error.message", schemeName),
-                                     CommonBundle.message("corrupted.scheme.file.message.title"));
-
           }
 
           public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
@@ -103,6 +88,17 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
           public void initScheme(final EditorColorsSchemeImpl scheme) {
             
+          }
+
+          public void onSchemeAdded(final EditorColorsSchemeImpl scheme) {
+
+          }
+
+          public void onSchemeDeleted(final EditorColorsSchemeImpl scheme) {
+          }
+
+          public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+            fireChanges(mySchemesManager.getCurrentScheme());
           }
         }, RoamingType.PER_USER);
 

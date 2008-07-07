@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -8,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -54,21 +54,22 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
         return scheme.saveToDocument();
       }
 
-      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.read.scheme.file.message", filePath),
-                                 PsiBundle.message("codestyle.cannot.read.scheme.file.title"));
-      }
-
-      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.scheme.file", filePath, e.getLocalizedMessage()), CommonBundle.getErrorTitle());
-      }
-
       public boolean shouldBeSaved(final CodeStyleSchemeImpl scheme) {
         return !scheme.isDefault();
       }
 
       public void initScheme(final CodeStyleSchemeImpl scheme) {
-        ((CodeStyleSchemeImpl)scheme).init(CodeStyleSchemesImpl.this);
+        scheme.init(CodeStyleSchemesImpl.this);
+      }
+
+      public void onSchemeAdded(final CodeStyleSchemeImpl scheme) {
+      }
+
+      public void onSchemeDeleted(final CodeStyleSchemeImpl scheme) {
+      }
+
+      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+        
       }
     };
 

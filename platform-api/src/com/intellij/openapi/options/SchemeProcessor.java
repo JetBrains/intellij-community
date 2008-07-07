@@ -10,10 +10,12 @@ import java.io.IOException;
 public interface SchemeProcessor<T extends ExternalizableScheme> {
   T readScheme(Document schemeContent) throws InvalidDataException, IOException, JDOMException;
   Document writeScheme(T scheme) throws WriteExternalException;
-  void showReadErrorMessage(Exception e, final String schemeName, final String filePath);
-  void showWriteErrorMessage(Exception e, final String schemeName, final String filePath);
+
   boolean shouldBeSaved(T scheme);
+  void initScheme(T scheme);
 
-  void initScheme(T scheme);  
+  void onSchemeAdded(T scheme);
+  void onSchemeDeleted(T scheme);
 
+  void onCurrentSchemeChanged(final Scheme oldCurrentScheme);
 }

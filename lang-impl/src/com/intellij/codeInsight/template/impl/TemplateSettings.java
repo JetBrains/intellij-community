@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -124,20 +125,28 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         return new Document(templateSetElement);
       }
 
-      public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.warn(e);
-      }
-
-      public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-        LOG.warn(e);
-      }
-
       public void initScheme(final TemplateGroup scheme) {
         Collection<TemplateImpl> templates = scheme.getTemplates();
 
         for (TemplateImpl template : templates) {
           addTemplate(template);
         }
+      }
+
+      public void onSchemeAdded(final TemplateGroup scheme) {
+        for (TemplateImpl template : scheme.getTemplates()) {
+          addTemplate(template);
+        }
+      }
+
+      public void onSchemeDeleted(final TemplateGroup scheme) {
+        for (TemplateImpl template : scheme.getTemplates()) {
+          removeTemplate(template);
+        }
+      }
+
+      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+
       }
     };
 

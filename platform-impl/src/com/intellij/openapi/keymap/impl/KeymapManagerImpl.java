@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.*;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -63,17 +64,22 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
             return new Document(scheme.writeExternal());
           }
 
-          public void showReadErrorMessage(final Exception e, final String schemeName, final String filePath) {
-          }
-
-          public void showWriteErrorMessage(final Exception e, final String schemeName, final String filePath) {
-          }
-
           public boolean shouldBeSaved(final KeymapImpl scheme) {
             return scheme.canModify();
           }
 
           public void initScheme(final KeymapImpl scheme) {
+            
+          }
+
+          public void onSchemeAdded(final KeymapImpl scheme) {
+
+          }
+
+          public void onSchemeDeleted(final KeymapImpl scheme) {
+          }
+
+          public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
             
           }
         },
@@ -88,6 +94,13 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
       }
     }
     load();
+  }
+
+  private Keymap getFirstUnmodifiableKeymap() {
+    for (Keymap keymap : mySchemesManager.getAllSchemes()) {
+      if (!keymap.canModify()) return keymap;
+    }
+    return null;
   }
 
   @NotNull
