@@ -63,8 +63,11 @@ public class PersistentHashMapValueStorage {
       chunkCount++;
     }
     
-    assert bytesRead == size;
-
+    //assert bytesRead == size;
+    if (bytesRead != size) {
+      throw new IOException("Read from storage " + bytesRead + " bytes, but requested " + size + " bytes");
+    }
+    
     if (chunkCount > 1 && !myCompactionMode) {
       return appendBytes(result, 0);
     }
