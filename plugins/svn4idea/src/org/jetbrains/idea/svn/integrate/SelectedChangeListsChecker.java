@@ -43,58 +43,28 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
 
   private void checkSame() {
     final CheckSamePattern<SVNURL> sameBranch = new CheckSamePattern<SVNURL>();
-    final CheckSamePattern<VirtualFile> sameVcsRoot = new CheckSamePattern<VirtualFile>();
+    final CheckSamePattern<VirtualFile> sameRoot = new CheckSamePattern<VirtualFile>();
 
     for (ChangeList changeList : myChangeListsList) {
       final SvnChangeList svnChangeList = (SvnChangeList) changeList;
       sameBranch.iterate(svnChangeList.getBranchUrl());
-      sameVcsRoot.iterate(svnChangeList.getVcsRoot());
+      sameRoot.iterate(svnChangeList.getRoot());
 
-      if ((! sameBranch.isSame()) || (! sameVcsRoot.isSame())) {
+      if ((! sameBranch.isSame()) || (! sameRoot.isSame())) {
         break;
       }
     }
-    isValid = sameBranch.isSame() && sameVcsRoot.isSame();
+    isValid = sameBranch.isSame() && sameRoot.isSame();
     mySameBranch = sameBranch.getSameValue();
-    myVcsRoot = sameVcsRoot.getSameValue();
+    myVcsRoot = sameRoot.getSameValue();
   }
 
   public SVNURL getSameBranch() {
     return mySameBranch;
   }
 
-  public VirtualFile getVcsRoot() {
+  public VirtualFile getRoot() {
     return myVcsRoot;
-  }
-
-  public static class CheckSamePattern <T> {
-    private boolean mySame;
-    private T mySameValue;
-
-    public CheckSamePattern() {
-      mySameValue = null;
-      mySame = true;
-    }
-
-    public void iterate(final T t) {
-      if (t == null) {
-        mySame = false;
-        return;
-      }
-      if (mySameValue == null) {
-        mySameValue = t;
-        return;
-      }
-      mySame &= mySameValue.equals(t);
-    }
-
-    public boolean isSame() {
-      return mySame;
-    }
-
-    public T getSameValue() {
-      return mySameValue;
-    }
   }
 
   private void getSelectedSvnCls(final AnActionEvent event) {

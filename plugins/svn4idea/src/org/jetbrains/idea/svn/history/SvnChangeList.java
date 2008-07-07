@@ -36,9 +36,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -65,15 +63,15 @@ public class SvnChangeList implements CommittedChangeList {
   private Set<String> myAddedPaths = new HashSet<String>();
   private Set<String> myDeletedPaths = new HashSet<String>();
   private ChangesListCreationHelper myListsHolder;
-  private final String myCommonPathRoot;
 
   private SVNURL myBranchUrl;
-  private VirtualFile myVcsRoot;
 
   private boolean myCachedInfoLoaded;
 
   // key: added path, value: copied-from
   private Map<String, String> myCopiedAddedPaths = new HashMap<String, String>();
+  private RootMixedInfo myWcRoot;
+  private final CommonPathSearcher myCommonPathSearcher;
 
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
@@ -87,13 +85,13 @@ public class SvnChangeList implements CommittedChangeList {
 
     myRepositoryRoot = repositoryRoot.endsWith("/") ? repositoryRoot.substring(0, repositoryRoot.length() - 1) : repositoryRoot;
 
-    final CommonPathSearcher commonPathSearcher = new CommonPathSearcher();
+    myCommonPathSearcher = new CommonPathSearcher();
 
     for(Object o: logEntry.getChangedPaths().values()) {
       final SVNLogEntryPath entry = (SVNLogEntryPath) o;
       final String path = entry.getPath();
 
-      commonPathSearcher.next(path);
+      myCommonPathSearcher.next(path);
       
       if (entry.getType() == 'A') {
         if (entry.getCopyPath() != null) {
@@ -108,25 +106,22 @@ public class SvnChangeList implements CommittedChangeList {
         myChangedPaths.add(path);
       }
     }
-
-    myCommonPathRoot = commonPathSearcher.getCommon();
   }
 
   public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream, final boolean supportsCopyFromInfo) throws IOException {
     myVcs = vcs;
     myLocation = location;
     readFromStream(stream, supportsCopyFromInfo);
-    final CommonPathSearcher commonPathSearcher = new CommonPathSearcher();
+    myCommonPathSearcher = new CommonPathSearcher();
     for (String path : myAddedPaths) {
-      commonPathSearcher.next(path);
+      myCommonPathSearcher.next(path);
     }
     for (String path : myDeletedPaths) {
-      commonPathSearcher.next(path);
+      myCommonPathSearcher.next(path);
     }
     for (String path : myChangedPaths) {
-      commonPathSearcher.next(path);
+      myCommonPathSearcher.next(path);
     }
-    myCommonPathRoot = commonPathSearcher.getCommon();
   }
 
   public String getCommitterName() {
@@ -464,11 +459,27 @@ public class SvnChangeList implements CommittedChangeList {
     return myBranchUrl;
   }
 
+  @Nullable
   public VirtualFile getVcsRoot() {
     if (!myCachedInfoLoaded) {
       updateCachedInfo();
     }
-    return myVcsRoot;
+    return (myWcRoot == null) ? null : myWcRoot.getParentVcsRoot();
+  }
+
+  @Nullable
+  public VirtualFile getRoot() {
+    if (!myCachedInfoLoaded) {
+      updateCachedInfo();
+    }
+    return (myWcRoot == null) ? null : myWcRoot.getFile();
+  }
+
+  public RootMixedInfo getWcRootInfo() {
+    if (!myCachedInfoLoaded) {
+      updateCachedInfo();
+    }
+    return myWcRoot;
   }
 
   private static class CommonPathSearcher {
@@ -498,14 +509,15 @@ public class SvnChangeList implements CommittedChangeList {
   private void updateCachedInfo() {
     myCachedInfoLoaded = true;
 
-    final String absolutePath = myRepositoryRoot + (myCommonPathRoot.startsWith("/") ? myCommonPathRoot : ("/" + myCommonPathRoot));
-
-    myVcsRoot = myVcs.getSvnFileUrlMapping().getVcRootByUrl(absolutePath);
-    if (myVcsRoot == null) {
-      return;
+    final String commonPath = myCommonPathSearcher.getCommon();
+    if (commonPath != null) {
+      final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
+      final String absoluteUrl = SVNPathUtil.append(myRepositoryRoot, commonPath);
+      myWcRoot = urlMapping.getWcRootForUrl(absoluteUrl);
+      if (myWcRoot != null) {
+        myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myWcRoot.getFile(), absoluteUrl);
+      }
     }
-    
-    myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myVcsRoot, absolutePath);
   }
 
   public void forceReloadCachedInfo(final boolean reloadRoot) {
@@ -513,7 +525,7 @@ public class SvnChangeList implements CommittedChangeList {
     myBranchUrl = null;
 
     if (reloadRoot) {
-      myVcsRoot = null;
+      myWcRoot = null;
     }
   }
 

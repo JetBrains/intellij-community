@@ -1,13 +1,16 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -26,7 +29,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   private final SvnVcs myVcs;
 
   private final Map<String, RootUrlInfo> myFile2UrlMap;
-  private final Map<String, String> myUrl2FileMap;
+  private final Map<String, Pair<String, VirtualFile>> myUrl2FileMap;
   private final Map<String, VirtualFile> myFileRootsMap;
 
   SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
@@ -34,7 +37,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     myVcs = vcs;
 
     myFile2UrlMap = new HashMap<String, SvnFileUrlMappingRefresher.RootUrlInfo>();
-    myUrl2FileMap = new HashMap<String, String>();
+    myUrl2FileMap = new HashMap<String, Pair<String, VirtualFile>>();
     myFileRootsMap = new HashMap<String, VirtualFile>();
   }
 
@@ -61,9 +64,23 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     if (rootUrl == null) {
       return null;
     }
-    final String parentPath = myUrl2FileMap.get(rootUrl);
+    final String parentPath = myUrl2FileMap.get(rootUrl).first;
 
     return fileByUrl(parentPath, rootUrl, url).getAbsolutePath();
+  }
+
+  @NotNull
+  public List<VirtualFile> getWcRootsUnderVcsRoot(final VirtualFile vcsRoot) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Map.Entry<String, VirtualFile> entry : myFileRootsMap.entrySet()) {
+      if (Comparing.equal(vcsRoot, entry.getValue())) {
+        final VirtualFile filePath = myUrl2FileMap.get(entry.getKey()).second;
+        if (filePath != null) {
+          result.add(filePath);
+        }
+      }
+    }
+    return result;
   }
 
   public VirtualFile getVcRootByUrl(final String url) {
@@ -92,16 +109,16 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
       return null;
     }
 
-    final String file = myUrl2FileMap.get(rootUrl);
-    final SVNURL rootUrlUrl = myFile2UrlMap.get(file).getAbsoluteUrlAsUrl();
-    return new RootMixedInfo(file, rootUrlUrl, myFileRootsMap.get(rootUrl));
+    final Pair<String, VirtualFile> filePair = myUrl2FileMap.get(rootUrl);
+    final SVNURL rootUrlUrl = myFile2UrlMap.get(filePair.first).getAbsoluteUrlAsUrl();
+    return new RootMixedInfo(filePair.first, filePair.second, rootUrlUrl, myFileRootsMap.get(rootUrl));
   }
 
   public Map<String, RootUrlInfo> getAllWcInfos() {
     return Collections.unmodifiableMap(myFile2UrlMap);
   }
 
-  private class FileUrlMappingCrawler implements SvnWCRootCrawler {
+  private class FileUrlMappingCrawler implements NotNullFunction<VirtualFile, Collection<VirtualFile>> {
     private final SVNWCClient myClient;
     private VirtualFile myCurrentRoot;
 
@@ -112,24 +129,40 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
       myClient = myVcs.createWCClient();
     }
 
-    public Collection<File> handleWorkingCopyRoot(final File root, final ProgressIndicator progress) {
-      // topmost versioned directory under directory set by the user
-      // !!! not nessecarily WC root (root might be above)
+    @NotNull
+    public Collection<VirtualFile> fun(final VirtualFile virtualFile) {
       try {
-        final SVNInfo info = myClient.doInfo(root, SVNRevision.WORKING);
-        String currentPath = FileUtil.toSystemDependentName(root.getAbsolutePath()) + File.separator;
-        final String repositoryUrl = info.getRepositoryRootURL().toString();
+        SVNInfo info = myVcs.getInfoWithCaching(virtualFile);
+        if (info == null) {
+          // === svn exception
+          return Collections.emptyList();
+        }
 
-        final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrl, info.getURL());
+        SVNURL repositoryUrl = info.getRepositoryRootURL();
+        if (repositoryUrl == null) {
+          final File ioFile = new File(virtualFile.getPath());
+          // in very few cases go there
+          info = myClient.doInfo(ioFile, SVNRevision.HEAD);
+          repositoryUrl = info.getRepositoryRootURL();
+          if (repositoryUrl == null) {
+            LOG.info("Error: cannot find repository URL for versioned folder: " + ioFile.getAbsolutePath());
+            return Collections.emptyList();
+          }
+        }
+
+        final String repositoryUrlString = repositoryUrl.toString();
+        final String currentPath = FileUtil.toSystemDependentName(virtualFile.getPath()) + File.separator;
+
+        final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrlString, info.getURL());
 
         myFile2UrlMap.put(currentPath, rootInfo);
-        myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), currentPath);
+        myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), new Pair<String, VirtualFile>(currentPath, virtualFile));
         myFileRootsMap.put(rootInfo.getAbsoluteUrl(), myCurrentRoot);
       }
       catch (SVNException e) {
-        LOG.error(e);
+        LOG.info(e);
       }
-      
+
       return Collections.emptyList();
     }
 
@@ -140,15 +173,23 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
 
   public void doRefresh() {
     //LOG.info("do refresh: " + new Time(System.currentTimeMillis()));
-    // look WC roots under them.
-    VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+    // look WC roots under mappings
+    final List<VcsDirectoryMapping> mappings = ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings(myVcs);
+    // WC roots
+    final List<VirtualFile> wcRoots = new ArrayList<VirtualFile>();
+    for (VcsDirectoryMapping mapping : mappings) {
+      final VirtualFile directory = SvnUtil.correctRoot(myProject, mapping.getDirectory());
+      if (directory == null) {
+        continue;
+      }
+      wcRoots.add(LocalFileSystem.getInstance().findFileByPath(directory.getPath()));
+    }
 
     final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
 
-    for (VirtualFile root : roots) {
-      final File ioFile = new File(root.getPath());
+    for (VirtualFile root : wcRoots) {
       crawler.setCurrentRoot(root);
-      SvnUtil.crawlWCRoots(ioFile, crawler, ProgressManager.getInstance().getProgressIndicator());
+      SvnUtil.crawlWCRoots(root, crawler);
     }
   }
 

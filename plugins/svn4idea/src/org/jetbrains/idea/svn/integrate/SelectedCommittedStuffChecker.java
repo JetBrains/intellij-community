@@ -11,7 +11,7 @@ public interface SelectedCommittedStuffChecker {
 
   SVNURL getSameBranch();
 
-  VirtualFile getVcsRoot();
+  VirtualFile getRoot();
 
   MergerFactory createFactory();
 }

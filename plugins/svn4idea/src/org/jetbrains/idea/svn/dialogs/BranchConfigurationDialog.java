@@ -23,15 +23,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBranchConfiguration;
-import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.jetbrains.idea.svn.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -150,12 +146,20 @@ public class BranchConfigurationDialog extends DialogWrapper {
     if (vcsRoot == null) {
       return;
     }
-    final String rootUrl;
-    try {
-      rootUrl = SvnVcs.getInstance(project).createWCClient().doInfo(new File(file.getPath()), SVNRevision.WORKING).
-          getRepositoryRootURL().toString();
-    } catch (SVNException e) {
-      Messages.showErrorDialog(project, e.getMessage() , SvnBundle.message("configure.branches.error.no.connection.title"));
+
+    final VirtualFile directory = SvnUtil.correctRoot(project, file);
+    if (directory == null) {
+      return;
+    }
+    Pair<String,SvnFileUrlMapping.RootUrlInfo> rootUrlInfoPair =
+        SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(new File(directory.getPath()));
+    if (rootUrlInfoPair == null) {
+      return;
+    }
+    final String rootUrl = rootUrlInfoPair.getSecond().getRepositoryUrl();
+    if (rootUrl == null) {
+      Messages.showErrorDialog(project, SvnBundle.message("configure.branches.error.no.connection.title"),
+                               SvnBundle.message("configure.branches.title"));
       return;
     }
 
@@ -164,7 +168,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
       configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
     }
     catch (VcsException ex) {
-      Messages.showErrorDialog(project, "Error loading branch configuration: " + ex.getMessages(),
+      Messages.showErrorDialog(project, "Error loading branch configuration: " + ex.getMessage(),
                                SvnBundle.message("configure.branches.title"));
       return;
     }

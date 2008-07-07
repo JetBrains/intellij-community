@@ -23,10 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
@@ -46,31 +48,55 @@ public class SvnUtil {
   private SvnUtil() {
   }
 
+  public static void crawlWCRoots(VirtualFile path, NotNullFunction<VirtualFile, Collection<VirtualFile>> callback) {
+    if (path == null) {
+      return;
+    }
+    final boolean isDirectory = path.isDirectory();
+    final VirtualFile parentVFile = (!isDirectory) || (!path.exists()) ? path.getParent() : path;
+    if (parentVFile == null) {
+      return;
+    }
+    final File parent = new File(parentVFile.getPath());
+
+    if (SVNWCUtil.isVersionedDirectory(parent)) {
+      checkCanceled();
+      final Collection<VirtualFile> pending = callback.fun(path);
+      checkCanceled();
+      for (VirtualFile virtualFile : pending) {
+        crawlWCRoots(virtualFile, callback);
+      }
+    }
+    else if (isDirectory) {
+      checkCanceled();
+      VirtualFile[] children = path.getChildren();
+      for (int i = 0; children != null && i < children.length; i++) {
+        checkCanceled();
+        VirtualFile child = children[i];
+        if (child.isDirectory()) {
+          crawlWCRoots(child, callback);
+        }
+      }
+    }
+  }
+
   public static Collection<File> crawlWCRoots(File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
     final Collection<File> result = new HashSet<File>();
     File parent = path.isFile() || !path.exists() ? path.getParentFile() : path;
     if (SVNWCUtil.isVersionedDirectory(parent)) {
-      if (progress != null && progress.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      checkCanceled(progress);
       final Collection<File> pending = callback.handleWorkingCopyRoot(path, progress);
-      if (progress != null && progress.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      checkCanceled(progress);
       for (final File aPending : pending) {
         result.addAll(crawlWCRoots(aPending, callback, progress));
       }
       result.add(path);
     }
     else if (path.isDirectory()) {
-      if (progress != null && progress.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      checkCanceled(progress);
       File[] children = path.listFiles();
       for (int i = 0; children != null && i < children.length; i++) {
-        if (progress != null && progress.isCanceled()) {
-          throw new ProcessCanceledException();
-        }
+        checkCanceled(progress);
         File child = children[i];
         if (child.isDirectory()) {
           result.addAll(crawlWCRoots(child, callback, progress));
@@ -78,6 +104,17 @@ public class SvnUtil {
       }
     }
     return result;
+  }
+
+  private static void checkCanceled() {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    checkCanceled(indicator);
+  }
+
+  private static void checkCanceled(final ProgressIndicator progress) {
+    if (progress != null && progress.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
   }
 
   public static String[] getLocationsForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
@@ -398,5 +435,23 @@ public class SvnUtil {
       return event.getURL().toString();
     }
     return null;
+  }
+
+  @Nullable
+  public static VirtualFile correctRoot(final Project project, final String path) {
+    if (path.length() == 0) {
+      // project root
+      return project.getBaseDir();
+    }
+    return LocalFileSystem.getInstance().findFileByPath(path);
+  }
+
+  @Nullable
+  public static VirtualFile correctRoot(final Project project, final VirtualFile file) {
+    if (file.getPath().length() == 0) {
+      // project root
+      return project.getBaseDir();
+    }
+    return file;
   }
 }

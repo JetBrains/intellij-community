@@ -2,10 +2,12 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 public interface SvnFileUrlMapping {
@@ -14,6 +16,9 @@ public interface SvnFileUrlMapping {
 
   @Nullable
   String getLocalPath(final String url);
+
+  @NotNull
+  List<VirtualFile> getWcRootsUnderVcsRoot(final VirtualFile vcsRoot);
 
   @Nullable
   VirtualFile getVcRootByUrl(final String url);
