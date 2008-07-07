@@ -84,7 +84,7 @@ public class PluginManagerMain {
   private ArrayList<IdeaPluginDescriptor> pluginsList;
   private ActionToolbar myActionToolbar;
 
-  private FilterComponent myFilter = new MyPluginsFilter();
+  private MyPluginsFilter myFilter = new MyPluginsFilter();
 
   public PluginManagerMain(final SortableProvider installedProvider, final SortableProvider availableProvider) {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
@@ -445,9 +445,12 @@ public class PluginManagerMain {
 
   public boolean isModified() {
     if (requireShutdown) return true;
-    for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
+    for (int i = 0; i < installedPluginsModel.getRowCount(); i++) {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-      if (pluginDescriptor.isEnabled() != ((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue()) return true;
+      if (pluginDescriptor.isEnabled() != installedPluginsModel.getEnabledMap().get(pluginDescriptor.getPluginId()).booleanValue()) return true;
+    }
+    for (IdeaPluginDescriptor descriptor : myFilter.getFilteredInstalled()) {
+      if (((IdeaPluginDescriptorImpl)descriptor).isEnabled() != installedPluginsModel.getEnabledMap().get(descriptor.getPluginId()).booleanValue()) return true;
     }
     return false;
   }
@@ -459,12 +462,14 @@ public class PluginManagerMain {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
       pluginDescriptor.setEnabled(((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue());
     }
+    for (IdeaPluginDescriptor descriptor : myFilter.getFilteredInstalled()) {
+      ((IdeaPluginDescriptorImpl)descriptor).setEnabled(installedPluginsModel.getEnabledMap().get(descriptor.getPluginId()).booleanValue());
+    }
     try {
       final ArrayList<String> ids = new ArrayList<String>();
-      for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
-        final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-        if (!pluginDescriptor.isEnabled()) {
-          ids.add(pluginDescriptor.getPluginId().getIdString());
+      for (Map.Entry<PluginId, Boolean> entry : installedPluginsModel.getEnabledMap().entrySet()) {
+        if (!entry.getValue().booleanValue()) {
+          ids.add(entry.getKey().getIdString());
         }
       }
       PluginManager.saveDisabledPlugins(ids, false);
@@ -476,9 +481,9 @@ public class PluginManagerMain {
 
   private boolean canApply() {
     final StringBuilder buf = new StringBuilder();
-    for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
-      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-      if (((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue()) {
+    for (Map.Entry<PluginId, Boolean> entry : installedPluginsModel.getEnabledMap().entrySet()) {
+      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)PluginManager.getPlugin(entry.getKey());
+      if (entry.getValue().booleanValue()) {
         final Set<PluginId> absent = new HashSet<PluginId>();
         PluginManager.checkDependants(pluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
           @Nullable
@@ -583,6 +588,10 @@ public class PluginManagerMain {
       else {
         filter(availablePluginsModel, myFilteredAvailable);
       }
+    }
+
+    public List<IdeaPluginDescriptor> getFilteredInstalled() {
+      return myFilteredInstalled;
     }
 
     private void filter(PluginTableModel model, final List<IdeaPluginDescriptor> filtered) {

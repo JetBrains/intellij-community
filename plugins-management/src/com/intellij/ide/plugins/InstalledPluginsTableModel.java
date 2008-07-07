@@ -2,8 +2,11 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.Function;
@@ -115,6 +118,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return enabled != null && enabled.booleanValue();
   }
 
+  public Map<PluginId, Boolean> getEnabledMap() {
+    return myEnabled;
+  }
+
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptorImpl, Boolean> {
 
     public EnabledPluginInfo() {
@@ -143,6 +150,40 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     public void setValue(final IdeaPluginDescriptorImpl ideaPluginDescriptor, final Boolean value) {
       myEnabled.put(ideaPluginDescriptor.getPluginId(), value);
+      if (value.booleanValue()) {
+        final Set<PluginId> deps = new HashSet<PluginId>();
+        PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
+            @Nullable
+            public IdeaPluginDescriptor fun(final PluginId pluginId) {
+              return PluginManager.getPlugin(pluginId);
+            }
+          }, new Condition<PluginId>() {
+            public boolean value(final PluginId pluginId) {
+              final Boolean enabled = myEnabled.get(pluginId);
+              if (enabled == null) {
+                return false;
+              }
+              if (!enabled.booleanValue()) {
+                deps.add(pluginId);
+                return false;
+              }
+              return true;
+            }
+          });
+        if (!deps.isEmpty()) {
+          if (Messages.showOkCancelDialog("<html>Plugin has disabled dependant plugins:<br>" + StringUtil.join(deps, new Function<PluginId, String>() {
+            public String fun(final PluginId pluginId) {
+              final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+              assert pluginDescriptor != null;
+              return pluginDescriptor.getName();
+            }
+          }, "<br>") + "</html>", "Enable dependant plugins?", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+            for (PluginId pluginId : deps) {
+              myEnabled.put(pluginId, Boolean.TRUE);
+            }
+          }
+        }
+      }
     }
 
     public Comparator<IdeaPluginDescriptorImpl> getComparator() {
