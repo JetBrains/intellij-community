@@ -280,7 +280,7 @@ public class SearchUtil {
   private static String quoteStrictOccurences(final String textToMarkup, final String filter) {
     String cur = "";
     for (String part : filter.split(" ")) {
-      if (textToMarkup.indexOf(part) != -1) {
+      if (textToMarkup.toLowerCase().indexOf(part) != -1) {
         cur += "\"" + part + "\" ";
       } else {
         cur += part + " ";
@@ -335,6 +335,14 @@ public class SearchUtil {
       for (Integer index : indx.keySet()) {
         final String stripped = indx.get(index);
         final int start = index.intValue();
+        if (pos > start) {
+          final String highlighted = selectedWords.get(selectedWords.size() - 1);
+          if (highlighted.length() < stripped.length()){
+            selectedWords.remove(highlighted);
+          } else {
+            continue;
+          }
+        }
         appendSelectedWords(text, selectedWords, pos, start, filter);
         selectedWords.add(stripped);
         pos = start + stripped.length();
