@@ -4,7 +4,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.ColumnInfo;
@@ -20,16 +22,21 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class SvnMapDialog extends DialogWrapper {
   private JPanel myContentPane;
   private TableView<WCInfo> myTableView;
-  private JButton myChangeFormatButton;
+  private JButton myChangeFormatButton;        
+  private JButton myCorrectButton;
+  private JLabel myWarningLabel;
   private ListTableModel<WCInfo> myTableModel;
 
   private final Project myProject;
+  private ActionListener myChangeFormatListener;
 
   public SvnMapDialog(final Project project) {
     super(project, true);
@@ -39,7 +46,21 @@ public class SvnMapDialog extends DialogWrapper {
     init();
     
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    myTableModel.setItems(vcs.getAllWcInfos());
+    final List<WCInfo> infoList = vcs.getAllWcInfos();
+    myTableModel.setItems(infoList);
+
+    final boolean promptForCorrection = vcs.getSvnFileUrlMapping().rootsDiffer();
+    if (promptForCorrection) {
+      myWarningLabel.setText(SvnBundle.message("action.working.copies.map.correct.warning.text"));
+      myWarningLabel.setUI(new MultiLineLabelUI());
+      myCorrectButton.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          correctMappings(vcs, infoList);
+        }
+      });
+    }
+    myCorrectButton.setVisible(promptForCorrection);
+    myWarningLabel.setVisible(promptForCorrection);
 
     myTableView.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -48,8 +69,8 @@ public class SvnMapDialog extends DialogWrapper {
                                         (! ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()));
       }
     });
-    
-    myChangeFormatButton.addActionListener(new ActionListener() {
+
+    myChangeFormatListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final Collection<WCInfo> selected = myTableView.getSelection();
         if (selected.size() != 1) {
@@ -75,10 +96,31 @@ public class SvnMapDialog extends DialogWrapper {
           ProgressManager.getInstance().run(task);
         }
       }
-    });
+    };
+    myChangeFormatButton.addActionListener(myChangeFormatListener);
 
     myChangeFormatButton.setEnabled((myTableView.getSelection().size() == 1) &&
                                     (! ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()));
+  }
+
+  private void correctMappings(final SvnVcs vcs, final List<WCInfo> infos) {
+    final ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(vcs.getProject());
+    final List<VcsDirectoryMapping> mappings = manager.getDirectoryMappings();
+    final List<VcsDirectoryMapping> newMappings = new ArrayList<VcsDirectoryMapping>();
+    final String svnVcsName = vcs.getName();
+    for (VcsDirectoryMapping mapping : mappings) {
+      if (! svnVcsName.equals(mapping.getVcs())) {
+        newMappings.add(mapping);
+      }
+    }
+    for (WCInfo info : infos) {
+      newMappings.add(new VcsDirectoryMapping(info.getPath(), svnVcsName));
+    }
+    manager.setDirectoryMappings(newMappings);
+
+    // table did not changed
+    myCorrectButton.setVisible(false);
+    myWarningLabel.setVisible(false);
   }
 
   public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);

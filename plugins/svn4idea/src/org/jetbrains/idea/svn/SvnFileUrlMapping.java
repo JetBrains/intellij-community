@@ -31,6 +31,11 @@ public interface SvnFileUrlMapping {
   @Nullable
   Pair<String, RootUrlInfo> getWcRootForFilePath(final File file);
 
+  /**
+   * @return true if roots under SVN set by the user differs from real WC roots (are under specified roots)
+   */
+  boolean rootsDiffer();
+
   class RootUrlInfo {
     private final String myRepositoryUrl;
     private final SVNURL myAbsoluteUrlAsUrl;

@@ -31,6 +31,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   private final Map<String, RootUrlInfo> myFile2UrlMap;
   private final Map<String, Pair<String, VirtualFile>> myUrl2FileMap;
   private final Map<String, VirtualFile> myFileRootsMap;
+  private boolean myUserRootsDiffersFromReal;
 
   SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
     myProject = project;
@@ -102,6 +103,10 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     return new Pair<String, RootUrlInfo>(root, myFile2UrlMap.get(root));
   }
 
+  public boolean rootsDiffer() {
+    return myUserRootsDiffersFromReal;
+  }
+
   @Nullable
   public RootMixedInfo getWcRootForUrl(final String url) {
     final String rootUrl = getUrlRootForUrl(url, myUrl2FileMap.keySet());
@@ -155,6 +160,9 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
 
         final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrlString, info.getURL());
 
+        if ((! myUserRootsDiffersFromReal) && (! myCurrentRoot.equals(virtualFile))) {
+          myUserRootsDiffersFromReal = true;
+        }
         myFile2UrlMap.put(currentPath, rootInfo);
         myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), new Pair<String, VirtualFile>(currentPath, virtualFile));
         myFileRootsMap.put(rootInfo.getAbsoluteUrl(), myCurrentRoot);
@@ -173,6 +181,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
 
   public void doRefresh() {
     //LOG.info("do refresh: " + new Time(System.currentTimeMillis()));
+    myUserRootsDiffersFromReal = false;
     // look WC roots under mappings
     final List<VcsDirectoryMapping> mappings = ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings(myVcs);
     // WC roots
