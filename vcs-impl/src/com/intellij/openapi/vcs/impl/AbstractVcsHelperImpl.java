@@ -178,7 +178,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   protected void reportError(Exception exception) {
-    exception.printStackTrace();
+    LOG.info(exception);
     Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"),
                                Messages.getErrorIcon());
   }
