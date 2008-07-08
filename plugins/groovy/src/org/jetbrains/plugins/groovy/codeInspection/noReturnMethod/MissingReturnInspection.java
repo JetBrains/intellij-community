@@ -99,7 +99,7 @@ public class MissingReturnInspection extends LocalInspectionTool {
   @NonNls
   @NotNull
   public String getShortName() {
-    return GroovyInspectionBundle.message("no.return.short.name");
+    return "GroovyMissingReturnStatement";
   }
 
   public boolean isEnabledByDefault() {

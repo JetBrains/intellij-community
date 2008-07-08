@@ -51,7 +51,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
   @NonNls
   @NotNull
   public String getShortName() {
-    return GroovyInspectionBundle.message("unassigned.access.short.name");
+    return "GroovyVariableNotAssigned";
   }
 
   public boolean isEnabledByDefault() {

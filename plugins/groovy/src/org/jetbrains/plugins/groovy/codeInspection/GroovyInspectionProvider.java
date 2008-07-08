@@ -57,7 +57,6 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         GroovyContinueOrBreakFromFinallyBlockInspection.class,
         GroovyReturnFromFinallyBlockInspection.class,
         GroovyThrowFromFinallyBlockInspection.class,
-        GroovyThrowFromFinallyBlockInspection.class,
         GroovyEmptyCatchBlockInspection.class,
         GroovyEmptyFinallyBlockInspection.class,
         GroovyEmptyTryBlockInspection.class,
