@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -26,7 +27,11 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(getModule(element));
+    GlobalSearchScope scope;
+    Module module = getModule(element);
+    if (module != null) scope = GlobalSearchScope.moduleWithDependenciesScope(module);
+    else scope = GlobalSearchScope.projectScope(element.getProject());
+
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
 
     List<Pair<PsiClass, Integer>> classesWithWeights = new ArrayList<Pair<PsiClass, Integer>>();
@@ -84,7 +89,11 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    GlobalSearchScope scope = GlobalSearchScope.moduleTestsWithDependentsScope(getModule(element));
+    GlobalSearchScope scope;
+    Module module = getModule(element);
+    if (module != null) scope = GlobalSearchScope.moduleWithDependentsScope(module);
+    else scope = GlobalSearchScope.projectScope(element.getProject());
+
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
 
     String klassName = klass.getName();
@@ -92,7 +101,9 @@ public class JavaTestFinder implements TestFinder {
 
     List<Pair<PsiClass, Integer>> classesWithProximities = new ArrayList<Pair<PsiClass, Integer>>();
 
-    for (String eachName : cache.getAllClassNames()) {
+    HashSet<String> names = new HashSet<String>();
+    cache.getAllClassNames(names);
+    for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
           if (TestUtil.isTestClass(eachClass)) {
