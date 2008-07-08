@@ -67,11 +67,13 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     myProviders = providers;
     myBaseDir = baseDir;
 
-    ApplicationManager.getApplication().invokeLater(new Runnable(){
-      public void run() {
-        addVFSListener();
-      }
-    });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable(){
+        public void run() {
+          addVFSListener();
+        }
+      });
+    }
   }
 
   public Collection<E> loadSchemes() {
