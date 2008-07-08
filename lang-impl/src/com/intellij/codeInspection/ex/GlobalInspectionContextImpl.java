@@ -510,7 +510,15 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
     }
     for (GlobalInspectionContextExtension extension : myExtensions.values()) {
-      extension.performPostRunActivities(needRepeatSearchRequest, this);
+      try {
+        extension.performPostRunActivities(needRepeatSearchRequest, this);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     if (RUN_GLOBAL_TOOLS_ONLY) return;
     final List<InspectionProfileEntry> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
