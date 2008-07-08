@@ -25,11 +25,11 @@ public class PropertyResolver {
     if (text == null) return null;
 
     DomFileElement<MavenModel> dom = value.getRoot();
-    VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
-    return resolve(text, virtualFile, dom);
+    return resolve(text, dom);
   }
 
-  public static String resolve(String text, VirtualFile file, DomFileElement<MavenModel> dom) {
+  public static String resolve(String text, DomFileElement<MavenModel> dom) {
+    VirtualFile file = dom.getOriginalFile().getVirtualFile();
     MavenProjectsManager manager = MavenProjectsManager.getInstance(dom.getFile().getProject());
     MavenProjectModel mavenProject = manager.findProject(file);
     if (mavenProject == null) return text;

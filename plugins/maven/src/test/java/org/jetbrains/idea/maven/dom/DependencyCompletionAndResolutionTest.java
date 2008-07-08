@@ -464,6 +464,34 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     checkHighlighting();
   }
 
+  public void testResolvingSystemScopeDependenciesWithProperties() throws Throwable {
+    String libPath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <depPath>" + libPath + "</depPath>" +
+                     "</properties>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version><caret>xxx</version>" +
+                     "    <scope>system</system>" +
+                     "    <systemPath>${depPath}</systemPath>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    assertEquals(getPsiFile(LocalFileSystem.getInstance().findFileByPath(libPath)), ref.resolve());
+    checkHighlighting();
+  }
+
   public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
     String libPath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 

@@ -123,6 +123,36 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertEquals(getPsiFile(parent), ref.resolve());
   }
 
+  public void testResolvingByRelativePathWithProperties() throws Throwable {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <parentPath>parent/pom.xml</parentPath>" +
+                     "</properties>" +
+
+                     "<parent>" +
+                     "  <groupId><caret>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>${parentPath}</relativePath>" +
+                     "</parent>");
+
+    VirtualFile parent = createModulePom("parent",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>parent</artifactId>" +
+                                         "<version>1</version>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    assertEquals(getPsiFile(parent), ref.resolve());
+  }
+
   public void testRelativePathCompletion() throws Throwable {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

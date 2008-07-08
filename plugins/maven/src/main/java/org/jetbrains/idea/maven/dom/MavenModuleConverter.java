@@ -30,7 +30,7 @@ public class MavenModuleConverter extends Converter<PsiFile> implements CustomRe
     VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
 
     String originalText = value.getStringValue();
-    String resolvedText = PropertyResolver.resolve(originalText, virtualFile, dom);
+    String resolvedText = PropertyResolver.resolve(originalText, dom);
 
     XmlFile psiFile = context.getFile();
     TextRange range = ElementManipulators.getValueTextRange(element);

@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.dom.model.MavenModel;
 
 import java.io.File;
 
-public class ProperyResolverTest extends MavenImportingTestCase {
+public class PropertyResolverTest extends MavenImportingTestCase {
   public void testResolvingProjectAttributes() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -161,6 +161,6 @@ public class ProperyResolverTest extends MavenImportingTestCase {
     DomManager domManager = DomManager.getDomManager(myProject);
     DomFileElement<MavenModel> dom = domManager.getFileElement((XmlFile)psi, MavenModel.class);
 
-    return PropertyResolver.resolve(text, f, dom);
+    return PropertyResolver.resolve(text, dom);
   }
 }
