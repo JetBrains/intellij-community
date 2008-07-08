@@ -418,7 +418,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
-        if (!myLookupStartMarker.isValid()){
+        if (myLookupStartMarker != null && !myLookupStartMarker.isValid()){
           hide();
         }
       }
