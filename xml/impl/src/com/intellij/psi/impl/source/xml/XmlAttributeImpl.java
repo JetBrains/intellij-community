@@ -152,9 +152,9 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     PsiElement firstChild = value.getFirstChild();
     if (firstChild == null) return null;
     ASTNode child = firstChild.getNode();
-    myValueTextRange = new TextRange(0, value.getTextLength());
+    TextRange valueTextRange = new TextRange(0, value.getTextLength());
     if (child != null && child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
-      myValueTextRange = new TextRange(child.getTextLength(), myValueTextRange.getEndOffset());
+      valueTextRange = new TextRange(child.getTextLength(), valueTextRange.getEndOffset());
       child = child.getTreeNext();
     }
     final TIntArrayList gapsStarts = new TIntArrayList();
@@ -164,7 +164,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       final int start = buffer.length();
       IElementType elementType = child.getElementType();
       if (elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-        myValueTextRange = new TextRange(myValueTextRange.getStartOffset(), child.getTextRange().getStartOffset() - value.getTextRange().getStartOffset());
+        valueTextRange = new TextRange(valueTextRange.getStartOffset(), child.getTextRange().getStartOffset() - value.getTextRange().getStartOffset());
         break;
       }
       if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
@@ -194,6 +194,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       myGapPhysicalStarts[i] = myGapDisplayStarts[i] + currentGapsSum;
     }
 
+    myValueTextRange = valueTextRange;
     return myDisplayText = buffer.toString();
   }
 
