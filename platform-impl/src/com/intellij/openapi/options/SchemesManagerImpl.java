@@ -66,13 +66,18 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
     myRoamingType = roamingType;
     myProviders = providers;
     myBaseDir = baseDir;
+
+    ApplicationManager.getApplication().invokeLater(new Runnable(){
+      public void run() {
+        addVFSListener();
+      }
+    });
   }
 
   public Collection<E> loadSchemes() {
 
     myBaseDir.mkdirs();
 
-    addVFSListener();
     try {
       myIsUpdating = true;
       myDeletedNames.addAll(readDeletedSchemeNames());
