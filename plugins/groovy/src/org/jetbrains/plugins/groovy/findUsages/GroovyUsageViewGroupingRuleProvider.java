@@ -15,13 +15,12 @@
 
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.usages.rules.UsageGroupingRuleProvider;
-import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usages.UsageView;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -35,17 +34,5 @@ public class GroovyUsageViewGroupingRuleProvider implements UsageGroupingRulePro
   @NotNull
   public AnAction[] createGroupingActions(UsageView view) {
     return AnAction.EMPTY_ARRAY;
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "GroovyUsageViewGroupingRuleProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

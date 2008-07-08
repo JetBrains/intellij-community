@@ -58,6 +58,26 @@
 
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
 
+    <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
+
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyBlockStatementsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
+
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
+    <annotatedMembersSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
+
+    <compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>
+
+    <facetType implementation="org.jetbrains.plugins.groovy.config.GroovyFacetType"/>
+
+    <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
+
+    <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
+
     <!-- Grails and GSP -->
     <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
     <annotator language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.annotator.GspAnnotator"/>
@@ -70,26 +90,12 @@
 
     <codeInsight.parameterInfo language="GSP" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
 
+    <quoteHandler fileType="GSP" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
+    <braceMatcher filetype="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspBraceMatcher"/>
+
     <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
 
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner"/>
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyBlockStatementsSelectioner"/>
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner"/>
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner"/>
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
-
-    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
-    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
-    <annotatedMembersSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
-
-    <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
-
-    <compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>
-
-    <facetType implementation="org.jetbrains.plugins.groovy.config.GroovyFacetType"/>
     <facetType implementation="org.jetbrains.plugins.grails.config.GrailsFacetType"/>
-
-    <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
@@ -99,6 +105,12 @@
                     serviceImplementation="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl"/>
 
     <moduleType id="GRAILS_MODULE" implementationClass="org.jetbrains.plugins.grails.module.GrailsModuleType"/>
+
+    <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider"/>
+
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagBodySelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsHtmlTagBodySelectioner"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -255,21 +267,10 @@
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider
-      </implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.grails.fileType.GspLoader</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider
-      </implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.lang.completion.VariableNameSuggesterRegistry
