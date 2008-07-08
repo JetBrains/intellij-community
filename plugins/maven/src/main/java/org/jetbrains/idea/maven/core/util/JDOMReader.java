@@ -15,17 +15,19 @@ public class JDOMReader {
   private Element myRootElement;
   private Namespace myNamespace;
 
-  public JDOMReader(InputStream s) {
+  public JDOMReader(InputStream s) throws IOException {
     try {
       Document document = new SAXBuilder().build(s);
-      if (document.hasRootElement()) {
-        myRootElement = document.getRootElement();
-        myNamespace = myRootElement.getNamespace();
+      if (!document.hasRootElement()) {
+        throw new IOException("root element not found");
       }
+      myRootElement = document.getRootElement();
+      myNamespace = myRootElement.getNamespace();
     }
-    catch (JDOMException ignore) {
-    }
-    catch (IOException ignore) {
+    catch (JDOMException e) {
+      IOException ioException = new IOException();
+      ioException.initCause(e);
+      throw ioException;
     }
   }
 

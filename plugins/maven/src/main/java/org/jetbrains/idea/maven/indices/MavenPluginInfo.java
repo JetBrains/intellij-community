@@ -5,6 +5,7 @@ import org.jdom.Element;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.*;
 
 public class MavenPluginInfo {
@@ -14,7 +15,7 @@ public class MavenPluginInfo {
   private String myGoalPrefix;
   private Map<String, Mojo> myMojos;
 
-  public MavenPluginInfo(InputStream inputStream) {
+  public MavenPluginInfo(InputStream inputStream) throws IOException {
     JDOMReader r = new JDOMReader(inputStream);
 
     myGroupId = r.getChildText(r.getRootElement(), "groupId");
