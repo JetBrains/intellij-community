@@ -153,6 +153,10 @@ public class ModifierFix implements IntentionAction {
                                    Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
+            if (!CodeInsightUtilBase.preparePsiElementsForWrite(modifierLists)) {
+              return;
+            }
+
             for (final PsiModifierList modifierList : modifierLists) {
               changeModifierList(modifierList);
             }
