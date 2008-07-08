@@ -236,7 +236,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       if (wasRootNodeInitialized()) {
         updateFromRoot();
       } else {
-        initRootNodeNow();
+        initRootNodeNowIfNeeded();
         updateFromRoot();
       }
     }
@@ -397,7 +397,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     final Activatable activatable = new Activatable() {
       public void showNotify() {
         if (!myRootNodeWasInitialized) {
-          initRootNodeNow();
+          initRootNodeNowIfNeeded();
         }
       }
 
@@ -412,7 +412,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  private void initRootNodeNow() {
+  private void initRootNodeNowIfNeeded() {
     if (myRootNodeWasInitialized) return;
 
     myRootNodeWasInitialized = true;
@@ -458,10 +458,12 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public void updateFromRoot() {
-    updateSubtree(getRootNode());
+    updateSubtreeNow(getRootNode());
   }
 
-  public final void updateSubtree(DefaultMutableTreeNode node) {
+  public final void updateSubtreeNow(DefaultMutableTreeNode node) {
+    initRootNodeNowIfNeeded();
+
     if (!(node.getUserObject()instanceof NodeDescriptor)) return;
     final TreeState treeState = TreeState.createOn(myTree, node);
     updateNode(node);
@@ -566,7 +568,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       updateNodeChildren(childNode);
     }
   }
-
+    
   private boolean processAllChildren(final DefaultMutableTreeNode node, final Map<Object, Integer> elementToIndexMap) {
     ArrayList<TreeNode> childNodes = TreeUtil.childrenToArray(node);
     boolean containsLoading = false;

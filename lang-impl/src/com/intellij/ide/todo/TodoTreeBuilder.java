@@ -73,7 +73,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   private final MyFileStatusListener myFileStatusListener;
 
   TodoTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-    super(tree, treeModel, null, MyComparator.ourInstance);
+    super(tree, treeModel, null, MyComparator.ourInstance, false);
     myProject = project;
 
     myFileTree = new FileTree();

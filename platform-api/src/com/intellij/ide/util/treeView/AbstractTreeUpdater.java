@@ -96,7 +96,7 @@ public class AbstractTreeUpdater implements Disposable {
   }
 
   protected void updateSubtree(DefaultMutableTreeNode node) {
-    myTreeBuilder.updateSubtree(node);
+    myTreeBuilder.updateSubtreeNow(node);
   }
 
   public synchronized void performUpdate() {
