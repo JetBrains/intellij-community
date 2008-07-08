@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.PsiClass;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,26 +32,68 @@ import org.jetbrains.annotations.NotNull;
 public class NonExceptionNameEndsWithExceptionInspection
         extends BaseInspection {
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.exception.name.ends.with.exception.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.exception.name.ends.with.exception.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    @Override @NotNull
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+        final String name = (String) infos[0];
+        return new InspectionGadgetsFix[] {new RenameFix(),
+                new ExtendExceptionFix(name)};
     }
 
+    private static class ExtendExceptionFix extends InspectionGadgetsFix {
+
+        private final String name;
+
+        public ExtendExceptionFix(String name) {
+            this.name = name;
+        }
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "non.exception.name.ends.with.exception.quickfix", name);
+        }
+
+        @Override
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiClass)) {
+                return;
+            }
+            final PsiClass aClass = (PsiClass) parent;
+            final PsiReferenceList extendsList = aClass.getExtendsList();
+            if (extendsList == null) {
+                return;
+            }
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = facade.getElementFactory();
+            final GlobalSearchScope scope = aClass.getResolveScope();
+            final PsiJavaCodeReferenceElement reference =
+                    factory.createReferenceElementByFQClassName(
+                            "java.lang.Exception", scope);
+            extendsList.add(reference);
+        }
+    }
+
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NonExceptionNameEndsWithExceptionVisitor();
     }
@@ -68,7 +114,7 @@ public class NonExceptionNameEndsWithExceptionInspection
             if (ClassUtils.isSubclass(aClass, "java.lang.Exception")) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, className);
         }
     }
 }
