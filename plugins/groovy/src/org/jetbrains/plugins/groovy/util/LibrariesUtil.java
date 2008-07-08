@@ -49,8 +49,7 @@ public abstract class LibrariesUtil {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        ModifiableRootModel model = manager.getModifiableModel();
-        for (OrderEntry entry : model.getOrderEntries()) {
+        for (OrderEntry entry : manager.getOrderEntries()) {
           if (entry instanceof LibraryOrderEntry) {
             LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
             Library library = libEntry.getLibrary();
