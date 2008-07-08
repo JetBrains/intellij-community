@@ -30,7 +30,7 @@ public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
       final boolean isSelected,
       final boolean cellHasFocus
     ){
-      final BorderType type=(BorderType)value;
+      final BorderType type = value != null ? (BorderType)value : BorderType.NONE;
       return super.getListCellRendererComponent(list,type.getName(),index,isSelected,cellHasFocus);
     }
   }
