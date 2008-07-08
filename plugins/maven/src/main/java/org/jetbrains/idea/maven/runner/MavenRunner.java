@@ -97,7 +97,6 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   public void closeToolWindow() {
     if (isToolWindowOpen()) {
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(OUTPUT_TOOL_WINDOW_ID);
-      Disposer.dispose(myMavenOutputWindowPanel);
     }
   }
 
