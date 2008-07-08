@@ -11,9 +11,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class JavaErrorOptionsProvider implements ErrorOptionsProvider {
-  private JCheckBox mySuppressWay = new JCheckBox(ApplicationBundle.message("checkbox.suppress.with.suppresswarnings"));
+  private JCheckBox mySuppressWay;
 
   public JComponent createComponent() {
+    mySuppressWay = new JCheckBox(ApplicationBundle.message("checkbox.suppress.with.suppresswarnings"));
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(mySuppressWay, BorderLayout.EAST);
     return panel;
