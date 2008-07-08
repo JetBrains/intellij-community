@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -523,6 +524,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       super(project, MESSAGE, ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
+      Disposer.register(myDisposable, myProject);
     }
 
     protected String getOkActionName() {
