@@ -18,7 +18,8 @@
   <property environment="env"/>
 
 
-  <property name="project.dir" location="${basedir}/.."/>
+  <property name="project.dir" location="${basedir}"/>
+  <property name="src.dir" location="${project.dir}/src"/>
   <property name="production.dest" location="${project.dir}/classes/production"/>
   <property name="production.dest.groovy" location="${production.dest}/groovy"/>
   <property name="production.dest.groovy_rt" location="${production.dest}/groovy_rt"/>
@@ -78,15 +79,15 @@
   </target>
 
   <target name="build.lexer" description="makes lexer file">
-    <ant dir="./org/jetbrains/plugins/groovy/lang/lexer/" antfile="build.xml" target="generate.lexer"/>
-    <ant dir="./org/jetbrains/plugins/grails/lang/gsp/lexer/core" antfile="build.xml" target="generate.lexer"/>
+    <ant dir="${src.dir}/org/jetbrains/plugins/groovy/lang/lexer/" antfile="build.xml" target="generate.lexer"/>
+    <ant dir="${src.dir}/org/jetbrains/plugins/grails/lang/gsp/lexer/core" antfile="build.xml" target="generate.lexer"/>
   </target>
 
   <property name="stubsOutput" value="${project.dir}/stubs"/>
 
 
   <path id="rtFiles">
-    <pathelement path="../rt/src/"/>
+    <pathelement path="${project.dir}/rt/src/"/>
   </path>
 
   <path id="rtFiles.output">
@@ -110,7 +111,7 @@
 
     <mkdir dir="${stubsOutput}"/>
 
-    <generateStubs destdir="${stubsOutput}" srcDir="${project.dir}/src">
+    <generateStubs destdir="${stubsOutput}" srcDir="${src.dir}">
       <include name="**/*.groovy"/>
       <include name="**/*.java"/>
       <classpath>
@@ -124,7 +125,7 @@
 
   <target name="make.project" description="makes project" depends="make.rt, make.stubs">
     <copy todir="${production.dest.groovy}/META-INF">
-      <fileset dir="src/META-INF"/>
+      <fileset dir="${src.dir}/META-INF"/>
     </copy>
 
     <copy todir="${production.dest.groovy}">
@@ -132,14 +133,14 @@
     </copy>
 
     <copy todir="${production.dest.groovy}" flatten="false">
-      <fileset dir="${project.dir}/src">
+      <fileset dir="${src.dir}">
         <include name="**/*Bundle.properties"/>
       </fileset>
     </copy>
 
     <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="idea.lib.path"/>
     <path id="javaToCompile">
-      <pathelement path="."/>
+      <pathelement path="${src.dir}"/>
       <pathelement path="${stubsOutput}"/>
     </path>
 
