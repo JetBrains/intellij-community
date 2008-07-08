@@ -124,11 +124,8 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
 
   public void selectTest(final TestProxy test) {
     if (test == null) return;
-    final TreePath pathToNode = pathToTest(test, true);
-    if (pathToNode == null) return;
-    myTreeView.setSelectionPath(pathToNode);
-    myTreeView.makeVisible(pathToNode);
-    myTreeView.scrollPathToVisible(pathToNode);
+
+    myTreeBuilder.select(test, null);
   }
 
 

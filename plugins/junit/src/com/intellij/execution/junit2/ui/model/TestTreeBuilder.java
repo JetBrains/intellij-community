@@ -18,11 +18,10 @@ package com.intellij.execution.junit2.ui.model;
 
 import com.intellij.execution.junit2.TestEvent;
 import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestTreeView;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,19 +75,11 @@ public class TestTreeBuilder extends AbstractTreeBuilder {
   }
 
   private TestTreeBuilder(final JTree tree, final TestTreeStructure treeStructure, final JUnitRunningModel model) {
-    this(tree, new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.createDescriptor(model.getRoot(), null))), treeStructure);
     treeStructure.setSpecialNode(new SpecialNode(this, model));
     myModel = model;
     myModel.addListener(myListener);
+    init(tree, new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.createDescriptor(model.getRoot(), null))), treeStructure, IndexComparator.INSTANCE);
     initRootNode();
-  }
-
-  private TestTreeBuilder(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure) {
-    super(tree,
-          treeModel,
-          treeStructure,
-          IndexComparator.INSTANCE);
-    tree.setModel(treeModel);
   }
 
   protected boolean isSmartExpand() {
