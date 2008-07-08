@@ -11,12 +11,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -42,6 +44,12 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         new MyEnvironmentVariablesDialog().show();
+      }
+    });
+    getComponent().getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        myEnvs.clear();
+        splitVars(myEnvs, getComponent().getText());
       }
     });
   }
@@ -84,22 +92,25 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
           envs.put(envName, envValue);
         }
       }
-    } else { //compatibility
+    } else { //compatibility with prev version
       for (Object o : element.getChildren(OPTION)) {
         if (Comparing.strEqual(((Element)o).getAttributeValue(NAME), ENV_VARIABLES)) {
-          final String val = ((Element)o).getAttributeValue(VALUE);
-          if (val != null) {
-            final String[] envVars = val.split(";");
-            if (envVars != null) {
-              for (String envVar : envVars) {
-                final int idx = envVar.indexOf('=');
-                if (idx > -1) {
-                  envs.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
-                }
-              }
-            }
-          }
+          splitVars(envs, ((Element)o).getAttributeValue(VALUE));
           break;
+        }
+      }
+    }
+  }
+
+  private static void splitVars(final Map<String, String> envs, final String val) {
+    if (val != null) {
+      final String[] envVars = val.split(";");
+      if (envVars != null) {
+        for (String envVar : envVars) {
+          final int idx = envVar.indexOf('=');
+          if (idx > -1) {
+            envs.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
+          }
         }
       }
     }
