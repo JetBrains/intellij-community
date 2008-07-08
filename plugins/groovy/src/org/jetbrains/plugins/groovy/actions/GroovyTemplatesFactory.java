@@ -16,20 +16,18 @@
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.fileTemplates.*;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import java.util.Properties;
 
-public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent {
+public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory {
   @NonNls
   public static final String[] TEMPLATES = {
       "GroovyClass.groovy",
@@ -52,18 +50,6 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
     //add GSP Template
     group.addTemplate(new FileTemplateDescriptor(GSP_TEMPLATE, fileTypeManager.getFileTypeByFileName(GSP_TEMPLATE).getIcon()));
     return group;
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "GroovyTemplatesFactory";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public static PsiFile createFromTemplate(final PsiDirectory directory, final String name, String fileName, String templateName,

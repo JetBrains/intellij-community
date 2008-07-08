@@ -14,10 +14,9 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -27,7 +26,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class GroovyImportsTracker implements ProjectComponent {
+public class GroovyImportsTracker {
 
   private Map<GroovyFile, Set<GrImportStatement>> myUsedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
   private Map<GroovyFile, Set<GrImportStatement>> myUnusedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
@@ -61,28 +60,8 @@ public class GroovyImportsTracker implements ProjectComponent {
     return unused;
   }
 
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "Groovy Inspection Data";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
   public static GroovyImportsTracker getInstance(Project project) {
-    return project.getComponent(GroovyImportsTracker.class);
+    return ServiceManager.getService(project, GroovyImportsTracker.class);
   }
 
   public void markFileAnnotated(GroovyFile file) {

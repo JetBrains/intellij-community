@@ -19,8 +19,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompositeCompletionData;
-import com.intellij.codeInsight.editorActions.SelectWordUtil;
-import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
@@ -36,24 +34,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
-import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
-import org.jetbrains.plugins.groovy.editor.selection.*;
-import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
-import org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher;
-import org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry;
-import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
@@ -115,18 +105,11 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     //Register Keyword completion
     setupCompletion();
 
-    registerSelectioners();
-
-    MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
-    MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
     //todo [DIANA] implement me!
 //    ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
 //    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferencesSearcher());
 //    ReferencesSearch.INSTANCE.registerExecutor(new TypeAliasReferenceSearcher());
 //    ReferencesSearch.INSTANCE.registerExecutor(new LateBoundReferencesSearcher());
-    AnnotatedMembersSearch.INSTANCE.registerExecutor(new AnnotatedMembersSearcher());
-
-    TypedHandler.registerQuoteHandler(GroovyFileType.GROOVY_FILE_TYPE, new GroovyQuoteHandler());
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(final Project project) {
@@ -148,7 +131,6 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
         compilerManager.addCompiler(generator);
         compilerManager.addCompilationStatusListener(generator);
 
-        compilerManager.addCompiler(new GroovyCompiler(project));
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
         DebuggerManager.getInstance(project).registerPositionManagerFactory(new Function<DebugProcess, PositionManager>() {
@@ -192,14 +174,6 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
       }
     });
 */
-  }
-
-  private static void registerSelectioners() {
-    SelectWordUtil.registerSelectioner(new GroovyLiteralSelectioner());
-    SelectWordUtil.registerSelectioner(new GroovyBlockStatementsSelectioner());
-    SelectWordUtil.registerSelectioner(new GroovyTypeCastSelectioner());
-    SelectWordUtil.registerSelectioner(new GroovyDocParamsSelectioner());
-    SelectWordUtil.registerSelectioner(new GroovyArgListSelectioner());
   }
 
   private static void setupCompletion() {

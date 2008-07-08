@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -46,7 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 public abstract class GroovyPsiElementFactory {
 
   public static GroovyPsiElementFactory getInstance(Project project) {
-    return project.getComponent(GroovyPsiElementFactory.class);
+    return ServiceManager.getService(project, GroovyPsiElementFactory.class);
   }
 
   /**

@@ -41,7 +41,7 @@ import java.util.Comparator;
 public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvider<GroovyFacet> {
 
   protected GroovyFacetSupportProvider() {
-    super(GroovyFacetType.INSTANCE);
+    super(GroovyFacetType.getInstance());
   }
 
   @NotNull

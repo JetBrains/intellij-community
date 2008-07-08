@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -60,7 +59,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory implements ProjectComponent {
+public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   Project myProject;
 
   public GroovyPsiElementFactoryImpl(Project project) {
@@ -319,24 +318,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     GroovyFileImpl file = createDummyFile(idText, isPhisical);
     file.setContext(context);
     return file;
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "Groovy Element Factory";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public PsiElement createWhiteSpace() {

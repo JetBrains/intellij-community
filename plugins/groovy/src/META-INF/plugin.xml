@@ -14,7 +14,6 @@
   ~
   -->
 
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin url="http://www.jetbrains.net/confluence/display/GRVY/Groovy+Home">
   <id>org.intellij.groovy</id>
   <name>JetGroovy</name>
@@ -25,8 +24,8 @@
   <idea-version since-build="8508" until-build="8999"/>
   <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
 
-  <extensions xmlns="com.intellij">
-    <errorHandler implementation="org.jetbrains.plugins.groovy.error.GroovyErrorReportSubmitter"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
@@ -35,7 +34,7 @@
             serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
 
     <!-- Groovy language -->
-    <treeStructureProvider language="Groovy" implementation="org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider"/>
+    <treeStructureProvider implementation="org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider"/>
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
@@ -72,9 +71,37 @@
     <codeInsight.parameterInfo language="GSP" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
 
     <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
+
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyBlockStatementsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
+
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
+    <annotatedMembersSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
+
+    <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
+
+    <compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>
+
+    <facetType implementation="org.jetbrains.plugins.groovy.config.GroovyFacetType"/>
+    <facetType implementation="org.jetbrains.plugins.grails.config.GrailsFacetType"/>
+
+    <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
+                    serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
+                    serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
+    <projectService serviceInterface="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactory"
+                    serviceImplementation="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl"/>
+
+    <moduleType id="GRAILS_MODULE" implementationClass="org.jetbrains.plugins.grails.module.GrailsModuleType"/>
   </extensions>
 
-  <extensions xmlns="com.intellij.debugger">
+  <extensions defaultExtensionNs="com.intellij.debugger">
     <codeFragmentFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyCodeFragmentFactory"/>
   </extensions>
 
@@ -96,35 +123,19 @@
       <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
     </component>
     <component>
-      <interface-class>org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory</interface-class>
-      <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl
-      </implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.editor.EditorDecorator</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory
       </implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker</implementation-class>
-      <interface-class>org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker</interface-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManagerImpl
       </implementation-class>
       <interface-class>org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManager</interface-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl</implementation-class>
-      <interface-class>org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactory</interface-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.GrailsProjectLoader</implementation-class>
@@ -244,15 +255,6 @@
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.config.GroovyGrailsFacetLoader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.module.GrailsModuleType</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType</implementation-class>
     </component>
     <component>
@@ -261,10 +263,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.fileType.GspLoader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.error.GroovyErrorReportConfigurable</implementation-class>
-      <interface-class>org.jetbrains.plugins.groovy.error.GroovyErrorReportConfigurable</interface-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
