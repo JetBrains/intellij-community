@@ -234,7 +234,7 @@
     <mkdir dir="${test.dest}"/>
     <mkdir dir="${test.dest}/Groovy"/>
 
-    <javac srcdir="../test"
+    <javac srcdir="${project.dir}/test"
             destdir="${test.dest}"
             debug="on">
 
@@ -254,7 +254,7 @@
       <pathelement path="${test.dest}"/>
     </path>
 
-    <groovyc destdir="../test" srcDir="../test">
+    <groovyc destdir="${project.dir}/test" srcDir="${project.dir}/test">
       <include name="**/Groovy*Test.groovy"/>
       <classpath>
         <path refid="idea.lib.path"/>
@@ -263,7 +263,7 @@
         <path refid="output.path"/>
       </classpath>
     </groovyc>
-    <groovyc destdir="${test.dest}" srcDir="../test">
+    <groovyc destdir="${test.dest}" srcDir="${project.dir}/test">
       <include name="**/Groovy*Test.groovy"/>
       <classpath>
         <path refid="idea.lib.path"/>
@@ -329,7 +329,7 @@
     </junit>
 
     <!--cleanup-->
-    <delete dir="../test">
+    <delete dir="${project.dir}/test">
       <include name="**/Groovy*.class"/>
     </delete>
 
