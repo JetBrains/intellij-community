@@ -21,5 +21,6 @@ public enum ProblemHighlightType {
   LIKE_UNKNOWN_SYMBOL,
   LIKE_UNUSED_SYMBOL,
   J2EE_PROBLEM,
+  ERROR,
   INFO
 }
