@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -22,10 +23,9 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.io.File;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> {
   private boolean myPassParentEnvs;
@@ -125,6 +125,19 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
       envsElement.addContent(envElement);
     }
     element.addContent(envsElement);
+  }
+
+  public static void inlineParentOccurrences(final Map<String, String> envs) {
+    final Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
+    for (String envKey : envs.keySet()) {
+      final String val = envs.get(envKey);
+      if (val != null) {
+        final String parentVal = parentParams.get(envKey);
+        if (parentVal != null && ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1) {
+          envs.put(envKey, val.replace("$" + envKey + "$", parentVal));
+        }
+      }
+    }
   }
 
   private class MyEnvironmentVariablesDialog extends DialogWrapper {

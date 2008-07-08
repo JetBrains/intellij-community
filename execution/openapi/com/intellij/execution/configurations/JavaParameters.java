@@ -17,6 +17,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,14 +28,12 @@ import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.Map;
 
 public class JavaParameters {
@@ -191,16 +190,7 @@ public class JavaParameters {
 
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
-      final Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
-      for (String envKey : envs.keySet()) {
-        final String val = envs.get(envKey);
-        if (val != null) {
-          final String parentVal = parentParams.get(envKey);
-          if (parentVal != null && ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1) {
-            envs.put(envKey, val.replace("$" + envKey + "$", parentVal));
-          }
-        }
-      }
+      EnvironmentVariablesComponent.inlineParentOccurrences(envs);
       setEnv(envs);
       setPassParentEnvs(passDefault);
     }
