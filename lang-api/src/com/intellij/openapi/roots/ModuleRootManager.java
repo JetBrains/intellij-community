@@ -61,6 +61,7 @@ public abstract class ModuleRootManager implements ModuleRootModel {
 
   /**
    * Returns the interface for modifying the set of roots for this module. Must be called in a read action.
+   * !!!!! ACHTUNG !!!!!: This model MUST be either committed {@link ModifiableRootModel#commit()} or disposed {@link ModifiableRootModel#dispose()}  
    *
    * @return the modifiable root model.
    */
