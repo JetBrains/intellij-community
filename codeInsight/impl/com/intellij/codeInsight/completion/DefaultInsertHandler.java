@@ -30,14 +30,12 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -716,41 +714,28 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 
     final RangeMarker toDelete = insertSpace(endOffset, document);
-    endOffset = startOffset + name.length();
 
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 
     PsiElement element = file.findElementAt(startOffset);
-    if (element instanceof PsiIdentifier){
+    if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified()){
+      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified()) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
 
         if (!aClass.getManager().areElementsEquivalent(aClass, resolveReference(ref))) {
           final PsiElement pointerElement = pointer.getElement();
           if (pointerElement instanceof PsiClass) {
+            PsiElement newElement;
             if (!(ref instanceof PsiImportStaticReferenceElement)) {
-              String debugText;
-              if (parent.getParent().getParent() != null) {
-                debugText = "grandparent: " + DebugUtil.psiToString(parent.getParent().getParent(), false) + "\n ref: " + parent.getText();
-              } else {
-                debugText = "no grandparent, parent: " + DebugUtil.psiToString(parent.getParent(), false) + "\n ref: " + parent.getText();
-              }
-
-              PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
-              newRef = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newRef);
-              LOG.assertTrue(newRef != null, debugText);
-              final TextRange textRange = newRef.getTextRange();
-              endOffset = textRange.getEndOffset();
-              newStartOffset = textRange.getStartOffset();
+              newElement = ref.bindToElement(pointerElement);
             }
             else {
-              PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement);
-              statement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(statement);
-              final TextRange textRange = statement.getTextRange();
-              endOffset = textRange.getEndOffset();
-              newStartOffset = textRange.getStartOffset();
+              newElement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass)pointerElement);
             }
+            RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
+            CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
+            newStartOffset = marker.getStartOffset();
           }
         }
       }
