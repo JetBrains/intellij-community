@@ -19,12 +19,26 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<CompileScope>();
 
   public CompositeScope(CompileScope scope1, CompileScope scope2) {
-    myScopes.add(scope1);
-    myScopes.add(scope2);
+    addScope(scope1);
+    addScope(scope2);
   }
 
   public CompositeScope(CompileScope[] scopes) {
-    myScopes.addAll(Arrays.asList(scopes));
+    for (CompileScope scope : scopes) {
+      addScope(scope);
+    }
+  }
+
+  private void addScope(CompileScope scope) {
+    if (scope instanceof CompositeScope) {
+      final CompositeScope compositeScope = (CompositeScope)scope;
+      for (CompileScope childScope : compositeScope.myScopes) {
+        addScope(childScope);
+      }
+    }
+    else {
+      myScopes.add(scope);
+    }
   }
 
   public VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly) {
