@@ -8,10 +8,10 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.*;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -48,8 +47,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
   private static final String ACTIVE_KEYMAP = "active_keymap";
   @NonNls
   private static final String NAME_ATTRIBUTE = "name";
-  @NonNls
-  private static final String XML_FILE_EXT = "xml";
   private SchemesManager<Keymap, KeymapImpl> mySchemesManager;
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
@@ -94,13 +91,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
       }
     }
     load();
-  }
-
-  private Keymap getFirstUnmodifiableKeymap() {
-    for (Keymap keymap : mySchemesManager.getAllSchemes()) {
-      if (!keymap.canModify()) return keymap;
-    }
-    return null;
   }
 
   @NotNull
@@ -193,7 +183,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
   public void writeExternal(Element element) throws WriteExternalException{
     if (mySchemesManager.getCurrentScheme() != null) {
       Element e = new Element(ACTIVE_KEYMAP);
-      e.setAttribute(NAME_ATTRIBUTE, mySchemesManager.getCurrentScheme().getName());
+      Keymap currentScheme = mySchemesManager.getCurrentScheme();
+      if (currentScheme != null) {
+        e.setAttribute(NAME_ATTRIBUTE, currentScheme.getName());
+      }
       element.addContent(e);
     }
   }
@@ -226,23 +219,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
       }
     }
     return directory;
-  }
-
-  private static File[] getKeymapFiles() {
-    File directory = getKeymapDirectory(false);
-    if (directory == null) {
-      return new File[0];
-    }
-    File[] ret = directory.listFiles(new FileFilter() {
-      public boolean accept(File file){
-        return !file.isDirectory() && file.getName().toLowerCase().endsWith('.' + XML_FILE_EXT);
-      }
-    });
-    if (ret == null) {
-      LOG.error("Cannot read directory: " + directory.getAbsolutePath());
-      return new File[0];
-    }
-    return ret;
   }
 
   private void fireActiveKeymapChanged() {
