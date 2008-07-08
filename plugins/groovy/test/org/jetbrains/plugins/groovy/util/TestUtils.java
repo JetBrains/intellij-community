@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -24,12 +25,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,10 +88,12 @@ public abstract class TestUtils {
         true);
   }
 
-  private static String TEST_DATA_PATH = null;
+  private static @NonNls String TEST_DATA_PATH = null;
 
   public static String getTestDataPath() {
     if (TEST_DATA_PATH == null) {
+      TEST_DATA_PATH = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/svnPlugins/groovy/testdata";
+      /*
       ClassLoader loader = TestUtils.class.getClassLoader();
       URL resource = loader.getResource("testdata");
       try {
@@ -100,6 +102,7 @@ public abstract class TestUtils {
         LOG.error(e);
         return null;
       }
+      */
     }
 
     return TEST_DATA_PATH;
