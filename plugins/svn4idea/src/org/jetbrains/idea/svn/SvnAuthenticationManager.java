@@ -2,12 +2,16 @@ package org.jetbrains.idea.svn;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +29,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         return new ApplicationAuthenticationProvider();
     }
 
-    protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, boolean allowSave) {
+  // todo clarify whether it is OK that this method is not used, no more overrides "create Default..."
+  protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, boolean allowSave) {
         return new ISVNAuthenticationProvider() {
             public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
                 return null;
@@ -39,7 +44,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
   static class ApplicationAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-            // get from key-ring, use realm.
+          // get from key-ring, use realm.
             Map info = SvnApplicationSettings.getInstance().getAuthenticationInfo(realm, kind);
             // convert info to SVNAuthentication.
             if (info != null && !info.isEmpty() && info.get("username") != null) {
@@ -99,4 +104,50 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
     }
 
+  // 30 seconds
+  private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
+
+  @Override
+  public int getReadTimeout(final SVNRepository repository) {
+    String protocol = repository.getLocation().getProtocol();
+    if ("http".equals(protocol) || "https".equals(protocol)) {
+        String host = repository.getLocation().getHost();
+        Map properties = getHostProperties(host);
+        String timeout = (String) properties.get("http-timeout");
+        if (timeout != null) {
+            try {
+                return Integer.parseInt(timeout)*1000;
+            } catch (NumberFormatException nfe) {
+              // use default
+            }
+        }
+        return DEFAULT_READ_TIMEOUT;
+    }
+    return 0;
+  }
+
+  // taken from default manager as is
+  private Map getHostProperties(String host) {
+      Map globalProps = getServersFile().getProperties("global");
+      String groupName = getGroupName(getServersFile().getProperties("groups"), host);
+      if (groupName != null) {
+          Map hostProps = getServersFile().getProperties(groupName);
+          globalProps.putAll(hostProps);
+      }
+      return globalProps;
+  }
+  // taken from default manager as is
+  private static String getGroupName(Map groups, String host) {
+      for (Iterator names = groups.keySet().iterator(); names.hasNext();) {
+          String name = (String) names.next();
+          String pattern = (String) groups.get(name);
+          for(StringTokenizer tokens = new StringTokenizer(pattern, ","); tokens.hasMoreTokens();) {
+              String token = tokens.nextToken();
+              if (DefaultSVNOptions.matches(token, host)) {
+                  return name;
+              }
+          }
+      }
+      return null;
+  }
 }

@@ -2,11 +2,13 @@ package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
 import java.util.*;
@@ -78,10 +80,12 @@ class RepositoryLoader extends Loader {
 
     public void run() {
       final Collection<SVNDirEntry> entries = new TreeSet<SVNDirEntry>();
+      final RepositoryTreeNode node = myData.first;
+      final SvnVcs vcs = node.getVcs();
+      SVNRepository repository = null;
       try {
-        final RepositoryTreeNode node = myData.first;
-
-        node.getRepository().getDir((node.getSVNDirEntry() == null) ? "" : node.getPath(), -1, null, new ISVNDirEntryHandler() {
+        repository = vcs.createRepository(node.getURL().toString());
+        repository.getDir("", -1, null, new ISVNDirEntryHandler() {
           public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
             entries.add(dirEntry);
           }
@@ -94,6 +98,10 @@ class RepositoryLoader extends Loader {
           }
         });
         return;
+      } finally {
+        if (repository != null) {
+          repository.closeSession();
+        }
       }
 
       SwingUtilities.invokeLater(new Runnable() {

@@ -7,9 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.browserCache.*;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -51,8 +49,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
   }
 
   public void setSingleRoot(SVNURL url) {
-    SVNRepository repos = createRepository(url);
-    final RepositoryTreeNode rootNode = new RepositoryTreeNode(this, null, repos, url, url);
+    final RepositoryTreeNode rootNode = new RepositoryTreeNode(this, null, url, url);
     Disposer.register(this, rootNode);
     setRoot(rootNode);
   }
@@ -94,13 +91,8 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
     }
   }
 
-  protected SVNRepository createRepository(@NotNull SVNURL url) {
-    try {
-      return myVCS.createRepository(url.toString());
-    } catch (SVNException e) {
-      //
-    }
-    return null;
+  public SvnVcs getVCS() {
+    return myVCS;
   }
 
   public void dispose() {

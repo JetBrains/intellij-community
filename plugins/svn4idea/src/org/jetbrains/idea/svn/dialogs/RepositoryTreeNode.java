@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -12,7 +13,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -24,28 +24,19 @@ import java.util.List;
 public class RepositoryTreeNode implements TreeNode, Disposable {
 
   private TreeNode myParentNode;
-  private final SVNRepository myRepository;
   private List<TreeNode> myChildren;
   private final RepositoryTreeModel myModel;
-  private String myPath;
   private final SVNURL myURL;
   private final Object myUserObject;
 
   private final NodeLoadState myLoadState;
   private NodeLoadState myChildrenLoadState;
 
-  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNRepository repository,
+  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode,
                             @NotNull SVNURL url, Object userObject, final NodeLoadState state) {
     myParentNode = parentNode;
-    myRepository = repository;
 
     myURL = url;
-    final SVNURL location = myRepository.getLocation();
-    assert location != null;
-    myPath = url.getPath().substring(location.getPath().length());
-    if (myPath.startsWith("/")) {
-      myPath = myPath.substring(1);
-    }
     myModel = model;
     myUserObject = userObject;
 
@@ -53,10 +44,9 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myChildrenLoadState = NodeLoadState.EMPTY;
   }
 
-  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNRepository repository,
-                            @NotNull SVNURL url, Object userObject) {
+  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNURL url, Object userObject) {
     // created outside: only roots
-    this(model, parentNode, repository, url, userObject, NodeLoadState.REFRESHED);
+    this(model, parentNode, url, userObject, NodeLoadState.REFRESHED);
   }
 
   public Object getUserObject() {
@@ -149,7 +139,6 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public void dispose() {
-    myRepository.closeSession();
   }
 
   public TreeNode[] getSelfPath() {
@@ -196,7 +185,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
       if (!myModel.isShowFiles() && entry.getKind() != SVNNodeKind.DIR) {
         continue;
       }
-      nodes.add(new RepositoryTreeNode(myModel, this, myRepository, entry.getURL(), entry, state));
+      nodes.add(new RepositoryTreeNode(myModel, this, entry.getURL(), entry, state));
     }
 
     myChildrenLoadState = state;
@@ -242,12 +231,8 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myModel.reload(this);
   }
 
-  public SVNRepository getRepository() {
-    return myRepository;
-  }
-
-  public String getPath() {
-    return myPath;
+  public SvnVcs getVcs() {
+    return myModel.getVCS();
   }
 
   public boolean isCached() {
