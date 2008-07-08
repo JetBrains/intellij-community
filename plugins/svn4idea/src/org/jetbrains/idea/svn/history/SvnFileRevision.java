@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -132,7 +131,7 @@ public class SvnFileRevision implements VcsFileRevision {
     else {
       final SVNException svnException = loader.getException();
       LOG.info("Failed to load file '" + myURL + "' content at revision: " + myRevision + "\n" + svnException.getMessage(), svnException);
-      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+      throw new VcsException(svnException);
     }
   }
 
