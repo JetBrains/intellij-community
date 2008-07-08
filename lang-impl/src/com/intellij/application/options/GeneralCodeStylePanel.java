@@ -163,7 +163,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private FileTypeIndentOptionsProvider getSelectedIndentProvider() {
     if (myIndentOptionsTabs == null) return null;
     final int selIndex = myIndentOptionsTabs.getSelectedIndex();
-    if (selIndex < myIndentOptionsProviders.size()) {
+    if (selIndex >= 0 && selIndex < myIndentOptionsProviders.size()) {
       return myIndentOptionsProviders.get(selIndex);
     }
     return null;
