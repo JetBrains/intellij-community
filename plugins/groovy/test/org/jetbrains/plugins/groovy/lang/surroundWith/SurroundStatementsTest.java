@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.application.PathManager;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
@@ -18,7 +19,6 @@ import java.util.Map;
 
 
 public class SurroundStatementsTest extends TestSuite {
-  protected static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
   private static Map<Class, String> surroundersOfStmtToPathsMap = new HashMap<Class, String>();
 
   static {
@@ -42,7 +42,8 @@ public class SurroundStatementsTest extends TestSuite {
     for (Surrounder surrounder : surrounders) {
       path = surroundersOfStmtToPathsMap.get(surrounder.getClass());
 //      addTest(new SurroundWithTestStmts((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
-      addTest(new SurroundWithTestItem((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
+      String dataPath = PathManager.getHomePath() + "/svnPlugins/groovy/test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
+      addTest(new SurroundWithTestItem((dataPath.endsWith("/") ? dataPath : dataPath + File.separator) + path, surrounder));
     }
   }
 

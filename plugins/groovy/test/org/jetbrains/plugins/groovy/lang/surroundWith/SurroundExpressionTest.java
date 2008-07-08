@@ -1,13 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.application.PathManager;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.*;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithParenthesisExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithTypeCastSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithWithExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithWhileExprSurrounder;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
 
 import java.io.File;
 import java.util.HashMap;
@@ -18,8 +21,6 @@ import java.util.Map;
  * Date: 01.06.2007
  */
 public class SurroundExpressionTest extends TestSuite {
-  protected static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
-
   private static Map<String, String> surroundersOfExprToPathsMap = new HashMap<String, String>();
 
   static {
@@ -40,7 +41,8 @@ public class SurroundExpressionTest extends TestSuite {
     String path;
     for (Surrounder surrounder : surrounders) {
       path = surroundersOfExprToPathsMap.get(surrounder.getClass().getCanonicalName());
-      addTest(new SurroundWithTestItem((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
+      String dataPath = PathManager.getHomePath() + "/svnPlugins/groovy/test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
+      addTest(new SurroundWithTestItem((dataPath.endsWith("/") ? dataPath : dataPath + File.separator) + path, surrounder));
     }
   }
 
