@@ -39,6 +39,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -53,6 +54,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +70,7 @@ import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -97,8 +100,9 @@ import java.util.logging.Level;
 public class SvnVcs extends AbstractVcs {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
-  private final Map<VirtualFile, SVNStatusHolder> myStatuses = new HashMap<VirtualFile, SVNStatusHolder>();
-  private final Map<VirtualFile, SVNInfoHolder> myInfos = new HashMap<VirtualFile, SVNInfoHolder>();
+  private final Map<VirtualFile, SVNStatusHolder> myStatuses = new SoftHashMap<VirtualFile, SVNStatusHolder>();
+  private final Map<VirtualFile, SVNInfoHolder> myInfos = new SoftHashMap<VirtualFile, SVNInfoHolder>();
+  private final Map<VirtualFile, Map<String, Pair<SVNPropertyValue, Long>>> myPropertyCache = new SoftHashMap<VirtualFile, Map<String, Pair<SVNPropertyValue, Long>>>();
 
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
@@ -125,6 +129,7 @@ public class SvnVcs extends AbstractVcs {
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   @NonNls public static final String VCS_NAME = "svn";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
+  public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
 
   static {
     //noinspection UseOfArchaicSystemPropertyAccessors
@@ -396,7 +401,8 @@ public class SvnVcs extends AbstractVcs {
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
-    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
+    // value 0 for modified time also returned for not existing file
+    if (value != null && (value.getEntriesTimestamp() == entriesFile.lastModified()) && (value.getEntriesTimestamp() != 0) &&
         value.getFileTimestamp() == vFile.getTimeStamp() && value.isLocked() == lockFile.exists()) {
       return value;
     }
@@ -435,6 +441,34 @@ public class SvnVcs extends AbstractVcs {
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     myInfos.put(vFile, new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
+  }
+
+  @Nullable
+  public SVNPropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws SVNException {
+    Map<String, Pair<SVNPropertyValue, Long>> cachedMap = myPropertyCache.get(file);
+    final Pair<SVNPropertyValue, Long> cachedValue = (cachedMap == null) ? null : cachedMap.get(propName);
+
+    final File ioFile = new File(file.getPath());
+    final File dirPropsFile = getDirPropsFile(ioFile);
+    long dirPropsModified = dirPropsFile.lastModified();
+
+    if (cachedValue != null) {
+      if (dirPropsModified == cachedValue.getSecond().longValue()) {
+        return cachedValue.getFirst();
+      }
+    }
+
+    final SVNPropertyData value = createWCClient().doGetProperty(ioFile, propName, SVNRevision.WORKING, SVNRevision.WORKING, false);
+    final SVNPropertyValue propValue = (value == null) ? null : value.getValue();
+
+    if (cachedMap == null) {
+      cachedMap = new HashMap<String, Pair<SVNPropertyValue, Long>>();
+      myPropertyCache.put(file, cachedMap);
+    }
+
+    cachedMap.put(propName, new Pair<SVNPropertyValue, Long>(propValue, dirPropsModified));
+
+    return propValue;
   }
 
   public boolean fileExistsInVcs(FilePath path) {
@@ -489,6 +523,10 @@ public class SvnVcs extends AbstractVcs {
 
   private static File getEntriesFile(File file) {
     return file.isDirectory() ? new File(file, pathToEntries) : new File(file.getParentFile(), pathToEntries);
+  }
+
+  private static File getDirPropsFile(File file) {
+    return new File(file, pathToDirProps);
   }
 
   @Nullable

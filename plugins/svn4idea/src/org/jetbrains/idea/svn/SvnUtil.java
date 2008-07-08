@@ -42,6 +42,7 @@ import java.util.*;
 public class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME = ".svn";
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
+  @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = ".svn/lock";
   @NonNls public static final String LOCK_FILE_NAME = "lock";
 

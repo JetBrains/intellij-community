@@ -9,8 +9,6 @@ import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -51,7 +49,7 @@ public class SvnPropertyService {
     protected final boolean myUseCommonExtension;
     
     protected abstract void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data,
-                                          final SVNPropertyData propertyData) throws SVNException;
+                                          final SVNPropertyValue propertyValue) throws SVNException;
     protected abstract void onAfterProcessing(final VirtualFile[] file) throws VcsException;
     protected abstract void onSVNException(SVNException e);
     protected abstract boolean stopIteration();
@@ -71,9 +69,8 @@ public class SvnPropertyService {
         }
         final File dir = new File(entry.getKey().getPath());
         try {
-          final SVNPropertyData propertyData =
-              myClient.doGetProperty(dir, SvnPropertyKeys.SVN_IGNORE, SVNRevision.WORKING, SVNRevision.WORKING, false);
-          processFolder(entry.getKey(), dir, entry.getValue(), propertyData);
+          final SVNPropertyValue value = myVcs.getPropertyWithCaching(entry.getKey(), SvnPropertyKeys.SVN_IGNORE);
+          processFolder(entry.getKey(), dir, entry.getValue(), value);
         }
         catch (SVNException e) {
           onSVNException(e);
@@ -99,15 +96,15 @@ public class SvnPropertyService {
       return (! myFilesOk) && (! myExtensionOk);
     }
 
-    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyData propertyData)
+    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
         throws SVNException {
-      if ((propertyData == null) || (propertyData.getValue() == null)) {
+      if (propertyValue == null) {
         myFilesOk = false;
         myExtensionOk = false;
         return;
       }
       final Set<String> ignorePatterns = new HashSet<String>();
-      final StringTokenizer st = new StringTokenizer(SVNPropertyValue.getPropertyAsString(propertyData.getValue()), "\r\n ");
+      final StringTokenizer st = new StringTokenizer(SVNPropertyValue.getPropertyAsString(propertyValue), "\r\n ");
       while (st.hasMoreElements()) {
         final String ignorePattern = (String)st.nextElement();
         ignorePatterns.add(ignorePattern);
@@ -152,11 +149,11 @@ public class SvnPropertyService {
       return false;
     }
 
-    protected abstract String getNewPropertyValue(final Set<String> data, final SVNPropertyData propertyData);
+    protected abstract String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue);
 
-    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyData propertyData)
+    protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
         throws SVNException {
-      final String newValue = getNewPropertyValue(data, propertyData);
+      final String newValue = getNewPropertyValue(data, propertyValue);
 
       myClient.doSetProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(newValue), false, false, null);
 
@@ -187,10 +184,10 @@ public class SvnPropertyService {
       super(activeVcs, project, useCommonExtension);
     }
 
-    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyData propertyData) {
-      if (propertyData != null) {
+    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue) {
+      if (propertyValue != null) {
         final StringBuilder sb = new StringBuilder();
-        final StringTokenizer st = new StringTokenizer(SVNPropertyValue.getPropertyAsString(propertyData.getValue()), "\r\n ");
+        final StringTokenizer st = new StringTokenizer(SVNPropertyValue.getPropertyAsString(propertyValue), "\r\n ");
         while (st.hasMoreElements()) {
           final String ignorePattern = (String)st.nextElement();
           if (! data.contains(ignorePattern)) {
@@ -209,7 +206,7 @@ public class SvnPropertyService {
       super(activeVcs, project, useCommonExtension);
     }
 
-    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyData propertyData) {
+    protected String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue) {
       final String ignoreString;
       if (data.size() == 1) {
         ignoreString = data.iterator().next();
@@ -220,7 +217,7 @@ public class SvnPropertyService {
         }
         ignoreString = sb.toString();
       }
-      return (propertyData == null) ? ignoreString : (SVNPropertyValue.getPropertyAsString(propertyData.getValue()) + '\n' + ignoreString);
+      return (propertyValue == null) ? ignoreString : (SVNPropertyValue.getPropertyAsString(propertyValue) + '\n' + ignoreString);
     }
   }
 }
