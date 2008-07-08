@@ -1,18 +1,14 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.codeInsight.template.impl.TemplateColors;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
-import com.intellij.openapi.command.undo.NonUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -27,19 +23,26 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -65,6 +68,7 @@ public class FileTemplateConfigurable implements Configurable {
 
   private JPanel myMainPanel;
   private FileTemplate myTemplate;
+  private PsiFile myFile;
   private Editor myTemplateEditor;
   private JTextField myNameField;
   private JTextField myExtensionField;
@@ -73,8 +77,10 @@ public class FileTemplateConfigurable implements Configurable {
   private JEditorPane myDescriptionComponent;
   private boolean myModified = false;
   private String myDefaultDescriptionUrl;
+  private final Project myProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
   private final ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
+  private Splitter mySplitter;
 
   public FileTemplate getTemplate() {
     return myTemplate;
@@ -136,10 +142,11 @@ public class FileTemplateConfigurable implements Configurable {
 
   public JComponent createComponent() {
     myMainPanel = new JPanel(new GridBagLayout());
-    myTemplateEditor = createEditor();
     myNameField = new JTextField();
     myExtensionField = new JTextField();
-    final Splitter splitter = new Splitter(true, 0.66f);
+    mySplitter = new Splitter(true, 0.66f);
+
+    myTemplateEditor = createEditor();
 
     myDescriptionComponent = new JEditorPane(CONTENT_TYPE_HTML, EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
@@ -166,17 +173,13 @@ public class FileTemplateConfigurable implements Configurable {
     myMainPanel.add(myAdjustBox,
                     new GridBagConstraints(0, 1, 4, 1, 0.0, 0.0, GridBagConstraints.WEST,
                                            GridBagConstraints.HORIZONTAL, new Insets(2, 0, 2, 0), 0, 0));
-    myMainPanel.add(splitter,
+    myMainPanel.add(mySplitter,
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(2, 0, 0, 0), 0, 0));
-    splitter.setFirstComponent(myTemplateEditor.getComponent());
-    splitter.setSecondComponent(secondPanel);
+
+    mySplitter.setSecondComponent(secondPanel);
     setShowInternalMessage(null);
-    myTemplateEditor.getDocument().addDocumentListener(new DocumentAdapter() {
-      public void documentChanged(DocumentEvent e) {
-        onTextChanged();
-      }
-    });
+
     myNameField.addFocusListener(new FocusAdapter() {
       public void focusLost(FocusEvent e) {
         onNameChanged();
@@ -191,10 +194,10 @@ public class FileTemplateConfigurable implements Configurable {
     return myMainPanel;
   }
 
-  private static Editor createEditor() {
+  private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = editorFactory.createDocument("");
-    Editor editor = editorFactory.createEditor(doc);
+    Document doc = myFile == null ? editorFactory.createDocument(myTemplate == null ? "" : myTemplate.getText()) : PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
+    Editor editor = myProject == null ? editorFactory.createEditor(doc) : editorFactory.createEditor(doc, myProject);
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setVirtualSpace(false);
@@ -207,6 +210,14 @@ public class FileTemplateConfigurable implements Configurable {
     EditorColorsScheme scheme = editor.getColorsScheme();
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
 
+    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+      public void documentChanged(DocumentEvent e) {
+        onTextChanged();
+      }
+    });
+
+    ((EditorEx)editor).setHighlighter(createHighlighter());
+    mySplitter.setFirstComponent(editor.getComponent());
     return editor;
   }
 
@@ -316,8 +327,12 @@ public class FileTemplateConfigurable implements Configurable {
         LOG.error(e);
       }
     }
+
+    EditorFactory.getInstance().releaseEditor(myTemplateEditor);
+    myFile = createFile(text, name);
+    myTemplateEditor = createEditor();
+
     boolean adjust = (myTemplate != null) && myTemplate.isAdjust();
-    setHighlighter();
     myNameField.setText(name);
     myExtensionField.setText(extension);
     myAdjustBox.setSelected(adjust);
@@ -332,29 +347,19 @@ public class FileTemplateConfigurable implements Configurable {
     myDescriptionComponent.setCaretPosition(0);
     myDescriptionComponent.setEditable(false);
 
-    CommandProcessor.getInstance().executeCommand(null, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final Document document = myTemplateEditor.getDocument();
-            document.replaceString(0, document.getTextLength(), text);
-            UndoManager.getGlobalInstance().undoableActionPerformed(new NonUndoableAction() {
-              public DocumentReference[] getAffectedDocuments() {
-                return new DocumentReference[] {DocumentReferenceByDocument.createDocumentReference(document)};
-              }
-
-              public boolean isComplex() {
-                return false;
-              }
-            });
-          }
-        });
-      }
-    }, "", null);
-
     myNameField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
     myExtensionField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
     myModified = false;
+  }
+
+  @Nullable
+  private PsiFile createFile(final String text, final String name) {
+    if (myTemplate == null || myProject == null) return null;
+
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
+    if (fileType == FileTypes.UNKNOWN) return null;
+
+    return PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
   }
 
   public void disposeUIResources() {
@@ -363,23 +368,25 @@ public class FileTemplateConfigurable implements Configurable {
       EditorFactory.getInstance().releaseEditor(myTemplateEditor);
       myTemplateEditor = null;
     }
+    myFile = null;
   }
 
-  private void setHighlighter() {
-    FileType fileType;
-    if (myTemplate != null) {
-      String extension = myTemplate.getExtension();
-      fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
+  private EditorHighlighter createHighlighter() {
+    if (myTemplate != null && myProject != null) {
+      return EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, new LightVirtualFile("aaa." + myTemplate.getExtension() + ".ft"));
     }
     else {
-      fileType = FileTypes.PLAIN_TEXT;
+      FileType fileType = null;
+      if (myTemplate != null) {
+        fileType = FileTypeManager.getInstance().getFileTypeByExtension(myTemplate.getExtension());
+      }
+      if (fileType == null) {
+        fileType = FileTypes.PLAIN_TEXT;
+      }
+      SyntaxHighlighter originalHighlighter = SyntaxHighlighter.PROVIDER.create(fileType, null, null);
+      if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
+      return new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
     }
-
-    SyntaxHighlighter originalHighlighter = SyntaxHighlighter.PROVIDER.create(fileType, null, null);
-    if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
-    EditorHighlighter highlighter = new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
-    ((EditorEx)myTemplateEditor).setHighlighter(highlighter);
-    ((EditorEx)myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
   }
 
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(FileTemplateTokenType.TEXT);
