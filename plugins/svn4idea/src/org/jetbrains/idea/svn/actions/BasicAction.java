@@ -184,7 +184,7 @@ public abstract class BasicAction extends AnAction {
     return needsFiles();
   }
 
-  private void execute(Project project,
+  protected void execute(Project project,
                        final SvnVcs activeVcs,
                        final VirtualFile file,
                        DataContext context,
@@ -198,13 +198,6 @@ public abstract class BasicAction extends AnAction {
       });
 
       VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-
-
-/*        final VirtualFile[] children = file.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          VirtualFile child = children[i];
-          execute(project, activeVcs, child, context);
-        } */
     }
     else {
       perform(project, activeVcs, file, context);

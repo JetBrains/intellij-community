@@ -20,16 +20,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-
-import java.io.File;
 
 /**
  * @author yole
@@ -37,19 +31,9 @@ import java.io.File;
 public class CleanupProjectAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    SVNWCClient wcClient = vcs.createWCClient();
-    for(VirtualFile root: roots) {
-      try {
-        wcClient.doCleanup(new File(root.getPath()));
-      }
-      catch (SVNException ex) {
-        Messages.showErrorDialog(project, "Error performing cleanup for " + FileUtil.toSystemDependentName(root.getPath()) + ": " + ex.getMessage(),
-                                 "Cleanup Project");
-      }
-    }
-  }
+    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
+    new CleanupWorker(roots, project, "action.Subversion.cleanup.project.title").execute();
+ }
 
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);

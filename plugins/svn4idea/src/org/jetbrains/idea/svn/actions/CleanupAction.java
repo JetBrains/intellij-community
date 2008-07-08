@@ -78,17 +78,16 @@ public class CleanupAction extends BasicAction {
     return true;
   }
 
+  @Override
+  protected void execute(final Project project,
+                         final SvnVcs activeVcs, final VirtualFile file, final DataContext context, final AbstractVcsHelper helper)
+      throws VcsException {
+    perform(project, activeVcs, file, context);
+  }
+
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
-    SVNWCClient wcClient = activeVcs.createWCClient();
-    try {
-      wcClient.doCleanup(new File(file.getPath()));
-    }
-    catch (SVNException e) {
-      VcsException ve = new VcsException(e);
-      ve.setVirtualFile(file);
-      throw ve;
-    }
+    new CleanupWorker(new VirtualFile[]{file}, project, "action.Subversion.cleanup.progress.title").execute();
   }
 
   protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context)
