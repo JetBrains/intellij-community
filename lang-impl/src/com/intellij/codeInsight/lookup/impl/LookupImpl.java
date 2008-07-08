@@ -248,6 +248,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     for (final LookupItem item : myItems) {
       minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
     }
+    if (myMinPrefixLength != minPrefixLength) {
+      myLookupStartMarker = null;
+    }
     myMinPrefixLength = minPrefixLength;
 
     Object oldSelected = !myDirty ? null : myList.getSelectedValue();
