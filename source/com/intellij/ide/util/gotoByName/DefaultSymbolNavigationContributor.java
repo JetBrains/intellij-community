@@ -77,7 +77,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return array;
   }
 
-  private void filterOutNonOpenable(List<PsiMember> members) {
+  private static void filterOutNonOpenable(List<PsiMember> members) {
     ListIterator<PsiMember> it = members.listIterator();
     while (it.hasNext()) {
       PsiMember member = it.next();
@@ -87,11 +87,11 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     }
   }
 
-  private boolean isNonOpenable(PsiMember member) {
+  private static boolean isNonOpenable(PsiMember member) {
     return member.getContainingFile().getVirtualFile() == null;
   }
 
-  private PsiMethod[] filterInheritedMethods(PsiMethod[] methods) {
+  private static PsiMethod[] filterInheritedMethods(PsiMethod[] methods) {
     ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
       if (method.isConstructor()) continue;
@@ -111,17 +111,10 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       if (element1 == element2) return 0;
 
       PsiModifierList modifierList1 = element1.getModifierList();
-      if (modifierList1 == null) {
-        LOG.error("No modifier list for: " + element1.getText());
-      }
-
       PsiModifierList modifierList2 = element2.getModifierList();
-      if (modifierList2 == null) {
-        LOG.error("No modifier list for: " + element2.getText());
-      }
 
-      int level1 = PsiUtil.getAccessLevel(modifierList1);
-      int level2 = PsiUtil.getAccessLevel(modifierList2);
+      int level1 = modifierList1 == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList1);
+      int level2 = modifierList2 == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList2);
       if (level1 != level2) return level2 - level1;
 
       int kind1 = getElementTypeLevel(element1);
@@ -147,7 +140,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       return containerText1.compareTo(containerText2);
     }
 
-    private int getElementTypeLevel(PsiElement element){
+    private static int getElementTypeLevel(PsiElement element){
       if (element instanceof PsiMethod){
         return 1;
       }
