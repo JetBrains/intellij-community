@@ -128,6 +128,11 @@ public class GeneralCommandLine {
   }
 
   @Nullable
+  public Map<String, String> getEnvParams() {
+    return myEnvParams;
+  }
+
+  @Nullable
   private String[] getEnvParamsArray() {
     if (myEnvParams == null) {
       return null;
