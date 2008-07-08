@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -60,6 +61,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private boolean isModuleAdded = false;
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedFiles;
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles;
+  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<RootModelImpl, Throwable>();
 
 
 
@@ -101,6 +103,18 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   public void disposeComponent() {
     myRootModel.disposeModel();
     myIsDisposed = true;
+
+    if (Disposer.isDebugMode()) {
+      final Set<Map.Entry<RootModelImpl, Throwable>> entries = myModelCreations.entrySet();
+      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<Map.Entry<RootModelImpl, Throwable>>(entries)) {
+        System.err.println("***********************************************************************************************");
+        System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
+        System.err.println("***********************************************************************************************");
+        System.err.println("Created at:");
+        entry.getValue().printStackTrace(System.err);
+        entry.getKey().dispose();
+      }
+    }
   }
 
 
@@ -121,7 +135,19 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @NotNull
   public ModifiableRootModel getModifiableModel(final RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return new RootModelImpl(myRootModel, this, true, accessor, null, myFilePointerManager, myProjectRootManager);
+    final RootModelImpl model = new RootModelImpl(myRootModel, this, true, accessor, null, myFilePointerManager, myProjectRootManager) {
+      @Override
+      void disposeModel() {
+        super.disposeModel();
+        if (Disposer.isDebugMode()) {
+          myModelCreations.remove(this);
+        }
+      }
+    };
+    if (Disposer.isDebugMode()) {
+      myModelCreations.put(model, new Throwable());
+    }
+    return model;
   }
 
   void fireBeforeRootsChange() {
