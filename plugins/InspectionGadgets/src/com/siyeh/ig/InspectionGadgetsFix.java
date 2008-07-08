@@ -206,24 +206,31 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         return status.hasReadonlyFiles();
     }
 
-    protected static StringBuilder appendElementText(
+    protected static String getElementText(@NotNull PsiElement element,
+                                           @Nullable PsiElement elementToReplace,
+                                           @Nullable String replacement) {
+        final StringBuilder out = new StringBuilder();
+        getElementText(element, elementToReplace, replacement, out);
+        return out.toString();
+    }
+
+    private static void getElementText(
             @NotNull PsiElement element,
             @Nullable PsiElement elementToReplace,
             @Nullable String replacement,
             @NotNull StringBuilder out) {
         if (element.equals(elementToReplace)) {
             out.append(replacement);
-            return out;
+            return;
         }
         final PsiElement[] children = element.getChildren();
         if (children.length == 0) {
             out.append(element.getText());
-            return out;
+            return;
         }
         for (PsiElement child : children) {
-            appendElementText(child, elementToReplace, replacement, out);
+            getElementText(child, elementToReplace, replacement, out);
         }
-        return out;
     }
 
     public final void setOnTheFly(boolean onTheFly) {

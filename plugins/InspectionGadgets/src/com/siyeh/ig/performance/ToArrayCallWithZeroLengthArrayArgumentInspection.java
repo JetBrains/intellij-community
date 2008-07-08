@@ -33,13 +33,13 @@ import org.jetbrains.annotations.Nullable;
 public class ToArrayCallWithZeroLengthArrayArgumentInspection
         extends BaseInspection {
 
-    @Nls @NotNull
+    @Override @Nls @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "to.array.call.with.zero.length.array.argument.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiExpression argument = (PsiExpression)infos[1];
         return InspectionGadgetsBundle.message(
@@ -47,11 +47,12 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 argument.getText());
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
-    @Nullable
+    @Override @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression) infos[0];
@@ -80,6 +81,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                     replacementText);
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -120,8 +122,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 }
                 final PsiExpression dimension = dimensions[0];
                 final String replacementText = qualifierText + ".size()";
-                return appendElementText(expression, dimension, replacementText,
-                        new StringBuilder()).toString();
+                return getElementText(expression, dimension, replacementText);
             } else if (argument instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression referenceExpression =
                         (PsiReferenceExpression)argument;
@@ -134,13 +135,14 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 final String typeText = componentType.getCanonicalText();
                 final String replacementText =
                         "new " + typeText + "[" + qualifierText + ".size()]";
-                return appendElementText(expression, referenceExpression,
-                        replacementText, new StringBuilder()).toString();
+                return getElementText(expression, referenceExpression,
+                        replacementText);
             }
             return null;
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ToArrayCallWithZeroLengthArrayArgument();
     }
