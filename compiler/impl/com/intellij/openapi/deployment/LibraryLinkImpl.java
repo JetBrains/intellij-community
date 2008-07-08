@@ -115,18 +115,20 @@ public class LibraryLinkImpl extends LibraryLink {
     return classRoots;
   }
 
-  public @Nullable Library getLibrary() {
+  @Nullable
+  public Library getLibrary() {
     return getLibrary(null);
   }
 
-  public @Nullable Library getLibrary(@Nullable ModulesProvider provider) {
+  @Nullable
+  public Library getLibrary(@Nullable ModulesProvider provider) {
     final LibraryInfo libraryInfo = myLibraryInfo;
     if (libraryInfo instanceof LibraryInfoBasedOnLibrary) {
       return ((LibraryInfoBasedOnLibrary)libraryInfo).getLibrary();
     }
 
     LOG.assertTrue(libraryInfo instanceof LibraryInfoImpl);
-    final LibraryInfoImpl info = ((LibraryInfoImpl)libraryInfo);
+    final LibraryInfoImpl info = (LibraryInfoImpl)libraryInfo;
     final Library library = info.findLibrary(myProject, getParentModule(), provider);
     if (library != null) {
       myLibraryInfo = new LibraryInfoBasedOnLibrary(library);
@@ -142,7 +144,7 @@ public class LibraryLinkImpl extends LibraryLink {
   public String getPresentableName() {
     if (getName() != null) return getName();
     List<String> urls = getUrls();
-    if (urls.size() == 0) return CompilerBundle.message("linrary.link.empty.library.presentable.name");
+    if (urls.isEmpty()) return CompilerBundle.message("linrary.link.empty.library.presentable.name");
     final String url = urls.get(0);
     final String path = PathUtil.toPresentableUrl(url);
 

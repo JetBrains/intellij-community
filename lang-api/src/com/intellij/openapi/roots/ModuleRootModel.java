@@ -66,7 +66,7 @@ public interface ModuleRootModel {
   *
   * @return true if the JDK is inherited, false otherwise
   * @see ProjectRootManager#getProjectJdk()
-  * @see ProjectRootManager#setProjectJdk(com.intellij.openapi.projectRoots.ProjectJdk)
+  * @see ProjectRootManager#setProjectJdk(com.intellij.openapi.projectRoots.Sdk)
   */
  boolean isSdkInherited();
 

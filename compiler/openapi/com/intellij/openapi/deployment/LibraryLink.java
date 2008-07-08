@@ -37,7 +37,8 @@ public abstract class LibraryLink extends ContainerElement {
     super(parentModule);
   }
 
-  public abstract @Nullable Library getLibrary();
+  @Nullable
+  public abstract Library getLibrary();
 
   public abstract void addUrl(String url);
 
@@ -46,7 +47,8 @@ public abstract class LibraryLink extends ContainerElement {
 
   public abstract boolean hasDirectoriesOnly();
 
-  public abstract @Nullable String getName();
+  @Nullable
+  public abstract String getName();
 
   public abstract String getLevel();
 
