@@ -27,12 +27,21 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     myProject = project;
   }
 
-  public Map<VirtualFile, T> getMappings() {
+  public synchronized Map<VirtualFile, T> getMappings() {
+    cleanup();
     return Collections.unmodifiableMap(myMappings);
   }
 
+  private void cleanup() {
+    for (final VirtualFile file : new ArrayList<VirtualFile>(myMappings.keySet())) {
+      if (!file.isValid()) {
+        myMappings.clear();
+      }
+    }
+  }
+
   @Nullable 
-  public T getMapping(final VirtualFile file) {
+  public synchronized T getMapping(final VirtualFile file) {
     for (VirtualFile cur = file; ; cur = cur.getParent()) {
       final T dialect = myMappings.get(cur);
       if (dialect != null) return dialect;
@@ -41,13 +50,14 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     return null;
   }
 
-  public void setMappings(final Map<VirtualFile, T> mappings) {
+  public synchronized void setMappings(final Map<VirtualFile, T> mappings) {
     myMappings = new HashMap<VirtualFile, T>(mappings);
+    cleanup();
     FileContentUtil.reparseFiles(myProject, mappings.keySet(), true);
   }
 
   @TestOnly
-  public void setMapping(final VirtualFile file, T dialect) {
+  public synchronized void setMapping(final VirtualFile file, T dialect) {
     if (dialect == null) {
       myMappings.remove(file);
     }
@@ -59,7 +69,8 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
 
   protected abstract String serialize(T t);
 
-  public Element getState() {
+  public synchronized Element getState() {
+    cleanup();
     final Element element = new Element("x");
     final List<VirtualFile> files = new ArrayList<VirtualFile>(myMappings.keySet());
     Collections.sort(files, new Comparator<VirtualFile>() {
@@ -80,7 +91,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
 
   public abstract List<T> getAvailableValues();
 
-  public void loadState(final Element state) {
+  public synchronized void loadState(final Element state) {
     final THashMap<String, T> dialectMap = new THashMap<String, T>();
     for (T dialect : getAvailableValues()) {
       dialectMap.put(serialize(dialect), dialect);
