@@ -6,8 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -18,7 +18,6 @@ import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -73,7 +72,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
     final XmlAttribute attribute = XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute("a", valueText);
-    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)attribute);
+    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner(){
@@ -185,15 +184,16 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       }
       child = child.getTreeNext();
     }
-    myGapDisplayStarts = new int[gapsShifts.size()];
-    myGapPhysicalStarts = new int[gapsShifts.size()];
+    int[] gapDisplayStarts = new int[gapsShifts.size()];
+    int[] gapPhysicalStarts = new int[gapsShifts.size()];
     int currentGapsSum = 0;
-    for (int i=0; i<myGapDisplayStarts.length;i++) {
+    for (int i=0; i<gapDisplayStarts.length;i++) {
       currentGapsSum += gapsShifts.get(i);
-      myGapDisplayStarts[i] = gapsStarts.get(i);
-      myGapPhysicalStarts[i] = myGapDisplayStarts[i] + currentGapsSum;
+      gapDisplayStarts[i] = gapsStarts.get(i);
+      gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
     }
-
+    myGapDisplayStarts = gapDisplayStarts;
+    myGapPhysicalStarts = gapPhysicalStarts;
     myValueTextRange = valueTextRange;
     return myDisplayText = buffer.toString();
   }
@@ -252,7 +252,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public boolean isNamespaceDeclaration() {
-    final @NonNls String name = getName();
+    @NonNls final String name = getName();
     return name.startsWith("xmlns:") || name.equals("xmlns");
   }
 
@@ -261,7 +261,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final String oldName = name.getText();
     final PomModel model = PomManager.getModel(getProject());
     final XmlAttribute attribute = XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute(nameText, "");
-    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)attribute);
+    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       public PomModelEvent runInner(){
