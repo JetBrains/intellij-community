@@ -277,7 +277,8 @@ public class JavaAwareCompletionData extends CompletionData{
       packageName = "default package";
     }
 
-    ret.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + packageName + ")");
+    final String tailText = (String)ret.getAttribute(LookupItem.TAIL_TEXT_ATTR);
+    ret.setAttribute(LookupItem.TAIL_TEXT_ATTR, StringUtil.notNullize(tailText) + " (" + packageName + ")");
     ret.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
     return ret;
   }
