@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.apache.maven.project.MavenProject;
@@ -82,12 +83,12 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   void openToolWindow(final ConsoleView consoleView) {
     if (myMavenOutputWindowPanel == null) {
       myMavenOutputWindowPanel = new MavenRunnerOutputPanel();
+      Disposer.register(myProject, myMavenOutputWindowPanel);
     }
 
     if (!isToolWindowOpen()) {
       ToolWindowManager.getInstance(myProject)
-          .registerToolWindow(OUTPUT_TOOL_WINDOW_ID, myMavenOutputWindowPanel.getRootComponent(), ToolWindowAnchor.BOTTOM)
-          .show(null);
+          .registerToolWindow(OUTPUT_TOOL_WINDOW_ID, myMavenOutputWindowPanel.getRootComponent(), ToolWindowAnchor.BOTTOM).show(null);
     }
 
     myMavenOutputWindowPanel.attachConsole(consoleView);
@@ -96,6 +97,7 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   public void closeToolWindow() {
     if (isToolWindowOpen()) {
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(OUTPUT_TOOL_WINDOW_ID);
+      Disposer.dispose(myMavenOutputWindowPanel);
     }
   }
 
