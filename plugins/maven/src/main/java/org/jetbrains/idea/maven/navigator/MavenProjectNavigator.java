@@ -191,15 +191,19 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
 
   private void subscribeForChanges() {
     myMavenProjectsListener = new MavenProjectsManager.Listener() {
+      boolean isActivated;
       public void activate() {
         for (MavenProjectModel each : myProjectsManager.getProjects()) {
           fileToNode.put(each.getFile(), new PomNode(each));
         }
 
         updateFromRoot(true, true);
+        isActivated = true;
       }
 
       public void setIgnored(VirtualFile file, boolean on) {
+        if (!isActivated) return;
+
         final PomNode pomNode = fileToNode.get(file);
         if (pomNode != null) {
           pomNode.setIgnored(on);
@@ -207,11 +211,15 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       }
 
       public void profilesChanged(List<String> profiles) {
+        if (!isActivated) return;
+
         root.setActiveProfiles(profiles);
         myTree.repaint();
       }
 
       public void projectAdded(final MavenProjectModel n) {
+        if (!isActivated) return;
+
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) return;
@@ -231,6 +239,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       }
 
       public void projectUpdated(final MavenProjectModel n) {
+        if (!isActivated) return;
+
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) return;
@@ -249,6 +259,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       }
 
       public void projectRemoved(final MavenProjectModel n) {
+        if (!isActivated) return;
+
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) return;
