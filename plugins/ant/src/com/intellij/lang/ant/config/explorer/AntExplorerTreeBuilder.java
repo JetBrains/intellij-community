@@ -46,8 +46,8 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   public void setTargetsFiltered(boolean value) {
     ArrayList pathsToExpand = new ArrayList();
     ArrayList selectionPaths = new ArrayList();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, true);
-    ((AntExplorerTreeStructure)myTreeStructure).setFilteredTargets(value);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
+    ((AntExplorerTreeStructure)getTreeStructure()).setFilteredTargets(value);
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {
         public void run() {
@@ -62,7 +62,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   public void refresh() {
     ArrayList pathsToExpand = new ArrayList();
     ArrayList selectionPaths = new ArrayList();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, true);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {
         public void run() {
@@ -80,26 +80,26 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
 
   private final class ConfigurationListener implements AntConfigurationListener {
     public void configurationLoaded() {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public void buildFileAdded(AntBuildFile buildFile) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public void buildFileChanged(AntBuildFile buildFile) {
-      myUpdater.addSubtreeToUpdateByElement(buildFile);
+      getUpdater().addSubtreeToUpdateByElement(buildFile);
     }
 
     public void buildFileRemoved(AntBuildFile buildFile) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
   }
 
   void expandAll() {
     ArrayList pathsToExpand = new ArrayList();
     ArrayList selectionPaths = new ArrayList();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, true);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     int row = 0;
     while (row < myTree.getRowCount()) {
       myTree.expandRow(row);
@@ -112,7 +112,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   void collapseAll() {
     ArrayList pathsToExpand = new ArrayList();
     ArrayList selectionPaths = new ArrayList();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, true);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     TreeUtil.collapseAll(myTree, 1);
     myTree.setSelectionPaths(new TreePath[0]);
     pathsToExpand.clear();

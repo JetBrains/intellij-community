@@ -6,7 +6,6 @@ package com.intellij.openapi.fileChooser.impl;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.RootFileElement;
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Comparator;
 
@@ -53,19 +51,19 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   private void installVirtualFileListener() {
     myVirtualFileListener = new VirtualFileAdapter() {
       public void propertyChanged(VirtualFilePropertyEvent event) {
-        myUpdater.addSubtreeToUpdate(myRootNode);
+        getUpdater().addSubtreeToUpdate(getRootNode());
       }
 
       public void fileCreated(VirtualFileEvent event) {
-        myUpdater.addSubtreeToUpdate(myRootNode);
+        getUpdater().addSubtreeToUpdate(getRootNode());
       }
 
       public void fileDeleted(VirtualFileEvent event) {
-        myUpdater.addSubtreeToUpdate(myRootNode);
+        getUpdater().addSubtreeToUpdate(getRootNode());
       }
 
       public void fileMoved(VirtualFileMoveEvent event) {
-        myUpdater.addSubtreeToUpdate(myRootNode);
+        getUpdater().addSubtreeToUpdate(getRootNode());
       }
     };
 

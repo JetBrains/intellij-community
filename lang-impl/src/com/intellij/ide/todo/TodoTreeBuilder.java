@@ -87,7 +87,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
     myFileStatusListener = new MyFileStatusListener();
 
-    myUpdater.setDelay(1500);
+    getUpdater().setDelay(1500);
   }
 
   /**
@@ -96,7 +96,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   public final void init() {
     TodoTreeStructure todoTreeStructure = createTreeStructure();
-    myTreeStructure = todoTreeStructure;
+    setTreeStructure(todoTreeStructure);
     todoTreeStructure.setTreeBuilder(this);
 
     rebuildCache();
@@ -149,7 +149,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   public final TodoTreeStructure getTodoTreeStructure() {
-    return (TodoTreeStructure)myTreeStructure;
+    return (TodoTreeStructure)getTreeStructure();
   }
 
   protected final AbstractTreeUpdater createUpdater() {
@@ -367,7 +367,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       return (TodoItemNode)element;
     }
     else {
-      Object[] children = myTreeStructure.getChildElements(element);
+      Object[] children = getTreeStructure().getChildElements(element);
       if (children.length == 0) {
         return null;
       }
@@ -390,7 +390,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       return (TodoItemNode)element;
     }
     else {
-      Object[] children = myTreeStructure.getChildElements(element);
+      Object[] children = getTreeStructure().getChildElements(element);
       if (children.length == 0) {
         return null;
       }
@@ -406,9 +406,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   protected final void updateTree(boolean later) {
     if (myUpdatable) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
       if (!later) {
-        myUpdater.performUpdate();
+        getUpdater().performUpdate();
       }
     }
   }
@@ -446,7 +446,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     getTodoTreeStructure().setShownPackages(state);
     ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     ArrayList<Object> pathsToSelect = new ArrayList<Object>();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, pathsToSelect, true);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
     myTree.clearSelection();
     getTodoTreeStructure().validateCache();
     updateTree(false);
@@ -459,7 +459,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   void setFlattenPackages(boolean state) {
     ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     ArrayList<Object> pathsToSelect = new ArrayList<Object>();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, pathsToSelect, true);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
     myTree.clearSelection();
     TodoTreeStructure todoTreeStructure = getTodoTreeStructure();
     todoTreeStructure.setFlattenPackages(state);
@@ -501,11 +501,11 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         returns <code>null</code>.
    */
   Object getNextSibling(Object obj) {
-    Object parent = myTreeStructure.getParentElement(obj);
+    Object parent = getTreeStructure().getParentElement(obj);
     if (parent == null) {
       return null;
     }
-    Object[] children = myTreeStructure.getChildElements(parent);
+    Object[] children = getTreeStructure().getChildElements(parent);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -546,11 +546,11 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         returns <code>null</code>.
    */
   Object getPreviousSibling(Object obj) {
-    Object parent = myTreeStructure.getParentElement(obj);
+    Object parent = getTreeStructure().getParentElement(obj);
     if (parent == null) {
       return null;
     }
-    Object[] children = myTreeStructure.getChildElements(parent);
+    Object[] children = getTreeStructure().getChildElements(parent);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -591,7 +591,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     getTodoTreeStructure().setShownModules(state);
     ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     ArrayList<Object> pathsToSelect = new ArrayList<Object>();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, pathsToSelect, true);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
     myTree.clearSelection();
     getTodoTreeStructure().validateCache();
     updateTree(false);
@@ -719,7 +719,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     public void propertyChanged(PsiTreeChangeEvent e) {
       String propertyName = e.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) { // rebuild all tree when source roots were changed
-        myUpdater.runBeforeUpdate(
+        getUpdater().runBeforeUpdate(
           new Runnable() {
             public void run() {
               rebuildCache();

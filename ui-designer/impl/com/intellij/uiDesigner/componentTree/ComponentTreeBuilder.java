@@ -46,7 +46,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
 
     myEditor = editor;
     mySelectionWatcher = new MySelectionWatcher(editor);
-    myTreeStructure = new ComponentTreeStructure(editor);
+    setTreeStructure(new ComponentTreeStructure(editor));
 
     initRootNode();
     syncSelection();
@@ -65,7 +65,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
   }
 
   private ComponentTreeStructure getComponentTreeStructure(){
-    return (ComponentTreeStructure)myTreeStructure;
+    return (ComponentTreeStructure)getTreeStructure();
   }
 
   protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor){

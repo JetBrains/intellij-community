@@ -65,8 +65,8 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
   }
 
   private void cleanUpStructureCaches() {
-    if (!(myTreeStructure instanceof SimpleTreeStructure)) return;
-    ((SimpleTreeStructure) myTreeStructure).clearCaches();
+    if (!(getTreeStructure() instanceof SimpleTreeStructure)) return;
+    ((SimpleTreeStructure)getTreeStructure()).clearCaches();
   }
 
   public SimpleTreeBuilder initRoot() {

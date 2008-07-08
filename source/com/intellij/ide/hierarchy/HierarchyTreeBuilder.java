@@ -51,7 +51,7 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   public final Object storeExpandedAndSelectedInfo() {
     final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     final ArrayList<Object> selectionPaths = new ArrayList<Object>();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, true);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     return new Pair<ArrayList<Object>, ArrayList<Object>>(pathsToExpand, selectionPaths);
   }
 
@@ -61,7 +61,7 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean isAlwaysShowPlus(final NodeDescriptor nodeDescriptor) {
-    return myTreeStructure instanceof CallerMethodsTreeStructure;
+    return getTreeStructure() instanceof CallerMethodsTreeStructure;
   }
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
@@ -94,37 +94,37 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
     public final void childAdded(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public final void childRemoved(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public final void childReplaced(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public final void childMoved(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public final void childrenChanged(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public final void propertyChanged(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
     public final void fileStatusesChanged() {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public final void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
   }
 }

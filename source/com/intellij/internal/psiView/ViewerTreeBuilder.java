@@ -29,7 +29,7 @@ public class ViewerTreeBuilder extends AbstractTreeBuilder {
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     Object element = nodeDescriptor.getElement();
-    Object rootElement = myTreeStructure.getRootElement();
+    Object rootElement = getTreeStructure().getRootElement();
     if (rootElement.equals(element)) return true;
     NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
     if (parent != null && rootElement.equals(parent.getElement())) return true;

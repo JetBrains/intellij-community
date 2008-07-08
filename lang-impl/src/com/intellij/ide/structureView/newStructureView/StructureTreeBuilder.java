@@ -51,7 +51,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
-    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
+    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
@@ -155,7 +155,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   void addRootToUpdate() {
     getTreeStructure().commit();
     ((SmartTreeStructure)getTreeStructure()).rebuildTree();
-    myUpdater.addSubtreeToUpdate(myRootNode);
+    getUpdater().addSubtreeToUpdate(getRootNode());
   }
 
   protected AbstractTreeNode createSearchingTreeNodeWrapper() {

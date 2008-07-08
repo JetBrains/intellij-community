@@ -23,7 +23,7 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder{
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
 
-    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)myTreeStructure;
+    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTreeStructure();
     PsiFile psiFile=treeStructure.getFile();
     if(treeStructure.accept(psiFile)){
       myFileTree.add(psiFile.getVirtualFile());
@@ -36,7 +36,7 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder{
    * @see com.intellij.ide.todo.CurrentFileTodosTreeStructure#setFile
    */
   public void setFile(PsiFile file){
-    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)myTreeStructure;
+    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTreeStructure();
     treeStructure.setFile(file);
     rebuildCache();
     updateTree(false);

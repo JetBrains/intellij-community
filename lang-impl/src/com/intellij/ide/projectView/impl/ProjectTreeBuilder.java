@@ -48,11 +48,11 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject){
       protected DefaultMutableTreeNode getRootNode(){
-        return myRootNode;
+        return ProjectTreeBuilder.this.getRootNode();
       }
 
-      protected AbstractTreeUpdater getUpdater(){
-        return myUpdater;
+      protected AbstractTreeUpdater getUpdater() {
+        return ProjectTreeBuilder.this.getUpdater();
       }
 
       protected boolean isFlattenPackages(){
@@ -63,13 +63,13 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
       public void rootsChanged(ModuleRootEvent event) {
-        myUpdater.addSubtreeToUpdate(myRootNode);
+        getUpdater().addSubtreeToUpdate(getRootNode());
       }
     });
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
     myFileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
+    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
     /*myPropertiesFileListener = new PropertiesFileListener();
@@ -96,7 +96,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
   private final class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
@@ -109,13 +109,13 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         element = psiManager.findFile(vFile);
       }
 
-      final boolean fileAdded = myUpdater.addSubtreeToUpdateByElement(element);
+      final boolean fileAdded = getUpdater().addSubtreeToUpdateByElement(element);
       if (!fileAdded) {
         if (element instanceof PsiFile) {
-          myUpdater.addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
+          getUpdater().addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
         }
         else {
-          myUpdater.addSubtreeToUpdate(myRootNode);
+          getUpdater().addSubtreeToUpdate(getRootNode());
         }
       }
     }
@@ -164,7 +164,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
               synchronized (myFilesToRefresh) {
                 filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
               }
-              updateNodesContaining(filesToRefresh, myRootNode);
+              updateNodesContaining(filesToRefresh, getRootNode());
               synchronized (myFilesToRefresh) {
                 myFilesToRefresh.removeAll(filesToRefresh);
               }

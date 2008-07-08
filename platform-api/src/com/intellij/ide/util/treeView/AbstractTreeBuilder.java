@@ -57,10 +57,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   protected JTree myTree;
   // protected for TestNG
-  @SuppressWarnings({"WeakerAccess"}) protected final DefaultTreeModel myTreeModel;
-  protected AbstractTreeStructure myTreeStructure;
+  @SuppressWarnings({"WeakerAccess"}) protected DefaultTreeModel myTreeModel;
+  private AbstractTreeStructure myTreeStructure;
 
-  protected AbstractTreeUpdater myUpdater;
+  private AbstractTreeUpdater myUpdater;
 
   private Comparator<NodeDescriptor> myNodeDescriptorComparator;
   private final Comparator<TreeNode> myNodeComparator = new Comparator<TreeNode>() {
@@ -74,14 +74,14 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
   };
 
-  protected final DefaultMutableTreeNode myRootNode;
+  private DefaultMutableTreeNode myRootNode;
 
   private final HashMap<Object, Object> myElementToNodeMap = new HashMap<Object, Object>();
   private final HashSet<DefaultMutableTreeNode> myUnbuiltNodes = new HashSet<DefaultMutableTreeNode>();
-  private final TreeExpansionListener myExpansionListener;
+  private TreeExpansionListener myExpansionListener;
 
   private WorkerThread myWorker = null;
-  private final ProgressIndicator myProgress;
+  private ProgressIndicator myProgress;
 
   private static final int WAIT_CURSOR_DELAY = 100;
 
@@ -95,7 +95,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
-  private final boolean myUpdateIfInactive;
+  private boolean myUpdateIfInactive;
 
   private WeakList<Object> myLoadingParents = new WeakList<Object>();
 
@@ -114,26 +114,46 @@ public abstract class AbstractTreeBuilder implements Disposable {
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
                              Comparator<NodeDescriptor> comparator) {
-    this(tree, treeModel, treeStructure, comparator, true);
+    init(tree, treeModel, treeStructure, comparator, true);
   }
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
                              Comparator<NodeDescriptor> comparator,
                              boolean updateIfInactive) {
+    init(tree, treeModel, treeStructure, comparator, updateIfInactive);
+  }
+
+  protected AbstractTreeBuilder() {
+  }
+
+  protected final void init(JTree tree,
+                             DefaultTreeModel treeModel,
+                             AbstractTreeStructure treeStructure,
+                             Comparator<NodeDescriptor> comparator) {
+
+    init(tree, treeModel, treeStructure, comparator, true);
+  }
+
+  protected final void init(JTree tree,
+                             DefaultTreeModel treeModel,
+                             AbstractTreeStructure treeStructure,
+                             Comparator<NodeDescriptor> comparator,
+                             boolean updateIfInactive) {
     myTree = tree;
     myTreeModel = treeModel;
-    myRootNode = (DefaultMutableTreeNode)treeModel.getRoot();
-    myTreeStructure = treeStructure;
+    myTree.setModel(myTreeModel);
+    setRootNode((DefaultMutableTreeNode)treeModel.getRoot());
+    setTreeStructure(treeStructure);
     myNodeDescriptorComparator = comparator;
     myUpdateIfInactive = updateIfInactive;
 
     myExpansionListener = new MyExpansionListener();
     myTree.addTreeExpansionListener(myExpansionListener);
 
-    myUpdater = createUpdater();
+    setUpdater(createUpdater());
     myProgress = createProgressIndicator();
-    Disposer.register(this, myUpdater);
+    Disposer.register(this, getUpdater());
 
     new UiNotifyConnector(tree, new Activatable() {
       public void showNotify() {
@@ -245,9 +265,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
     if (myDisposed) return;
     myDisposed = true;
     myTree.removeTreeExpansionListener(myExpansionListener);
-    disposeNode(myRootNode);
+    disposeNode(getRootNode());
     myElementToNodeMap.clear();
-    myUpdater.cancelAllRequests();
+    getUpdater().cancelAllRequests();
     if (myWorker != null) {
       myWorker.dispose(true);
     }
@@ -258,7 +278,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     disposeClearanceServiceIfNeeded();
 
     myTree = null;
-    myUpdater = null;
+    setUpdater(null);
     myWorker = null;
   }
 
@@ -279,14 +299,14 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   protected void expandNodeChildren(final DefaultMutableTreeNode node) {
-    myTreeStructure.commit();
-    myUpdater.addSubtreeToUpdate(node);
+    getTreeStructure().commit();
+    getUpdater().addSubtreeToUpdate(node);
     addNodeAction(getElementFor(node), new NodeAction() {
       public void onReady(final DefaultMutableTreeNode node) {
         processSmartExpand(node);
       }
     });
-    myUpdater.performUpdate();
+    getUpdater().performUpdate();
   }
 
   public final AbstractTreeStructure getTreeStructure() {
@@ -302,8 +322,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
   DefaultMutableTreeNode getNodeForElement(Object element) {
     DefaultMutableTreeNode node = getFirstNode(element);
     if (node != null) {
-      LOG.assertTrue(TreeUtil.isAncestor(myRootNode, node));
-      LOG.assertTrue(myRootNode == myTreeModel.getRoot());
+      LOG.assertTrue(TreeUtil.isAncestor(getRootNode(), node));
+      LOG.assertTrue(getRootNode() == myTreeModel.getRoot());
     }
     return node;
   }
@@ -320,12 +340,12 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public final void buildNodeForElement(Object element) {
-    myUpdater.performUpdate();
+    getUpdater().performUpdate();
     DefaultMutableTreeNode node = getNodeForElement(element);
     if (node == null) {
       final List<Object> elements = new ArrayList<Object>();
       while (true) {
-        element = myTreeStructure.getParentElement(element);
+        element = getTreeStructure().getParentElement(element);
         if (element == null) {
           break;
         }
@@ -342,7 +362,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public final void buildNodeForPath(Object[] path) {
-    myUpdater.performUpdate();
+    getUpdater().performUpdate();
     DefaultMutableTreeNode node = null;
     for (final Object pathElement : path) {
       node = node == null ? getFirstNode(pathElement) : findNodeForChildElement(node, pathElement);
@@ -356,9 +376,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
     myNodeDescriptorComparator = nodeDescriptorComparator;
     List<Object> pathsToExpand = new ArrayList<Object>();
     List<Object> selectionPaths = new ArrayList<Object>();
-    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, false);
-    resortChildren(myRootNode);
-    myTreeModel.nodeStructureChanged(myRootNode);
+    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, false);
+    resortChildren(getRootNode());
+    myTreeModel.nodeStructureChanged(getRootNode());
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, false);
   }
 
@@ -396,29 +416,29 @@ public abstract class AbstractTreeBuilder implements Disposable {
     if (myRootNodeWasInitialized) return;
 
     myRootNodeWasInitialized = true;
-    Object rootElement = myTreeStructure.getRootElement();
+    Object rootElement = getTreeStructure().getRootElement();
     addNodeAction(rootElement, new NodeAction() {
       public void onReady(final DefaultMutableTreeNode node) {
         processDeferredActions();
       }
     });
-    NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
-    myRootNode.setUserObject(nodeDescriptor);
+    NodeDescriptor nodeDescriptor = getTreeStructure().createDescriptor(rootElement, null);
+    getRootNode().setUserObject(nodeDescriptor);
     updateNodeDescriptor(nodeDescriptor);
     if (nodeDescriptor.getElement() != null) {
-      createMapping(nodeDescriptor.getElement(), myRootNode);
+      createMapping(nodeDescriptor.getElement(), getRootNode());
     }
-    addLoadingNode(myRootNode);
+    addLoadingNode(getRootNode());
     boolean willUpdate = false;
     if (isAutoExpandNode(nodeDescriptor)) {
-      willUpdate = myUnbuiltNodes.contains(myRootNode);
-      expand(myRootNode);
+      willUpdate = myUnbuiltNodes.contains(getRootNode());
+      expand(getRootNode());
     }
     if (!willUpdate) {
-      updateNodeChildren(myRootNode);
+      updateNodeChildren(getRootNode());
     }
-    if (myRootNode.getChildCount() == 0) {
-      myTreeModel.nodeChanged(myRootNode);
+    if (getRootNode().getChildCount() == 0) {
+      myTreeModel.nodeChanged(getRootNode());
     }
 
     processDeferredActions();
@@ -438,7 +458,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public void updateFromRoot() {
-    updateSubtree(myRootNode);
+    updateSubtree(getRootNode());
   }
 
   public final void updateSubtree(DefaultMutableTreeNode node) {
@@ -465,7 +485,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   private void updateNodeChildren(final DefaultMutableTreeNode node) {
-    myTreeStructure.commit();
+    getTreeStructure().commit();
     boolean wasExpanded = myTree.isExpanded(new TreePath(node.getPath()));
     final boolean wasLeaf = node.getChildCount() == 0;
 
@@ -479,7 +499,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       return;
     }
 
-    if (myTreeStructure.isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) {
+    if (getTreeStructure().isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) {
       if (queueBackgroundUpdate(node, descriptor)) return;
     }
 
@@ -525,9 +545,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private void processUnbuilt(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
     if (isAlwaysShowPlus(descriptor)) return; // check for isAlwaysShowPlus is important for e.g. changing Show Members state!
 
-    if (myTreeStructure.isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) return; //?
+    if (getTreeStructure().isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) return; //?
 
-    Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
+    Object[] children = getTreeStructure().getChildElements(getTreeStructureElement(descriptor));
     if (children.length == 0) {
       for (int i = 0; i < node.getChildCount(); i++) {
         if (isLoadingNode(node.getChildAt(i))) {
@@ -564,7 +584,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor) {
     Map<Object, Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
-    Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
+    Object[] children = getTreeStructure().getChildElements(getTreeStructureElement(descriptor));
     int index = 0;
     for (Object child : children) {
       if (!validateNode(child)) continue;
@@ -615,10 +635,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
     for (Map.Entry<Object, Integer> entry : elementToIndexMap.entrySet()) {
       Object child = entry.getKey();
       Integer index = entry.getValue();
-      final NodeDescriptor childDescr = myTreeStructure.createDescriptor(child, descriptor);
+      final NodeDescriptor childDescr = getTreeStructure().createDescriptor(child, descriptor);
       //noinspection ConstantConditions
       if (childDescr == null) {
-        LOG.error("childDescr == null, treeStructure = " + myTreeStructure + ", child = " + child);
+        LOG.error("childDescr == null, treeStructure = " + getTreeStructure() + ", child = " + child);
         continue;
       }
       childDescr.setIndex(index.intValue());
@@ -652,7 +672,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         Object element = descriptor.getElement();
         if (element == null) return;
 
-        myTreeStructure.getChildElements(getTreeStructureElement(descriptor)); // load children
+        getTreeStructure().getChildElements(getTreeStructureElement(descriptor)); // load children
       }
     };
 
@@ -813,8 +833,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
       updateNodeChildren(childNode);
     }
 
-    if (node.equals(myRootNode)) {
-      myTreeModel.nodeChanged(myRootNode);
+    if (node.equals(getRootNode())) {
+      myTreeModel.nodeChanged(getRootNode());
     }
   }
 
@@ -825,7 +845,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private void addLoadingNode(final DefaultMutableTreeNode node) {
     final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
     if (!isAlwaysShowPlus(descriptor)) {
-      if (myTreeStructure.isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) {
+      if (getTreeStructure().isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) {
         final boolean[] hasNoChildren = new boolean[1];
         Runnable runnable = new Runnable() {
           public void run() {
@@ -833,7 +853,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
             Object element = getTreeStructureElement(descriptor);
             if (element == null) return;
 
-            Object[] children = myTreeStructure.getChildElements(element);
+            Object[] children = getTreeStructure().getChildElements(element);
             hasNoChildren[0] = children.length == 0;
           }
         };
@@ -856,7 +876,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         addTaskToWorker(runnable, false, postRunnable);
       }
       else {
-        Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
+        Object[] children = getTreeStructure().getChildElements(getTreeStructureElement(descriptor));
         if (children.length == 0) return;
       }
     }
@@ -989,8 +1009,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
     addSubtreeToUpdate(root, null);
   }
   public void addSubtreeToUpdate(final DefaultMutableTreeNode root, Runnable runAfterUpdate) {
-    myUpdater.runAfterUpdate(runAfterUpdate);
-    myUpdater.addSubtreeToUpdate(root);
+    getUpdater().runAfterUpdate(runAfterUpdate);
+    getUpdater().addSubtreeToUpdate(root);
   }
 
   public boolean wasRootNodeInitialized() {
@@ -1069,7 +1089,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
-        eachElement = myTreeStructure.getParentElement(eachElement);
+        eachElement = getTreeStructure().getParentElement(eachElement);
         if (eachElement == null) {
           firstVisible = null;
           break;
@@ -1138,6 +1158,26 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return isParentLoading(nodeObject) || isLoadingChildrenFor(nodeObject);
   }
 
+  public void setTreeStructure(final AbstractTreeStructure treeStructure) {
+    myTreeStructure = treeStructure;
+  }
+
+  public AbstractTreeUpdater getUpdater() {
+    return myUpdater;
+  }
+
+  public void setUpdater(final AbstractTreeUpdater updater) {
+    myUpdater = updater;
+  }
+
+  public DefaultMutableTreeNode getRootNode() {
+    return myRootNode;
+  }
+
+  public void setRootNode(final DefaultMutableTreeNode rootNode) {
+    myRootNode = rootNode;
+  }
+
   private class MyExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
       TreePath path = event.getPath();
@@ -1184,8 +1224,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
       if (isDisposeOnCollapsing(descriptor)) {
         removeChildren(node);
         addLoadingNode(node);
-        if (node.equals(myRootNode)) {
-          myTree.addSelectionPath(new TreePath(myRootNode.getPath()));
+        if (node.equals(getRootNode())) {
+          myTree.addSelectionPath(new TreePath(getRootNode().getPath()));
         }
         else {
           myTreeModel.reload(node);
@@ -1342,7 +1382,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     final Object[] toExpand = addPaths(myTree.getExpandedDescendants(new TreePath(myTreeModel.getRoot())));
 
     myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
-    myRootNode.removeAllChildren();
+    getRootNode().removeAllChildren();
 
     myRootNodeWasInitialized = false;
     myBackgroundableNodeActions.clear();

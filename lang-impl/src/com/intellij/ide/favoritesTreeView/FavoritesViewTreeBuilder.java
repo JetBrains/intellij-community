@@ -52,15 +52,15 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       protected DefaultMutableTreeNode getRootNode() {
-        return myRootNode;
+        return FavoritesViewTreeBuilder.this.getRootNode();
       }
 
       protected AbstractTreeUpdater getUpdater() {
-        return myUpdater;
+        return FavoritesViewTreeBuilder.this.getUpdater();
       }
 
       protected boolean isFlattenPackages() {
-        return ((FavoritesTreeStructure)myTreeStructure).isFlattenPackages();
+        return ((FavoritesTreeStructure)getTreeStructure()).isFlattenPackages();
       }
 
       protected void childrenChanged(PsiElement parent) {
@@ -76,13 +76,13 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        myUpdater.addSubtreeToUpdate(myRootNode);
+        getUpdater().addSubtreeToUpdate(getRootNode());
       }
     });
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
     myFileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
+    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
     myFavoritesListener = new FavoritesManager.FavoritesListener() {
@@ -107,7 +107,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   public void updateFromRoot() {
     if (isDisposed()) return;
-    myUpdater.cancelAllRequests();
+    getUpdater().cancelAllRequests();
     super.updateFromRoot();
   }
 
@@ -173,7 +173,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object[] childElements = myTreeStructure.getChildElements(nodeDescriptor);
+    final Object[] childElements = getTreeStructure().getChildElements(nodeDescriptor);
     return childElements != null && childElements.length > 0;
   }
 
@@ -183,7 +183,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   private final class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      myUpdater.addSubtreeToUpdate(myRootNode);
+      getUpdater().addSubtreeToUpdate(getRootNode());
     }
 
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
@@ -196,8 +196,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         element = psiManager.findFile(vFile);
       }
 
-      if (!myUpdater.addSubtreeToUpdateByElement(element) && element instanceof PsiFile && ((PsiFile) element).getFileType() == StdFileTypes.JAVA) {
-        myUpdater.addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
+      if (!getUpdater().addSubtreeToUpdateByElement(element) && element instanceof PsiFile && ((PsiFile) element).getFileType() == StdFileTypes.JAVA) {
+        getUpdater().addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
       }
     }
   }

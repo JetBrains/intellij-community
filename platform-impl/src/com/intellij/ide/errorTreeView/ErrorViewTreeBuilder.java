@@ -25,23 +25,23 @@ public class ErrorViewTreeBuilder extends AbstractTreeBuilder{
   }
 
   public void updateFromRoot() {
-    myUpdater.cancelAllRequests();
+    getUpdater().cancelAllRequests();
     super.updateFromRoot();
   }
 
   public void updateTree() {
-    myUpdater.addSubtreeToUpdate(myRootNode);
+    getUpdater().addSubtreeToUpdate(getRootNode());
   }
 
   public void updateTree(Runnable runAferUpdate) {
-    myUpdater.runAfterUpdate(runAferUpdate);
+    getUpdater().runAfterUpdate(runAferUpdate);
     updateTree();
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final ErrorTreeElement element = (ErrorTreeElement)nodeDescriptor.getElement();
     if (element instanceof GroupingElement) {
-      return ((ErrorViewStructure)myTreeStructure).getChildCount((GroupingElement)element) > 0;
+      return ((ErrorViewStructure)getTreeStructure()).getChildCount((GroupingElement)element) > 0;
     }
     return false;
   }
