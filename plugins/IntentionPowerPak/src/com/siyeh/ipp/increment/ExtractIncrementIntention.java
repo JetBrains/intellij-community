@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.siyeh.ipp.increment;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExtractIncrementIntention extends MutablyNamedIntention {
 
+    @Override
     public String getTextForElement(PsiElement element) {
         final PsiJavaToken sign;
         if (element instanceof PsiPostfixExpression) {
@@ -40,12 +43,13 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
                 "extract.increment.intention.name", operator);
     }
 
-    @NotNull
+    @Override @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ExtractIncrementPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiExpression operand;
         if (element instanceof PsiPostfixExpression) {
@@ -69,8 +73,9 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
         if (parent == null) {
             return;
         }
-        final PsiManager manager = element.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final Project project = element.getProject();
+        final PsiElementFactory factory =
+                JavaPsiFacade.getInstance(project).getElementFactory();
         final String newStatementText = element.getText() + ';';
         final String operandText = operand.getText();
         if (parent instanceof PsiIfStatement ||
@@ -79,12 +84,14 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             // in/decrement is inside braceless control statement body
             final StringBuilder text = new StringBuilder();
             text.append('{');
+            final String elementText =
+                    getElementText(statement, element, operandText);
             if (element instanceof PsiPostfixExpression) {
-                appendElementText(statement, element, operandText, text);
+                text.append(elementText);
                 text.append(newStatementText);
             } else {
                 text.append(newStatementText);
-                appendElementText(statement, element, operandText, text);
+                text.append(elementText);
             }
             text.append('}');
             final PsiCodeBlock codeBlock =
@@ -94,10 +101,80 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
         }
         final PsiStatement newStatement =
                 factory.createStatementFromText(newStatementText, element);
-        if (statement instanceof PsiReturnStatement ||
-            statement instanceof PsiThrowStatement) {
-            // cannot extract to after throw or return
-            if (element instanceof PsiPrefixExpression) {
+        if (statement instanceof PsiReturnStatement) {
+            if (element instanceof PsiPostfixExpression) {
+                // special handling of postfix expression in return statement
+                final PsiReturnStatement returnStatement =
+                        (PsiReturnStatement) statement;
+                final PsiExpression returnValue =
+                        returnStatement.getReturnValue();
+                if (returnValue == null) {
+                    return;
+                }
+                final JavaCodeStyleManager javaCodeStyleManager =
+                        JavaCodeStyleManager.getInstance(project);
+                final String variableName =
+                        javaCodeStyleManager.suggestUniqueVariableName(
+                                "result", returnValue, true);
+                final PsiType type = returnValue.getType();
+                if (type == null) {
+                    return;
+                }
+                final String newReturnValueText = getElementText(
+                        returnValue, element, operandText);
+                final String declarationStatementText =
+                        type.getCanonicalText() + ' ' + variableName +
+                                '=' + newReturnValueText + ';';
+                final PsiStatement declarationStatement =
+                        factory.createStatementFromText(declarationStatementText,
+                                returnStatement);
+                parent.addBefore(declarationStatement, statement);
+                parent.addBefore(newStatement, statement);
+                final PsiStatement newReturnStatement =
+                        factory.createStatementFromText(
+                                "return " + variableName + ';',
+                                returnStatement);
+                returnStatement.replace(newReturnStatement);
+                return;
+            } else {
+                parent.addBefore(newStatement, statement);
+            }
+        } else if (statement instanceof PsiThrowStatement) {
+            if (element instanceof PsiPostfixExpression) {
+                // special handling of postfix expression in throw statement
+                final PsiThrowStatement returnStatement =
+                        (PsiThrowStatement) statement;
+                final PsiExpression exception =
+                        returnStatement.getException();
+                if (exception == null) {
+                    return;
+                }
+                final JavaCodeStyleManager javaCodeStyleManager =
+                        JavaCodeStyleManager.getInstance(project);
+                final String variableName =
+                        javaCodeStyleManager.suggestUniqueVariableName(
+                                "e", exception, true);
+                final PsiType type = exception.getType();
+                if (type == null) {
+                    return;
+                }
+                final String newReturnValueText = getElementText(
+                        exception, element, operandText);
+                final String declarationStatementText =
+                        type.getCanonicalText() + ' ' + variableName +
+                                '=' + newReturnValueText + ';';
+                final PsiStatement declarationStatement =
+                        factory.createStatementFromText(declarationStatementText,
+                                returnStatement);
+                parent.addBefore(declarationStatement, statement);
+                parent.addBefore(newStatement, statement);
+                final PsiStatement newReturnStatement =
+                        factory.createStatementFromText(
+                                "throw " + variableName + ';',
+                                returnStatement);
+                returnStatement.replace(newReturnStatement);
+                return;
+            } else {
                 parent.addBefore(newStatement, statement);
             }
         } else if (!(statement instanceof PsiForStatement)) {
@@ -164,7 +241,15 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
         replaceExpression(operandText, (PsiExpression)element);
     }
 
-    private static void appendElementText(
+    private static String getElementText(@NotNull PsiElement element,
+                                         @Nullable PsiElement elementToReplace,
+                                         @Nullable String replacement) {
+        final StringBuilder out = new StringBuilder();
+        getElementText(element, elementToReplace, replacement, out);
+        return out.toString();
+    }
+
+    private static void getElementText(
             @NotNull PsiElement element,
             @Nullable PsiElement elementToReplace,
             @Nullable String replacement,
@@ -179,7 +264,7 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             return;
         }
         for (PsiElement child : children) {
-            appendElementText(child, elementToReplace, replacement, out);
+            getElementText(child, elementToReplace, replacement, out);
         }
     }
 }
