@@ -26,7 +26,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
@@ -48,7 +47,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   private boolean myImlLocationDocListenerEnabled = true;
 
 
-  public ProjectNameWithTypeStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
+  public ProjectNameWithTypeStep(final WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
     myAdditionalContentPanel.add(myModulePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     myCreateModuleCb.setVisible(myWizardContext.isCreatingNewProject());
@@ -145,21 +144,16 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
           myModuleNameChangedByUser = true;
         }
         if (!myContentRootChangedByUser) {
-          final String path = myModuleContentRoot.getText();
-          final int lastSeparatorIndex = path.lastIndexOf(File.separator);
-          if (lastSeparatorIndex >= 0) {
-            final boolean f = myModuleNameChangedByUser;
-            myModuleNameChangedByUser = true;
-            setModuleContentRoot(path.substring(0, lastSeparatorIndex + 1) + myModuleName.getText());
-            myModuleNameChangedByUser = f;
-          }
+          final String path = getDefaultBaseDir(wizardContext);
+          final boolean f = myModuleNameChangedByUser;
+          myModuleNameChangedByUser = true;
+          setModuleContentRoot(path + "/" + myModuleName.getText());
+          myModuleNameChangedByUser = f;
+
         }
         if (!myImlLocationChangedByUser) {
-          final String path = myModuleFileLocation.getText();
-          final int lastSeparatorIndex = path.lastIndexOf(File.separator);
-          if (lastSeparatorIndex >= 0) {
-            setImlFileLocation(path.substring(0, lastSeparatorIndex + 1) + myModuleName.getText());
-          }
+          final String path = getDefaultBaseDir(wizardContext);
+          setImlFileLocation(path + "/" + myModuleName.getText());
         }
       }
     });
@@ -213,6 +207,18 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       setImlFileLocation(baseDir.getPath() + "/" + moduleName);
       myModuleName.setSelectionStart(0);
       myModuleName.setSelectionEnd(moduleName.length());
+    }
+  }
+
+  private String getDefaultBaseDir(WizardContext wizardContext) {
+    if (wizardContext.isCreatingNewProject()) {
+      return myNamePathComponent.getPath();
+    } else {
+      final Project project = wizardContext.getProject();
+      assert project != null;
+      final VirtualFile baseDir = project.getBaseDir();
+      assert baseDir != null;
+      return baseDir.getPath();
     }
   }
 
