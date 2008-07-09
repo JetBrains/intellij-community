@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -45,7 +46,6 @@ import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ResolveAction extends BasicAction {
@@ -106,7 +106,9 @@ public class ResolveAction extends BasicAction {
     }
     final List<VirtualFile> fileList = new ArrayList<VirtualFile>();
     if (!hasDirs) {
-      Collections.addAll(fileList, files);
+      for (VirtualFile file : files) {
+        addIfWritable(file, project, fileList);
+      }
     }
     else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -118,7 +120,7 @@ public class ResolveAction extends BasicAction {
                   ProgressManager.getInstance().checkCanceled();
                   VirtualFile fileOrDir = filePath.getVirtualFile();
                   if (fileOrDir != null && !fileOrDir.isDirectory() && isEnabled(project, activeVcs, fileOrDir) && !fileList.contains(fileOrDir)) {
-                    fileList.add(fileOrDir);
+                    addIfWritable(fileOrDir, project, fileList);
                   }
                   return true;
                 }
@@ -134,6 +136,13 @@ public class ResolveAction extends BasicAction {
       }, SvnBundle.message("progress.searching.for.files.with.conflicts"), true, project);
     }
     AbstractVcsHelper.getInstance(project).showMergeDialog(fileList, new SvnMergeProvider(project));
+  }
+
+  private void addIfWritable(final VirtualFile fileOrDir, final Project project, final List<VirtualFile> fileList) {
+    final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileOrDir);
+    if (! operationStatus.hasReadonlyFiles()) {
+      fileList.add(fileOrDir);
+    }
   }
 
   protected boolean isBatchAction() {

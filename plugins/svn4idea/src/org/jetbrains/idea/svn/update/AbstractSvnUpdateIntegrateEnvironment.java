@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,11 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
               vf.getParent().refresh(true, false);
               VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(vf);
               if (myVcs.equals(ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(vf))) {
-                vfFiles.add(vf);
+
+                final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myVcs.getProject()).ensureFilesWritable(vf);
+                if (! operationStatus.hasReadonlyFiles()) {
+                  vfFiles.add(vf);
+                }
               }
             }
           }
