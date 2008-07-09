@@ -5,15 +5,15 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 
 import javax.swing.*;
 
-public class EditMavenRepositoryDialog extends DialogWrapper {
+public class EditMavenIndexDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JTextField myUrlField;
 
-  public EditMavenRepositoryDialog() {
+  public EditMavenIndexDialog() {
     this("");
   }
 
-  public EditMavenRepositoryDialog(String url) {
+  public EditMavenIndexDialog(String url) {
     super(false);
     setTitle("Edit Maven Repository");
     myUrlField.setText(url.length() == 0 ? "http://" : url);

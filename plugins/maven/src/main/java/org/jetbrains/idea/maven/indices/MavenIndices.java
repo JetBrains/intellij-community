@@ -50,24 +50,20 @@ public class MavenIndices {
       }
       catch (Exception e) {
         FileUtil.delete(each);
-        MavenLog.info(e);
+        MavenLog.warn(e);
       }
     }
   }
 
   public synchronized void close() {
     try {
-      closeOpenIndices();
-    }
-    catch (MavenIndexException e) {
-      MavenLog.info(e);
-    }
-  }
-
-  private void closeOpenIndices() throws MavenIndexException {
-    try {
       for (MavenIndex data : myIndices) {
-        data.close();
+        try {
+          data.close();
+        }
+        catch (MavenIndexException e) {
+          MavenLog.warn(e);
+        }
       }
     }
     finally {
@@ -99,13 +95,17 @@ public class MavenIndices {
     throw new RuntimeException("No available dir found");
   }
 
-  public synchronized void remove(MavenIndex i) throws MavenIndexException {
-    i.delete();
+  public synchronized void remove(MavenIndex i) {
     myIndices.remove(i);
+    try {
+      i.delete();
+    }
+    catch (MavenIndexException e) {
+      MavenLog.warn(e);
+    }
   }
 
-  public void update(MavenIndex i, ProgressIndicator progress) throws MavenIndexException,
-                                                                      ProcessCanceledException {
+  public void update(MavenIndex i, ProgressIndicator progress) throws ProcessCanceledException {
     i.update(myEmbedder, myIndexer, myUpdater, progress);
   }
 }

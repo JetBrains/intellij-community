@@ -89,6 +89,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
       for (MavenIndex each : allIndices) {
         if (FileUtil.pathsEqual(localRepoPath, each.getRepositoryPathOrUrl())) {
           localIndex = each;
+          break;
         }
       }
       try {

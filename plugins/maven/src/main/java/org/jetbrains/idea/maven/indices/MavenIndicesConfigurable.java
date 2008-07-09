@@ -15,6 +15,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,8 +45,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
         AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT,
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            int width = myTable.getColumnModel().getColumn(2).getWidth();
-            myTable.repaint(myTable.getWidth() - width, 0, width, myTable.getHeight());
+            myTable.repaint();
           }
         });
 
@@ -63,12 +64,38 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
         updateButtonsState();
       }
     });
+
+    myTable.addMouseMotionListener(new MouseMotionListener() {
+      public void mouseDragged(MouseEvent e) {
+      }
+
+      public void mouseMoved(MouseEvent e) {
+        int row = myTable.rowAtPoint(e.getPoint());
+        if (row == -1) return;
+        updateIndexHint(row);
+      }
+    });
+
+    myTable.setDefaultRenderer(Object.class, new MyCellRenderer());
+    myTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
+                               new MyIconCellRenderer());
+
     updateButtonsState();
   }
 
   private void updateButtonsState() {
     boolean hasSelection = !myTable.getSelectionModel().isSelectionEmpty();
     myUpdateButton.setEnabled(hasSelection);
+  }
+
+  public void updateIndexHint(int row) {
+    MavenIndex index = getIndexAt(row);
+    Exception ex = index.getFailedToUpdateException();
+    if (ex == null) {
+      myTable.setToolTipText(null);
+    } else {
+      myTable.setToolTipText(ex.getMessage());
+    }
   }
 
   private void doUpdateIndex() {
@@ -78,10 +105,14 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   private List<MavenIndex> getSelectedIndices() {
     List<MavenIndex> result = new ArrayList<MavenIndex>();
     for (int i : myTable.getSelectedRows()) {
-      MyTableModel model = (MyTableModel)myTable.getModel();
-      result.add(model.getIndex(i));
+      result.add(getIndexAt(i));
     }
     return result;
+  }
+
+  private MavenIndex getIndexAt(int i) {
+    MyTableModel model = (MyTableModel)myTable.getModel();
+    return model.getIndex(i);
   }
 
   public String getDisplayName() {
@@ -109,9 +140,6 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myTable.getColumnModel().getColumn(1).setPreferredWidth(50);
     myTable.getColumnModel().getColumn(2).setPreferredWidth(50);
     myTable.getColumnModel().getColumn(3).setPreferredWidth(20);
-
-    myTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
-                               new MyIconCellRenderer());
 
     myRepaintTimer.start();
     myUpdatingIcon.resume();
@@ -164,6 +192,10 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
           if (i.getKind() == MavenIndex.Kind.LOCAL) return "Local";
           return "Remote";
         case 2:
+          Exception e = i.getFailedToUpdateException();
+          if (e != null) {
+            return IndicesBundle.message("maven.index.timestamp.error");
+          }
           long timestamp = i.getUpdateTimestamp();
           if (timestamp == -1) return IndicesBundle.message("maven.index.timestamp.unknown");
           return SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(new Date(timestamp));
@@ -178,7 +210,29 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     }
   }
 
-  private class MyIconCellRenderer extends DefaultTableCellRenderer {
+  private class MyCellRenderer extends DefaultTableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      // reset custom colors and let DefaultTableCellRenderer to set ones
+      setForeground(null);
+      setBackground(null);
+
+      Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+      MavenIndex index = getIndexAt(row);
+      if (index.getFailedToUpdateException() != null) {
+        if (isSelected) {
+          setForeground(Color.PINK);
+        } else {
+          setBackground(Color.PINK);
+        }
+      }
+      
+      return c;
+    }
+  }
+
+  private class MyIconCellRenderer extends MyCellRenderer {
     MavenIndicesManager.IndexUpdatingState myState;
 
     @Override

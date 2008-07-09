@@ -59,6 +59,8 @@ public class MavenIndex {
   private String myDataDirName;
   private IndexData myData;
 
+  private Exception myFailedToUpdateException;
+
   public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind) throws MavenIndexException {
     myDir = dir;
     myRepositoryPathOrUrl = repositoryPathOrUrl;
@@ -82,7 +84,7 @@ public class MavenIndex {
       }
     }
     catch (IOException e) {
-      throw new MavenIndexException(e);
+      throw new MavenIndexException("Cannot read " + INDEX_INFO_FILE + " file", e);
     }
 
     myKind = Kind.valueOf(props.getProperty(KIND_KEY));
@@ -100,7 +102,7 @@ public class MavenIndex {
     open();
   }
 
-  private synchronized void save() throws MavenIndexException {
+  private synchronized void save() {
     myDir.mkdirs();
 
     Properties props = new Properties();
@@ -120,7 +122,7 @@ public class MavenIndex {
       }
     }
     catch (IOException e) {
-      throw new MavenIndexException(e);
+      MavenLog.info(e);
     }
   }
 
@@ -128,13 +130,13 @@ public class MavenIndex {
     try {
       doOpen();
     }
-    catch (Exception e) {
-      MavenLog.info(e);
+    catch (Exception e1) {
+      MavenLog.info(e1);
       try {
         doOpen();
       }
-      catch (Exception e1) {
-        throw new MavenIndexException(e1);
+      catch (Exception e2) {
+        throw new MavenIndexException("Cannot open index " + myDir.getPath(), e2);
       }
     }
   }
@@ -178,6 +180,10 @@ public class MavenIndex {
     return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
 
+  public Exception getFailedToUpdateException() {
+    return myFailedToUpdateException;
+  }
+
   public synchronized void close() throws MavenIndexException {
     try {
       if (myData != null) myData.close();
@@ -199,8 +205,7 @@ public class MavenIndex {
   public void update(MavenEmbedder embedder,
                      NexusIndexer indexer,
                      IndexUpdater updater,
-                     ProgressIndicator progress) throws MavenIndexException,
-                                                        ProcessCanceledException {
+                     ProgressIndicator progress) throws ProcessCanceledException {
     try {
       if (myKind == Kind.LOCAL) {
         FileUtil.delete(getContextDir());
@@ -214,12 +219,15 @@ public class MavenIndex {
       finally {
         indexer.removeIndexingContext(context, false);
       }
+      myFailedToUpdateException = null;
     }
     catch (IOException e) {
-      throw new MavenIndexException(e);
+      myFailedToUpdateException = e;
+      MavenLog.info(e);
     }
     catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenIndexException(e);
+      myFailedToUpdateException = e;
+      MavenLog.info(e);
     }
   }
 
@@ -576,8 +584,8 @@ public class MavenIndex {
     }
 
     public Set<String> read(DataInput s) throws IOException {
-      Set<String> result = new HashSet<String>();
       int count = s.readInt();
+      Set<String> result = new HashSet<String>(count);
       while (count-- > 0) {
         result.add(s.readUTF());
       }

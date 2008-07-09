@@ -35,7 +35,7 @@ public class MavenIndicesTestFixture {
 
     MavenCore.getInstance(myProject).getState().setLocalRepository(myDataTestFixture.getTestDataPath(myLocalRepoDir));
 
-    MavenIndicesManager.getInstance().doInit(new File(myDir, "MavenIndices"));
+    MavenIndicesManager.getInstance().setIndexDir(new File(myDir, "MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
     myIndicesManager.doInit();
   }
