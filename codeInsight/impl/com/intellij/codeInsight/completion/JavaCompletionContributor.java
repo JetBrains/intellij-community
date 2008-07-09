@@ -148,6 +148,10 @@ public class JavaCompletionContributor extends CompletionContributor {
           new ShowParameterInfoHandler().invoke(project, editor, file, lbraceOffset, null);
         }
 
+        if (expression instanceof PsiLiteralExpression) {
+          return LangBundle.message("completion.no.suggestions") + suffix;
+        }
+
         if (expression instanceof PsiInstanceOfExpression) {
           final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
           if (PsiTreeUtil.isAncestor(instanceOfExpression.getCheckType(), parameters.getPosition(), false)) {

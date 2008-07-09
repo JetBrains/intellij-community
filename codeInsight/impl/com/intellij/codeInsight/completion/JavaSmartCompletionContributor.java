@@ -156,6 +156,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>(true, false) {
              public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
                final PsiElement position = params.getPosition();
+               if (position.getParent() instanceof PsiLiteralExpression) return;
+
                final THashSet<ExpectedTypeInfo> infos = new THashSet<ExpectedTypeInfo>(EXPECTED_TYPE_INFO_STRATEGY);
                ApplicationManager.getApplication().runReadAction(new Runnable() {
                  public void run() {
