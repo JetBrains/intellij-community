@@ -241,7 +241,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         --i;
       }
       else {
-        myDocument.insertString(suffixIndex + commentSuffix.length(), commentPrefix);
+        myDocument.insertString(suffixIndex + normalizedSuffix.length(), commentPrefix);
         --j;
       }
     }
