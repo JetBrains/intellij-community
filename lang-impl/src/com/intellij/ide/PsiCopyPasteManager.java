@@ -4,13 +4,18 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PsiCopyPasteManager {
   public static PsiCopyPasteManager getInstance() {
@@ -26,6 +31,7 @@ public class PsiCopyPasteManager {
     myCopyPasteManager = (CopyPasteManagerEx) copyPasteManager;
   }
 
+  @Nullable
   public PsiElement[] getElements(boolean[] isCopied) {
     try {
       Transferable content = myCopyPasteManager.getSystemClipboardContents();
@@ -57,6 +63,7 @@ public class PsiCopyPasteManager {
     }
   }
 
+  @Nullable
   static PsiElement[] getElements(final Transferable content) {
     if (content == null) return null;
     Object transferData;
@@ -159,17 +166,37 @@ public class PsiCopyPasteManager {
 
   public static class MyTransferable implements Transferable {
     private MyData myDataProxy;
-    private static final DataFlavor[] DATA_FLAVOR_ARRAY = new DataFlavor[]{ourDataFlavor};
+    private static final DataFlavor[] DATA_FLAVOR_ARRAY = new DataFlavor[]{ourDataFlavor, DataFlavor.stringFlavor};
 
     public MyTransferable(MyData data) {
       myDataProxy = data;
     }
 
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-      if (!ourDataFlavor.equals(flavor)) {
+      if (ourDataFlavor.equals(flavor)) {
+        return myDataProxy;
+      }
+      if (DataFlavor.stringFlavor.equals(flavor)) {
+        return getDataAsText();
+      }
+      return null;
+    }
+
+    @Nullable
+    private String getDataAsText() {
+      List<String> names = new ArrayList<String>();
+      for (PsiElement element : myDataProxy.getElements()) {
+        if (element instanceof PsiNamedElement) {
+          String name = ((PsiNamedElement) element).getName();
+          if (name != null) {
+            names.add(name);
+          }
+        }
+      }
+      if (names.isEmpty()) {
         return null;
       }
-      return myDataProxy;
+      return StringUtil.join(names, "\n");
     }
 
     public DataFlavor[] getTransferDataFlavors() {
@@ -177,7 +204,7 @@ public class PsiCopyPasteManager {
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return flavor.equals(ourDataFlavor);
+      return flavor.equals(ourDataFlavor) || flavor.equals(DataFlavor.stringFlavor);
     }
 
     public PsiElement[] getElements() {
