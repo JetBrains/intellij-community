@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,20 +39,15 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     myNamespacePrefix = namespacePrefix;
   }
 
-  public void handleInsert(final CompletionContext context,
-                           final int startOffset,
-                           final LookupData data,
-                           final LookupItem item,
-                           final boolean signatureSelected,
-                           final char completionChar) {
+  public void handleInsert(final InsertionContext context, final LookupElement item) {
 
     final XmlFile file = (XmlFile)context.file;
-    final Project project = context.project;
+    final Project project = context.getProject();
 
-    final PsiElement psiElement = file.findElementAt(startOffset);
+    final PsiElement psiElement = file.findElementAt(context.getStartOffset());
     assert psiElement != null;
     if (isNamespaceBound(psiElement)) {
-      doDefault(context, startOffset, data, item, signatureSelected, completionChar);
+      doDefault(context, item);
       return;
     }
 
@@ -74,10 +69,9 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
             qualifyWithPrefix(namespacePrefix, element, document);
             PsiDocumentManager.getInstance(project).commitDocument(document);
           }
-          final int offset = context.getStartOffset();
           editor.getCaretModel().moveToOffset(caretMarker.getStartOffset());
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-          doDefault(context, offset, data, item, signatureSelected, completionChar);
+          doDefault(context, item);
         }
       };
 
@@ -95,10 +89,8 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     }
   }
 
-  protected void doDefault(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
-                         final boolean signatureSelected,
-                         final char completionChar) {
-    ExtendedTagInsertHandler.super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+  protected void doDefault(final InsertionContext context, final LookupElement item) {
+    ExtendedTagInsertHandler.super.handleInsert(context, item);
   }
 
   protected boolean isNamespaceBound(PsiElement psiElement) {

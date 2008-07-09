@@ -51,8 +51,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   protected static final Object EXPANDED_TEMPLATE_ATTR = Key.create("EXPANDED_TEMPLATE_ATTR");
 
-  protected CompletionContext myContext;
-  private LookupData myLookupData;
+  protected InsertionContext myContext;
   private LookupItem myLookupItem;
 
   private Project myProject;
@@ -61,9 +60,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   protected Document myDocument;
   private InsertHandlerState myState;
 
-  public void handleInsert(final CompletionContext context,
-                           int startOffset, LookupData data, LookupItem item,
-                           final boolean signatureSelected, final char completionChar) {
+  public void handleInsert(final InsertionContext context, LookupElement item) {
     if (!(item instanceof SimpleLookupItem)) {
       if (item.getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)item.getObject();
@@ -86,15 +83,15 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           }
         });
         final InsertHandler insertHandler = simpleItem.getInsertHandler();
-        simpleItem.copyAttributes(item);
-        insertHandler.handleInsert(context, startOffset, data, simpleItem, signatureSelected, completionChar);
+        simpleItem.copyAttributes((LookupItem)item);
+        insertHandler.handleInsert(context, simpleItem);
         return;
       }
     }
 
     DefaultInsertHandler delegate = this;
 
-    if (isTemplateToBeCompleted(item)) {
+    if (isTemplateToBeCompleted((LookupItem)item)) {
       try {
         delegate = (DefaultInsertHandler)clone();
         delegate.clear();
@@ -106,7 +103,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     boolean toClear = true;
     try{
-      toClear = delegate.handleInsertInner(context, startOffset, data, item, signatureSelected, completionChar);
+      toClear = delegate.handleInsertInner(context, context.getStartOffset(), (LookupItem)item, context.isSignatureSelected(), context.getCompletionChar());
     }
     finally{
       if (toClear) {
@@ -121,22 +118,20 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myProject = null;
     myFile = null;
     myState = null;
-    myLookupData = null;
     myLookupItem = null;
     myContext = null;
   }
 
-  private boolean handleInsertInner(CompletionContext context,
-                                    int startOffset, LookupData data, LookupItem item,
+  private boolean handleInsertInner(InsertionContext context,
+                                    int startOffset, LookupItem item,
                                     final boolean signatureSelected, final char completionChar) {
 
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
-    PsiDocumentManager.getInstance(context.project).commitDocument(context.editor.getDocument());
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.editor.getDocument());
     myContext = context;
-    myLookupData = data;
     myLookupItem = item;
 
-    myProject = myContext.project;
+    myProject = myContext.getProject();
     myFile = myContext.file;
     myEditor = myContext.editor;
     myDocument = myEditor.getDocument();
@@ -217,7 +212,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (insertingAnnotation()) {
       // Check if someone inserts annotation class that require @
       final Document document = context.editor.getDocument();
-      PsiDocumentManager.getInstance(context.project).commitDocument(document);
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
       PsiElement elementAt = myFile.findElementAt(myContext.getStartOffset());
       final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
 
@@ -419,8 +414,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private boolean insertingAnnotationWithParameters() {
     if(insertingAnnotation()) {
-      final Document document = myContext.editor.getDocument();
-      PsiDocumentManager.getInstance(myContext.project).commitDocument(document);
+      final Document document = myContext.getEditor().getDocument();
+      PsiDocumentManager.getInstance(myContext.getProject()).commitDocument(document);
       PsiElement elementAt = myFile.findElementAt(myContext.getStartOffset());
       if (elementAt instanceof PsiIdentifier) {
         if (insertingNotRuntimeAnnotation() || PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null) {
@@ -456,7 +451,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   protected void removeEndOfIdentifier(boolean needParenth){
-    JavaCompletionUtil.initOffsets(myContext.file, myContext.project, myContext.getOffsetMap());
+    JavaCompletionUtil.initOffsets(myContext.getFile(), myContext.getProject(), myContext.getOffsetMap());
     myDocument.deleteString(myContext.getSelectionEndOffset(), myContext.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     if(myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) > 0 && !needParenth){
       myDocument.deleteString(myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET),
@@ -511,9 +506,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           final OffsetMap offsetMap = myContext.getOffsetMap();
           offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, endOffset);
           offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
-          CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, offsetMap);
+          InsertionContext newContext = new InsertionContext(offsetMap, completionChar, signatureSelected, LookupElement.EMPTY_ARRAY, myFile, editor);
           JavaCompletionUtil.initOffsets(myFile, myProject, offsetMap);
-          handleInsert(newContext, myContext.getStartOffset(), myLookupData, myLookupItem, signatureSelected, completionChar);
+          handleInsert(newContext, myLookupItem);
         }
       }
     );

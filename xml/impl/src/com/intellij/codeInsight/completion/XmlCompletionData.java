@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.editor.CaretModel;
@@ -120,15 +120,10 @@ public class XmlCompletionData extends CompletionData {
   }
 
   private static class XmlAttributeValueInsertHandler extends BasicInsertHandler {
-    public void handleInsert(CompletionContext context,
-                             int startOffset,
-                             LookupData data,
-                             LookupItem item,
-                             boolean signatureSelected,
-                             char completionChar) {
-      super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      super.handleInsert(context, item);
 
-      eatClosingQuote(completionChar, context.editor);
+      eatClosingQuote(context.getCompletionChar(), context.editor);
 
     }
 
@@ -154,15 +149,10 @@ public class XmlCompletionData extends CompletionData {
     public XmlAttributeInsertHandler() {
     }
 
-    public void handleInsert(CompletionContext context,
-                             int startOffset,
-                             LookupData data,
-                             LookupItem item,
-                             boolean signatureSelected,
-                             char completionChar) {
-      super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      super.handleInsert(context, item);
 
-      final Editor editor = context.editor;
+      final Editor editor = context.getEditor();
 
       final Document document = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
@@ -296,18 +286,13 @@ public class XmlCompletionData extends CompletionData {
   }
 
   protected static class EntityRefInsertHandler extends BasicInsertHandler {
-    public void handleInsert(CompletionContext context,
-                             int startOffset,
-                             LookupData data,
-                             LookupItem item,
-                             boolean signatureSelected,
-                             char completionChar) {
-      super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      super.handleInsert(context, item);
 
-      final CaretModel caretModel = context.editor.getCaretModel();
-      context.editor.getDocument().insertString(caretModel.getOffset(), ";");
+      final CaretModel caretModel = context.getEditor().getCaretModel();
+      context.getEditor().getDocument().insertString(caretModel.getOffset(), ";");
       caretModel.moveToOffset(caretModel.getOffset() + 1);
-      eatClosingQuote(completionChar, context.editor);
+      eatClosingQuote(context.getCompletionChar(), context.getEditor());
     }
   }
 }

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -41,20 +41,15 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
   public XmlTagInsertHandler() {
   }
 
-  public void handleInsert(CompletionContext context,
-                           int startOffset,
-                           LookupData data,
-                           LookupItem item,
-                           boolean signatureSelected,
-                           char completionChar) {
-    super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
-    Project project = context.project;
+  public void handleInsert(InsertionContext context, LookupElement item) {
+    super.handleInsert(context, item);
+    Project project = context.getProject();
     Editor editor = context.editor;
     // Need to insert " " to prevent creating tags like <tagThis is my text
     final int offset = editor.getCaretModel().getOffset();
     editor.getDocument().insertString(offset, " ");
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    PsiElement current = context.file.findElementAt(context.getStartOffset());
+    PsiElement current = context.getFile().findElementAt(context.getStartOffset());
     editor.getDocument().deleteString(offset, offset + 1);
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
@@ -66,10 +61,10 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
 
       Template t = TemplateManager.getInstance(project).getActiveTemplate(editor);
       if (t == null && descriptor != null) {
-        insertIncompleteTag(completionChar, editor, project, descriptor, tag);
+        insertIncompleteTag(context.getCompletionChar(), editor, project, descriptor, tag);
       }
     }
-    else if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+    else if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       int caretOffset = editor.getCaretModel().getOffset();
@@ -102,7 +97,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
       }
     }
 
-    final TailType tailType = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, completionChar);
+    final TailType tailType = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, context.getCompletionChar());
     tailType.processTail(editor, editor.getCaretModel().getOffset());
   }
 

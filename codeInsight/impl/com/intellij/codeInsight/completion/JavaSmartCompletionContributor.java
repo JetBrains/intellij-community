@@ -53,7 +53,7 @@ import java.util.*;
  * @author peter
  */
 public class JavaSmartCompletionContributor extends CompletionContributor {
-  static final JavaAwareCompletionData SMART_DATA = new JavaAwareCompletionData();
+  private static final JavaAwareCompletionData SMART_DATA = new JavaAwareCompletionData();
   private static final ElementExtractorFilter THROWABLES_FILTER = new ElementExtractorFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
   @NonNls private static final String EXCEPTION_TAG = "exception";
   private static final ElementPattern<PsiElement> AFTER_NEW =
@@ -133,9 +133,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (reference != null) {
           final Pair<ElementFilter, TailType> pair = getReferenceFilter(element);
           if (pair != null) {
-            final THashSet<LookupItem> set = new THashSet<LookupItem>();
-            SMART_DATA.completeReference(reference, element, set, pair.second, parameters.getOriginalFile(), pair.first, new CompletionVariant());
-            for (final LookupItem item : set) {
+            for (final LookupItem item : completeReference(element, reference, parameters.getOriginalFile(), pair.second, pair.first, result)) {
               if (AFTER_THROW_NEW.accepts(element)) {
                 item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
                 if (item.getObject() instanceof PsiClass) {
@@ -437,4 +435,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     result.addElement(item);
   }
 
+  public static THashSet<LookupItem> completeReference(final PsiElement element, final PsiReference reference, final PsiFile originalFile,
+                                                        final TailType tailType, final ElementFilter filter, final CompletionResultSet result) {
+    final THashSet<LookupItem> set = new THashSet<LookupItem>();
+    SMART_DATA.completeReference(reference, element, set, tailType, originalFile, filter, new CompletionVariant());
+    return set;
+  }
 }

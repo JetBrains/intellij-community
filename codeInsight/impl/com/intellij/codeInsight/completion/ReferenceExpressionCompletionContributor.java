@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -40,8 +39,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ReferenceExpressionCompletionContributor extends ExpressionSmartCompletionContributor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor");
-  private static final ElementPattern<PsiElement> INSIDE_VARIABLE =
-      PsiJavaPatterns.psiElement().inside(PsiJavaPatterns.psiElement(PsiVariable.class));
 
   @Nullable
   private static Pair<ElementFilter, TailType> getReferenceFilter(PsiElement element, boolean second) {
@@ -50,23 +47,19 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       return new Pair<ElementFilter, TailType>(TrueFilter.INSTANCE, TailType.SEMICOLON);
     }
 
-    if (psiElement().afterLeaf(psiElement().withText(")").withParent(PsiTypeCastExpression.class)).accepts(element)) {
-      return null;
-    }
-
-    if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element) && !second) {
+    if (psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element) && !second) {
       return new Pair<ElementFilter, TailType>(new ElementExtractorFilter(new ExcludeDeclaredFilter(new ClassFilter(PsiMethod.class))
-      ), TailType.UNKNOWN);
+      ), TailType.SEMICOLON);
     }
 
-    if (PsiJavaPatterns.psiElement().inside(PsiAnnotationParameterList.class).accepts(element)) {
+    if (psiElement().inside(PsiAnnotationParameterList.class).accepts(element)) {
       return new Pair<ElementFilter, TailType>(new ElementExtractorFilter(new AndFilter(
           new ClassFilter(PsiField.class),
           new ModifierFilter(PsiKeyword.STATIC, PsiKeyword.FINAL)
       )), TailType.NONE);
     }
 
-    if (INSIDE_VARIABLE.accepts(element)) {
+    if (psiElement().inside(PsiJavaPatterns.psiElement(PsiVariable.class)).accepts(element)) {
       return new Pair<ElementFilter, TailType>(
           new AndFilter(new ElementExtractorFilter(new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class))),
                         new ElementExtractorFilter(new ExcludeSillyAssignment())), TailType.NONE);
@@ -79,6 +72,8 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final PsiElement element = parameters.getPosition();
+        if (psiElement().afterLeaf(psiElement().withText(")").withParent(PsiTypeCastExpression.class)).accepts(element)) return;
+
         final int offset = parameters.getOffset();
         final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
         if (reference != null) {
@@ -87,14 +82,14 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             final PsiFile originalFile = parameters.getOriginalFile();
             final TailType tailType = pair.second;
             final ElementFilter filter = pair.first;
-            final THashSet<LookupItem> set = completeReference(element, reference, originalFile, tailType, filter, result);
+            final THashSet<LookupItem> set = JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, filter, result);
             for (final LookupItem item : set) {
               result.addElement(item);
             }
 
             if (parameters.getInvocationCount() >= 2) {
               ElementFilter qualifierFilter = getReferenceFilter(element, true).first;
-              for (final LookupItem<?> qualifier : completeReference(element, reference, originalFile, tailType, qualifierFilter, result)) {
+              for (final LookupItem<?> qualifier : JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, qualifierFilter, result)) {
                 final Object object = qualifier.getObject();
                 final String prefix = getItemText(object);
                 if (prefix == null) continue;
@@ -103,7 +98,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                 try {
                   final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
                   final PsiExpression ref = elementFactory.createExpressionFromText(prefix + ".xxx", element);
-                  for (final LookupItem<?> item : completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, qualifierFilter, result)) {
+                  for (final LookupItem<?> item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, qualifierFilter, result)) {
                     if (item.getObject() instanceof PsiMethod) {
                       final PsiMethod method = (PsiMethod)item.getObject();
                       final PsiClass collectionClass = JavaPsiFacade.getInstance(element.getProject())
@@ -291,13 +286,6 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
 
   private static String getSpace(boolean needSpace) {
     return needSpace ? " " : "";
-  }
-
-  private static THashSet<LookupItem> completeReference(final PsiElement element, final PsiReference reference, final PsiFile originalFile,
-                                                        final TailType tailType, final ElementFilter filter, final CompletionResultSet result) {
-    final THashSet<LookupItem> set = new THashSet<LookupItem>();
-    JavaSmartCompletionContributor.SMART_DATA.completeReference(reference, element, set, tailType, originalFile, filter, new CompletionVariant());
-    return set;
   }
 
   private static class QualifiedMethodLookupItem extends LookupItem<PsiMethod> {

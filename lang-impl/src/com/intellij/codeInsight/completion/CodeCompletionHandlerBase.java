@@ -295,7 +295,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         insertLookupString(context, offset2, uniqueText);
         context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-        lookupItemSelected(context, data, item, false, (char)0);
+        lookupItemSelected(context, item, (char)0, false, data.items);
       }
     }.execute();
   }
@@ -330,7 +330,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                                             context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
                                                                                                                                                     caretOffset:Math.max(caretOffset, context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset);
-    lookupItemSelected(context, data, item, signatureSelected, completionChar);
+    lookupItemSelected(context, item, completionChar, signatureSelected, data.items);
   }
 
   private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final String dummyIdentifier) {
@@ -419,24 +419,16 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private void lookupItemSelected(final CompletionContext context, final LookupData data,
-                                  @NotNull final LookupItem item,
-                                  final boolean signatureSelected,
-                                  final char completionChar) {
+  private void lookupItemSelected(final CompletionContext context, @NotNull final LookupItem item, final char completionChar, final boolean signatuireSelected, final LookupItem[] items) {
     final InsertHandler handler;
     if (item.getInsertHandler() == null) {
       handler = new InsertHandler() {
-        public void handleInsert(final CompletionContext context,
-                                 final int startOffset,
-                                 final LookupData data,
-                                 final LookupItem item,
-                                 final boolean signatureSelected,
-                                 final char completionChar) {
+        public void handleInsert(final InsertionContext context, final LookupElement item) {
           final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
-          if (idEndOffset != context.getSelectionEndOffset() && CompletionUtil.isOverwrite(item, completionChar)) {
-            context.editor.getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
+          if (idEndOffset != context.getSelectionEndOffset() && CompletionUtil.isOverwrite((LookupItem)item, completionChar)) {
+            context.getEditor().getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
           }
-          item.getTailType().processTail(context.editor, context.editor.getCaretModel().getOffset());
+          item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
         }
       };
     }
@@ -446,7 +438,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
-        handler.handleInsert(context, context.getStartOffset(), data, item, signatureSelected, completionChar);
+        handler.handleInsert(new InsertionContext(context.getOffsetMap(), completionChar, signatuireSelected, items, context.file, context.editor), item);
       }
     });
   }

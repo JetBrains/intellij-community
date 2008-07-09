@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuppressManagerImpl;
@@ -150,20 +151,16 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
 
 
   private class InlineInsertHandler extends BasicInsertHandler {
-    public void handleInsert(CompletionContext context,
-                             int startOffset,
-                             LookupData data,
-                             LookupItem item,
-                             boolean signatureSelected, char completionChar) {
-      super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      super.handleInsert(context, item);
 
-      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
-        final Project project = context.project;
+      if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
+        final Project project = context.getProject();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
-        final Editor editor = context.editor;
+        final Editor editor = context.getEditor();
         final CaretModel caretModel = editor.getCaretModel();
         final int offset = caretModel.getOffset();
-        final PsiElement element = context.file.findElementAt(offset - 1);
+        final PsiElement element = context.getFile().findElementAt(offset - 1);
         PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
 
         for (PsiElement child = tag.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -198,18 +195,13 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
   }
 
   private class MethodSignatureInsertHandler extends BasicInsertHandler {
-    public void handleInsert(CompletionContext context,
-                             int startOffset,
-                             LookupData data,
-                             LookupItem item,
-                             boolean signatureSelected,
-                             char completionChar) {
-      super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      super.handleInsert(context, item);
       if (!(item.getObject() instanceof PsiMethod)) {
         return;
       }
-      PsiDocumentManager.getInstance(context.project).commitDocument(context.editor.getDocument());
-      final Editor editor = context.editor;
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.editor.getDocument());
+      final Editor editor = context.getEditor();
       final PsiMethod method = (PsiMethod)item.getObject();
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -217,14 +209,14 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
 
       final CharSequence chars = editor.getDocument().getCharsSequence();
       int endOffset = editor.getCaretModel().getOffset();
-      final Project project = context.project;
+      final Project project = context.getProject();
       int afterSharp = CharArrayUtil.shiftBackwardUntil(chars, endOffset, "#") + 1;
       int signatureOffset = afterSharp;
 
       PsiElement element = context.file.findElementAt(signatureOffset - 1);
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
-      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+      if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final PsiDocTagValue valueElement = tag.getValueElement();
         endOffset = valueElement.getTextRange().getEndOffset();
       }
@@ -265,7 +257,7 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
       shortenReferences(project, editor, context, afterParenth);
     }
 
-    private void shortenReferences(final Project project, final Editor editor, CompletionContext context, int offset) {
+    private void shortenReferences(final Project project, final Editor editor, InsertionContext context, int offset) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       final PsiElement element = context.file.findElementAt(offset);
       final PsiDocTagValue tagValue = PsiTreeUtil.getParentOfType(element, PsiDocTagValue.class);
@@ -277,7 +269,7 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
           LOG.error(e);
         }
       }
-      PsiDocumentManager.getInstance(context.project).commitAllDocuments();
+      PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     }
   }
 }

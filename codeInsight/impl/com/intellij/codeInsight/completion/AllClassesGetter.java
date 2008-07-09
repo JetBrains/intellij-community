@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,9 +39,7 @@ public class AllClassesGetter {
   private final ElementFilter myFilter;
   private static final InsertHandler INSERT_HANDLER = new InsertHandler() {
 
-    public int _handleInsert(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
-                             final boolean signatureSelected,
-                             final char completionChar) {
+    public int _handleInsert(final InsertionContext context, final LookupItem item) {
       final Editor editor = context.editor;
       final PsiClass psiClass = (PsiClass)item.getObject();
       int endOffset = editor.getCaretModel().getOffset();
@@ -57,7 +56,7 @@ public class AllClassesGetter {
 
       PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
       if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-        ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.project).getExpectedTypes((PsiExpression)prevElement.getParent(), true);
+        ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.getProject()).getExpectedTypes((PsiExpression)prevElement.getParent(), true);
         boolean flag = true;
         for (ExpectedTypeInfo info : infos) {
           if (info.isArrayTypeInfo()) {
@@ -72,7 +71,7 @@ public class AllClassesGetter {
       }
 
       if (context.file.getLanguage() == StdLanguages.JAVA) {
-        new DefaultInsertHandler().handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+        new DefaultInsertHandler().handleInsert(context, item);
         return editor.getCaretModel().getOffset();
       }
 
@@ -126,10 +125,8 @@ public class AllClassesGetter {
       return endOffset;
     }
 
-    public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
-                             final boolean signatureSelected,
-                             final char completionChar) {
-      int endOffset = _handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    public void handleInsert(final InsertionContext context, final LookupElement item) {
+      int endOffset = _handleInsert(context, (LookupItem)item);
       context.editor.getCaretModel().moveToOffset(endOffset);
       item.getTailType().processTail(context.editor, endOffset);
     }

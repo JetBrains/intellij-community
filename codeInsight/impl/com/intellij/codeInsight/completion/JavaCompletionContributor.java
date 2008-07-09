@@ -10,6 +10,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -72,10 +73,9 @@ public class JavaCompletionContributor extends CompletionContributor {
 
         if (item.getInsertHandler() == null) {
           item.setInsertHandler(new InsertHandler() {
-            public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data,
-                                     final LookupItem item, final boolean signatureSelected, final char completionChar) {
-              analyzeItem(context, item, item.getObject(), parameters.getPosition());
-              new DefaultInsertHandler().handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+            public void handleInsert(final InsertionContext context, final LookupElement item) {
+              analyzeItem(context, (LookupItem)item, item.getObject(), parameters.getPosition());
+              new DefaultInsertHandler().handleInsert(context, item);
             }
           });
         }
@@ -193,7 +193,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
   }
 
-  public static void analyzeItem(final CompletionContext context, final LookupItem item, final Object completion, final PsiElement position) {
+  public static void analyzeItem(final InsertionContext context, final LookupItem item, final Object completion, final PsiElement position) {
     if(completion instanceof PsiKeyword){
       if(PsiKeyword.BREAK.equals(((PsiKeyword)completion).getText())
          || PsiKeyword.CONTINUE.equals(((PsiKeyword)completion).getText())){
@@ -241,7 +241,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (completion instanceof PsiClass) {
       final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
       if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-        ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.project).getExpectedTypes((PsiExpression) prevElement.getParent(), true);
+        ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.getProject()).getExpectedTypes((PsiExpression) prevElement.getParent(), true);
         boolean flag = true;
         PsiTypeParameter[] typeParameters = ((PsiClass)completion).getTypeParameters();
         for (ExpectedTypeInfo info : infos) {
