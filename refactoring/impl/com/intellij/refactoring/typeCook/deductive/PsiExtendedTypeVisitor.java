@@ -1,8 +1,8 @@
 package com.intellij.refactoring.typeCook.deductive;
 
-import com.intellij.psi.*;
-
-import java.util.Iterator;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeVisitorEx;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,9 +17,7 @@ public abstract class PsiExtendedTypeVisitor <X> extends PsiTypeVisitorEx<X> {
     final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
 
     if (result.getElement() != null) {
-      for (Iterator<PsiType> t = result.getSubstitutor().getSubstitutionMap().values().iterator(); t.hasNext();) {
-        final PsiType type = t.next();
-
+      for (final PsiType type : result.getSubstitutor().getSubstitutionMap().values()) {
         if (type != null) {
           type.accept(this);
         }

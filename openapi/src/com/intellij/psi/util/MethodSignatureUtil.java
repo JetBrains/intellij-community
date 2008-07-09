@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 
 public class MethodSignatureUtil {
@@ -254,7 +255,8 @@ public class MethodSignatureUtil {
 
   public static PsiSubstitutor combineSubstitutors(PsiSubstitutor substitutor1, PsiSubstitutor substitutor2) {
     if (substitutor1 == PsiSubstitutor.EMPTY) return substitutor2;
-    final PsiTypeParameter[] typeParameters = substitutor1.getSubstitutionMap().keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
+    Set<PsiTypeParameter> parameters1 = substitutor1.getSubstitutionMap().keySet();
+    final PsiTypeParameter[] typeParameters = parameters1.toArray(new PsiTypeParameter[parameters1.size()]);
     for (PsiTypeParameter typeParameter : typeParameters) {
       final PsiType type = substitutor1.substitute(typeParameter);
       PsiType otherSubstituted;
@@ -262,8 +264,14 @@ public class MethodSignatureUtil {
         final PsiClass resolved = ((PsiClassType)type).resolve();
         if (resolved instanceof PsiTypeParameter) {
           otherSubstituted = substitutor2.substitute((PsiTypeParameter)resolved);
-        } else otherSubstituted = substitutor2.substitute(type);
-      } else otherSubstituted = substitutor2.substitute(type);
+        }
+        else {
+          otherSubstituted = substitutor2.substitute(type);
+        }
+      }
+      else {
+        otherSubstituted = substitutor2.substitute(type);
+      }
 
       substitutor1 = substitutor1.put(typeParameter, otherSubstituted);
     }
@@ -325,4 +333,5 @@ public class MethodSignatureUtil {
     }
     return true;
   }
+
 }
