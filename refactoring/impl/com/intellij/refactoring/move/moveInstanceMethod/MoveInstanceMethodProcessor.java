@@ -127,7 +127,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         usages.add(new JavadocUsageInfo(((PsiDocTagValue)element)));
       }
       else {
-        LOG.assertTrue(false, "Unknown reference found");
+        throw new UnknownReferenceTypeException(element.getLanguage());
       }
     }
 

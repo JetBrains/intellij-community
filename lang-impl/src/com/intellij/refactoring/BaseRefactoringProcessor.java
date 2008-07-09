@@ -3,12 +3,14 @@ package com.intellij.refactoring;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
@@ -115,12 +117,18 @@ public abstract class BaseRefactoringProcessor {
   protected void doRun() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
+    final Ref<Language> refErrorLanguage = new Ref<Language>();
 
     final Runnable findUsagesRunnable = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            refUsages.set(findUsages());
+            try {
+              refUsages.set(findUsages());
+            }
+            catch (UnknownReferenceTypeException e) {
+              refErrorLanguage.set(e.getElementLanguage());
+            }
           }
         });
       }
@@ -130,7 +138,11 @@ public abstract class BaseRefactoringProcessor {
       return;
     }
 
-    LOG.assertTrue(!refUsages.isNull());
+    if (!refErrorLanguage.isNull()) {
+      Messages.showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
+      return;
+    }
+
     if (!preprocessUsages(refUsages)) return;
     final UsageInfo[] usages = refUsages.get();
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
@@ -419,5 +431,17 @@ public abstract class BaseRefactoringProcessor {
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     return Arrays.asList(descriptor.getElements());
+  }
+
+  public static class UnknownReferenceTypeException extends RuntimeException {
+    private final Language myElementLanguage;
+
+    public UnknownReferenceTypeException(final Language elementLanguage) {
+      myElementLanguage = elementLanguage;
+    }
+
+    public Language getElementLanguage() {
+      return myElementLanguage;
+    }
   }
 }
