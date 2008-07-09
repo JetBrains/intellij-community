@@ -31,7 +31,7 @@ class LookupCellRenderer implements ListCellRenderer {
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
   private final Font SMALL_FONT;
-  private final int FONT_WIDTH;
+  private final int myFontWidth;
 
   public static final Color BACKGROUND_COLOR = new Color(235, 244, 254);
   private static final Color FOREGROUND_COLOR = Color.black;
@@ -86,7 +86,7 @@ class LookupCellRenderer implements ListCellRenderer {
     label.setText("W"); //the widest letter known to me
     label.setIcon(null);
     label.setFont(BOLD_FONT);
-    FONT_WIDTH = label.getPreferredSize().width;
+    myFontWidth = label.getPreferredSize().width;
 
     final LookupItem[] items = lookup.getItems();
     if (items.length > 0) lookup.getList().setPrototypeCellValue(items[0]);
@@ -94,6 +94,10 @@ class LookupCellRenderer implements ListCellRenderer {
     myLookupElementPresentation.setItems(items);
 
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
+  }
+
+  public int getFontWidth() {
+    return myFontWidth;
   }
 
   public void updateIconWidth(final int iconWidth) {
@@ -170,11 +174,11 @@ class LookupCellRenderer implements ListCellRenderer {
     if (text != null){
       String s = text;
       int width = getTextWidth(item);
-      int n = width - MAX_LENGTH * FONT_WIDTH;
+      int n = width - MAX_LENGTH * myFontWidth;
       if (n > 0){
-        n = Math.min(n, (s.length() - 7) * FONT_WIDTH);
+        n = Math.min(n, (s.length() - 7) * myFontWidth);
         if (n >= 0){
-          s = s.substring(0, s.length() - n / FONT_WIDTH - 3) + "...";
+          s = s.substring(0, s.length() - n / myFontWidth - 3) + "...";
         }
       }
       label.setText(s);
@@ -206,7 +210,7 @@ class LookupCellRenderer implements ListCellRenderer {
     String text = text3;
 
     final int listWidth = Math.max(list.getFixedCellWidth(), list.getWidth());
-    final int maxWidth = listWidth - myNameComponent.getPreferredSize().width - myLabel2.getPreferredSize().width - 3 * FONT_WIDTH;
+    final int maxWidth = listWidth - myNameComponent.getPreferredSize().width - myLabel2.getPreferredSize().width - 3 * myFontWidth;
 
     JLabel label = myLabel3;
     if (text == null) text = "";
@@ -334,8 +338,8 @@ class LookupCellRenderer implements ListCellRenderer {
     for (LookupItem item : items) {
       maxWidth = Math.max(maxWidth, getTextWidth(item));
     }
-    maxWidth = Math.min(maxWidth, MAX_LENGTH * FONT_WIDTH);
-    return maxWidth + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap() + FONT_WIDTH;
+    maxWidth = Math.min(maxWidth, MAX_LENGTH * myFontWidth);
+    return maxWidth + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap() + myFontWidth;
   }
 
   /**
@@ -353,7 +357,7 @@ class LookupCellRenderer implements ListCellRenderer {
     String text = getName(item);
     text += getText3(item) + "XXX";
 
-    int width = myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text) + 2;
+    int width = myFontWidth * text.length() + 2;
     String text2 = getText2(item);
     if (text2 != null){
       boolean isSmall = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
@@ -477,7 +481,7 @@ class LookupCellRenderer implements ListCellRenderer {
     }
 
     private void addWidth(final String text) {
-      myTotalWidth += myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text);
+      myTotalWidth += text.length() * myFontWidth;
     }
 
     public LookupItem[] getItems() {
