@@ -8,10 +8,6 @@
     </component>
     -->
     <component>
-      <interface-class>com.intellij.ide.XmlRpcServer</interface-class>
-      <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTable</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable</implementation-class>
     </component>

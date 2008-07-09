@@ -118,6 +118,11 @@
       <interface-class>com.intellij.openapi.options.SchemesManagerFactory</interface-class>
       <implementation-class>com.intellij.openapi.options.SchemesManagerFactoryImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.ide.XmlRpcServer</interface-class>
+      <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

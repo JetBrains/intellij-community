@@ -67,6 +67,7 @@
     <orderEntry type="module" module-name="lvcs-openapi" />
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntryProperties />
   </component>
 </module>
