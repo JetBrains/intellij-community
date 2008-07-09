@@ -21,6 +21,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -224,7 +225,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_JAVADOC_LOOKUP) {
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
       if (file == null) return;
       final Runnable request = new Runnable(){
         public void run(){

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class AutoPopupController implements Disposable {
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_MEMBER_LOOKUP) {
-      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
       if (file == null) return;
       final Runnable request = new Runnable(){
         public void run(){

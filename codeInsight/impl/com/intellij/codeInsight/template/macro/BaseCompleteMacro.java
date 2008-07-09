@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +54,7 @@ public abstract class BaseCompleteMacro implements Macro {
     final Project project = context.getProject();
     final Editor editor = context.getEditor();
 
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     new WriteCommandAction.Simple(project, psiFile) {
         public void run() {
           PsiDocumentManager.getInstance(project).commitAllDocuments();

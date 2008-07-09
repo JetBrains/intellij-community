@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlTag;
 
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
@@ -39,11 +40,13 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   public static void autoPopupXmlLookup(final Project project, final Editor editor){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_XML_LOOKUP) {
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null) return;
       final Runnable request = new Runnable(){
         public void run(){
           PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+          final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+          if (file == null) return;
+
           CommandProcessor.getInstance().executeCommand(project, new Runnable() {
             public void run() {
               new XmlAutoLookupHandler().invoke(project, editor, file);
