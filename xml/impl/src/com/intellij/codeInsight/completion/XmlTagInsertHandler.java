@@ -44,7 +44,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
   public void handleInsert(InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);
     Project project = context.getProject();
-    Editor editor = context.editor;
+    Editor editor = context.getEditor();
     // Need to insert " " to prevent creating tags like <tagThis is my text
     final int offset = editor.getCaretModel().getOffset();
     editor.getDocument().insertString(offset, " ");
@@ -69,7 +69,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
 
       int caretOffset = editor.getCaretModel().getOffset();
 
-      PsiElement otherTag = PsiTreeUtil.getParentOfType(context.file.findElementAt(caretOffset), XmlTag.class);
+      PsiElement otherTag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), XmlTag.class);
 
       PsiElement endTagStart = XmlUtil.getTokenOfType(otherTag, XmlTokenType.XML_END_TAG_START);
 
@@ -89,7 +89,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
     }
-    current = context.file.findElementAt(context.getStartOffset());
+    current = context.getFile().findElementAt(context.getStartOffset());
     if (current != null && current.getPrevSibling()instanceof XmlToken) {
       if (!isClosed(current) && ((XmlToken)current.getPrevSibling()).getTokenType() == XmlTokenType.XML_END_TAG_START) {
         editor.getDocument().insertString(current.getTextRange().getEndOffset(), ">");

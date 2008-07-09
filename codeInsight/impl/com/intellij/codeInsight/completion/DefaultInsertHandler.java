@@ -127,13 +127,13 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
                                     final boolean signatureSelected, final char completionChar) {
 
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
-    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.editor.getDocument());
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
     myContext = context;
     myLookupItem = item;
 
     myProject = myContext.getProject();
-    myFile = myContext.file;
-    myEditor = myContext.editor;
+    myFile = myContext.getFile();
+    myEditor = myContext.getEditor();
     myDocument = myEditor.getDocument();
 
     if (isTemplateToBeCompleted(myLookupItem)){
@@ -211,7 +211,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     if (insertingAnnotation()) {
       // Check if someone inserts annotation class that require @
-      final Document document = context.editor.getDocument();
+      final Document document = context.getEditor().getDocument();
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
       PsiElement elementAt = myFile.findElementAt(myContext.getStartOffset());
       final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
@@ -262,7 +262,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   private boolean isAtTokenNeeded() {
-    HighlighterIterator iterator = ((EditorEx)myContext.editor).getHighlighter().createIterator(myContext.getStartOffset());
+    HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
     LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
     iterator.retreat();
     if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
@@ -486,10 +486,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     myDocument.replaceString(templateStartOffset, templateStartOffset + myLookupItem.getLookupString().length(), "");
 
-    final RangeMarker offsetRangeMarker = myContext.editor.getDocument().createRangeMarker(templateStartOffset, templateStartOffset);
+    final RangeMarker offsetRangeMarker = myContext.getEditor().getDocument().createRangeMarker(templateStartOffset, templateStartOffset);
 
     TemplateManager.getInstance(myProject).startTemplate(
-      myContext.editor,
+      myContext.getEditor(),
       template,
       new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
@@ -497,7 +497,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
           if (!offsetRangeMarker.isValid()) return;
 
-          final Editor editor = myContext.editor;
+          final Editor editor = myContext.getEditor();
           final int startOffset = offsetRangeMarker.getStartOffset();
           final int endOffset = editor.getCaretModel().getOffset();
           String lookupString = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();

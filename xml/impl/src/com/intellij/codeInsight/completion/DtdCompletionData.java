@@ -118,12 +118,12 @@ public class DtdCompletionData extends CompletionData {
       if (item.getObject().toString().startsWith("<!")) {
         PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
-        int caretOffset = context.editor.getCaretModel().getOffset();
-        PsiElement tag = PsiTreeUtil.getParentOfType(context.file.findElementAt(caretOffset), PsiNamedElement.class);
+        int caretOffset = context.getEditor().getCaretModel().getOffset();
+        PsiElement tag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), PsiNamedElement.class);
 
         if (tag == null) {
-          context.editor.getDocument().insertString(caretOffset, " >");
-          context.editor.getCaretModel().moveToOffset(caretOffset + 1);
+          context.getEditor().getDocument().insertString(caretOffset, " >");
+          context.getEditor().getCaretModel().moveToOffset(caretOffset + 1);
         }
       }
     }

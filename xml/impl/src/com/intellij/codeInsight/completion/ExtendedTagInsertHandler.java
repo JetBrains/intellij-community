@@ -41,7 +41,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
   public void handleInsert(final InsertionContext context, final LookupElement item) {
 
-    final XmlFile file = (XmlFile)context.file;
+    final XmlFile file = (XmlFile)context.getFile();
     final Project project = context.getProject();
 
     final PsiElement psiElement = file.findElementAt(context.getStartOffset());
@@ -51,7 +51,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
       return;
     }
 
-    final Editor editor = context.editor;
+    final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
 

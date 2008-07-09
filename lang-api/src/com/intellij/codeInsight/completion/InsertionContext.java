@@ -17,8 +17,8 @@ public class InsertionContext {
   private final char myCompletionChar;
   private final boolean mySignatureSelected;
   private final LookupElement[] myElements;
-  public final PsiFile file;
-  public final Editor editor;
+  private final PsiFile file;
+  private final Editor editor;
 
   public InsertionContext(final OffsetMap offsetMap, final char completionChar, final boolean signatureSelected, final LookupElement[] elements,
                           final PsiFile file,

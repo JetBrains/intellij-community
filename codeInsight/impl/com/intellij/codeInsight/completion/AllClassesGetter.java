@@ -40,7 +40,7 @@ public class AllClassesGetter {
   private static final InsertHandler INSERT_HANDLER = new InsertHandler() {
 
     public int _handleInsert(final InsertionContext context, final LookupItem item) {
-      final Editor editor = context.editor;
+      final Editor editor = context.getEditor();
       final PsiClass psiClass = (PsiClass)item.getObject();
       int endOffset = editor.getCaretModel().getOffset();
       final String qname = psiClass.getQualifiedName();
@@ -70,7 +70,7 @@ public class AllClassesGetter {
         }
       }
 
-      if (context.file.getLanguage() == StdLanguages.JAVA) {
+      if (context.getFile().getLanguage() == StdLanguages.JAVA) {
         new DefaultInsertHandler().handleInsert(context, item);
         return editor.getCaretModel().getOffset();
       }
@@ -127,8 +127,8 @@ public class AllClassesGetter {
 
     public void handleInsert(final InsertionContext context, final LookupElement item) {
       int endOffset = _handleInsert(context, (LookupItem)item);
-      context.editor.getCaretModel().moveToOffset(endOffset);
-      item.getTailType().processTail(context.editor, endOffset);
+      context.getEditor().getCaretModel().moveToOffset(endOffset);
+      item.getTailType().processTail(context.getEditor(), endOffset);
     }
 
   };

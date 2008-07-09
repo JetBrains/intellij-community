@@ -200,7 +200,7 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
       if (!(item.getObject() instanceof PsiMethod)) {
         return;
       }
-      PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.editor.getDocument());
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
       final Editor editor = context.getEditor();
       final PsiMethod method = (PsiMethod)item.getObject();
 
@@ -213,7 +213,7 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
       int afterSharp = CharArrayUtil.shiftBackwardUntil(chars, endOffset, "#") + 1;
       int signatureOffset = afterSharp;
 
-      PsiElement element = context.file.findElementAt(signatureOffset - 1);
+      PsiElement element = context.getFile().findElementAt(signatureOffset - 1);
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
@@ -259,7 +259,7 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
 
     private void shortenReferences(final Project project, final Editor editor, InsertionContext context, int offset) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      final PsiElement element = context.file.findElementAt(offset);
+      final PsiElement element = context.getFile().findElementAt(offset);
       final PsiDocTagValue tagValue = PsiTreeUtil.getParentOfType(element, PsiDocTagValue.class);
       if (tagValue != null) {
         try {

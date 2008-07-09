@@ -17,6 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,4 +87,6 @@ public interface LookupElement<T> extends UserDataHolder{
   boolean isPrefixMatched();
 
   @NotNull PrefixMatcher getPrefixMatcher();
+
+  InsertHandler getInsertHandler();
 }

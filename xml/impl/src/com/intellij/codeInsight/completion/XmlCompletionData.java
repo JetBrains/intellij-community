@@ -123,7 +123,7 @@ public class XmlCompletionData extends CompletionData {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
 
-      eatClosingQuote(context.getCompletionChar(), context.editor);
+      eatClosingQuote(context.getCompletionChar(), context.getEditor());
 
     }
 
