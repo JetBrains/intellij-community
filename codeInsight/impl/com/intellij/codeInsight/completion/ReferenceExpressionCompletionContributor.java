@@ -109,11 +109,8 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                   for (final LookupItem<?> item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, qualifierFilter, result)) {
                     if (item.getObject() instanceof PsiMethod) {
                       final PsiMethod method = (PsiMethod)item.getObject();
-                      final PsiClass collectionClass = JavaPsiFacade.getInstance(element.getProject())
-                          .findClass(CommonClassNames.JAVA_UTIL_COLLECTION, element.getResolveScope());
-                      if (method.getName().equals("toArray") && method.getParameterList().getParametersCount() == 1 &&
-                          !method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.PRIVATE) &&
-                          collectionClass != null && (collectionClass.equals(method.getContainingClass()) || method.getContainingClass().isInheritor(collectionClass, true))) {
+                      if (PsiJavaPatterns.psiMethod().withName("toArray").withParameterCount(1)
+                          .definedInClass(CommonClassNames.JAVA_UTIL_COLLECTION).accepts(method)) {
                         continue;
                       }
 

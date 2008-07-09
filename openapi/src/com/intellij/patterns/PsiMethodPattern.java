@@ -24,6 +24,14 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
     super(PsiMethod.class);
   }
 
+  public PsiMethodPattern withParameterCount(@NonNls final int paramCount) {
+    return with(new PatternCondition<PsiMethod>("withParameterCount") {
+      public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
+        return method.getParameterList().getParametersCount() == paramCount;
+      }
+    });
+  }
+
   /**
    * Selects the corrected method by argument types
    * @param types the array of FQN of the parameter types or wildcards.
