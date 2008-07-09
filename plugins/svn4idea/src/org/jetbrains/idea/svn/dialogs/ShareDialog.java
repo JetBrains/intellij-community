@@ -10,6 +10,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.*;
 
 public class ShareDialog extends RepositoryBrowserDialog {
+  private String mySelectedURL;
 
   public ShareDialog(Project project) {
     super(project);
@@ -28,6 +29,16 @@ public class ShareDialog extends RepositoryBrowserDialog {
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
     ((RepositoryTreeModel) getRepositoryBrowser().getRepositoryTree().getModel()).setShowFiles(false);
+  }
+
+  @Override
+  protected void doOKAction() {
+    mySelectedURL = getRepositoryBrowser().getSelectedURL();
+    super.doOKAction();
+  }
+
+  public String getSelectedURL() {
+    return mySelectedURL;
   }
 
   protected JPopupMenu createPopup(boolean toolWindow) {

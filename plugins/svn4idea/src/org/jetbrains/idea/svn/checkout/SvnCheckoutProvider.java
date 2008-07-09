@@ -59,11 +59,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
         // allow to select working copy format
-        String formatMode = null;
-        while (formatMode == null) {
-          formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_15);
-          SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(formatMode));
-        }
+        promptForWCopyFormat(target, project);
 
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
@@ -119,6 +115,14 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     };
 
     ProgressManager.getInstance().run(checkoutBackgroundTask);
+  }
+
+  public static void promptForWCopyFormat(final File target, final Project project) {
+    String formatMode = null;
+    while (formatMode == null) {
+      formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_15);
+      SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(formatMode));
+    }
   }
 
   public static void doExport(final Project project, final File target, final String url, final boolean recursive,

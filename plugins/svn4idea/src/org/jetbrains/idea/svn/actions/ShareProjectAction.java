@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
+import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -64,7 +66,7 @@ public class ShareProjectAction extends BasicAction {
     return true;
   }
 
-  protected void perform(Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
     ShareDialog shareDialog = new ShareDialog(project);
     shareDialog.show();
 
@@ -79,10 +81,15 @@ public class ShareProjectAction extends BasicAction {
             SVNCommitInfo info = activeVcs.createCommitClient().doMkDir(new SVNURL[] {url},
                                                                         SvnBundle.message("share.directory.commit.message", file.getName()));
             SVNRevision revision = SVNRevision.create(info.getNewRevision());
-            activeVcs.createUpdateClient().doCheckout(url, new File(file.getPath()), SVNRevision.UNDEFINED, revision, true);
+            final File path = new File(file.getPath());
+            SvnCheckoutProvider.promptForWCopyFormat(path, project);
+            activeVcs.createUpdateClient().doCheckout(url, path, SVNRevision.UNDEFINED, revision, true);
+            SvnWorkingCopyFormatHolder.setPresetFormat(null);
             activeVcs.createWCClient().doAdd(new File(file.getPath()), true, false, false, true);
           } catch (SVNException e) {
             error[0] = e;
+          } finally {
+            SvnWorkingCopyFormatHolder.setPresetFormat(null);
           }
         }
       }, SvnBundle.message("share.directory.title"), false, project);
