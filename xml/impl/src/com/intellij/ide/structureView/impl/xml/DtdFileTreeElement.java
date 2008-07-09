@@ -33,6 +33,7 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -112,7 +113,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
         final String name = getElement().getName();
         for(XmlAttlistDecl a:attLists) {
           final String aname = a.getName();
-          if (!name.equals(aname)) continue;
+          if (!Comparing.equal(aname, name)) continue;
           if (attrMap == null) attrMap = new LinkedHashMap<String, XmlAttributeDecl>();
 
           for(XmlAttributeDecl d : a.getAttributeDecls()) {
