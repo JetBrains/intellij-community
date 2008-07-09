@@ -24,6 +24,6 @@ public class CommentByLineCommentAction extends BaseCodeInsightAction {
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter() != null;
     }
-    return LanguageCommenters.INSTANCE.forLanguage(file.getLanguage()) != null;
+    return LanguageCommenters.INSTANCE.forLanguage(file.getLanguage()) != null || LanguageCommenters.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage()) != null;
   }
 }

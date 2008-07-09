@@ -3,12 +3,11 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.CommentByBlockCommentHandler;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import com.intellij.lang.Language;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
@@ -27,9 +26,8 @@ public class CommentByBlockCommentAction extends BaseCodeInsightAction {
       return ((AbstractFileType)fileType).getCommenter() != null;
     }
 
-    final Language lang = file.getLanguage();
-    if (lang == null) return false;
-    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(lang);
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
+    if (commenter == null) commenter = LanguageCommenters.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
     if (commenter == null) return false;
     return commenter.getBlockCommentPrefix() != null && commenter.getBlockCommentSuffix() != null;
   }

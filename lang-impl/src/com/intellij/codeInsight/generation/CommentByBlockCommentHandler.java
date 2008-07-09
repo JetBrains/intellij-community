@@ -157,6 +157,9 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     if (lang == null || LanguageCommenters.INSTANCE.forLanguage(lang) == null) {
       lang = file.getLanguage();
     }
+    if (lang == null || LanguageCommenters.INSTANCE.forLanguage(lang) == null) {
+      lang = file.getViewProvider().getBaseLanguage();
+    }
     return LanguageCommenters.INSTANCE.forLanguage(lang);
   }
 

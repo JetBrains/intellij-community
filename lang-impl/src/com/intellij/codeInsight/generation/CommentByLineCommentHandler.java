@@ -269,7 +269,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
     Language language = PsiUtilBase.getLanguageAtOffset(myFile, offset);
-    return LanguageCommenters.INSTANCE.forLanguage(language);
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+    return commenter == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getViewProvider().getBaseLanguage()) : commenter;
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
