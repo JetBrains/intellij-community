@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.ui.table.TableView;
@@ -114,7 +115,7 @@ public class SvnMapDialog extends DialogWrapper {
       }
     }
     for (WCInfo info : infos) {
-      newMappings.add(new VcsDirectoryMapping(info.getPath(), svnVcsName));
+      newMappings.add(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(info.getPath()), svnVcsName));
     }
     manager.setDirectoryMappings(newMappings);
 
