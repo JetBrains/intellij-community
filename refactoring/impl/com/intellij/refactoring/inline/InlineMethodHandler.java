@@ -70,7 +70,8 @@ class InlineMethodHandler {
         return;
       }
       if (reference != null) {
-        PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)reference.getElement());
+        final PsiElement element = reference.getElement();
+        PsiCall constructorCall = element instanceof PsiJavaCodeReferenceElement ? RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)element) : null;
         if (constructorCall == null || !method.equals(constructorCall.resolveMethod())) reference = null;
       }
     }
