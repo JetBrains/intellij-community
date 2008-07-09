@@ -205,7 +205,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return lib;
   }
 
-
   protected void assertModuleLibDeps(String moduleName, String... expectedDeps) {
     assertModuleDeps(moduleName, LibraryOrderEntry.class, expectedDeps);
   }

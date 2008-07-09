@@ -162,12 +162,13 @@ public class RootModelAdapter {
   }
 
   public void createModuleLibrary(String libraryName,
-                                  String urlClasses,
-                                  String urlSources,
-                                  String urlJavadoc,
+                                  @Nullable String urlClasses,
+                                  @Nullable String urlSources,
+                                  @Nullable String urlJavadoc,
                                   boolean isExportable) {
-    final Library library = getLibraryModel().createLibrary(libraryName);
-    final Library.ModifiableModel libraryModel = library.getModifiableModel();
+    Library library = getLibraryModel().createLibrary(libraryName);
+    Library.ModifiableModel libraryModel = library.getModifiableModel();
+
     setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
     setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
     setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
@@ -176,6 +177,15 @@ public class RootModelAdapter {
     e.setExported(isExportable);
 
     libraryModel.commit();
+  }
+
+  private void setUrl(Library.ModifiableModel libraryModel, @Nullable String newUrl, OrderRootType type) {
+    for (String url : libraryModel.getUrls(type)) {
+      libraryModel.removeRoot(url, type);
+    }
+    if (newUrl != null) {
+      libraryModel.addRoot(newUrl, type);
+    }
   }
 
   private LibraryOrderEntry findLibraryEntry(ModuleRootModel m, final Library library) {
@@ -198,25 +208,6 @@ public class RootModelAdapter {
       }
     }
     return libraries;
-  }
-
-  void updateModuleLibrary(String libraryName, String urlSources, String urlJavadoc) {
-    final Library library = getLibraryModel().getLibraryByName(libraryName);
-    if (library != null) {
-      final Library.ModifiableModel libraryModel = library.getModifiableModel();
-      setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
-      setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
-      libraryModel.commit();
-    }
-  }
-
-  private void setUrl(final Library.ModifiableModel libraryModel, final String newUrl, final OrderRootType type) {
-    for (String url : libraryModel.getUrls(type)) {
-      libraryModel.removeRoot(url, type);
-    }
-    if (newUrl != null) {
-      libraryModel.addRoot(newUrl, type);
-    }
   }
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {

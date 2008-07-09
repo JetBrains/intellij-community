@@ -116,11 +116,16 @@ public class MavenModuleConfigurator {
     return myIgnorePatternCache.matcher(id.toString()).matches();
   }
 
+  @Nullable
   private String getUrl(String artifactPath, String classifier) {
     String path = artifactPath;
 
     if (classifier != null) {
-      path = MessageFormat.format("{0}-{1}.jar", path.substring(0, path.lastIndexOf(".")), classifier);
+      int dotPos = path.lastIndexOf(".");
+      if (dotPos == -1) return null; // somethimes path doesn't contain '.'; but i can't make up any reason.
+
+      String withoutExtension = path.substring(0, dotPos);
+      path = MessageFormat.format("{0}-{1}.jar", withoutExtension, classifier);
     }
 
     String normalizedPath = FileUtil.toSystemIndependentName(path);
