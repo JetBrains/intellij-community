@@ -437,13 +437,16 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       if (usage instanceof NonCodeUsageInfo) {
         nonCodeUsages.add((NonCodeUsageInfo)usage);
-      } else if (usage instanceof MoveRenameUsageInfo) {
+      }
+      else if (usage instanceof MoveRenameUsageInfo) {
         final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
         final PsiElement oldElement = moveRenameUsage.getReferencedElement();
         final PsiElement newElement = oldToNewElementsMapping.get(oldElement);
         LOG.assertTrue(newElement != null);
         final PsiReference reference = moveRenameUsage.getReference();
-        if (reference != null) reference.bindToElement(newElement);
+        if (reference != null) {
+          reference.bindToElement(newElement);
+        }
       }
     }
     return nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);

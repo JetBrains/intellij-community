@@ -57,6 +57,10 @@ public class MoveClassTest extends CodeInsightTestCase {
     doTest("classAndSecondary", new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
   }
 
+  public void testIdeadev27996() throws Exception {
+    doTest("ideadev27996", new String[] { "pack1.X" }, "pack2");
+  }
+
   private void doTest(String testName, String[] classNames, String newPackageName) throws Exception{
     String root = PathManagerEx.getTestDataPath()+ "/refactoring/moveClass/" + testName;
 

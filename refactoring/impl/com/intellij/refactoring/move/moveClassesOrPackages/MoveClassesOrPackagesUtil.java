@@ -234,6 +234,7 @@ public class MoveClassesOrPackagesUtil {
         }
       }
       newClass = (PsiClass)created.replace(aClass);
+      correctOldClassReferences(newClass, aClass);
       aClass.delete();
     }
     else if (!newDirectory.equals(file.getContainingDirectory()) && newDirectory.findFile(file.getName()) != null) {
@@ -254,6 +255,22 @@ public class MoveClassesOrPackagesUtil {
     }
 
     return newClass;
+  }
+
+  private static void correctOldClassReferences(final PsiClass newClass, final PsiClass oldClass) {
+    newClass.accept(new JavaRecursiveElementVisitor() {
+      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        if (reference.isReferenceTo(oldClass)) {
+          try {
+            reference.bindToElement(newClass);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+        super.visitReferenceElement(reference);
+      }
+    });
   }
 
   private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
