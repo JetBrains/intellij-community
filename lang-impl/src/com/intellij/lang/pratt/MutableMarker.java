@@ -54,15 +54,17 @@ public class MutableMarker {
   }
 
   public void finish() {
-    assert myMode == Mode.READY || myMode == Mode.DROPPED && myResultType == null: myMode;
-    if (myResultType == null) {
-      myMode = Mode.DROPPED;
-      myStartMarker.drop();
-    } else {
-      myMode = Mode.COMMITTED;
-      myStartMarker.done(myResultType);
-      restorePath();
-      myPath.addLast(myResultType);
+    if (myMode == Mode.READY) {
+      if (myResultType == null) {
+        myMode = Mode.DROPPED;
+        myStartMarker.drop();
+      }
+      else {
+        myMode = Mode.COMMITTED;
+        myStartMarker.done(myResultType);
+        restorePath();
+        myPath.addLast(myResultType);
+      }
     }
   }
 
