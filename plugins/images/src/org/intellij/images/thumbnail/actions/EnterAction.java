@@ -26,7 +26,7 @@ public final class EnterAction extends AnAction {
                 ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
                 for (VirtualFile file : selection) {
                     if (typeManager.isImage(file)) {
-                        fileEditorManager.openFile(file, true);
+                        fileEditorManager.openFile(file, false);
                     }
                 }
             }
