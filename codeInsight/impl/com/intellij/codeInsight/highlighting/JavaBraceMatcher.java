@@ -33,7 +33,8 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
             || tokenType == JavaTokenType.COMMA
             || tokenType == JavaTokenType.RPARENTH
             || tokenType == JavaTokenType.RBRACKET
-            || tokenType == JavaTokenType.RBRACE;
+            || tokenType == JavaTokenType.RBRACE
+            || tokenType == JavaTokenType.LBRACE;
   }
 
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
