@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 
@@ -43,7 +44,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     if (obj instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      Editor editor = context.editor;
+      Editor editor = context.getEditor();
       Document document = editor.getDocument();
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
@@ -88,7 +89,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       }
       return;
     } else if (obj instanceof String && !"assert".equals(obj)) {
-      Editor editor = context.editor;
+      Editor editor = context.getEditor();
       Document document = editor.getDocument();
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
@@ -100,7 +101,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
 
   }
 
-  private boolean isExpressionStatement(PsiFile psiFile, int offset) {
+  private static boolean isExpressionStatement(PsiFile psiFile, int offset) {
     PsiElement elementAt = psiFile.findElementAt(offset);
     if (elementAt == null) return false;
     GrExpression expr = PsiTreeUtil.getParentOfType(elementAt, GrExpression.class);
@@ -108,7 +109,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     return expr.getParent() instanceof GrControlFlowOwner;
   }
 
-  private void handleOverwrite(final int offset, final Document document) {
+  private static void handleOverwrite(final int offset, final Document document) {
     final CharSequence sequence = document.getCharsSequence();
     int i = offset;
     while (i < sequence.length() && (Character.isJavaIdentifierPart(sequence.charAt(i)) || sequence.charAt(i) == '\''))
@@ -116,14 +117,14 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     document.deleteString(offset, i);
   }
 
-  private void addTailType(LookupElement item) {
+  private static void addTailType(LookupElement item) {
     if ("default".equals(item.toString())) {
       item.setTailType(TailType.CASE_COLON);
       return;
     }
-    String[] exprs = {"true", "false", "null", "super", "this"};
-    String[] withSemi = {"break", "continue"};
-    String[] withSpace = {"private", "public", "protected", "static", "transient", "abstract",
+    @NonNls String[] exprs = {"true", "false", "null", "super", "this"};
+    @NonNls String[] withSemi = {"break", "continue"};
+    @NonNls String[] withSpace = {"private", "public", "protected", "static", "transient", "abstract",
             "native", "volatile", "strictfp", "boolean", "byte", "char", "short", "int", "float", "long", "double", "void",
             "new", "try", "while", "with", "switch", "for", "return", "throw", "throws", "assert", "synchronized", "package",
             "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else", "instanceof",

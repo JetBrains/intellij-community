@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
   public boolean isAcceptable(InsertionContext context, int startOffset, LookupElement item) {
-    PsiFile file = context.file;
+    PsiFile file = context.getFile();
     if (!(file instanceof GroovyFile)) return false;
 
     PsiElement element = file.findElementAt(startOffset);
@@ -45,7 +45,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
     }
     if (!(element instanceof GrDocComment)) return false;
 
-    int offset = context.editor.getCaretModel().getOffset();
+    int offset = context.getEditor().getCaretModel().getOffset();
     String text = file.getText();
     return offset < text.length() && item.getObject() instanceof PsiMethod;
 
@@ -53,7 +53,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
   public void handleInsert(InsertionContext context, int startOffset, LookupElement item) {
 
-    Editor editor = context.editor;
+    Editor editor = context.getEditor();
     Object o = item.getObject();
     assert o instanceof PsiMethod;
     PsiMethod method = (PsiMethod) o;
@@ -91,7 +91,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
     int endOffset = offset + paramText.length();
 
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
-    PsiReference ref = context.file.findReferenceAt(startOffset);
+    PsiReference ref = context.getFile().findReferenceAt(startOffset);
     if (ref instanceof GrDocMethodReference) {
       GrDocMethodReference methodReference = (GrDocMethodReference) ref;
       GrDocMethodParams list = methodReference.getParameterList();
