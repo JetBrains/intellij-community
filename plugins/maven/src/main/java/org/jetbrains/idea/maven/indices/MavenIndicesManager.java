@@ -30,7 +30,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     IDLE, WAITING, UPDATING
   }
 
-  private File myIndicesDir;
+  private File myTestIndicesDir;
 
   private volatile MavenEmbedder myEmbedder;
   private volatile MavenIndices myIndices;
@@ -51,25 +51,23 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    setIndexDir(new File(PathManager.getSystemPath(), "Maven/Indices"));
   }
 
   @TestOnly
-  public void setIndexDir(File indicesDir) {
-    myIndicesDir = indicesDir;
+  public void setTestIndexDir(File indicesDir) {
+    myTestIndicesDir = indicesDir;
   }
 
   private synchronized MavenIndices getIndicesObject() {
     if (myIndices != null) return myIndices;
     
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      assert myIndicesDir != null : "MavenIndicesManager.setIndexDir should be called in test mode";
-    }
     MavenCoreSettings settings = MavenCore.getInstance(ProjectManager.getInstance().getDefaultProject()).getState();
 
     myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings).getEmbedder();
-    myIndices = new MavenIndices(myEmbedder, myIndicesDir);
+    File dir = myTestIndicesDir == null
+               ? new File(PathManager.getSystemPath(), "Maven/Indices")
+               : myTestIndicesDir;
+    myIndices = new MavenIndices(myEmbedder, dir);
 
     return myIndices;
   }
