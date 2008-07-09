@@ -3,6 +3,8 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -440,7 +442,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   @SuppressWarnings("HardCodedStringLiteral")
   private static void adjustHashCodeToArrays(StringBuilder buffer, final PsiField field, final String name) {
-    if (field.getType() instanceof PsiArrayType && PsiUtil.isLanguageLevel5OrHigher(field)) {
+    if (field.getType() instanceof PsiArrayType && hasArraysHashCode(field)) {
       buffer.append("Arrays.hashCode(");
       buffer.append(name);
       buffer.append(")");
@@ -449,6 +451,16 @@ public class GenerateEqualsHelper implements Runnable {
       buffer.append(name);
       buffer.append(".hashCode()");
     }
+  }
+
+  private static boolean hasArraysHashCode(final PsiField field) {
+    // the method was added in JDK 1.5 - check for actual method presence rather than language level
+    Module module = ModuleUtil.findModuleForPsiElement(field);
+    if (module == null) return false;
+    PsiClass arraysClass = JavaPsiFacade.getInstance(field.getProject()).findClass("java.util.Arrays", module.getModuleWithLibrariesScope());
+    if (arraysClass == null) return false;
+    final PsiMethod[] methods = arraysClass.findMethodsByName("hashCode", false);
+    return methods.length > 0;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
