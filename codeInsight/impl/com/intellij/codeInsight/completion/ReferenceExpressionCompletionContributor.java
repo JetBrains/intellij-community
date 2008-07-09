@@ -97,7 +97,15 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                 final PsiSubstitutor substitutor = (PsiSubstitutor)qualifier.getAttribute(LookupItem.SUBSTITUTOR);
                 try {
                   final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
-                  final PsiExpression ref = elementFactory.createExpressionFromText(prefix + ".xxx", element);
+                  String qualifierText = "";
+                  if (reference instanceof PsiJavaCodeReferenceElement) {
+                    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)reference;
+                    final PsiElement q = referenceElement.getQualifier();
+                    if (q != null) {
+                      qualifierText = q.getText() + ".";
+                    }
+                  }
+                  final PsiExpression ref = elementFactory.createExpressionFromText(qualifierText + prefix + ".xxx", element);
                   for (final LookupItem<?> item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, qualifierFilter, result)) {
                     if (item.getObject() instanceof PsiMethod) {
                       final PsiMethod method = (PsiMethod)item.getObject();
