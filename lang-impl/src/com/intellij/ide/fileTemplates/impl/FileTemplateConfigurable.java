@@ -4,6 +4,7 @@ import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
@@ -359,7 +360,9 @@ public class FileTemplateConfigurable implements Configurable {
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
     if (fileType == FileTypes.UNKNOWN) return null;
 
-    return PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
+    final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
+    file.getViewProvider().putUserData(FileTemplateManager.DEFAULT_TEMPLATE_PROPERTIES, FileTemplateManager.getInstance().getDefaultProperties());
+    return file;
   }
 
   public void disposeUIResources() {

@@ -1,6 +1,7 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,7 @@ import java.util.Properties;
  * Date: Jul 24, 2002
  */
 public abstract class FileTemplateManager{
+  public static final Key<Properties> DEFAULT_TEMPLATE_PROPERTIES = Key.create("DEFAULT_TEMPLATE_PROPERTIES");
   public static final int RECENT_TEMPLATES_SIZE = 25;
 
   @NonNls public static final String INTERNAL_HTML_TEMPLATE_NAME = "Html";
