@@ -110,7 +110,7 @@ public class ShowDiffAction extends AnAction {
   public static void showDiffForChange(Change[] changes, int index, final Project project, @Nullable DiffExtendUIFactory actionsFactory,
                                        final boolean showFrame) {
     Change selectedChange = changes [index];
-    changes = filterDirectoryChanges(changes);
+    changes = filterDirectoryAndBinaryChanges(changes);
     if (changes.length == 0) {
       return;
     }
@@ -138,11 +138,13 @@ public class ShowDiffAction extends AnAction {
     }
   }
 
-  private static Change[] filterDirectoryChanges(final Change[] changes) {
+  private static Change[] filterDirectoryAndBinaryChanges(final Change[] changes) {
     ArrayList<Change> changesList = new ArrayList<Change>();
     Collections.addAll(changesList, changes);
     for(int i=changesList.size()-1; i >= 0; i--) {
-      if (ChangesUtil.getFilePath(changesList.get(i)).isDirectory()) {
+      final FilePath path = ChangesUtil.getFilePath(changesList.get(i));
+      //if (path.isDirectory() || path.getFileType().isBinary()) {
+      if (path.isDirectory()) {
         changesList.remove(i);
       }
     }
