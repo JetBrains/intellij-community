@@ -9,6 +9,8 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NotNull;
@@ -47,11 +49,17 @@ public class CamelHumpMatcher extends PrefixMatcher {
     }
     //todo dirty hack
     if (result && itemCaseInsensitive) {
-      final String currentString = item.getLookupString();
-      final String newString = handleCaseInsensitiveVariant(myPrefix, currentString);
-      item.setLookupString(newString);
-      if (item.getObject().equals(currentString)) {
-        ((LookupItem)item).setObject(newString);
+      final String currentString = ContainerUtil.find(item.getAllLookupStrings(), new Condition<String>() {
+        public boolean value(final String s) {
+          return StringUtil.startsWithIgnoreCase(s, myPrefix);
+        }
+      });
+      if (currentString != null) {
+        final String newString = handleCaseInsensitiveVariant(myPrefix, currentString);
+        item.setLookupString(newString);
+        if (item.getObject().equals(currentString)) {
+          ((LookupItem)item).setObject(newString);
+        }
       }
     }
     return result;
@@ -67,7 +75,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return new CamelHumpMatcher(prefix);
   }
 
-  private static String handleCaseInsensitiveVariant(final String prefix, final String uniqueText) {
+  private static String handleCaseInsensitiveVariant(final String prefix, @NotNull final String uniqueText) {
     final int length = prefix.length();
     if (length == 0) return uniqueText;
     boolean isAllLower = true;
