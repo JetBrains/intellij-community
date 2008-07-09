@@ -102,7 +102,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   private void showHint(final LightweightHint hint, final PsiElement element, Editor editor) {
-    if (element != myElement) {
+    if (element != myElement && element.isValid()) {
       hideCurrentHintIfAny();
       setCurrentHint(hint, element);
 
