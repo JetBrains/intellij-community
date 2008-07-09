@@ -181,6 +181,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       }
       if (anyChange) {
         modelsToCommit.add(rootModel);
+      } else {
+        rootModel.dispose();
       }
     }
 
