@@ -201,7 +201,7 @@ public abstract class ChooseByNameBase{
       final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
       if (updateProcessor != null){
         myHint.cancel();
-        updateProcessor.getUpdater().value(element);
+        updateProcessor.updatePopup(element);
       }
     }
   }

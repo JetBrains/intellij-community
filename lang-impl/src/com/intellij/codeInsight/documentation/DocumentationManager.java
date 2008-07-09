@@ -114,69 +114,19 @@ public class DocumentationManager implements ProjectComponent {
     myActionManagerEx.removeAnActionListener(myActionListener);
   }
 
-  public JBPopup showJavaDocInfo(@NotNull PsiElement element) {
-    final DocumentationComponent component = new DocumentationComponent(this);
-
-    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
-      public boolean value(final PsiElement element) {
-        showJavaDocInfo(element);
-        return false;
-      }
-    });
-    final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocusCondition(getProject(element), NotLookupOrSearchCondition.INSTANCE)
-      .setProject(myProject)
-      .addListener(updateProcessor)
-      .addUserData(updateProcessor)
-      .setForceHeavyweight(true)
-      .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
-      .setResizable(true)
-      .setMovable(true)
-      .setTitle(getTitle(element))
-      .setCancelCallback(new Computable<Boolean>() {
-        public Boolean compute() {
-          if (fromQuickSearch()) {
-            ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-          }
-
-          Disposer.dispose(component);
-
-          myEditor = null;
-          myPreviouslyFocused = null;
-          return Boolean.TRUE;
+  public JBPopup showJavaDocInfo(@NotNull final PsiElement element) {
+    PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
+      public void updatePopup(Object lookupItemObject) {
+        if (lookupItemObject instanceof PsiElement) {
+          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this);
         }
-      })
-      .createPopup();
-
-
-    AbstractPopup oldHint = (AbstractPopup)getDocInfoHint();
-
-    if (oldHint != null) {
-      DocumentationComponent oldComponent = (DocumentationComponent)oldHint.getComponent();
-      PsiElement element1 = oldComponent.getElement();
-      if (Comparing.equal(element, element1)) {
-        return oldHint;
       }
-      oldHint.cancel();
-    }
-
-    component.setHint(hint);
-
-    fetchDocInfo(getDefaultCollector(element), component);
-
-    myDocInfoHintRef = new WeakReference<JBPopup>(hint);
-
-    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(getProject(element));
-
-    if (fromQuickSearch()) {
-      ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
-    }
-
-    return hint;
+    };
+    return doShowJavaDocInfo(element, true, false, updateProcessor);
   }
 
   @Nullable
-  public JBPopup showJavaDocInfo(final Editor editor, @Nullable PsiFile file, boolean requestFocus) {
+  public JBPopup showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
     myEditor = editor;
     final Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -187,7 +137,7 @@ public class DocumentationManager implements ProjectComponent {
       myParameterInfoController = ParameterInfoController.findControllerAtOffset(editor, list.getTextRange().getStartOffset());
     }
 
-    PsiElement originalElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
+    final PsiElement originalElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
     PsiElement element = findTargetElement(editor, file, originalElement);
 
     if (element == null && myParameterInfoController != null) {
@@ -211,24 +161,28 @@ public class DocumentationManager implements ProjectComponent {
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
-    AbstractPopup oldHint = (AbstractPopup)getDocInfoHint();
-    if (oldHint != null) {
-      DocumentationComponent component = (DocumentationComponent)oldHint.getComponent();
-      PsiElement element1 = component.getElement();
-      if (Comparing.equal(element, element1)) {
-        if (requestFocus) {
-          component.getComponent().requestFocus();
-        }
-        return oldHint;
-      }
-      oldHint.cancel();
-    }
-
-    final DocumentationComponent component = new DocumentationComponent(this);
     storeOriginalElement(project, originalElement, element);
 
-    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
-      public boolean value(final PsiElement element) {
+    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
+      public void updatePopup(Object lookupIteObject) {
+        if (lookupIteObject instanceof PsiElement) {
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this);
+          return;
+        }
+
+        DocumentationProvider documentationProvider = getProviderFromElement(file);
+
+        PsiElement element = null;
+        if (documentationProvider!=null) {
+          element = documentationProvider.getDocumentationElementForLookupItem(
+            PsiManager.getInstance(myProject),
+            lookupIteObject,
+            originalElement
+          );
+        }
+
+        if (element == null) return;
+
         if (myEditor != null) {
           final PsiFile file = element.getContainingFile();
           if (file != null) {
@@ -238,36 +192,56 @@ public class DocumentationManager implements ProjectComponent {
           }
         }
         else {
-          showJavaDocInfo(element);
+          doShowJavaDocInfo(element, false, false, this);
         }
-        return false;
       }
-    });
+    };
+
+    return doShowJavaDocInfo(element, false, requestFocus, updateProcessor);
+  }
+
+  private JBPopup doShowJavaDocInfo(PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor) {
+    Project project = getProject(element);
+    final DocumentationComponent component = new DocumentationComponent(this);
+
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
-      .setProject(project)
-      .addListener(updateProcessor)
-      .addUserData(updateProcessor)
-      .setForceHeavyweight(false)
-      .setDimensionServiceKey(project, JAVADOC_LOCATION_AND_SIZE, false)
-      .setResizable(true)
-      .setMovable(true)
-      .setTitle(getTitle(element))
-      .setCancelCallback(new Computable<Boolean>(){
-        public Boolean compute() {
-          if (fromQuickSearch()) {
-            ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
+        .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
+        .setProject(project)
+        .addListener(updateProcessor)
+        .addUserData(updateProcessor)
+        .setForceHeavyweight(heavyWeight)
+        .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
+        .setResizable(true)
+        .setMovable(true)
+        .setTitle(getTitle(element))
+        .setCancelCallback(new Computable<Boolean>() {
+          public Boolean compute() {
+            if (fromQuickSearch()) {
+              ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
+            }
+
+            Disposer.dispose(component);
+            myEditor = null;
+            myPreviouslyFocused = null;
+            myParameterInfoController = null;
+            return Boolean.TRUE;
           }
+        })
+        .createPopup();
 
-          Disposer.dispose(component);
-          myEditor = null;
-          myPreviouslyFocused = null;
-          myParameterInfoController = null;
-          return Boolean.TRUE;
+
+    AbstractPopup oldHint = (AbstractPopup)getDocInfoHint();
+    if (oldHint != null) {
+      DocumentationComponent oldComponent = (DocumentationComponent)oldHint.getComponent();
+      PsiElement element1 = oldComponent.getElement();
+      if (Comparing.equal(element, element1)) {
+        if (requestFocus) {
+          component.getComponent().requestFocus();
         }
-      })
-      .createPopup();
-
+        return oldHint;
+      }
+      oldHint.cancel();
+    }
 
     component.setHint(hint);
 
@@ -275,6 +249,10 @@ public class DocumentationManager implements ProjectComponent {
 
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
+
+    if (fromQuickSearch()) {
+      ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
+    }
 
     return hint;
   }

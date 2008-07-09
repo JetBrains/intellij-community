@@ -46,7 +46,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
@@ -157,12 +156,11 @@ public class ShowImplementationsAction extends AnAction {
 
     final ImplementationViewComponent component = new ImplementationViewComponent(impls);
     if (component.hasElementsToShow()) {
-      final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
-        public boolean value(final PsiElement element) {
-          updateElementImplementations(element, editor, project);
-          return false;
+      final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
+        public void updatePopup(Object lookupItemObject) {
+          updateElementImplementations((PsiElement)lookupItemObject, editor, project);
         }
-      });
+      };
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
         .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setProject(project)

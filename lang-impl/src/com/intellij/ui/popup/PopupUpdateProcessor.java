@@ -5,25 +5,16 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.psi.PsiElement;
 
 import java.awt.*;
 
 /**
  * @author yole
  */
-public class PopupUpdateProcessor extends JBPopupAdapter {
-  private Condition<PsiElement> myPopupUpdater;
+public abstract class PopupUpdateProcessor extends JBPopupAdapter {
 
-  public PopupUpdateProcessor(Condition<PsiElement> popupUpdater) {
-    myPopupUpdater = popupUpdater;
-  }
-
-  public Condition<PsiElement> getUpdater() {
-    return myPopupUpdater;
-  }
+  public abstract void updatePopup(Object lookupItemObject);
 
   public void beforeShown(final Project project, final JBPopup jbPopup) {
     final Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
@@ -33,11 +24,8 @@ public class PopupUpdateProcessor extends JBPopupAdapter {
           if (jbPopup.isVisible()) { //was not canceled yet
             final LookupItem item = event.getItem();
             if (item != null) {
-              final Object o = item.getObject();
-              if (o instanceof PsiElement) {
-                jbPopup.cancel(); //close this one
-                myPopupUpdater.value((PsiElement)o); //open next
-              }
+              jbPopup.cancel(); //close this one
+              updatePopup(item.getObject()); //open next
             }
           }
           activeLookup.removeLookupListener(this); //do not multiply listeners
