@@ -37,4 +37,13 @@ public abstract class DomUIControl<T extends DomElement> implements CommittableP
   public abstract boolean canNavigate(DomElement element);
 
   public abstract void navigate(DomElement element);
+
+  public void addDependency(final DomUIControl control) {
+    control.addCommitListener(new CommitAdapter() {
+      @Override
+      public void afterCommit(final DomUIControl control) {
+        reset();
+      }
+    });
+  }
 }
