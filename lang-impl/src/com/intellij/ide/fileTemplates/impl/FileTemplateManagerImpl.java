@@ -200,14 +200,24 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     props.setProperty("TIME", DateFormat.getTimeInstance().format(date));
     Calendar calendar = Calendar.getInstance();
     props.setProperty("YEAR", Integer.toString(calendar.get(Calendar.YEAR)));
-    props.setProperty("MONTH", Integer.toString(calendar.get(Calendar.MONTH) + 1)); //to correct Calendar bias to 0
-    props.setProperty("DAY", Integer.toString(calendar.get(Calendar.DAY_OF_MONTH)));
-    props.setProperty("HOUR", Integer.toString(calendar.get(Calendar.HOUR_OF_DAY)));
-    props.setProperty("MINUTE", Integer.toString(calendar.get(Calendar.MINUTE)));
+    props.setProperty("MONTH", getCalendarValue(calendar, Calendar.MONTH));
+    props.setProperty("DAY", getCalendarValue(calendar, Calendar.DAY_OF_MONTH));
+    props.setProperty("HOUR", getCalendarValue(calendar, Calendar.HOUR_OF_DAY));
+    props.setProperty("MINUTE", getCalendarValue(calendar, Calendar.MINUTE));
 
     props.setProperty("USER", SystemProperties.getUserName());
 
     return props;
+  }
+
+  private static String getCalendarValue(final Calendar calendar, final int field) {
+    int val = calendar.get(field);
+    if (field == Calendar.MONTH) val++;
+    final String result = Integer.toString(val);
+    if (result.length() == 1) {
+      return "0" + result;
+    }
+    return result;
   }
 
   private File getParentDirectory(boolean create) {
