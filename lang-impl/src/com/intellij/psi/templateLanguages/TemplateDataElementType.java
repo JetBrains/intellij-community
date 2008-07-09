@@ -81,7 +81,12 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     lexer.start(chars, 0, chars.length(),0);
     insertOuters(parsed, lexer, table);
 
-    if (parsed != null) TreeUtil.addChildren(treeElement, parsed.getFirstChildNode());
+    if (parsed != null) {
+      final TreeElement element = parsed.getFirstChildNode();
+      if (element != null) {
+        TreeUtil.addChildren(treeElement, element);
+      }
+    }
 
     treeElement.clearCaches();
     treeElement.subtreeChanged();
