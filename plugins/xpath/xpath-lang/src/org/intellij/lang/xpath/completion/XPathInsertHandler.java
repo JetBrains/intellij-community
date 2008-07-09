@@ -15,10 +15,7 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -27,14 +24,14 @@ import com.intellij.openapi.diagnostic.Logger;
 class XPathInsertHandler implements InsertHandler {
     private static final Logger LOG = Logger.getInstance(XPathInsertHandler.class.getName());
 
-    public void handleInsert(CompletionContext completionContext, int i, LookupData lookupData, LookupItem lookupItem, boolean selection, char c) {
+    public void handleInsert(InsertionContext context, LookupElement lookupItem) {
         final Object object = lookupItem.getObject();
         LOG.debug("object = " + object);
 
-        handleInsertImpl(completionContext, lookupData, lookupItem, c);
+        handleInsertImpl(context, lookupItem, context.getCompletionChar());
 
-        final CharSequence charsSequence = completionContext.editor.getDocument().getCharsSequence();
-        final CaretModel caretModel = completionContext.editor.getCaretModel();
+        final CharSequence charsSequence = context.editor.getDocument().getCharsSequence();
+        final CaretModel caretModel = context.editor.getCaretModel();
         int offset = caretModel.getOffset();
 
         if (object instanceof Lookup) {
@@ -42,7 +39,7 @@ class XPathInsertHandler implements InsertHandler {
 
             if (item.isFunction()) {
                 if (charAt(charsSequence, offset) != '(') {
-                    EditorModificationUtil.insertStringAtCaret(completionContext.editor, "()");
+                    EditorModificationUtil.insertStringAtCaret(context.editor, "()");
                     if (item.hasParameters()) {
                         caretModel.moveCaretRelatively(-1, 0, false, false, true);
                     }
@@ -51,13 +48,13 @@ class XPathInsertHandler implements InsertHandler {
                 }
             } else if (item instanceof NamespaceLookup) {
                 if (charAt(charsSequence, offset) != ':') {
-                    EditorModificationUtil.insertStringAtCaret(completionContext.editor, ":");
+                    EditorModificationUtil.insertStringAtCaret(context.editor, ":");
                     return;
                 }
             }
         }
 
-        if (c == '\t') {
+        if (context.getCompletionChar() == '\t') {
             if (charAt(charsSequence, offset) == ',') {
                 offset++;
                 caretModel.moveCaretRelatively(1, 0, false, false, true);
@@ -65,7 +62,7 @@ class XPathInsertHandler implements InsertHandler {
                     caretModel.moveCaretRelatively(1, 0, false, false, true);
                 }
             } else if (isIdentifier(charAt(charsSequence, offset)) && isIdentifier(charAt(charsSequence, offset - 1))) {
-                EditorModificationUtil.insertStringAtCaret(completionContext.editor, " ");
+                EditorModificationUtil.insertStringAtCaret(context.editor, " ");
             } else if (charAt(charsSequence, offset) == ':') {
                 caretModel.moveCaretRelatively(1, 0, false, false, true);
             }
@@ -76,7 +73,7 @@ class XPathInsertHandler implements InsertHandler {
         return charsSequence.length() > offset ? charsSequence.charAt(offset) : 0;
     }
 
-    public void handleInsertImpl(CompletionContext context, LookupData data, LookupItem item, char c) {
+    public void handleInsertImpl(InsertionContext context, LookupElement item, char c) {
 //        final int selectionLength = (context.getSelectionEndOffset() - context.getStartOffset());
 //        context.shiftOffsets(item.getLookupString().length() - data.prefix.length() - selectionLength);
 
@@ -85,13 +82,13 @@ class XPathInsertHandler implements InsertHandler {
         final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
         final boolean isOverwrite = c != 0
                 ? c == com.intellij.codeInsight.lookup.Lookup.REPLACE_SELECT_CHAR
-                : item.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
+                : ((LookupItem)item).getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
         if (idEndOffset != context.getSelectionEndOffset() && isOverwrite) {
             context.editor.getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
         }
     }
 
-    private static void adjustIdentifierEnd(CompletionContext completioncontext, LookupItem item) {
+    private static void adjustIdentifierEnd(InsertionContext completioncontext, LookupElement item) {
         final boolean isNamespace = (item.getObject() instanceof NamespaceLookup);
         final CharSequence charsSequence = completioncontext.editor.getDocument().getCharsSequence();
         final int textLength = completioncontext.editor.getDocument().getTextLength();

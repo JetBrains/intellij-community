@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.LookupData;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,21 +38,21 @@ import java.util.Arrays;
  * @author ven
  */
 public class GroovyInsertHandler extends DefaultInsertHandler {
-  public void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
+  public void handleInsert(InsertionContext context, LookupElement item) {
     Object obj = item.getObject();
     if (obj instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       Editor editor = context.editor;
       Document document = editor.getDocument();
-      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+      if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
       }
 
       CaretModel caretModel = editor.getCaretModel();
-      int offset = startOffset + method.getName().length();
+      int offset = context.getStartOffset() + method.getName().length();
       PsiFile file = PsiDocumentManager.getInstance(method.getProject()).getPsiFile(document);
-      PsiElement elementAt = file.findElementAt(startOffset);
+      PsiElement elementAt = file.findElementAt(context.getStartOffset());
       PsiElement parent = elementAt != null ? elementAt.getParent() : null;
       if (parent instanceof GrReferenceExpression && ((GrReferenceExpression) parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER)
         return;
@@ -79,7 +78,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
           PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
           docManager.commitDocument(document);
           PsiFile psiFile = docManager.getPsiFile(document);
-          if (isExpressionStatement(psiFile, startOffset) && PsiType.VOID.equals(method.getReturnType())) {
+          if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(method.getReturnType())) {
             document.insertString(offset, " ");
           } else {
             document.insertString(offset, "()");
@@ -91,13 +90,13 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     } else if (obj instanceof String && !"assert".equals(obj)) {
       Editor editor = context.editor;
       Document document = editor.getDocument();
-      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+      if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
       }
     }
 
     addTailType(item);
-    super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    super.handleInsert(context, item);
 
   }
 
@@ -117,7 +116,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     document.deleteString(offset, i);
   }
 
-  private void addTailType(LookupItem item) {
+  private void addTailType(LookupElement item) {
     if ("default".equals(item.toString())) {
       item.setTailType(TailType.CASE_COLON);
       return;

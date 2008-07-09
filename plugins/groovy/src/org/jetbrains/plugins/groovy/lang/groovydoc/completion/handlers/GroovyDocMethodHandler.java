@@ -15,28 +15,27 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers;
 
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.CaretModel;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 
 /**
  * @author ilyas
  */
 public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
-  public boolean isAcceptable(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
+  public boolean isAcceptable(InsertionContext context, int startOffset, LookupElement item) {
     PsiFile file = context.file;
     if (!(file instanceof GroovyFile)) return false;
 
@@ -52,7 +51,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
   }
 
-  public void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
+  public void handleInsert(InsertionContext context, int startOffset, LookupElement item) {
 
     Editor editor = context.editor;
     Object o = item.getObject();
@@ -84,14 +83,14 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
     caretModel.moveToOffset(endOffset);
   }
 
-  private static int shortenParamterReferences(CompletionContext context, int startOffset, PsiMethod method, StringBuffer buffer) {
-    Document document = context.editor.getDocument();
+  private static int shortenParamterReferences(InsertionContext context, int startOffset, PsiMethod method, StringBuffer buffer) {
+    Document document = context.getEditor().getDocument();
     int offset = startOffset + method.getName().length();
     String paramText = buffer.toString();
     document.insertString(offset, paramText);
     int endOffset = offset + paramText.length();
 
-    PsiDocumentManager.getInstance(context.project).commitDocument(document);
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     PsiReference ref = context.file.findReferenceAt(startOffset);
     if (ref instanceof GrDocMethodReference) {
       GrDocMethodReference methodReference = (GrDocMethodReference) ref;

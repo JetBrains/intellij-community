@@ -17,9 +17,8 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
 
 /**
  * @author ilyas
@@ -33,13 +32,13 @@ public class GroovyInsertHandlerAdapter extends DefaultInsertHandler{
     myHandlers = handlers;
   }
 
-  public void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
+  public void handleInsert(InsertionContext context, LookupElement item) {
     for (ContextSpecificInsertHandler handler : myHandlers) {
-      if (handler.isAcceptable(context, startOffset, data, item, signatureSelected, completionChar)) {
-        handler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+      if (handler.isAcceptable(context, context.getStartOffset(), item)) {
+        handler.handleInsert(context, context.getStartOffset(), item);
         return;
       }
     }
-    myGroovyInsertHandler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    myGroovyInsertHandler.handleInsert(context, item);
   }
 }

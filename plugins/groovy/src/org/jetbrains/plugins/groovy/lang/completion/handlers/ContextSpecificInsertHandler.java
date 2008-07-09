@@ -15,20 +15,19 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.handlers;
 
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
 
 /**
  * @author ilyas
  */
 public interface ContextSpecificInsertHandler {
 
-  boolean isAcceptable(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar);
+  boolean isAcceptable(InsertionContext context, int startOffset, LookupElement item);
 
   /**
-   * Handler can be executed ONLY if {@link #isAcceptable(CompletionContext, int, LookupData, LookupItem, boolean, char)}
+   * Handler can be executed ONLY if {@link #isAcceptable(com.intellij.codeInsight.completion.InsertionContext,int,com.intellij.codeInsight.completion.LookupData,com.intellij.codeInsight.lookup.LookupItem,boolean,char)}
    * returns true.
    */
-  void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar);
+  void handleInsert(InsertionContext context, int startOffset, LookupElement item);
 }
