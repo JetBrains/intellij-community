@@ -792,6 +792,9 @@ class TemplateListPanel extends JPanel {
 
       if (myExportButton != null) {
         myExportButton.setEnabled(enableExportButton);
+      }
+
+      if (myImportButton != null) {
         myImportButton.setEnabled(true);
       }
     }
