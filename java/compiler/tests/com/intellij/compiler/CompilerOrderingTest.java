@@ -42,8 +42,9 @@ public class CompilerOrderingTest extends IdeaTestCase {
     );
     
     
-    compireDescriptions(new String[] {
-      CompilerBundle.message("resource.compiler.description"), 
+    compareDescriptions(new String[] {
+      CompilerBundle.message("resource.compiler.description"),
+      "groovy compiler",
       "C2",
       "C4",
       "C1", 
@@ -52,7 +53,7 @@ public class CompilerOrderingTest extends IdeaTestCase {
     }, manager.getCompilers(TranslatingCompiler.class));
   }
 
-  private void compireDescriptions(final String[] expected, final TranslatingCompiler[] compilers) {
+  private void compareDescriptions(final String[] expected, final TranslatingCompiler[] compilers) {
     List<String> actualDescriptions = new ArrayList<String>();
     for (TranslatingCompiler compiler : compilers) {
       actualDescriptions.add(compiler.getDescription());
