@@ -14,12 +14,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiGenerationInfo<T extends PsiMember> implements GenerationInfo {
   private T myMember;
+  private final boolean myMergeIfExists;
 
   public PsiGenerationInfo(@NotNull final T member) {
     myMember = member;
+    myMergeIfExists = true;
   }
 
-  @NotNull
+  public PsiGenerationInfo(T myMember, boolean myMergeIfExists) {
+    this.myMember = myMember;
+    this.myMergeIfExists = myMergeIfExists;
+  }
+
+    @NotNull
   public final T getPsiMember() {
     return myMember;
   }
@@ -33,7 +40,7 @@ public class PsiGenerationInfo<T extends PsiMember> implements GenerationInfo {
       existingMember = aClass.findMethodBySignature((PsiMethod)myMember, false);
     }
     else existingMember = null;
-    if (existingMember == null) {
+    if (existingMember == null || !myMergeIfExists) {
       PsiElement newMember = GenerateMembersUtil.insert(aClass, myMember, anchor, before);
       myMember = (T)JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(newMember);
     }

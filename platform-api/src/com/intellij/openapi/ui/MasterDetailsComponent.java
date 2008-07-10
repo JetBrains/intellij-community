@@ -607,6 +607,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       parentNode.remove(node);
       myHasDeletedItems |= wasObjectStored(editableObject);
       fireItemsChangeListener(editableObject);
+      onItemDeleted(editableObject);
       namedConfigurable.disposeUIResources();
     }
     ((DefaultTreeModel)myTree.getModel()).reload();
@@ -617,6 +618,9 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     else {
       TreeUtil.selectFirstNode(myTree);
     }
+  }
+
+  protected void onItemDeleted(Object item) {
   }
 
   protected class MyDeleteAction extends AnAction {

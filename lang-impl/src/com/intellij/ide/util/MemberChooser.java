@@ -11,8 +11,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
@@ -53,8 +53,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private boolean myAllowMultiSelection;
   private final Project myProject;
   private final boolean myIsInsertOverrideVisible;
+  private final JComponent myHeaderPanel;
 
-  protected T[] myElements;
+  private T[] myElements;
   private HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<MemberNode, ParentNode>();
   private HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<ClassMember, MemberNode>();
   private ArrayList<ContainerNode> myContainerNodes = new ArrayList<ContainerNode>();
@@ -76,18 +77,29 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                        boolean allowMultiSelection,
                        @NotNull Project project,
                        boolean isInsertOverrideVisible) {
+    this(elements, allowEmptySelection, allowMultiSelection, project, isInsertOverrideVisible, null);
+  }
+
+  public MemberChooser(T[] elements,
+                       boolean allowEmptySelection,
+                       boolean allowMultiSelection,
+                       @NotNull Project project,
+                       boolean isInsertOverrideVisible,
+                       JComponent headerPanel
+                       ) {
     super(project, true);
-    myElements = elements;
     myAllowEmptySelection = allowEmptySelection;
     myAllowMultiSelection = allowMultiSelection;
     myProject = project;
     myIsInsertOverrideVisible = isInsertOverrideVisible;
+    myHeaderPanel = headerPanel;
     myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    resetData();
+    resetElements(elements);
     init();
   }
 
-  protected void resetData() {
+  public void resetElements(T[] elements) {
+    myElements = elements;
     mySelectedNodes.clear();
     myNodeToParentMap.clear();
     myElementToNodeMap.clear();
@@ -98,6 +110,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         myTreeModel = buildModel();
       }
     });
+
     myTree.setModel(myTreeModel);
     myTree.setRootVisible(false);
 
@@ -106,6 +119,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     if (myIsInsertOverrideVisible) {
       myInsertOverrideAnnotationCheckbox = new JCheckBox(IdeBundle.message("checkbox.insert.at.override"));
     }
+
+    myTree.doLayout();
   }
 
   /**
@@ -200,6 +215,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                              new Insets(0, 0, 0, 0), 0, 0)
     );
     return panel;
+  }
+
+  @Override
+  protected JComponent createNorthPanel() {
+    return myHeaderPanel;
   }
 
   protected JComponent createCenterPanel() {

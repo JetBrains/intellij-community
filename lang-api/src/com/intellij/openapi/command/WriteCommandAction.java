@@ -108,7 +108,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   private void performWriteCommandAction(final RunResult<T> result) {
-    if (!ensureFilesWritable(myProject, myPsiFiles == null? Collections.<PsiFile>emptyList() : Arrays.asList(myPsiFiles))) return;
+    if (myProject != null && !ensureFilesWritable(myProject, myPsiFiles == null? Collections.<PsiFile>emptyList() : Arrays.asList(myPsiFiles))) return;
 
     //this is needed to prevent memory leak, since command
     // is put into undo queue
