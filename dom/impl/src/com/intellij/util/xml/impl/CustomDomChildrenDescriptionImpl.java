@@ -10,6 +10,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

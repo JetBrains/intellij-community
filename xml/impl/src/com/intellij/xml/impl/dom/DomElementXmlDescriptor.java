@@ -1,6 +1,7 @@
 package com.intellij.xml.impl.dom;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -9,10 +10,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -206,7 +204,26 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
   @NonNls
   public String getName(final PsiElement context) {
-    return getDefaultName();
+    final String name = getDefaultName();
+    if (context instanceof XmlTag) {
+      XmlTag tag = (XmlTag)context;
+      final PsiFile file = tag.getContainingFile();
+      DomElement element = myManager.getDomElement(tag);
+      if (element == null && tag.getParentTag() != null) {
+        element = myManager.getDomElement(tag.getParentTag());
+      }
+      if (element != null && file instanceof XmlFile) {
+        final String namespace = DomService.getInstance().getEvaluatedXmlName(element).evaluateChildName(myChildrenDescription.getXmlName()).getNamespace(tag, (XmlFile)file);
+        if (!tag.getNamespaceByPrefix("").equals(namespace)) {
+          final String s = tag.getPrefixByNamespace(namespace);
+          if (StringUtil.isNotEmpty(s)) {
+            return s + ":" + name;
+          }
+        }
+      }
+    }
+
+    return name;
   }
 
   @NonNls

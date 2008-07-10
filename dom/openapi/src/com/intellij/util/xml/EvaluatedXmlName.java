@@ -1,13 +1,12 @@
 /*
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.util.xml.impl;
+package com.intellij.util.xml;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.util.xml.XmlName;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter

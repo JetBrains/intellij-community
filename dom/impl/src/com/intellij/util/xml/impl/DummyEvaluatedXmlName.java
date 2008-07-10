@@ -6,13 +6,14 @@ package com.intellij.util.xml.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 
 /**
  * @author peter
  */
-public class DummyEvaluatedXmlName implements EvaluatedXmlName{
+public class DummyEvaluatedXmlName implements EvaluatedXmlName {
   private final XmlName myXmlName;
   private final String myNamespace;
 

@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.xml.util.XmlStringUtil;

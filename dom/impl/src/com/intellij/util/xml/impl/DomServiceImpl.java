@@ -17,6 +17,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +30,11 @@ public class DomServiceImpl extends DomService {
 
   public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
+  }
+
+  @NotNull
+  public EvaluatedXmlName getEvaluatedXmlName(@NotNull final DomElement element) {
+    return DomManagerImpl.getDomInvocationHandler(element).getXmlName();
   }
 
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project) {

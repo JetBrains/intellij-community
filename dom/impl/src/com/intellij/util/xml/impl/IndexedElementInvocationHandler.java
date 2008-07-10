@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 

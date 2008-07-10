@@ -25,10 +25,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -52,6 +53,9 @@ public abstract class DomService {
   public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(Class<T> clazz, final Project project, @Nullable GlobalSearchScope scope);
 
   public abstract ModelMerger createModelMerger();
+
+  @NotNull
+  public abstract EvaluatedXmlName getEvaluatedXmlName(@NotNull DomElement element);
 
   public enum StructureViewMode {
     SHOW, SHOW_CHILDREN, SKIP

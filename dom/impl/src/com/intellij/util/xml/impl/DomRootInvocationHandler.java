@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.EvaluatedXmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

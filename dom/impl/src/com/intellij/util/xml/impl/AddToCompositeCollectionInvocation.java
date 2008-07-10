@@ -5,6 +5,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.EvaluatedXmlName;
 
 import java.lang.reflect.Type;
 import java.util.Set;
