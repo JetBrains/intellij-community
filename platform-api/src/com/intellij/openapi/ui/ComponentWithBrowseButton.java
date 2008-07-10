@@ -101,8 +101,10 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
   public void addBrowseFolderListener(String title, String description, @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor) {
-    final BrowseFolderActionListener<Comp> actionListener =
-      new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor);
+    addBrowseFolderListener(project, new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor));
+  }
+
+  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
     if (project == null) {
       project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
@@ -162,7 +164,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     private final Project myProject;
     private FileChooserDescriptor myFileChooserDescriptor;
 
-    public BrowseFolderActionListener(String title, String description, ComponentWithBrowseButton<T> textField, Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<T> accessor) {
+    public BrowseFolderActionListener(String title, String description, ComponentWithBrowseButton<T> textField, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<T> accessor) {
       myTitle = title;
       myDescription = description;
       myTextComponent = textField;
