@@ -55,6 +55,8 @@
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
 
+    <iconProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
+
     <applicationService
         serviceInterface="org.intellij.plugins.xpathView.support.XPathSupport"
         serviceImplementation="org.intellij.plugins.xpathView.support.jaxen.XPathSupportImpl" />

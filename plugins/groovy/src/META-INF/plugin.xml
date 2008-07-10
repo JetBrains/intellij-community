@@ -93,6 +93,8 @@
     <quoteHandler fileType="GSP" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
     <braceMatcher filetype="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspBraceMatcher"/>
 
+    <iconProvider implementation="org.jetbrains.plugins.groovy.GroovyIconProvider"/>
+
     <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
 
     <facetType implementation="org.jetbrains.plugins.grails.config.GrailsFacetType"/>

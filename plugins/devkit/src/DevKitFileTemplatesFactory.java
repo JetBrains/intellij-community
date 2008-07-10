@@ -15,44 +15,13 @@
  */
 package org.jetbrains.idea.devkit;
 
-import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.ide.IconProvider;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlFile;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
-import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
-import javax.swing.*;
-
-public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider, FileTemplateGroupDescriptorFactory, IconProvider {
-  private static final Icon ICON = IconLoader.getIcon("/plugin.png");
-
-  @NotNull
-  public String getComponentName() {
-    return "DevKit.Plugin";
-  }
-
-  public Class[] getInspectionClasses() {
-    return new Class[] {
-            //RegistrationProblemsInspection.class,
-            PluginXmlDomInspection.class,
-            ComponentNotRegisteredInspection.class,
-    };
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
+public class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFactory {
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"), IconLoader.getIcon("/nodes/plugin.png"));
@@ -64,12 +33,4 @@ public class DevKitPlugin implements ApplicationComponent, InspectionToolProvide
     return descriptor;
   }
 
-  @Nullable
-  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-    @NonNls final String pluginXml = "plugin.xml";
-    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), pluginXml)) {
-      return ICON;
-    }
-    return null;
-  }
 }

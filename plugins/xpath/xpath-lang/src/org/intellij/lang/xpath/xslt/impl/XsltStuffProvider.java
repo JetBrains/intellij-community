@@ -17,14 +17,11 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.ide.IconProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -34,32 +31,27 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import gnu.trove.TIntObjectHashMap;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-import org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection;
+import org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-class XsltStuffProvider implements UsageGroupingRuleProvider, IconProvider, InspectionToolProvider {
-    private static final Key<TIntObjectHashMap<Icon>> ICON_KEY = Key.create("MY_CUSTOM_ICON");
+class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionToolProvider {
 
-    private final XsltConfig myConfig;
-    private final UsageGroupingRule[] myUsageGroupingRules;
+  private final XsltConfig myConfig;
 
-    private boolean active;
+  private final UsageGroupingRule[] myUsageGroupingRules;
 
-    public XsltStuffProvider(XsltConfig config) {
+  public XsltStuffProvider(XsltConfig config) {
         myConfig = config;
         myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
     }
@@ -70,35 +62,6 @@ class XsltStuffProvider implements UsageGroupingRuleProvider, IconProvider, Insp
                 TemplateInvocationInspection.class,
                 XsltDeclarationInspection.class
         };
-    }
-
-    @Nullable
-    public synchronized Icon getIcon(@NotNull PsiElement element, int flags) {
-        if (active || !myConfig.isEnabled()) return null;
-
-        active = true;
-        try {
-            TIntObjectHashMap<Icon> icons = element.getUserData(ICON_KEY);
-            if (icons != null) {
-                final Icon icon = icons.get(flags);
-                if (icon != null) {
-                    return icon;
-                }
-            }
-            if (element instanceof PsiFile) {
-                if (XsltSupport.isXsltFile((PsiFile)element)) {
-                    if (icons == null) {
-                        element.putUserData(ICON_KEY, icons = new TIntObjectHashMap<Icon>(3));
-                    }
-                    final Icon i = XsltSupport.createXsltIcon(element.getIcon(flags));
-                    icons.put(flags, i);
-                    return i;
-                }
-            }
-            return null;
-        } finally {
-            active = false;
-        }
     }
 
     @NotNull

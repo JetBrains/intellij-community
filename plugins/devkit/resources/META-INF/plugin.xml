@@ -18,13 +18,10 @@
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
+    <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
+    <inspectionToolProvider implementation="org.jetbrains.idea.devkit.DevKitInspectionToolProvider"/>
+    <iconProvider implementation="org.jetbrains.idea.devkit.DevKitIconProvider"/>
   </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.DevKitPlugin</implementation-class>
-    </component>
-  </application-components>
 
   <module-components>
     <component>

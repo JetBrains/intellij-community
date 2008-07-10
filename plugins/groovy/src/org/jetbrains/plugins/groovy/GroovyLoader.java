@@ -22,7 +22,6 @@ import com.intellij.codeInsight.completion.CompositeCompletionData;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.ide.IconProvider;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -32,11 +31,9 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
@@ -49,12 +46,9 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletio
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -63,7 +57,7 @@ import java.util.Set;
  *
  * @author ilyas
  */
-public class GroovyLoader implements ApplicationComponent, IconProvider {
+public class GroovyLoader implements ApplicationComponent {
 
   @NotNull
   public static final String GROOVY_EXTENSION = "groovy";
@@ -192,20 +186,4 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     return "groovy.support.loader";
   }
 
-  @Nullable
-  public Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (element instanceof GroovyFile) {
-      GroovyFile file = (GroovyFile) element;
-      if (!file.isScript()) {
-        GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
-        if (typeDefinitions.length > 0) {
-          return typeDefinitions[0].getIcon(flags);
-        }
-      }
-
-      return GroovyFileType.GROOVY_LOGO;
-    }
-
-    return null;
-  }
 }
