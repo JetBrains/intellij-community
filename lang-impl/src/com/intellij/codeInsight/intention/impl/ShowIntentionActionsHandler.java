@@ -42,7 +42,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     if (HintManager.getInstance().performCurrentQuestionAction()) return;
 
-    if (!file.isWritable()) return;
+    //intentions check isWritable before modification: if (!file.isWritable()) return;if (!file.isWritable()) return;
     if (file instanceof PsiCodeFragment) return;
 
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
