@@ -64,7 +64,7 @@ public class TestTreeBuilder extends AbstractTreeBuilder {
       }
       final DefaultMutableTreeNode node = getNodeForElement(parentToUpdate);
       if (node != null) {
-        updateSubtreeNow(node);
+        updateSubtree(node);
         myNodesToUpdate.clear();
      }
     }
