@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.RootModelAdapter;
 
@@ -687,5 +689,34 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertSources("project", "target/src");
     assertTestSources("project", "target/test/subFolder");
     assertExcludes("project");
+  }
+
+  public void testUnexcludeNewSourcesUnderCompilerOutputDir() throws Exception {
+    createProjectSubDirs("target/classes/src");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertExcludes("project", "target/classes");
+    assertTrue(getCompilerExtension("project").isExcludeOutput());
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <sourceDirectory>target/classes/src</sourceDirectory>" +
+                     "</build>");
+    importProject();
+
+    assertSources("project", "target/classes/src");
+    assertExcludes("project");
+
+    assertFalse(getCompilerExtension("project").isExcludeOutput());
+  }
+
+  private CompilerModuleExtension getCompilerExtension(String moduleName) {
+    return ModuleRootManager.getInstance(getModule(moduleName)).getModuleExtension(CompilerModuleExtension.class);
   }
 }

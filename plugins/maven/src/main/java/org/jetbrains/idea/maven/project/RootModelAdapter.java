@@ -66,7 +66,6 @@ public class RootModelAdapter {
     findOrCreateContentRoot(url).addSourceFolder(url.getUrl(), testSource);
   }
 
-
   private void removeRegisteredAncestorFolders(String url) {
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
       for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
@@ -76,7 +75,11 @@ public class RootModelAdapter {
       }
       for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
         if (isAncestor(eachFolder.getUrl(), url)) {
-          eachEntry.removeExcludeFolder(eachFolder);
+          if (eachFolder.isSynthetic()) {
+            getCompilerExtension().setExcludeOutput(false);
+          } else {
+            eachEntry.removeExcludeFolder(eachFolder);
+          }
         }
       }
     }
