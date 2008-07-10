@@ -77,7 +77,7 @@ public class SmartEnterAction extends EditorAction {
     }
 
     private static boolean isEnabledForFile(final PsiFile psiFile) {
-      return psiFile instanceof PsiJavaFile || psiFile instanceof XmlFile;
+      return psiFile instanceof PsiClassOwner || psiFile instanceof XmlFile;
     }
 
     private static boolean isInPreceedingBlanks(Editor editor) {
