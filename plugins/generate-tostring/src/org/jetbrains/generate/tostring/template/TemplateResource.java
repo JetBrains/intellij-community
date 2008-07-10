@@ -15,6 +15,7 @@
  */
 package org.jetbrains.generate.tostring.template;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.util.StringUtil;
 
 import java.io.Serializable;
@@ -78,6 +79,7 @@ public class TemplateResource implements Serializable {
      *
      * @return  the javadoc, null if no javadoc.
      */
+    @Nullable
     public String getJavaDoc() {
         int i = template.indexOf("*/");
         if (i == -1)
@@ -95,6 +97,7 @@ public class TemplateResource implements Serializable {
         return getMethodBody(template);
     }
 
+    @Nullable
     private static String getMethodBody(String template) {
         String signature = getMethodSignature(template);
         String s = StringUtil.after(template, signature);

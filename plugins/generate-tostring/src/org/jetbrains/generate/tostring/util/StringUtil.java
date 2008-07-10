@@ -182,7 +182,7 @@ public class StringUtil {
         if (s.length() > 1) {
             return Character.toLowerCase(s.charAt(0)) + s.substring(1);
         } else if (s.length() == 1) {
-            return "" + Character.toLowerCase(s.charAt(0));
+            return String.valueOf(Character.toLowerCase(s.charAt(0)));
         } else {
             return s;
         }

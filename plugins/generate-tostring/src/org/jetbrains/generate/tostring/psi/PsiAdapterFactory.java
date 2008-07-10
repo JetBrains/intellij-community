@@ -26,6 +26,9 @@ public class PsiAdapterFactory {
 
     private static PsiAdapter instance; // singleton instance
 
+    private PsiAdapterFactory() {
+    }
+
     /**
      * Gets the PsiAdapter
      *

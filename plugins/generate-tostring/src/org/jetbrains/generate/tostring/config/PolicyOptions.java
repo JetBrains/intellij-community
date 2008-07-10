@@ -24,6 +24,9 @@ public class PolicyOptions {
 
     private static transient DuplicatonPolicy[] conflictOptions = {DuplicatonPolicy.ASK, DuplicatonPolicy.REPLACE, DuplicatonPolicy.DUPLICATE};
 
+    private PolicyOptions() {
+    }
+
     /**
      * Get's the options for the the insert new method policy.
      * @return the options for the the insert new method policy.

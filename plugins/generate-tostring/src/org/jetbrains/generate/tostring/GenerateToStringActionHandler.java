@@ -15,7 +15,6 @@
  */
 package org.jetbrains.generate.tostring;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -43,9 +42,8 @@ public interface GenerateToStringActionHandler {
      * Action to be executed from quick fix.
      *
      * @param project           the current project.
-   * @param clazz             the class.
-   * @param desc              the problem found by that quick fix should solve
-   */
-    void executeActionQickFix(Project project, PsiClass clazz, ProblemDescriptor desc);
+     * @param clazz             the class.
+     */
+    void executeActionQickFix(Project project, PsiClass clazz);
 
 }

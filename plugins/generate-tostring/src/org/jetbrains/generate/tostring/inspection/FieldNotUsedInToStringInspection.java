@@ -37,10 +37,12 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
     private AbstractGenerateToStringQuickFix  fix = new GenerateToStringQuickFix();
 
+    @NotNull
     public String getDisplayName() {
         return "Field not used in toString() method";
     }
 
+    @NotNull
     public String getShortName() {
         return "FieldNotUsedInToString";
     }

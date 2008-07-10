@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.util.StringUtil;
 
 /**
@@ -66,6 +67,7 @@ public abstract class PsiAdapter {
      * @param element element to find it's class
      * @return the class, null if not found.
      */
+    @Nullable
     public PsiClass findClass(PsiElement element) {
         if (element instanceof PsiClass) {
             return (PsiClass) element;
@@ -110,6 +112,7 @@ public abstract class PsiAdapter {
      * @param name  name of method to find
      * @return the found method, null if none exist
      */
+    @Nullable
     public PsiMethod findMethodByName(PsiClass clazz, String name) {
         PsiMethod[] methods = clazz.getMethods();
 
@@ -517,6 +520,7 @@ public abstract class PsiAdapter {
      * @return the fully qualified classname, null if the field is a primitive.
      * @see #getTypeClassName(com.intellij.psi.PsiType) for the non qualified version.
      */
+    @Nullable
     public String getTypeQualifiedClassName(PsiType type) {
         if (isPrimitiveType(type)) {
             return null;
@@ -538,6 +542,7 @@ public abstract class PsiAdapter {
      * @return the classname, null if the field is a primitive.
      * @see #getTypeQualifiedClassName(com.intellij.psi.PsiType) for the qualified version.
      */
+    @Nullable
     public String getTypeClassName(PsiType type) {
         String name = getTypeQualifiedClassName(type);
 
@@ -631,6 +636,7 @@ public abstract class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
+    @Nullable
     public PsiMethod findPublicStaticVoidMainMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("main", false);
 
@@ -682,6 +688,7 @@ public abstract class PsiAdapter {
      * @return the added/replace javadoc comment, null if the was an existing javadoc and it should <b>not</b> be replaced.
      * @throws IncorrectOperationException is thrown if error adding/replacing the javadoc comment.
      */
+    @Nullable
     public PsiComment addOrReplaceJavadoc(PsiElementFactory factory, CodeStyleManager codeStyleManager, PsiMethod method, String javadoc, boolean replace) throws IncorrectOperationException {
         PsiComment comment = factory.createCommentFromText(javadoc, null);
 
@@ -723,6 +730,7 @@ public abstract class PsiAdapter {
      * @param name  name of field to find
      * @return the found field, null if none exist
      */
+    @Nullable
     public PsiField findFieldByName(PsiClass clazz, String name) {
         PsiField[] fields = clazz.getFields();
 
@@ -787,6 +795,7 @@ public abstract class PsiAdapter {
      * @return the fieldname if this is a getter method.
      * @see #isGetterMethod(com.intellij.psi.PsiElementFactory,com.intellij.psi.PsiMethod) for the getter check
      */
+    @Nullable
     public String getGetterFieldName(PsiElementFactory factory, PsiMethod method) {
         // must be a getter
         if (!isGetterMethod(factory, method)) {
@@ -816,6 +825,7 @@ public abstract class PsiAdapter {
      * @param method the method
      * @return the javadoc, null if no javadoc.
      */
+    @Nullable
     public String getJavaDoc(PsiMethod method) {
         if (method == null) {
             return null;
@@ -928,6 +938,7 @@ public abstract class PsiAdapter {
      * @param editor   the editor.
      * @return the elemenet, null if not found or not possible to find.
      */
+    @Nullable
     public PsiElement findElementAtCursorPosition(PsiJavaFile javaFile, Editor editor) {
         if (javaFile == null) {
             return null;
@@ -941,6 +952,7 @@ public abstract class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
+    @Nullable
     public PsiMethod findEqualsMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("equals", false);
 
@@ -987,6 +999,7 @@ public abstract class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
+    @Nullable
     public PsiMethod findHashCodeMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("hashCode", false);
 
@@ -1079,6 +1092,7 @@ public abstract class PsiAdapter {
      * @param clazz   the class
      * @return the super, null if not found.
      */
+    @Nullable
     public PsiClass getSuperClass(Project project, PsiClass clazz) {
         PsiReferenceList list = clazz.getExtendsList();
 
@@ -1166,6 +1180,7 @@ public abstract class PsiAdapter {
      * @param elem the element
      * @return the parent method if found, <tt>null</tt> if not found.
      */
+    @Nullable
     public static PsiMethod findParentMethod(PsiElement elem) {
         if (elem == null) {
             return null;

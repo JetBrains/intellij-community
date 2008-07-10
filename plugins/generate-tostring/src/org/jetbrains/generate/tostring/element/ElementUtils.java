@@ -38,12 +38,11 @@ public class ElementUtils {
      * Get's the list of members to be put in the VelocityContext.
      *
      * @param project           Project
-     * @param elementFactory    Element Factory
      * @param psi               PSI adapter
      * @param members a list of {@link com.intellij.psi.PsiMember} objects.
      * @return a filtered list of only the fields as {@link FieldElement} objects.
      */
-    public static List<FieldElement> getOnlyAsFieldElements(Project project, PsiElementFactory elementFactory, PsiAdapter psi, Collection<PsiMember> members) {
+    public static List<FieldElement> getOnlyAsFieldElements(Project project, PsiAdapter psi, Collection<PsiMember> members) {
         List<FieldElement> fieldElementList = new ArrayList<FieldElement>();
 
         for (PsiMember member : members) {

@@ -15,8 +15,8 @@
  */
 package org.jetbrains.generate.tostring.element;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
@@ -26,6 +26,9 @@ import org.jetbrains.generate.tostring.psi.PsiAdapter;
 public class ElementFactory {
 
     private static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.element.ElementFactory");
+
+    private ElementFactory() {
+    }
 
     /**
      * Creates a new {@link ClassElement} object.
@@ -65,12 +68,10 @@ public class ElementFactory {
      *
      * @param project the IDEA project.
      * @param field   the {@link com.intellij.psi.PsiField} to get the information from.
-     * @param factory the PsiAdapterFactory.
      * @param psi     the psi adapter
      * @return a new {@link FieldElement} object.
      */
     public static FieldElement newFieldElement(Project project, PsiField field, PsiAdapter psi) {
-        PsiManager manager = psi.getPsiManager(project);
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
         FieldElement fe = new FieldElement();

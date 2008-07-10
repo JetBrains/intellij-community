@@ -65,14 +65,14 @@ public class GenerateToStringWorker {
         Map<String, String> params = new HashMap<String, String>();
 
         // before
-        beforeCreateToStringMethod(members, params, template);
+        beforeCreateToStringMethod(params, template);
 
         // generate method
         PsiMethod method = createToStringMethod(members, resolutionPolicy, params, template);
 
         // after, if method was generated (not cancel policy)
         if (method != null) {
-            afterCreateToStringMethod(method, resolutionPolicy, params, template);
+            afterCreateToStringMethod(method, params, template);
         }
     }
 
@@ -116,11 +116,10 @@ public class GenerateToStringWorker {
     /**
      * This method is executed just before the <code>toString</code> method is created or updated.
      *
-     * @param selectedMembers   the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
      * @param params            additional parameters stored with key/value in the map.
      * @param template          the template to use
      */
-    private void beforeCreateToStringMethod(Collection<PsiMember> selectedMembers, Map<String, String> params, TemplateResource template) {
+    private void beforeCreateToStringMethod(Map<String, String> params, TemplateResource template) {
         PsiMethod existingMethod = psi.findMethodByName(clazz, template.getTargetMethodName()); // find the existing method
         if (existingMethod != null && existingMethod.getDocComment() != null) {
             PsiDocComment doc = existingMethod.getDocComment();
@@ -144,7 +143,7 @@ public class GenerateToStringWorker {
     @Nullable
     private PsiMethod createToStringMethod(Collection<PsiMember> selectedMembers, ConflictResolutionPolicy policy, Map<String, String> params, TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
         // generate code using velocity
-        String body = velocityGenerateCode(selectedMembers, params, template, template.getMethodBody());
+        String body = velocityGenerateCode(selectedMembers, params, template.getMethodBody());
         if (logger.isDebugEnabled()) logger.debug("Method body generated from Velocity:\n" + body);
 
         // fix weird linebreak problem in IDEA #3296 and later
@@ -183,7 +182,7 @@ public class GenerateToStringWorker {
             PsiMethod toStringMethod = clazz.findMethodBySignature(newMethod, false); // must find again to be able to add javadoc (IDEA does not add if using method parameter)
 
             // generate javadoc using velocity
-            newJavaDoc = velocityGenerateCode(selectedMembers, params, template, newJavaDoc);
+            newJavaDoc = velocityGenerateCode(selectedMembers, params, newJavaDoc);
             if (logger.isDebugEnabled()) logger.debug("JavaDoc body generated from Velocity:\n" + newJavaDoc);
 
             applyJavaDoc(toStringMethod, elementFactory, codeStyleManager, existingJavaDoc, newJavaDoc);
@@ -206,12 +205,11 @@ public class GenerateToStringWorker {
      * This method is executed just after the <code>toString</code> method is created or updated.
      *
      * @param method            the newly created/updated <code>toString</code> method.
-     * @param policy            the policy selected
      * @param params            additional parameters stored with key/value in the map.
      * @param template          the template to use
      * @throws IncorrectOperationException  is thrown by IDEA
      */
-    private void afterCreateToStringMethod(PsiMethod method, ConflictResolutionPolicy policy, Map<String, String> params, TemplateResource template) throws IncorrectOperationException {
+    private void afterCreateToStringMethod(PsiMethod method, Map<String, String> params, TemplateResource template) throws IncorrectOperationException {
 
         // if the code uses Arrays, then make sure java.util.Arrays is imported.
         String javaCode = method.getText();
@@ -271,12 +269,11 @@ public class GenerateToStringWorker {
      *
      * @param selectedMembers  the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
      * @param params           additional parameters stored with key/value in the map.
-     * @param template         overriding template to use (if using quick template selection dialog), can be null.
      * @param templateMacro    the veloicty macro template
      * @return code (usually javacode). Returns null if templateMacro is null.
      * @throws GenerateCodeException is thrown when there is an error generating the javacode.
      */
-    private String velocityGenerateCode(Collection<PsiMember> selectedMembers, Map<String, String> params, TemplateResource template, String templateMacro) throws GenerateCodeException {
+    private String velocityGenerateCode(Collection<PsiMember> selectedMembers, Map<String, String> params, String templateMacro) throws GenerateCodeException {
         if (templateMacro == null) {
             return null;
         }
@@ -287,7 +284,7 @@ public class GenerateToStringWorker {
 
             // field information
             logger.debug("Velocity Context - adding fields");
-            vc.put("fields", ElementUtils.getOnlyAsFieldElements(project, elementFactory, psi, selectedMembers));
+            vc.put("fields", ElementUtils.getOnlyAsFieldElements(project, psi, selectedMembers));
 
             // method information
             logger.debug("Velocity Context - adding methods");

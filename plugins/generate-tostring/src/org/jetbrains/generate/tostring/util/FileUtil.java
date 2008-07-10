@@ -15,6 +15,8 @@
  */
 package org.jetbrains.generate.tostring.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
 
 /**
@@ -101,6 +103,7 @@ public class FileUtil {
      * @param filename   filename.
      * @return  the extension, null if the file does not have an extension (could be a directory).
      */
+    @Nullable
     public static String getFileExtension(String filename) {
         File file = new File(filename);
         int pos = file.getName().lastIndexOf(".");

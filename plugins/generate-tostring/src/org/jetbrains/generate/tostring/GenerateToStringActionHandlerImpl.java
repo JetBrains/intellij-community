@@ -16,7 +16,6 @@
 package org.jetbrains.generate.tostring;
 
 import com.intellij.codeInsight.generation.PsiElementClassMember;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.MemberChooserBuilder;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -68,7 +67,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     }
 
 
-    public void executeActionQickFix(final Project project, final PsiClass clazz, final ProblemDescriptor desc) {
+    public void executeActionQickFix(final Project project, final PsiClass clazz) {
         doExecuteAction(project, clazz, null);
     }
 

@@ -40,7 +40,7 @@ public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
     public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         int offset = editor != null ? editor.getCaretModel().getOffset() : clazz.getTextRange().getEndOffset() - 1;
-        GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(new PsiGenerationInfo[]{new PsiGenerationInfo(newMethod, false)}));
+        GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(new PsiGenerationInfo(newMethod, false)));
         return true;
     }
 

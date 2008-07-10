@@ -15,16 +15,10 @@
  */
 package org.jetbrains.generate.tostring.config;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
-
 /**
  * Configuration.
  * <p/>
- * The configuration is stored using {@link JDOMExternalizable} that automatically stores the
+ * The configuration is stored standard xmlb.XmlSerializer that automatically stores the
  * state of this classes public fields.
  */
 public class Config {
@@ -172,14 +166,6 @@ public class Config {
 
     public void setFilterMethodType(String filterMethodType) {
         this.filterMethodType = filterMethodType;
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-        DefaultJDOMExternalizer.readExternal(this, element);
-    }
-
-    public void writeExternal(Element element) throws WriteExternalException {
-        DefaultJDOMExternalizer.writeExternal(this, element);
     }
 
     /**

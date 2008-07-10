@@ -27,7 +27,7 @@ import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
  */
 public class GenerateToStringQuickFix extends AbstractGenerateToStringQuickFix {
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor desc) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
 
         // find the class
         PsiClass clazz = psi.findClass(desc.getPsiElement());
@@ -37,7 +37,7 @@ public class GenerateToStringQuickFix extends AbstractGenerateToStringQuickFix {
 
         // execute the action
         GenerateToStringActionHandler handler = new GenerateToStringActionHandlerImpl();
-        handler.executeActionQickFix(project, clazz, desc);
+        handler.executeActionQickFix(project, clazz);
     }
 
 }

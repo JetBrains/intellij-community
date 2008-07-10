@@ -34,6 +34,8 @@ import javax.swing.*;
  * </ul>
  */
 public class MethodExistsDialog {
+    private MethodExistsDialog() {
+    }
 
     /**
      * Shows this dialog.

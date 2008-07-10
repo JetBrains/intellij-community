@@ -15,7 +15,6 @@
  */
 package org.jetbrains.generate.tostring.inspection;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
@@ -34,8 +33,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Intention to check if the current class overwrites the toString() method.
@@ -86,7 +83,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                     return;
 
                 PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-                List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
 
                 // must not be an exception
                 if (excludeException && psi.isExceptionClass(clazz)) {
@@ -129,7 +125,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
                 // get list of fields and getter methods supposed to be dumped in the toString method
                 Project project = clazz.getProject();
-                PsiManager manager = psi.getPsiManager(project);
                 fields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
                 PsiMethod[] methods = null;
                 if (GenerateToStringContext.getConfig().isEnableMethods()) {

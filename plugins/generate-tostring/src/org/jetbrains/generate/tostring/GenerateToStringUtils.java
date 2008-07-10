@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.FilterPattern;
 import org.jetbrains.generate.tostring.element.ElementFactory;
 import org.jetbrains.generate.tostring.element.FieldElement;
@@ -61,7 +62,6 @@ public class GenerateToStringUtils {
      *
      * @param project        Project
      * @param psi            PSI adapter
-     * @param elementFactory Element Factory
      * @param clazz          the class to filter it's fields
      * @param pattern        the filter pattern to filter out unwanted fields
      * @return fields avaiable for this action after the filter process.
@@ -94,7 +94,6 @@ public class GenerateToStringUtils {
      * <ul/>
      *
      * @param psi            PSI adapter
-     * @param elementFactory Element Factory
      * @param clazz          the class to filter it's fields
      * @param pattern        the filter pattern to filter out unwanted fields
      * @return methods avaiable for this action after the filter process.
@@ -152,6 +151,7 @@ public class GenerateToStringUtils {
      * @param project project
      * @return the editor, null if not found
      */
+    @Nullable
     public static Editor getEditor(final Project project) {
         Editor[] editors = EditorFactory.getInstance().getAllEditors();
         for (Editor ed : editors) {
