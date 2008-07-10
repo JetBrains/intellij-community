@@ -43,6 +43,7 @@ public class PropertiesBuilder extends AntElementVisitor {
       final AntProject project = antFile.getAntProject();
       if (project != null) {
         project.acceptAntElementVisitor(this);
+        ((AntProjectImpl)project).clearImports();
       }
     }
   }

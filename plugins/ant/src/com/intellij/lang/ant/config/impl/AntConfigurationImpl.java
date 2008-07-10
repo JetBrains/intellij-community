@@ -763,9 +763,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
     file.clearCaches();
   }
-  
+
+  public AntFile getContextFile(@Nullable final AntFile file) {
+    return file != null? toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile())) : null;
+  }
+
   @Nullable
-  public AntFile getContextFile(final AntFile file) {
+  public AntFile getEffectiveContextFile(final AntFile file) {
     return new Object() {
       @Nullable
       AntFile findContext(final AntFile file, Set<PsiElement> processed) {

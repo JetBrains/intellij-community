@@ -68,7 +68,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
       myTargets = null;
-      myImportedTargets = null;
       clearImports();
       myReferencedElements = null;
       myRefIdsArray = null;
@@ -79,10 +78,11 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
   }
 
-  private void clearImports() {
+  public void clearImports() {
     myImports = null;
     myCachedImportsArray = null;
     myImportsDependentProperties = null;
+    myImportedTargets = null;
   }
 
   @Nullable

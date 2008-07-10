@@ -53,7 +53,7 @@ public class AntRefIdReference extends AntGenericReference {
     final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
     try {
       final AntStructuredElement elem = getElement();
-      final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getContextFile(elem.getAntFile());
+      final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getEffectiveContextFile(elem.getAntFile());
       return resolve(id, contextFile.getAntProject(), elementsDepthStack);
     }
     finally {

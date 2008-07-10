@@ -60,4 +60,7 @@ public abstract class AntConfigurationBase extends AntConfiguration {
 
   @Nullable
   public abstract AntFile getContextFile(@Nullable AntFile file);
+  
+  @Nullable
+  public abstract AntFile getEffectiveContextFile(@Nullable AntFile file);
 }

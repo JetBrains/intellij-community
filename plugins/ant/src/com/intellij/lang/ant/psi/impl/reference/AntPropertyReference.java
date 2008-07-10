@@ -74,7 +74,7 @@ public class AntPropertyReference extends AntGenericReference {
 
   public PsiElement resolveInner() {
     final AntElement elem = getElement();
-    final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getContextFile(elem.getAntFile());
+    final AntFile contextFile = AntConfigurationBase.getInstance(elem.getProject()).getEffectiveContextFile(elem.getAntFile());
     if (contextFile == null) {
       return null;
     }
