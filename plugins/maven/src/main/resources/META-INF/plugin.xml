@@ -132,14 +132,10 @@
     </group>
 
     <group id="Maven.PomTreeView">
-      <action id="Maven.GroupByModules"
-              class="org.jetbrains.idea.maven.navigator.action.GroupByModulesAction" text="Group by modules"
-              description="Group by modules"
-              icon="/nodes/ModuleClosed.png"/>
-      <action id="Maven.GroupByDirectories"
-              class="org.jetbrains.idea.maven.navigator.action.GroupByDirectoriesAction"
-              text="Group by directories"
-              description="Group by directories"
+      <action id="Maven.GroupStructurally"
+              class="org.jetbrains.idea.maven.navigator.action.GroupStructurallyAction"
+              text="Group structurally"
+              description="Group Maven projects according to the layout"
               icon="/nodes/folder.png"/>
       <action id="Maven.ShowIgnored"
               class="org.jetbrains.idea.maven.navigator.action.ShowIgnoredAction"
