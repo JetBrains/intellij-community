@@ -73,7 +73,7 @@ public class FileUtil {
         for (int i = in.read(); i != -1; i = in.read()) {
             buf.append((char) i);
         }
-        return buf.toString();
+        return StringUtil.fixLineBreaks(buf.toString());
     }
 
     /**

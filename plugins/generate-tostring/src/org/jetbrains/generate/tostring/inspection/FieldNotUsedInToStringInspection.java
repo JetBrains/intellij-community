@@ -15,18 +15,15 @@
  */
 package org.jetbrains.generate.tostring.inspection;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringContext;
 import org.jetbrains.generate.tostring.GenerateToStringUtils;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Intention to check if the current class toString() method is out of
@@ -38,7 +35,7 @@ import java.util.List;
  */
 public class FieldNotUsedInToStringInspection extends AbstractToStringInspection {
 
-    private AbstractGenerateToStringQuickFix  fix = new FieldNotUsedInToStringQuickFix();
+    private AbstractGenerateToStringQuickFix  fix = new GenerateToStringQuickFix();
 
     public String getDisplayName() {
         return "Field not used in toString() method";
@@ -48,36 +45,34 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         return "FieldNotUsedInToString";
     }
 
-    public ProblemDescriptor[] checkClass(PsiClass clazz, InspectionManager im, boolean onTheFly) {
-        // must be enabled to do check on the fly
-        if (onTheFly && ! onTheFlyEnabled()) {
-            return null;
-        }
+    @Override
+    public boolean runForWholeFile() {
+        return true;
+    }
 
-        List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-        checkFields(problems, clazz, im, onTheFly);
-        checkMethods(problems, clazz, im, onTheFly);
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+        return new JavaElementVisitor() {
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            }
 
-        // any problems?
-        if (problems.size() > 0) {
-            if (log.isDebugEnabled()) log.debug("Number of problems found: " + problems.size());
-            return problems.toArray(new ProblemDescriptor[problems.size()]);
-        } else {
-            log.debug("No problems found");
-            return null; // no problems
-        }
+            @Override
+            public void visitClass(PsiClass clazz) {
+                checkFields(holder, clazz);
+                checkMethods(holder, clazz);
+            }
+        };
     }
 
     /**
      * Checking for problems with fields.
      *
-     * @param problems   list of ProblemDescription found is added to this list
-     * @param clazz      the class to check
-     * @param im         InspectionManager
-     * @param onTheFly   is on-the-fly enabled
+     * @param clazz  the class to check
+     * @param holder a sink to feed the problem to
      */
-    private void checkFields(List<ProblemDescriptor> problems, PsiClass clazz, InspectionManager im, boolean onTheFly) {
-        if (log.isDebugEnabled()) log.debug("checkFields: clazz=" + clazz + ", onTheFly=" + onTheFly);
+    private void checkFields(ProblemsHolder holder, PsiClass clazz) {
+        if (log.isDebugEnabled()) log.debug("checkFields: clazz=" + clazz);
 
         // must be a class
         if (clazz == null || clazz.getName() == null) {
@@ -117,8 +112,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
 
         // get list of fields supposed to be dumped in the toString method
-        Project project = im.getProject();
-        PsiManager manager = psi.getPsiManager(project);
+        Project project = clazz.getProject();
         fields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
         if (fields == null || fields.length == 0) {
             log.debug("No fields to be dumped as all fields was excluded (exclude field by XXX from Settings)");
@@ -137,8 +131,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
             // use regexp to match if field is used in code
             if (!body.matches(pattern)) {
                 if (log.isDebugEnabled()) log.debug("Field is not used in toString() method (out-of-sync): " + field);
-                ProblemDescriptor problem = im.createProblemDescriptor(field, "Field '" + field.getName() + "' is not used in toString() method", fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-                problems.add(problem);
+                holder.registerProblem(field, "Field '" + field.getName() + "' is not used in toString() method", ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
             }
         }
 
@@ -147,13 +140,11 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     /**
      * Checking for problems with fields.
      *
-     * @param problems   list of ProblemDescription found is added to this list
      * @param clazz      the class to check
-     * @param im         InspectionManager
-     * @param onTheFly   is on-the-fly enabled
+     * @param holder a sink to feed the problem to
      */
-    private void checkMethods(List<ProblemDescriptor> problems, PsiClass clazz, InspectionManager im, boolean onTheFly) {
-        if (log.isDebugEnabled()) log.debug("checkMethods: clazz=" + clazz + ", onTheFly=" + onTheFly);
+    private void checkMethods(ProblemsHolder holder, PsiClass clazz) {
+        if (log.isDebugEnabled()) log.debug("checkMethods: clazz=" + clazz);
 
         // must be a class
         if (clazz == null || clazz.getName() == null) {
@@ -195,7 +186,6 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
 
         // get list of methods supposed to be dumped in the toString method
-        Project project = im.getProject();
         methods = GenerateToStringUtils.filterAvailableMethods(psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
         if (methods == null || methods.length == 0) {
             log.debug("No getter methods to be dumped as all methods was excluded or a field existed for the getter method (exclude method by XXX from Settings)");
@@ -215,8 +205,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
             if (!body.matches(pattern)) {
                 // method is not in toString
                 if (log.isDebugEnabled()) log.debug("Getter method is not used in toString() method (out-of-sync): " + method);
-                ProblemDescriptor problem = im.createProblemDescriptor(method, "Method '" + method.getName() + "' is not used in toString() method", fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-                problems.add(problem);
+                holder.registerProblem(method, "Method '" + method.getName() + "' is not used in toString() method", ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
             }
         }
 

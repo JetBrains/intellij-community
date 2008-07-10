@@ -15,6 +15,7 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -25,18 +26,18 @@ import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 /**
  * Inserts the method last in the javafile.
  */
-public class InsertLastPolicy implements InsertNewMethodPolicy {
+public class InsertLastStrategy implements InsertNewMethodStrategy {
 
-    private static final InsertLastPolicy instance = new InsertLastPolicy();
+    private static final InsertLastStrategy instance = new InsertLastStrategy();
 
-    private InsertLastPolicy() {
+    private InsertLastStrategy() {
     }
 
-    public static InsertLastPolicy getInstance() {
+    public static InsertLastStrategy getInstance() {
         return instance;
     }
 
-    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod) throws IncorrectOperationException {
+    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
 
         // if main method exists and is the last then add toString just before main method

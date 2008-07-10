@@ -15,6 +15,7 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
@@ -23,16 +24,17 @@ import com.intellij.util.IncorrectOperationException;
  * Interface that defines a policy for dealing with where to insert a new <code>toString()</code>
  * method in the javafile.
  */
-public interface InsertNewMethodPolicy {
+public interface InsertNewMethodStrategy {
 
     /**
      * Applies the choosen policy.
      *
      * @param clazz          PSIClass.
      * @param newMethod      new method.
+     * @param editor
      * @return if the policy was executed normally (not cancelled)
      * @throws com.intellij.util.IncorrectOperationException is thrown if there is an IDEA error.
      */
-    boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod) throws IncorrectOperationException;
+    boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
 
 }

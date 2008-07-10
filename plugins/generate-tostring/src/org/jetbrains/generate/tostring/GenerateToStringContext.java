@@ -15,26 +15,43 @@
  */
 package org.jetbrains.generate.tostring;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import org.jetbrains.generate.tostring.config.Config;
 
 /**
  * Application context for this plugin.
  */
-public class GenerateToStringContext {
-    private static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringContext"); 
-    private static Config config;
+@State(
+  name = "ToStringSettings",
+  storages = {
+    @Storage(
+      id ="ToStringSettings",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class GenerateToStringContext implements PersistentStateComponent<Config> {
+    public static GenerateToStringContext getInstance() {
+        return ServiceManager.getService(GenerateToStringContext.class);
+    }
+
+    private Config config = new Config();
 
     public static Config getConfig() {
-        if (config == null) {
-            log.warn("Config is null - return a new default Config");
-            config = new Config();
-        }
-        return config;
+        return getInstance().config;
     }
 
     public static void setConfig(Config newConfig) {
-        config = newConfig;
+        getInstance().config = newConfig;
     }
 
+    public Config getState() {
+        return config;
+    }
+
+    public void loadState(Config state) {
+        config = state;
+    }
 }

@@ -15,17 +15,7 @@
  */
 package org.jetbrains.generate.tostring;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 
 /**
  * The IDEA action for this plugin.
@@ -41,37 +31,4 @@ public class GenerateToStringAction extends EditorAction {
     public GenerateToStringAction() {
         super(new GenerateToStringActionHandlerImpl()); // register our action handler
     }
-
-
-    /**
-     * Updates the presentation of this action. Will disable this action for non-java files.
-     *
-     * @param editor       IDEA editor.
-     * @param presentation Presentation.
-     * @param dataContext  data context.
-     */
-    public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-        Project project = editor.getProject();
-        PsiManager manager = psi.getPsiManager(project);
-
-        PsiJavaFile javaFile = psi.getSelectedJavaFile(project, manager);
-        if (javaFile == null) {
-            presentation.setEnabled(false);
-            return;
-        }
-
-        PsiClass clazz = psi.getCurrentClass(javaFile, editor);
-        if (clazz == null) {
-            presentation.setEnabled(false);
-            return;
-        }
-
-        // must not be an interface
-        presentation.setEnabled(! clazz.isInterface());
-    }
-
-    protected GenerateToStringAction(EditorActionHandler editorActionHandler) {
-    super(editorActionHandler);    //To change body of overridden methods use File | Settings | File Templates.
-}
 }

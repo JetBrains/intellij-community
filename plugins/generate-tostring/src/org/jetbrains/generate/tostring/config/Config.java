@@ -19,11 +19,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jetbrains.generate.tostring.template.TemplateResource;
-import org.jetbrains.generate.tostring.template.TemplateResourceLocator;
 import org.jdom.Element;
-
-import java.io.Serializable;
 
 /**
  * Configuration.
@@ -31,14 +27,11 @@ import java.io.Serializable;
  * The configuration is stored using {@link JDOMExternalizable} that automatically stores the
  * state of this classes public fields.
  */
-public class Config implements JDOMExternalizable, Serializable {
+public class Config {
 
     public boolean useFullyQualifiedName = false;
-    public boolean useFieldChooserDialog = true;
-    public boolean useDefaultAlways = false;
-    public ConflictResolutionPolicy replaceDialogInitialOption = PolicyOptions.getConflictOptions()[0];
-    public InsertNewMethodPolicy insertNewMethodInitialOption = PolicyOptions.getNewMethodOptions()[0];
-    public String methodBody = null;
+    public InsertWhere insertNewMethodOption = InsertWhere.AT_CARET;
+    public DuplicatonPolicy whenDuplicatesOption = DuplicatonPolicy.ASK;
     public boolean filterConstantField = true;
     public boolean filterEnumField = false;
     public boolean filterTransientModifier = false;
@@ -49,12 +42,7 @@ public class Config implements JDOMExternalizable, Serializable {
     public String filterFieldType = null;
     public boolean filterLoggers = true;
     public boolean addImplementSerializable = false;
-    public boolean autoImports = false;
-    public String autoImportsPackages = "java.util.*,java.text.*";
-    public boolean inspectionOnTheFly = false;
     public boolean enableMethods = false;
-    public boolean enableTemplateQuickList = false;
-    public String selectedQuickTemplates = null;
     public boolean jumpToMethod = true; // jump cursor to toString method
     public int sortElements = 0; // 0 = none, 1 = asc, 2 = desc
 
@@ -66,44 +54,20 @@ public class Config implements JDOMExternalizable, Serializable {
         this.useFullyQualifiedName = useFullyQualifiedName;
     }
 
-    public String getMethodBody() {
-        return methodBody;
+    public DuplicatonPolicy getReplaceDialogInitialOption() {
+        return whenDuplicatesOption;
     }
 
-    public void setMethodBody(String methodBody) {
-        this.methodBody = methodBody;
+    public void setReplaceDialogInitialOption(DuplicatonPolicy option) {
+        this.whenDuplicatesOption = option;
     }
 
-    public boolean isUseFieldChooserDialog() {
-        return useFieldChooserDialog;
+    public InsertWhere getInsertNewMethodInitialOption() {
+        return this.insertNewMethodOption;
     }
 
-    public void setUseFieldChooserDialog(boolean useFieldChooserDialog) {
-        this.useFieldChooserDialog = useFieldChooserDialog;
-    }
-
-    public boolean isUseDefaultAlways() {
-        return useDefaultAlways;
-    }
-
-    public void setUseDefaultAlways(boolean useDefaultAlways) {
-        this.useDefaultAlways = useDefaultAlways;
-    }
-
-    public ConflictResolutionPolicy getReplaceDialogInitialOption() {
-        return replaceDialogInitialOption;
-    }
-
-    public void setReplaceDialogInitialOption(ConflictResolutionPolicy replaceDialogInitialOption) {
-        this.replaceDialogInitialOption = replaceDialogInitialOption;
-    }
-
-    public InsertNewMethodPolicy getInsertNewMethodInitialOption() {
-        return this.insertNewMethodInitialOption;
-    }
-
-    public void setInsertNewMethodInitialOption(InsertNewMethodPolicy insertNewMethodInitialOption) {
-        this.insertNewMethodInitialOption = insertNewMethodInitialOption;
+    public void setInsertNewMethodInitialOption(InsertWhere where) {
+        this.insertNewMethodOption = where;
     }
 
     public boolean isFilterConstantField() {
@@ -146,30 +110,6 @@ public class Config implements JDOMExternalizable, Serializable {
         this.addImplementSerializable = addImplementSerializable;
     }
 
-    public boolean isAutoImports() {
-        return autoImports;
-    }
-
-    public void setAutoImports(boolean autoImports) {
-        this.autoImports = autoImports;
-    }
-
-    public String getAutoImportsPackages() {
-        return autoImportsPackages;
-    }
-
-    public void setAutoImportsPackages(String autoImportsPackages) {
-        this.autoImportsPackages = autoImportsPackages;
-    }
-
-    public boolean isInspectionOnTheFly() {
-        return inspectionOnTheFly;
-    }
-
-    public void setInspectionOnTheFly(boolean inspectionOnTheFly) {
-        this.inspectionOnTheFly = inspectionOnTheFly;
-    }
-
     public boolean isEnableMethods() {
         return enableMethods;
     }
@@ -184,22 +124,6 @@ public class Config implements JDOMExternalizable, Serializable {
 
     public void setFilterMethodName(String filterMethodName) {
         this.filterMethodName = filterMethodName;
-    }
-
-    public boolean isEnableTemplateQuickList() {
-        return enableTemplateQuickList;
-    }
-
-    public void setEnableTemplateQuickList(boolean enableTemplateQuickList) {
-        this.enableTemplateQuickList = enableTemplateQuickList;
-    }
-
-    public String getSelectedQuickTemplates() {
-        return selectedQuickTemplates;
-    }
-
-    public void setSelectedQuickTemplates(String selectedQuickTemplates) {
-        this.selectedQuickTemplates = selectedQuickTemplates;
     }
 
     public boolean isJumpToMethod() {
@@ -258,13 +182,6 @@ public class Config implements JDOMExternalizable, Serializable {
         DefaultJDOMExternalizer.writeExternal(this, element);
     }
 
-    public TemplateResource getActiveTemplate() {
-        // if just installed plugin methodBody can be null so use the default template instead
-        if (methodBody == null)
-            methodBody = TemplateResourceLocator.getDefaultTemplateBody();
-        return new TemplateResource("--> Active Template <--", methodBody);
-    }
-
     /**
      * Get's the filter pattern that this configuration represent.
      *
@@ -291,21 +208,14 @@ public class Config implements JDOMExternalizable, Serializable {
         final Config config = (Config) o;
 
         if (addImplementSerializable != config.addImplementSerializable) return false;
-        if (autoImports != config.autoImports) return false;
         if (enableMethods != config.enableMethods) return false;
-        if (enableTemplateQuickList != config.enableTemplateQuickList) return false;
         if (filterConstantField != config.filterConstantField) return false;
         if (filterEnumField != config.filterEnumField) return false;
         if (filterStaticModifier != config.filterStaticModifier) return false;
         if (filterTransientModifier != config.filterTransientModifier) return false;
-        if (inspectionOnTheFly != config.inspectionOnTheFly) return false;
         if (jumpToMethod != config.jumpToMethod) return false;
         if (sortElements != config.sortElements) return false;
-        if (useDefaultAlways != config.useDefaultAlways) return false;
-        if (useFieldChooserDialog != config.useFieldChooserDialog) return false;
         if (useFullyQualifiedName != config.useFullyQualifiedName) return false;
-        if (autoImportsPackages != null ? !autoImportsPackages.equals(config.autoImportsPackages) : config.autoImportsPackages != null)
-            return false;
         if (filterFieldName != null ? !filterFieldName.equals(config.filterFieldName) : config.filterFieldName != null)
             return false;
         if (filterFieldType != null ? !filterFieldType.equals(config.filterFieldType) : config.filterFieldType != null)
@@ -314,11 +224,8 @@ public class Config implements JDOMExternalizable, Serializable {
             return false;
         if (filterMethodType != null ? !filterMethodType.equals(config.filterMethodType) : config.filterMethodType != null)
             return false;
-        if (!insertNewMethodInitialOption.equals(config.insertNewMethodInitialOption)) return false;
-        if (methodBody != null ? !methodBody.equals(config.methodBody) : config.methodBody != null) return false;
-        if (!replaceDialogInitialOption.equals(config.replaceDialogInitialOption)) return false;
-        if (selectedQuickTemplates != null ? !selectedQuickTemplates.equals(config.selectedQuickTemplates) : config.selectedQuickTemplates != null)
-            return false;
+        if (!whenDuplicatesOption.equals(config.whenDuplicatesOption)) return false;
+        if (!insertNewMethodOption.equals(config.insertNewMethodOption)) return false;
 
         return true;
     }
@@ -326,11 +233,8 @@ public class Config implements JDOMExternalizable, Serializable {
     public int hashCode() {
         int result;
         result = (useFullyQualifiedName ? 1 : 0);
-        result = 29 * result + (useFieldChooserDialog ? 1 : 0);
-        result = 29 * result + (useDefaultAlways ? 1 : 0);
-        result = 29 * result + replaceDialogInitialOption.hashCode();
-        result = 29 * result + insertNewMethodInitialOption.hashCode();
-        result = 29 * result + (methodBody != null ? methodBody.hashCode() : 0);
+        result = 29 * result + whenDuplicatesOption.hashCode();
+        result = 29 * result + insertNewMethodOption.hashCode();
         result = 29 * result + (filterConstantField ? 1 : 0);
         result = 29 * result + (filterEnumField ? 1 : 0);
         result = 29 * result + (filterTransientModifier ? 1 : 0);
@@ -340,12 +244,7 @@ public class Config implements JDOMExternalizable, Serializable {
         result = 29 * result + (filterMethodName != null ? filterMethodName.hashCode() : 0);
         result = 29 * result + (filterMethodType != null ? filterMethodType.hashCode() : 0);
         result = 29 * result + (addImplementSerializable ? 1 : 0);
-        result = 29 * result + (autoImports ? 1 : 0);
-        result = 29 * result + (autoImportsPackages != null ? autoImportsPackages.hashCode() : 0);
-        result = 29 * result + (inspectionOnTheFly ? 1 : 0);
         result = 29 * result + (enableMethods ? 1 : 0);
-        result = 29 * result + (enableTemplateQuickList ? 1 : 0);
-        result = 29 * result + (selectedQuickTemplates != null ? selectedQuickTemplates.hashCode() : 0);
         result = 29 * result + (jumpToMethod ? 1 : 0);
         result = 29 * result + sortElements;
         return result;
@@ -354,11 +253,8 @@ public class Config implements JDOMExternalizable, Serializable {
     public String toString() {
         return "Config{" +
                 "useFullyQualifiedName=" + useFullyQualifiedName +
-                ", useFieldChooserDialog=" + useFieldChooserDialog +
-                ", useDefaultAlways=" + useDefaultAlways +
-                ", replaceDialogInitialOption=" + replaceDialogInitialOption +
-                ", insertNewMethodInitialOption=" + insertNewMethodInitialOption +
-                ", methodBody='" + methodBody + "'" +
+                ", replaceDialogOption=" + whenDuplicatesOption +
+                ", insertNewMethodOption=" + insertNewMethodOption +
                 ", filterConstantField=" + filterConstantField +
                 ", filterEnumField=" + filterEnumField +
                 ", filterTransientModifier=" + filterTransientModifier +
@@ -368,12 +264,7 @@ public class Config implements JDOMExternalizable, Serializable {
                 ", filterMethodName='" + filterMethodName + "'" +
                 ", filterMethodType='" + filterMethodType + "'" +
                 ", addImplementSerializable=" + addImplementSerializable +
-                ", autoImports=" + autoImports +
-                ", autoImportsPackages='" + autoImportsPackages + "'" +
-                ", inspectionOnTheFly=" + inspectionOnTheFly +
                 ", enableMethods=" + enableMethods +
-                ", enableTemplateQuickList=" + enableTemplateQuickList +
-                ", selectedQuickTemplates='" + selectedQuickTemplates + "'" +
                 ", jumpToMethod=" + jumpToMethod +
                 ", sortElements=" + sortElements +
                 "}";

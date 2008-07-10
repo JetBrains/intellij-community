@@ -15,13 +15,10 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 
 /**
  * This policy is to create a duplicate <code>toString</code> method.
@@ -29,7 +26,7 @@ import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 public class DuplicatePolicy implements ConflictResolutionPolicy {
 
     private static final DuplicatePolicy instance = new DuplicatePolicy();
-    private static InsertNewMethodPolicy newMethodPolicy;
+    private static InsertNewMethodStrategy newMethodStrategy = InsertAtCaretStrategy.getInstance();
 
     private DuplicatePolicy() {
     }
@@ -38,24 +35,13 @@ public class DuplicatePolicy implements ConflictResolutionPolicy {
         return instance;
     }
 
-    public void setInsertNewMethodPolicy(InsertNewMethodPolicy policy) {
-        newMethodPolicy = policy;
+    public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
+        newMethodStrategy = strategy;
     }
 
-    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod) throws IncorrectOperationException {
-        newMethodPolicy.insertNewMethod(clazz, newMethod);
+    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+        newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
         return true;
-    }
-
-    public boolean applyJavaDoc(PsiClass clazz, PsiMethod newMethod, PsiElementFactory elementFactory, CodeStyleManager codeStyleManager, String existingJavaDoc, String newJavaDoc) throws IncorrectOperationException {
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-        String text = newJavaDoc != null ? newJavaDoc : existingJavaDoc; // prefer to use new javadoc
-
-        if (psi.addOrReplaceJavadoc(elementFactory, codeStyleManager, newMethod, text, true) != null) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
     public String toString() {

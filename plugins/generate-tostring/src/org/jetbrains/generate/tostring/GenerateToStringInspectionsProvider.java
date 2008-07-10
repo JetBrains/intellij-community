@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.generate.tostring.inspection;
+package org.jetbrains.generate.tostring;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInspection.InspectionToolProvider;
+import org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection;
+import org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection;
 
-/**
- * Base class for inspection support.
- */
-public abstract class AbstractToStringInspection extends LocalInspectionTool {
-    protected static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.inspection.AbstractToStringInspection");
+public class GenerateToStringInspectionsProvider implements InspectionToolProvider {
 
-    public String getGroupDisplayName() {
-        return "toString() issues";
+    public Class[] getInspectionClasses() {
+        // register our inspection classes
+        return new Class[] { ClassHasNoToStringMethodInspection.class,
+                             FieldNotUsedInToStringInspection.class };
     }
 }

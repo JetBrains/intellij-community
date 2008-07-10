@@ -18,18 +18,14 @@ package org.jetbrains.generate.tostring.inspection;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringActionHandler;
 import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
-import org.jetbrains.generate.tostring.GenerateToStringContext;
-import org.jetbrains.generate.tostring.config.InsertAtCaretPolicy;
-import org.jetbrains.generate.tostring.config.InsertLastPolicy;
-import org.jetbrains.generate.tostring.config.InsertNewMethodPolicy;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public class ClassHasNoToStringQuickFix extends AbstractGenerateToStringQuickFix {
+public class GenerateToStringQuickFix extends AbstractGenerateToStringQuickFix {
 
     public void applyFix(@NotNull Project project, ProblemDescriptor desc) {
 
@@ -41,18 +37,7 @@ public class ClassHasNoToStringQuickFix extends AbstractGenerateToStringQuickFix
 
         // execute the action
         GenerateToStringActionHandler handler = new GenerateToStringActionHandlerImpl();
-
-        // determine what insert policy to use
-        InsertNewMethodPolicy policy = GenerateToStringContext.getConfig().getInsertNewMethodInitialOption();
-        if (policy instanceof InsertAtCaretPolicy) {
-            // okay if the config is set to insert at caret, we should override this to insert
-            // last instead, otherwise the javacode will be inserted in the middle of the classname declaration
-            policy = InsertLastPolicy.getInstance();
-        }
-
-        // must use insert last policy otherwise we might insert a new method where the cursor is position and
-        // that position could be in the javafile class name where the inspection is highlighted for (ClassHasNoToStringInsepction)
-        handler.executeActionQickFix(project, clazz, desc, policy);
+        handler.executeActionQickFix(project, clazz, desc);
     }
 
 }

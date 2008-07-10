@@ -20,15 +20,15 @@ package org.jetbrains.generate.tostring.config;
  */
 public class PolicyOptions {
 
-    private static transient InsertNewMethodPolicy[] newMethodOptions = {InsertAtCaretPolicy.getInstance(), InsertAfterEqualsHashCodePolicy.getInstance(), InsertLastPolicy.getInstance()};
+    private static transient InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
 
-    private static transient ConflictResolutionPolicy[] conflictOptions = {ReplacePolicy.getInstance(), DuplicatePolicy.getInstance(), CancelPolicy.getInstance()};
+    private static transient DuplicatonPolicy[] conflictOptions = {DuplicatonPolicy.ASK, DuplicatonPolicy.REPLACE, DuplicatonPolicy.DUPLICATE};
 
     /**
      * Get's the options for the the insert new method policy.
      * @return the options for the the insert new method policy.
      */
-    public static InsertNewMethodPolicy[] getNewMethodOptions() {
+    public static InsertWhere[] getNewMethodOptions() {
         return newMethodOptions;
     }
 
@@ -36,7 +36,7 @@ public class PolicyOptions {
      * Get's the options for the the conflict resolution policy.
      * @return the options for the the conflict resolution policy.
      */
-    public static ConflictResolutionPolicy[] getConflictOptions() {
+    public static DuplicatonPolicy[] getConflictOptions() {
         return conflictOptions;
     }
 

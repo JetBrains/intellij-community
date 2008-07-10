@@ -15,10 +15,9 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -35,16 +34,12 @@ public class CancelPolicy implements ConflictResolutionPolicy {
         return instance;
     }
 
-    public void setInsertNewMethodPolicy(InsertNewMethodPolicy policy) {
+    public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
         // not used as this is cancel
     }
 
-    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod) throws IncorrectOperationException {
+    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         return false; // the user cancels
-    }
-
-    public boolean applyJavaDoc(PsiClass clazz, PsiMethod newMethod, PsiElementFactory elementFactory, CodeStyleManager codeStyleManager, String existingJavaDoc, String newJavaDoc) throws IncorrectOperationException {
-        return false;  // the user cancels
     }
 
     public String toString() {

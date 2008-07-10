@@ -44,7 +44,6 @@ public class TemplateResourceLocator {
     private static final String DEFAULT_CONCAT_SUPER = "/org/jetbrains/generate/tostring/template/DefaultConcatMemberSuper.vm";
     private static final String DEFAULT_BUFFER = "/org/jetbrains/generate/tostring/template/DefaultBuffer.vm";
     private static final String DEFAULT_BUILDER = "/org/jetbrains/generate/tostring/template/DefaultBuilder.vm";
-    private static final String DEFAULT_BUILDER_ANNOTATION = "/org/jetbrains/generate/tostring/template/DefaultBuilderWithAnnotation.vm";
     private static final String DEFAULT_TOSTRINGBUILDER = "/org/jetbrains/generate/tostring/template/DefaultToStringBuilder.vm";
 
     /**
@@ -73,14 +72,13 @@ public class TemplateResourceLocator {
      */
     public static TemplateResource[] getDefaultTemplates() {
         try {
-            TemplateResource tr1 = new TemplateResource("Default using String concat (+)", FileUtil.readFile(DEFAULT_CONCAT));
-            TemplateResource tr2 = new TemplateResource("Default using String concat (+) and super.toString()", FileUtil.readFile(DEFAULT_CONCAT_SUPER));
-            TemplateResource tr3 = new TemplateResource("Default using StringBuffer", FileUtil.readFile(DEFAULT_BUFFER));
-            TemplateResource tr4 = new TemplateResource("Default using StringBuilder (JDK 1.5)", FileUtil.readFile(DEFAULT_BUILDER));
-            TemplateResource tr5 = new TemplateResource("Default using StringBuilder with Override Annotation (JDK 1.5)", FileUtil.readFile(DEFAULT_BUILDER_ANNOTATION));
-            TemplateResource tr6 = new TemplateResource("Default using org.apache.commons.lang.ToStringBuilder", FileUtil.readFile(DEFAULT_TOSTRINGBUILDER));
+            TemplateResource tr1 = new TemplateResource("String concat (+)", FileUtil.readFile(DEFAULT_CONCAT), true);
+            TemplateResource tr2 = new TemplateResource("String concat (+) and super.toString()", FileUtil.readFile(DEFAULT_CONCAT_SUPER), true);
+            TemplateResource tr3 = new TemplateResource("StringBuffer", FileUtil.readFile(DEFAULT_BUFFER), true);
+            TemplateResource tr4 = new TemplateResource("StringBuilder (JDK 1.5)", FileUtil.readFile(DEFAULT_BUILDER), true);
+            TemplateResource tr5 = new TemplateResource("ToStringBuilder (Apache Commons)", FileUtil.readFile(DEFAULT_TOSTRINGBUILDER), true);
 
-            return new TemplateResource[]{tr1, tr2, tr3, tr4, tr5, tr6};
+            return new TemplateResource[]{tr1, tr2, tr3, tr4, tr5};
 
         } catch (IOException e) {
             throw new TemplateResourceException("Error loading default templates", e);

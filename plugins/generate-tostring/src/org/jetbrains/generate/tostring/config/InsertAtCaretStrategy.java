@@ -15,40 +15,36 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.Arrays;
+
 /**
- * This policy is to replace the existing <code>toString</code> method.
+ * Inserts the method at the caret position.
  */
-public class ReplacePolicy implements ConflictResolutionPolicy {
+public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
-    private static final ReplacePolicy instance = new ReplacePolicy();
+    private static final InsertAtCaretStrategy instance = new InsertAtCaretStrategy();
 
-    private ReplacePolicy() {
+    private InsertAtCaretStrategy() {
     }
 
-    public static ReplacePolicy getInstance() {
+    public static InsertAtCaretStrategy getInstance() {
         return instance;
     }
 
-    public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
-        // not needed here
-    }
-
-    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        if (existingMethod != null) {
-            existingMethod.replace(newMethod);
-            return true;
-        } else {
-            return DuplicatePolicy.getInstance().applyMethod(clazz, existingMethod, newMethod, editor);
-        }
+    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+        int offset = editor != null ? editor.getCaretModel().getOffset() : clazz.getTextRange().getEndOffset() - 1;
+        GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(new PsiGenerationInfo[]{new PsiGenerationInfo(newMethod, false)}));
+        return true;
     }
 
     public String toString() {
-        return "Replace existing";
+        return "At caret";
     }
-
 }

@@ -26,9 +26,9 @@ import java.io.Serializable;
  * the text is stored.
  */
 public class TemplateResource implements Serializable {
-
-    private String fileName;
-    private String template;
+    private final boolean isDefault;
+    private String fileName = "";
+    private String template = "";
 
     /**
      * Constructor.
@@ -37,8 +37,20 @@ public class TemplateResource implements Serializable {
      * @param template the template velocity body content
      */
     public TemplateResource(String fileName, String template) {
+        this(fileName, template, false);
+    }
+
+    public TemplateResource(String fileName, String template, boolean aDefault) {
+        isDefault = aDefault;
         this.fileName = fileName;
         this.template = template;
+    }
+
+    /**
+     * Bean constructor
+     */
+    public TemplateResource() {
+        isDefault = false;
     }
 
     public String getTemplate() {
@@ -55,6 +67,10 @@ public class TemplateResource implements Serializable {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public boolean isDefault() {
+        return isDefault;
     }
 
     /**
@@ -222,4 +238,32 @@ public class TemplateResource implements Serializable {
         return fileName != null ? fileName : template;
     }
 
+    public String getName() {
+        return fileName;
+    }
+
+    public void copyFrom(TemplateResource templateResource) {
+        fileName = templateResource.getFileName();
+        template = templateResource.getTemplate();
+    }
+
+    public void setName(String name) {
+        fileName = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TemplateResource)) return false;
+
+        TemplateResource that = (TemplateResource) o;
+
+        return fileName.equals(that.fileName) && template.equals(that.template);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * fileName.hashCode() + template.hashCode();
+    }
 }

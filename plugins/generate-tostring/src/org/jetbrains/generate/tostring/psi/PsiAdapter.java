@@ -18,10 +18,7 @@ package org.jetbrains.generate.tostring.psi;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -59,22 +56,6 @@ public abstract class PsiAdapter {
      */
     public PsiField[] getFields(PsiClass clazz) {
         return clazz.getFields();
-    }
-
-    /**
-     * Get's the current class for the javafile and relative to the editor's caret.
-     * It's possible to get an inner class if the caret is positioned inside the innerclass.
-     *
-     * @param javaFile javafile for the class to find.
-     * @param editor   the editor.
-     * @return the class, null if not found.
-     */
-    public PsiClass getCurrentClass(PsiJavaFile javaFile, Editor editor) {
-        if (javaFile == null) {
-            return null;
-        }
-        PsiElement element = javaFile.findElementAt(editor.getCaretModel().getOffset());
-        return element != null ? findClass(element) : null;
     }
 
     /**
@@ -1066,40 +1047,6 @@ public abstract class PsiAdapter {
     }
 
     /**
-     * Get's the selected java file in the editor.
-     *
-     * @param project IDEA project
-     * @param manager IDEA manager
-     * @return the selected java file, null if none found.
-     */
-    public PsiJavaFile getSelectedJavaFile(Project project, PsiManager manager) {
-        Editor editor = getSelectedEditor(project);
-        if (editor == null) {
-            return null;
-        }
-
-        VirtualFile vFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        PsiFile psiFile = manager.findFile(vFile);
-
-        // we only want it if its a java file
-        if (!(psiFile instanceof PsiJavaFile)) {
-            return null;
-        } else {
-            return (PsiJavaFile) psiFile;
-        }
-    }
-
-    /**
-     * Get's the current selected text editor.
-     *
-     * @param project IDEA project
-     * @return the selected editor, null if none selected
-     */
-    public Editor getSelectedEditor(Project project) {
-        return FileEditorManager.getInstance(project).getSelectedTextEditor();
-    }
-
-    /**
      * Check if the given type against a FQ classname (assignable).
      *
      * @param factory         IDEA factory
@@ -1176,35 +1123,7 @@ public abstract class PsiAdapter {
      * @return true if primitive, false if not.
      */
     public boolean isPrimitiveType(PsiType type) {
-        // shortcut - skip java.* and javax.* packages
-        if (type.getCanonicalText().startsWith("java")) {
-            return false;
-        }
-
-        if (type.isAssignableFrom(PsiType.BOOLEAN) ||
-                type.isAssignableFrom(PsiType.BYTE) ||
-                type.isAssignableFrom(PsiType.CHAR) ||
-                type.isAssignableFrom(PsiType.DOUBLE) ||
-                type.isAssignableFrom(PsiType.FLOAT) ||
-                type.isAssignableFrom(PsiType.INT) ||
-                type.isAssignableFrom(PsiType.LONG) ||
-                type.isAssignableFrom(PsiType.SHORT)) {
-            return true;
-        }
-
-        PsiType subType = type.getDeepComponentType();
-        if (subType.isAssignableFrom(PsiType.BOOLEAN) ||
-                subType.isAssignableFrom(PsiType.BYTE) ||
-                subType.isAssignableFrom(PsiType.CHAR) ||
-                subType.isAssignableFrom(PsiType.DOUBLE) ||
-                subType.isAssignableFrom(PsiType.FLOAT) ||
-                subType.isAssignableFrom(PsiType.INT) ||
-                subType.isAssignableFrom(PsiType.LONG) ||
-                subType.isAssignableFrom(PsiType.SHORT)) {
-            return true;
-        }
-
-        return false;
+        return type instanceof PsiPrimitiveType;
     }
 
     /**

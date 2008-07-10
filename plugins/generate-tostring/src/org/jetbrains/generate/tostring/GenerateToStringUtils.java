@@ -191,29 +191,6 @@ public class GenerateToStringUtils {
     }
 
     /**
-     * Gets the current PsiClass
-     *
-     * @param editor the editor
-     * @return the clazz, <tt>null</tt> if not found
-     */
-    public static PsiClass getCurrentClass(Editor editor) {
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-        Project project = editor.getProject();
-        PsiManager manager = psi.getPsiManager(project);
-        PsiJavaFile javaFile = psi.getSelectedJavaFile(project, manager);
-        if (javaFile == null) {
-            return null; // silently ignore since it's not a javafile.
-        }
-
-        PsiClass clazz = psi.getCurrentClass(javaFile, editor);
-        if (clazz == null) {
-            return null; // silently ignore since current selected class in editor not found.
-        } else {
-            return clazz;
-        }
-    }
-
-    /**
      * Combines the two lists into one list of members.
      *
      * @param filteredFields  fields to be included in the dialog

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
@@ -24,19 +25,19 @@ import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 /**
  * Inserts the method after the hashCode/equals methods in the javafile.
  */
-public class InsertAfterEqualsHashCodePolicy implements InsertNewMethodPolicy {
+public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrategy {
 
-    private static final InsertAfterEqualsHashCodePolicy instance = new InsertAfterEqualsHashCodePolicy ();
+    private static final InsertAfterEqualsHashCodeStrategy instance = new InsertAfterEqualsHashCodeStrategy();
     private static PsiAdapter psi;
 
-    private InsertAfterEqualsHashCodePolicy () {
+    private InsertAfterEqualsHashCodeStrategy() {
     }
 
-    public static InsertAfterEqualsHashCodePolicy getInstance() {
+    public static InsertAfterEqualsHashCodeStrategy getInstance() {
         return instance;
     }
 
-    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod) throws IncorrectOperationException {
+    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         // lazy initialize otherwise IDEA throws error: Component requests are not allowed before they are created
         if (psi == null) {
             psi = PsiAdapterFactory.getPsiAdapter();
@@ -63,7 +64,7 @@ public class InsertAfterEqualsHashCodePolicy implements InsertNewMethodPolicy {
             clazz.addAfter(newMethod, method);
         } else {
             // no equals/hashCode so insert at caret
-            InsertAtCaretPolicy.getInstance().insertNewMethod(clazz, newMethod);
+            InsertAtCaretStrategy.getInstance().insertNewMethod(clazz, newMethod, editor);
         }
 
         return true;

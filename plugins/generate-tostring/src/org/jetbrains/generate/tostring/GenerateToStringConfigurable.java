@@ -7,6 +7,7 @@ import org.jetbrains.generate.tostring.config.Config;
 import org.jetbrains.generate.tostring.view.ConfigUI;
 
 import javax.swing.*;
+import java.net.URL;
 
 /**
  * @author yole
@@ -17,11 +18,11 @@ public class GenerateToStringConfigurable implements Configurable {
   private ConfigUI configUI;
 
   public String getDisplayName() {
-      return "GenerateToString";
+      return "Settings";
   }
 
   public Icon getIcon() {
-      java.net.URL resource = getClass().getResource("/resources/configurableToStringPlugin.png");
+      URL resource = getClass().getResource("/resources/configurableToStringPlugin.png");
       if (resource != null) {
           return new ImageIcon(resource);
       }
@@ -42,10 +43,6 @@ public class GenerateToStringConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
       Config config = configUI.getConfig();
-
-      if (config.isEnableTemplateQuickList() && config.getSelectedQuickTemplates() == null) {
-          throw new ConfigurationException("At least one template should be selected in the Template Quick Selection List");
-      }
 
       GenerateToStringContext.setConfig(config); // update context
 

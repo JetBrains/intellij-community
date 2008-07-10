@@ -15,10 +15,9 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -31,10 +30,10 @@ public interface ConflictResolutionPolicy {
     /**
      * Inject the policy to use when inserting a new method.
      *
-     * @param policy  the policy to use.
+     * @param strategy  the policy to use.
      * @since 3.18
      */
-    void setInsertNewMethodPolicy(InsertNewMethodPolicy policy);
+    void setNewMethodStrategy(InsertNewMethodStrategy strategy);
 
     /**
      * Applies the choosen policy.
@@ -42,24 +41,9 @@ public interface ConflictResolutionPolicy {
      * @param clazz          PSIClass.
      * @param existingMethod existing method if one exists.
      * @param newMethod      new method.
+     * @param editor
      * @return if the policy was executed normally (not cancelled)
      * @throws IncorrectOperationException is thrown if there is an IDEA error.
      */
-    boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod) throws IncorrectOperationException;
-
-    /**
-     * Applies the choose policy for javadoc.
-     *
-     * @param clazz              PSIClass
-     * @param newMethod          New toString method
-     * @param elementFactory     Element factory
-     * @param codeStyleManager   CodeStyleManager
-     * @param existingJavaDoc    Existing javadoc if any
-     * @param newJavaDoc         The new javadoc if any
-     * @return                   true if javadoc replace, false if left as it was before
-     * @throws IncorrectOperationException is thrown if there is an IDEA error.
-     * @since 2.20
-     */
-    boolean applyJavaDoc(PsiClass clazz, PsiMethod newMethod, PsiElementFactory elementFactory, CodeStyleManager codeStyleManager, String existingJavaDoc, String newJavaDoc) throws IncorrectOperationException;
-
+    boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
 }

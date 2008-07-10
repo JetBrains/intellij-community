@@ -20,8 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import org.jetbrains.generate.tostring.config.InsertNewMethodPolicy;
-import org.jetbrains.generate.tostring.template.TemplateResource;
 
 /**
  * Main interface for the plugin.
@@ -40,25 +38,14 @@ public interface GenerateToStringActionHandler {
      */
     void executeWriteAction(Editor editor, DataContext dataContext);
 
-    /**
-     * Action to be executed from the template quick selection dialog.
-     *
-     * @param project           the current project.
-     * @param clazz             the class.
-     * @param quickTemplate     the selected quick template
-     * @param insertPolicy      overrule to use this policy (usually by quickfix), null to use default
-     */
-    void executeActionTemplateQuickSelection(Project project, PsiClass clazz, TemplateResource quickTemplate, InsertNewMethodPolicy insertPolicy);
 
-
-    /**
+  /**
      * Action to be executed from quick fix.
      *
      * @param project           the current project.
-     * @param clazz             the class.
-     * @param desc              the problem found by that quick fix should solve
-     * @param insertPolicy      overrule to use this policy (usually by quickfix), null to use default
-     */
-    void executeActionQickFix(Project project, PsiClass clazz, ProblemDescriptor desc, InsertNewMethodPolicy insertPolicy);
+   * @param clazz             the class.
+   * @param desc              the problem found by that quick fix should solve
+   */
+    void executeActionQickFix(Project project, PsiClass clazz, ProblemDescriptor desc);
 
 }
