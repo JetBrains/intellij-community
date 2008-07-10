@@ -524,7 +524,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       super(project, MESSAGE, ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
-      Disposer.register(myDisposable, myProject);
+      Disposer.register(myProject, myDisposable);
     }
 
     protected String getOkActionName() {
