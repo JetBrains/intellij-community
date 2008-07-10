@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
@@ -215,7 +212,9 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     DefaultJDOMExternalizer.writeExternal(this, element);
     super.writeExternal(element);
 
-    for (String unnamedScope : myUnnamedScopes.keySet()) {
+    final List<String> unnamedScopes = new ArrayList<String>(myUnnamedScopes.keySet());
+    Collections.sort(unnamedScopes);
+    for (final String unnamedScope : unnamedScopes) {
       Element unnamedElement = new Element(UNNAMED_SCOPE);
       unnamedElement.setAttribute(VALUE, unnamedScope);
       element.addContent(unnamedElement);
