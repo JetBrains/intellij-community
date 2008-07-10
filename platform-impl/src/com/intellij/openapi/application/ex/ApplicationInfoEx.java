@@ -31,6 +31,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWelcomeScreenDeveloperSloganUrl();
 
+  public abstract String getHelpFileName();
+
+  public abstract String getHelpRootName();
+
   public abstract boolean isEAP();
 
 

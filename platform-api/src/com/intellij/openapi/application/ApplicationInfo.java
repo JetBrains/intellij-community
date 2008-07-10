@@ -23,6 +23,7 @@ public abstract class ApplicationInfo {
   public abstract String getMajorVersion();
   public abstract String getMinorVersion();
   public abstract String getVersionName();
+  public abstract String getHelpURL();
 
   public static ApplicationInfo getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationInfo.class);

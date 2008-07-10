@@ -5,8 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NonNls;
@@ -58,8 +58,7 @@ public class HelpManagerImpl extends HelpManager {
   }
 
   private static HelpSet createHelpSet() {
-    // This is a temporary solution: path to the help should be customized somehow
-    String urlToHelp = PathManager.getHelpURL() + "/" + HELP_HS;
+    String urlToHelp = ApplicationInfo.getInstance().getHelpURL() + "/" + HELP_HS;
 
     try {
       HelpSet helpSet = new HelpSet(null, new URL (urlToHelp));

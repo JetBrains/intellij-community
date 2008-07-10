@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
@@ -35,6 +37,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private UpdateUrls myUpdateUrls;
   private UpdateUrls myEapUpdateUrls;
   private boolean myEAP;
+  @NonNls private String myHelpFileName = "ideahelp.jar";
+  @NonNls private String myHelpRootName = "idea";
 
   @NonNls private static final String IDEA_PATH = "/idea/";
   @NonNls private static final String ELEMENT_VERSION = "version";
@@ -58,6 +62,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String EAP_UPDATE_URLS_ELEMENT_NAME = "eap-update-urls";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls private static final String ATTRIBUTE_EAP = "eap";
+  @NonNls private static final String HELP_ELEMENT_NAME = "help";
+  @NonNls private static final String ATTRIBUTE_HELP_FILE = "file";
+  @NonNls private static final String ATTRIBUTE_HELP_ROOT = "root";
 
   public void initComponent() { }
 
@@ -88,6 +95,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return fullName;
   }
 
+  @NonNls
+  public String getHelpURL() {
+    return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+  }
+
+  @NonNls
+  private String getHelpJarPath() {
+    return PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
+  }
+
   public String getLogoUrl() {
     return myLogoUrl;
   }
@@ -106,6 +123,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getWelcomeScreenDeveloperSloganUrl() {
     return myWelcomeScreenDeveloperSloganUrl;
+  }
+
+  public String getHelpFileName() {
+    return myHelpFileName;
+  }
+
+  public String getHelpRootName() {
+    return myHelpRootName;
   }
 
   public boolean isEAP() {
@@ -216,6 +241,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (welcomeScreen != null) {
       myWelcomeScreenCaptionUrl = welcomeScreen.getAttributeValue(CAPTION_URL_ATTR);
       myWelcomeScreenDeveloperSloganUrl = welcomeScreen.getAttributeValue(SLOGAN_URL_ATTR);
+    }
+
+    Element helpElement = parentNode.getChild(HELP_ELEMENT_NAME);
+    if (helpElement != null) {
+      myHelpFileName = helpElement.getAttributeValue(ATTRIBUTE_HELP_FILE);
+      myHelpRootName = helpElement.getAttributeValue(ATTRIBUTE_HELP_ROOT);
     }
 
     Element updateUrls = parentNode.getChild(UPDATE_URLS_ELEMENT_NAME);

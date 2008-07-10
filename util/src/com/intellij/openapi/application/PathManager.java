@@ -187,20 +187,6 @@ public class PathManager {
     return ourConfigPath;
   }
 
-  @NonNls
-  public static String getHelpURL() {
-    return "jar:file:///" + getHelpJarPath() + "!/idea";
-  }
-
-  @NonNls
-  private static String getHelpJarPath() {
-    return getHomePath() + File.separator + "help" + File.separator + "ideahelp.jar";
-  }
-
-  public static File getHelpJarFile() {
-    return new File(getHelpJarPath());
-  }
-
   public static String getBinPath() {
     return getHomePath() + File.separator + BIN_FOLDER;
   }
