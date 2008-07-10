@@ -242,7 +242,13 @@ public class CompareWithBranchAction extends AnAction {
         reportNotFound(baseUrl);
       }
       else {
-        LOG.error(ex);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showMessageDialog(myProject, ex.getMessage(),
+                                       SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
+          }
+        });
+        LOG.info(ex);
       }
     }
 
