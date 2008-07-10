@@ -17,6 +17,7 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
@@ -27,10 +28,10 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
@@ -119,9 +120,11 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       public void onSchemeAdded(final InspectionProfileImpl scheme) {
         updateProfileImpl(scheme);
         fireProfileChanged(scheme);
+        onProfilesChanged();
       }
 
       public void onSchemeDeleted(final InspectionProfileImpl scheme) {
+        onProfilesChanged();
       }
 
       public void onCurrentSchemeChanged(final Scheme oldCurrentScheme) {
@@ -129,7 +132,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
         if (current != null) {
           fireProfileChanged((Profile)oldCurrentScheme, current,null);
         }
-
+        onProfilesChanged();
       }
     };
 
@@ -367,5 +370,18 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public SchemesManager<Profile, InspectionProfileImpl> getSchemesManager() {
     return mySchemesManager;
+  }
+
+  public void onProfilesChanged() {
+    //cleanup caches blindly for all projects in case ide profile was modified
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      HighlightingSettingsPerFile.getInstance(project).cleanProfileSettings();
+
+      InspectionProjectProfileManager.getInstance(project).updateStatusBar();
+
+    }
+
+
+
   }
 }
