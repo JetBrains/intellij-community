@@ -761,7 +761,7 @@ public class StringUtil {
         continue;
       }
 
-      if (c == '"' && !(i > 0 && s.charAt(i - 1) == '\\')) {
+      if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
         inQuotes = !inQuotes;
       }
       builder.append(c);
