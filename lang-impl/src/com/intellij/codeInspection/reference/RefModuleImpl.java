@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 /**
  * User: anna
@@ -22,6 +23,23 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
     super(module.getName(), manager);
     myModule = module;
     ((RefProjectImpl)manager.getRefProject()).add(this);
+  }
+
+  public void add(RefEntity child) {
+    if (myChildren == null) {
+       myChildren = new ArrayList<RefEntity>();
+    }
+    myChildren.add(child);
+
+    if (child.getOwner() == null) {
+      ((RefEntityImpl)child).setOwner(this);
+    }
+  }
+
+  protected void removeChild(RefEntity child) {
+    if (myChildren != null) {
+      myChildren.remove(child);
+    }
   }
 
   public void accept(final RefVisitor refVisitor) {

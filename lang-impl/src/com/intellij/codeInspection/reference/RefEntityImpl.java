@@ -48,7 +48,7 @@ public abstract class RefEntityImpl implements RefEntity {
     return myOwner;
   }
 
-  private void setOwner(RefEntityImpl owner) {
+  protected void setOwner(RefEntityImpl owner) {
     myOwner = owner;
   }
 
