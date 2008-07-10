@@ -311,7 +311,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   private void doImportProjects(List<VirtualFile> files, String... profiles) throws MavenException {
     myProfilesList = Arrays.asList(profiles);
 
-    myMavenProjectsManager.doInitComponent(true);
+    myMavenProjectsManager.doInitComponent(false);
     myMavenProjectsManager.setManagedFiles(files);
     myMavenProjectsManager.setActiveProfiles(myProfilesList);
     myMavenProjectsManager.reimport();
