@@ -167,6 +167,7 @@ public class DomImplUtil {
       return XmlFileHeader.EMPTY;
     }
 
+    if (!file.isValid()) return XmlFileHeader.EMPTY;
     return NanoXmlUtil.parseHeader(file);
   }
 
