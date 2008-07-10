@@ -1,8 +1,8 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.ExportSchemeAction;
+import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.LafManager;
@@ -734,6 +734,7 @@ public class KeymapPanel extends JPanel {
     newKeymap.setCanModify(true);
     myKeymapListModel.addElement(newKeymap);
     myKeymapList.setSelectedItem(newKeymap);
+    myKeymapList.getEditor().selectAll();
     processCurrentKeymapChanged();
   }
 
