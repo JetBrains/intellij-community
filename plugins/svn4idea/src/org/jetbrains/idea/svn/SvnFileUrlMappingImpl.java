@@ -54,7 +54,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
       return rootInfo.second.getAbsoluteUrlAsUrl().appendPath(relativePath, true);
     }
     catch (SVNException e) {
-      LOG.error(e);
+      LOG.info(e);
       return null;
     }
   }

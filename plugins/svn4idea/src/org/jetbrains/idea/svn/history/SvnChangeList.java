@@ -243,7 +243,7 @@ public class SvnChangeList implements CommittedChangeList {
           uploadDeletedRenamedChildren();
         }
         catch (SVNException e) {
-          LOG.error(e);
+          LOG.info(e);
         } finally {
           if (myRepository != null) {
             myRepository.closeSession();
