@@ -6,15 +6,24 @@ package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -27,6 +36,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -307,7 +317,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = element.getProject();
-    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+    final PsiFile containingFile = element.getContainingFile();
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
     if (!entries.isEmpty()) {
@@ -322,12 +333,39 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
     final MyExternalPromptDialog dialog = new MyExternalPromptDialog(project);
     if (dialog.isToBeShown()) {
-      dialog.show();
-      if (dialog.getExitCode() == 2) {
-        return AnnotationPlace.EXTERNAL;
+      final PsiElement highlightElement = element instanceof PsiNameIdentifierOwner
+                                           ? ((PsiNameIdentifierOwner)element).getNameIdentifier()
+                                           : element.getNavigationElement();
+      LOG.assertTrue(highlightElement != null);
+      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+      final boolean highlight =
+          editor != null && editor.getDocument() == PsiDocumentManager.getInstance(project).getDocument(containingFile);
+      try {
+        if (highlight) { //do not highlight for batch inspections
+          final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+          final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+          final TextRange textRange = highlightElement.getTextRange();
+          HighlightManager.getInstance(project).addRangeHighlight(editor,
+                                                                textRange.getStartOffset(), textRange.getEndOffset(),
+                                                                attributes, true, highlighters);
+          final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
+          editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.CENTER);
+        }
+
+        dialog.show();
+        if (dialog.getExitCode() == 2) {
+          return AnnotationPlace.EXTERNAL;
+        }
+        else if (dialog.getExitCode() == 1) {
+          return AnnotationPlace.NOWHERE;
+        }
+
       }
-      else if (dialog.getExitCode() == 1) {
-        return AnnotationPlace.NOWHERE;
+      finally {
+        if (highlight) {
+          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+        }
       }
     }
     return AnnotationPlace.IN_CODE;
