@@ -865,7 +865,8 @@ public final class PsiUtil extends PsiUtilBase {
 
   @Nullable
   public static PsiType extractIterableTypeParameter(@Nullable PsiType psiType) {
-    return substituteTypeParameter(psiType, CommonClassNames.JAVA_LANG_ITERABLE, 0);
+    final PsiType type = substituteTypeParameter(psiType, CommonClassNames.JAVA_LANG_ITERABLE, 0);
+    return type != null ? type : substituteTypeParameter(psiType, CommonClassNames.JAVA_UTIL_COLLECTION, 0);
   }
 
   public static PsiType substituteTypeParameter(final PsiType psiType, final String superClass, final int typeParamIndex) {

@@ -91,6 +91,7 @@ public abstract class PsiType {
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
+  @NotNull
   public static PsiClassType getJavaLangObject(PsiManager manager, GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
   }
@@ -124,6 +125,7 @@ public abstract class PsiType {
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
+  @NotNull
   public static PsiClassType getJavaLangString(PsiManager manager, GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, resolveScope);
   }
