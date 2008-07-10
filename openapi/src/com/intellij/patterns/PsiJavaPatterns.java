@@ -78,7 +78,11 @@ public class PsiJavaPatterns extends StandardPatterns{
     return psiElement(PsiReferenceExpression.class);
   }
 
-  public static PsiJavaElementPattern.Capture<PsiExpressionStatement> psiExpressionStatement() {
-    return psiElement(PsiExpressionStatement.class);
+  public static PsiStatementPattern.Capture<PsiExpressionStatement> psiExpressionStatement() {
+    return new PsiStatementPattern.Capture<PsiExpressionStatement>(PsiExpressionStatement.class);
+  }
+
+  public static PsiStatementPattern.Capture<PsiReturnStatement> psiReturnStatement() {
+    return new PsiStatementPattern.Capture<PsiReturnStatement>(PsiReturnStatement.class);
   }
 }

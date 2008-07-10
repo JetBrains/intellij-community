@@ -6,13 +6,14 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.Processor;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,10 +69,10 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
     return definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(qname));
   }
 
-  public PsiMethodPattern definedInClass(final ElementPattern pattern) {
+  public PsiMethodPattern definedInClass(final ElementPattern<? extends PsiClass> pattern) {
     return with(new PatternCondition<PsiMethod>("definedInClass") {
       public boolean accepts(@NotNull final PsiMethod psiMethod, final ProcessingContext context) {
-        if (pattern.accepts(psiMethod.getContainingClass())) {
+        if (pattern.accepts(psiMethod.getContainingClass(), context)) {
           return true;
         }
         final Ref<Boolean> ref = new Ref<Boolean>(Boolean.FALSE);

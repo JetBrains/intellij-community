@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -34,11 +35,23 @@ public class ParametersList implements Cloneable{
   public boolean hasParameter(@NonNls final String param) {
     return myParameters.contains(param);
   }
+
   public boolean hasProperty(@NonNls final String name) {
     for (@NonNls String parameter : myParameters) {
       if (parameter.startsWith("-D"+name+"=")) return true;
     }
     return false;
+  }
+
+  @Nullable
+  public String getPropertyValue(@NonNls final String name) {
+    for (String parameter : myParameters) {
+      @NonNls String prefix = "-D" + name + "=";
+      if (parameter.startsWith(prefix)) {
+        return parameter.substring(prefix.length());
+      }
+    }
+    return null;
   }
 
   public String getParametersString() {
@@ -77,11 +90,11 @@ public class ParametersList implements Cloneable{
     myParameters.add("-D" + propertyName + "=" + propertyValue);
   }
 
-  public void replaceOrAppend(final String parameterPrefix, final String replacement) {
+  public void replaceOrAppend(final @NonNls String parameterPrefix, final @NonNls String replacement) {
     replaceOrAdd(parameterPrefix, replacement, myParameters.size());
   }
 
-  private void replaceOrAdd(final String parameterPrefix, final String replacement, final int position) {
+  private void replaceOrAdd(final @NonNls String parameterPrefix, final @NonNls String replacement, final int position) {
     for (ListIterator<String> iterator = myParameters.listIterator(); iterator.hasNext();) {
       final String param = iterator.next();
       if (param.startsWith(parameterPrefix)) {
@@ -99,7 +112,7 @@ public class ParametersList implements Cloneable{
     }
   }
 
-  public void replaceOrPrepend(final String parameter, final String replacement) {
+  public void replaceOrPrepend(final @NonNls String parameter, final @NonNls String replacement) {
     replaceOrAdd(parameter, replacement, 0);
   }
 
