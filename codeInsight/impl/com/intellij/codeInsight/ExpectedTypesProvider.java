@@ -495,8 +495,10 @@ public class ExpectedTypesProvider {
         final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider);
         expr.getParent().accept(visitor);
         myResult = visitor.getResult();
-        for (final ExpectedTypeInfo info : myResult) {
-          ((ExpectedTypeInfoImpl)info).myTailType = TailType.NONE;
+        if (!(expr.getParent() instanceof PsiExpressionList)) {
+          for (final ExpectedTypeInfo info : myResult) {
+            ((ExpectedTypeInfoImpl)info).myTailType = TailType.NONE;
+          }
         }
         return;
       }
