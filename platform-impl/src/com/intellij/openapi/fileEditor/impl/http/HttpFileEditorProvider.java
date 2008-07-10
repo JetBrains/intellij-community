@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
@@ -32,6 +33,7 @@ public class HttpFileEditorProvider implements FileEditorProvider {
   }
 
   public void disposeEditor(@NotNull final FileEditor editor) {
+    Disposer.dispose(editor);
   }
 
   @NotNull
