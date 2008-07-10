@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.codeInsight.completion.LegacyCompletionContributor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,8 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.codeInsight.completion.LegacyCompletionContributor;
+import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   private final ConcurrentMap<Class,SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
+  private MultiMap<Class,Class> myKnownSupers;
   private boolean myInitialized;
 
   private static final Comparator<Trinity<PsiReferenceProvider,ProcessingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
@@ -59,6 +62,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     registerReferenceProvider(pattern, provider, DEFAULT_PRIORITY);
   }
   public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority) {
+    myKnownSupers = null;
     final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
     final PsiNamePatternCondition<?> nameCondition = ContainerUtil.findInstance(pattern.getCondition().getConditions(), PsiNamePatternCondition.class);
     if (nameCondition != null) {
@@ -159,18 +163,37 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
       }
     }
 
-    final SimpleProviderBinding simpleBinding = myBindingsMap.get(clazz);
-    final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(clazz);
-    if (simpleBinding == null && namedBinding == null) return Collections.emptyList();
+    MultiMap<Class, Class> knownSupers = myKnownSupers;
+    if (knownSupers == null) {
+      knownSupers = new MultiMap<Class, Class>();
+      Set<Class> allClasses = new THashSet<Class>();
+      allClasses.addAll(myBindingsMap.keySet());
+      allClasses.addAll(myNamedBindingsMap.keySet());
+      for (final Class ancestor : allClasses) {
+        for (final Class descendant : allClasses) {
+          if (ancestor.isAssignableFrom(descendant)) {
+            knownSupers.putValue(descendant, ancestor);
+          }
+        }
+      }
+      myKnownSupers = knownSupers;
+    }
 
-    List<Trinity<PsiReferenceProvider,ProcessingContext,Double>> ret = new SmartList<Trinity<PsiReferenceProvider,ProcessingContext,Double>>();
-    if (simpleBinding != null) {
-      simpleBinding.addAcceptableReferenceProviders(element, ret);
+    List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret = null;
+    for (final Class aClass : knownSupers.get(clazz)) {
+      final SimpleProviderBinding simpleBinding = myBindingsMap.get(aClass);
+      final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(aClass);
+      if (simpleBinding == null && namedBinding == null) continue;
+
+      if (ret == null) ret = new SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>();
+      if (simpleBinding != null) {
+        simpleBinding.addAcceptableReferenceProviders(element, ret);
+      }
+      if (namedBinding != null) {
+        namedBinding.addAcceptableReferenceProviders(element, ret);
+      }
     }
-    if (namedBinding != null) {
-      namedBinding.addAcceptableReferenceProviders(element, ret);
-    }
-    return ret;
+    return ret == null ? Collections.<Trinity<PsiReferenceProvider, ProcessingContext, Double>>emptyList() : ret;
   }
 
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz){
