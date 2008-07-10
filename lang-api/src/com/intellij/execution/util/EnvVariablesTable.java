@@ -23,12 +23,12 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 
 public class EnvVariablesTable extends Observable {
   private final List<EnvironmentVariable> myVariables = new ArrayList<EnvironmentVariable>();
@@ -183,29 +183,11 @@ public class EnvVariablesTable extends Observable {
       setModified();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          myVariables.add(new EnvironmentVariable(getUniqueName(), "", false));
+          myVariables.add(new EnvironmentVariable("", "", false));
           myTableVeiw.getTableViewModel().setItems(myVariables);
-          myTableVeiw.getComponent().editCellAt(0, myVariables.size() - 1);
+          myTableVeiw.getComponent().editCellAt(myVariables.size() - 1, 0);
         }
       });
-    }
-
-    private String getUniqueName() {
-      Set<String> names = collectAllNames();
-      for (int i = 2; ; i++) {
-        @NonNls String newName = "EnvVar" + i;
-        if (names.contains(newName)) continue;
-        return newName;
-      }
-    }
-
-    private Set<String> collectAllNames() {
-      HashSet<String> result = new HashSet<String>();
-      for (final EnvironmentVariable myVariable : myVariables) {
-        EnvironmentVariable environmentVariable = (EnvironmentVariable)myVariable;
-        result.add(environmentVariable.getName());
-      }
-      return result;
     }
   }
 
