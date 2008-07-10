@@ -60,6 +60,7 @@ public class PluginManager {
   private static String ourBuildNumber;
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
   @NonNls private static final String META_INF = "META-INF";
+  private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
 
   public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -169,6 +170,10 @@ public class PluginManager {
     // sort descriptors according to plugin dependencies
     Collections.sort(result, getPluginDescriptorComparator(idToDescriptorMap));
 
+    for (int i = 0; i < result.size(); i++) {
+      ourId2Index.put(result.get(i).getPluginId(), i);
+    }
+
     for (final IdeaPluginDescriptorImpl pluginDescriptor : result) {
       if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID) || pluginDescriptor.isUseCoreClassLoader()) {
         pluginDescriptor.setLoader(parentLoader, true);
@@ -188,6 +193,10 @@ public class PluginManager {
     }
 
     ourPlugins = pluginDescriptors;
+  }
+
+  public static int getPluginLoadingOrder(PluginId id) {
+    return ourId2Index.get(id);
   }
 
   private static void mergeOptionalConfigs(Map<PluginId, IdeaPluginDescriptorImpl> descriptors) {

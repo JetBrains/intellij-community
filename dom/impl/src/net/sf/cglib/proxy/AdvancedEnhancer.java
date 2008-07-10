@@ -18,6 +18,7 @@ package net.sf.cglib.proxy;
 import com.intellij.util.xml.JavaMethodSignature;
 import com.intellij.util.ReflectionCache;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.PluginManager;
 import net.sf.cglib.asm.ClassVisitor;
 import net.sf.cglib.asm.Label;
 import net.sf.cglib.asm.Type;
@@ -402,14 +403,30 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   protected ClassLoader getDefaultClassLoader() {
+    int maxIndex = -1;
+    ClassLoader bestLoader = null;
     if (interfaces != null && interfaces.length > 0) {
       for (final Class anInterface : interfaces) {
-        final ClassLoader classLoader1 = anInterface.getClassLoader();
-        if (classLoader1 instanceof PluginClassLoader) return classLoader1;
+        final ClassLoader loader = anInterface.getClassLoader();
+        if (loader instanceof PluginClassLoader) {
+          final int order = PluginManager.getPluginLoadingOrder(((PluginClassLoader)loader).getPluginId());
+          if (maxIndex < order) {
+            maxIndex = order;
+            bestLoader = loader;
+          }
+        }
       }
     }
-    if (superclass != null) return superclass.getClassLoader();
-    return null;
+    ClassLoader superLoader = null;
+    if (superclass != null) {
+      superLoader = superclass.getClassLoader();
+      if (superLoader instanceof PluginClassLoader &&
+          maxIndex < PluginManager.getPluginLoadingOrder(((PluginClassLoader)superLoader).getPluginId())) {
+        return superLoader;
+      }
+    }
+    if (bestLoader != null) return bestLoader;
+    return superLoader;
   }
 
   private static Signature rename(Signature sig, int index) {
