@@ -79,6 +79,9 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     
     myEntriesChooser.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+          return;
+        }
         final List<T> entries = getSelectedEntries();
         final Collection deps = getDependencies(entries);
 

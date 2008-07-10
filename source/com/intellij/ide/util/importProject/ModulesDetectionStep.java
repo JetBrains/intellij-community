@@ -35,7 +35,11 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   }
 
   protected JComponent createResultsPanel() {
-    myModulesLayoutPanel = new ModulesLayoutPanel(myInsight);
+    myModulesLayoutPanel = new ModulesLayoutPanel(myInsight, new ModulesLayoutPanel.LibraryFilter() {
+      public boolean isLibraryChosen(final LibraryDescriptor libDescriptor) {
+        return myBuilder.isLibraryChosen(libDescriptor);
+      }
+    });
     return myModulesLayoutPanel;
   }
 

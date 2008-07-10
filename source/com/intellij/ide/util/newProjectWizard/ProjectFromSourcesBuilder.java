@@ -278,7 +278,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     return myChosenModules;
   }
   
-  private boolean isLibraryChosen(LibraryDescriptor lib) {
+  public boolean isLibraryChosen(LibraryDescriptor lib) {
     Set<LibraryDescriptor> available = myChosenLibrariesSet;
     if (available == null) {
       available = new HashSet<LibraryDescriptor>(myChosenLibraries);
