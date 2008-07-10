@@ -190,6 +190,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         final VcsRoot[] vcsRoots = myVcsManager.getAllVcsRoots();
         for(VcsRoot root: vcsRoots) {
           try {
+            if (myProject.isDisposed()) {
+              return;
+            }
             myResult.addAll(getChanges(settings, root.path, root.vcs, maxCount, cacheOnly));
           }
           catch (VcsException e) {
@@ -199,6 +202,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
 
       public void onSuccess() {
+        if (myProject.isDisposed()) {
+          return;
+        }
         if (myExceptions.size() > 0) {
           errorConsumer.consume(myExceptions);
         }
