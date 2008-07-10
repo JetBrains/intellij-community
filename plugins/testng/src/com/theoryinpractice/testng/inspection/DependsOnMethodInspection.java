@@ -82,7 +82,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
         return problemDescriptors.toArray(new ProblemDescriptor[] {} );
     }
 
-    private void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
+    private static void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
         LOGGER.debug("Found dependsOnMethods with text: " + methodName);
         if (methodName.length() > 0 && methodName.charAt(methodName.length() - 1) == ')') {
 
@@ -96,18 +96,9 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
             problemDescriptors.add(descriptor);
 
         } else {
-            boolean methodExists = false;
-            PsiMethod[] methods = psiClass.getMethods();
-            PsiMethod foundMethod = null;
-            for (PsiMethod method : methods) {
-                LOGGER.debug("Checking method with name: " + method.getName());
-                if (method.getName().equals(methodName)) {
-                    methodExists = true;
-                    break;
-                }
-            }
+            PsiMethod[] foundMethods = psiClass.findMethodsByName(methodName, true);
 
-            if (!methodExists) {
+            if (foundMethods.length == 0) {
                 LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
                                                                    "Method '" + methodName + "' unknown.",
@@ -115,12 +106,18 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
                                                                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
                 problemDescriptors.add(descriptor);
 
-            } else if(foundMethod != null && !TestNGUtil.hasTest(foundMethod) && !!TestNGUtil.hasConfig(foundMethod)) {
+            } else {
+              boolean hasTestsOrConfigs = false;
+              for (PsiMethod foundMethod : foundMethods) {
+                 hasTestsOrConfigs |= TestNGUtil.hasTest(foundMethod) || TestNGUtil.hasConfig(foundMethod);
+              }
+              if (!hasTestsOrConfigs) {
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
-                                                                   "Method '" + methodName + "' is not a test or configuration method.",
-                                                                   (LocalQuickFix) null,
-                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                                                                     "Method '" + methodName + "' is not a test or configuration method.",
+                                                                     (LocalQuickFix) null,
+                                                                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
                 problemDescriptors.add(descriptor);
+              }
             }
         }
     }
