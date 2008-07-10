@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +25,8 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public interface IconProvider {
-  //ExtensionPointName<IconProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.iconProvider");
+public abstract class IconProvider {
+  public static final ExtensionPointName<IconProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.iconProvider");
 
   /**
    * @param element for which icon is shown
@@ -33,5 +34,5 @@ public interface IconProvider {
    * @see com.intellij.openapi.util.Iconable
    */
   @Nullable
-  Icon getIcon(@NotNull PsiElement element, int flags);
+  public abstract Icon getIcon(@NotNull PsiElement element, int flags);
 }

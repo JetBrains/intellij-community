@@ -4,7 +4,7 @@
 package com.intellij.util;
 
 import com.intellij.ide.IconProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public class PsiIconUtil {
   }
 
   private static class IconProviderHolder {
-    private static final IconProvider[] ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
+    private static final IconProvider[] ourIconProviders = Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME);
   }
 
   private static IconProvider[] getIconProviders() {

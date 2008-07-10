@@ -268,4 +268,6 @@
   <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectViewOpener"/>
 
   <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
+
+  <iconProvider implementation="com.intellij.psi.impl.file.DirectoryIconProvider" id="directory" order="last"/>
 </extensions>

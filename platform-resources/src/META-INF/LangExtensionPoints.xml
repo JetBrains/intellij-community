@@ -159,6 +159,8 @@
 
   <extensionPoint name="fileTemplateGroup"
                   interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"/>
+  <extensionPoint name="iconProvider"
+                  interface="com.intellij.ide.IconProvider"/>
   <extensionPoint name="createFromTemplateHandler"
                   interface="com.intellij.ide.fileTemplates.CreateFromTemplateHandler"/>
   <extensionPoint name="defaultTemplatePropertiesProvider"

@@ -18,7 +18,7 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class JavaDirectoryIconProvider implements IconProvider {
+public class JavaDirectoryIconProvider extends IconProvider {
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
     if (element instanceof PsiDirectory) {

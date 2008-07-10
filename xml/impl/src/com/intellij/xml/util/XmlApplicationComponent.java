@@ -1,10 +1,7 @@
 package com.intellij.xml.util;
 
-import com.intellij.ide.IconProvider;
 import com.intellij.html.impl.RelaxedHtmlFromSchemaNSDescriptor;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
@@ -16,18 +13,11 @@ import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author Maxim.Mossienko
  */
-public class XmlApplicationComponent implements ApplicationComponent, IconProvider {
-  private static final Icon ourXsdIcon = IconLoader.getIcon("/fileTypes/xsdFile.png");
-  private static final Icon ourWsdlIcon = IconLoader.getIcon("/fileTypes/wsdlFile.png");
-  @NonNls private static final String XSD_FILE_EXTENSION = "xsd";
-  @NonNls private static final String WSDL_FILE_EXTENSION = "wsdl";
+public class XmlApplicationComponent implements ApplicationComponent {
 
   @NonNls
   @NotNull
@@ -130,13 +120,4 @@ public class XmlApplicationComponent implements ApplicationComponent, IconProvid
   public void disposeComponent() {
   }
 
-  @Nullable
-  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-    if (element instanceof XmlFile) {
-      final String extension = ((XmlFile)element).getVirtualFile().getExtension();
-      if(XSD_FILE_EXTENSION.equals(extension)) return ourXsdIcon;
-      if(WSDL_FILE_EXTENSION.equals(extension)) return ourWsdlIcon;
-    }
-    return null;
-  }
 }
