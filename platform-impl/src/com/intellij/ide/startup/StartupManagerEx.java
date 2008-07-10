@@ -10,7 +10,6 @@ public abstract class StartupManagerEx extends StartupManager {
   public abstract boolean startupActivityRunning();
   public abstract boolean startupActivityPassed();
 
-  public abstract void registerProjectConfigurationActivity(Runnable runnable);
   public abstract void registerPreStartupActivity(Runnable runnable); // should be used only to register to FileSystemSynchronizer!
 
   public static StartupManagerEx getInstanceEx(Project project) {

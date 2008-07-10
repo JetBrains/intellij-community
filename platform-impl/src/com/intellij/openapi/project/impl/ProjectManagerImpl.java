@@ -297,8 +297,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
-    startupManager.runProjectConfigurationActivities();
-
     boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         startupManager.runStartupActivities();

@@ -4,10 +4,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 
 public class StubStartupManagerEx extends StartupManagerEx {
-  public void registerProjectConfigurationActivity(Runnable runnable) {
-    throw new UnsupportedOperationException();
-  }
-
   public void registerStartupActivity(Runnable runnable) {
     throw new UnsupportedOperationException();
   }

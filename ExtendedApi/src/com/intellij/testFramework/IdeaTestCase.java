@@ -356,7 +356,6 @@ import java.util.HashSet;
 
     mm.projectOpened();
     setUpJdk();
-    sm.runProjectConfigurationActivities();
     sm.runStartupActivities();
     // extra init for libraries
     sm.runPostStartupActivities();
