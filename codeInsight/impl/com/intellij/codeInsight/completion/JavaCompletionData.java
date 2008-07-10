@@ -4,6 +4,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.patterns.PlatformPatterns;
+import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -606,11 +607,18 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     {
       // null completion
-      final CompletionVariant variant = new CompletionVariant(new NotFilter(new LeftNeighbour(new TextFilter("."))));
+      final CompletionVariant variant = new CompletionVariant(and(
+          psiElement().inside(or(
+              psiElement(PsiExpressionList.class),
+              psiElement(PsiExpression.class).withParent(or(psiElement(PsiIfStatement.class), psiElement(PsiLocalVariable.class))),
+              psiElement(PsiAssignmentExpression.class))
+          ),
+          not(psiElement().afterLeaf("."))));
       variant.addCompletion(PsiKeyword.NULL, TailType.NONE);
       variant.addCompletion(PsiKeyword.TRUE, TailType.NONE);
       variant.addCompletion(PsiKeyword.FALSE, TailType.NONE);
       variant.includeScopeClass(PsiExpressionList.class);
+      variant.includeScopeClass(PsiStatement.class);
       registerVariant(variant);
     }
   }
