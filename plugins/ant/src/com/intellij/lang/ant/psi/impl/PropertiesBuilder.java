@@ -56,6 +56,16 @@ public class PropertiesBuilder extends AntElementVisitor {
     }
   }
 
+  public void visitAntStructuredElement(final AntStructuredElement element) {
+    if (element instanceof AntFilesProviderImpl) {
+      // need to clear cached files here 
+      // because they might be cached at the moment when not all properties were loaded (e.g. because of antProject.getChildren()) 
+      // and thus not all paths might resolve
+      ((AntFilesProviderImpl)element).clearCachedFiles();
+    }
+    super.visitAntStructuredElement(element);
+  }
+
   @Override public void visitAntProject(final AntProject antProject) {
     final Set<AntTarget> projectTargets = new LinkedHashSet<AntTarget>();
     for (PsiElement child : antProject.getChildren()) {

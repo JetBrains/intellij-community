@@ -47,11 +47,17 @@ public class AntFilesProviderImpl extends AntStructuredElementImpl implements An
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
       myPattern = null;
-      myCachedFiles = null;
+      clearCachedFiles();
       final AntElement parent = getAntParent();
       if (parent != null) {
         parent.clearCaches();
       }
+    }
+  }
+
+  public void clearCachedFiles() {
+    synchronized (PsiLock.LOCK) {
+      myCachedFiles = null;
     }
   }
 
