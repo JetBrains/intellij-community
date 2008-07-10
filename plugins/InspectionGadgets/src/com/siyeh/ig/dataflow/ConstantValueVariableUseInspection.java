@@ -15,33 +15,36 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantValueVariableUseInspection extends BaseInspection {
 
-    @Override @NotNull
+    @Override
+    @NotNull
     public String getDisplayName() {
-        return "Use of variable whose value is known to be constant";
+        return InspectionGadgetsBundle.message(
+                "constant.value.variable.use.display.name");
     }
 
     @Override @NotNull
     protected String buildErrorString(Object... infos) {
-        return "Value of <code>#ref</code> is known to be constant";
+        return InspectionGadgetsBundle.message(
+                "constant.value.variable.use.problem.descriptor");
     }
 
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
+        final PsiExpression expression = (PsiExpression)infos[0];
         return new ReplaceReferenceWithExpressionFix(expression);
     }
 
@@ -50,7 +53,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
 
         private final PsiExpression expression;
 
-        public ReplaceReferenceWithExpressionFix(
+        ReplaceReferenceWithExpressionFix(
                 PsiExpression expression) {
             this.expression = expression;
         }
@@ -58,7 +61,9 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
 
         @NotNull
         public String getName() {
-            return "Replace with '" + expression.getText() + "'";
+            return InspectionGadgetsBundle.message(
+                    "replace.reference.with.expression.quickfix",
+                    expression.getText());
         }
 
         @Override
@@ -85,7 +90,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
                 return;
             }
             final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) condition;
+                    (PsiBinaryExpression)condition;
             final IElementType tokenType =
                     binaryExpression.getOperationTokenType();
             if (JavaTokenType.EQEQ != tokenType) {
@@ -111,7 +116,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
                 return;
             }
             final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) expression;
+                    (PsiReferenceExpression)expression;
             if (referenceExpression.getQualifierExpression() != null) {
                 return;
             }
@@ -123,58 +128,218 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
             if (!(target instanceof PsiVariable)) {
                 return;
             }
-            final PsiVariable variable = (PsiVariable) target;
-            final VariableUsedVisitor visitor = new VariableUsedVisitor(
+            final PsiVariable variable = (PsiVariable)target;
+            final VariableReadVisitor visitor = new VariableReadVisitor(
                     variable);
             thenBranch.accept(visitor);
-            if (!visitor.isUsed()) {
+            if (!visitor.isRead()) {
                 return;
             }
-            registerError(visitor.getUse(), constantExpression);
+            registerError(visitor.getReference(), constantExpression);
         }
     }
 
-    // cannot rename this class VarialbeReadVisitor
-    private static class VariableUsedVisitor
+    private static class VariableReadVisitor
             extends JavaRecursiveElementVisitor {
 
-        @NotNull private final PsiVariable variable;
-        private boolean used = false;
-        private PsiReferenceExpression use;
+        @NotNull
+        private final PsiVariable variable;
+        private boolean read = false;
+        private PsiReferenceExpression reference = null;
 
-        public VariableUsedVisitor(@NotNull PsiVariable variable){
-            super();
+        VariableReadVisitor(@NotNull PsiVariable variable) {
             this.variable = variable;
         }
 
-        @Override public void visitElement(@NotNull PsiElement element){
-            if(!used){
-                super.visitElement(element);
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+            if (read) {
+                return;
+            }
+            super.visitElement(element);
+        }
+
+        @Override
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression assignment) {
+            if (read) {
+                return;
+            }
+            super.visitAssignmentExpression(assignment);
+            final PsiExpression rhs = assignment.getRExpression();
+            if (rhs == null) {
+                return;
+            }
+            final VariableUsedVisitor visitor =
+                    new VariableUsedVisitor(variable);
+            rhs.accept(visitor);
+            read = visitor.isUsed();
+            reference = visitor.getReference();
+        }
+
+        @Override public void visitVariable(@NotNull PsiVariable variable){
+            if(read){
+                return;
+            }
+            super.visitVariable(variable);
+            final PsiExpression initalizer = variable.getInitializer();
+            if (initalizer == null) {
+                return;
+            }
+            final VariableUsedVisitor visitor =
+                    new VariableUsedVisitor(variable);
+            initalizer.accept(visitor);
+            read = visitor.isUsed();
+            reference = visitor.getReference();
+        }
+
+        @Override public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
+            if(read){
+                return;
+            }
+            super.visitMethodCallExpression(call);
+            final PsiExpressionList argumentList = call.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            for(final PsiExpression argument : arguments){
+                final VariableUsedVisitor visitor =
+                        new VariableUsedVisitor(variable);
+                argument.accept(visitor);
+                if (visitor.isUsed()) {
+                    read = true;
+                    reference = visitor.getReference();
+                    return;
+                }
             }
         }
 
-        @Override public void visitReferenceExpression(
-                @NotNull PsiReferenceExpression expression){
-            if(used){
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression newExpression){
+            if(read){
+                return;
+            }
+            super.visitNewExpression(newExpression);
+            final PsiExpressionList argumentList =
+                    newExpression.getArgumentList();
+            if(argumentList == null){
+                return;
+            }
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            for(final PsiExpression argument : arguments){
+                final VariableUsedVisitor visitor =
+                        new VariableUsedVisitor(variable);
+                argument.accept(visitor);
+                if (visitor.isUsed()) {
+                    read = true;
+                    reference = visitor.getReference();
+                    return;
+                }
+            }
+        }
+
+        @Override public void visitArrayInitializerExpression(
+                PsiArrayInitializerExpression expression){
+            if(read){
+                return;
+            }
+            super.visitArrayInitializerExpression(expression);
+            final PsiExpression[] arguments = expression.getInitializers();
+            for(final PsiExpression argument : arguments){
+                final VariableUsedVisitor visitor =
+                        new VariableUsedVisitor(variable);
+                argument.accept(visitor);
+                if (visitor.isUsed()) {
+                    read = true;
+                    reference = visitor.getReference();
+                    return;
+                }
+            }
+        }
+
+        @Override public void visitReturnStatement(
+                @NotNull PsiReturnStatement returnStatement) {
+            if(read){
+                return;
+            }
+            super.visitReturnStatement(returnStatement);
+            final PsiExpression returnValue = returnStatement.getReturnValue();
+            if (returnValue == null) {
+                return;
+            }
+            final VariableUsedVisitor visitor =
+                    new VariableUsedVisitor(variable);
+            returnValue.accept(visitor);
+            read = visitor.isUsed();
+            reference = visitor.getReference();
+        }
+
+        /**
+         * check if variable is used in nested/inner class.
+         */
+        @Override
+        public void visitClass(PsiClass aClass) {
+            if (read) {
+                return;
+            }
+            super.visitClass(aClass);
+            final VariableUsedVisitor visitor =
+                    new VariableUsedVisitor(variable);
+            aClass.accept(visitor);
+            read = visitor.isUsed();
+            reference = visitor.getReference();
+        }
+
+        public boolean isRead() {
+            return read;
+        }
+
+        public PsiReferenceExpression getReference() {
+            return reference;
+        }
+    }
+
+    private static class VariableUsedVisitor
+            extends JavaRecursiveElementVisitor {
+
+        private final PsiVariable variable;
+        private boolean used = false;
+        private PsiReferenceExpression reference = null;
+
+        VariableUsedVisitor(PsiVariable variable) {
+            this.variable = variable;
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+            if (used) {
+                return;
+            }
+            super.visitElement(element);
+        }
+
+        @Override
+        public void visitReferenceExpression(
+                @NotNull PsiReferenceExpression expression) {
+            if (used) {
                 return;
             }
             super.visitReferenceExpression(expression);
             final PsiElement referent = expression.resolve();
-            if(referent == null){
+            if (referent == null) {
                 return;
             }
-            if(referent.equals(variable)){
-                use = expression;
+            if (referent.equals(variable)) {
+                reference = expression;
                 used = true;
             }
         }
 
-        public boolean isUsed(){
+        public boolean isUsed() {
             return used;
         }
 
-        public PsiReferenceExpression getUse() {
-            return use;
+        public PsiReferenceExpression getReference() {
+            return reference;
         }
     }
 }
