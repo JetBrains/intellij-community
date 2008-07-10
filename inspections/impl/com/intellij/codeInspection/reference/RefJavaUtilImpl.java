@@ -182,7 +182,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
   public RefClass getTopLevelClass(RefElement refElement) {
     RefEntity refParent = refElement.getOwner();
 
-    while (refParent != null && !(refParent instanceof RefPackage) && !(refParent instanceof RefFile)) {
+    while (refParent != null && refParent instanceof RefElement && !(refParent instanceof RefFile)) {
       refElement = (RefElementImpl)refParent;
       refParent = refParent.getOwner();
     }
