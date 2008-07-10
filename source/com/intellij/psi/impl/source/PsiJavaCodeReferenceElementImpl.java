@@ -61,7 +61,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (i == DUMMY_HOLDER) {
       return myKindWhenDummy;
     }
-    else if (i == TYPE || i == EXTENDS_LIST || i == IMPLEMENTS_LIST || i == EXTENDS_BOUND_LIST || i == THROWS_LIST ||
+    else if (i == TYPE) {
+      return getTreeParent().getTreeParent().getPsi() instanceof PsiTypeCodeFragment ? CLASS_OR_PACKAGE_NAME_KIND : CLASS_NAME_KIND;
+    }
+    else if (i == EXTENDS_LIST || i == IMPLEMENTS_LIST || i == EXTENDS_BOUND_LIST || i == THROWS_LIST ||
              i == THIS_EXPRESSION ||
              i == SUPER_EXPRESSION ||
              i == DOC_METHOD_OR_FIELD_REF ||
