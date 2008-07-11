@@ -14,6 +14,7 @@ public class DynamicElementSettings {
   private String myType;
   private boolean isMethod;
   private List<MyPair> myPairs;
+  private boolean isStatic;
 
   public void setContainingClassName(String newName) {
     myContainingClassName = newName;
@@ -53,5 +54,13 @@ public class DynamicElementSettings {
 
   public void setName(String name) {
     myName = name;
+  }
+
+  public boolean isStatic() {
+      return isStatic;
+  }
+
+  public void setStatic(boolean aStatic) {
+    isStatic = aStatic;
   }
 }

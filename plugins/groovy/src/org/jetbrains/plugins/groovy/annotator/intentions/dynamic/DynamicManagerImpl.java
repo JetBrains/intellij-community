@@ -278,7 +278,7 @@ public class DynamicManagerImpl extends DynamicManager {
     final DPropertyElement oldPropertyElement = classElement.getPropertyByName(oldPropertyName);
     if (oldPropertyElement == null) return null;
     classElement.removeProperty(oldPropertyName);
-    classElement.addProperty(new DPropertyElement(newPropertyName, oldPropertyElement.getType()));
+    classElement.addProperty(new DPropertyElement(oldPropertyElement.isStatic(), newPropertyName, oldPropertyElement.getType()));
     fireChange();
 
     return newPropertyName;
@@ -469,9 +469,9 @@ public class DynamicManagerImpl extends DynamicManager {
   public DItemElement createDynamicElement(DynamicElementSettings settings) {
     DItemElement itemElement;
     if (settings.isMethod()) {
-      itemElement = new DMethodElement(settings.getName(), settings.getType(), settings.getPairs());
+      itemElement = new DMethodElement(settings.isStatic(), settings.getName(), settings.getType(), settings.getPairs());
     } else {
-      itemElement = new DPropertyElement(settings.getName(), settings.getType());
+      itemElement = new DPropertyElement(settings.isStatic(), settings.getName(), settings.getType());
     }
     return itemElement;
   }

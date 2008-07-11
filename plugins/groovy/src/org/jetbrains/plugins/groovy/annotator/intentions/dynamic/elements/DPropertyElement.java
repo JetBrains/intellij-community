@@ -16,8 +16,12 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitProperty;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightModifierList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedHashSet;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -28,11 +32,11 @@ public class DPropertyElement extends DItemElement {
 
   //Do not use directly! Persistence component uses default constructor for deserializable
   public DPropertyElement() {
-    super(null, null);
+    super(null, null, null);
   }
 
-  public DPropertyElement(String name, String type) {
-    super(name, type);
+  public DPropertyElement(Boolean isStatic, String name, String type) {
+    super(isStatic, name, type);
   }
 
   public void clearCache() {
@@ -42,7 +46,12 @@ public class DPropertyElement extends DItemElement {
   @NotNull
   public PsiVariable getPsi(PsiManager manager, String containingClassName) {
     if (myPsi != null) return myPsi;
-    myPsi = new GrDynamicImplicitProperty(manager, getName(), getType(), containingClassName);
+
+      LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
+      if (isStatic()) {
+        hashSet.add(PsiModifier.STATIC);
+      }
+      myPsi = new GrDynamicImplicitProperty(manager, getName(), getType(), containingClassName, new LightModifierList(manager, hashSet));
     return myPsi;
   }
 }

@@ -17,20 +17,21 @@ import org.jetbrains.annotations.Nullable;
  * @author ilyas
  */
 public class GrImplicitVariableImpl extends LightVariableBase implements GrImplicitVariable {
+  private PsiModifierList myInnerModifierList;
 
-  public GrImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
+  public GrImplicitVariableImpl(PsiModifierList modifierList, PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
     super(manager, nameIdentifier, type, writable, scope);
-  }
+        myInnerModifierList = modifierList != null ? modifierList : myModifierList;
+    }
 
-  public GrImplicitVariableImpl(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
-    this(manager, null,
+  public GrImplicitVariableImpl(PsiModifierList modifierList, PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
+    this(modifierList, manager, null,
         JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().
             createTypeByFQClassName(type, ProjectScope.getAllScope(manager.getProject())), false, referenceExpression);
     myNameIdentifier = new GrLightIdentifier(myManager, name);
   }
 
-
-  public void accept(@NotNull PsiElementVisitor visitor) {
+    public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitImplicitVariable(this);
     }
@@ -44,6 +45,15 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     throw new IncorrectOperationException();
   }
 
+  @Override
+  public PsiModifierList getModifierList() {
+    return myInnerModifierList;
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String modifier) {
+    return myInnerModifierList.hasModifierProperty(modifier);
+  }
 
   protected static class GrLightIdentifier extends LightIdentifier {
     private String myTextInternal;

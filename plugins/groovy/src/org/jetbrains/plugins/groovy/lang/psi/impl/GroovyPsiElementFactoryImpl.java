@@ -293,7 +293,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrConstructorDefinitionImpl createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
-    final GrMethod method = createMethodFromText(constructorName, null, paramTypes, paramNames, body);
+    final GrMethod method = createMethodFromText(null, constructorName, null, paramTypes, paramNames, body);
 
     GroovyFileBase file = createDummyFile("class " + constructorName + "{" + method.getText() + "}");
     GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
@@ -410,8 +410,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
 
-  private GrMethod createMethodFromText(String name, String type, String[] paramTypes, String[] paramNames, String body) {
+  private GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, String[] paramNames, String body) {
     StringBuilder builder = new StringBuilder();
+
+    if (modifier != null){
+      builder.append(modifier);
+      builder.append(" ");
+    }
+
     builder.append("def ");
 
     //This is for constructor creation
@@ -444,7 +450,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createMethodFromText(builder.toString());
   }
 
-  public GrMethod createMethodFromText(String name, @Nullable String type, String[] paramTypes) {
+  public GrMethod createMethodFromText(String modifier, String name, @Nullable String type, String[] paramTypes) {
     PsiType psiType;
     List<PsiType> res = new ArrayList<PsiType>();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
@@ -460,6 +466,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       res.add(psiType);
     }
 
-    return createMethodFromText(name, type, paramTypes, QuickfixUtil.getMethodArgumentsNames(myProject, res.toArray(PsiType.EMPTY_ARRAY)), null);
+    return createMethodFromText(modifier, name, type, paramTypes, QuickfixUtil.getMethodArgumentsNames(myProject, res.toArray(PsiType.EMPTY_ARRAY)), null);
   }
 }

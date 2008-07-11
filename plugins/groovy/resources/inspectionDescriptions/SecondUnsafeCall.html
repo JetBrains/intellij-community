@@ -4,7 +4,8 @@
     <tr>
         <td valign="top" height="150">
             <font face="verdana" size="-1">
-              TODO: Write a description
+              This quick fix prevent possible NullPonterException during chain methods or properties call.
+              E.g. <b><font color="#000080">domain?.getZone().getName()</font></b> replaces by <b><font color="#000080">domain?.getZone()?.getName()</font></b>
             </font></td>
     </tr>
     <tr>

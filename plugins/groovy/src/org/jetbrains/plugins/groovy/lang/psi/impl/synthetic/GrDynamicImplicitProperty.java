@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -42,12 +43,12 @@ import javax.swing.tree.TreePath;
 /**
  * @author ilyas
  */
-public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements GrDynamicImplicitElement {
+public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements GrDynamicImplicitElement, PsiField {
   private final String myContainingClassName;
   private final Project myProject;
 
-  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName) {
-    super(manager, name, type, null);
+  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, LightModifierList modifierList) {
+    super(modifierList, manager, name, type, null);
     myContainingClassName = containingClassName;
     myProject = manager.getProject();
   }
@@ -164,4 +165,16 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   public boolean isValid() {
     return true;
   }
+
+  public PsiClass getContainingClass() {
+    return getContainingClassElement();
+  }
+
+    public PsiDocComment getDocComment() {
+        return null;
+    }
+
+    public boolean isDeprecated() {
+        return false;
+    }
 }

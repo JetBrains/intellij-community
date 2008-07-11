@@ -16,6 +16,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -35,11 +36,11 @@ public class DMethodElement extends DItemElement implements Comparable {
   private PsiMethod myImplicitMethod;
 
   public DMethodElement() {
-    super(null, null);
+    super(null, null, null);
   }
 
-  public DMethodElement(String name, String returnType, List<MyPair> pairs) {
-    super(name, returnType);
+  public DMethodElement(Boolean isStatic, String name, String returnType, List<MyPair> pairs) {
+    super(isStatic, name, returnType);
 
     myPairs = pairs;
   }
@@ -58,7 +59,13 @@ public class DMethodElement extends DItemElement implements Comparable {
 
     final String type = getType();
 
-    final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject()).createMethodFromText(getName(), type, QuickfixUtil.getArgumentsTypes(myPairs));
+    String staticModifier = null;
+    boolean isStatic = isStatic();
+      if (isStatic){
+        staticModifier = PsiModifier.STATIC;
+    }
+
+    final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject()).createMethodFromText(staticModifier, getName(), type, QuickfixUtil.getArgumentsTypes(myPairs));
 
     myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName);
     return myImplicitMethod;

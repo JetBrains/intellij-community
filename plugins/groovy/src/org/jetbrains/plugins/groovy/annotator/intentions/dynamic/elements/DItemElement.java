@@ -31,12 +31,14 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class DItemElement implements DNamedElement, DTypedElement {
   public String myType = null;
+  private Boolean myStatic = false;
   public String myName = null;
 
 //  @NotNull
   public String myHightlightedText = null;
 
-  public DItemElement(String name, String type) {
+  public DItemElement(Boolean isStatic, String name, String type) {
+    myStatic = isStatic;
     myName = name;
     myType = type;
   }
@@ -57,6 +59,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
 
     if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
+    if (myStatic != that.myStatic) return false;
 
     return true;
   }
@@ -85,6 +88,15 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
 
   public void setName(String name) {
     this.myName = name;
+    clearCache();
+  }
+
+  public Boolean isStatic() {
+      return myStatic;
+  }
+
+  public void setStatic(Boolean aStatic) {
+    myStatic = aStatic;
     clearCache();
   }
 

@@ -128,9 +128,9 @@ public class DynamicTest extends GroovyFileSetTestCase {
       final String[] methodArgumentsNames = QuickfixUtil.getMethodArgumentsNames(project, psiTypes);
       final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, psiTypes);
 
-      itemElement = new DMethodElement(referenceExpression.getName(), "java.lang.Object", pairs);
+      itemElement = new DMethodElement(false, referenceExpression.getName(), "java.lang.Object", pairs);
     } else {
-      itemElement = new DPropertyElement(referenceExpression.getName(), "java.lang.Object");
+      itemElement = new DPropertyElement(false, referenceExpression.getName(), "java.lang.Object");
     }
 
     return new Pair<String, DItemElement>(classDefinition.getQualifiedName(), itemElement);

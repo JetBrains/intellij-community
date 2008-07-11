@@ -72,6 +72,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JLabel myTypeStatusLabel;
   private JTable myParametersTable;
   private JLabel myTableLabel;
+  private JCheckBox myStaticCheckBox;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
   private EventListenerList myListenerList = new EventListenerList();
@@ -295,6 +296,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     super.doOKAction();
 
     mySettings.setContainingClassName(getEnteredContaningClass().getContainingClass().getQualifiedName());
+    mySettings.setStatic(myStaticCheckBox.isSelected());
     GrTypeElement typeElement = getEnteredTypeName();
 
     if (typeElement == null) {
