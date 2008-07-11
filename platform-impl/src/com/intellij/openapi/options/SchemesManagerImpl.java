@@ -79,11 +79,16 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   public Collection<E> loadSchemes() {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Collection<E>>(){
-      public Collection<E> compute() {
-        return doLoad();
-      }
-    });
+    if (myVFSBaseDir != null) {
+      return ApplicationManager.getApplication().runWriteAction(new Computable<Collection<E>>(){
+        public Collection<E> compute() {
+          return doLoad();
+        }
+      });
+    }
+    else {
+      return Collections.emptyList();
+    }
 
   }
 
@@ -649,19 +654,21 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   public void save() throws WriteExternalException {
-    final WriteExternalException[] ex = new WriteExternalException[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable(){
-      public void run() {
-        try {
-          doSave();
+    if (myVFSBaseDir != null) {
+      final WriteExternalException[] ex = new WriteExternalException[1];
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        public void run() {
+          try {
+            doSave();
+          }
+          catch (WriteExternalException e) {
+            ex[0] = e;
+          }
         }
-        catch (WriteExternalException e) {
-          ex[0] = e;
-        }
-      }
-    });
+      });
 
-    if (ex[0] != null) throw ex[0];
+      if (ex[0] != null) throw ex[0];
+    }
   }
 
   private void doSave() throws WriteExternalException {
