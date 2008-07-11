@@ -538,7 +538,9 @@ public class ElementsChooser<T> extends JPanel {
       final ElementProperties properties = myElementToPropertiesMap.get(t);
       if (component instanceof JLabel) {
         final Icon icon = properties != null ? properties.getIcon() : getItemIcon(t);
-        ((JLabel)component).setIcon(icon);
+        JLabel label = (JLabel)component;
+        label.setIcon(icon);
+        label.setDisabledIcon(icon);
       }
       component.setForeground(properties != null && properties.getColor() != null ?
                               properties.getColor() :

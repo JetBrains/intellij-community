@@ -140,7 +140,12 @@ public class BuildJarDialog extends DialogWrapper {
     myJarPath = myJarFilePathComponent.getComponent();
     myMainClass = myMainClassComponent.getComponent();
 
-    myElementsChooser = new ElementsChooser<Module>(true);
+    myElementsChooser = new ElementsChooser<Module>(true) {
+      @Override
+      protected String getItemText(final Module value) {
+        return value.getName();
+      }
+    };
     myModulesPanel.setLayout(new BorderLayout());
     myModulesPanel.add(myElementsChooser, BorderLayout.CENTER);
 
