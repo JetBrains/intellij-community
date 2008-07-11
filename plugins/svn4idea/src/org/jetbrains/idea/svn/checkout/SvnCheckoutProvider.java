@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.checkout;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -95,7 +96,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         if (vf != null) {
           vf.refresh(true, true, new Runnable() {
             public void run() {
-              notifyListener();
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  notifyListener();
+                }
+              });
             }
           });
         }
