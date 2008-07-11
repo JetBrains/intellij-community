@@ -44,6 +44,7 @@ public class IndexPattern {
     compilePattern();
   }
 
+  @NotNull
   public String getPatternString() {
     return myPatternString;
   }
@@ -56,7 +57,7 @@ public class IndexPattern {
     return myCaseSensitive;
   }
 
-  public void setPatternString(final String patternString) {
+  public void setPatternString(@NotNull final String patternString) {
     myPatternString = patternString;
     compilePattern();
   }
@@ -93,8 +94,7 @@ public class IndexPattern {
   }
 
   public int hashCode() {
-    int result;
-    result = myPatternString.hashCode();
+    int result = myPatternString.hashCode();
     result = 29 * result + (myCaseSensitive ? 1 : 0);
     return result;
   }

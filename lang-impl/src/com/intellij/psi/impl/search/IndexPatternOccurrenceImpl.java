@@ -46,14 +46,9 @@ class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
       return false;
     }
     IndexPatternOccurrenceImpl todoItem=(IndexPatternOccurrenceImpl)obj;
-    if(
-      !myFile.equals(todoItem.myFile)||
-      myStartOffset!=todoItem.myStartOffset||
-      myEndOffset!=todoItem.myEndOffset||
-      !myPattern.equals(todoItem.myPattern)
-    ){
-      return false;
-    }
-    return true;
+    return myFile.equals(todoItem.myFile) &&
+           myStartOffset == todoItem.myStartOffset &&
+           myEndOffset == todoItem.myEndOffset &&
+           myPattern.equals(todoItem.myPattern);
   }
 }

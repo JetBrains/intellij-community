@@ -287,7 +287,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
   
-  private <K> boolean isUpToDateCheckEnabled() {
+  private boolean isUpToDateCheckEnabled() {
     final Integer value = myUpToDateCheckState.get();
     return value == null || value.intValue() == 0;
   }
@@ -340,13 +340,13 @@ public class FileBasedIndex implements ApplicationComponent {
     void process(VirtualFile file, V value);
   }
 
-  public <K, V> void processValues(final ID<K, V> indexId, final K dataKey, final @Nullable VirtualFile inFile,
+  public <K, V> void processValues(final ID<K, V> indexId, final K dataKey, @Nullable final VirtualFile inFile,
                                    ValueProcessor<V> processor, final VirtualFileFilter filter) {
     processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
   
   private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, boolean ensureValueProcessedOnce,
-                                        final @Nullable VirtualFile restrictToFile, ValueProcessor<V> processor,
+                                        @Nullable final VirtualFile restrictToFile, ValueProcessor<V> processor,
                                         final VirtualFileFilter filter) {
     try {
       ensureUpToDate(indexId);
@@ -372,7 +372,7 @@ public class FileBasedIndex implements ApplicationComponent {
           }
         }
         else {
-          final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+          final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
@@ -793,7 +793,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
         IndexingStamp.flushCache();
 
-        if (affectedIndices.size() > 0) {
+        if (!affectedIndices.isEmpty()) {
           if (saveContent) {
             myFileContentAttic.offer(file);
           }
@@ -1012,7 +1012,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     public boolean acceptInput(final VirtualFile file) {
-      return (file instanceof VirtualFileWithId) && myDelegate.acceptInput(file);
+      return file instanceof VirtualFileWithId && myDelegate.acceptInput(file);
     }
   }
 }

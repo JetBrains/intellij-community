@@ -71,7 +71,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     }
 
     public Integer read(final DataInput in) throws IOException {
-      return new Integer(in.readInt());
+      return Integer.valueOf(in.readInt());
     }
   };
 

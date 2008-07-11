@@ -98,7 +98,7 @@ public class TargetElementUtilBase {
   @Nullable
   public static PsiElement findTargetElement(Editor editor, int flags) {
     int offset = editor.getCaretModel().getOffset();
-    return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
+    return getInstance().findTargetElement(editor, flags, offset);
   }
 
   @Nullable
@@ -109,7 +109,7 @@ public class TargetElementUtilBase {
     if (project == null) return null;
 
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
-    if (activeLookup != null && (flags & TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED) != 0) {
+    if (activeLookup != null && (flags & LOOKUP_ITEM_ACCEPTED) != 0) {
       final PsiElement lookupItem = getLookupItem(activeLookup);
       return lookupItem != null && lookupItem.isValid() ? lookupItem : null;
     }
@@ -199,7 +199,7 @@ public class TargetElementUtilBase {
 
   @Nullable
   protected PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
-    PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+    PsiReference ref = findReference(editor, offset);
     if (ref == null) return null;
     PsiManager manager = file.getManager();
     PsiElement refElement = ref.resolve();

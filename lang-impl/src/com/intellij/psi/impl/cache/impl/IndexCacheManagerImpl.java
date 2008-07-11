@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -123,6 +124,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
+    if (file instanceof VirtualFileWindow) return -1;
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     int count = 0;
     for (IndexPattern indexPattern : patternProvider.getIndexPatterns()) {
@@ -132,10 +134,11 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
    
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
+    if (file instanceof VirtualFileWindow) return -1;
     return fetchCount(FileBasedIndex.getInstance(), file, pattern);
   }
 
-  private int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
+  private static int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
     final int[] count = new int[] {0};
     fileBasedIndex.processValues(
       TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,

@@ -153,7 +153,7 @@ public class IdTableBuilding {
     }
 
     if (fileType instanceof AbstractFileType) {
-      return new WordsScannerFileTypeIdIndexerAdapter(createWordScaner(((AbstractFileType)fileType)));
+      return new WordsScannerFileTypeIdIndexerAdapter(createWordScaner((AbstractFileType)fileType));
     }
 
     return null;
@@ -168,6 +168,7 @@ public class IdTableBuilding {
 
   }
 
+  private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
   @Nullable
   public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType, final VirtualFile virtualFile) {
     final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = ourTodoIndexers.get(fileType);
@@ -186,8 +187,7 @@ public class IdTableBuilding {
     }
 
     if (fileType instanceof AbstractFileType) {
-      final TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
-      return new TokenSetTodoIndexer(commentTokens, virtualFile);
+      return new TokenSetTodoIndexer(ABSTRACT_FILE_COMMENT_TOKENS, virtualFile);
     }
 
     return null;

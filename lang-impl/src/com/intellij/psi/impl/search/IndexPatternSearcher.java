@@ -34,21 +34,14 @@ import java.util.regex.Pattern;
 public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   public boolean execute(final IndexPatternSearch.SearchParameters queryParameters, final Processor<IndexPatternOccurrence> consumer) {
     final PsiFile file = queryParameters.getFile();
-    if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement ||
-        file.getVirtualFile() == null) {
+    if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement || file.getVirtualFile() == null) {
       return true;
     }
 
     final CacheManager cacheManager = ((PsiManagerEx)file.getManager()).getCacheManager();
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
-    if (patternProvider != null) {
-      if (cacheManager.getTodoCount(file.getVirtualFile(), patternProvider) == 0)
-        return true;
-    }
-    else {
-      if (cacheManager.getTodoCount(file.getVirtualFile(), queryParameters.getPattern()) == 0)
-        return true;
-    }
+    int count = patternProvider != null ? cacheManager.getTodoCount(file.getVirtualFile(), patternProvider) : cacheManager.getTodoCount(file.getVirtualFile(), queryParameters.getPattern());
+    if (count == 0) return true;
 
     TIntArrayList commentStarts = new TIntArrayList();
     TIntArrayList commentEnds = new TIntArrayList();
@@ -78,6 +71,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
   }
 
 
+  private static final TokenSet COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+
   private static void findCommentTokenRanges(final PsiFile file,
                                              final CharSequence chars,
                                              final TextRange range,
@@ -87,9 +82,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       FileType fType = file.getFileType();
       synchronized (PsiLock.LOCK) {
         if (fType instanceof AbstractFileType) {
-          TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
           Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
-          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds, null);
+          findComments(lexer, chars, range, COMMENT_TOKENS, commentStarts, commentEnds, null);
         }
         else {
           commentStarts.add(0);

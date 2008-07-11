@@ -144,7 +144,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         addInjectedPsiHighlights(elements, Extensions.getExtensions(DefaultHighlightVisitor.FILTER_EP_NAME, myProject));
       }
 
-      result.addAll(highlightTodos());
+      result.addAll(highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset));
 
       if (myUpdateAll) {
         fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
@@ -205,18 +205,33 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             fixedTextRange = null;
           }
           final HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation, fixedTextRange);
-          synchronized (myInjectedPsiHighlights) {
-            Collection<HighlightInfo> infos = myInjectedPsiHighlights.get(textRange);
-            if (infos == null) {
-              infos = new SmartList<HighlightInfo>();
-              myInjectedPsiHighlights.put(textRange, infos);
-            }
-            infos.add(highlightInfo);
-          }
+          addHighlightInfo(textRange, highlightInfo);
+        }
+
+        Collection<HighlightInfo> todos = highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength());
+        for (HighlightInfo info : todos) {
+          TextRange editable = documentWindow.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
+          if (editable == null) continue;
+          TextRange hostRange = documentWindow.injectedToHost(editable);
+
+          HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, hostRange, info.description, info.forcedTextAttributes);
+          patched.toolTip = info.toolTip;
+          addHighlightInfo(hostRange, patched);
         }
         return true;
       }
     }, "Highlight injected language fragments");
+  }
+
+  private void addHighlightInfo(@NotNull TextRange textRange, @NotNull HighlightInfo highlightInfo) {
+    synchronized (myInjectedPsiHighlights) {
+      Collection<HighlightInfo> infos = myInjectedPsiHighlights.get(textRange);
+      if (infos == null) {
+        infos = new SmartList<HighlightInfo>();
+        myInjectedPsiHighlights.put(textRange, infos);
+      }
+      infos.add(highlightInfo);
+    }
   }
 
   // finds the first nearest text range
@@ -462,16 +477,16 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return new AnnotationHolderImpl();
   }
 
-  private Collection<HighlightInfo> highlightTodos() {
-    PsiManager psiManager = myFile.getManager();
+  private static Collection<HighlightInfo> highlightTodos(PsiFile file, CharSequence text, int startOffset, int endOffset) {
+    PsiManager psiManager = file.getManager();
     PsiSearchHelper helper = psiManager.getSearchHelper();
-    TodoItem[] todoItems = helper.findTodoItems(myFile, myStartOffset, myEndOffset);
+    TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
     if (todoItems.length == 0) return Collections.emptyList();
 
     List<HighlightInfo> list = new ArrayList<HighlightInfo>(todoItems.length);
     for (TodoItem todoItem : todoItems) {
       TextRange range = todoItem.getTextRange();
-      String description = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
+      String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.TODO, range, description, attributes);
       list.add(info);
