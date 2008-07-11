@@ -39,8 +39,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,7 +70,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   }
 
   @Override
-  protected ChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
+  protected LocalChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     FilePath[] roots = getRoots(context);

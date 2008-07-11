@@ -36,10 +36,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,7 +67,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.ensureUpToDate(true)) {
-      ChangeList initialSelection = getInitiallySelectedChangeList(context, project);
+      LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
 
       Change[] changes = context.getSelectedChanges();
       if (changes != null && changes.length > 0) {
@@ -90,8 +87,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   }
 
   @Nullable
-  protected ChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
-    ChangeList initialSelection;
+  protected LocalChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
+    LocalChangeList initialSelection;
     ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
     if (selectedChangeLists != null && selectedChangeLists.length > 0) {
       // convert copy to real

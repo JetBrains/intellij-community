@@ -16,10 +16,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 
 import java.util.Arrays;
@@ -47,9 +44,9 @@ public class CommitAction extends AnAction {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(project, changes);
-    if (list == null) return;
+    if ((list == null) || (! (list instanceof LocalChangeList))) return;
 
-    CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), list,
+    CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), (LocalChangeList) list,
                                          ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
   }
 }

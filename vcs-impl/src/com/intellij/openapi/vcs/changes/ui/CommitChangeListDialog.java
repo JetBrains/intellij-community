@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,14 +66,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
   private final boolean myShowVcsCommit;
-  private ChangeList myLastSelectedChangeList = null;
+  private LocalChangeList myLastSelectedChangeList = null;
   private Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = new HashMap<AbstractVcs, JPanel>();
 
   @Nullable
   private final AbstractVcs myVcs;
   private final boolean myIsAlien;
 
-  private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
+  private static void commit(Project project, final List<Change> changes, final LocalChangeList initialSelection,
                              final List<CommitExecutor> executors, boolean showVcsCommit, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final LocalChangeList defaultList = manager.getDefaultChangeList();
@@ -80,7 +81,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList, changeLists, null, false, comment).show();
   }
 
-  public static void commitPaths(final Project project, Collection<FilePath> paths, final ChangeList initialSelection,
+  public static void commitPaths(final Project project, Collection<FilePath> paths, final LocalChangeList initialSelection,
                                  @Nullable final CommitExecutor executor, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final Collection<Change> changes = new HashSet<Change>();
@@ -91,7 +92,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     commitChanges(project, changes, initialSelection, executor, comment);
   }
 
-  public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
+  public static void commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                    final CommitExecutor executor, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     if (executor == null) {
@@ -102,7 +103,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
+  public static void commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                    final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
     if (changes.isEmpty()) {
       Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
@@ -122,7 +123,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private CommitChangeListDialog(final Project project,
                                  final List<Change> changes,
-                                 final ChangeList initialSelection,
+                                 final LocalChangeList initialSelection,
                                  final List<CommitExecutor> executors,
                                  final boolean showVcsCommit, final LocalChangeList defaultChangeList,
                                  final List<LocalChangeList> changeLists, final AbstractVcs singleVcs, final boolean isAlien,
@@ -172,8 +173,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitMessageArea = new CommitMessage();
     myCommitMessageArea.init();
 
-    setCommitMessage((comment != null) ? comment : VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
-    if (comment == null) {
+    if (comment != null) {
+      setCommitMessage(comment);
+      myLastKnownComment = comment;
+      myLastSelectedChangeList = initialSelection;
+    } else {
+      setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
       updateComment();
 
       String messageFromVcs = getInitialMessageFromVcs();
@@ -383,10 +388,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return result.get();
   }
 
+  private void saveCommentIntoChangeList() {
+    if (myLastSelectedChangeList != null) {
+      final String actualCommentText = myCommitMessageArea.getComment();
+      if (! Comparing.equal(myLastSelectedChangeList.getComment(), actualCommentText)) {
+        myLastSelectedChangeList.setComment(actualCommentText);
+      }
+    }
+  }
+
   private void updateComment() {
-    final LocalChangeList list = (LocalChangeList)myBrowser.getSelectedChangeList();
+    final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
     if (list == null || list == myLastSelectedChangeList) {
       return;
+    } else if (myLastSelectedChangeList != null) {
+      saveCommentIntoChangeList();
     }
     myLastSelectedChangeList = list;
 
@@ -397,7 +413,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         listComment = listTitle;
       }
       else {
-        listComment = myLastKnownComment;
+        myLastKnownComment = listComment;
       }
     }
 
@@ -510,6 +526,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public void doCancelAction() {
+    saveCommentIntoChangeList();
     VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
     super.doCancelAction();
   }
