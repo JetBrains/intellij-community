@@ -57,7 +57,8 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     if (aClass == null) {
       return false;
     }
-    return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), ((ApplicationConfiguration)configuration).MAIN_CLASS_NAME);
+    return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), ((ApplicationConfiguration)configuration).MAIN_CLASS_NAME)
+           && Comparing.equal(JavaExecutionUtil.findModule(aClass), ((ApplicationConfiguration)configuration).getConfigurationModule().getModule());
   }
 
   public static PsiClass getMainClass(PsiElement element) {
