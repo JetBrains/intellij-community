@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,56 +16,59 @@
 package com.siyeh.ipp.parenthesis;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AddClarifyingParenthesesIntention extends Intention {
 
-	@NotNull protected
-	PsiElementPredicate getElementPredicate() {
-		return new AddClarifyingParenthesesPredicate();
-	}
+    @Override @NotNull protected
+    PsiElementPredicate getElementPredicate() {
+        return new AddClarifyingParenthesesPredicate();
+    }
 
-	protected void processIntention(@NotNull PsiElement element)
-			throws IncorrectOperationException {
-		final PsiExpression expression = getTopLevelExpression(element);
-		if (expression == null) {
-			return;
-		}
-		final StringBuilder newExpression =
+    @Override
+    protected void processIntention(@NotNull PsiElement element)
+            throws IncorrectOperationException {
+        final PsiExpression expression = getTopLevelExpression(element);
+        if (expression == null) {
+            return;
+        }
+        final StringBuilder newExpression =
                 createReplacementText(expression, new StringBuilder());
-		replaceExpression(newExpression.toString(), expression);
-	}
+        replaceExpression(newExpression.toString(), expression);
+    }
 
-	@Nullable
-	private static PsiExpression getTopLevelExpression(PsiElement element) {
-		if (!(element instanceof PsiExpression)) {
-			return null;
-		}
-		PsiExpression result = (PsiExpression)element;
-		PsiElement parent = result.getParent();
-		while (parent instanceof PsiBinaryExpression ||
-				parent instanceof PsiParenthesizedExpression) {
-			result = (PsiExpression)parent;
-			parent = result.getParent();
-		}
-		return result;
-	}
+    @Nullable
+    private static PsiExpression getTopLevelExpression(PsiElement element) {
+        if (!(element instanceof PsiExpression)) {
+            return null;
+        }
+        PsiExpression result = (PsiExpression)element;
+        PsiElement parent = result.getParent();
+        while (parent instanceof PsiBinaryExpression ||
+                parent instanceof PsiParenthesizedExpression) {
+            result = (PsiExpression)parent;
+            parent = result.getParent();
+        }
+        return result;
+    }
 
-	private static StringBuilder createReplacementText(PsiExpression element,
+    private static StringBuilder createReplacementText(PsiExpression element,
                                                        StringBuilder out) {
-		if (element instanceof PsiBinaryExpression) {
-			final PsiBinaryExpression binaryExpression =
+        if (element instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)element;
-			final PsiExpression lhs = binaryExpression.getLOperand();
-			final PsiJavaToken operationSign =
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiJavaToken operationSign =
                     binaryExpression.getOperationSign();
-			final PsiExpression rhs = binaryExpression.getROperand();
-			final PsiElement parent = element.getParent();
-			final String signText = operationSign.getText();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            final PsiElement parent = element.getParent();
+            final String signText = operationSign.getText();
             final PsiElement lhsNextSibling = lhs.getNextSibling();
             final PsiElement rhsPrevSibling;
             if (rhs != null) {
@@ -74,12 +77,14 @@ public class AddClarifyingParenthesesIntention extends Intention {
                 rhsPrevSibling = null;
             }
             if (parent instanceof PsiBinaryExpression) {
-				final PsiBinaryExpression parentBinaryExpression =
+                final PsiBinaryExpression parentBinaryExpression =
                         (PsiBinaryExpression)parent;
-				final PsiJavaToken parentOperationSign =
+                final PsiJavaToken parentOperationSign =
                         parentBinaryExpression.getOperationSign();
-                if (!signText.equals(parentOperationSign.getText())) {
-                    out.append("(");
+                final IElementType tokenType = operationSign.getTokenType();
+                if (!operationSign.equals(parentOperationSign) ||
+                        !ParenthesesUtils.isCommutativeBinaryOperator(tokenType)) {
+                    out.append('(');
                     createReplacementText(lhs, out);
                     if (lhsNextSibling instanceof PsiWhiteSpace) {
                         out.append(lhsNextSibling.getText());
@@ -103,18 +108,18 @@ public class AddClarifyingParenthesesIntention extends Intention {
             }
             createReplacementText(rhs, out);
         } else if (element instanceof PsiParenthesizedExpression) {
-			final PsiParenthesizedExpression parenthesizedExpression =
-					(PsiParenthesizedExpression)element;
-			final PsiExpression expression =
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)element;
+            final PsiExpression expression =
                     parenthesizedExpression.getExpression();
             out.append('(');
             createReplacementText(expression, out);
             out.append(')');
-		} else if (element instanceof PsiInstanceOfExpression) {
+        } else if (element instanceof PsiInstanceOfExpression) {
             out.append('(');
             out.append(element.getText());
             out.append(')');
-		} else if (element != null) {
+        } else if (element != null) {
             out.append(element.getText());
         }
         return out;
