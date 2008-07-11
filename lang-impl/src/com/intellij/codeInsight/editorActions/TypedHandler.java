@@ -5,6 +5,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -133,7 +136,7 @@ public class TypedHandler implements TypedActionHandler {
         autoPopupController.autoPopupMemberLookup(editor, null);
       }
 
-      if (charTyped == '('){
+      if (charTyped == '(' && !isInsideStringLiteral(editor, file)) {
         autoPopupController.autoPopupParameterInfo(editor, null);
       }
     }
@@ -193,6 +196,25 @@ public class TypedHandler implements TypedActionHandler {
     if ('{' == charTyped) {
       indentOpenedBrace(project, editor);
     }
+  }
+
+  private static boolean isInsideStringLiteral(final Editor editor, final PsiFile file) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    if (element == null) return false;
+    final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+    if (definition != null) {
+      final TokenSet stringLiteralElements = definition.getStringLiteralElements();
+      final IElementType elementType = element.getNode().getElementType();
+      if (stringLiteralElements.contains(elementType)) {
+        return true;
+      }
+      PsiElement parent = element.getParent();
+      if (parent != null && stringLiteralElements.contains(parent.getNode().getElementType())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, Editor editor, PsiFile oldFile) {
