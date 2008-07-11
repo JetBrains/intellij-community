@@ -165,10 +165,14 @@ public class MavenProjectConfigurator {
   private List<MavenProjectModel> getMavenProjectsToConfigure() {
     List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
     for (MavenProjectModel each : myMavenTree.getProjects()) {
-      if (!myImporterSettings.isCreateModulesForAggregators() && each.isAggregator()) continue;
+      if (!shouldCreateModuleFor(each)) continue;
       result.add(each);
     }
     return result;
+  }
+
+  private boolean shouldCreateModuleFor(MavenProjectModel project) {
+    return myImporterSettings.isCreateModulesForAggregators() || !project.isAggregator();
   }
 
   private boolean ensureModuleCreated(MavenProjectModel project) {
@@ -211,21 +215,23 @@ public class MavenProjectConfigurator {
     myMavenTree.visit(new MavenProjectsTree.SimpleVisitor() {
       int depth = 0;
 
-      public void visit(MavenProjectModel project) {
+      public void visit(MavenProjectModel each) {
         depth++;
 
-        String name = myMavenProjectToModuleName.get(project);
+        String name = myMavenProjectToModuleName.get(each);
 
-        if (shouldCreateGroup(project)) {
+        if (shouldCreateGroup(each)) {
           groups.push(ProjectBundle.message("module.group.name", name));
         }
+
+        if (!shouldCreateModuleFor(each)) return;
 
         Module module = myModuleModel.findModuleByName(name);
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
       }
 
-      public void leave(MavenProjectModel node) {
-        if (shouldCreateGroup(node)) {
+      public void leave(MavenProjectModel each) {
+        if (shouldCreateGroup(each)) {
           groups.pop();
         }
         depth--;
