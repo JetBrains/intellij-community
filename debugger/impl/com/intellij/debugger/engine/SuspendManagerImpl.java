@@ -7,10 +7,7 @@ import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +23,7 @@ public class SuspendManagerImpl implements SuspendManager {
   // contexts, paused at breakpoint or another debugger event requests. Note that thread, explicitly paused by user is not considered as
   // "paused at breakpoint" and JDI prohibits data queries on its stackframes 
   private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<SuspendContextImpl>();
-  private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = new HashSet<ThreadReferenceProxyImpl>();
+  private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<ThreadReferenceProxyImpl>());
 
   private final DebugProcessImpl myDebugProcess;
 
@@ -204,7 +201,6 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   public boolean isFrozen(ThreadReferenceProxyImpl thread) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
     return myFrozenThreads.contains(thread);
   }
 
@@ -253,17 +249,15 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   public void freezeThread(ThreadReferenceProxyImpl thread) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    LOG.assertTrue(!isFrozen(thread));
-    myFrozenThreads.add(thread);
-    thread.suspend();
+    if (myFrozenThreads.add(thread)) {
+      thread.suspend();
+    }
   }
 
   public void unfreezeThread(ThreadReferenceProxyImpl thread) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    LOG.assertTrue(isFrozen(thread));
-    myFrozenThreads.remove(thread);
-    thread.resume();
+    if (myFrozenThreads.remove(thread)) {
+      thread.resume();
+    }
   }
 
   private void processVote(SuspendContextImpl suspendContext) {
