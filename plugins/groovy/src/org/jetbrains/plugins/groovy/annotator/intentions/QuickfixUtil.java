@@ -51,6 +51,10 @@ public class QuickfixUtil {
     return psiClass;
   }
 
+  public static boolean isStaticCall(GrReferenceExpression refExpr){
+      return refExpr.getQualifierExpression() instanceof GrReferenceExpression;
+  }
+
 
   public static boolean ensureFileWritable(Project project, PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -163,6 +167,10 @@ public class QuickfixUtil {
     assert containingClass != null;
     String className = containingClass.getQualifiedName();
     className = className == null ? containingClass.getContainingFile().getName() : className;
+
+    if (isStaticCall(referenceExpression)) {
+        settings.setStatic(true);
+    }
 
     settings.setContainingClassName(className);
     settings.setName(referenceExpression.getName());

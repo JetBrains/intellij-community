@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class DItemElement implements DNamedElement, DTypedElement {
   public String myType = null;
-  private Boolean myStatic = false;
+  public Boolean myStatic = false;
   public String myName = null;
 
 //  @NotNull

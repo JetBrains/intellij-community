@@ -100,6 +100,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     setUpTypeComboBox();
     setUpContainingClassComboBox();
     setUpStatusLabel();
+    setUpStaticComboBox();
+
     myTableLabel.setLabelFor(myParametersTable);
     setUpTableNameLabel(GroovyBundle.message("dynamic.properties.table.name"));
 
@@ -108,6 +110,11 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);
+  }
+
+  private void setUpStaticComboBox() {
+    myStaticCheckBox.setMnemonic(KeyEvent.VK_S);
+    myStaticCheckBox.setSelected(mySettings.isStatic());
   }
 
   public DynamicElementSettings getSettings() {
