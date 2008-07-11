@@ -23,7 +23,9 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +70,8 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
   public boolean isConfigurationByLocation(final RunConfiguration configuration, final Location location) {
     final JUnitConfiguration unitConfiguration = (JUnitConfiguration)configuration;
     final TestObject testObject = unitConfiguration.getTestObject();
-    return testObject != null && testObject.isConfiguredByElement(unitConfiguration, location.getPsiElement());
+    return testObject != null && testObject.isConfiguredByElement(unitConfiguration, location.getPsiElement()) &&
+           Comparing.equal(ModuleUtil.findModuleForPsiElement(location.getPsiElement()), ((JUnitConfiguration)configuration).getConfigurationModule().getModule());
   }
 
   @NotNull

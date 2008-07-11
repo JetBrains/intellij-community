@@ -13,7 +13,9 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +55,8 @@ public class TestNGConfigurationType implements LocatableConfigurationType
         if (testobject == null)
             return false;
         else
-            return testobject.isConfiguredByElement(location.getPsiElement());
+            return testobject.isConfiguredByElement(location.getPsiElement()) &&
+           Comparing.equal(ModuleUtil.findModuleForPsiElement(location.getPsiElement()), ((TestNGConfiguration)runConfiguration).getConfigurationModule().getModule());
     }
 
     public String getDisplayName() {
