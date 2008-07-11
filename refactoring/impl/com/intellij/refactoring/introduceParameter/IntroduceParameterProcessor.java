@@ -206,7 +206,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       conflicts.add(anySameNameVariables.getConflict());
     }
 
-    detectAccessibilityConflicts(usagesIn, conflicts);
+    if (!myGenerateDelegate) {
+      detectAccessibilityConflicts(usagesIn, conflicts);
+    }
 
     if (myParameterInitializer != null && !myMethodToReplaceIn.hasModifierProperty(PsiModifier.PRIVATE)) {
       final AnySupers anySupers = new AnySupers();
