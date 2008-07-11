@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ConstantValueVariableUseInspection extends BaseInspection {
 
@@ -36,7 +37,8 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
                 "constant.value.variable.use.display.name");
     }
 
-    @Override @NotNull
+    @Override
+    @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "constant.value.variable.use.problem.descriptor");
@@ -44,7 +46,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
 
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiExpression expression = (PsiExpression)infos[0];
+        final PsiExpression expression = (PsiExpression) infos[0];
         return new ReplaceReferenceWithExpressionFix(expression);
     }
 
@@ -86,56 +88,75 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
         public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiExpression condition = statement.getCondition();
-            if (!(condition instanceof PsiBinaryExpression)) {
-                return;
-            }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)condition;
-            final IElementType tokenType =
-                    binaryExpression.getOperationTokenType();
-            if (JavaTokenType.EQEQ != tokenType) {
-                return;
-            }
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            if (PsiUtil.isConstantExpression(lhs)) {
-                checkConstantValueVariableUse(statement, rhs, lhs);
-            } else if (PsiUtil.isConstantExpression(rhs)) {
-                checkConstantValueVariableUse(statement, lhs, rhs);
-            }
+            final PsiStatement body = statement.getThenBranch();
+            checkCondition(condition, body);
         }
 
-        private void checkConstantValueVariableUse(
-                PsiIfStatement statement,
-                PsiExpression expression,
-                PsiExpression constantExpression) {
+        @Override
+        public void visitWhileStatement(PsiWhileStatement statement) {
+            super.visitWhileStatement(statement);
+            final PsiExpression condition = statement.getCondition();
+            final PsiStatement body = statement.getBody();
+            checkCondition(condition, body);
+        }
+
+        private boolean checkCondition(@Nullable PsiExpression condition,
+                                       @Nullable PsiStatement body) {
+            if (body == null) {
+                return false;
+            }
+            if (!(condition instanceof PsiBinaryExpression)) {
+                return false;
+            }
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) condition;
+            final IElementType tokenType =
+                    binaryExpression.getOperationTokenType();
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (JavaTokenType.ANDAND == tokenType) {
+                return checkCondition(lhs, body) ||
+                        checkCondition(rhs, body);
+            }
+            if (JavaTokenType.EQEQ != tokenType) {
+                return false;
+            }
+            if (rhs == null) {
+                return false;
+            }
+            if (PsiUtil.isConstantExpression(lhs)) {
+                return checkConstantValueVariableUse(rhs, lhs, body);
+            } else if (PsiUtil.isConstantExpression(rhs)) {
+                return checkConstantValueVariableUse(lhs, rhs, body);
+            }
+            return false;
+        }
+
+        private boolean checkConstantValueVariableUse(
+                @Nullable PsiExpression expression,
+                @NotNull PsiExpression constantExpression,
+                @NotNull PsiElement body) {
             if (!(expression instanceof PsiReferenceExpression)) {
-                return;
+                return false;
             }
             final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)expression;
-            if (referenceExpression.getQualifierExpression() != null) {
-                return;
-            }
-            final PsiStatement thenBranch = statement.getThenBranch();
-            if (thenBranch == null) {
-                return;
-            }
+                    (PsiReferenceExpression) expression;
             final PsiElement target = referenceExpression.resolve();
             if (!(target instanceof PsiVariable)) {
-                return;
+                return false;
             }
-            final PsiVariable variable = (PsiVariable)target;
-            final VariableReadVisitor visitor = new VariableReadVisitor(
-                    variable);
-            thenBranch.accept(visitor);
+            if (target instanceof PsiField) {
+                return false;
+            }
+            final PsiVariable variable = (PsiVariable) target;
+            final VariableReadVisitor visitor =
+                    new VariableReadVisitor(variable);
+            body.accept(visitor);
             if (!visitor.isRead()) {
-                return;
+                return false;
             }
             registerError(visitor.getReference(), constantExpression);
+            return true;
         }
     }
 
@@ -145,6 +166,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
         @NotNull
         private final PsiVariable variable;
         private boolean read = false;
+        private boolean written = false;
         private PsiReferenceExpression reference = null;
 
         VariableReadVisitor(@NotNull PsiVariable variable) {
@@ -153,7 +175,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
 
         @Override
         public void visitElement(@NotNull PsiElement element) {
-            if (read) {
+            if (read || written) {
                 return;
             }
             super.visitElement(element);
@@ -162,10 +184,20 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
         @Override
         public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment) {
-            if (read) {
+            if (read || written) {
                 return;
             }
             super.visitAssignmentExpression(assignment);
+            final PsiExpression lhs = assignment.getLExpression();
+            if (lhs instanceof PsiReferenceExpression) {
+                PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression) lhs;
+                final PsiElement target = referenceExpression.resolve();
+                if (variable.equals(target)) {
+                    written = true;
+                    return;
+                }
+            }
             final PsiExpression rhs = assignment.getRExpression();
             if (rhs == null) {
                 return;
@@ -177,8 +209,63 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
             reference = visitor.getReference();
         }
 
-        @Override public void visitVariable(@NotNull PsiVariable variable){
-            if(read){
+        @Override
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression prefixExpression) {
+            if (read || written) {
+                return;
+            }
+            super.visitPrefixExpression(prefixExpression);
+            final PsiJavaToken operationSign =
+                    prefixExpression.getOperationSign();
+            final IElementType tokenType = operationSign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+                return;
+            }
+            final PsiExpression operand = prefixExpression.getOperand();
+            if (!(operand instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) operand;
+            final PsiElement target = referenceExpression.resolve();
+            if (!variable.equals(target)) {
+                return;
+            }
+            written = true;
+        }
+
+        @Override
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression postfixExpression) {
+            if (read || written) {
+                return;
+            }
+            super.visitPostfixExpression(postfixExpression);
+            final PsiJavaToken operationSign =
+                    postfixExpression.getOperationSign();
+            final IElementType tokenType = operationSign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+                return;
+            }
+            final PsiExpression operand = postfixExpression.getOperand();
+            if (!(operand instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) operand;
+            final PsiElement target = referenceExpression.resolve();
+            if (!variable.equals(target)) {
+                return;
+            }
+            written = true;
+        }
+
+        @Override
+        public void visitVariable(@NotNull PsiVariable variable) {
+            if (read || written) {
                 return;
             }
             super.visitVariable(variable);
@@ -193,15 +280,16 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
             reference = visitor.getReference();
         }
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call){
-            if(read){
+        @Override
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call) {
+            if (read || written) {
                 return;
             }
             super.visitMethodCallExpression(call);
             final PsiExpressionList argumentList = call.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
-            for(final PsiExpression argument : arguments){
+            for (final PsiExpression argument : arguments) {
                 final VariableUsedVisitor visitor =
                         new VariableUsedVisitor(variable);
                 argument.accept(visitor);
@@ -213,19 +301,20 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
             }
         }
 
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression newExpression){
-            if(read){
+        @Override
+        public void visitNewExpression(
+                @NotNull PsiNewExpression newExpression) {
+            if (read || written) {
                 return;
             }
             super.visitNewExpression(newExpression);
             final PsiExpressionList argumentList =
                     newExpression.getArgumentList();
-            if(argumentList == null){
+            if (argumentList == null) {
                 return;
             }
             final PsiExpression[] arguments = argumentList.getExpressions();
-            for(final PsiExpression argument : arguments){
+            for (final PsiExpression argument : arguments) {
                 final VariableUsedVisitor visitor =
                         new VariableUsedVisitor(variable);
                 argument.accept(visitor);
@@ -237,14 +326,15 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
             }
         }
 
-        @Override public void visitArrayInitializerExpression(
-                PsiArrayInitializerExpression expression){
-            if(read){
+        @Override
+        public void visitArrayInitializerExpression(
+                PsiArrayInitializerExpression expression) {
+            if (read || written) {
                 return;
             }
             super.visitArrayInitializerExpression(expression);
             final PsiExpression[] arguments = expression.getInitializers();
-            for(final PsiExpression argument : arguments){
+            for (final PsiExpression argument : arguments) {
                 final VariableUsedVisitor visitor =
                         new VariableUsedVisitor(variable);
                 argument.accept(visitor);
@@ -256,9 +346,10 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
             }
         }
 
-        @Override public void visitReturnStatement(
+        @Override
+        public void visitReturnStatement(
                 @NotNull PsiReturnStatement returnStatement) {
-            if(read){
+            if (read || written) {
                 return;
             }
             super.visitReturnStatement(returnStatement);
@@ -278,7 +369,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
          */
         @Override
         public void visitClass(PsiClass aClass) {
-            if (read) {
+            if (read || written) {
                 return;
             }
             super.visitClass(aClass);
