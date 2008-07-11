@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -43,9 +44,19 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Change[] changes = e.getData(getChangesKey());
 
-    e.getPresentation().setVisible(true);
-    e.getPresentation().setEnabled(! ((project == null) || (changes == null) || (changes.length != 1) ||
-      (! SvnVcs.VCS_NAME.equals(ChangesUtil.getVcsForFile(ChangesUtil.getFilePath(changes[0]).getVirtualFile(), project).getName()))));
+    final Presentation presentation = e.getPresentation();
+    presentation.setVisible(true);
+    presentation.setEnabled(enabled(project, changes));
+  }
+
+  private static boolean enabled(final Project project, final Change[] changes) {
+    final boolean noChange = (project == null) || (changes == null) || (changes.length != 1);
+    if (noChange) {
+      return false;
+    } else {
+      final VirtualFile virtualFile = ChangesUtil.getFilePath(changes[0]).getVirtualFile();
+      return virtualFile != null && SvnVcs.VCS_NAME.equals(ChangesUtil.getVcsForFile(virtualFile, project).getName());
+    }
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -53,8 +64,7 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Change[] changes = e.getData(getChangesKey());
 
-    if ((project == null) || (changes == null) || (changes.length != 1) ||
-      (! SvnVcs.VCS_NAME.equals(ChangesUtil.getVcsForFile(ChangesUtil.getFilePath(changes[0]).getVirtualFile(), project).getName()))) {
+    if (! enabled(project, changes)) {
       return;
     }
 
