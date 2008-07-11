@@ -15,14 +15,18 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
   private final Block myOriginal;
   private final Indent myIndent;
   private final int myOffset;
+  private final TextRange myRange;
 
   public AnotherLanguageBlockWrapper(final ASTNode node,
                                      final XmlFormattingPolicy policy,
-                                     final Block original, final Indent indent, final int offset) {
+                                     final Block original, final Indent indent,
+                                     final int offset,
+                                     TextRange range) {
     super(node, original.getWrap(), original.getAlignment(), policy);
     myOriginal = original;
     myIndent = indent;
     myOffset = offset;
+    myRange = range;
   }
 
   public Indent getIndent() {
@@ -42,17 +46,20 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
   }
 
   protected List<Block> buildChildren() {
-    final List<Block> list = myOriginal.getSubBlocks();
-    if (myOffset == 0) return list;
+    if (myOffset == 0 && myRange == null) return myOriginal.getSubBlocks();
 
-    return InjectedLanguageBlockWrapper.buildBlocks(myOriginal, myOffset);
+    return InjectedLanguageBlockWrapper.buildBlocks(myOriginal, myOffset, myRange);
   }
 
   @NotNull
   public TextRange getTextRange() {
     final TextRange range = super.getTextRange();
     if (myOffset == 0) return range;
-    return new TextRange(myOffset + range.getStartOffset(), myOffset + range.getEndOffset());
+    
+    return new TextRange(
+        myOffset + range.getStartOffset(),
+        myOffset + (myRange != null ? myRange.getLength() : range.getLength())
+    );
   }
 
   @Nullable public Spacing getSpacing(Block child1, Block child2) {

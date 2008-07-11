@@ -443,7 +443,15 @@ public class InjectedLanguageUtil {
     return null;
   }
 
+  public static PsiElement findInjectedElementNoCommitWithOffset(@NotNull PsiFile file, final int offset) {
+    return findInjectedElementNoCommit2(file, offset, true);
+  }
+
   public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile file, final int offset) {
+    return findInjectedElementNoCommit2(file, offset, false);
+  }
+
+  private static PsiElement findInjectedElementNoCommit2(final PsiFile file, final int offset, boolean accuratelyPlease) {
     if (isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
 
@@ -451,7 +459,7 @@ public class InjectedLanguageUtil {
     PsiElement inj = element == null ? null : findInside(element, file, offset, documentManager);
     if (inj != null) return inj;
 
-    if (offset != 0) {                                                    
+    if (offset != 0 && !accuratelyPlease) {
       PsiElement element1 = file.findElementAt(offset - 1);
       if (element1 != element && element1 != null) return findInside(element1, file, offset, documentManager);
     }

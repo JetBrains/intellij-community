@@ -94,10 +94,11 @@ public class EnterHandler extends EditorWriteActionHandler {
     }
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiElement psiAtOffset = file.findElementAt(caretOffset);
+
     boolean forceIndent = false;
     Ref<Integer> caretOffsetRef = new Ref<Integer>(caretOffset);
     Ref<Integer> caretAdvanceRef = new Ref<Integer>(0);
+
     for(EnterHandlerDelegate delegate: Extensions.getExtensions(EnterHandlerDelegate.EP_NAME)) {
       EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffsetRef, caretAdvanceRef, dataContext, myOriginalHandler);
       if (result == EnterHandlerDelegate.Result.Stop) return;

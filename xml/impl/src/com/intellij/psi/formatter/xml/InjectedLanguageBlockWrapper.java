@@ -36,18 +36,34 @@ final class InjectedLanguageBlockWrapper implements Block {
   @NotNull
   public List<Block> getSubBlocks() {
     if (myBlocks == null) {
-      myBlocks = buildBlocks(myOriginal, myOffset);
+      myBlocks = buildBlocks(myOriginal, myOffset, null);
     }
     return myBlocks;
   }
 
-  static List<Block> buildBlocks(Block myOriginal, int myOffset) {
+  static List<Block> buildBlocks(Block myOriginal, int myOffset, TextRange range) {
     final List<Block> list = myOriginal.getSubBlocks();
     if (list.size() == 0) return AbstractXmlBlock.EMPTY;
     else {
       final ArrayList<Block> result = new ArrayList<Block>(list.size());
-      for(Block b:list) result.add(new InjectedLanguageBlockWrapper(b, myOffset));
+      if (range == null) {
+        for(Block b:list) result.add(new InjectedLanguageBlockWrapper(b, myOffset));
+      } else {
+        collectBlocksIntersectingRange(list, result, range, myOffset);
+      }
       return result;
+    }
+  }
+
+  private static void collectBlocksIntersectingRange(final List<Block> list, final List<Block> result, final TextRange range,
+                                                     int blockStartOffset) {
+    for(Block b:list) {
+      final TextRange textRange = b.getTextRange();
+      if (range.contains(textRange)) {
+        result.add(new InjectedLanguageBlockWrapper(b, blockStartOffset - range.getStartOffset()));
+      } else if (textRange.intersectsStrict(range)) {
+        collectBlocksIntersectingRange(b.getSubBlocks(), result, range, blockStartOffset);
+      }
     }
   }
 

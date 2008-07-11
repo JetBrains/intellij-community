@@ -55,7 +55,11 @@ public class PsiBasedFormattingModel implements FormattingModel {
     ASTNode leafElement = findElementAt(offset);
 
     if (leafElement != null) {
-      return replaceWithPsiInLeaf(textRange, whiteSpace, leafElement);
+      if (leafElement.getPsi() instanceof PsiFile) {
+        return null;
+      } else {
+        return replaceWithPsiInLeaf(textRange, whiteSpace, leafElement);
+      }
     } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
       FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
       return whiteSpace;
@@ -78,11 +82,8 @@ public class PsiBasedFormattingModel implements FormattingModel {
   protected ASTNode findElementAt(final int offset) {
     PsiFile containingFile = myASTNode.getPsi().getContainingFile();
     assert !PsiDocumentManager.getInstance(containingFile.getProject()).isUncommited(myDocumentModel.getDocument());
-    PsiElement psiElement = InjectedLanguageUtil.findInjectedElementNoCommit(containingFile, offset);
+    PsiElement psiElement = InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(containingFile, offset);
     if (psiElement == null) psiElement = containingFile.findElementAt(offset);
-    if (psiElement instanceof PsiFile) {
-      psiElement = myASTNode.getPsi().findElementAt(offset);
-    }
     if (psiElement == null) return null;
     return psiElement.getNode();
   }

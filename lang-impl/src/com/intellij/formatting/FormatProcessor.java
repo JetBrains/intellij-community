@@ -417,13 +417,13 @@ class FormatProcessor {
 
   private void adjustLineIndent() {
     IndentData alignOffset = getAlignOffset();
+    final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
+
     if (alignOffset == null) {
-      final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
       final IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
       whiteSpace.setSpaces(offset.getSpaces(), offset.getIndentSpaces());
     }
     else {
-      final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
       whiteSpace.setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
     }
   }
@@ -649,7 +649,11 @@ class FormatProcessor {
   public IndentInfo getIndentAt(final int offset) {
     processBlocksBefore(offset);
     AbstractBlockWrapper parent = getParentFor(offset, myCurrentBlock);
-    if (parent == null) return new IndentInfo(0, 0, 0);
+    if (parent == null) {
+      final LeafBlockWrapper previousBlock = myCurrentBlock.getPreviousBlock();
+      if (previousBlock != null) parent = getParentFor(offset, previousBlock);
+      if (parent == null) return new IndentInfo(0,0,0);
+    }
     int index = getNewChildPosition(parent, offset);
     final Block block = myInfos.get(parent);
     

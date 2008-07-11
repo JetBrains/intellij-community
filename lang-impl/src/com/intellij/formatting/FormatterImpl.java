@@ -257,11 +257,13 @@ public class FormatterImpl extends FormatterEx
       }
     }
 
+    final int defaultOffset = offset - whiteSpace.getLength() + newWS.length();
+
     if (wsContainsCaret) {
-      return whiteSpace.getStartOffset()
-             + CharArrayUtil.shiftForward(newWS, lineStartOffset - whiteSpace.getStartOffset(), " \t");
+      final int ws = whiteSpace.getStartOffset() + CharArrayUtil.shiftForward(newWS, lineStartOffset - whiteSpace.getStartOffset(), " \t");
+      return Math.max(defaultOffset, ws);
     } else {
-      return offset - whiteSpace.getLength() + newWS.length();
+      return defaultOffset;
     }
   }
 
