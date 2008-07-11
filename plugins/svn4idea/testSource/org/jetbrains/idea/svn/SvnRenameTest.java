@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -259,6 +260,7 @@ public class SvnRenameTest extends SvnTestCase {
   }
 
   // IDEADEV-19336
+  @Bombed(user = "Ira", month = 6, day = 15)
   @Test
   public void testUndoMoveCommittedPackage() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
