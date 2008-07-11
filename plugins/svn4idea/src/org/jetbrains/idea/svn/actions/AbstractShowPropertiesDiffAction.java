@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -54,7 +55,14 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
     if (noChange) {
       return false;
     } else {
-      final VirtualFile virtualFile = ChangesUtil.getFilePath(changes[0]).getVirtualFile();
+      final Change change = changes[0];
+
+      final ContentRevision revision = (change.getBeforeRevision() != null) ? change.getBeforeRevision() : change.getAfterRevision();
+      if ((revision == null) || (! (revision.getRevisionNumber() instanceof SvnRevisionNumber))) {
+        return false;
+      }
+
+      final VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
       return virtualFile != null && SvnVcs.VCS_NAME.equals(ChangesUtil.getVcsForFile(virtualFile, project).getName());
     }
   }
