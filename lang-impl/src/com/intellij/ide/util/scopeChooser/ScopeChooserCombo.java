@@ -146,10 +146,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     
-    PsiElement dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
 
     if (dataContextElement == null) {
-      dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
+      dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     }
 
     if (dataContextElement != null) {
