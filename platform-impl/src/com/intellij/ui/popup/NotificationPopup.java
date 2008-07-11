@@ -92,20 +92,29 @@ public class NotificationPopup {
   }
 
   private class ContentComponent extends JPanel {
-    private MouseAdapter myEntranceListener;
+    private MouseAdapter myMouseListener;
 
     public ContentComponent(JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
       setBackground(myBackgroud);
 
-      myEntranceListener = new MouseAdapter() {
+      myMouseListener = new MouseAdapter() {
+        @Override
+        public void mouseClicked(final MouseEvent e) {
+          if (e.getButton() == MouseEvent.BUTTON3) {
+            myPopup.cancel();
+          }
+        }
+
+        @Override
         public void mouseEntered(MouseEvent e) {
           if (myFadeInTimer.isRunning()) {
             myFadeInTimer.stop();
           }
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
           if (!myFadeInTimer.isRunning()) {
             myFadeInTimer.start();
@@ -117,13 +126,13 @@ public class NotificationPopup {
     @Override
     public void addNotify() {
       super.addNotify();
-      ListenerUtil.addMouseListener(this, myEntranceListener);
+      ListenerUtil.addMouseListener(this, myMouseListener);
     }
 
     @Override
     public void removeNotify() {
       super.removeNotify();
-      ListenerUtil.removeMouseListener(this, myEntranceListener);
+      ListenerUtil.removeMouseListener(this, myMouseListener);
     }
 
     public Dimension getPreferredSize() {
