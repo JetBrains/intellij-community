@@ -189,6 +189,14 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
            false);
   }
 
+  public void testReorderWithVarargs() throws Exception {  // IDEADEV-26977
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    doTest(null, new ParameterInfo[] {
+        new ParameterInfo(1),
+        new ParameterInfo(0, "s", factory.createTypeFromText("java.lang.String...", getFile()))
+    }, false);
+  }
+
 
   protected void setUpJdk() {
     super.setUpJdk();

@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -850,10 +849,24 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         final PsiExpression[] args = list.getExpressions();
         final int nonVarargCount = getNonVarargCount(changeInfo, args);
         final int varargCount = args.length - nonVarargCount;
+        PsiExpression[] newVarargInitializers = null;
 
         final int newArgsLength;
         final int newNonVarargCount;
-        if (changeInfo.retainsVarargs) {
+        if (changeInfo.arrayToVarargs) {
+          newNonVarargCount = changeInfo.newParms.length - 1;
+          final ParameterInfo lastNewParm = changeInfo.newParms[changeInfo.newParms.length - 1];
+          final PsiExpression arrayToConvert = args[lastNewParm.oldParameterIndex];
+          if (arrayToConvert instanceof PsiNewExpression) {
+            final PsiNewExpression expression = (PsiNewExpression)arrayToConvert;
+            final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
+            if (arrayInitializer != null) {
+              newVarargInitializers = arrayInitializer.getInitializers();
+            }
+          }
+          newArgsLength = newVarargInitializers == null ? changeInfo.newParms.length : newNonVarargCount + newVarargInitializers.length;
+        }
+        else if (changeInfo.retainsVarargs) {
           newNonVarargCount = changeInfo.newParms.length - 1;
           newArgsLength =  newNonVarargCount + varargCount;
         }
@@ -867,24 +880,41 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
         final PsiExpression[] newArgs = new PsiExpression[newArgsLength];
         for (int i = 0; i < newNonVarargCount; i++) {
-          final ParameterInfo info = changeInfo.newParms[i];
-          final int index = info.oldParameterIndex;
-          if (index >= 0) {
-            newArgs[i] = args[index];
-          } else {
-            if (toInsertDefaultValue) {
-              newArgs[i] = createDefaultValue(factory, info, list);
-            } else {
-              newArgs[i] = factory.createExpressionFromText(info.getName(), list);
+          newArgs [i] = createActualArgument(list, changeInfo.newParms [i], toInsertDefaultValue, args);
+        }
+        if (changeInfo.arrayToVarargs) {
+          if (newVarargInitializers == null) {
+            newArgs [newNonVarargCount] = createActualArgument(list, changeInfo.newParms [newNonVarargCount], toInsertDefaultValue, args);
+          }
+          else {
+            for (int i = 0; i < newVarargInitializers.length; i++) {
+              newArgs [i + newNonVarargCount] = newVarargInitializers [i];
             }
           }
         }
-        final int newVarargCount = newArgsLength - newNonVarargCount;
-        LOG.assertTrue(newVarargCount == 0 || newVarargCount == varargCount);
-        for (int i = 0; i < newVarargCount; i++) {
-          newArgs[newNonVarargCount + i] = args[nonVarargCount + i];
+        else {
+          final int newVarargCount = newArgsLength - newNonVarargCount;
+          LOG.assertTrue(newVarargCount == 0 || newVarargCount == varargCount);
+          for (int i = 0; i < newVarargCount; i++) {
+            newArgs[newNonVarargCount + i] = args[nonVarargCount + i];
+          }
         }
         ChangeSignatureUtil.synchronizeList(list, Arrays.asList(newArgs), ExpressionList.INSTANCE, changeInfo.toRemoveParm);
+      }
+    }
+  }
+
+  private PsiExpression createActualArgument(final PsiExpressionList list, final ParameterInfo info, final boolean toInsertDefaultValue,
+                                             final PsiExpression[] args) throws IncorrectOperationException {
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
+    final int index = info.oldParameterIndex;
+    if (index >= 0) {
+      return args[index];
+    } else {
+      if (toInsertDefaultValue) {
+        return createDefaultValue(factory, info, list);
+      } else {
+        return factory.createExpressionFromText(info.getName(), list);
       }
     }
   }

@@ -40,6 +40,7 @@ class ChangeInfo {
   final boolean wasVararg;
   final boolean retainsVarargs;
   final boolean obtainsVarags;
+  final boolean arrayToVarargs;
   PsiIdentifier newNameIdentifier;
   PsiType newTypeElement;
   final PsiExpression[] defaultValues;
@@ -142,11 +143,19 @@ class ChangeInfo {
     if (this.newParms.length == 0) {
       retainsVarargs = false;
       obtainsVarags = false;
+      arrayToVarargs = false;
     }
     else {
       final ParameterInfo lastNewParm = this.newParms[this.newParms.length - 1];
       obtainsVarags = lastNewParm.isVarargType();
       retainsVarargs = lastNewParm.oldParameterIndex >= 0 && obtainsVarags;
+      if (retainsVarargs) {
+        final PsiType oldTypeForVararg = parameters[lastNewParm.oldParameterIndex].getType();
+        arrayToVarargs = (oldTypeForVararg instanceof PsiArrayType && !(oldTypeForVararg instanceof PsiEllipsisType));
+      }
+      else {
+        arrayToVarargs = false;
+      }
     }
   }
 
