@@ -21,10 +21,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +95,14 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
         @Override
         public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
+            final PsiExpression condition = statement.getCondition();
+            final PsiStatement body = statement.getBody();
+            checkCondition(condition, body);
+        }
+
+        @Override
+        public void visitForStatement(PsiForStatement statement) {
+            super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();
             final PsiStatement body = statement.getBody();
             checkCondition(condition, body);
