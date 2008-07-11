@@ -188,7 +188,14 @@ public class LibrariesContainerFactory {
 
     public Library createLibrary(@NotNull @NonNls final String name, @NotNull final LibraryLevel level,
                                  @NotNull final VirtualFile[] classRoots, @NotNull final VirtualFile[] sourceRoots) {
-      LibraryTableModifiableModelProvider provider = myContext.getProjectLibrariesProvider(false);
+      LibraryTableModifiableModelProvider provider;
+      if (level == LibraryLevel.PROJECT) {
+        provider = myContext.getProjectLibrariesProvider(false);
+      }
+      else {
+        provider = myContext.getGlobalLibrariesProvider(false);
+      }
+      
       LibraryTable.ModifiableModel model = provider.getModifiableModel();
       Library library = model.createLibrary(getUniqueLibraryName(name, model));
       LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
