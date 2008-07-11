@@ -236,7 +236,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
           if (exprType == null) return null;
           JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
           String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
-          result.add(new ParameterInfo(-1, name, exprType, expression.getText()));
+          result.add(new ParameterInfo(-1, name, exprType, expression.getText().replace('\n', ' ')));
           ei++;
         }
       }
