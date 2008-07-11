@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -271,14 +272,24 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     private boolean isExternal(final Match match) {
-      return !PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false);
+      if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false)) {
+        return false;
+      }
+      else {
+        final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
+        if (psiClass != null) {
+          if (InheritanceUtil.isInheritorOrSelf(psiClass, myMethod.getContainingClass(), true)) return false;
+        }
+      }
+      return true;
     }
 
     private boolean isEssentialStaticContextAbsent(final Match match) {
       if (!myMethod.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiExpression instanceExpression = match.getInstanceExpression();
         if (instanceExpression != null) return false;
-        if (isExternal(match) || RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) return true;
+        if (isExternal(match)) return true;
+        if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false) && RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) return true;
       }
       return false;
     }
