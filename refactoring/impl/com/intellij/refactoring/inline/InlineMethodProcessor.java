@@ -271,6 +271,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(statements.length == 1 && statements[0] instanceof PsiExpressionStatement);
     PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
     LOG.assertTrue(expression instanceof PsiMethodCallExpression);
+    ChangeContextUtil.encodeContextInfo(expression, true);
 
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression.copy();
     final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
@@ -279,11 +280,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     try {
-      constructorCall.getArgumentList().replace(methodCall.getArgumentList());
+      final PsiExpressionList exprList = (PsiExpressionList) constructorCall.getArgumentList().replace(methodCall.getArgumentList());
+      ChangeContextUtil.decodeContextInfo(exprList, PsiTreeUtil.getParentOfType(constructorCall, PsiClass.class), null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    ChangeContextUtil.clearContextInfo(expression);
   }
 
   private static void replaceParameterReferences(final PsiElement element,
