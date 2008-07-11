@@ -419,11 +419,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  private volatile AntElement[] myLastProcessedChildren;
   private AntElement[] fixUndefinedElements(final AntElement[] elements) {
-    if (myLastProcessedChildren == elements) {
-      return elements;
-    }
     for (int i = 0; i < elements.length; i++) {
       final AntElement element = elements[i];
       if (element instanceof AntStructuredElement) {
@@ -436,7 +432,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         }
       }
     }
-    myLastProcessedChildren = elements;
     return elements;
   }
 
