@@ -90,6 +90,19 @@ public class CompilerUtil {
     }
   }
 
+  public static void refreshIODirectories(@NotNull final Collection<File> files) {
+    if (files.isEmpty()) {
+      return;
+    }
+
+    for (File file1 : files) {
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
+      if (file != null) {
+        file.refresh(false, true);
+      }
+    }
+  }
+
   public static void refreshIOFile(final File file) {
     final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     if (vFile != null) {

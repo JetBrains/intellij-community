@@ -858,9 +858,7 @@ public class CompileDriver {
       else { // refresh is still required
         pruneEmptyDirectories(outputDirectories); // to avoid too much files deleted events
 
-        for (final VirtualFile outputDirectory : CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(myProject).getModules())) {
-          outputDirectory.refresh(false, true);
-        }
+        CompilerUtil.refreshIODirectories(outputDirectories);
       }
       dropScopesCaches();
 
@@ -939,14 +937,11 @@ public class CompileDriver {
     }
     FileUtil.asyncDelete(filesToDelete);
 
-    // ensure output directories exist, create and refresh if not exist
-    final List<File> createdFiles = new ArrayList<File>(outputDirectories.size());
+    // ensure output directories exist
     for (final File file : outputDirectories) {
-      if (file.mkdirs()) {
-        createdFiles.add(file);
-      }
+      file.mkdirs();
     }
-    CompilerUtil.refreshIOFiles(createdFiles);
+    CompilerUtil.refreshIODirectories(outputDirectories);
   }
 
   private void clearCompilerSystemDirectory(final CompileContext context) {
