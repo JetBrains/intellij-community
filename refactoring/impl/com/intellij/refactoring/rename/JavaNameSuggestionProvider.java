@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -25,22 +26,34 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     String parameterName = null;
     if (nameSuggestionContext != null) {
       final PsiElement nameSuggestionContextParent = nameSuggestionContext.getParent();
-      if (nameSuggestionContextParent != null && nameSuggestionContextParent.getParent() instanceof PsiExpressionList) {
-        final PsiExpressionList expressionList = (PsiExpressionList)nameSuggestionContextParent.getParent();
-        final PsiElement parent = expressionList.getParent();
-        if (parent instanceof PsiCallExpression) {
-          final PsiMethod method = ((PsiCallExpression)parent).resolveMethod();
-          if (method != null) {
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            final PsiExpression[] expressions = expressionList.getExpressions();
-            for (int i = 0; i < expressions.length; i++) {
-              PsiExpression expression = expressions[i];
-              if (expression == nameSuggestionContextParent) {
-                if (i < parameters.length) {
-                  parameterName = parameters[i].getName();
+      if (nameSuggestionContextParent != null) {
+        final PsiElement parentOfParent = nameSuggestionContextParent.getParent();
+        if (parentOfParent instanceof PsiExpressionList) {
+          final PsiExpressionList expressionList = (PsiExpressionList)parentOfParent;
+          final PsiElement parent = expressionList.getParent();
+          if (parent instanceof PsiCallExpression) {
+            final PsiMethod method = ((PsiCallExpression)parent).resolveMethod();
+            if (method != null) {
+              final PsiParameter[] parameters = method.getParameterList().getParameters();
+              final PsiExpression[] expressions = expressionList.getExpressions();
+              for (int i = 0; i < expressions.length; i++) {
+                PsiExpression expression = expressions[i];
+                if (expression == nameSuggestionContextParent) {
+                  if (i < parameters.length) {
+                    parameterName = parameters[i].getName();
+                  }
+                  break;
                 }
-                break;
               }
+            }
+          }
+        }
+        else if (parentOfParent instanceof PsiParameterList) {
+          final PsiElement parent3 = parentOfParent.getParent();
+          if (parent3 instanceof PsiMethod) {
+            final String propName = PropertyUtil.getPropertyName((PsiMethod)parent3);
+            if (propName != null) {
+              parameterName = propName;
             }
           }
         }
