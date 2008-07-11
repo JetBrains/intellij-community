@@ -57,7 +57,7 @@ public class MavenProcess {
   public static MavenTaskHandler runInBackground(Project project,
                                                  String title,
                                                  final boolean canBeCancelled,
-                                                 final MavenTask t) throws CanceledException {
+                                                 final MavenTask t) {
     final Semaphore startSemaphore = new Semaphore();
     final Semaphore finishSemaphore = new Semaphore();
     final ProgressIndicator[] indicator = new ProgressIndicator[1];
