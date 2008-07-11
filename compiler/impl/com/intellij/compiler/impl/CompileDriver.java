@@ -196,7 +196,7 @@ public class CompileDriver {
   }
 
   private CompileStatus readStatus() {
-    final boolean isInProgress = new File(myCachesDirectoryPath, LOCK_FILE_NAME).exists();
+    final boolean isInProgress = getLockFile().exists();
     int version = -1;
     try {
       final File versionFile = new File(myCachesDirectoryPath, VERSION_FILE_NAME);
@@ -220,7 +220,7 @@ public class CompileDriver {
 
   private void writeStatus(CompileStatus status, CompileContext context) {
     final File statusFile = new File(myCachesDirectoryPath, VERSION_FILE_NAME);
-    final File lockFile = new File(myCachesDirectoryPath, LOCK_FILE_NAME);
+    final File lockFile = getLockFile();
     try {
       statusFile.createNewFile();
       DataOutputStream out = new DataOutputStream(new FileOutputStream(statusFile));
@@ -240,6 +240,10 @@ public class CompileDriver {
     catch (IOException e) {
       context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.exception", e.getMessage()), null, -1, -1);
     }
+  }
+
+  private File getLockFile() {
+    return new File(CompilerPaths.getCompilerSystemDirectory(myProject), LOCK_FILE_NAME);
   }
 
   private void doRebuild(CompileStatusNotification callback,
