@@ -90,11 +90,11 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
 
   public void updateIndexHint(int row) {
     MavenIndex index = getIndexAt(row);
-    Exception ex = index.getFailedToUpdateException();
-    if (ex == null) {
+    String message = index.getFailureMessage();
+    if (message == null) {
       myTable.setToolTipText(null);
     } else {
-      myTable.setToolTipText(ex.getMessage());
+      myTable.setToolTipText(message);
     }
   }
 
@@ -192,8 +192,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
           if (i.getKind() == MavenIndex.Kind.LOCAL) return "Local";
           return "Remote";
         case 2:
-          Exception e = i.getFailedToUpdateException();
-          if (e != null) {
+          if (i.getFailureMessage() != null) {
             return IndicesBundle.message("maven.index.timestamp.error");
           }
           long timestamp = i.getUpdateTimestamp();
@@ -220,7 +219,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
       Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
       MavenIndex index = getIndexAt(row);
-      if (index.getFailedToUpdateException() != null) {
+      if (index.getFailureMessage() != null) {
         if (isSelected) {
           setForeground(Color.PINK);
         } else {

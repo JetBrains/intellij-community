@@ -35,6 +35,7 @@ public class MavenIndex {
   private static final String PATH_OR_URL_KEY = "pathOrUrl";
   private static final String TIMESTAMP_KEY = "lastUpdate";
   private static final String DATA_DIR_NAME_KEY = "dataDirName";
+  private static final String FAILURE_MESSAGE_KEY = "failureMessage";
 
   private static final String CONTEXT_DIR = "context";
 
@@ -59,7 +60,9 @@ public class MavenIndex {
   private String myDataDirName;
   private IndexData myData;
 
-  private Exception myFailedToUpdateException;
+  private String myFailureMessage;
+
+  private Object myDirectoryLock = new Object();
 
   public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind) throws MavenIndexException {
     myDir = dir;
@@ -98,6 +101,7 @@ public class MavenIndex {
     }
 
     myDataDirName = props.getProperty(DATA_DIR_NAME_KEY);
+    myFailureMessage = props.getProperty(FAILURE_MESSAGE_KEY);
 
     open();
   }
@@ -111,6 +115,7 @@ public class MavenIndex {
     props.setProperty(PATH_OR_URL_KEY, myRepositoryPathOrUrl);
     if (myUpdateTimestamp != null) props.setProperty(TIMESTAMP_KEY, String.valueOf(myUpdateTimestamp));
     props.setProperty(DATA_DIR_NAME_KEY, myDataDirName);
+    if (myFailureMessage != null) props.setProperty(FAILURE_MESSAGE_KEY, myFailureMessage);
 
     try {
       FileOutputStream s = new FileOutputStream(new File(myDir, INDEX_INFO_FILE));
@@ -143,10 +148,12 @@ public class MavenIndex {
 
   private void doOpen() throws Exception {
     try {
-      if (myDataDirName == null) {
-        myDataDirName = findAvailableDataDir();
+      synchronized (myDirectoryLock) {
+        if (myDataDirName == null) {
+          myDataDirName = findAvailableDataDir();
+        }
+        myData = openData(myDataDirName);
       }
-      myData = openData(myDataDirName);
     }
     catch (Exception e) {
       try {
@@ -180,8 +187,8 @@ public class MavenIndex {
     return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
 
-  public Exception getFailedToUpdateException() {
-    return myFailedToUpdateException;
+  public String getFailureMessage() {
+    return myFailureMessage;
   }
 
   public synchronized void close() throws MavenIndexException {
@@ -214,21 +221,22 @@ public class MavenIndex {
       try {
         updateContext(context, embedder, indexer, updater, progress);
         updateData(context, progress);
-        save();
       }
       finally {
         indexer.removeIndexingContext(context, false);
       }
-      myFailedToUpdateException = null;
+      myFailureMessage = null;
     }
     catch (IOException e) {
-      myFailedToUpdateException = e;
+      myFailureMessage = e.getMessage();
       MavenLog.info(e);
     }
     catch (UnsupportedExistingLuceneIndexException e) {
-      myFailedToUpdateException = e;
+      myFailureMessage = e.getMessage();
       MavenLog.info(e);
     }
+
+    save();
   }
 
   private IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
@@ -293,8 +301,13 @@ public class MavenIndex {
   private void updateData(IndexingContext context, ProgressIndicator progress) throws IOException {
     progress.setText2(IndicesBundle.message("maven.indices.updating.saving"));
 
-    String newDataDir = findAvailableDataDir();
-    IndexData newData = openData(newDataDir);
+    String newDataDir;
+    IndexData newData;
+    synchronized (myDirectoryLock){
+      newDataDir = findAvailableDataDir();
+      newData = openData(newDataDir);
+    }
+
     try {
       doUpdateIndexData(context, newData, progress);
       newData.flush();
@@ -405,6 +418,7 @@ public class MavenIndex {
   }
 
   private String findAvailableDataDir() {
+    assert Thread.holdsLock(myDirectoryLock);
     return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
   }
 

@@ -193,6 +193,19 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     myIndices.update(i, new EmptyProgressIndicator());
   }
 
+  public void testSavingFailureMessage() throws Exception {
+    MavenIndex i = myIndices.add("xxx", MavenIndex.Kind.REMOTE);
+    myIndices.update(i, new EmptyProgressIndicator());
+
+    String message = i.getFailureMessage();
+    assertNotNull(message);
+
+    shutdownIndices();
+    initIndices();
+    
+    assertEquals(message, myIndices.getIndices().get(0).getFailureMessage());
+  }
+
   public void testGettingArtifactInfos() throws Exception {
     myDataTestFixture.copy("local2", "local1");
     MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
