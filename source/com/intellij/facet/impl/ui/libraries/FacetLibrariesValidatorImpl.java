@@ -180,7 +180,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
         }
       }
       LibraryCompositionOptionsPanel panel = new LibraryCompositionOptionsPanel(myLibrariesContainer, myLibrarySettings, mirrorsMap);
-      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel, mirrorsMap);
+      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel, myLibrariesContainer, mirrorsMap);
       dialog.show();
       myValidator.onChange();
     }
@@ -189,10 +189,12 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private static class LibraryCompositionDialog extends DialogWrapper {
     private LibraryCompositionOptionsPanel myPanel;
     private final LibraryDownloadingMirrorsMap myMirrorsMap;
+    private final LibrariesContainer myLibrariesContainer;
 
     private LibraryCompositionDialog(final JComponent parent, final LibraryCompositionOptionsPanel panel,
-                                     final LibraryDownloadingMirrorsMap mirrorsMap) {
+                                     final LibrariesContainer librariesContainer, final LibraryDownloadingMirrorsMap mirrorsMap) {
       super(parent, true);
+      myLibrariesContainer = librariesContainer;
       setTitle(IdeBundle.message("specify.libraries.dialog.title"));
       myPanel = panel;
       myMirrorsMap = mirrorsMap;
@@ -205,7 +207,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     protected void doOKAction() {
       myPanel.apply();
-      if (myPanel.getLibraryCompositionSettings().downloadFiles(myMirrorsMap, myPanel.getMainPanel())) {
+      if (myPanel.getLibraryCompositionSettings().downloadFiles(myMirrorsMap, myLibrariesContainer, myPanel.getMainPanel())) {
         super.doOKAction();
       }
     }

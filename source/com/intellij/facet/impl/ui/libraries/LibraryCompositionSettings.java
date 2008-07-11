@@ -3,6 +3,7 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -96,10 +97,16 @@ public class LibraryCompositionSettings {
     return myTitle;
   }
 
-  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap, final @NotNull JComponent parent) {
+  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap, @NotNull LibrariesContainer librariesContainer, final @NotNull JComponent parent) {
     if (myDownloadLibraries) {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
-      VirtualFile[] jars = myAddedJars.toArray(new VirtualFile[myAddedJars.size()]);
+
+      List<VirtualFile> roots = new ArrayList<VirtualFile>();
+      roots.addAll(myAddedJars);
+      for (Library library : myUsedLibraries) {
+        roots.addAll(Arrays.asList(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
+      }
+      VirtualFile[] jars = roots.toArray(new VirtualFile[roots.size()]);
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars);
       if (info != null) {
         LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
@@ -137,7 +144,7 @@ public class LibraryCompositionSettings {
   }
 
   public Collection<Library> getUsedLibraries() {
-    return myUsedLibraries;
+    return Collections.unmodifiableCollection(myUsedLibraries);
   }
 
   public Icon getIcon() {

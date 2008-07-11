@@ -115,7 +115,7 @@ public class AddSupportForFrameworksPanel {
   public boolean downloadLibraries() {
     List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
     for (LibraryCompositionSettings compositionSettings : list) {
-      if (!compositionSettings.downloadFiles(myMirrorsMap, myMainPanel)) return false;
+      if (!compositionSettings.downloadFiles(myMirrorsMap, myLibrariesContainer, myMainPanel)) return false;
     }
     return true;
   }
