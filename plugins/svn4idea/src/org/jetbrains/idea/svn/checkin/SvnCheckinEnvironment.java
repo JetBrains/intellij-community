@@ -282,7 +282,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     
     Collections.sort(files, FileComparator.getInstance());
 
-    for (VirtualFile file : files) {
+    /*for (VirtualFile file : files) {
       if (SvnStatusUtil.fileCanBeAdded(mySvnVcs.getProject(), file)) {
         filteredList.add(file);
       } else {
@@ -297,8 +297,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       result.add(new VcsException(
           SvnBundle.message("message.Subversion.files.can.not.be.added.to.subversion.are.not.under.working.copy.text",
           sb.toString())));
-    }
-    final List<SVNException> exceptionList = scheduleUnversionedFilesForAddition(wcClient, filteredList);
+    }*/
+    final List<SVNException> exceptionList = scheduleUnversionedFilesForAddition(wcClient, files);
     for (SVNException svnException : exceptionList) {
       result.add(new VcsException(svnException));
     }
