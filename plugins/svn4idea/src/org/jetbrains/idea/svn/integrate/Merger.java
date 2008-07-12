@@ -7,6 +7,7 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -23,16 +24,16 @@ import java.util.List;
 public class Merger {
   private final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  protected final boolean myDryRun;
   protected final SVNDiffClient myDiffClient;
   protected int myCount;
   private final ProgressIndicator myProgressIndicator;
   protected CommittedChangeList myLatestProcessed;
   protected final SVNURL myCurrentBranchUrl;
   private StringBuilder myCommitMessage;
+  protected final SvnConfiguration mySvnConfig;
 
-  public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target,
-                final boolean dryRun, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+  public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+    mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
     myDiffClient = vcs.createDiffClient();
     myChangeLists = changeLists;
@@ -40,7 +41,6 @@ public class Merger {
     Collections.sort(myChangeLists, ByNumberChangeListComparator.getInstance());
 
     myTarget = target;
-    myDryRun = dryRun;
     myCount = 0;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     myDiffClient.setEventHandler(handler);
@@ -77,7 +77,7 @@ public class Merger {
 
   protected void doMerge() throws SVNException {
     myDiffClient.doMerge(myCurrentBranchUrl, SVNRevision.UNDEFINED, SVNRevision.create(myLatestProcessed.getNumber() - 1),
-                         SVNRevision.create(myLatestProcessed.getNumber()), myTarget, true, true, false, myDryRun);
+      SVNRevision.create(myLatestProcessed.getNumber()), myTarget, true, true, false, mySvnConfig.MERGE_DRY_RUN);
   }
 
   @NonNls

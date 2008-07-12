@@ -22,8 +22,7 @@ public class ChangeSetMergerFactory implements MergerFactory {
     mySelectedChanges = new ArrayList<Change>(selectedChanges);
   }
 
-  public Merger createMerger(final SvnVcs vcs, final File target, final boolean dryRun, final UpdateEventHandler handler,
-                             final SVNURL currentBranchUrl) {
-    return new PointMerger(vcs, mySelectedList, target, dryRun, handler, currentBranchUrl, mySelectedChanges);
+  public Merger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+    return new PointMerger(vcs, mySelectedList, target, handler, currentBranchUrl, mySelectedChanges);
   }
 }

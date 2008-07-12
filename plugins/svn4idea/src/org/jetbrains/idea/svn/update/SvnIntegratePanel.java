@@ -15,14 +15,12 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
-
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.options.ConfigurationException;
-
 import java.util.Collection;
 
 public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
@@ -32,6 +30,7 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
   private JCheckBox myRecursiveBox;
   private JPanel myRootOptionsPanel;
   private JPanel myPanel;
+  private JCheckBox myUseAncestry;
 
   public SvnIntegratePanel(final SvnVcs vcs, Collection<FilePath> roots) {
     super(vcs);
@@ -49,11 +48,12 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
   public void reset(final SvnConfiguration configuration) {
     super.reset(configuration);
     myDryRunCheckbox.setSelected(configuration.MERGE_DRY_RUN);
-
+    myUseAncestry.setSelected(configuration.MERGE_DIFF_USE_ANCESTRY);
   }
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     super.apply(configuration);
     configuration.MERGE_DRY_RUN = myDryRunCheckbox.isSelected();
+    configuration.MERGE_DIFF_USE_ANCESTRY = myUseAncestry.isSelected();
   }
 
   protected JComponent getPanel() {

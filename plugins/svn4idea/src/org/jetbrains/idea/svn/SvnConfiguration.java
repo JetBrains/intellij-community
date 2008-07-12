@@ -81,6 +81,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean UPDATE_RUN_STATUS = false;
   public boolean UPDATE_RECURSIVELY = true;
   public boolean MERGE_DRY_RUN = false;
+  public boolean MERGE_DIFF_USE_ANCESTRY = true;
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();

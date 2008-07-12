@@ -81,8 +81,9 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       myWorkingCopiesList.setSelectedIndex(0);
     }
 
-    myDryRunCheckbox.setSelected(SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN);
-    myStatusBox.setSelected(SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS);
+    SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
+    myDryRunCheckbox.setSelected(svnConfig.MERGE_DRY_RUN);
+    myStatusBox.setSelected(svnConfig.UPDATE_RUN_STATUS);
 
     mySourceInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.source.label.text", currentBranch));
     myTargetInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl));
@@ -189,12 +190,9 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   public void saveOptions() {
-    SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN = myDryRunCheckbox.isSelected();
-    SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS = myStatusBox.isSelected();
-  }
-
-  public boolean isDryRun() {
-    return myDryRunCheckbox.isSelected();
+    SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
+    svnConfig.MERGE_DRY_RUN = myDryRunCheckbox.isSelected();
+    svnConfig.UPDATE_RUN_STATUS = myStatusBox.isSelected();
   }
 
   protected JComponent createCenterPanel() {

@@ -108,7 +108,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       diffClient.setEventHandler(myHandler);
       diffClient.doMerge(info.getUrl1(), info.getRevision1(),
                          info.getUrl2(), info.getRevision2(), root,
-                         svnConfig.UPDATE_RECURSIVELY, true, false, svnConfig.MERGE_DRY_RUN);
+                         svnConfig.UPDATE_RECURSIVELY, svnConfig.MERGE_DIFF_USE_ANCESTRY, false, svnConfig.MERGE_DRY_RUN);
 
       SvnConfiguration.getInstance(myVcs.getProject()).LAST_MERGED_REVISION = getLastMergedRevision(info.getRevision2(), info.getUrl2());
       return info.getResultRevision();

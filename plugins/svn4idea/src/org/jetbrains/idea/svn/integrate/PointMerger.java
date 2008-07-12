@@ -26,10 +26,10 @@ public class PointMerger extends Merger {
   private SvnVcs myVcs;
   private final UpdateEventHandler myHandler;
 
-  public PointMerger(final SvnVcs vcs, CommittedChangeList selectedChangeList, final File target, final boolean dryRun,
-                     final UpdateEventHandler handler, final SVNURL currentBranchUrl, final List<Change> selectedChanges) {
+  public PointMerger(final SvnVcs vcs, CommittedChangeList selectedChangeList, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl,
+                     final List<Change> selectedChanges) {
     super(vcs, new ArrayList<CommittedChangeList>(Arrays.<CommittedChangeList>asList(selectedChangeList)),
-          target, dryRun, handler, currentBranchUrl);
+          target, handler, currentBranchUrl);
     myHandler = handler;
     myVcs = vcs;
     mySelectedChanges = selectedChanges;
@@ -65,7 +65,7 @@ public class PointMerger extends Merger {
 
     myDiffClient.doMerge(SVNURL.parseURIEncoded(beforeUrl), ((SvnRevisionNumber) before.getRevisionNumber()).getRevision(),
                          SVNURL.parseURIEncoded(afterUrl), ((SvnRevisionNumber) after.getRevisionNumber()).getRevision(),
-                         afterPath, false, true, false, myDryRun);
+                         afterPath, false, true, false, mySvnConfig.MERGE_DRY_RUN);
   }
 
   private void delete(final Change change) throws SVNException {
@@ -78,7 +78,7 @@ public class PointMerger extends Merger {
     final String beforeUrl = before.getFullPath();
     final File beforePath = SvnUtil.fileFromUrl(myTarget, path, beforeUrl);
 
-    myWcClient.doDelete(beforePath, false, myDryRun);
+    myWcClient.doDelete(beforePath, false, mySvnConfig.MERGE_DRY_RUN);
   }
 
   private void add(final Change change) throws SVNException {
@@ -93,6 +93,7 @@ public class PointMerger extends Merger {
 
     final SVNRevision revision = ((SvnRevisionNumber)after.getRevisionNumber()).getRevision();
     final SVNCopySource[] copySource = new SVNCopySource[]{new SVNCopySource(revision, revision, SVNURL.parseURIEncoded(afterUrl))};
+    // todo dry run
     myCopyClient.doCopy(copySource, afterPath, false, true, true);
   }
 
