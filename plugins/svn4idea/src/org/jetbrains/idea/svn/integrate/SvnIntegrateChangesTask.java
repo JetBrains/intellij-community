@@ -36,8 +36,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final UpdatedFilesReverseSide myAccomulatedFiles;
   private UpdatedFiles myRecentlyUpdatedFiles;
 
-  private boolean myCanceled;
-
   private final List<VcsException> myExceptions;
 
   private final UpdateEventHandler myHandler;
@@ -58,8 +56,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     myExceptions = new ArrayList<VcsException>();
 
     myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    myMerger = mergerFactory.createMerger(myVcs, new File(info.getLocalPath()), SvnConfiguration.getInstance(vcs.getProject()).MERGE_DRY_RUN,
-                                          myHandler, currentBranchUrl);
+    myMerger = mergerFactory.createMerger(myVcs, new File(info.getLocalPath()), myHandler, currentBranchUrl);
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
   }
 
@@ -167,7 +164,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void finishActions() {
-    if ((myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) && (! myAccomulatedFiles.isEmpty())) {
+    if ((! SvnConfiguration.getInstance(myProject).MERGE_DRY_RUN) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
+        (! myAccomulatedFiles.isEmpty())) {
       if (myInfo.isUnderProjectRoot()) {
         showLocalCommit();
       } else {
@@ -257,7 +255,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     final SvnChangeProvider provider = new SvnChangeProvider(myVcs);
     final GatheringChangelistBuilder clb = new GatheringChangelistBuilder();
     try {
-      provider.getChanges(dirtyScope, clb, null);
+      provider.getChanges(dirtyScope, clb, ProgressManager.getInstance().getProgressIndicator());
     } catch (VcsException e) {
       Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.unable.to.collect.changes.text",
                                                  e.getMessage()), SvnBundle.message("action.Subversion.integrate.changes.alien.commit.changelist.title"));
