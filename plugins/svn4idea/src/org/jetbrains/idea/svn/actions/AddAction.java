@@ -36,13 +36,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -66,8 +65,7 @@ public class AddAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
-    return fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.IGNORED;
+    return SvnStatusUtil.fileCanBeAdded(project, file);
   }
 
   protected boolean needsFiles() {

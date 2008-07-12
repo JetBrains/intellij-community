@@ -471,6 +471,23 @@ public class SvnVcs extends AbstractVcs {
     return propValue;
   }
 
+  @Nullable
+  public SVNStatus getStatusWithCaching(final VirtualFile file) {
+    SVNStatusHolder statusHolder = getCachedStatus(file);
+    if (statusHolder != null) {
+      return statusHolder.getStatus();
+    }
+    try {
+      final SVNStatus status = createStatusClient().doStatus(new File(file.getPath()), false);
+      cacheStatus(file, status);
+      return status;
+    }
+    catch (SVNException e) {
+      cacheStatus(file, null);
+    }
+    return null;
+  }
+
   public boolean fileExistsInVcs(FilePath path) {
     File file = path.getIOFile();
     SVNStatus status;
