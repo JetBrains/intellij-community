@@ -49,9 +49,17 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     if (rootInfo == null) {
       return null;
     }
-    final String relativePath = file.getAbsolutePath().substring(rootInfo.first.length());
+    final String absolutePath = file.getAbsolutePath();
+    if (absolutePath.length() < rootInfo.first.length()) {
+      // remove last separator from etalon name
+      if (absolutePath.equals(rootInfo.first.substring(0, rootInfo.first.length() - 1))) {
+        return rootInfo.second.getAbsoluteUrlAsUrl();
+      }
+      return null;
+    }
+    final String relativePath = absolutePath.substring(rootInfo.first.length());
     try {
-      return rootInfo.second.getAbsoluteUrlAsUrl().appendPath(relativePath, true);
+      return rootInfo.second.getAbsoluteUrlAsUrl().appendPath(FileUtil.toSystemIndependentName(relativePath), true);
     }
     catch (SVNException e) {
       LOG.info(e);

@@ -35,15 +35,12 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBranchConfiguration;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnProgressCanceller;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -51,7 +48,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -124,14 +120,14 @@ public class CompareWithBranchAction extends AnAction {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
-            final SVNURL url = getURLInBranch(baseUrl, revision);
+            final SvnVcs vcs = SvnVcs.getInstance(myProject);
+            final SVNURL url = getURLInBranch(vcs, baseUrl);
             if (url == null) return;
             titleBuilder.append(SvnBundle.message("repository.browser.compare.title",
                                                   url.toString(),
                                                   FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 
 
-            final SvnVcs vcs = SvnVcs.getInstance(myProject);
             SVNWCAccess wcAccess = vcs.createWCAccess();
             try {
               SVNAdminAreaInfo info = wcAccess.openAnchor(new File(myVirtualFile.getPath()), false, SVNWCAccess.INFINITE_DEPTH);
@@ -153,8 +149,8 @@ public class CompareWithBranchAction extends AnAction {
               SVNRepository repository = vcs.createRepository(anchorURL.toString());
               SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY, null);
               long rev = repository.getLatestRevision();
-              SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile,
-                                                           vcs.createRepository(url.removePathTail().toString()), rev, true);
+              SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
+                vcs.createRepository((target == null) ? url.toString() : url.removePathTail().toString()), rev, true);
               repository.diff(url, rev, rev, target, true, true, false, reporter,
                               SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
               changes.addAll(diffEditor.getChangesMap().values());
@@ -187,10 +183,11 @@ public class CompareWithBranchAction extends AnAction {
             if (indicator != null) {
               indicator.setIndeterminate(true);
             }
-            SVNURL svnurl = getURLInBranch(baseUrl, revision);
+            final SvnVcs vcs = SvnVcs.getInstance(myProject);
+            SVNURL svnurl = getURLInBranch(vcs, baseUrl);
             if (svnurl == null) return;
             remoteTitleBuilder.append(svnurl.toString());
-            SVNWCClient client = SvnVcs.getInstance(myProject).createWCClient();
+            SVNWCClient client = vcs.createWCClient();
             client.doGetFileContents(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD, true, baos);
             success.set(true);
           }
@@ -211,26 +208,27 @@ public class CompareWithBranchAction extends AnAction {
     }
 
     @Nullable
-    private SVNURL getURLInBranch(String baseUrl, long revision) throws SVNException {
-      SVNRevision infoRevision = SVNRevision.WORKING;
-      if (revision != -1) {
-        infoRevision = SVNRevision.create(revision);
-      }
-      SVNWCClient client = SvnVcs.getInstance(myProject).createWCClient();
-      SVNInfo info;
-      try {
-        info = client.doInfo(VfsUtil.virtualToIoFile(myVirtualFile), infoRevision);
-      }
-      catch (SVNException ex) {
-        reportException(ex, baseUrl);
+    private SVNURL getURLInBranch(final SvnVcs vcs, final String baseUrl) throws SVNException {
+      final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
+      final File file = new File(myVirtualFile.getPath());
+      final SVNURL fileUrl = urlMapping.getUrlForFile(file);
+      if (fileUrl == null) {
         return null;
       }
-      if (info == null) {
-        reportNotFound(baseUrl);
+
+      final String fileUrlString = fileUrl.toString();
+      final RootMixedInfo rootMixed = urlMapping.getWcRootForUrl(fileUrlString);
+      if (rootMixed == null) {
         return null;
       }
-      String fileUrl = myConfiguration.getRelativeUrl(info.getURL().toString());
-      return SVNURL.parseURIEncoded(baseUrl).appendPath(fileUrl, true);
+
+      final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(vcs, rootMixed.getFile(), fileUrlString);
+      if (thisBranchForUrl == null) {
+        return null;
+      }
+
+      final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrlString);
+      return SVNURL.parseURIEncoded(SVNPathUtil.append(baseUrl, relativePath));
     }
 
     private void reportException(final SVNException ex, final String baseUrl) {

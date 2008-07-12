@@ -1091,7 +1091,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public String getContent() throws VcsException {
-      return myContentRevision.getContent();
+      return (myContentRevision == null) ? "" : myContentRevision.getContent();
     }
 
     @NotNull

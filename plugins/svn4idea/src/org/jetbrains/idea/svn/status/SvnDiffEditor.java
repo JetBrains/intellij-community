@@ -61,14 +61,14 @@ public class SvnDiffEditor implements ISVNEditor {
       return new DiffContentRevision(path, mySource, -1);
     }
     // 'path' includes the first component of the root local path
-    File f = new File(mySourceRoot.getParent().getPath(), path);
+    File f = new File(mySourceRoot.getPath(), path);
     FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(f);
     return CurrentContentRevision.create(filePath);
   }
 
   private DiffContentRevision createAfterRevision(final String path) {
     if (mySourceRoot != null) {
-      File f = new File(mySourceRoot.getParent().getPath(), path);
+      File f = new File(mySourceRoot.getPath(), path);
       FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(f);
       return new DiffContentRevision(path, myTarget, myTargetRevision, filePath);
     }
