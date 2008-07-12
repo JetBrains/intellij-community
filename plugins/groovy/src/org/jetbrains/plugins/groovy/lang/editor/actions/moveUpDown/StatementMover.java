@@ -63,8 +63,8 @@ public class StatementMover extends LineMover {
     LineRange range = toMove;
 
     if (editor == null) return false;
-
     range = expandLineRangeToCoverPsiElements(range, editor, file);
+    if (range == null) return false;
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0));
     final PsiElement[] statements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset, false);
