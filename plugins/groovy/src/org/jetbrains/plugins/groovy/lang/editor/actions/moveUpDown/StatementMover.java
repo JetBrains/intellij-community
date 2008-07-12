@@ -62,6 +62,8 @@ public class StatementMover extends LineMover {
     if (!available) return false;
     LineRange range = toMove;
 
+    if (editor == null) return false;
+
     range = expandLineRangeToCoverPsiElements(range, editor, file);
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0));
