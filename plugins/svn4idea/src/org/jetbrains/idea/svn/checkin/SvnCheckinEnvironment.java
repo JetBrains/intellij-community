@@ -279,6 +279,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final List<VirtualFile> notUnderWcFiles = new ArrayList<VirtualFile>();
     final SVNWCClient wcClient = mySvnVcs.createWCClient();
     final List<VirtualFile> filteredList = new ArrayList<VirtualFile>();
+    
+    Collections.sort(files, FileComparator.getInstance());
+
     for (VirtualFile file : files) {
       if (SvnStatusUtil.fileCanBeAdded(mySvnVcs.getProject(), file)) {
         filteredList.add(file);
