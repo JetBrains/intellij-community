@@ -7,22 +7,21 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBranchConfiguration;
-import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -43,11 +42,20 @@ public class SelectBranchPopup {
   }
 
   public static void show(Project project, VirtualFile file, BranchSelectedCallback callback, final String title) {
-    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
-    showForVCSRoot(project, vcsRoot, callback, title);
+    final SvnFileUrlMapping urlMapping = SvnVcs.getInstance(project).getSvnFileUrlMapping();
+    final SVNURL svnurl = urlMapping.getUrlForFile(new File(file.getPath()));
+    if (svnurl == null) {
+      return;
+    }
+    final RootMixedInfo rootInfo = urlMapping.getWcRootForUrl(svnurl.toString());
+    if (rootInfo == null) {
+      return;
+    }
+
+    showForBranchRoot(project, rootInfo.getFile(), callback, title);
   }
 
-  public static void showForVCSRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title) {
+  public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title) {
     final SvnBranchConfiguration configuration;
     try {
       configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
