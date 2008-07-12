@@ -275,6 +275,9 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final SvnChangeProviderContext context,
                                       final FileStatus parentStatus) throws SVNException {
+    if (status == null) {
+      context.getBuilder().processLocallyDeletedFile(filePath);
+    }
     if (filePath.isDirectory() && status.isLocked()) {
       context.getBuilder().processLockedFolder(filePath.getVirtualFile());
     }
