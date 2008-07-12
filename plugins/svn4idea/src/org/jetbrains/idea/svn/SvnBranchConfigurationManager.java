@@ -27,10 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -126,6 +123,11 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
           SVNLogClient client = SvnVcs.getInstance(myProject).createLogClient();
           client.doList(rootPath, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
             public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+              if (("".equals(dirEntry.getRelativePath())) || (! SVNNodeKind.DIR.equals(dirEntry.getKind()))) {
+                // do not use itself or files
+                return;
+              }
+
               if (dirEntry.getName().toLowerCase().endsWith(DEFAULT_TRUNK_NAME)) {
                 result.setTrunkUrl(rootPath.appendPath(dirEntry.getName(), false).toString());
               }
