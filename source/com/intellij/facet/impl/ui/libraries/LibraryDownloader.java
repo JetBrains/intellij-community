@@ -188,7 +188,7 @@ public class LibraryDownloader {
     final File ioDir = VfsUtil.virtualToIoFile(dir);
     for (Pair<LibraryDownloadInfo, File> pair : downloadedFiles) {
       final LibraryDownloadInfo info = pair.getFirst();
-      final boolean dontTouch = info.getDownloadUrl().startsWith(LIB_SCHEMA);
+      final boolean dontTouch = info.getDownloadUrl().startsWith(LIB_SCHEMA) || info.getDownloadUrl().startsWith(LocalFileSystem.PROTOCOL_PREFIX);
       final File toFile = dontTouch? pair.getSecond() : generateName(info, ioDir);
       if (!dontTouch) {
         FileUtil.rename(pair.getSecond(), toFile);
@@ -254,8 +254,11 @@ public class LibraryDownloader {
       final String fullPath = PathManager.getLibPath() + File.separatorChar + path;
       final File file = new File(fullPath);
       downloadedFiles.add(Pair.create(libraryInfo, file));
-    }
-    else {
+    } else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+      String path = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length()).replace('/', File.separatorChar).replace('\\', File.separatorChar);
+      File file = new File(path);
+      if (file.exists()) downloadedFiles.add(Pair.create(libraryInfo, file));
+    } else {
       indicator.setText2(IdeBundle.message("progress.connecting.to.dowload.jar.text", presentableUrl));
       indicator.setIndeterminate(true);
       HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
