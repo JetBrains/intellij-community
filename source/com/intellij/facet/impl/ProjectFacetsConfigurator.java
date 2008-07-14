@@ -149,7 +149,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       final Facet underlyingFacet = facet.getUnderlyingFacet();
       final FacetEditorContext parentContext = underlyingFacet != null ? getOrCreateEditor(underlyingFacet).getContext() : null;
       final ModuleConfigurationState state = myModuleStateProvider.fun(facet.getModule());
-      final ProjectConfigurableContext context = new MyProjectConfigurableContext(myFacet2Info.get(facet), facet, parentContext, state);
+      final ProjectConfigurableContext context = new MyProjectConfigurableContext(facet, parentContext, state);
       editor = new FacetEditorImpl(context, facet.getConfiguration());
       editor.getComponent();
       editor.reset();
@@ -314,8 +314,8 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
     private LibrariesContainer myContainer;
 
-    public MyProjectConfigurableContext(FacetInfo facetInfo, final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
-      super(facetInfo, facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
+    public MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
+      super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
             ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData());
       myContainer = LibrariesContainerFactory.createContainer(facet.getModule().getProject(), myContext);
     }

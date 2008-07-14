@@ -4,7 +4,7 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.facet.FacetInfo;
+import com.intellij.facet.Facet;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.module.Module;
@@ -32,17 +32,17 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   private FacetsProvider myFacetsProvider;
   @Nullable private final FacetEditorContext myParentContext;
   private ModulesProvider myModulesProvider;
-  private final FacetInfo myFacetInfo;
+  private final Facet myFacet;
   private UserDataHolder mySharedModuleData;
   private EventDispatcher<FacetContextChangeListener> myFacetContextChangeDispatcher = EventDispatcher.create(FacetContextChangeListener.class);
   private UserDataHolder mySharedProjectData;
 
-  public FacetEditorContextBase(@NotNull FacetInfo facetInfo, final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider,
+  public FacetEditorContextBase(@NotNull Facet facet, final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider,
                                 final @NotNull ModulesProvider modulesProvider,
                                 final UserDataHolder sharedModuleData,
                                 final UserDataHolder sharedProjectData) {
+    myFacet = facet;
     mySharedProjectData = sharedProjectData;
-    myFacetInfo = facetInfo;
     mySharedModuleData = sharedModuleData;
     myParentContext = parentContext;
     myModulesProvider = modulesProvider;
@@ -60,7 +60,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
 
   @NotNull
   public String getFacetName() {
-    return myFacetInfo.getName();
+    return myFacet.getName();
   }
 
   public VirtualFile[] getLibraryFiles(final Library library, final OrderRootType rootType) {
@@ -124,4 +124,14 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   }
 
   public abstract LibrariesContainer getContainer();
+
+  @NotNull
+  public Facet getFacet() {
+    return myFacet;
+  }
+
+  @Nullable
+  public Facet getParentFacet() {
+    return myFacet.getUnderlyingFacet();
+  }
 }
