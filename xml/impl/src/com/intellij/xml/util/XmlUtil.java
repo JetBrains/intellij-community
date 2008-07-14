@@ -225,11 +225,14 @@ public class XmlUtil {
 
   public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project) {
     final Collection<VirtualFile> files = XmlNamespaceIndex.getFilesByNamespace(namespace, project);
-    return ContainerUtil.map2List(files, new NullableFunction<VirtualFile, XmlFile>() {
-      public XmlFile fun(final VirtualFile file) {
-        return (XmlFile)PsiManager.getInstance(project).findFile(file);
+    final ArrayList<XmlFile> list = new ArrayList<XmlFile>(files.size());
+    for (VirtualFile file : files) {
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile instanceof XmlFile) {
+        list.add((XmlFile)psiFile);
       }
-    });
+    }
+    return list;
   }
 
   @Nullable
