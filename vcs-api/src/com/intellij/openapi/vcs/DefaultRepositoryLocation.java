@@ -20,10 +20,16 @@ package com.intellij.openapi.vcs;
  * @author yole
  */
 public class DefaultRepositoryLocation implements RepositoryLocation {
-  private String myURL;
+  private final String myURL;
+  private final String myLocation;
 
   public DefaultRepositoryLocation(final String URL) {
+    this(URL, URL);
+  }
+
+  public DefaultRepositoryLocation(final String URL, final String location) {
     myURL = URL;
+    myLocation = location;
   }
 
   public String getURL() {
@@ -31,7 +37,7 @@ public class DefaultRepositoryLocation implements RepositoryLocation {
   }
 
   public String toString() {
-    return myURL;
+    return myLocation;
   }
 
   public String toPresentableString() {
