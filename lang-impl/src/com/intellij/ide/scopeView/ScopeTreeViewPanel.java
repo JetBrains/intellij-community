@@ -361,7 +361,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         textAttributes.setForegroundColor(CopyPasteManager.getInstance().isCutElement(psiElement) ? CopyPasteManager.CUT_COLOR : node.getStatus().getColor());
         append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
         final String locationString = node.getComment(false);
-        if (locationString != null) {
+        if (locationString != null && locationString.length() > 0) {
           append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
