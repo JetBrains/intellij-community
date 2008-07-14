@@ -63,21 +63,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   private StateStorage getStateStorage(final Storage storageSpec, final String key) throws StateStorage.StateStorageException {
     if (myStorages.get(key) == null) {
       final StateStorage stateStorage = createStateStorage(storageSpec);
-      if (stateStorage instanceof FileBasedStorage) {
-        //
-        String filePath = ((FileBasedStorage)stateStorage).getFilePath();
-        if (myPathToStorage.containsKey(filePath)) {
-          StateStorage existing = myPathToStorage.get(filePath);
-          myStorages.put(key, existing);
-        }
-        else {
-          myStorages.put(key, stateStorage);
-        }
-      }
-      else {
-        if (stateStorage == null) return null;
-        myStorages.put(key, stateStorage);
-      }
+      putStorageToMap(key, stateStorage);
     }
 
     return myStorages.get(key);
@@ -87,11 +73,31 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   public StateStorage getFileStateStorage(final String fileName) {
     if (myStorages.get(fileName) == null) {
       final StateStorage stateStorage = createFileStateStorage(fileName);
-      if (stateStorage == null) return null;
-      myStorages.put(fileName, stateStorage);
+      putStorageToMap(fileName, stateStorage);
     }
 
     return myStorages.get(fileName);
+  }
+
+  private void putStorageToMap(final String key, final StateStorage stateStorage) {
+    if (stateStorage != null) {
+      if (stateStorage instanceof FileBasedStorage) {
+        //fixing problem with 2 macros for the same directory (APP_CONFIG and OPTIONS)
+        String filePath = ((FileBasedStorage)stateStorage).getFilePath();
+        if (myPathToStorage.containsKey(filePath)) {
+          StateStorage existing = myPathToStorage.get(filePath);
+          myStorages.put(key, existing);
+        }
+        else {
+          myPathToStorage.put(filePath, stateStorage);
+          myStorages.put(key, stateStorage);
+        }
+      }
+      else {
+        myStorages.put(key, stateStorage);
+      }
+    }
+
   }
 
 
