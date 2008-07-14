@@ -91,7 +91,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   }
 
   public boolean importClass(PsiClass aClass) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public PsiType getThisType() {
