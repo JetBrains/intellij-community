@@ -195,7 +195,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
 
       if (toInsertCDataEnd) template.addTextSegment("\n]]>");
 
-      if (!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag.getName())) {
+      if ((!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag.getName())) && tag.getAttributes().length == 0) {
         template.addTextSegment("</");
         template.addTextSegment(descriptor.getName(tag));
         template.addTextSegment(">");

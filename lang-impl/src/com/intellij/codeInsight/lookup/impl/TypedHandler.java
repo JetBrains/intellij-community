@@ -78,7 +78,7 @@ class TypedHandler implements TypedActionHandler {
     }
     final CharFilter[] filters = Extensions.getExtensions(CharFilter.EP_NAME);
     for (final CharFilter extension : filters) {
-      final CharFilter.Result result = extension.acceptChar(charTyped, lookup.getMinPrefixLength(), lookup);
+      final CharFilter.Result result = extension.acceptChar(charTyped, lookup.getMinPrefixLength() + lookup.getAdditionalPrefix().length(), lookup);
       if (result != null) {
         return result;
       }
