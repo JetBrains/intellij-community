@@ -31,9 +31,14 @@ public class PsiScopesUtil {
   }
 
   public static boolean treeWalkUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement entrance, @Nullable PsiElement maxScope) {
+    return treeWalkUp(processor, entrance, maxScope, ResolveState.initial());
+  }
+
+  public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor, @NotNull final PsiElement entrance,
+                                    @Nullable final PsiElement maxScope,
+                                    @NotNull final ResolveState state) {
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
-    ResolveState state = ResolveState.initial();
 
     while(scope != null){
       if(scope instanceof PsiClass){

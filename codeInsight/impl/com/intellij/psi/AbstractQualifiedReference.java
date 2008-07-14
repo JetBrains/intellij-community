@@ -78,7 +78,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
 
-  public final String getCanonicalText() {
+  public  String getCanonicalText() {
     return getText();
   }
 
@@ -208,7 +208,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
 
   @Nullable
   @NonNls
-  public final String getReferenceName() {
+  public String getReferenceName() {
     final PsiElement element = getReferenceNameElement();
     return element == null ? null : element.getText().trim();
   }
