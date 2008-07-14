@@ -73,7 +73,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       return new ArrayList<AbstractTreeNode>();
     }
 
-    myTree.expandPath(new TreePath(node.getPath()));
+    getTree().expandPath(new TreePath(node.getPath()));
 
     int childCount = node.getChildCount();
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>(childCount);
@@ -122,7 +122,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   // returns selected node for element or null if element node is not selected
   private DefaultMutableTreeNode alreadySelectedNode(final Object element) {
-    final TreePath[] selectionPaths = myTree.getSelectionPaths();
+    final TreePath[] selectionPaths = getTree().getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) {
       return null;
     }

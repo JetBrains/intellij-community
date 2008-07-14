@@ -55,7 +55,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
         }
       }
     );
-    myTree.setSelectionPaths(new TreePath[0]);
+    getTree().setSelectionPaths(new TreePath[0]);
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
   }
 
@@ -70,7 +70,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
         }
       }
     );
-    myTree.setSelectionPaths(new TreePath[0]);
+    getTree().setSelectionPaths(new TreePath[0]);
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
   }
 
@@ -101,11 +101,11 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     ArrayList selectionPaths = new ArrayList();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     int row = 0;
-    while (row < myTree.getRowCount()) {
-      myTree.expandRow(row);
+    while (row < getTree().getRowCount()) {
+      getTree().expandRow(row);
       row++;
     }
-    myTree.setSelectionPaths(new TreePath[0]);
+    getTree().setSelectionPaths(new TreePath[0]);
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
   }
 
@@ -113,8 +113,8 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     ArrayList pathsToExpand = new ArrayList();
     ArrayList selectionPaths = new ArrayList();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
-    TreeUtil.collapseAll(myTree, 1);
-    myTree.setSelectionPaths(new TreePath[0]);
+    TreeUtil.collapseAll(getTree(), 1);
+    getTree().setSelectionPaths(new TreePath[0]);
     pathsToExpand.clear();
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
   }

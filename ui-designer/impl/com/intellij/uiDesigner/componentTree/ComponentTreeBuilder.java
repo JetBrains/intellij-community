@@ -53,13 +53,14 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
 
     myTreeSelectionListener = new MyTreeSelectionListener();
     myHierarchyChangeListener = new MyHierarchyChangeListener();
-    myTree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
+    getTree().getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
     editor.addHierarchyChangeListener(myHierarchyChangeListener);
   }
 
+
   public void dispose() {
     myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
-    myTree.getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
+    getTree().getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
     mySelectionWatcher.dispose();
     super.dispose();
   }
@@ -111,7 +112,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     }
 
     // Set selection in the tree
-    myTree.clearSelection();
+    getTree().clearSelection();
     TreePath firstSelectedPath = null;
     for(int i = selection.size() - 1; i >= 0; i--){
       final ComponentPtr ptr=new ComponentPtr(myEditor, selection.get(i));
@@ -125,13 +126,13 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
 //      LOG.assertTrue(nodeForElement!=null);
       // Add selected path and scroll it to visible area
       final TreePath selectedPath=new TreePath(nodeForElement.getPath());
-      myTree.addSelectionPath(selectedPath);
+      getTree().addSelectionPath(selectedPath);
       if(firstSelectedPath == null){
         firstSelectedPath = selectedPath;
       }
     }
     LOG.assertTrue(firstSelectedPath != null);
-    myTree.scrollPathToVisible(firstSelectedPath);
+    getTree().scrollPathToVisible(firstSelectedPath);
 
     // Notify the ComponentTree that selected component changed
     myEditor.fireSelectedComponentChanged();
@@ -238,7 +239,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
       if(myInsideChange>0){
         return;
       }
-      final TreePath[] paths = myTree.getSelectionPaths();
+      final TreePath[] paths = getTree().getSelectionPaths();
       if(paths==null){
         return;
       }

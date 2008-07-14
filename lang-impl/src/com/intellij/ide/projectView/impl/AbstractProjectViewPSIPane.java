@@ -147,7 +147,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
         }
       };
     }
-    getTreeBuilder().addSubtreeToUpdate((DefaultMutableTreeNode)getTreeBuilder().getTreeModel().getRoot(), expandPaths);
+    getTreeBuilder().addSubtreeToUpdate(getTreeBuilder().getRootNode(), expandPaths);
     //myTreeBuilder.updateFromRoot();
   }
 

@@ -149,7 +149,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
           addRootToUpdate();
         }
       }
-    }, 300, ModalityState.stateForComponent(myTree));
+    }, 300, ModalityState.stateForComponent(getTree()));
   }
 
   void addRootToUpdate() {

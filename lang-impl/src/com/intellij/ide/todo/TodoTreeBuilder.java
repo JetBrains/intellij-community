@@ -107,7 +107,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       buildNodeForElement(selectableElement);
       DefaultMutableTreeNode node = getNodeForElement(selectableElement);
       if (node != null) {
-        myTree.getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
+        getTree().getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
       }
     }
 
@@ -426,16 +426,16 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   void collapseAll() {
-    int row = myTree.getRowCount() - 1;
+    int row = getTree().getRowCount() - 1;
     while (row > 0) {
-      myTree.collapseRow(row);
+      getTree().collapseRow(row);
       row--;
     }
   }
 
   void expandAll() {
-    for (int i = 0; i < myTree.getRowCount(); i++) {
-      myTree.expandRow(i);
+    for (int i = 0; i < getTree().getRowCount(); i++) {
+      getTree().expandRow(i);
     }
   }
 
@@ -447,7 +447,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     ArrayList<Object> pathsToSelect = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
-    myTree.clearSelection();
+    getTree().clearSelection();
     getTodoTreeStructure().validateCache();
     updateTree(false);
     TreeBuilderUtil.restorePaths(this, pathsToExpand, pathsToSelect, true);
@@ -460,7 +460,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     ArrayList<Object> pathsToSelect = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
-    myTree.clearSelection();
+    getTree().clearSelection();
     TodoTreeStructure todoTreeStructure = getTodoTreeStructure();
     todoTreeStructure.setFlattenPackages(state);
     todoTreeStructure.validateCache();
@@ -592,7 +592,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     ArrayList<Object> pathsToSelect = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
-    myTree.clearSelection();
+    getTree().clearSelection();
     getTodoTreeStructure().validateCache();
     updateTree(false);
     TreeBuilderUtil.restorePaths(this, pathsToExpand, pathsToSelect, true);
