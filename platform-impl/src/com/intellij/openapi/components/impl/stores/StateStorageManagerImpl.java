@@ -27,6 +27,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   private Map<String, String> myMacros = new HashMap<String, String>();
   private Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
+  private Map<String, StateStorage> myPathToStorage = new HashMap<String, StateStorage>();
   private TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private String myRootTagName;
   private Object mySession;
@@ -62,8 +63,18 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   private StateStorage getStateStorage(final Storage storageSpec, final String key) throws StateStorage.StateStorageException {
     if (myStorages.get(key) == null) {
       final StateStorage stateStorage = createStateStorage(storageSpec);
-      if (stateStorage == null) return null;
-      myStorages.put(key, stateStorage);
+      if (stateStorage instanceof FileBasedStorage) {
+        //
+        String filePath = ((FileBasedStorage)stateStorage).getFilePath();
+        if (myPathToStorage.containsKey(filePath)) {
+          StateStorage existing = myPathToStorage.get(filePath);
+          myStorages.put(key, existing);
+        }
+      }
+      else {
+        if (stateStorage == null) return null;
+        myStorages.put(key, stateStorage);
+      }
     }
 
     return myStorages.get(key);
