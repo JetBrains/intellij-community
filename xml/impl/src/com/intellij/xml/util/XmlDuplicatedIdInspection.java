@@ -29,6 +29,9 @@ public class XmlDuplicatedIdInspection extends LocalInspectionTool {
     return new XmlElementVisitor() {
       @Override
       public void visitXmlAttributeValue(final XmlAttributeValue value) {
+        if (value.getTextRange().isEmpty()) {
+          return;
+        }
         final PsiFile file = value.getContainingFile();
         if (file instanceof XmlFile) {
           final XmlRefCountHolder refHolder = XmlRefCountHolder.getInstance((XmlFile)file);
