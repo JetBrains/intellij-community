@@ -36,7 +36,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -276,28 +279,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     final List<VcsException> result = new ArrayList<VcsException>();
-    final List<VirtualFile> notUnderWcFiles = new ArrayList<VirtualFile>();
     final SVNWCClient wcClient = mySvnVcs.createWCClient();
-    final List<VirtualFile> filteredList = new ArrayList<VirtualFile>();
-    
-    Collections.sort(files, FileComparator.getInstance());
 
-    /*for (VirtualFile file : files) {
-      if (SvnStatusUtil.fileCanBeAdded(mySvnVcs.getProject(), file)) {
-        filteredList.add(file);
-      } else {
-        notUnderWcFiles.add(file);
-      }
-    }
-    if (! notUnderWcFiles.isEmpty()) {
-      final StringBuilder sb = new StringBuilder();
-      for (VirtualFile notUnderWcFile : notUnderWcFiles) {
-        sb.append(notUnderWcFile.getPath()).append('\n');
-      }
-      result.add(new VcsException(
-          SvnBundle.message("message.Subversion.files.can.not.be.added.to.subversion.are.not.under.working.copy.text",
-          sb.toString())));
-    }*/
     final List<SVNException> exceptionList = scheduleUnversionedFilesForAddition(wcClient, files);
     for (SVNException svnException : exceptionList) {
       result.add(new VcsException(svnException));

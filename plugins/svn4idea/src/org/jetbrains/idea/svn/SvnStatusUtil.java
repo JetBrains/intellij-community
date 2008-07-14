@@ -39,10 +39,10 @@ public class SvnStatusUtil {
     if (! notUnderControl(status)) {
       return false;
     }
-    final VirtualFile parent = file.getParent();
+    /*final VirtualFile parent = file.getParent();
     if ((parent == null) || (! isValidUnderControlParent(vcs.getStatusWithCaching(parent)))) {
       return false;
-    }
+    }*/
     return true;
   }
 }
