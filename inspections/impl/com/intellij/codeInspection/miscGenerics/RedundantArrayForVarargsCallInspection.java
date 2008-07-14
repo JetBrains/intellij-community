@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
@@ -27,6 +26,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   private static class MyQuickFix implements LocalQuickFix {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiNewExpression arrayCreation = (PsiNewExpression) descriptor.getPsiElement();
+      if (arrayCreation == null || !arrayCreation.isValid()) return;
       if (!CodeInsightUtilBase.prepareFileForWrite(arrayCreation.getContainingFile())) return;
       InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
     }
