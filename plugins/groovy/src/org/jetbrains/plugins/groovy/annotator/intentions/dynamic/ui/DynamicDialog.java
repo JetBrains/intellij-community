@@ -178,6 +178,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
+  @Nullable
   private Document createDocument(final String text) {
     GroovyCodeFragment fragment = new GroovyCodeFragment(myProject, text);
     fragment.setContext(myReferenceExpression);
@@ -188,6 +189,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     final EditorComboBoxEditor comboEditor = new EditorComboBoxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
 
     final Document document = createDocument("");
+    assert document != null;
+
     comboEditor.setItem(document);
 
     myTypeComboBox.setEditor(comboEditor);
