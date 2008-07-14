@@ -70,6 +70,9 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
           StateStorage existing = myPathToStorage.get(filePath);
           myStorages.put(key, existing);
         }
+        else {
+          myStorages.put(key, stateStorage);
+        }
       }
       else {
         if (stateStorage == null) return null;
