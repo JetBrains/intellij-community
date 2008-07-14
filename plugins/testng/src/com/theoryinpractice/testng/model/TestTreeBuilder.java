@@ -16,7 +16,6 @@ public class TestTreeBuilder extends AbstractTreeBuilder
 {
     public TestTreeBuilder(JTree tree, AbstractTreeStructure structure) {
         super(tree, new DefaultTreeModel(new DefaultMutableTreeNode(structure.getRootElement())), structure, IndexComparator.INSTANCE);
-        tree.setModel(getTreeModel());
         initRootNode();
     }
 
