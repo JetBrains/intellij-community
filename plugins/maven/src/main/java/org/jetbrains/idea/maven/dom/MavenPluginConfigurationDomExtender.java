@@ -78,11 +78,12 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
   private void registerPluginParameter(DomExtensionsRegistrar r, final Parameter parameter, final String parameterName) {
     DomExtension e;
     if (isCollection(parameter)) {
-      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), DomElement.class);
+      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), AnyParameter.class);
       e.addExtender(new DomExtender() {
         public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-          DomExtension inner =
-              registrar.registerCollectionChildrenExtension(new XmlName(StringUtil.unpluralize(parameterName)), AnyParameter.class);
+          String singularName = StringUtil.unpluralize(parameterName);
+          if (singularName == null) singularName = parameterName;
+          DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(singularName), AnyParameter.class);
           inner.putUserData(DomExtension.KEY_DECLARATION, parameter);
         }
       });

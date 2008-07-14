@@ -181,6 +181,10 @@
               text="Re-import Maven projects" description="Re-import Maven projects into Idea project structure"
               icon="/actions/sync.png">
       </action>
+      <action id="Maven.UpdateDependencies" class="org.jetbrains.idea.maven.project.action.UpdateDependenciesAction"
+              text="Update Dependencies" description="Resolve Maven dependencies and update IDEA project libraries"
+              icon="/images/updateDependencies.png">
+      </action>
       <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.action.UpdateFoldersAction"
               text="Update Folders" description="Generate sources and update project folders"
               icon="/images/updateFolders.png">
@@ -218,6 +222,7 @@
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="Maven.Reimport"/>
+      <!--<reference id="Maven.UpdateDependencies"/>-->
       <reference id="Maven.UpdateFolders"/>
       <reference id="Maven.DownloadArtifacts"/>
       <separator/>

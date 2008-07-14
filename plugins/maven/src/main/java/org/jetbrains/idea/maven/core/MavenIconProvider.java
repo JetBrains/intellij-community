@@ -28,5 +28,4 @@ public class MavenIconProvider extends IconProvider {
     }
     return null;
   }
-
 }

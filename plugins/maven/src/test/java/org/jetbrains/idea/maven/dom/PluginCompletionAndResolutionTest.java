@@ -23,19 +23,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <version>2.0.2</version>" +
-                  "    </plugin>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-war-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+                  "<version>1</version>");
   }
 
   public void testGroupIdCompletion() throws Exception {
@@ -68,7 +56,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin");
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin");
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
@@ -84,7 +72,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin");
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin", "maven-eclipse-plugin");
   }
 
   public void testResolvingPlugins() throws Exception {
@@ -547,6 +535,50 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "</build>");
 
     assertCompletionVariants(myProjectPom, "exclude");
+  }
+
+  public void testListElementWhatHasUnpluralizedNameCompletion() throws Exception {
+    // NPE test - StringUtil.unpluralize returns null.
+    
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-eclipse-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <additionalConfig>" +
+                     "          <<caret>" +
+                     "        </additionalConfig>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom, "additionalConfig");
+  }
+
+  public void testDoNotHighlightUnknownElementsUnderLists() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <excludes>" +
+                     "          <foo>foo</foo>" +
+                     "        </excludes>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
   }
 
   public void testArrayElementsCompletion() throws Exception {

@@ -309,17 +309,22 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private void doImportProjects(List<VirtualFile> files, String... profiles) throws MavenException {
-    myProfilesList = Arrays.asList(profiles);
+    try {
+      myProfilesList = Arrays.asList(profiles);
 
-    myMavenProjectsManager.doInitComponent(false);
-    myMavenProjectsManager.setManagedFiles(files);
-    myMavenProjectsManager.setActiveProfiles(myProfilesList);
-    myMavenProjectsManager.reimport();
-    myMavenTree = myMavenProjectsManager.getMavenProjectTree();
+      myMavenProjectsManager.doInitComponent(false);
+      myMavenProjectsManager.setManagedFiles(files);
+      myMavenProjectsManager.setActiveProfiles(myProfilesList);
+      myMavenProjectsManager.doReimport();
+      myMavenTree = myMavenProjectsManager.getMavenProjectTree();
+    }
+    catch (CanceledException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void resolveProject() throws MavenException, CanceledException {
-    myMavenProjectsManager.resolve();
+    myMavenProjectsManager.updateDependencies();
   }
 
   protected void generateSources() throws MavenException, CanceledException {
