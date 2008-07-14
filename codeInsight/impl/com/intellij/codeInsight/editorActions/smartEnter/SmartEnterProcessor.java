@@ -2,9 +2,6 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -122,19 +119,15 @@ public class SmartEnterProcessor {
       queue.add(atCaret);
 
       for (PsiElement psiElement : queue) {
-        final Language language = psiElement.getLanguage();
-
-        if (isEnabledForLanguage(language)) {
-          for (Fixer fixer : ourFixers) {
-            fixer.apply(myEditor, this, psiElement);
-            if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
-              return;
-            }
-            if (isUncommited() || !psiElement.isValid()) {
-              moveCaretInsideBracesIfAny();
-              process(attempt + 1);
-              return;
-            }
+        for (Fixer fixer : ourFixers) {
+          fixer.apply(myEditor, this, psiElement);
+          if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
+            return;
+          }
+          if (isUncommited() || !psiElement.isValid()) {
+            moveCaretInsideBracesIfAny();
+            process(attempt + 1);
+            return;
           }
         }
       }
@@ -143,10 +136,6 @@ public class SmartEnterProcessor {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  private static boolean isEnabledForLanguage(final Language language) {
-    return StdLanguages.JAVA.equals(language) || language instanceof XMLLanguage;
   }
 
   private void moveCaretInsideBracesIfAny() throws IncorrectOperationException {
