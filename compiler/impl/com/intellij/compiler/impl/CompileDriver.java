@@ -1421,9 +1421,13 @@ public class CompileDriver {
           LOG.debug("\t" + file.getPresentableUrl() + "; ts=" + file.getTimeStamp());
         }
       }
-      for (FileProcessingCompiler.ProcessingItem item : processed) {
-        cacheUpdater.addFileForUpdate(item.getFile(), cache, item.getValidityState());
-      }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (FileProcessingCompiler.ProcessingItem item : processed) {
+            cacheUpdater.addFileForUpdate(item.getFile(), cache, item.getValidityState());
+          }
+        }
+      });
     }
     return true;
   }
