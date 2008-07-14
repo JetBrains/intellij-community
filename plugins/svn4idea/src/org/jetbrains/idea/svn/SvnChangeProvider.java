@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -84,13 +85,27 @@ public class SvnChangeProvider implements ChangeProvider {
     boolean foundRename = false;
     final SVNStatus copiedStatus = copiedFile.getStatus();
     final String copyFromURL = copiedFile.getCopyFromURL();
+    final FilePath copiedToPath = copiedFile.getFilePath();
+
+    // if copy target is _deleted_, treat like deleted, not moved!
+    /*for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
+      final SvnChangedFile deletedFile = iterator.next();
+      final FilePath deletedPath = deletedFile.getFilePath();
+
+      if (Comparing.equal(deletedPath, copiedToPath)) {
+        return;
+      }
+    }*/
+
+    final Set<SvnChangedFile> deletedToDelete = new HashSet<SvnChangedFile>();
+
     for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
       SvnChangedFile deletedFile = iterator.next();
       final SVNStatus deletedStatus = deletedFile.getStatus();
       if (copyFromURL.equals(deletedStatus.getURL().toString())) {
         builder.processChange(new Change(createBeforeRevision(deletedFile),
                                          CurrentContentRevision.create(copiedFile.getFilePath())));
-        iterator.remove();
+        deletedToDelete.add(deletedFile);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
           final String childURL = deletedChild.getStatus().getURL().toString();
@@ -98,14 +113,21 @@ public class SvnChangeProvider implements ChangeProvider {
             String relativePath = childURL.substring(copyFromURL.length());
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
-            builder.processChange(new Change(createBeforeRevision(deletedChild),
+            if (! context.isDeleted(newFilePath)) {
+              builder.processChange(new Change(createBeforeRevision(deletedChild),
                                              CurrentContentRevision.create(newFilePath)));
-            iterChild.remove();
+              deletedToDelete.add(deletedChild);
+            }
           }
         }
         foundRename = true;
         break;
       }
+    }
+
+    final List<SvnChangedFile> deletedFiles = context.getDeletedFiles();
+    for (SvnChangedFile file : deletedToDelete) {
+      deletedFiles.remove(file);
     }
 
     // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
@@ -431,6 +453,7 @@ public class SvnChangeProvider implements ChangeProvider {
         }
       }
         try {
+          // todo isWorking copy root ? maybe use already got area entry
             if (parentURL != null && !SVNWCUtil.isWorkingCopyRoot(file)) {
               parentURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(file.getName()));
               if (childURL != null && !parentURL.equals(childURL)) {
@@ -500,6 +523,28 @@ public class SvnChangeProvider implements ChangeProvider {
       }
       return myCopyFromURL;
     }
+
+    @Override
+    public String toString() {
+      return myFilePath.getPath();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final SvnChangedFile that = (SvnChangedFile)o;
+
+      if (myFilePath != null ? !myFilePath.equals(that.myFilePath) : that.myFilePath != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myFilePath != null ? myFilePath.hashCode() : 0;
+    }
   }
 
   private static class SvnChangeProviderContext {
@@ -535,6 +580,15 @@ public class SvnChangeProvider implements ChangeProvider {
 
     public List<SvnChangedFile> getDeletedFiles() {
       return myDeletedFiles;
+    }
+
+    public boolean isDeleted(final FilePath path) {
+      for (SvnChangedFile deletedFile : myDeletedFiles) {
+        if (Comparing.equal(path, deletedFile.getFilePath())) {
+          return true;
+        }
+      }
+      return false;
     }
 
     public boolean isCanceled() {
