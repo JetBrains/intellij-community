@@ -30,7 +30,7 @@ public class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFi
   }
 
   public boolean isValid() {
-    return myDocumentWindow.isValid();
+    return myDocumentWindow.isValid() && myDelegate.isValid();
   }
 
   public boolean isWritable() {
