@@ -6,7 +6,6 @@ package com.intellij.refactoring;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -213,9 +212,8 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Check issues: IDEADEV-25308.", user = "Anna Kozlova", month = 6, day = 20)
   public void testTypesExtendsReturnDifferent() throws Exception {
-    doTest(false);
+    doTest();
   }
 
   public void testTypesGenericsConcrete2Concrete() throws Exception {

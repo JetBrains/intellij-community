@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -14,8 +15,8 @@ import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -216,8 +217,9 @@ public final class Match {
   }
 
   @Nullable
-  public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString) {
-    if (!myChangedParams.isEmpty()) {
+  public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString,
+                                    final PsiImmediateClassType returnType) {
+    if (!myChangedParams.isEmpty() || returnType != null) {
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append(visibilityString);
       if (buffer.length() > 0) {
@@ -232,7 +234,7 @@ public final class Match {
         buffer.append(" ");
       }
 
-      buffer.append(PsiFormatUtil.formatType(method.getReturnType(), 0, PsiSubstitutor.EMPTY));
+      buffer.append(PsiFormatUtil.formatType(returnType != null ? returnType : method.getReturnType(), 0, PsiSubstitutor.EMPTY));
       buffer.append(" ");
       buffer.append(method.getName());
       buffer.append("(");

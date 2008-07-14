@@ -1204,7 +1204,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   @NotNull
   public String getConfirmDuplicatePrompt(Match match) {
     final boolean needToBeStatic = RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass());
-    final String changedSignature = match.getChangedSignature(myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
+    final String changedSignature = match.getChangedSignature(myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod),
+                                                              null);
     if (changedSignature != null) {
       return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
     }
