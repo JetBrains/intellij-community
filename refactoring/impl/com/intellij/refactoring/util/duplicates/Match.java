@@ -84,13 +84,13 @@ public final class Match {
       if (type == null) return false;
       if (!(parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter)) {
         if (!parameterType.isAssignableFrom(type)) return false;
+        if (!psiVariable.getType().isAssignableFrom(type)) {
+          myChangedParams.put(psiVariable, parameterType);
+        }
       }
       myParameterValues.put(psiVariable, value);
       final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
       myParameterOccurences.put(psiVariable, elements);
-      if (!psiVariable.getType().isAssignableFrom(type)) {
-        myChangedParams.put(psiVariable, parameterType);
-      }
       return true;
     }
     else {
