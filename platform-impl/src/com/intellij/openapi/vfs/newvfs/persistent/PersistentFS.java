@@ -115,20 +115,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     int[] currentIds = myRecords.list(id);
 
     final NewVirtualFileSystem delegate = getDelegate(file);
-    String[] delegateNames = VfsUtil.filterNames(delegate.list(file));    
-    if (delegateNames.length == 0) return currentNames;
-    
-    final String[] names;
-    if (currentNames.length == 0) {
-      names = delegateNames;
-    }
-    else {
-      Set<String> allNamesSet = new LinkedHashSet<String>((currentNames.length + delegateNames.length) * 2);
-      allNamesSet.addAll(Arrays.asList(currentNames));
-      allNamesSet.addAll(Arrays.asList(delegateNames));
-      names = allNamesSet.toArray(new String[allNamesSet.size()]);
-    }
-
+    String[] names = VfsUtil.filterNames(delegate.list(file));
     final int[] childrenIds = new int[names.length];
 
     for (int i = 0; i < names.length; i++) {
