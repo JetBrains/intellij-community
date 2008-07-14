@@ -1,6 +1,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -13,10 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -27,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -427,19 +424,17 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       }
     }
 
-    Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
+    DocumentReference[] documentReferences = getDocumentReferences(editor);
 
-    if (documents != null && documents.length > 0) {
-      for (Document document : documents) {
-        Document original = getOriginal(document);
-
+    if (documentReferences.length != 0) {
+      for (DocumentReference ref : documentReferences) {
         if (shouldCheckMerger) {
-          if (myMerger != null && myMerger.hasChangesOf(DocumentReferenceByDocument.createDocumentReference(original))) {
+          if (myMerger != null && myMerger.hasChangesOf(ref)) {
             return true;
           }
         }
 
-        LinkedList localStack = stackHolder.getStack(original);
+        LinkedList localStack = stackHolder.getStack(ref);
         if (!localStack.isEmpty()) {
           return true;
         }
@@ -454,6 +449,23 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
       return !stackHolder.getGlobalStack().isEmpty();
     }
+  }
+
+  DocumentReference[] getDocumentReferences(FileEditor editor) {
+    List<DocumentReference> documentReferences = new ArrayList<DocumentReference>();
+    Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
+
+    if (documents != null) {
+      for (Document d : documents) {
+        documentReferences.add(DocumentReferenceByDocument.createDocumentReference(getOriginal(d)));
+      }
+    }
+
+    if (editor instanceof DocumentReferenceEditor) {
+      documentReferences.addAll(Arrays.asList(((DocumentReferenceEditor) editor).getDocumentReferences()));
+    }
+
+    return documentReferences.toArray(new DocumentReference[documentReferences.size()]);
   }
 
   public boolean isActive() {

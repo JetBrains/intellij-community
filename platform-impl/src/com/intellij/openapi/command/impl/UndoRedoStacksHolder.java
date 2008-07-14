@@ -4,7 +4,6 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -58,7 +57,7 @@ class UndoRedoStacksHolder {
     // If document is not associated with file, we have to store its stack in document
     // itself to avoid memory leaks caused by holding stacks of all documents, ever created, here.
     // And to know, what documents do exist now, we have to maintain soft reference list of them.
-    
+
     Document d = r.getDocument();
     LinkedList<UndoableGroup> result = d.getUserData(STACK_IN_DOCUMENT_KEY);
     if (result == null) {
@@ -89,8 +88,8 @@ class UndoRedoStacksHolder {
   }
 
   public void clearEditorStack(FileEditor e) {
-    for (Document d : TextEditorProvider.getDocuments(e)) {
-      clearFileStack(createReferenceOrGetOriginal(d));
+    for (DocumentReference d : myManager.getDocumentReferences(e)) {
+      clearFileStack(d);
     }
   }
 

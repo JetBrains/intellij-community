@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -151,7 +150,7 @@ abstract class UndoOrRedo {
     // 2. move caret
     // 3. close editor
     // 4. re-open editor for A via Ctrl-E
-    // 5. undo -> position is not affected, because instance created in step 4 is not the same!!! 
+    // 5. undo -> position is not affected, because instance created in step 4 is not the same!!!
     if (!myEditor.getClass().equals(pair.getEditor().getClass())) {
       return false;
     }
@@ -272,17 +271,23 @@ abstract class UndoOrRedo {
   public static class NothingToUndoException extends Exception {}
 
   private LinkedList<UndoableGroup> getStack() throws NothingToUndoException {
-    final Document[] documents = myEditor == null? null : TextEditorProvider.getDocuments(myEditor);
+    final DocumentReference[] documents = myEditor == null? null : myManager.getDocumentReferences(myEditor);
     if (documents == null || documents.length == 0) {
       return getStackHolder().getGlobalStack();
     }
     else {
       long recentDocumentTimeStamp = -1;
       LinkedList<UndoableGroup> result = null;
-      for (Document document : documents) {
-        LinkedList<UndoableGroup> stack = getStackHolder().getStack(document);
+      for (DocumentReference docRef : documents) {
+        LinkedList<UndoableGroup> stack = getStackHolder().getStack(docRef);
         if (!stack.isEmpty()) {
-          long modificationStamp = document.getModificationStamp();
+          long modificationStamp;
+          if (docRef instanceof DocumentReferenceByDocument) {
+            DocumentReferenceByDocument doc = (DocumentReferenceByDocument) docRef;
+            modificationStamp = doc.getDocument().getModificationStamp();
+          } else {
+            modificationStamp = docRef.getFile().getModificationStamp();
+          }
           if (recentDocumentTimeStamp < modificationStamp) {
             result = stack;
             recentDocumentTimeStamp = modificationStamp;
