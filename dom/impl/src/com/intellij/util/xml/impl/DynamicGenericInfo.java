@@ -5,13 +5,8 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -34,13 +29,11 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private final Project myProject;
   private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
+  private boolean myInitialized;
   private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
   private CustomDomChildrenDescriptionImpl myCustomChildren;
-  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
-  private static final JBLock r = rwl.readLock();
-  private static final JBLock w = rwl.writeLock();
 
   public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo, final Project project) {
     myInvocationHandler = handler;
@@ -52,55 +45,41 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     myCollections = staticGenericInfo.getCollections();
   }
 
-  public final void checkInitialized() {
-    r.lock();
-    try {
-      _checkInitialized();
-    } finally {
-      r.unlock();
-    }
-  }
-
   public Invocation createInvocation(final JavaMethod method) {
     return myStaticGenericInfo.createInvocation(method);
   }
 
-  private void _checkInitialized() {
-    myStaticGenericInfo.buildMethodMaps();
-    if (myComputing.get() != null) return;
-    r.unlock();
-    boolean rlocked = false;
-    try {
-      w.lock();
+  public final void checkInitialized() {
+    if (myInitialized) return;
+    if (myComputing.get() == Boolean.TRUE) return;
+
+    synchronized (myInvocationHandler) {
+      if (myInitialized) return;
+      myComputing.set(Boolean.TRUE);
+
       try {
+        myStaticGenericInfo.buildMethodMaps();
         myAttributes = myStaticGenericInfo.getAttributes();
         myFixeds = myStaticGenericInfo.getFixed();
         myCollections = myStaticGenericInfo.getCollections();
 
-        myComputing.set(Boolean.TRUE);
-      } finally {
-        w.unlock();
-      }
+        DomExtensionsRegistrarImpl registrar = null;
+        final DomElement domElement = myInvocationHandler.getProxy();
+        for (final DomExtenderEP extenderEP : Extensions.getExtensions(DomExtenderEP.EP_NAME)) {
+          registrar = extenderEP.extend(myProject, domElement, registrar);
+        }
 
-      DomExtensionsRegistrarImpl registrar = null;
-      final DomElement domElement = myInvocationHandler.getProxy();
-      for (final DomExtenderEP extenderEP : Extensions.getExtensions(DomExtenderEP.EP_NAME)) {
-        registrar = extenderEP.extend(myProject, domElement, registrar);
-      }
-
-      final AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
-      if (description != null) {
-        final List<DomExtender> extenders = description.getUserData(DomExtensionImpl.DOM_EXTENDER_KEY);
-        if (extenders != null) {
-          if (registrar == null) registrar = new DomExtensionsRegistrarImpl();
-          for (final DomExtender extender : extenders) {
-            extender.registerExtensions(domElement, registrar);
+        final AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
+        if (description != null) {
+          final List<DomExtender> extenders = description.getUserData(DomExtensionImpl.DOM_EXTENDER_KEY);
+          if (extenders != null) {
+            if (registrar == null) registrar = new DomExtensionsRegistrarImpl();
+            for (final DomExtender extender : extenders) {
+              extender.registerExtensions(domElement, registrar);
+            }
           }
         }
-      }
 
-      w.lock();
-      try {
         if (registrar != null) {
           final List<DomExtensionImpl> attributes = registrar.getAttributes();
           if (!attributes.isEmpty()) {
@@ -131,17 +110,9 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       }
       finally {
         myComputing.set(null);
-        r.lock();
-        rlocked = true;
-        w.unlock();
+        myInitialized = true;
       }
     }
-    finally {
-      if (!rlocked) {
-        r.lock();
-      }
-    }
-
   }
 
   public XmlElement getNameElement(DomElement element) {
@@ -164,110 +135,56 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
   @NotNull
   public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
-    r.lock();
-    try {
-      _checkInitialized();
-      final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<AbstractDomChildDescriptionImpl>();
-      list.addAll(myAttributes.getDescriptions());
-      list.addAll(myFixeds.getDescriptions());
-      list.addAll(myCollections.getDescriptions());
-      ContainerUtil.addIfNotNull(myStaticGenericInfo.getCustomNameChildrenDescription(), list);
-      return list;
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<AbstractDomChildDescriptionImpl>();
+    list.addAll(myAttributes.getDescriptions());
+    list.addAll(myFixeds.getDescriptions());
+    list.addAll(myCollections.getDescriptions());
+    ContainerUtil.addIfNotNull(myStaticGenericInfo.getCustomNameChildrenDescription(), list);
+    return list;
   }
 
   @NotNull
   public final List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myFixeds.getDescriptions();
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myFixeds.getDescriptions();
   }
 
   @NotNull
   public final List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myCollections.getDescriptions();
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myCollections.getDescriptions();
   }
 
   public FixedChildDescriptionImpl getFixedChildDescription(String tagName) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myFixeds.findDescription(tagName);
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myFixeds.findDescription(tagName);
   }
 
   public DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespace) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myFixeds.getDescription(tagName, namespace);
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myFixeds.getDescription(tagName, namespace);
   }
 
   public CollectionChildDescriptionImpl getCollectionChildDescription(String tagName) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myCollections.findDescription(tagName);
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myCollections.findDescription(tagName);
   }
 
   public DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName, @NonNls String namespace) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myCollections.getDescription(tagName, namespace);
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myCollections.getDescription(tagName, namespace);
   }
 
   public AttributeChildDescriptionImpl getAttributeChildDescription(String attributeName) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myAttributes.findDescription(attributeName);
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myAttributes.findDescription(attributeName);
   }
 
 
   public DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myAttributes.getDescription(attributeName, namespace);
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myAttributes.getDescription(attributeName, namespace);
   }
 
   public Type[] getConcreteInterfaceVariants() {
@@ -280,21 +197,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
   @NotNull
   public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myAttributes.getDescriptions();
-    }
-    finally {
-      r.unlock();
-    }
+    checkInitialized();
+    return myAttributes.getDescriptions();
   }
 
-  private static class MyCachedValueProvider implements CachedValueProvider<Object> {
-    Object[] deps = new Object[]{ModificationTracker.EVER_CHANGED};
-
-    public Result<Object> compute() {
-      return new Result<Object>(Boolean.TRUE, deps);
-    }
-  }
 }
