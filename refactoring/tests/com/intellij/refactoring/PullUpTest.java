@@ -28,6 +28,13 @@ public class PullUpTest extends LightCodeInsightTestCase {
     doTest(new Pair<String, Class<? extends PsiMember>> ("Inner", PsiClass.class));
   }
 
+  public void testQualifiedReference() throws Exception {     // IDEADEV-25008
+    doTest(new Pair<String, Class<? extends PsiMember>> ("x", PsiField.class),
+           new Pair<String, Class<? extends PsiMember>> ("getX", PsiMethod.class),
+           new Pair<String, Class<? extends PsiMember>> ("setX", PsiMethod.class));
+
+  }
+
   private void doTest(Pair<String, Class<? extends PsiMember>>... membersToFind) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());

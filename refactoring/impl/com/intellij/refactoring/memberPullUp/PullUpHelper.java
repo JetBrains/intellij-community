@@ -593,14 +593,20 @@ public class PullUpHelper {
 
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if (classMember instanceof PsiClass) return;
-      if (classMember.hasModifierProperty(PsiModifier.STATIC)
-          && !myMovedMembers.contains(classMember)
-          && RefactoringHierarchyUtil.isMemberBetween(myTargetSuperClass, mySourceClass, classMember)) {
-        myReferences.add(classMemberReference);
-        myReferees.add(classMember);
-        myRefereeClasses.add(classMember.getContainingClass());
+      if (classMember.hasModifierProperty(PsiModifier.STATIC)) {
+        if (!myMovedMembers.contains(classMember) &&
+            RefactoringHierarchyUtil.isMemberBetween(myTargetSuperClass, mySourceClass, classMember)) {
+          myReferences.add(classMemberReference);
+          myReferees.add(classMember);
+          myRefereeClasses.add(classMember.getContainingClass());
+        }
+        else if ((myMovedMembers.contains(classMember) || myMembersAfterMove.contains(classMember)) && classMemberReference.isQualified()) {
+          myReferences.add(classMemberReference);
+          myReferees.add(classMember);
+          myRefereeClasses.add(myTargetSuperClass);
+        }
       }
-      }
+    }
   }
 
   private class QualifiedThisSuperAdjuster extends JavaRecursiveElementVisitor {
