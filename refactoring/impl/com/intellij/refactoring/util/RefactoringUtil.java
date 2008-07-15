@@ -167,6 +167,9 @@ public class RefactoringUtil {
 
   @Nullable
   public static String suggestNewOverriderName(String oldOverriderName, String oldBaseName, String newBaseName) {
+    if (oldOverriderName.equals(oldBaseName)) {
+      return newBaseName;
+    }
     int i;
     if (oldOverriderName.startsWith(oldBaseName)) {
       i = 0;
