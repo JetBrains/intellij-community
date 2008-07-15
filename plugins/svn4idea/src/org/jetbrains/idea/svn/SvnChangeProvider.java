@@ -108,7 +108,15 @@ public class SvnChangeProvider implements ChangeProvider {
         deletedToDelete.add(deletedFile);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
-          final String childURL = deletedChild.getStatus().getURL().toString();
+          final SVNStatus childStatus = deletedChild.getStatus();
+          if (childStatus == null) {
+            continue;
+          }
+          final SVNURL childUrl = childStatus.getURL();
+          if (childUrl == null) {
+            continue;
+          }
+          final String childURL = childUrl.toString();
           if (childURL.startsWith(copyFromURL + "/")) {
             String relativePath = childURL.substring(copyFromURL.length());
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
