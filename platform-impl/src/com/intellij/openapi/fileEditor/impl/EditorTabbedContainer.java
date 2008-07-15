@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -74,6 +75,13 @@ final class EditorTabbedContainer implements Disposable {
           if (info != null) {
             myWindow.closeFile((VirtualFile)info.getObject());
           }
+        }
+      }
+
+      @Override
+      public void mouseClicked(final MouseEvent e) {
+        if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
+          ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
         }
       }
     }).setUiDecorator(new UiDecorator() {
