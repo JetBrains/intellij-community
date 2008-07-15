@@ -864,12 +864,14 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   @Nullable
-  public static PsiType extractIterableTypeParameter(@Nullable PsiType psiType) {
-    final PsiType type = substituteTypeParameter(psiType, CommonClassNames.JAVA_LANG_ITERABLE, 0);
-    return type != null ? type : substituteTypeParameter(psiType, CommonClassNames.JAVA_UTIL_COLLECTION, 0);
+  public static PsiType extractIterableTypeParameter(@Nullable PsiType psiType, final boolean eraseTypeParameter) {
+    final PsiType type = substituteTypeParameter(psiType, CommonClassNames.JAVA_LANG_ITERABLE, 0, eraseTypeParameter);
+    return type != null ? type : substituteTypeParameter(psiType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, eraseTypeParameter);
   }
 
-  public static PsiType substituteTypeParameter(final PsiType psiType, final String superClass, final int typeParamIndex) {
+  @Nullable
+  public static PsiType substituteTypeParameter(final PsiType psiType, final String superClass, final int typeParamIndex,
+                                                final boolean eraseTypeParameter) {
     if (psiType == null) return null;
 
     if (!(psiType instanceof PsiClassType)) return null;
@@ -879,16 +881,20 @@ public final class PsiUtil extends PsiUtilBase {
     final PsiClass psiClass = classResolveResult.getElement();
     if (psiClass == null) return null;
 
-    final PsiClass iterable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(superClass, psiClass.getResolveScope());
-    if (iterable == null) return null;
+    final PsiClass baseClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(superClass, psiClass.getResolveScope());
+    if (baseClass == null) return null;
 
-    if (!psiClass.isEquivalentTo(iterable) && !psiClass.isInheritor(iterable, true)) return null;
+    if (!psiClass.isEquivalentTo(baseClass) && !psiClass.isInheritor(baseClass, true)) return null;
 
-    final PsiTypeParameter[] parameters = iterable.getTypeParameters();
+    final PsiTypeParameter[] parameters = baseClass.getTypeParameters();
     if (parameters.length <= typeParamIndex) return null;
 
-    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(iterable, psiClass, classResolveResult.getSubstitutor());
-    return substitutor.substitute(parameters[typeParamIndex]);
+    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, classResolveResult.getSubstitutor());
+    final PsiType type = substitutor.substitute(parameters[typeParamIndex]);
+    if (type == null && eraseTypeParameter) {
+      return TypeConversionUtil.typeParameterErasure(parameters[typeParamIndex]);
+    }
+    return type;
   }
 
   public static final Comparator<PsiElement> BY_POSITION = new Comparator<PsiElement>() {

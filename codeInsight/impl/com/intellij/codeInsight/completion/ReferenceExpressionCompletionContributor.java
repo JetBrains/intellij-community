@@ -151,7 +151,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                                                 final PsiType itemType, final JavaSmartCompletionParameters parameters,
                                                 final CompletionResultSet result, @Nullable PsiElement qualifier) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
-    PsiType componentType = PsiUtil.extractIterableTypeParameter(parameters.getExpectedType());
+    PsiType componentType = PsiUtil.extractIterableTypeParameter(parameters.getExpectedType(), true);
     final String callSpace =
         getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
     if (componentType == null ||
@@ -207,7 +207,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     final String callSpace =
                       getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
-    final PsiType componentType = PsiUtil.substituteTypeParameter(itemType, CommonClassNames.JAVA_UTIL_COLLECTION, 0);
+    final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
     if (componentType == null || !(parameters.getExpectedType() instanceof PsiArrayType)) return;
 
     final PsiArrayType type = (PsiArrayType)parameters.getExpectedType();
