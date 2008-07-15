@@ -284,6 +284,7 @@
       <separator/>
       <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction" text="Check VFS sanity"/>
     </group>
 
     <!-- Help -->
