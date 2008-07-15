@@ -16,11 +16,9 @@
 package com.siyeh.ipp.parenthesis;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,9 +79,7 @@ public class AddClarifyingParenthesesIntention extends Intention {
                         (PsiBinaryExpression)parent;
                 final PsiJavaToken parentOperationSign =
                         parentBinaryExpression.getOperationSign();
-                final IElementType tokenType = operationSign.getTokenType();
-                if (!operationSign.equals(parentOperationSign) ||
-                        !ParenthesesUtils.isCommutativeBinaryOperator(tokenType)) {
+                if (!signText.equals(parentOperationSign.getText())) {
                     out.append('(');
                     createReplacementText(lhs, out);
                     if (lhsNextSibling instanceof PsiWhiteSpace) {

@@ -15,10 +15,12 @@
  */
 package com.siyeh.ipp.parenthesis;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
@@ -32,19 +34,11 @@ class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
                 (PsiBinaryExpression)element;
         final IElementType tokenType = binaryExpression.getOperationTokenType();
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression parentBinaryExpression =
-                    (PsiBinaryExpression)parent;
-            final IElementType parentTokenType =
-                    parentBinaryExpression.getOperationTokenType();
-            if (!tokenType.equals(parentTokenType)) {
-                return true;
-            } else if (!ParenthesesUtils.isCommutativeBinaryOperator(
-                    tokenType)) {
+        if (parent instanceof PsiExpression) {
+            final PsiExpression expression = (PsiExpression)parent;
+            if (needsParentheses(expression, tokenType)) {
                 return true;
             }
-        } else if (parent instanceof PsiInstanceOfExpression) {
-            return true;
         }
         final PsiExpression lhs = binaryExpression.getLOperand();
         if (needsParentheses(lhs, tokenType)) {
@@ -57,14 +51,11 @@ class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
     private static boolean needsParentheses(PsiExpression expression,
                                             IElementType tokenType) {
         if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression lhsBinaryExpression =
+            final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)expression;
-            final IElementType lhsTokenType =
-                    lhsBinaryExpression.getOperationTokenType();
-            if (!tokenType.equals(lhsTokenType)) {
-                return true;
-            } else if (!ParenthesesUtils.isCommutativeBinaryOperator(
-                    tokenType)) {
+            final IElementType expressionTokenType =
+                    binaryExpression.getOperationTokenType();
+            if (!tokenType.equals(expressionTokenType)) {
                 return true;
             }
         } else if (expression instanceof PsiInstanceOfExpression) {
