@@ -57,6 +57,7 @@ public class PopupChooserBuilder {
 
   ArrayList<JBPopupListener> myListeners = new ArrayList<JBPopupListener>();
   private String myAd;
+  private Dimension myMinSize;
 
 
   public PopupChooserBuilder(@NotNull JList list) {
@@ -188,8 +189,8 @@ public class PopupChooserBuilder {
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
     }
-    myPopup = builder
-      .setDimensionServiceKey(null, myDimensionServiceKey, false)
+
+    builder.setDimensionServiceKey(null, myDimensionServiceKey, false)
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)
@@ -198,9 +199,19 @@ public class PopupChooserBuilder {
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
-      .setAdText(myAd)
-      .createPopup();
+      .setAdText(myAd);
+
+    if (myMinSize != null) {
+      builder.setMinSize(myMinSize);
+    }
+
+    myPopup = builder.createPopup();
     return myPopup;
+  }
+
+  public PopupChooserBuilder setMinSize(final Dimension dimension) {
+    myMinSize = dimension;
+    return this;
   }
 
   private void regsiterClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {

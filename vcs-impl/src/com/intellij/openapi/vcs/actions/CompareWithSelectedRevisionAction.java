@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
@@ -233,14 +234,16 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
     };
 
-    new PopupChooserBuilder(table).
-      setSouthComponent(createCommentsPanel(table)).
-      setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
-      setItemChoosenCallback(runnable).
-      setResizable(true).
-      setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").
-      createPopup().
-      showCenteredInCurrentWindow(project);
+    table.setMinimumSize(new Dimension(300, 50));
+    final JBPopup popup = new PopupChooserBuilder(table).
+        setSouthComponent(createCommentsPanel(table)).
+        setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
+        setItemChoosenCallback(runnable).
+        setResizable(true).
+        setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new Dimension(300, 300)).
+        createPopup();
+    
+    popup.showCenteredInCurrentWindow(project);
   }
 
   private static JPanel createCommentsPanel(final TableView<VcsFileRevision> table) {
@@ -262,7 +265,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
     jPanel.add(textScrollPane, BorderLayout.SOUTH);
 
-    jPanel.setPreferredSize(new Dimension(300, jPanel.getPreferredSize().height + 10));
+    jPanel.setPreferredSize(new Dimension(300, 100));
     return jPanel;
   }
 
