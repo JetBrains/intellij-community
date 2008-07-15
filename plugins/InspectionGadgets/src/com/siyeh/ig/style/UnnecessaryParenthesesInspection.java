@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,9 +118,6 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                 final PsiJavaToken childSign =
                         childBinaryExpression.getOperationSign();
                 final IElementType childOperator = childSign.getTokenType();
-                if (!parentOperator.equals(childOperator)) {
-                    return true;
-                }
                 final PsiType parentType =
                         parentBinaryExpression.getType();
                 if (parentType == null) {
@@ -131,7 +128,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                     return true;
                 }
                 if (parentBinaryExpression.getROperand() == expression) {
-                    if (!ParenthesesUtils.isCommutativeBinaryOperator(childOperator)) {
+                    if (!ParenthesesUtils.isCommutativeBinaryOperator(
+                            childOperator)) {
                         return true;
                     }
                 }
@@ -140,6 +138,4 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
             return false;
         }
     }
-
-
 }

@@ -128,7 +128,7 @@ public class ParenthesesUtils{
                     (PsiBinaryExpression)expression;
             final PsiJavaToken sign =
                     binaryExpression.getOperationSign();
-            return precedenceForBinaryOperator(sign);
+            return getPrecedenceForBinaryOperator(sign);
         }
         if(expression instanceof PsiInstanceOfExpression){
             return RELATIONAL_PRECEDENCE;
@@ -145,7 +145,8 @@ public class ParenthesesUtils{
         return -1;
     }
 
-    private static int precedenceForBinaryOperator(@NotNull PsiJavaToken sign){
+    private static int getPrecedenceForBinaryOperator(
+            @NotNull PsiJavaToken sign){
         final String operator = sign.getText();
         final Integer precedence = s_binaryOperatorPrecedence.get(operator);
         return precedence.intValue();
