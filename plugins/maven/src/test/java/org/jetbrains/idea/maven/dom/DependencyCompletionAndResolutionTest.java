@@ -743,6 +743,22 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     checkHighlighting();
   }
 
+  public void testDoNotHighlightVersionRanges() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>jmock</groupId>" +
+                     "    <artifactId>jmock</artifactId>" +
+                     "    <version>[1,2]</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
   public void testHandlingProperties() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
