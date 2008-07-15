@@ -561,4 +561,9 @@ public class IdeEventQueue extends EventQueue {
   public IdePopupManager getPopupManager() {
     return myPopupManager;
   }
+
+  public void blockNextEvents(final MouseEvent e) {
+    myMouseEventDispatcher.blockNextEvents(e);
+  }
+
 }

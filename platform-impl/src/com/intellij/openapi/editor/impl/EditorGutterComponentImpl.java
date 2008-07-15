@@ -13,6 +13,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -147,8 +148,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
   private void processClose(final MouseEvent e) {
+    final IdeEventQueue queue = IdeEventQueue.getInstance();
+
     if (isLineNumbersShown()) {
       if (e.getX() >= getLineNumberAreaOffset() && getLineNumberAreaOffset() + getLineNumberAreaWidth() >= e.getX()) {
+        queue.blockNextEvents(e);
         myEditor.getSettings().setLineNumbersShown(false);
         e.consume();
         return;
@@ -161,6 +165,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
       final int size = myTextAnnotationGutterSizes.get(i);
       if (x <= e.getX() && e.getX() <= x + size + GAP_BETWEEN_ANNOTATIONS) {
+        queue.blockNextEvents(e);
         closeAllAnnotations();
         e.consume();
         break;

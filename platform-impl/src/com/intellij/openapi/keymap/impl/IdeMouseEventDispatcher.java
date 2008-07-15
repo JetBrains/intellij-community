@@ -7,11 +7,13 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * TODO[vova] rewrite comments
@@ -23,6 +25,8 @@ import java.util.ArrayList;
 public final class IdeMouseEventDispatcher{
   private final PresentationFactory myPresentationFactory;
   private final ArrayList<AnAction> myActions;
+
+  private Map<Container, Point> myRootPane2BlockedPoint = new HashMap<Container, Point>();
 
   public IdeMouseEventDispatcher(){
     myPresentationFactory=new PresentationFactory();
@@ -92,6 +96,27 @@ public final class IdeMouseEventDispatcher{
       return false;
     }
 
+    Window window = e.getComponent() instanceof Window ? (Window)e.getComponent() : SwingUtilities.getWindowAncestor(e.getComponent());
+    JRootPane root = null;
+    if (window instanceof JFrame) {
+      root = ((JFrame)window).getRootPane();
+    } else if (window instanceof JDialog) {
+      root = ((JDialog)window).getRootPane();
+    }
+    
+    if (root != null) {
+      final Point toBlock = myRootPane2BlockedPoint.get(root);
+      if (toBlock != null) {
+        final Point currentPoint = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), root);
+        if (currentPoint.equals(toBlock)) {
+          return false;
+        } else {
+          myRootPane2BlockedPoint.remove(root);
+        }
+      }
+    }
+
+
     Component component=e.getComponent();
     if(component==null){
       throw new IllegalStateException("component cannot be null");
@@ -130,5 +155,15 @@ public final class IdeMouseEventDispatcher{
       }
     }
     return false;
+  }
+
+  public void blockNextEvents(final MouseEvent e) {
+    if (!(e.getComponent() instanceof JComponent)) return;
+
+    final JComponent c = (JComponent)e.getComponent();
+    final JRootPane root = c.getRootPane();
+    if (root == null) return;
+
+    myRootPane2BlockedPoint.put(root, SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), root));
   }
 }

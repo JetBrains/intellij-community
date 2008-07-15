@@ -1,5 +1,6 @@
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.TitlePanel;
@@ -525,20 +526,29 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private void processHide(final MouseEvent e) {
+    IdeEventQueue.getInstance().blockNextEvents(e);
     final Component c = e.getComponent();
     if (c instanceof ContentTabLabel) {
       final ContentTabLabel tab = (ContentTabLabel)c;
       if (myManager.canCloseContents() && tab.myContent.isCloseable()) {
         myManager.removeContent(tab.myContent, true);
+      } else {
+        if (myManager.getContentCount() == 1) {
+          hideWindow(e);
+        }
       }
     }
     else {
-      if (e.isControlDown()) {
-        myWindow.fireHiddenSide();
-      }
-      else {
-        myWindow.fireHidden();
-      }
+      hideWindow(e);
+    }
+  }
+
+  private void hideWindow(final MouseEvent e) {
+    if (e.isControlDown()) {
+      myWindow.fireHiddenSide();
+    }
+    else {
+      myWindow.fireHidden();
     }
   }
 
