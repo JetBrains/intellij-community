@@ -51,7 +51,9 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     boolean markAsCopy) {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
     if(fileType instanceof LanguageFileType){
-      final PsiFile file = trySetupPsiForFile(false, virtualFile, ((LanguageFileType)fileType).getLanguage(), physical, markAsCopy);
+      final Language language =
+          LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), virtualFile, myManager.getProject());
+      final PsiFile file = trySetupPsiForFile(false, virtualFile, language, physical, markAsCopy);
       if (file != null) return file;
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
