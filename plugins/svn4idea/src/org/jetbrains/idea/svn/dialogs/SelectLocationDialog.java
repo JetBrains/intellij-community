@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.dialogs.browser.UrlOpeningExpander;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -104,14 +105,15 @@ public class SelectLocationDialog extends DialogWrapper {
 
   protected void init() {
     super.init();
+    String urlString = myURL.toString();
     try {
-      SVNRepository repos = SvnVcs.getInstance(myProject).createRepository(myURL.toString());
+      SVNRepository repos = SvnVcs.getInstance(myProject).createRepository(urlString);
       myURL = repos.getRepositoryRoot(true);
       repos.closeSession();
     } catch (SVNException e) {
       // show error dialog.
     }
-    myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles);
+    myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles, new UrlOpeningExpander.Factory(urlString, urlString));
     myRepositoryBrowser.addChangeListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         getOKAction().setEnabled(isOKActionEnabled());

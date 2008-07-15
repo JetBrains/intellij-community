@@ -69,7 +69,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myLocationList.setModel(listModel);
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        SelectLocationDialog dlg = new SelectLocationDialog(project, configuration.getTrunkUrl());
+        SelectLocationDialog dlg = new SelectLocationDialog(project, rootUrl);
         dlg.show();
         if (dlg.isOK()) {
           if (!configuration.getBranchUrls().contains(dlg.getSelectedURL())) {

@@ -194,12 +194,15 @@ public class CopyDialog extends DialogWrapper {
       myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
     }
     catch (VcsException e) {
-      LOG.error(e);
+      LOG.info(e);
       myBranchTagBaseComboBox.setEnabled(false);
     }
   }
 
   private void updateToURL() {
+    if (myBranchConfiguration == null) {
+      return;
+    }
     String relativeUrl;
     if (myWorkingCopyRadioButton.isSelected()) {
       relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL);
