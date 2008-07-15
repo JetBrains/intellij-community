@@ -691,6 +691,19 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     }
+    else if (expr.getParent() instanceof PsiAssignmentExpression && variableKind == VariableKind.PARAMETER) {
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expr.getParent();
+      if (expr == assignmentExpression.getRExpression()) {
+        final PsiExpression leftExpression = assignmentExpression.getLExpression();
+        if (leftExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression) leftExpression).getQualifier() == null) {
+          String name = leftExpression.getText();
+          if (name != null) {
+            String[] names = getSuggestionsByName(name, variableKind, false);
+            return new NamesByExprInfo(name, names);
+          }
+        }
+      }
+    }
 
     return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
   }
