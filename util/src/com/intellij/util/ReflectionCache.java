@@ -32,7 +32,7 @@ import java.util.Map;
  * @author peter
  */
 public class ReflectionCache {
-  private static final boolean CACHE_DISABLED = System.getProperty("java.version", "1.5").indexOf("1.5") < 0;
+  private static final boolean CACHE_DISABLED = System.getProperty("java.version", "1.5").indexOf("1.5") < 0 || Runtime.getRuntime().availableProcessors() > 4;
 
   private static final ConcurrentFactoryMap<Class,Class> ourSuperClasses = new ConcurrentFactoryMap<Class, Class>() {
     protected Class create(final Class key) {
