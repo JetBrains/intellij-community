@@ -678,13 +678,6 @@ class AbstractTreeUi implements Disposable {
       clearUpdaterState();
       state.restore();
     }
-
-    if (myTreeModel.getRoot() == node && !myTree.isRootVisible()) {
-      final TreePath rootPath = new TreePath(node.getPath());
-      if (!myTree.isExpanded(rootPath)) {
-        getBuilder().expandNodeChildren(node);
-      }
-    }
   }
 
   private void processSmartExpand(final DefaultMutableTreeNode node) {
