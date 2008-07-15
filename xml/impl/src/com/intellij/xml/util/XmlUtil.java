@@ -551,16 +551,12 @@ public class XmlUtil {
       final PsiElement[] inclusion;
 
       inclusion = xincludeTag.getManager().getCachedValuesManager()
-        .getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new Function<XmlTag, CachedValueProvider<PsiElement[]>>() {
-          public CachedValueProvider<PsiElement[]> fun(final XmlTag xmlTag) {
-            return new CachedValueProvider<PsiElement[]>() {
+        .getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new CachedValueProvider<PsiElement[]>() {
               public Result<PsiElement[]> compute() {
                 final Result<PsiElement[]> result = computeInclusion(xincludeTag);
                 result.setLockValue(true);
                 return result;
-              }
-            };
-          }
+            }
         }, false);
 
       if (inclusion != null) {
