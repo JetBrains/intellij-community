@@ -9,7 +9,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +55,22 @@ public class JavaFilePasteProvider implements PasteProvider {
     if (aPackage == null) return;
     final PsiPackageStatement oldStatement = javaFile.getPackageStatement();
     final Project project = javaFile.getProject();
-    if (oldStatement != null && !oldStatement.getPackageName().equals(aPackage.getQualifiedName())) {
+    if ((oldStatement != null && !oldStatement.getPackageName().equals(aPackage.getQualifiedName()) ||
+        (oldStatement == null && aPackage.getQualifiedName().length() > 0))) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
           try {
             PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
             final PsiPackageStatement newStatement = factory.createPackageStatement(aPackage.getQualifiedName());
-            oldStatement.replace(newStatement);
+            if (oldStatement != null) {
+              oldStatement.replace(newStatement);
+            }
+            else {
+              final PsiElement addedStatement = javaFile.addAfter(newStatement, null);
+              final TextRange textRange = addedStatement.getTextRange();
+              // ensure line break is added after the statement
+              CodeStyleManager.getInstance(project).reformatRange(javaFile, textRange.getStartOffset(), textRange.getEndOffset()+1);
+            }
           }
           catch (IncorrectOperationException e) {
             // ignore
