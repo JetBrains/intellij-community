@@ -2,9 +2,9 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemListener;
 
 /**
@@ -25,7 +25,6 @@ public class TypeSelector {
     myComboBoxModel = new MyComboBoxModel();
     myComponent = new ComboBox();
     ((ComboBox) myComponent).setModel(myComboBoxModel);
-    ((ComboBox) myComponent).setRenderer(new MyListCellRenderer());
     myType = null;
   }
 
@@ -37,7 +36,7 @@ public class TypeSelector {
     } else {
       oldType = null;
     }
-    myComboBoxModel.setSuggestions(types);
+    myComboBoxModel.setSuggestions(wrapToItems(types));
     if(oldType != null) {
       for (int i = 0; i < types.length; i++) {
         PsiType type = types[i];
@@ -50,6 +49,14 @@ public class TypeSelector {
     if (types.length > 0) {
       ((JComboBox) myComponent).setSelectedIndex(0);
     }
+  }
+
+  private static PsiTypeItem[] wrapToItems(final PsiType[] types) {
+    PsiTypeItem[] result = new PsiTypeItem[types.length];
+    for (int i = 0; i < result.length; i++) {
+      result [i] = new PsiTypeItem(types [i]);
+    }
+    return result;
   }
 
 
@@ -85,19 +92,21 @@ public class TypeSelector {
     }
   }
 
+  @Nullable
   public PsiType getSelectedType() {
     if (myComponent instanceof JLabel) {
       return myType;
     } else {
-      return (PsiType) ((JComboBox) myComponent).getSelectedItem();
+      final PsiTypeItem selItem = (PsiTypeItem)((JComboBox)myComponent).getSelectedItem();
+      return selItem == null ? null : selItem.getType();
     }
   }
 
   private static class MyComboBoxModel extends DefaultComboBoxModel {
-    private PsiType[] mySuggestions;
+    private PsiTypeItem[] mySuggestions;
 
     MyComboBoxModel() {
-      mySuggestions = new PsiType[0];
+      mySuggestions = new PsiTypeItem[0];
     }
 
     // implements javax.swing.ListModel
@@ -110,29 +119,27 @@ public class TypeSelector {
       return mySuggestions[index];
     }
 
-    public void setSuggestions(PsiType[] suggestions) {
+    public void setSuggestions(PsiTypeItem[] suggestions) {
       fireIntervalRemoved(this, 0, mySuggestions.length);
       mySuggestions = suggestions;
       fireIntervalAdded(this, 0, mySuggestions.length);
     }
   }
 
+  private static class PsiTypeItem {
+    private final PsiType myType;
 
+    private PsiTypeItem(final PsiType type) {
+      myType = type;
+    }
 
-  private class MyListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(
-            JList list,
-            Object value,
-            int index,
-            boolean isSelected,
-            boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    public PsiType getType() {
+      return myType;
+    }
 
-      if (value != null) {
-        setText(((PsiType) value).getPresentableText());
-      }
-
-      return this;
+    @Override
+    public String toString() {
+      return myType.getPresentableText();
     }
   }
 
