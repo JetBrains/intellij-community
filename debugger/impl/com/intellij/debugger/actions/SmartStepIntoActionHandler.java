@@ -91,10 +91,20 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
   }
 
   private static List<PsiMethod> findReferencedMethods(final SourcePosition position) {
-    final PsiFile file = position.getFile();
-    final Document doc = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
     final int line = position.getLine();
+    if (line < 0) {
+      return Collections.emptyList(); // the document has been changed
+    }
 
+    final PsiFile file = position.getFile();
+    final VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) {
+      // the file is not physical
+      return Collections.emptyList();
+    }
+    
+    final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
+    
     final int startOffset = doc.getLineStartOffset(line);
     final TextRange lineRange = new TextRange(startOffset, doc.getLineEndOffset(line));
     final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), startOffset, " \t");
