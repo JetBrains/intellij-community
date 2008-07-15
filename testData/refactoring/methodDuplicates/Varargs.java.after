@@ -1,0 +1,10 @@
+import java.util.*;
+public class Varargs {
+    private List<String> createSet(String... values) {
+        return Arrays.asList(values);
+    }
+
+    private List<String> method() {
+        return createSet("hi", "bye");
+    }
+}

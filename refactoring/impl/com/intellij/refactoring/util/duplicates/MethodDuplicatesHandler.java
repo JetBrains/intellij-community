@@ -29,20 +29,19 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -231,19 +230,6 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         myMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
 
-      final PsiImmediateClassType expressionType = getChangedReturnType(match);
-      if (expressionType != null) {
-        final ParameterInfo[] params = new ParameterInfo[myMethod.getParameterList().getParameters().length];
-        int idx = 0;
-        for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
-          params[idx] = new ParameterInfo(idx, parameter.getName(), parameter.getType());
-          idx++;
-        }
-        final ChangeSignatureProcessor csp =
-            new ChangeSignatureProcessor(myMethod.getProject(), myMethod, false, null, myMethod.getName(), expressionType, params);
-        csp.run();
-      }
-
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       final boolean needQualifier = match.getInstanceExpression() != null;
       final boolean needStaticQualifier = isExternal(match);
@@ -252,9 +238,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
       final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
       for (final PsiParameter parameter : parameters) {
-        final PsiElement parameterValue = match.getParameterValue(parameter);
+        final List<PsiElement> parameterValue = match.getParameterValues(parameter);
         if (parameterValue != null) {
-          methodCallExpression.getArgumentList().add(parameterValue);
+          for (PsiElement val : parameterValue) {
+            methodCallExpression.getArgumentList().add(val);
+          }
         }
         else {
           methodCallExpression.getArgumentList().add(factory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(parameter.getType()), parameter));
@@ -286,21 +274,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       return match.replace(methodCallExpression, null);
     }
 
-    @Nullable
-    private PsiImmediateClassType getChangedReturnType(final Match match) {
-      final PsiType returnType = myMethod.getReturnType();
-      final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(match.getMatchEnd(), PsiMethodCallExpression.class);
-      if (callExpression != null) {
-        final PsiMethod calledMethod = callExpression.resolveMethod();
-        if (calledMethod != null) {
-          final PsiImmediateClassType expressionType = new PsiImmediateClassType(calledMethod.getContainingClass(), PsiSubstitutor.EMPTY);
-          if (returnType != null && !TypeConversionUtil.isAssignable(expressionType, returnType)) {
-            return expressionType;
-          }
-        }
-      }
-      return null;
-    }
+
 
     private boolean isExternal(final Match match) {
       if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false)) {
@@ -338,8 +312,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       final PsiElement matchStart = match.getMatchStart();
       final String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
       final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
-      final PsiImmediateClassType returnType = getChangedReturnType(match);
-      final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility, returnType);
+      final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
       if (signature != null) {
         return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
       }

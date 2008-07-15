@@ -309,6 +309,27 @@ public class DuplicatesFinder {
 
     if (!canBeEquivalent(pattern, candidate)) return false; // Q : is it correct to check implementation classes?
 
+    if (pattern instanceof PsiExpressionList && candidate instanceof PsiExpressionList) { //check varargs
+      final PsiExpression[] expressions = ((PsiExpressionList)pattern).getExpressions();
+      final PsiExpression[] childExpressions = ((PsiExpressionList)candidate).getExpressions();
+      if (expressions.length < childExpressions.length && expressions.length > 0 && expressions[expressions.length - 1] instanceof PsiReferenceExpression) {
+        final PsiElement resolved = ((PsiReferenceExpression)expressions[expressions.length - 1]).resolve();
+        if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getType() instanceof PsiEllipsisType) {
+          for(int i = 0; i < expressions.length - 1; i++) {
+            final Pair<PsiVariable, PsiType> parameter = expressions[i].getUserData(PARAMETER);
+            if (parameter == null) return false;
+            if (!match.putParameter(parameter, childExpressions[i])) return false;
+          }
+          final Pair<PsiVariable, PsiType> param = expressions[expressions.length - 1].getUserData(PARAMETER);
+          if (param == null) return false;
+          for(int i = expressions.length - 1; i < childExpressions.length; i++) {
+            if (!match.putParameter(param, childExpressions[i])) return false;
+          }
+          return true;
+        }
+      }
+    }
+
     if (pattern instanceof PsiJavaCodeReferenceElement) {
       final PsiElement resolveResult1 = ((PsiJavaCodeReferenceElement)pattern).resolve();
       final PsiElement resolveResult2 = ((PsiJavaCodeReferenceElement)candidate).resolve();

@@ -588,7 +588,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     LOG.assertTrue(myElements[0].isValid());
 
     PsiCodeBlock body = newMethod.getBody();
-    PsiMethodCallExpression methodCall = generateMethodCall(null);
+    PsiMethodCallExpression methodCall = generateMethodCall(null, true);
 
     LOG.assertTrue(myElements[0].isValid());
 
@@ -843,8 +843,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       myExtractedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
-    final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression());
-    final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
+    final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false);
 
     ArrayList<ParameterTablePanel.VariableData> datas = new ArrayList<ParameterTablePanel.VariableData>();
     for (final ParameterTablePanel.VariableData variableData : myVariableDatum) {
@@ -852,11 +851,12 @@ public class ExtractMethodProcessor implements MatchProvider {
         datas.add(variableData);
       }
     }
-    LOG.assertTrue(expressions.length == datas.size());
     for (int i = 0; i < datas.size(); i++) {
       ParameterTablePanel.VariableData data = datas.get(i);
-      final PsiElement parameterValue = match.getParameterValue(data.variable);
-      expressions[i].replace(parameterValue);
+      final List<PsiElement> parameterValue = match.getParameterValues(data.variable);
+      for (PsiElement val : parameterValue) {
+        methodCallExpression.getArgumentList().add(val);
+      }
     }
     return match.replace(methodCallExpression, myOutputVariable);
   }
@@ -974,7 +974,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
 
-  protected PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier) throws IncorrectOperationException {
+  protected PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier, final boolean generateArgs) throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
 
     final boolean skipInstanceQualifier;
@@ -1011,14 +1011,16 @@ public class ExtractMethodProcessor implements MatchProvider {
       buffer.append(myMethodName);
     }
     buffer.append("(");
-    int count = 0;
-    for (ParameterTablePanel.VariableData data : myVariableDatum) {
-      if (data.passAsParameter) {
-        if (count > 0) {
-          buffer.append(",");
+    if (generateArgs) {
+      int count = 0;
+      for (ParameterTablePanel.VariableData data : myVariableDatum) {
+        if (data.passAsParameter) {
+          if (count > 0) {
+            buffer.append(",");
+          }
+          buffer.append(data.variable.getName());
+          count++;
         }
-        buffer.append(data.variable.getName());
-        count++;
       }
     }
     buffer.append(")");
@@ -1204,8 +1206,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   @NotNull
   public String getConfirmDuplicatePrompt(Match match) {
     final boolean needToBeStatic = RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass());
-    final String changedSignature = match.getChangedSignature(myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod),
-                                                              null);
+    final String changedSignature = match.getChangedSignature(myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
     if (changedSignature != null) {
       return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
     }

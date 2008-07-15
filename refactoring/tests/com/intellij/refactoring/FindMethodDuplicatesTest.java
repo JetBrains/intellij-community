@@ -323,4 +323,8 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   public void testInheritance() throws Exception {
     doTest();
   }
+
+  public void testVarargs() throws Exception {
+    doTest();
+  }
 }

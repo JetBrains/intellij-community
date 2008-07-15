@@ -10,6 +10,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,7 +31,7 @@ public final class Match {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.Match");
   private final PsiElement myMatchStart;
   private final PsiElement myMatchEnd;
-  private final Map<PsiVariable, PsiElement> myParameterValues = new HashMap<PsiVariable, PsiElement>();
+  private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<PsiVariable, List<PsiElement>>();
   private final Map<PsiVariable, ArrayList<PsiElement>> myParameterOccurences = new HashMap<PsiVariable, ArrayList<PsiElement>>();
   private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<PsiElement, PsiElement>();
   private ReturnValue myReturnValue = null;
@@ -50,7 +53,7 @@ public final class Match {
     return myMatchEnd;
   }
 
-  public PsiElement getParameterValue(PsiVariable parameter) {
+  public List<PsiElement> getParameterValues(PsiVariable parameter) {
     return myParameterValues.get(parameter);
   }
 
@@ -64,9 +67,9 @@ public final class Match {
     if (decl instanceof PsiVariable) {
       return new VariableReturnValue((PsiVariable)decl);
     }
-    final PsiElement parameterValue = getParameterValue(outputParameter);
-    if (parameterValue instanceof PsiExpression) {
-      return new ExpressionReturnValue((PsiExpression) parameterValue);
+    final List<PsiElement> parameterValue = getParameterValues(outputParameter);
+    if (parameterValue != null && parameterValue.size() == 1 && parameterValue.get(0) instanceof PsiExpression) {
+      return new ExpressionReturnValue((PsiExpression) parameterValue.get(0));
     }
     else {
       return null;
@@ -76,26 +79,39 @@ public final class Match {
 
   boolean putParameter(Pair<PsiVariable, PsiType> parameter, PsiElement value) {
     final PsiVariable psiVariable = parameter.first;
-    final PsiElement currentValue = myParameterValues.get(psiVariable);
+    final List<PsiElement> currentValue = myParameterValues.get(psiVariable);
+    final boolean isVararg = psiVariable instanceof PsiParameter && ((PsiParameter)psiVariable).isVarArgs();
+    if (!(value instanceof PsiExpression)) return false;
+    final PsiType type = ((PsiExpression)value).getType();
+    final PsiType parameterType = parameter.second;
+    if (type == null) return false;
     if (currentValue == null) {
-      if (!(value instanceof PsiExpression)) return false;
-      final PsiType type = ((PsiExpression)value).getType();
-      final PsiType parameterType = parameter.second;
-      if (type == null) return false;
       if (!(parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter)) {
         if (!parameterType.isAssignableFrom(type)) return false;
-        if (!psiVariable.getType().isAssignableFrom(type)) {
+        if (isVararg) {
+          if (!((PsiEllipsisType)psiVariable.getType()).getComponentType().isAssignableFrom(type)) {
+            myChangedParams.put(psiVariable, new PsiEllipsisType(parameterType));
+          }
+        } else if (!psiVariable.getType().isAssignableFrom(type)) {
           myChangedParams.put(psiVariable, parameterType);
         }
       }
-      myParameterValues.put(psiVariable, value);
+      final List<PsiElement> values = new ArrayList<PsiElement>();
+      values.add(value);
+      myParameterValues.put(psiVariable, values);
       final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
       myParameterOccurences.put(psiVariable, elements);
       return true;
     }
     else {
-      if (!PsiEquivalenceUtil.areElementsEquivalent(currentValue, value)) {
-        return false;
+      for (PsiElement val : currentValue) {
+        if (!isVararg && !PsiEquivalenceUtil.areElementsEquivalent(val, value)) {
+          return false;
+        }
+      }
+      if (isVararg) {
+        if (!parameterType.isAssignableFrom(type)) return false;
+        currentValue.add(value);
       }
       myParameterOccurences.get(psiVariable).add(value);
       return true;
@@ -217,8 +233,8 @@ public final class Match {
   }
 
   @Nullable
-  public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString,
-                                    final PsiImmediateClassType returnType) {
+  public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString) {
+    final PsiImmediateClassType returnType = getChangedReturnType(method);
     if (!myChangedParams.isEmpty() || returnType != null) {
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append(visibilityString);
@@ -275,11 +291,28 @@ public final class Match {
 
   public void changeSignature(final PsiMethod psiMethod) {
     final ArrayList<ParameterInfo> newParameters = patchParams(psiMethod);
+    final PsiImmediateClassType expressionType = getChangedReturnType(psiMethod);
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
-                                                                      psiMethod.getReturnType(),
+                                                                      expressionType != null ? expressionType : psiMethod.getReturnType(),
                                                                       newParameters.toArray(new ParameterInfo[newParameters.size()]));
 
     csp.run();
+  }
+
+  @Nullable
+  private PsiImmediateClassType getChangedReturnType(final PsiMethod psiMethod) {
+    final PsiType returnType = psiMethod.getReturnType();
+    final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiMethodCallExpression.class);
+    if (callExpression != null) {
+      final PsiMethod calledMethod = callExpression.resolveMethod();
+      if (calledMethod != null) {
+        final PsiImmediateClassType expressionType = new PsiImmediateClassType(calledMethod.getContainingClass(), PsiSubstitutor.EMPTY);
+        if (returnType != null && !TypeConversionUtil.isAssignable(expressionType, returnType)) {
+          return expressionType;
+        }
+      }
+    }
+    return null;
   }
 
   private ArrayList<ParameterInfo> patchParams(final PsiMethod psiMethod) {
