@@ -912,7 +912,7 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     String name = getName(id);
-    assert name.length() > 0: "File with empty name found under " + (parentId == 0 ? "<root> " : getName(parentId));
+    assert parentId > 0 || name.length() > 0: "File with empty name found under " + getName(parentId);
 
     int attributeRecordId;
     try {
