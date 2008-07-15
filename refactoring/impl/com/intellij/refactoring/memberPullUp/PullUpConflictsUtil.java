@@ -79,6 +79,7 @@ public class PullUpConflictsUtil {
     for (final PsiMethod method : abstractMethods) {
       checkModuleConflictsList.add(method.getParameterList());
       checkModuleConflictsList.add(method.getReturnTypeElement());
+      checkModuleConflictsList.add(method.getTypeParameterList());
     }
     RefactoringUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflictsList);
