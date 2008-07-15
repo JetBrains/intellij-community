@@ -24,10 +24,16 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+
 public class UnnecessaryParenthesesInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreClarifyingParentheses = false;
 
     @Override
     @NotNull
@@ -44,12 +50,18 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     }
 
     @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "unnecessary.parentheses.option"),
+                this, "ignoreClarifyingParentheses");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryParenthesesVisitor();
     }
 
-    private static class UnnecessaryParenthesesFix
-            extends InspectionGadgetsFix {
+    private class UnnecessaryParenthesesFix extends InspectionGadgetsFix {
 
         @NotNull
         public String getName() {
@@ -62,7 +74,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                 throws IncorrectOperationException {
             final PsiExpression expression =
                     (PsiExpression)descriptor.getPsiElement();
-            ParenthesesUtils.removeParentheses(expression);
+            ParenthesesUtils.removeParentheses(expression,
+                    ignoreClarifyingParentheses);
         }
     }
 
@@ -71,7 +84,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
         return new UnnecessaryParenthesesFix();
     }
 
-    private static class UnnecessaryParenthesesVisitor
+    private class UnnecessaryParenthesesVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitParenthesizedExpression(
@@ -89,6 +102,14 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                     ParenthesesUtils.getPrecedence((PsiExpression)parent);
             final int childPrecedence = ParenthesesUtils.getPrecedence(child);
             if (parentPrecedence > childPrecedence) {
+                if (ignoreClarifyingParentheses) {
+                    if (parent instanceof PsiBinaryExpression &&
+                            child instanceof PsiBinaryExpression) {
+                        return;
+                    } else if (child instanceof PsiInstanceOfExpression) {
+                        return;
+                    }
+                }
                 registerError(expression);
                 return;
             }
@@ -101,7 +122,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
             super.visitParenthesizedExpression(expression);
         }
 
-        private static boolean areParenthesesNeeded(
+        private boolean areParenthesesNeeded(
                 PsiParenthesizedExpression expression) {
             final PsiElement parent = expression.getParent();
             final PsiElement child = expression.getExpression();
@@ -109,15 +130,16 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                     child instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression parentBinaryExpression =
                         (PsiBinaryExpression)parent;
-                final PsiJavaToken parentSign =
-                        parentBinaryExpression.getOperationSign();
-                final IElementType parentOperator =
-                        parentSign.getTokenType();
                 final PsiBinaryExpression childBinaryExpression =
                         (PsiBinaryExpression)child;
-                final PsiJavaToken childSign =
-                        childBinaryExpression.getOperationSign();
-                final IElementType childOperator = childSign.getTokenType();
+                final IElementType childOperator =
+                        childBinaryExpression.getOperationTokenType();
+                final IElementType parentOperator =
+                        parentBinaryExpression.getOperationTokenType();
+                if (ignoreClarifyingParentheses &&
+                        !childOperator.equals(parentOperator)) {
+                    return true;
+                }
                 final PsiType parentType =
                         parentBinaryExpression.getType();
                 if (parentType == null) {

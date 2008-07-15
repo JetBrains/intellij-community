@@ -107,4 +107,11 @@
     <problem_class>Unnecessary parentheses</problem_class>
     <description>Parentheses around &lt;code&gt;(value != 5)&lt;/code&gt; are unnecessary #loc</description>
   </problem>
+
+  <problem>
+    <file>UnnecessaryParenthesesInspection.java</file>
+    <line>47</line>
+    <problem_class>Unnecessary parentheses</problem_class>
+    <description>Parentheses around &lt;code&gt;(1 - 2)&lt;/code&gt; are unnecessary #loc</description>
+  </problem>
 </problems>

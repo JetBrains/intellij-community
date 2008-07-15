@@ -41,4 +41,9 @@ public class UnnecessaryParenthesesInspection
         return value < 0 || value > 10
                 || (value != 5); // warn 
     }
+
+    public void commutative() {
+        final int a = 1 - (2 - 3); // no warn;
+        final int b = (1 - 2) - 3; // warn;
+    }
 }
