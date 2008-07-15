@@ -292,11 +292,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static void replaceParameterReferences(final PsiElement element,
                                                  final PsiMethod oldConstructor,
                                                  final PsiExpression[] instanceCreationArguments) {
+    boolean isParameterReference = false;
     if (element instanceof PsiReferenceExpression) {
       final PsiReferenceExpression expression = (PsiReferenceExpression)element;
       PsiElement resolved = expression.resolve();
       if (resolved instanceof PsiParameter &&
           element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
+        isParameterReference = true;
         PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
         PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
         for (int j = 0; j < declarationParameters.length; j++) {
@@ -311,7 +313,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    else {
+    if (!isParameterReference) {
       PsiElement child = element.getFirstChild();
       while (child != null) {
         PsiElement next = child.getNextSibling();

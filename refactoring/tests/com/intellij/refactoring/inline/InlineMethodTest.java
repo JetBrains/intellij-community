@@ -120,6 +120,10 @@ public class InlineMethodTest extends CodeInsightTestCase {
     doTest();
   }
 
+  public void testReplaceParameterWithArgumentForConstructor() throws Exception {   // IDEADEV-23652
+    doTest();
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";
