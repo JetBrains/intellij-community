@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
@@ -428,7 +430,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           if (idEndOffset != context.getSelectionEndOffset() && CompletionUtil.isOverwrite((LookupItem)item, completionChar)) {
             context.getEditor().getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
           }
-          item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
+          final TailType type =
+              SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(context.getEditor(), item, completionChar);
+          type.processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
         }
       };
     }
