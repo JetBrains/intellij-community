@@ -2,6 +2,7 @@ package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -79,6 +80,26 @@ public final class Match {
 
   boolean putParameter(Pair<PsiVariable, PsiType> parameter, PsiElement value) {
     final PsiVariable psiVariable = parameter.first;
+
+    if (myDeclarationCorrespondence.get(psiVariable) == null) {
+      final boolean [] valueDependsOnReplacedScope = new boolean[1];
+      value.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitReferenceExpression(final PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
+          final PsiElement resolved = expression.resolve();
+          if (resolved != null && Comparing.equal(resolved.getContainingFile(), getMatchEnd().getContainingFile())) {
+            final TextRange range = resolved.getTextRange();
+            if (getMatchStart().getTextOffset() <= range.getStartOffset() &&
+                range.getEndOffset() <= getMatchEnd().getTextRange().getEndOffset()) {
+              valueDependsOnReplacedScope[0] = true;
+            }
+          }
+        }
+      });
+      if (valueDependsOnReplacedScope[0]) return false;
+    }
+
     final List<PsiElement> currentValue = myParameterValues.get(psiVariable);
     final boolean isVararg = psiVariable instanceof PsiParameter && ((PsiParameter)psiVariable).isVarArgs();
     if (!(value instanceof PsiExpression)) return false;
