@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 22:53:14
  * To change this template use File | Settings | File Templates.
  */
-public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
+public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
