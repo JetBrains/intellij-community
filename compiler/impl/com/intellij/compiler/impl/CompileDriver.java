@@ -1759,15 +1759,15 @@ public class CompileDriver {
   }
   
   private static VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
-    final String path = CompilerPaths.getGenerationOutputPath(compiler, module, forTestSources);
-    final File file = new File(path);
+    final File file = new File(CompilerPaths.getGenerationOutputPath(compiler, module, forTestSources));
     final VirtualFile vFile;
     if (file.mkdirs()) {
       vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     }
     else {
-      vFile = LocalFileSystem.getInstance().findFileByPath(path);
+      vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     }
+    assert vFile != null: "Virtual file not found for " + file.getPath();
     return vFile;
   }
 

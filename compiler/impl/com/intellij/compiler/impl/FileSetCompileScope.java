@@ -28,6 +28,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
       new Runnable() {
         public void run() {
           for (VirtualFile file : files) {
+            assert file != null;
             addFile(file);
           }
         }
