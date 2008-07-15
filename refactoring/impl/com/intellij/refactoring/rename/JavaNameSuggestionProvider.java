@@ -24,6 +24,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     SuggestedNameInfo info = suggestNamesForElement(element);
 
     String parameterName = null;
+    String superMethodName = null;
     if (nameSuggestionContext != null) {
       final PsiElement nameSuggestionContextParent = nameSuggestionContext.getParent();
       if (nameSuggestionContextParent != null) {
@@ -55,6 +56,9 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
             if (propName != null) {
               parameterName = propName;
             }
+            if (nameSuggestionContextParent instanceof PsiParameter) {
+              superMethodName = getSuperMethodName((PsiParameter) nameSuggestionContextParent, (PsiMethod) parent3);
+            }
           }
         }
       }
@@ -76,9 +80,25 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     if (parameterName != null && !list.contains(parameterName)) {
       list.add(parameterName);
     }
+    if (superMethodName != null && !list.contains(superMethodName)) {
+      list.add(0, superMethodName);
+    }
     ContainerUtil.removeDuplicates(list);
     result.addAll(list);
     return info;
+  }
+
+  @Nullable
+  private static String getSuperMethodName(final PsiParameter psiParameter, final PsiMethod method) {
+    final int index = method.getParameterList().getParameterIndex(psiParameter);
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    for (PsiMethod superMethod : superMethods) {
+      final PsiParameterList superParameters = superMethod.getParameterList();
+      if (index < superParameters.getParametersCount()) {
+        return superParameters.getParameters() [index].getName();
+      }
+    }
+    return null;
   }
 
   @Nullable
