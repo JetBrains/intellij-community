@@ -601,12 +601,14 @@ class AbstractTreeUi implements Disposable {
   }
 
   private boolean queueBackgroundUpdate(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
-    if (isLoadingChildrenFor(node)) return false;
-
-    LoadingNode loadingNode = new LoadingNode(getLoadingNodeText());
-    myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount()); // 2 loading nodes - only one will be removed
+    if (myLoadingParents.contains(descriptor.getElement())) return false;
 
     myLoadingParents.add(descriptor.getElement());
+
+    if (!isNodeBeingBuilt(node)) {
+      LoadingNode loadingNode = new LoadingNode(getLoadingNodeText());
+      myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount());
+    }
 
     Runnable updateRunnable = new Runnable() {
       public void run() {
@@ -620,6 +622,8 @@ class AbstractTreeUi implements Disposable {
 
     Runnable postRunnable = new Runnable() {
       public void run() {
+        updateNodeChildren(node);
+
         myLoadingParents.remove(descriptor.getElement());
 
         getBuilder().updateNodeDescriptor(descriptor);
@@ -673,6 +677,13 @@ class AbstractTreeUi implements Disposable {
       final UpdaterTreeState state = myUpdaterState;
       clearUpdaterState();
       state.restore();
+    }
+
+    if (myTreeModel.getRoot() == node && !myTree.isRootVisible()) {
+      final TreePath rootPath = new TreePath(node.getPath());
+      if (!myTree.isExpanded(rootPath)) {
+        getBuilder().expandNodeChildren(node);
+      }
     }
   }
 
@@ -1189,8 +1200,8 @@ class AbstractTreeUi implements Disposable {
     return isNodeBeingBuilt(path.getLastPathComponent());
   }
 
-  public final boolean isNodeBeingBuilt(Object nodeObject) {
-    return isParentLoading(nodeObject) || isLoadingChildrenFor(nodeObject);
+  public final boolean isNodeBeingBuilt(Object node) {
+    return isParentLoading(node) || isLoadingChildrenFor(node);
   }
 
   public void setTreeStructure(final AbstractTreeStructure treeStructure) {
