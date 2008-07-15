@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -282,6 +283,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
       if (severity == HighlightSeverity.ERROR) {
         type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
+      }
+      if (severity == HighlightSeverity.WARNING) {
+        type = new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.INFO_ATTRIBUTES);
       }
       else {
         type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
