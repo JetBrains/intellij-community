@@ -90,8 +90,8 @@ public class LocalVcs implements ILocalVcs {
   public void endChangeSet(String name) {
     myChangeList.endChangeSet(name);
 
-    // we must call Storage.save to make it flush all the changes made during changesed.
-    // otherwise the ContentStorage may become corrupted if IDEA is forced to shutdown.
+    // we must call Storage.save to make it flush all the changes made during changeset.
+    // otherwise the ContentStorage may become corrupted if IDEA is shutdown forcefully.
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {
       myStorage.save();
