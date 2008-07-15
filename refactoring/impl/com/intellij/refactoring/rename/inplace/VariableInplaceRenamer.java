@@ -18,18 +18,17 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
@@ -248,13 +247,9 @@ public class VariableInplaceRenamer {
 
     public MyExpression(String name) {
       myName = name;
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myElementToRename.getProject());
-      VariableKind variableKind = codeStyleManager.getVariableKind(myElementToRename);
-      String propertyName = codeStyleManager.variableNameToPropertyName(myElementToRename.getName(), variableKind);
-      SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, myElementToRename.getType());
       List<String> names = new ArrayList<String>();
-      for (String suggestedName : nameInfo.names) {
-        if (!suggestedName.equals(myName)) names.add(suggestedName);
+      for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
+        provider.getSuggestedNames(myElementToRename, myElementToRename, names);
       }
       myLookupItems = new LookupItem[names.size()];
       for (int i = 0; i < myLookupItems.length; i++) {
