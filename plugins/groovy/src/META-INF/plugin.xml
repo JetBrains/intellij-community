@@ -78,6 +78,11 @@
 
     <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
 
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher"/>
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.TypeAliasReferenceSearcher"/>
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher"/>
+      
     <!-- Grails and GSP -->
     <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
     <annotator language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.annotator.GspAnnotator"/>
