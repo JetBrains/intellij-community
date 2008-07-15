@@ -311,7 +311,7 @@ public class FSRecords implements Disposable, Forceable {
     return DbConnection.getAttributes();
   }
 
-  private static PersistentStringEnumerator getNames() {
+  public static PersistentStringEnumerator getNames() {
     return DbConnection.getNames();
   }
 
