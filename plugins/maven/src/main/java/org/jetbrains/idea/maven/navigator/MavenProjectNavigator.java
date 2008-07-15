@@ -26,7 +26,6 @@ import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.idea.maven.indices.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
@@ -62,10 +61,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
 
   public MavenProjectNavigator(Project project,
                                MavenProjectsManager projectsManager,
-                               MavenPluginsRepository repository,
                                MavenEventsHandler eventsHandler) {
-    super(project, projectsManager, repository, eventsHandler);
-
+    super(project, projectsManager, eventsHandler);
   }
 
   @NotNull

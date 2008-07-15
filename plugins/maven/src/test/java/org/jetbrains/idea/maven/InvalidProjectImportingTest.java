@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven;
 
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
+import org.jetbrains.idea.maven.indices.MavenWithDataTestFixture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -472,6 +473,11 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotReportResolvedPlugins() throws Exception {
+    MavenWithDataTestFixture fixture = new MavenWithDataTestFixture(myDir);
+    fixture.setUp();
+
+    setRepositoryPath(fixture.getTestDataPath("plugins"));
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -481,7 +487,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "   <plugin>" +
                   "     <groupId>org.apache.maven.plugins</groupId>" +
                   "     <artifactId>maven-compiler-plugin</artifactId>" +
-                  "     <version>1</version>" +
+                  "     <version>2.0.2</version>" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");

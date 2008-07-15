@@ -127,8 +127,12 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected String getRepositoryPath() {
-    String path = getMavenCoreSettings().getEffectiveLocalRepository().getPath();
+    String path = getRepositoryFile().getPath();
     return FileUtil.toSystemIndependentName(path);
+  }
+
+  protected File getRepositoryFile() {
+    return getMavenCoreSettings().getEffectiveLocalRepository();
   }
 
   protected void setRepositoryPath(String path) {

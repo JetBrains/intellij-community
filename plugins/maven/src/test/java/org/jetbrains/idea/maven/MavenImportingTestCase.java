@@ -19,7 +19,6 @@ import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.indices.MavenPluginsRepository;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
@@ -58,7 +57,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenTreeStructure.RootNode createMavenTree() {
     MavenTreeStructure s = new MavenTreeStructure(myProject,
                                               myMavenProjectsManager,
-                                              MavenPluginsRepository.getInstance(myProject),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
         for (MavenProjectModel each : myMavenProjectsManager.getProjects()) {

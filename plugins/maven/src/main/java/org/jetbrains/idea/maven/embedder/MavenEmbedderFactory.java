@@ -130,12 +130,7 @@ public class MavenEmbedderFactory {
       }
     }
 
-    final String userHome = System.getProperty(PROP_USER_HOME);
-    if (!StringUtil.isEmptyOrSpaces(userHome)) {
-      return new File(new File(userHome, DOT_M2_DIR), REPOSITORY_DIR);
-    }
-
-    return null;
+    return new File(new File(System.getProperty(PROP_USER_HOME), DOT_M2_DIR), REPOSITORY_DIR);
   }
 
   private static String getRepositoryFromSettings(File file) {

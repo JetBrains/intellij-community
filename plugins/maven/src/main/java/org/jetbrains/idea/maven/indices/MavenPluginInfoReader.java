@@ -1,9 +1,6 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
@@ -25,51 +22,54 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
   public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
 
   @Nullable
-  public MavenPluginInfo loadPluginInfo(String repositoryPath, MavenId mavenId) {
-    String path = findPluginPath(repositoryPath, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar");
-    if (path == null) return null;
-
-    return createPluginDocument(path);
+  public static MavenPluginInfo loadPluginInfo(File localRepository, MavenId mavenId) {
+    File file = getPluginFile(localRepository, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar");
+    return createPluginDocument(file);
   }
 
-  public boolean hasPlugin(String repositoryPath, MavenId id) {
-    return findPluginPath(repositoryPath, id.groupId, id.artifactId, id.version, "jar") != null;
+  public static boolean hasPlugin(File localRepository, MavenId id) {
+    return getPluginFile(localRepository, id.groupId, id.artifactId, id.version, "jar").exists();
   }
 
-  @Nullable
-  @NonNls
-  public String findPluginPath(String repositoryPath, String groupId, String artifactId, String version, String ext) {
-    VirtualFile dir = null;
+  public static File getPluginFile(File localRepostiory, String groupId, String artifactId, String version, String ext) {
+    File dir = null;
     if (StringUtil.isEmpty(groupId)) {
       for (String each : DEFAULT_GROUPS) {
-        dir = findPluginDirectory(repositoryPath, each, artifactId);
-        if (dir != null) break;
+        dir = getPluginDirectory(localRepostiory, each, artifactId);
+        if (dir.exists()) break;
       }
     }
     else {
-      dir = findPluginDirectory(repositoryPath, groupId, artifactId);
+      dir = getPluginDirectory(localRepostiory, groupId, artifactId);
     }
 
-    if (dir == null || !dir.isDirectory()) return null;
-
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);
-    return dir.getPath() + File.separator + version + File.separator + artifactId + "-" + version + "." + ext;
+    return new File(dir, version + File.separator + artifactId + "-" + version + "." + ext);
   }
 
-  @Nullable
-  private VirtualFile findPluginDirectory(String repositoryPath,
-                                          String groupId,
-                                          String artifactId) {
+  private static File getPluginDirectory(File localRepository,
+                                         String groupId,
+                                         String artifactId) {
     String relativePath = StringUtil.replace(groupId, ".", File.separator) + File.separator + artifactId;
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(repositoryPath + File.separator + relativePath);
+    return new File(localRepository, relativePath);
   }
 
-  private String resolveVersion(VirtualFile pluginDir) {
+  private static String resolveVersion(File pluginDir) {
     List<String> versions = new ArrayList<String>();
 
-    for (VirtualFile availableVersion : pluginDir.getChildren()) {
-      if (availableVersion.isDirectory()) {
-        versions.add(availableVersion.getName());
+    File[] children;
+    try {
+      children = pluginDir.listFiles();
+      if (children == null) return "";
+    }
+    catch (Exception e) {
+      MavenLog.warn(e);
+      return "";
+    }
+
+    for (File version : children) {
+      if (version.isDirectory()) {
+        versions.add(version.getName());
       }
     }
 
@@ -80,13 +80,15 @@ public class MavenPluginInfoReader extends DummyProjectComponent {
   }
 
   @Nullable
-  private MavenPluginInfo createPluginDocument(String path) {
+  private static MavenPluginInfo createPluginDocument(File file) {
     try {
-      ZipFile jar = new ZipFile(path);
+      if (!file.exists()) return null;
+
+      ZipFile jar = new ZipFile(file);
       ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
       if (entry == null) {
-        MavenLog.info(IndicesBundle.message("repository.plugin.corrupt", path));
+        MavenLog.info(IndicesBundle.message("repository.plugin.corrupt", file));
         return null;
       }
 

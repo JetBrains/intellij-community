@@ -82,24 +82,22 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();
     List<MavenIndex> allIndices = indicesManager.getIndices();
 
-    File localRepo = MavenCore.getInstance(myProject).getState().getEffectiveLocalRepository();
-    if (localRepo != null) {
-      MavenIndex localIndex = null;
-      String localRepoPath = FileUtil.toSystemIndependentName(localRepo.getPath());
-      for (MavenIndex each : allIndices) {
-        if (FileUtil.pathsEqual(localRepoPath, each.getRepositoryPathOrUrl())) {
-          localIndex = each;
-          break;
-        }
+    File localRepo = MavenProjectsManager.getInstance(myProject).getLocalRepository();
+    MavenIndex localIndex = null;
+    String localRepoPath = FileUtil.toSystemIndependentName(localRepo.getPath());
+    for (MavenIndex each : allIndices) {
+      if (FileUtil.pathsEqual(localRepoPath, each.getRepositoryPathOrUrl())) {
+        localIndex = each;
+        break;
       }
-      try {
-        if (localIndex == null) localIndex = indicesManager.add(localRepoPath, MavenIndex.Kind.LOCAL);
-        projectIndices.add(localIndex);
-        if (localIndex.getUpdateTimestamp() == -1) scheduleUpdate(Collections.singletonList(localIndex));
-      }
-      catch (MavenIndexException e) {
-        MavenLog.info(e);
-      }
+    }
+    try {
+      if (localIndex == null) localIndex = indicesManager.add(localRepoPath, MavenIndex.Kind.LOCAL);
+      projectIndices.add(localIndex);
+      if (localIndex.getUpdateTimestamp() == -1) scheduleUpdate(Collections.singletonList(localIndex));
+    }
+    catch (MavenIndexException e) {
+      MavenLog.info(e);
     }
 
     Set<String> remoteRepos = collectRemoteRepositories();

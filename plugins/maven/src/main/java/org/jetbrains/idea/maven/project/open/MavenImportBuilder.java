@@ -83,8 +83,6 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
 
   private void enusreRepositoryPathMacro() {
     final File repo = myCoreSettings.getEffectiveLocalRepository();
-    if (repo == null) return;
-
     final PathMacros macros = PathMacros.getInstance();
 
     for (String each : macros.getAllMacroNames()) {

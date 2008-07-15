@@ -9,7 +9,6 @@ import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.indices.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
@@ -90,7 +89,6 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     public PopupMavenTreeStructure(final Project project) {
       super(project,
             MavenProjectsManager.getInstance(project),
-            MavenPluginsRepository.getInstance(project),
             project.getComponent(MavenEventsHandler.class));
       myTreeViewSettings = project.getComponent(MavenProjectNavigator.class).getTreeViewSettings();
     }

@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenPluginsRepositoryTest extends MavenTestCase {
+public class MavenPluginInfoReaderTest extends MavenTestCase {
   private MavenWithDataTestFixture myDataFixture;
   private MavenPluginInfo p;
 
@@ -19,7 +19,7 @@ public class MavenPluginsRepositoryTest extends MavenTestCase {
     setRepositoryPath(myDataFixture.getTestDataPath("plugins"));
 
     MavenId id = new MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2");
-    p = MavenPluginsRepository.getInstance(myProject).loadPluginInfo(id);
+    p = MavenPluginInfoReader.loadPluginInfo(getRepositoryFile(), id);
   }
 
   public void testLoadingPluginInfo() throws Exception {

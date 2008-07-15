@@ -58,9 +58,6 @@
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.indices.MavenPluginsRepository</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectNavigator</implementation-class>
     </component>
     <component>

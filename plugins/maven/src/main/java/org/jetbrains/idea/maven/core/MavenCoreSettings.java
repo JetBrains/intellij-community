@@ -77,7 +77,6 @@ public class MavenCoreSettings implements Cloneable {
     return localRepository;
   }
 
-  @Nullable
   public File getEffectiveLocalRepository() {
     return MavenEmbedderFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
   }

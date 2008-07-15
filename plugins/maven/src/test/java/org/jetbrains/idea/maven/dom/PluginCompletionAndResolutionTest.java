@@ -557,7 +557,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "additionalConfig");
+    assertCompletionVariants(myProjectPom, "additionalConfig", "config");
   }
 
   public void testDoNotHighlightUnknownElementsUnderLists() throws Throwable {
@@ -600,7 +600,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "webResource");
+    assertCompletionVariants(myProjectPom, "resource", "webResource");
   }
 
   public void testCompletionInCustomObjects() throws Exception {

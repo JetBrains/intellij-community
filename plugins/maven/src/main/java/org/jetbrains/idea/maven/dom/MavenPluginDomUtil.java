@@ -13,7 +13,9 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.model.Plugin;
 import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
 import org.jetbrains.idea.maven.indices.MavenPluginInfoReader;
-import org.jetbrains.idea.maven.indices.MavenPluginsRepository;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
+
+import java.io.File;
 
 public class MavenPluginDomUtil {
   public static MavenPluginModel getMavenPlugin(DomElement element) {
@@ -33,10 +35,9 @@ public class MavenPluginDomUtil {
     String artifactId = resolveProperties(pluginElement.getArtifactId());
     String version = resolveProperties(pluginElement.getVersion());
 
-    String pluginPath = MavenPluginsRepository.getInstance(p).findPluginPath(groupId, artifactId, version);
-    if (pluginPath == null) return null;
-
-    VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByPath(pluginPath);
+    File file = MavenPluginInfoReader.getPluginFile(MavenProjectsManager.getInstance(p).getLocalRepository(),
+                                                    groupId, artifactId, version, "jar");
+    VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (pluginFile == null) return null;
 
     VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);

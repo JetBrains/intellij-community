@@ -44,7 +44,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     }
 
     try {
-      Project p = context.getFile().getProject();
+      Project p = getProject(context);
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
       MavenId id = MavenArtifactConverterHelper.getId(context);
 
@@ -76,7 +76,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
     try {
-      Project p = context.getFile().getProject();
+      Project p = getProject(context);
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
       MavenId id = MavenArtifactConverterHelper.getId(context);
 
@@ -103,7 +103,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
 
   @Override
   public PsiElement resolve(String o, ConvertContext context) {
-    Project p = context.getFile().getProject();
+    Project p = getProject(context);
     MavenProjectsManager manager = MavenProjectsManager.getInstance(p);
 
     PsiFile f = getSpecifiedFile(context);
@@ -127,6 +127,10 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
     return super.resolve(o, context);
   }
 
+  private Project getProject(ConvertContext context) {
+    return context.getFile().getProject();
+  }
+
   private PsiFile getSpecifiedFile(ConvertContext context) {
     MavenParent parent = MavenArtifactConverterHelper.getMavenParent(context);
     if (parent != null) {
@@ -142,15 +146,12 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
   }
 
   private File resolveArtifactFile(ConvertContext context, MavenProjectsManager manager, MavenId id) {
-    File repo = manager.getMavenCoreSettings().getEffectiveLocalRepository();
-
     Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
     if (plugin != null) {
-      String path = new MavenPluginInfoReader().findPluginPath(repo.getPath(), id.groupId, id.artifactId, id.version, "pom");
-      return path == null ? null : new File(path);
+      return MavenPluginInfoReader.getPluginFile(manager.getLocalRepository(), id.groupId, id.artifactId, id.version, "pom");
     }
 
-    return new File(repo, assembleArtifactFile(context, id));
+    return new File(manager.getLocalRepository(), assembleArtifactFile(context, id));
   }
 
   private String assembleArtifactFile(ConvertContext context, MavenId id) {

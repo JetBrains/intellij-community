@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.xml.CustomChildren;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -81,10 +82,10 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
       e = r.registerFixedNumberChildExtension(new XmlName(parameterName), AnyParameter.class);
       e.addExtender(new DomExtender() {
         public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-          String singularName = StringUtil.unpluralize(parameterName);
-          if (singularName == null) singularName = parameterName;
-          DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(singularName), AnyParameter.class);
-          inner.putUserData(DomExtension.KEY_DECLARATION, parameter);
+          for (String each : collectPossibleNameForCollectionParameter(parameterName)) {
+            DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(each), AnyParameter.class);
+            inner.putUserData(DomExtension.KEY_DECLARATION, parameter);
+          }
         }
       });
     }
@@ -94,6 +95,18 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     e.putUserData(DomExtension.KEY_DECLARATION, parameter);
 
     parameter.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, parameter);
+  }
+
+  public List<String> collectPossibleNameForCollectionParameter(String parameterName) {
+    String singularName = StringUtil.unpluralize(parameterName);
+    if (singularName == null) singularName = parameterName;
+
+    List<String> result = new ArrayList<String>();
+    String[] parts = NameUtil.splitNameIntoWords(singularName);
+    for (int i = 0; i < parts.length; i++) {
+      result.add(StringUtil.decapitalize(StringUtil.join(parts, i, parts.length, "")));
+    }
+    return result;
   }
 
   private boolean isCollection(Parameter parameter) {

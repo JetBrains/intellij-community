@@ -13,14 +13,15 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.indices.MavenPluginInfo;
-import org.jetbrains.idea.maven.indices.MavenPluginsRepository;
+import org.jetbrains.idea.maven.indices.MavenPluginInfoReader;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -68,7 +69,6 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   public static void createActions(@NotNull Project project) {
     final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    final MavenPluginsRepository repository = MavenPluginsRepository.getInstance(project);
     final MavenEventsHandler eventsHandler = project.getComponent(MavenEventsHandler.class);
 
     final List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
@@ -78,7 +78,7 @@ public class MavenKeymapExtension implements KeymapExtension {
         final String mavenProjectName = each.getMavenProject().getName();
         final String pomPath = each.getPath();
         final String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
-        for (String goal : getGoals(each, repository)) {
+        for (String goal : getGoals(each, projectsManager.getLocalRepository())) {
           actionList.add(new MavenGoalAction(mavenProjectName, actionIdPrefix, pomPath, goal));
         }
       }
@@ -112,7 +112,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     return EventsBundle.message("maven.event.unknown.project");
   }
 
-  private static Collection<String> getGoals(MavenProjectModel node, MavenPluginsRepository repository) {
+  private static Collection<String> getGoals(MavenProjectModel node, File repository) {
     Collection<String> result = new HashSet<String>();
     result.addAll(MavenEmbedderFactory.getStandardGoalsList());
 
@@ -123,8 +123,8 @@ public class MavenKeymapExtension implements KeymapExtension {
     return result;
   }
 
-  private static void collectGoals(final MavenPluginsRepository repository, final MavenId mavenId, final Collection<String> list) {
-    final MavenPluginInfo plugin = repository.loadPluginInfo(mavenId);
+  private static void collectGoals(final File repository, final MavenId mavenId, final Collection<String> list) {
+    final MavenPluginInfo plugin = MavenPluginInfoReader.loadPluginInfo(repository, mavenId);
     if (plugin == null) return;
 
     for (MavenPluginInfo.Mojo m : plugin.getMojos()) {

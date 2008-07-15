@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.indices.MavenPluginInfo;
-import org.jetbrains.idea.maven.indices.MavenPluginsRepository;
+import org.jetbrains.idea.maven.indices.MavenPluginInfoReader;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -56,7 +56,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
   protected MavenProjectsManager myProjectsManager;
 
-  private final MavenPluginsRepository myRepository;
   protected final MavenEventsHandler myEventsHandler;
 
   protected final RootNode root = new RootNode();
@@ -66,16 +65,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
   public MavenTreeStructure(Project project,
                             MavenProjectsManager projectsManager,
-                            MavenPluginsRepository repository,
                             MavenEventsHandler eventsHandler) {
     myProject = project;
     myProjectsManager = projectsManager;
-    myRepository = repository;
     myEventsHandler = eventsHandler;
-  }
-
-  public MavenPluginsRepository getRepository() {
-    return myRepository;
   }
 
   public Object getRootElement() {
@@ -951,7 +944,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       myId = id;
       setUniformIcon(PLUGIN_ICON);
 
-      MavenPluginInfo plugin = getRepository().loadPluginInfo(id);
+      MavenPluginInfo plugin = MavenPluginInfoReader.loadPluginInfo(myProjectsManager.getLocalRepository(), id);
       if (plugin == null) {
         addColoredFragment(id.toString(), getErrorAttributes());
       }
