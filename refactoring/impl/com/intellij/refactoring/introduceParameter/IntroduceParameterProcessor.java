@@ -17,7 +17,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -127,33 +126,33 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    PsiSearchHelper helper = myManager.getSearchHelper();
 
     PsiMethod[] overridingMethods =
       OverridingMethodsSearch.search(myMethodToSearchFor, myMethodToSearchFor.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new UsageInfo(overridingMethod));
     }
+    if (!myGenerateDelegate) {
+      PsiReference[] refs =
+        MethodReferencesSearch.search(myMethodToSearchFor, GlobalSearchScope.projectScope(myProject), true).toArray(PsiReference.EMPTY_ARRAY);
 
-    PsiReference[] refs =
-      MethodReferencesSearch.search(myMethodToSearchFor, GlobalSearchScope.projectScope(myProject), true).toArray(PsiReference.EMPTY_ARRAY);
 
-
-    for (PsiReference ref1 : refs) {
-      PsiElement ref = ref1.getElement();
-      if (ref instanceof PsiMethod && ((PsiMethod)ref).isConstructor()) {
-        DefaultConstructorImplicitUsageInfo implicitUsageInfo =
-          new DefaultConstructorImplicitUsageInfo((PsiMethod)ref, myMethodToSearchFor);
-        result.add(implicitUsageInfo);
-      }
-      else if (ref instanceof PsiClass) {
-        result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
-      }
-      else if (!insideMethodToBeReplaced(ref)) {
-        result.add(new ExternalUsageInfo(ref));
-      }
-      else {
-        result.add(new ChangedMethodCallInfo(ref));
+      for (PsiReference ref1 : refs) {
+        PsiElement ref = ref1.getElement();
+        if (ref instanceof PsiMethod && ((PsiMethod)ref).isConstructor()) {
+          DefaultConstructorImplicitUsageInfo implicitUsageInfo =
+            new DefaultConstructorImplicitUsageInfo((PsiMethod)ref, myMethodToSearchFor);
+          result.add(implicitUsageInfo);
+        }
+        else if (ref instanceof PsiClass) {
+          result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
+        }
+        else if (!insideMethodToBeReplaced(ref)) {
+          result.add(new ExternalUsageInfo(ref));
+        }
+        else {
+          result.add(new ChangedMethodCallInfo(ref));
+        }
       }
     }
 
