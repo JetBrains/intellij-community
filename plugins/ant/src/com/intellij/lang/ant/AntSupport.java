@@ -68,7 +68,7 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   }
 
   public static void markFileAsAntFile(final VirtualFile file, final FileViewProvider viewProvider, final boolean value) {
-    if (ForcedAntFileAttribute.isAntFile(file) != value) {
+    if (file.isValid() && ForcedAntFileAttribute.isAntFile(file) != value) {
       ForcedAntFileAttribute.forceAntFile(file, value);
       viewProvider.contentsSynchronized();
     }

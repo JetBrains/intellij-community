@@ -29,6 +29,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -138,6 +140,27 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
       }
     });
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      public void beforeFileDeletion(final VirtualFileEvent event) {
+        final VirtualFile vFile = event.getFile();
+        final AntFile antFile = toAntFile(vFile);
+        if (antFile != null) {
+          // cleanup
+          for (AntBuildFile file : getBuildFiles()) {
+            if (antFile.equals(file.getAntFile())) {
+              removeBuildFile(file);
+              break;
+            }
+          }
+          for (Iterator<VirtualFile> it = myAntFileToContextFileMap.keySet().iterator(); it.hasNext();) {
+            final VirtualFile file = it.next();
+            if (vFile.equals(file) || vFile.equals(myAntFileToContextFileMap.get(file))) {
+              it.remove();
+            }
+          }
+        }
+      }
+    }, project);
   }
 
 
