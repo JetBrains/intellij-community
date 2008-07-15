@@ -43,7 +43,7 @@ public abstract class MavenExecutor extends ConsoleAdapter {
   private int exitCode = 0;
 
   public MavenExecutor(MavenRunnerParameters parameters, MavenCoreSettings coreSettings, MavenRunnerSettings runnerSettings, String caption) {
-    super(coreSettings.getOutputLevel());
+    super(coreSettings.getOutputLevel(), runnerSettings.isPrintStackTrace());
     myParameters = parameters;
     myCoreSettings = coreSettings;
     myRunnerSettings = runnerSettings;

@@ -117,7 +117,7 @@ public class MavenExternalParameters {
                                                     final MavenCoreSettings coreSettings,
                                                     final MavenRunnerSettings runnerSettings,
                                                     final MavenRunnerParameters parameters) {
-    encodeCoreSettings(coreSettings, list);
+    encodeCoreAndRunnerSettings(coreSettings, runnerSettings, list);
 
     if (runnerSettings.isSkipTests()) {
       addProperty(list, "maven.test.skip", "true");
@@ -203,7 +203,8 @@ public class MavenExternalParameters {
     return classpathEntries;
   }
 
-  private static void encodeCoreSettings(MavenCoreSettings coreSettings, @NonNls List<String> cmdList) {
+  private static void encodeCoreAndRunnerSettings(MavenCoreSettings coreSettings, MavenRunnerSettings runnerSettings,
+                                                  @NonNls List<String> cmdList) {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");
     }
@@ -238,6 +239,10 @@ public class MavenExternalParameters {
       else {
         cmdList.add("--lax-checksums");
       }
+    }
+
+    if (runnerSettings.isPrintStackTrace()) {
+      cmdList.add("-e");
     }
 
     addOption(cmdList, "s", coreSettings.getMavenSettingsFile());
