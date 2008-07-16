@@ -6,8 +6,8 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,6 @@ public class LookupElementFactoryImpl extends LookupElementFactory{
       if (metaData instanceof PsiPresentableMetaData) {
         final PsiPresentableMetaData presentableMetaData = (PsiPresentableMetaData)metaData;
         lookupItem.setIcon(presentableMetaData.getIcon());
-        lookupItem.setTypeText(presentableMetaData.getTypeName());
         final String name = presentableMetaData.getName();
         if (StringUtil.isNotEmpty(name)) {
           lookupItem.setPresentableText(name);
