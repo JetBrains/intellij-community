@@ -21,8 +21,8 @@ public class ClassHidesImportedClassUsageInfo extends ResolvableCollisionUsageIn
   }
 
   public void resolveCollision() throws IncorrectOperationException {
+    if (!myCollisionReference.isValid()) return;
     final PsiManager manager = myCollisionReference.getManager();
-    if(manager == null) return;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     if (!isResolvable()) return;
