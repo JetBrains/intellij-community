@@ -44,8 +44,7 @@ class FileInfo {
     myFile = file;
     myHandleType.add(HandleType.USE_FILE_SYSTEM);
     myHandleType.selectFirst();
-    final HandleTypeFactory[] typeFactories = Extensions.getExtensions(HandleTypeFactory.EP_NAME, project);
-    for(HandleTypeFactory factory: typeFactories) {
+    for(HandleTypeFactory factory: Extensions.getExtensions(HandleTypeFactory.EP_NAME, project)) {
       final HandleType handleType = factory.createHandleType(file);
       if (handleType != null) {
         myHandleType.add(handleType);

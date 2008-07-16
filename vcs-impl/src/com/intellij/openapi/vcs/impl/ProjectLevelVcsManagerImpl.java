@@ -187,8 +187,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     }
     if (myProject.isDisposed()) return null;
-    final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
-    for(VcsEP ep: vcsEPs) {
+    for(VcsEP ep: Extensions.getExtensions(VcsEP.EP_NAME, myProject)) {
       if (ep.name.equals(name)) {
         AbstractVcs vcs = ep.getVcs(myProject);
         if (!myVcss.contains(vcs)) {
@@ -202,8 +201,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public AbstractVcs[] getAllVcss() {
-    final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
-    for(VcsEP ep: vcsEPs) {
+    for(VcsEP ep: Extensions.getExtensions(VcsEP.EP_NAME, myProject)) {
       AbstractVcs vcs = ep.getVcs(myProject);
       if (!myVcss.contains(vcs)) {
         registerVcs(vcs);

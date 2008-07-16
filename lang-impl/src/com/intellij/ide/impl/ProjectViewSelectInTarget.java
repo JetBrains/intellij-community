@@ -56,8 +56,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   public void select(PsiElement element, final boolean requestFocus) {
     PsiElement toSelect = null;
-    final TreeStructureProvider[] providers = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
-    for (TreeStructureProvider provider : providers) {
+    for (TreeStructureProvider provider : Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject)) {
       if (provider instanceof SelectableTreeStructureProvider) {
         toSelect = ((SelectableTreeStructureProvider) provider).getTopLevelElement(element);
       }

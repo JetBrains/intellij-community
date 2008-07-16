@@ -67,6 +67,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
+  private static final Comparator<HighlightVisitor> VISITOR_ORDER_COMPARATOR = new Comparator<HighlightVisitor>() {
+    public int compare(final HighlightVisitor o1, final HighlightVisitor o2) {
+      return o1.order() - o2.order();
+    }
+  };
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -90,11 +95,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private HighlightVisitor[] createHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
     HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
-    Arrays.sort(highlightVisitors, new Comparator<HighlightVisitor>() {
-      public int compare(final HighlightVisitor o1, final HighlightVisitor o2) {
-        return o1.order() - o2.order();
-      }
-    });
     if (oldCount != 0) {
       highlightVisitors = highlightVisitors.clone();
       for (int i = 0; i < highlightVisitors.length; i++) {
@@ -388,7 +388,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     for (HighlightVisitor visitor : highlightVisitors) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
+
     HighlightVisitor[] visitorArray = visitors.toArray(new HighlightVisitor[visitors.size()]);
+    Arrays.sort(visitorArray, VISITOR_ORDER_COMPARATOR);
 
     final boolean forceHighlightParents = forceHighlightParents();
 

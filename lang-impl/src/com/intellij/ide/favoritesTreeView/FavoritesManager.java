@@ -277,8 +277,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
     };
 
-    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject);
-
     List<Pair<AbstractUrl, String>> urls = getFavoritesListRootUrls(name);
     for (Pair<AbstractUrl, String> pair : urls) {
       AbstractUrl abstractUrl = pair.getFirst();
@@ -340,7 +338,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
 
 
-      for(FavoriteNodeProvider provider: providers) {
+      for(FavoriteNodeProvider provider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
         if (provider.elementContainsFile(element, vFile)) {
           return true;
         }

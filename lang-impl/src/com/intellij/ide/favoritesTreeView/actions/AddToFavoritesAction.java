@@ -60,8 +60,7 @@ public class AddToFavoritesAction extends AnAction {
     Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
     Collection<AbstractTreeNode> nodesToAdd = null;
-    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project);
-    for(FavoriteNodeProvider provider: providers) {
+    for(FavoriteNodeProvider provider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
       nodesToAdd = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
       if (nodesToAdd != null) {
         break;

@@ -109,9 +109,8 @@ public class HectorComponent extends JPanel {
 
     gc.gridy = GridBagConstraints.RELATIVE;
     gc.weighty = 0;
-    final HectorComponentPanelsProvider[] componentPanelsProviders = Extensions.getExtensions(HectorComponentPanelsProvider.EP_NAME, project);
     myAdditionalPanels = new ArrayList<HectorComponentPanel>();
-    for (HectorComponentPanelsProvider provider : componentPanelsProviders) {
+    for (HectorComponentPanelsProvider provider : Extensions.getExtensions(HectorComponentPanelsProvider.EP_NAME, project)) {
       final HectorComponentPanel componentPanel = provider.createConfigurable(file);
       if (componentPanel != null) {
         myAdditionalPanels.add(componentPanel);
