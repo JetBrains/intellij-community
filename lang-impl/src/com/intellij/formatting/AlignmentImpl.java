@@ -33,14 +33,34 @@ class AlignmentImpl extends Alignment {
   }
 
   LeafBlockWrapper getOffsetRespBlockBefore(final LeafBlockWrapper blockAfter) {
-    if (blockAfter != null && myOffsetRespBlocks != EMPTY) {
+    if (myOffsetRespBlocks != EMPTY) {
+      LeafBlockWrapper lastBlockAfterLineFeed = null;
+      LeafBlockWrapper firstAlignedBlock = null;
+      LeafBlockWrapper lastAlignedBlock = null;
       for (ListIterator<LeafBlockWrapper> each = myOffsetRespBlocks.listIterator(myOffsetRespBlocks.size()); each.hasPrevious();) {
         final LeafBlockWrapper current = each.previous();
-        if (current.getStartOffset() < blockAfter.getStartOffset()) break;
-        each.remove();
+        if (blockAfter == null || current.getStartOffset() < blockAfter.getStartOffset()) {
+          if (firstAlignedBlock == null || firstAlignedBlock.getStartOffset() > current.getStartOffset()) {
+            firstAlignedBlock = current;
+          }
+
+          if (lastAlignedBlock == null || lastAlignedBlock.getStartOffset() < current.getStartOffset()) {
+            lastAlignedBlock = current;
+          }
+
+          if (current.getWhiteSpace().containsLineFeeds() &&
+              (lastBlockAfterLineFeed == null || lastBlockAfterLineFeed.getStartOffset() < current.getStartOffset())) {
+            lastBlockAfterLineFeed = current;
+          }
+
+        }
+        //each.remove();
       }
+      if (lastBlockAfterLineFeed != null) return lastBlockAfterLineFeed;
+      if (firstAlignedBlock != null) return firstAlignedBlock;
+      return lastAlignedBlock;
     }
-    return myOffsetRespBlocks.isEmpty() ? null : myOffsetRespBlocks.get(myOffsetRespBlocks.size() - 1);
+    return null;
   }
 
   void setOffsetRespBlock(final LeafBlockWrapper block) {

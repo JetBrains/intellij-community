@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 class LeafBlockWrapper extends AbstractBlockWrapper {
+  //TODO remove text!!!
   private static int CONTAIN_LINE_FEEDS = 4;
   private static int READ_ONLY = 8;
   private static int LEAF = 16;
