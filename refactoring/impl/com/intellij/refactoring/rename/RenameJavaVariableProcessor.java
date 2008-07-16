@@ -102,7 +102,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       return;
     }
 
-    if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter) {
+    if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter || elem instanceof PsiField) {
       qualifyField(field, replacedOccurence, newName);
     }
   }
