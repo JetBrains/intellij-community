@@ -170,7 +170,11 @@ public class PasteHandler extends EditorActionHandler {
         }
       );
 
-      final int offset = editor.getCaretModel().getOffset() - length;
+      int offset = editor.getCaretModel().getOffset() - length;
+      if (offset < 0) {
+        length += offset;
+        offset = 0;
+      }
       final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
 
       editor.getCaretModel().moveToOffset(bounds.getEndOffset());
