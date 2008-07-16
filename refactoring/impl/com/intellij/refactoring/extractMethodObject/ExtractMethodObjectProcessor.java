@@ -339,7 +339,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     protected void apply(final AbstractExtractDialog dialog) {
       super.apply(dialog);
       myCreateInnerClass = (((ExtractMethodObjectDialog)dialog).createInnerClass());
-      myInnerClassName = StringUtil.capitalize(dialog.getChosenMethodName());
+      myInnerClassName = myCreateInnerClass ? StringUtil.capitalize(dialog.getChosenMethodName()) : dialog.getChosenMethodName();
     }
 
     @Override
