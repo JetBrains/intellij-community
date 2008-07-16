@@ -129,8 +129,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     final PsiMethod methodToRename = (PsiMethod)element;
     findSubmemberHidesMemberCollisions(methodToRename, newName, result);
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
-
-    findCollisionsAgainstNewName(element, newName, result, methodToRename);
+    findCollisionsAgainstNewName(methodToRename, newName, result);
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {

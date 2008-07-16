@@ -64,10 +64,9 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("valueOf");
   }
 
-  //Fails due to IDEADEV-25198.
-  //public void testRenameVarConstToAlien() throws Exception {
-  //  doTest("CASE_INSENSITIVE_ORDER");
-  //}
+  public void testRenameVarConstToAlien() throws Exception {
+    doTest("CASE_INSENSITIVE_ORDER");
+  }
 
   public void testRenameVarConstToParam() throws Exception {
     doTest("param3");

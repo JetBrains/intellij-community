@@ -128,7 +128,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  protected void findCollisionsAgainstNewName(final PsiElement element, final String newName, final List<UsageInfo> result, final PsiMember memberToRename) {
+  protected void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<UsageInfo> result) {
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
     PsiMember prototype = (PsiMember)memberToRename.copy();
     try {
@@ -156,7 +156,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
         if (conflictElement != null) {
           final PsiElement scope = resolveResult.getCurrentFileResolveScope();
           if (scope instanceof PsiImportStaticStatement) {
-            result.add(new MemberHidesStaticImportUsageInfo(potentialConflict.getElement(), conflictElement, element));
+            result.add(new MemberHidesStaticImportUsageInfo(potentialConflict.getElement(), conflictElement, memberToRename));
           }
         }
       }

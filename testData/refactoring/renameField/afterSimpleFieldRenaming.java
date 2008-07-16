@@ -1,5 +1,5 @@
 class A {
-    int myNewField;    
+    int myNewField;
 }
 
 class B {

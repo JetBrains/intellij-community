@@ -1,7 +1,7 @@
 class A {
-   int <caret>fieldToBeRenamed;
+    int <caret>fieldToBeRenamed;
    
-   int method(int newFieldName) {
+    int method(int newFieldName) {
         if(newFieldName == 0) {
                 return fieldToBeRenamed;
         }

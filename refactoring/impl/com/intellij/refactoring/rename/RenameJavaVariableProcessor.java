@@ -38,6 +38,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                             final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
+    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
     List<PsiElement> occurrencesToCheckForConflict = new ArrayList<PsiElement>();
     // rename all references
     for (UsageInfo usage : usages) {
@@ -59,6 +60,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiField resolved = (PsiField)collidingRef.resolve();
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
+      }
+      else if (usage instanceof MemberHidesStaticImportUsageInfo) {
+        staticImportHides.add((MemberHidesStaticImportUsageInfo) usage);
       }
       else {
         final PsiReference ref;
@@ -87,6 +91,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
 
     qualifyOuterMemberReferences(outerHides);
+    qualifyStaticImportReferences(staticImportHides);
   }
 
   private static void fixPossibleNameCollisionsForFieldRenaming(PsiField field, String newName, PsiElement replacedOccurence) throws IncorrectOperationException {
@@ -203,6 +208,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       PsiField field = (PsiField) element;
       findMemberHidesOuterMemberCollisions(field, newName, result);
       findSubmemberHidesFieldCollisions(field, newName, result);
+      findCollisionsAgainstNewName(field, newName, result);
     }
     else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
       JavaUnresolvableLocalCollisionDetector.findCollisions(element, newName, result);
