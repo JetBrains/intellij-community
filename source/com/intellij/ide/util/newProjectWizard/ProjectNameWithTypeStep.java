@@ -14,6 +14,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -143,17 +144,18 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         if (myModuleNameDocListenerEnabled) {
           myModuleNameChangedByUser = true;
         }
+        String path = getDefaultBaseDir(wizardContext);
+        if (!Comparing.strEqual(myModuleName.getText().trim(), myNamePathComponent.getNameValue())) {
+          path += "/" + myModuleName.getText();
+        }
         if (!myContentRootChangedByUser) {
-          final String path = getDefaultBaseDir(wizardContext);
           final boolean f = myModuleNameChangedByUser;
           myModuleNameChangedByUser = true;
-          setModuleContentRoot(path + "/" + myModuleName.getText());
+          setModuleContentRoot(path);
           myModuleNameChangedByUser = f;
-
         }
         if (!myImlLocationChangedByUser) {
-          final String path = getDefaultBaseDir(wizardContext);
-          setImlFileLocation(path + "/" + myModuleName.getText());
+          setImlFileLocation(path);
         }
       }
     });
@@ -168,10 +170,17 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         if (!myModuleNameChangedByUser) {
           final String path = FileUtil.toSystemIndependentName(myModuleContentRoot.getText());
           final int idx = path.lastIndexOf("/");
+
           boolean f = myContentRootChangedByUser;
           myContentRootChangedByUser = true;
+
+          boolean i = myImlLocationChangedByUser;
+          myImlLocationChangedByUser = true;
+
           setModuleName(idx >= 0 ? path.substring(idx + 1) : "");
+
           myContentRootChangedByUser = f;
+          myImlLocationChangedByUser = i;
         }
       }
     });
