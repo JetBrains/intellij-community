@@ -1025,7 +1025,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiExpressionStatement statement = (PsiExpressionStatement)myFactory.createStatementFromText(field.getName() + " = 0;", body);
           statement = (PsiExpressionStatement)body.add(statement);
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
-          assignment.getLExpression().replace(RenameJavaVariableProcessor.createFieldReference(field, assignment));
+          assignment.getLExpression().replace(RenameJavaVariableProcessor.createMemberReference(field, assignment));
           assignment.getRExpression().replace(initializer);
           addMarkedElements(refsVector, statement);
           if (field.hasModifierProperty(PsiModifier.STATIC)) {

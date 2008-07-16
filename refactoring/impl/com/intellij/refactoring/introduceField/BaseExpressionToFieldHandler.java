@@ -480,7 +480,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiExpression rExpression = expr.getRExpression();
       LOG.assertTrue(rExpression != null);
       rExpression.replace(initializerExpr);
-      final PsiReferenceExpression fieldReference = RenameJavaVariableProcessor.createFieldReference(field, context);
+      final PsiReferenceExpression fieldReference = RenameJavaVariableProcessor.createMemberReference(field, context);
       expr.getLExpression().replace(fieldReference);
 
       return statement;

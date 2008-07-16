@@ -5,12 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -31,7 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
+public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaVariableProcessor");
 
   public boolean canProcessElement(final PsiElement element) {
@@ -54,7 +52,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
         PsiElement resolved = collidingRef.resolve();
 
         if (resolved instanceof PsiField) {
-          qualifyField((PsiField)resolved, collidingRef, newName);
+          qualifyMember((PsiField)resolved, collidingRef, newName);
         }
         else {
           // do nothing
@@ -95,7 +93,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       final PsiElement element = usage.getElement();
       PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
       PsiField field = (PsiField)usage.getReferencedElement();
-      PsiReferenceExpression ref = createFieldReference(field, collidingRef);
+      PsiReferenceExpression ref = createMemberReference(field, collidingRef);
       collidingRef.replace(ref);
     }
   }
@@ -110,63 +108,8 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     }
 
     if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter || (elem instanceof PsiField && elem != replacedOccurence))  {
-      qualifyField(field, replacedOccurence, newName);
+      qualifyMember(field, replacedOccurence, newName);
     }
-  }
-
-  private static void qualifyField(PsiField field, PsiElement occurence, String newName) throws IncorrectOperationException {
-    PsiManager psiManager = occurence.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-    if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText("a." + newName, null);
-      qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
-      qualified.getQualifierExpression().replace(factory.createReferenceExpression(field.getContainingClass()));
-      occurence.replace(qualified);
-    }
-    else {
-      PsiReferenceExpression qualified = createQualifiedFieldReference(field, occurence, newName);
-      qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
-      occurence.replace(qualified);
-    }
-  }
-
-  public static PsiReferenceExpression createFieldReference(PsiField field, PsiElement context) throws IncorrectOperationException {
-    final PsiManager manager = field.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final String name = field.getName();
-    PsiReferenceExpression ref = (PsiReferenceExpression) factory.createExpressionFromText(name, context);
-    PsiElement resolved = ref.resolve();
-    if (manager.areElementsEquivalent(resolved, field)) return ref;
-    return createQualifiedFieldReference(field, context, name);
-  }
-
-  private static PsiReferenceExpression createQualifiedFieldReference(final PsiField field, final PsiElement context,
-                                                                      final String name) throws IncorrectOperationException {
-    PsiReferenceExpression ref;
-    final PsiJavaCodeReferenceElement qualifier;
-
-    final PsiManager manager = field.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      ref = (PsiReferenceExpression)factory.createExpressionFromText("A." + name, context);
-      qualifier = (PsiReferenceExpression)ref.getQualifierExpression();
-      final PsiClass containingClass = field.getContainingClass();
-      final PsiReferenceExpression classReference = factory.createReferenceExpression(containingClass);
-      qualifier.replace(classReference);
-    }
-    else {
-      PsiClass contextClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-      if (InheritanceUtil.isInheritorOrSelf(contextClass, field.getContainingClass(), true)) {
-        ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + name, context);
-        return ref;
-      }
-      ref = (PsiReferenceExpression) factory.createExpressionFromText("A.this." + name, null);
-      qualifier = ((PsiThisExpression)ref.getQualifierExpression()).getQualifier();
-      final PsiClass containingClass = field.getContainingClass();
-      final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(containingClass);
-      qualifier.replace(classReference);
-    }
-    return ref;
   }
 
   public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {

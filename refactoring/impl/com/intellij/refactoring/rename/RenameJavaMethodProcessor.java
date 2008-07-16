@@ -1,14 +1,16 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -19,16 +21,14 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
-public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
+public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMethodProcessor");
 
   public boolean canProcessElement(final PsiElement element) {
@@ -39,6 +39,12 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
                             final String newName,
                             final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
     PsiMethod method = (PsiMethod) psiElement;
+    Set<PsiMethod> methodAndOverriders = new HashSet<PsiMethod>();
+    Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+    List<PsiElement> renamedReferences = new ArrayList<PsiElement>();
+
+    methodAndOverriders.add(method);
+    containingClasses.add(method.getContainingClass());
     // do actual rename of overriding/implementing methods and of references to all them
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
@@ -52,8 +58,13 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
           ref = element.getReference();
         }
         if (ref != null) {
-          ref.handleElementRename(newName);
+          renamedReferences.add(ref.handleElementRename(newName));
         }
+      }
+      else {
+        PsiMethod overrider = (PsiMethod) element;
+        methodAndOverriders.add(overrider);
+        containingClasses.add(overrider.getContainingClass());
       }
     }
 
@@ -66,6 +77,32 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
       }
     }
     listener.elementRenamed(method);
+
+    for (PsiElement element: renamedReferences) {
+      fixNameCollisionsWithInnerClassMethod(element, newName, methodAndOverriders, containingClasses,
+                                            method.hasModifierProperty(PsiModifier.STATIC));
+    }
+  }
+
+  private static void fixNameCollisionsWithInnerClassMethod(final PsiElement element, final String newName,
+                                                            final Set<PsiMethod> methodAndOverriders, final Set<PsiClass> containingClasses,
+                                                            final boolean isStatic) throws IncorrectOperationException {
+    if (!(element instanceof PsiReferenceExpression)) return;
+    PsiElement elem = ((PsiReferenceExpression)element).resolve();
+
+    if (elem instanceof PsiMethod) {
+      PsiMethod actualMethod = (PsiMethod) elem;
+      if (!methodAndOverriders.contains(actualMethod)) {
+        PsiClass outerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+        while (outerClass != null) {
+          if (containingClasses.contains(outerClass)) {
+            qualifyMember(element, newName, outerClass, isStatic);
+            break;
+          }
+          outerClass = outerClass.getContainingClass();
+        }
+      }
+    }
   }
 
   @NotNull
