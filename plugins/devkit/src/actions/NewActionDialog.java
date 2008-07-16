@@ -29,6 +29,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
       public void valueChanged(ListSelectionEvent e) {
         ActionGroup group = (ActionGroup) myGroupList.getSelectedValue();
         if (group == null) {
-          myActionList.setListData(new Object[0]);
+          myActionList.setListData(ArrayUtil.EMPTY_OBJECT_ARRAY);
         }
         else {
           final AnAction[] actions = group.getChildren(null);
