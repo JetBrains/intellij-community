@@ -97,7 +97,23 @@ public class PluginDownloader {
       return false;
     }
 
-    final IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(myFile);
+    IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(myFile);
+    if (descriptor == null) {
+      if (myFile.getName().endsWith(".zip")) {
+        final File outputDir = FileUtil.createTempDirectory("plugin", "");
+        try {
+          ZipUtil.extract(myFile, outputDir, new FilenameFilter() {
+            public boolean accept(final File dir, final String name) {
+              return true;
+            }
+          });
+          descriptor = PluginManager.loadDescriptor(new File(outputDir, FileUtil.getNameWithoutExtension(myFile)), PluginManager.PLUGIN_XML);
+        }
+        finally {
+          FileUtil.delete(outputDir);
+        }
+      }
+    }
     if (descriptor != null) {
       myPluginVersion = descriptor.getVersion();
       if (ideaPluginDescriptor != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) return false; //was not updated
