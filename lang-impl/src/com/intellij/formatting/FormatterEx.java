@@ -41,6 +41,13 @@ public abstract class FormatterEx{
                               TextRange affectedRange,
                               final boolean processHeadingWhitespace) throws IncorrectOperationException;
 
+  public abstract void format(FormattingModel model,
+                              CodeStyleSettings settings,
+                              CodeStyleSettings.IndentOptions indentOptions,
+                              CodeStyleSettings.IndentOptions javaIndentOptions,
+                              TextRange affectedRange,
+                              final boolean processHeadingWhitespace) throws IncorrectOperationException;
+
 
   public abstract IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel psiBasedFormattingModel,
                                                  final Block block,

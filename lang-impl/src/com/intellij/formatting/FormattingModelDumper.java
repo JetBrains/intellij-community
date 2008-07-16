@@ -1,7 +1,7 @@
 package com.intellij.formatting;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -14,7 +14,7 @@ public class FormattingModelDumper {
   private FormattingModelDumper() {
   }
 
-  public static void dumpFormattingModel(final ASTBlock block, int indent, final PrintStream output) {
+  public static void dumpFormattingModel(final Block block, int indent, final PrintStream output) {
     if (indent == 0) {
       output.println("--- FORMATTING MODEL ---");
     }
@@ -34,26 +34,37 @@ public class FormattingModelDumper {
           }
         }
         prevBlock = subBlock;
-        dumpFormattingModel((ASTBlock) subBlock, indent+2, output);
+        dumpFormattingModel(subBlock, indent+2, output);
       }
     }
   }
 
-  private static void dumpTextBlock(final ASTBlock block, final PrintStream output) {
-    StringBuilder blockData = new StringBuilder("\"" + block.getNode().getText() + "\"");
+  private static void dumpTextBlock(final Block block, final PrintStream output) {
+    StringBuilder blockData = new StringBuilder("\"" + getBlockText(block) + "\"");
     dumpBlockProperties(block, blockData);
     output.println(blockData.toString());
   }
 
-  private static void dumpBlock(final ASTBlock block, final PrintStream output) {
+  private static String getBlockText(final Block block) {
+    if (block instanceof ASTBlock) {
+      return ((ASTBlock)block).getNode().getText();
+    }
+    else {
+      return "unknown block " + block.getClass();
+    }
+  }
+
+  private static void dumpBlock(final Block block, final PrintStream output) {
     StringBuilder blockData = new StringBuilder("<block ");
-    blockData.append(block.getNode().getElementType());
+    if (block instanceof ASTBlock) {
+      blockData.append(((ASTBlock)block).getNode().getElementType());
+    }
     dumpBlockProperties(block, blockData);
     blockData.append(">");
     output.println(blockData.toString());
   }
 
-  private static void dumpBlockProperties(final ASTBlock block, final StringBuilder blockData) {
+  private static void dumpBlockProperties(final Block block, final StringBuilder blockData) {
     TextRange textRange = block.getTextRange();
     blockData.append(" ").append(textRange.getStartOffset()).append(":").append(textRange.getEndOffset());
     Wrap wrap = block.getWrap();

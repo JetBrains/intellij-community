@@ -51,6 +51,7 @@ class FormatProcessor {
   private WhiteSpace myLastWhiteSpace;
   private boolean myDisposed;
   private final int myInterestingOffset;
+  private CodeStyleSettings.IndentOptions myJavaIndentOptions;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -147,7 +148,16 @@ class FormatProcessor {
     myLastTokenBlock = null;
     myDisposed = true;
 
-    doModify(blocksToModify, model,myIndentOption,mySettings.getIndentOptions(StdFileTypes.JAVA));
+    //for GeneralCodeFormatterTest
+    if (myJavaIndentOptions == null) {
+      myJavaIndentOptions = mySettings.getIndentOptions(StdFileTypes.JAVA);
+    }
+
+    doModify(blocksToModify, model,myIndentOption, myJavaIndentOptions);
+  }
+
+  public void setJavaIndentOptions(final CodeStyleSettings.IndentOptions javaIndentOptions) {
+    myJavaIndentOptions = javaIndentOptions;
   }
 
   private static void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,

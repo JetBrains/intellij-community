@@ -1,9 +1,6 @@
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +9,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -22,6 +20,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+
+import java.io.IOException;
 
 public class CodeFormatterFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
@@ -110,6 +110,8 @@ public class CodeFormatterFacade {
                                                                          PsiDocumentManager.getInstance(project).getDocument(file),
                                                                          project, mySettings, fileType, file);
 
+          //printToConsole(rootBlock, model);
+
           FormatterEx.getInstanceEx().format(model, mySettings,
                                              mySettings.getIndentOptions(fileType), range, headWhitespace);
         }
@@ -117,6 +119,18 @@ public class CodeFormatterFacade {
           LOG.error(e);
         }
       }
+    }
+  }
+
+  private void printToConsole(final Block rootBlock, final FormattingModel model) {
+    try {
+      String tree = JDOMUtil.writeElement(new FormatInfoPrinter(rootBlock, model.getDocumentModel()).blocksAsTree(), "\n");
+      System.out.println("---TREE---");
+      System.out.println(tree);
+      System.out.println("---/TREE---");
+    }
+    catch (IOException e) {
+      e.printStackTrace();
     }
   }
 

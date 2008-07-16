@@ -309,6 +309,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Alignment.createAlignment();
     }
 
+    else if (nodeType == JavaElementType.MODIFIER_LIST) {
+      return myAlignment;
+    }
+
     else {
       return null;
     }

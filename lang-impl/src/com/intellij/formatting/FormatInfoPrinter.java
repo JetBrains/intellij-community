@@ -23,8 +23,40 @@ public class FormatInfoPrinter {
   }
 
   private Element createBlockElement(final Block block) {
-    final Element result = new Element(getBlockElementName(block));
+    final Element result = new Element("Block");
     printSimpleBlock(block, result);
+
+    if (block.getSubBlocks().size() == 0) {
+      result.setAttribute("text", myDocumentModel.getText(block.getTextRange()).toString());
+    }
+
+    Wrap wrap = block.getWrap();
+    if (wrap != null) {
+      Element wrapElem = new Element("Wrap");
+      result.addContent(wrapElem);
+      WrapImpl wrapImpl = (WrapImpl)wrap;
+      wrapElem.setAttribute("id", wrapImpl.getId());
+      wrapElem.setAttribute("type", wrapImpl.getType().name());
+      wrapElem.setAttribute("ignoreParents", String.valueOf(wrapImpl.getIgnoreParentWraps()));
+      wrapElem.setAttribute("wrapFirst", String.valueOf(wrapImpl.isWrapFirstElement()));
+
+      WrapImpl parent = wrapImpl.getParent();
+      if (parent != null) {
+        wrapElem.setAttribute("parent", parent.getId());
+      }
+    }
+    Indent indent = block.getIndent();
+    if (indent != null) {
+      Element indentElement = new Element("Indent");
+      result.addContent(indentElement);
+      indentElement.setAttribute("type", ((IndentImpl)indent).getType().toString());
+    }
+    AlignmentImpl alignment = (AlignmentImpl)block.getAlignment();
+    if (alignment != null) {
+      Element alEl = new Element("Alignment");
+      result.addContent(alEl);
+      alEl.setAttribute("id", String.valueOf(System.identityHashCode(alignment)));
+    }
     final List<Block> subBlocks = block.getSubBlocks();
     for (int i = 0; i < subBlocks.size(); i++) {
       if (i > 0 && i < subBlocks.size() - 1) {
@@ -39,35 +71,20 @@ public class FormatInfoPrinter {
   private Element createSpacingElement(final Spacing spacing) {
     final Element result = new Element("Spacing");
     final SpacingImpl impl = ((SpacingImpl)spacing);
+
+    result.setAttribute("keepBlankLines", String.valueOf(impl.getKeepBlankLines()));
+    result.setAttribute("keepLineBreaks", String.valueOf(impl.shouldKeepLineFeeds()));
+    result.setAttribute("minspaces", String.valueOf(impl.getMinSpaces()));
+    result.setAttribute("maxspaces", String.valueOf(impl.getMaxSpaces()));
+    result.setAttribute("minlinefeeds", String.valueOf(impl.getMinLineFeeds()));
+    result.setAttribute("readOnly", String.valueOf(impl.isReadOnly()));
+    result.setAttribute("safe", String.valueOf(impl.isSafe()));
+
     return result;
   }
 
-  private String getBlockElementName(final Block block) {
-    return block.getSubBlocks().size() > 0 ? "CompositeBlock" : "LeafBlock";
-  }
-
   private void printSimpleBlock(final Block block, Element element) {
-    if (block.getSubBlocks().size() == 0) {
-      element.setAttribute("text", myDocumentModel.getText(block.getTextRange()).toString());
-    }
-    
-    element.setAttribute("wrap", wrapAsString(block.getWrap()));
-    if (block.getAlignment() != null) {
-      element.setAttribute("align", ((AlignmentImpl)block.getAlignment()).getId());
-    }
-  }
-
-  private String wrapAsString(final Wrap wrap) {
-    if (wrap == null) return "null";
-    final WrapImpl impl = ((WrapImpl)wrap);
-    StringBuffer result = new StringBuffer();
-    result.append(impl.getType().toString()).append(" ").append(impl.getId());
-    if (impl.isWrapFirstElement()) {
-      result.append(" wrapFirst");
-    }
-    if (impl.getIgnoreParentWraps()) {
-      result.append(" ignoreParents");
-    }
-    return result.toString();
+    element.setAttribute("start", String.valueOf(block.getTextRange().getStartOffset()));
+    element.setAttribute("end", String.valueOf(block.getTextRange().getEndOffset()));
   }
 }

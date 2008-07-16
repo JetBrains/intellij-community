@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LeafBlock implements Block{
+public class LeafBlock implements ASTBlock{
   private int myStartOffset = -1;
   private final ASTNode myNode;
   private final Wrap myWrap;
@@ -28,6 +28,9 @@ public class LeafBlock implements Block{
     myIndent = indent;
   }
 
+  public ASTNode getNode() {
+    return myNode;
+  }
 
   @NotNull
   public TextRange getTextRange() {

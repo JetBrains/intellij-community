@@ -55,6 +55,21 @@ public class FormatterImpl extends FormatterEx
   public Indent getNoneIndent() {
     return NONE_INDENT;
   }
+  public void format(final FormattingModel model, final CodeStyleSettings settings,
+                     final CodeStyleSettings.IndentOptions indentOptions,
+                     final CodeStyleSettings.IndentOptions javaIndentOptions,
+                     final TextRange affectedRange, final boolean processHeadingWhitespace) throws IncorrectOperationException {
+    disableFormatting();
+    try {
+      FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions,
+                                                      affectedRange, processHeadingWhitespace);
+      processor.setJavaIndentOptions(javaIndentOptions);
+      processor.format(model);
+    } finally {
+      enableFormatting();
+    }
+
+  }
 
   public Wrap createWrap(WrapType type, boolean wrapFirstElement) {
     return new WrapImpl(type, wrapFirstElement);

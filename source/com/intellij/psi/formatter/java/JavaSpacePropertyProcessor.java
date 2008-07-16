@@ -1147,6 +1147,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole2 == ChildRole.REFERENCE_PARAMETER_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_TYPE_PARAMETER_LIST);
     }
+    else if (myRole2 == ChildRole.DOT){
+      createSpaceInCode(false);
+    }
   }
 
   @Override public void visitAnnotation(PsiAnnotation annotation) {

@@ -48,6 +48,14 @@ class WrapImpl extends Wrap {
     myFlags &=~ ACTIVE_MASK;
   }
 
+  public WrapImpl getParent(){
+    if (myParents != null && myParents.size() == 1) {
+      return myParents.iterator().next();
+    }
+
+    return null;
+  }
+
   public final boolean getIgnoreParentWraps() {
     return (myFlags & IGNORE_PARENT_WRAPS_MASK) != 0;
   }
