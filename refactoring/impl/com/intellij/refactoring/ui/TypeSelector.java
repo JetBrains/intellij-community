@@ -32,7 +32,7 @@ public class TypeSelector {
     if(myComboBoxModel == null) return;
     PsiType oldType;
     if (myComboBoxModel.getSize() > 0) {
-      oldType = (PsiType) myComboBoxModel.getSelectedItem();
+      oldType = getSelectedType();
     } else {
       oldType = null;
     }
