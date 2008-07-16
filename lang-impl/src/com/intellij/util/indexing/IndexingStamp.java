@@ -31,17 +31,22 @@ public class IndexingStamp {
       for (int i = 0; i < count; i++) {
         ID<?, ?> id = ID.findById(stream.readLong());
         long timestamp = stream.readLong();
-        myIndexStamps.put(id, timestamp);
+        if (id != null) {
+          myIndexStamps.put(id, timestamp);
+        }
       }
     }
 
     public void writeToStream(final DataOutputStream stream) throws IOException {
-      DataInputOutputUtil.writeINT(stream, myIndexStamps.size());
+      final int size = myIndexStamps.size();
+      final int[] count = new int[]{0};
+      DataInputOutputUtil.writeINT(stream, size);
       myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
         public boolean execute(final ID<?, ?> id, final long timestamp) {
           try {
             stream.writeLong(id.getUniqueId());
             stream.writeLong(timestamp);
+            count[0]++;
             return true;
           }
           catch (IOException e) {
@@ -49,6 +54,7 @@ public class IndexingStamp {
           }
         }
       });
+      assert count[0] == size;
     }
 
     public long get(ID<?, ?> id) {
