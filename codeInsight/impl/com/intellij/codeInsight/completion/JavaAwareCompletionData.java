@@ -106,20 +106,6 @@ public class JavaAwareCompletionData extends CompletionData{
     }
   }
 
-  protected PsiReference[] getReferences(final PsiMultiReference multiReference) {
-    final PsiElement element = multiReference.getElement();
-    if (element instanceof PsiNameValuePair) {
-      final PsiNameValuePair psiNameValuePair = (PsiNameValuePair)element;
-      final PsiElement parent = element.getParent();
-      boolean isTheOnlyParameter = parent instanceof PsiAnnotationParameterList && ((PsiAnnotationParameterList) parent).getAttributes().length == 1;
-      if (psiNameValuePair.getName() == null && !isTheOnlyParameter) {
-        return new PsiReference[]{psiNameValuePair.getReference()};
-      }
-    }
-
-    return super.getReferences(multiReference);
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   @Nullable
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {

@@ -278,6 +278,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     final Project project = context.getProject();
 
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
+
+    if (context.getCompletionType() == CompletionType.BASIC && file instanceof PsiJavaFile) {
+      context.setDummyIdentifier(context.getDummyIdentifier().trim());
+    }
   }
 
 }
