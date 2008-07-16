@@ -4,12 +4,30 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 
 /**
  * @author sashache
  */
 public class RenameCollisionsTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameCollisions/";
+  private LanguageLevel myPreviousLanguageLevel;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPreviousLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
+    super.tearDown();
+  }
 
   public void testRenameClassInnerToLocal() throws Exception {
     doTest("LocalClass");
@@ -84,10 +102,9 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("myField");
   }
 
-  //Fails due to IDEADEV-25198.
-  //public void testRenameVarLocalToAlien() throws Exception {
-  //  doTest("BOTTOM");
-  //}
+  public void testRenameVarLocalToAlien() throws Exception {
+    doTest("BOTTOM");
+  }
 
   public void testRenameVarLocalToConst() throws Exception {
     doTest("INNER_STATIC_FIELD");
@@ -117,10 +134,9 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("param3");
   }
 
-  //Fails due to IDEADEV-25198.
-  //public void testRenameVarParamToAlien() throws Exception {
-  //  doTest("BOTTOM");
-  //}
+  public void testRenameVarParamToAlien() throws Exception {
+    doTest("BOTTOM");
+  }
 
   public void testRenameVarParamToField() throws Exception {
     doTest("myInnerField");
@@ -137,5 +153,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     assertNotNull(element);
     new RenameProcessor(getProject(), element, newName, true, true).run();
     checkResultByFile(BASE_PATH + getTestName(false) + ".java.after");
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 }
