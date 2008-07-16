@@ -60,6 +60,11 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       }
     }
   };
+  private ChangeListener myChangeListener = new ChangeListener() {
+    public void stateChanged(final ChangeEvent e) {
+      fireUIChanged();
+    }
+  };
 
   public void addUserActivityListener(UserActivityListener listener) {
     myListeners.addListener(listener);
@@ -154,6 +159,10 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
         model.addTableModelListener(myTableModelListener);
       }
     }
+
+    if (parentComponent instanceof JSlider) {
+      ((JSlider)parentComponent).addChangeListener(myChangeListener);
+    }
   }
 
   protected void unprocessComponent(final Component component) {
@@ -172,6 +181,10 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       if (model != null) {
         model.removeTableModelListener(myTableModelListener);
       }
+    }
+
+    if (component instanceof JSlider){
+      ((JSlider)component).removeChangeListener(myChangeListener);
     }
   }
 
