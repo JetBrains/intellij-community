@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +131,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
 
       public Object[] getVariants() {
-        return new Object[0];
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       @Override

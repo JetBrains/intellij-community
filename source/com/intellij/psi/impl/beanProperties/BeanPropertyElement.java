@@ -4,15 +4,16 @@
  */
 package com.intellij.psi.impl.beanProperties;
 
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   }
 
   public Object[] getDependences() {
-    return new Object[0];
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Nullable

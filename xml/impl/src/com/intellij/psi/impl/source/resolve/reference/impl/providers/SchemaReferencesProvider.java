@@ -103,7 +103,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     public Object[] getVariants() {
-      return new Object[0];
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     public boolean isSoft() {

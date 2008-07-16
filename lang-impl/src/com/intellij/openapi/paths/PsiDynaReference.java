@@ -14,6 +14,7 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public Object[] getVariants() {
     switch (myReferences.size()) {
       case 0:
-        return new Object[0];
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       case 1:
         return myReferences.get(0).getVariants();
       default:
@@ -143,7 +144,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
           final String prefix;
           if (startOffset > minOffset) {
             prefix = text.substring(minOffset, startOffset);
-          } else {
+          }
+          else {
             prefix = null;
           }
           Object[] refVariants = ref.getVariants();
