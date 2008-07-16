@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,8 +12,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.util.List;
@@ -51,7 +50,7 @@ public class SmartEnterAction extends EditorAction {
         return;
       }
 
-      PsiFile psiFile = PsiUtil.getPsiFileInEditor(editor, project);
+      PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
 
       if (EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, caretOffset, psiFile.getFileType())) {
         EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
@@ -59,7 +58,7 @@ public class SmartEnterAction extends EditorAction {
         return;
       }
 
-      final Language language = PsiUtil.getLanguageInEditor(editor, project);
+      final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
       final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
       if (processors.size() > 0) {
         for (SmartEnterProcessor processor : processors) {
@@ -87,58 +86,6 @@ public class SmartEnterAction extends EditorAction {
     private EditorActionHandler getEnterHandler() {
       return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
     }
-
-    private PsiErrorElement getFirstUnresolvedError(PsiElement where) {
-      final PsiErrorElement[] unresolvedError = new PsiErrorElement[]{null};
-      traverseErrorElements(where, new ErrorElementProcessor() {
-        public boolean process(PsiErrorElement errorElement) {
-          unresolvedError[0] = errorElement;
-          return false;
-        }
-
-        public boolean process(PsiLiteralExpression nonTerminatedString) {
-          return true;
-        }
-      });
-      return unresolvedError[0];
-    }
-
-  }
-
-  private interface ErrorElementProcessor {
-    boolean process(PsiErrorElement errorElement);
-
-    boolean process(PsiLiteralExpression nonTerminatedString);
-  }
-
-  private static void traverseErrorElements(PsiElement psiWhere, final ErrorElementProcessor processor) {
-    psiWhere.accept(new JavaRecursiveElementVisitor() {
-      boolean myIsStopped = false;
-
-      @Override
-      public void visitElement(PsiElement element) {
-        if (myIsStopped) return;
-        super.visitElement(element);
-      }
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitElement(expression);
-      }
-
-      @Override
-      public void visitErrorElement(PsiErrorElement element) {
-        myIsStopped = !processor.process(element);
-      }
-
-      @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
-        String parsingError = expression.getParsingError();
-        if (parsingError != null && parsingError.indexOf(JavaErrorMessages.message("illegal.line.end.in.string.literal")) >= 0) {
-          myIsStopped = !processor.process(expression);
-        }
-      }
-    });
   }
 }
 

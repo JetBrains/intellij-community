@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
