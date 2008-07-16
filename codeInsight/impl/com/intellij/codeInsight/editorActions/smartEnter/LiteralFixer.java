@@ -1,11 +1,10 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.psi.JavaTokenType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -16,7 +15,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class LiteralFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement)
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement)
       throws IncorrectOperationException {
     if (psiElement instanceof PsiJavaToken) {
       if (((PsiJavaToken) psiElement).getTokenType() == JavaTokenType.STRING_LITERAL &&

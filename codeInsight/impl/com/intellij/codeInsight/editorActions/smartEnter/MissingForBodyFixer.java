@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use Options | File Templates.
  */
 public class MissingForBodyFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     PsiForStatement forStatement = getForStatementParent(psiElement);
     if (forStatement == null) return;
 

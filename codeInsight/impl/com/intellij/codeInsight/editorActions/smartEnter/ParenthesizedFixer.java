@@ -10,7 +10,7 @@ import com.intellij.psi.PsiParenthesizedExpression;
 import com.intellij.util.IncorrectOperationException;
 
 public class ParenthesizedFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiParenthesizedExpression) {
       final PsiElement lastChild = psiElement.getLastChild();
       if (lastChild != null && !")".equals(lastChild.getText())) {

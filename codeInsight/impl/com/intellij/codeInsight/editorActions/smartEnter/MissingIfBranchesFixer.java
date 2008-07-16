@@ -9,7 +9,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author max
  */
 public class MissingIfBranchesFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiIfStatement)) return;
 
     PsiIfStatement ifStatement = (PsiIfStatement) psiElement;

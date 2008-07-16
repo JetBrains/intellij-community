@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use File | Settings | File Templates.
  */
 public class MissingForeachBodyFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     PsiForeachStatement forStatement = getForeachStatementParent(psiElement);
     if (forStatement == null) return;
 

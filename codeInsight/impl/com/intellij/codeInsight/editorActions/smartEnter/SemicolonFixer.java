@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SemicolonFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiReturnStatement) {
       PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
       if (method != null && PsiType.VOID == method.getReturnType()) {

@@ -15,7 +15,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class MissingMethodBodyFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiMethod)) return;
     PsiMethod method = (PsiMethod) psiElement;
     if (method.getContainingClass().isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)) return;

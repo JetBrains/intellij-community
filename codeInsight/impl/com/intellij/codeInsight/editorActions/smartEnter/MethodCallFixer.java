@@ -14,7 +14,7 @@ import com.intellij.util.text.CharArrayUtil;
  * To change this template use Options | File Templates.
  */
 public class MethodCallFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     PsiExpressionList args = null;
     if (psiElement instanceof PsiMethodCallExpression && !(psiElement instanceof JspMethodCall)) {
       args = ((PsiMethodCallExpression) psiElement).getArgumentList();

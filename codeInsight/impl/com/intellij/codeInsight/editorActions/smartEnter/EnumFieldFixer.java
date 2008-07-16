@@ -15,7 +15,7 @@ import com.intellij.util.text.CharArrayUtil;
  * To change this template use Options | File Templates.
  */
 public class EnumFieldFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiEnumConstant) {
       int insertionOffset = psiElement.getTextRange().getEndOffset();
       Document doc = editor.getDocument();

@@ -24,7 +24,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SwitchExpressionFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiSwitchStatement) {
       final Document doc = editor.getDocument();
       final PsiSwitchStatement switchStatement = (PsiSwitchStatement)psiElement;

@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class MissingWhileBodyFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiWhileStatement)) return;
     PsiWhileStatement whileStatement = (PsiWhileStatement) psiElement;
 

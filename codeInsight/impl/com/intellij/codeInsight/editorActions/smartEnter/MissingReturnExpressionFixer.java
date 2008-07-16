@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class MissingReturnExpressionFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement)
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement)
       throws IncorrectOperationException {
     if (psiElement instanceof PsiReturnStatement) {
       PsiReturnStatement retStatement = (PsiReturnStatement) psiElement;

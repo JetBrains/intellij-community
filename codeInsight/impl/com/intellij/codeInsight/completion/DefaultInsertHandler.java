@@ -77,8 +77,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
               final PsiMethod psiMethod = element.getObject();
               return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
                      ? TailType.NONE : TailType.SEMICOLON;
-            }
-            if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailTypes.SMART_COMPLETION;
+            }                     
+            if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
             return null;
           }
         });
@@ -293,7 +293,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
     boolean insertRightParenth = (!settings.INSERT_SINGLE_PARENTH || settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams
                                  || generateAnonymousBody
-                                 || tailType != TailType.NONE) && tailType != TailTypes.SMART_COMPLETION;
+                                 || tailType != TailType.NONE) && tailType != TailType.SMART_COMPLETION;
 
     if (needParenth){
       if (myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) >= 0){
@@ -474,7 +474,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case '>':
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
-      case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailTypes.SMART_COMPLETION;
+      case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailType.SMART_COMPLETION;
       case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
     }
     final TailType attr = myLookupItem.getTailType();

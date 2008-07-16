@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class MissingSynchronizedBodyFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiSynchronizedStatement)) return;
     PsiSynchronizedStatement syncStatement = (PsiSynchronizedStatement) psiElement;
 

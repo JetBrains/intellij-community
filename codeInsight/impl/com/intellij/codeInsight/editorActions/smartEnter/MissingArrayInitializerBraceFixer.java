@@ -15,7 +15,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class MissingArrayInitializerBraceFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiArrayInitializerExpression)) return;
     PsiArrayInitializerExpression expr = (PsiArrayInitializerExpression)psiElement;
     final Document doc = editor.getDocument();

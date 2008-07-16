@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class WhileConditionFixer implements Fixer {
-  public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiWhileStatement) {
       final Document doc = editor.getDocument();
       final PsiWhileStatement whileStatement = (PsiWhileStatement) psiElement;

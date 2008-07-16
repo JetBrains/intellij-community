@@ -321,6 +321,9 @@
   <extensionPoint name="testFinder"
                   interface="com.intellij.testIntegration.TestFinder"/>
 
+  <extensionPoint name="lang.smartEnterProcessor"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
   <extensionPoint name="moduleConfigurationEditorProvider"
                   interface="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider"
                   area="IDEA_MODULE"/>

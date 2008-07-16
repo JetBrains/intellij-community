@@ -15,11 +15,20 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -156,4 +165,26 @@ public abstract class TailType {
   public static TailType createSimpleTailType(final char c) {
     return new CharTailType(c);
   }
+
+  public static final TailType SMART_COMPLETION = new TailType() {
+    public int processTail(final Editor editor, int tailOffset) {
+      final Project project = editor.getProject();
+      final Document doc = editor.getDocument();
+      final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+
+      final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
+      if (processors.size() > 0) {
+        for (SmartEnterProcessor processor : processors) {
+          processor.process(project, editor, PsiDocumentManager.getInstance(project).getPsiFile(doc));
+        }
+      }
+
+      return tailOffset;
+    }
+
+    @NonNls
+    public String toString() {
+      return "SMART_COMPLETION";
+    }
+  };
 }
