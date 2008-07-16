@@ -1,10 +1,9 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-class AbstractTreeUi implements Disposable {
+class AbstractTreeUi  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
   protected JTree myTree;// protected for TestNG
   @SuppressWarnings({"WeakerAccess"}) protected DefaultTreeModel myTreeModel;
@@ -110,10 +109,9 @@ class AbstractTreeUi implements Disposable {
 
     setUpdater(getBuilder().createUpdater());
     myProgress = getBuilder().createProgressIndicator();
-    Disposer.register(this, getUpdater());
-    Disposer.register(getBuilder(), this);
+    Disposer.register(getBuilder(), getUpdater());
 
-    new UiNotifyConnector(tree, new Activatable() {
+    final UiNotifyConnector uiNotify = new UiNotifyConnector(tree, new Activatable() {
       public void showNotify() {
         getBuilder().processShowNotify();
       }
@@ -122,6 +120,7 @@ class AbstractTreeUi implements Disposable {
         getBuilder().processHideNotify();
       }
     });
+    Disposer.register(getBuilder(), uiNotify);
   }
 
   protected void hideNotify() {
@@ -199,10 +198,11 @@ class AbstractTreeUi implements Disposable {
     myWasEverShown = true;
   }
 
-  public void dispose() {
+  public void release() {
     if (myDisposed) return;
     myDisposed = true;
     myTree.removeTreeExpansionListener(myExpansionListener);
+    myTree.removeTreeSelectionListener(mySelectionListener);
     disposeNode(getRootNode());
     myElementToNodeMap.clear();
     getUpdater().cancelAllRequests();
@@ -1199,6 +1199,7 @@ class AbstractTreeUi implements Disposable {
 
   public void setTreeStructure(final AbstractTreeStructure treeStructure) {
     myTreeStructure = treeStructure;
+    clearUpdaterState();
   }
 
   public AbstractTreeUpdater getUpdater() {

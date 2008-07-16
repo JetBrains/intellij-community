@@ -40,10 +40,12 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
   }
 
   public void hierarchyChanged(HierarchyEvent e) {
+    if (isDisposed()) return;
+
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (myComponent == null) return;
+          if (isDisposed() || myComponent == null) return;
 
           if (myComponent.isShowing()) {
             showNotify();
@@ -65,13 +67,17 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
   }
 
   public void dispose() {
-    if (myTarget == null) return;
+    if (isDisposed()) return;
 
     myTarget.hideNotify();
     myComponent.removeHierarchyListener(this);
 
     myTarget = null;
     myComponent = null;
+  }
+
+  private boolean isDisposed() {
+    return myTarget == null;
   }
 
   public static class Once extends UiNotifyConnector {

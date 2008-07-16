@@ -275,6 +275,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public void dispose() {
+    myUi.release();
+    myUi = null;
   }
 
   protected boolean updateNodeDescriptor(final NodeDescriptor descriptor) {
