@@ -66,6 +66,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JCheckBox invertWithinIn;
   private JPanel variableConstraints;
   private JPanel expressionConstraints;
+  private JPanel occurencePanel;
 
   EditVarConstraintsDialog(final Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
@@ -208,7 +209,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
     parameterList.setCellRenderer(
       new DefaultListCellRenderer() {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          return super.getListCellRendererComponent(list, ((Variable)value).getName(), index, isSelected, cellHasFocus);    //To change body of overridden methods use File | Settings | File Templates.
+          String name = ((Variable)value).getName();
+          if (Configuration.CONTEXT_VAR_NAME.equals(name)) name = SSRBundle.message("complete.match.variable.name");
+          return super.getListCellRendererComponent(list, name, index, isSelected, cellHasFocus);
         }
       }
     );
@@ -364,6 +367,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
     containedInConstraints.setVisible(contextVar);
     expressionConstraints.setVisible(isExprContext);
     partOfSearchResults.setEnabled(!contextVar); //?
+
+    occurencePanel.setVisible(!contextVar);
   }
 
   protected String getDimensionServiceKey() {
