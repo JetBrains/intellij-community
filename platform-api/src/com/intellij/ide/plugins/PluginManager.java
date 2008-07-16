@@ -58,8 +58,8 @@ public class PluginManager {
   static final Object lock = new Object();
 
   private static String ourBuildNumber;
-  @NonNls private static final String PLUGIN_XML = "plugin.xml";
-  @NonNls private static final String META_INF = "META-INF";
+  @NonNls public static final String PLUGIN_XML = "plugin.xml";
+  @NonNls public static final String META_INF = "META-INF";
   private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
 
   public static class Facade extends PluginsFacade {
@@ -636,7 +636,7 @@ public class PluginManager {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptor(final File file, final @NonNls String fileName) {
+  public static IdeaPluginDescriptorImpl loadDescriptor(final File file, final @NonNls String fileName) {
     IdeaPluginDescriptorImpl descriptor = null;
 
     if (file.isDirectory()) {
