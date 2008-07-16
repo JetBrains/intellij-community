@@ -10,10 +10,10 @@ package com.intellij.refactoring.rename;
 
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 
-class FieldHidesOuterFieldUsageInfo extends ResolvableCollisionUsageInfo {
-  public FieldHidesOuterFieldUsageInfo(PsiElement ref, PsiField field) {
-    super(ref, field);
+class MemberHidesOuterMemberUsageInfo extends ResolvableCollisionUsageInfo {
+  public MemberHidesOuterMemberUsageInfo(PsiElement ref, PsiMember member) {
+    super(ref, member);
   }
 }

@@ -42,6 +42,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     Set<PsiMethod> methodAndOverriders = new HashSet<PsiMethod>();
     Set<PsiClass> containingClasses = new HashSet<PsiClass>();
     List<PsiElement> renamedReferences = new ArrayList<PsiElement>();
+    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
 
     methodAndOverriders.add(method);
     containingClasses.add(method.getContainingClass());
@@ -50,7 +51,12 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       PsiElement element = usage.getElement();
       if (element == null) continue;
 
-      if (!(element instanceof PsiMethod)) {
+      if (usage instanceof MemberHidesOuterMemberUsageInfo) {
+        PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
+        PsiMethod resolved = (PsiMethod)collidingRef.resolve();
+        outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
+      }
+      else if (!(element instanceof PsiMethod)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
           ref = usage.getReference();
@@ -82,6 +88,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       fixNameCollisionsWithInnerClassMethod(element, newName, methodAndOverriders, containingClasses,
                                             method.hasModifierProperty(PsiModifier.STATIC));
     }
+    qualifyOuterMemberReferences(outerHides);
   }
 
   private static void fixNameCollisionsWithInnerClassMethod(final PsiElement element, final String newName,
@@ -114,6 +121,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,
                              final List<UsageInfo> result) {
     findSubmemberHidesMemberCollisions((PsiMethod) element, newName, result);
+    findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {

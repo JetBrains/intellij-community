@@ -1,15 +1,23 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.openapi.diagnostic.Logger;
+
+import java.util.List;
 
 /**
  * @author yole
  */
 public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMemberProcessor");
+
   protected static void qualifyMember(PsiMember member, PsiElement occurence, String newName) throws IncorrectOperationException {
     qualifyMember(occurence, newName, member.getContainingClass(), member.hasModifierProperty(PsiModifier.STATIC));
   }
@@ -66,5 +74,56 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
       qualifier.replace(classReference);
     }
     return ref;
+  }
+
+  protected static void findMemberHidesOuterMemberCollisions(final PsiMember member, final String newName, final List<UsageInfo> result) {
+    final PsiMember patternMember;
+    if (member instanceof PsiMethod) {
+      PsiMethod patternMethod = (PsiMethod) member.copy();
+      try {
+        patternMethod.setName(newName);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return;
+      }
+      patternMember = patternMethod;
+    }
+    else {
+      patternMember = member;
+    }
+
+    final PsiClass fieldClass = member.getContainingClass();
+    for (PsiClass aClass = fieldClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
+      final PsiMember conflict;
+      if (member instanceof PsiMethod) {
+        conflict = aClass.findMethodBySignature((PsiMethod)patternMember, true);
+      }
+      else {
+        conflict = aClass.findFieldByName(newName, false);
+      }
+      if (conflict == null) continue;
+      ReferencesSearch.search(conflict).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference reference) {
+          PsiElement refElement = reference.getElement();
+          if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
+          if (PsiTreeUtil.isAncestor(fieldClass, refElement, false)) {
+            MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, member);
+            result.add(info);
+          }
+          return true;
+        }
+      });
+    }
+  }
+
+  protected static void qualifyOuterMemberReferences(final List<MemberHidesOuterMemberUsageInfo> outerHides) throws IncorrectOperationException {
+    for (MemberHidesOuterMemberUsageInfo usage : outerHides) {
+      final PsiElement element = usage.getElement();
+      PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
+      PsiMember member = (PsiMember)usage.getReferencedElement();
+      PsiReferenceExpression ref = createMemberReference(member, collidingRef);
+      collidingRef.replace(ref);
+    }
   }
 }

@@ -8,9 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -19,7 +17,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +37,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                             final String newName,
                             final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
-    List<FieldHidesOuterFieldUsageInfo> outerHides = new ArrayList<FieldHidesOuterFieldUsageInfo>();
+    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
     List<PsiElement> occurrencesToCheckForConflict = new ArrayList<PsiElement>();
     // rename all references
     for (UsageInfo usage : usages) {
@@ -58,10 +55,10 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
           // do nothing
         }
       }
-      else if (usage instanceof FieldHidesOuterFieldUsageInfo) {
+      else if (usage instanceof MemberHidesOuterMemberUsageInfo) {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiField resolved = (PsiField)collidingRef.resolve();
-        outerHides.add(new FieldHidesOuterFieldUsageInfo(element, resolved));
+        outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
       }
       else {
         final PsiReference ref;
@@ -89,13 +86,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       }
     }
 
-    for (FieldHidesOuterFieldUsageInfo usage : outerHides) {
-      final PsiElement element = usage.getElement();
-      PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
-      PsiField field = (PsiField)usage.getReferencedElement();
-      PsiReferenceExpression ref = createMemberReference(field, collidingRef);
-      collidingRef.replace(ref);
-    }
+    qualifyOuterMemberReferences(outerHides);
   }
 
   private static void fixPossibleNameCollisionsForFieldRenaming(PsiField field, String newName, PsiElement replacedOccurence) throws IncorrectOperationException {
@@ -210,7 +201,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                              final List<UsageInfo> result) {
     if (element instanceof PsiField) {
       PsiField field = (PsiField) element;
-      findFieldHidesOuterFieldCollisions(field, newName, result);
+      findMemberHidesOuterMemberCollisions(field, newName, result);
       findSubmemberHidesFieldCollisions(field, newName, result);
     }
     else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
@@ -259,25 +250,6 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = enabled;
     }
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = enabled;
-  }
-
-  private static void findFieldHidesOuterFieldCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
-    final PsiClass fieldClass = field.getContainingClass();
-    for (PsiClass aClass = fieldClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
-      final PsiField conflict = aClass.findFieldByName(newName, false);
-      if (conflict == null) continue;
-      ReferencesSearch.search(conflict).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference reference) {
-          PsiElement refElement = reference.getElement();
-          if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
-          if (PsiTreeUtil.isAncestor(fieldClass, refElement, false)) {
-            FieldHidesOuterFieldUsageInfo info = new FieldHidesOuterFieldUsageInfo(refElement, field);
-            result.add(info);
-          }
-          return true;
-        }
-      });
-    }
   }
 
   private static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
