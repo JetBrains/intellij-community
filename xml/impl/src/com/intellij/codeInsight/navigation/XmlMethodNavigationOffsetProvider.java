@@ -29,10 +29,12 @@ public class XmlMethodNavigationOffsetProvider implements MethodNavigationOffset
   private static void addNavigationElements(ArrayList<PsiElement> array, PsiElement element) {
     PsiElement parent = element instanceof XmlFile ? element : element.getParent();
 
-    PsiElement[] children = parent.getChildren();
-    for (PsiElement child : children) {
-      if (child instanceof XmlTag) {
-        array.add(child);
+    if (parent != null) {
+      PsiElement[] children = parent.getChildren();
+      for (PsiElement child : children) {
+        if (child instanceof XmlTag) {
+          array.add(child);
+        }
       }
     }
     final PsiElement parentElement = element.getParent();
