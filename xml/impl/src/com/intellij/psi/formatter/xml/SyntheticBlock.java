@@ -162,11 +162,25 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
+    Block prevBlock = getSubBlocks().get(newChildIndex - 1);
+    if (isAttributeBlock(prevBlock)) {
+      return new ChildAttributes(myChildIndent, prevBlock.getAlignment());
+    }
     return new ChildAttributes(myChildIndent, null);
+  }
+
+  private boolean isAttributeBlock(final Block block) {
+    if (block instanceof XmlBlock) {
+      return ((XmlBlock)block).getNode().getElementType() == XmlElementType.XML_ATTRIBUTE;
+    }
+    return false;
   }
 
   public boolean isIncomplete() {
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
 
+  public boolean endsWithAttribute() {
+    return isAttributeBlock(getSubBlocks().get(getSubBlocks().size() - 1));
+  }
 }

@@ -321,10 +321,24 @@ public class XmlTagBlock extends AbstractXmlBlock{
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (myXmlFormattingPolicy.indentChildrenOf(getTag())) {
-      return new ChildAttributes(Indent.getNormalIndent(), null);
-    } else {
-      return new ChildAttributes(Indent.getNoneIndent(), null);
+    if (isAfterAttribute(newChildIndex)) {
+      List<Block> subBlocks = getSubBlocks();
+      Block subBlock = subBlocks.get(newChildIndex - 1);
+      int prevSubBlockChildrenCount = subBlock.getSubBlocks().size();
+      return subBlock.getChildAttributes(prevSubBlockChildrenCount);
     }
+    else {
+      if (myXmlFormattingPolicy.indentChildrenOf(getTag())) {
+        return new ChildAttributes(Indent.getNormalIndent(), null);
+      } else {
+        return new ChildAttributes(Indent.getNoneIndent(), null);
+      }
+    }
+  }
+
+  private boolean isAfterAttribute(final int newChildIndex) {
+    List<Block> subBlocks = getSubBlocks();
+    Block prevBlock = subBlocks.get(newChildIndex - 1);
+    return prevBlock instanceof SyntheticBlock && ((SyntheticBlock)prevBlock).endsWithAttribute();
   }
 }
