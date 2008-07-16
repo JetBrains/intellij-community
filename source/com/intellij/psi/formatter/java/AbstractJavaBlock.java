@@ -840,6 +840,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     else if (nodeType == JavaElementType.IF_STATEMENT) {
+      if (childType == JavaElementType.IF_STATEMENT && role == ChildRole.ELSE_BRANCH && getSettings().SPECIAL_ELSE_IF_TREATMENT) {
+        return Wrap.createWrap(WrapType.NONE, false);
+      }
       if (role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH) {
         if (childType == JavaElementType.BLOCK_STATEMENT) {
           return null;
