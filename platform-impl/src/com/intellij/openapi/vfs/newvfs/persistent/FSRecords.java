@@ -15,6 +15,7 @@ import com.intellij.util.io.MappedFile;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.Storage;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public class FSRecords implements Disposable, Forceable {
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
   private static final int HEADER_VERSION_OFFSET = 0;
-  private static final int HEADER_FREE_RECORD_OFFSET = 4;
+  private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // Reserverd
   private static final int HEADER_GLOBAL_MODCOUNT_OFFSET = 8;
   private static final int HEADER_CONNECTION_STATUS_OFFSET = 12;
   private static final int HEADER_SIZE = HEADER_CONNECTION_STATUS_OFFSET + 4;
@@ -80,6 +81,7 @@ public class FSRecords implements Disposable, Forceable {
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
     private static MappedFile myRecords;
+    private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
     private static boolean myDirty = false;
     private static ScheduledFuture<?> myFlushingFuture;
@@ -89,12 +91,30 @@ public class FSRecords implements Disposable, Forceable {
       synchronized (LOCK) {
         if (refCount == 0) {
           init();
+          scanFreeRecords();
           setupFlushing();
         }
         refCount++;
       }
 
       return new DbConnection();
+    }
+
+    private static void scanFreeRecords() {
+      final int filelength = (int)getRecords().length();
+      LOG.assertTrue(filelength % RECORD_SIZE == 0);
+
+      int count = filelength / RECORD_SIZE;
+      for (int n = 2; n < count; n++) {
+        if ((getFlags(n) & FREE_RECORD_FLAG) != 0) {
+          addFreeRecord(n);
+        }
+      }
+    }
+
+    public static int getFreeRecord() {
+      if (myFreeRecords.isEmpty()) return 0;
+      return myFreeRecords.remove(myFreeRecords.size() - 1);
     }
 
     private static void createBrokenMarkerFile() {
@@ -294,6 +314,10 @@ public class FSRecords implements Disposable, Forceable {
 
       return new RuntimeException(e);
     }
+
+    public static void addFreeRecord(final int id) {
+      myFreeRecords.add(id);
+    }
   }
 
   public FSRecords() {
@@ -319,19 +343,18 @@ public class FSRecords implements Disposable, Forceable {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
-        final int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
 
-        if (next == 0) {
+        final int free = DbConnection.getFreeRecord();
+        if (free == 0) {
           final int filelength = (int)getRecords().length();
           LOG.assertTrue(filelength % RECORD_SIZE == 0);
-          int result = filelength / RECORD_SIZE;
-          DbConnection.cleanRecord(result);
-          return result;
+          int newrecord = filelength / RECORD_SIZE;
+          DbConnection.cleanRecord(newrecord);
+          return newrecord;
         }
         else {
-          getRecords().putInt(HEADER_FREE_RECORD_OFFSET, getNextFree(next));
-          setNextFree(next, 0);
-          return next;
+          DbConnection.cleanRecord(free);
+          return free;
         }
       }
       catch (IOException e) {
@@ -387,10 +410,8 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private void addToFreeRecordsList(int id) throws IOException {
-    final int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
-    setNextFree(id, next);
+    DbConnection.addFreeRecord(id);
     setFlags(id, FREE_RECORD_FLAG, false);
-    getRecords().putInt(HEADER_FREE_RECORD_OFFSET, id);
   }
 
   public int[] listRoots() throws IOException {
@@ -629,19 +650,6 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private static int getNextFree(int id) {
-    return getParent(id);
-  }
-
-  private static void setNextFree(int id, int next) {
-    try {
-      getRecords().putInt(id * RECORD_SIZE + PARENT_OFFSET, next);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-  }
-
   public static String getName(int id) {
     synchronized (lock) {
       try {
@@ -876,30 +884,25 @@ public class FSRecords implements Disposable, Forceable {
       assert fileLength % RECORD_SIZE == 0;
       int recordCount = fileLength / RECORD_SIZE;
 
-      IntArrayList freeRecordIds = new IntArrayList();
       IntArrayList usedAttributeRecordIds = new IntArrayList();
       IntArrayList validAttributeIds = new IntArrayList();
       for(int id=2; id<recordCount; id++) {
         int flags = getFlags(id);
         assert (flags & ~ALL_VALID_FLAGS) == 0;
         if ((flags & FREE_RECORD_FLAG) != 0) {
-          freeRecordIds.add(id);
+          LOG.assertTrue(DbConnection.myFreeRecords.contains(id), "Record, marked free, not in free list: " + id);
         }
         else {
+          LOG.assertTrue(!DbConnection.myFreeRecords.contains(id), "Record, not marked free, in free list: " + id);
           checkRecordSanity(id, recordCount, usedAttributeRecordIds, validAttributeIds);
         }
       }
-
-      try {
-        checkFreeListSanity(freeRecordIds);
-      }
-      catch (IOException ex) {
-        throw DbConnection.handleError(ex);
-      }
     }
+
     long endTime = System.currentTimeMillis();
     System.out.println("Sanity check took " + (endTime-startTime) + " ms");
   }
+
 
   private static void checkRecordSanity(final int id, final int recordCount, final IntArrayList usedAttributeRecordIds,
                                         final IntArrayList validAttributeIds) {
@@ -912,7 +915,7 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     String name = getName(id);
-    assert parentId > 0 || name.length() > 0: "File with empty name found under " + getName(parentId);
+    LOG.assertTrue(parentId > 0 || name.length() > 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
 
     int attributeRecordId;
     try {
@@ -960,16 +963,5 @@ public class FSRecords implements Disposable, Forceable {
     finally {
       dataInputStream.close();
     }
-  }
-
-  private static void checkFreeListSanity(final IntArrayList freeRecordIds) throws IOException {
-    int freeRecordCount = 0;
-    int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
-    while(next > 0) {
-      freeRecordCount++;
-      assert freeRecordIds.contains(next);
-      next = getNextFree(next);
-    }
-    assert freeRecordCount == freeRecordIds.size(): "Found " + freeRecordIds.size() + " total free records and only " + freeRecordCount + " records in free list";
   }
 }
