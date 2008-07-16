@@ -18,6 +18,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.nio.charset.Charset;
 
 public class FileTreeTable extends AbstractFileTreeTable<Charset> {
@@ -91,12 +93,12 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
         AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
         changeAction.update(event);
         editorComponent = comboComponent;
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            press(comboComponent);
+        comboComponent.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentShown(final ComponentEvent e) {
+            press((Container)e.getComponent());
           }
         });
-
         Charset charset = (Charset)getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
         templatePresentation.setText(charset == null ? "" : charset.displayName());
         comboComponent.revalidate();

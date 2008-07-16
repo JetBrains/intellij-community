@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -135,12 +137,12 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
           AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
           changeAction.update(event);
           editorComponent = comboComponent;
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              press(comboComponent);
+          comboComponent.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(final ComponentEvent e) {
+              press((Container)e.getComponent());
             }
           });
-
           final T t = (T)getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
           templatePresentation.setText(t == null ? "" : visualize(t));
           comboComponent.revalidate();
