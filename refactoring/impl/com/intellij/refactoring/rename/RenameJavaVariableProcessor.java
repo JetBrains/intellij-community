@@ -2,8 +2,8 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -43,6 +43,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
                             final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
     List<FieldHidesOuterFieldUsageInfo> outerHides = new ArrayList<FieldHidesOuterFieldUsageInfo>();
+    List<PsiElement> occurrencesToCheckForConflict = new ArrayList<PsiElement>();
     // rename all references
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
@@ -75,7 +76,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
         if (ref != null) {
           PsiElement newElem = ref.handleElementRename(newName);
           if (variable instanceof PsiField) {
-            fixPossibleNameCollisionsForFieldRenaming((PsiField)variable, newName, newElem);
+            occurrencesToCheckForConflict.add(newElem);
           }
         }
       }
@@ -83,6 +84,12 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     // do actual rename
     variable.setName(newName);
     listener.elementRenamed(variable);
+
+    if (variable instanceof PsiField) {
+      for (PsiElement occurrence : occurrencesToCheckForConflict) {
+        fixPossibleNameCollisionsForFieldRenaming((PsiField) variable, newName, occurrence);
+      }
+    }
 
     for (FieldHidesOuterFieldUsageInfo usage : outerHides) {
       final PsiElement element = usage.getElement();
@@ -102,7 +109,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       return;
     }
 
-    if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter || elem instanceof PsiField) {
+    if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter || (elem instanceof PsiField && elem != replacedOccurence))  {
       qualifyField(field, replacedOccurence, newName);
     }
   }

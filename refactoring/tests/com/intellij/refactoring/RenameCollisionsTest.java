@@ -105,9 +105,9 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
   }
 
   //Fails due to IDEADEV-25197.
-  //public void testRenameVarOuterConstToInnerConst() throws Exception {
-  //  doTest("SI_STATIC_FIELD");
-  //}
+  public void testRenameVarOuterConstToInnerConst() throws Exception {
+    doTest("SI_STATIC_FIELD");
+  }
 
   public void testRenameVarOuterConstToLocal() throws Exception {
     doTest("localVar3");
