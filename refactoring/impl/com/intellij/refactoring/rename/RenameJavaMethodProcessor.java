@@ -43,6 +43,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     Set<PsiClass> containingClasses = new HashSet<PsiClass>();
     List<PsiElement> renamedReferences = new ArrayList<PsiElement>();
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
+    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
 
     methodAndOverriders.add(method);
     containingClasses.add(method.getContainingClass());
@@ -56,11 +57,15 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         PsiMethod resolved = (PsiMethod)collidingRef.resolve();
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
       }
+      else if (usage instanceof MemberHidesStaticImportUsageInfo) {
+        staticImportHides.add((MemberHidesStaticImportUsageInfo) usage);
+      }
       else if (!(element instanceof PsiMethod)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
           ref = usage.getReference();
-        } else {
+        }
+        else {
           ref = element.getReference();
         }
         if (ref != null) {
@@ -68,7 +73,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         }
       }
       else {
-        PsiMethod overrider = (PsiMethod) element;
+        PsiMethod overrider = (PsiMethod)element;
         methodAndOverriders.add(overrider);
         containingClasses.add(overrider.getContainingClass());
       }
@@ -89,6 +94,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                                             method.hasModifierProperty(PsiModifier.STATIC));
     }
     qualifyOuterMemberReferences(outerHides);
+    qualifyStaticImportReferences(staticImportHides);
   }
 
   private static void fixNameCollisionsWithInnerClassMethod(final PsiElement element, final String newName,
@@ -120,8 +126,11 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,
                              final List<UsageInfo> result) {
-    findSubmemberHidesMemberCollisions((PsiMethod) element, newName, result);
+    final PsiMethod methodToRename = (PsiMethod)element;
+    findSubmemberHidesMemberCollisions(methodToRename, newName, result);
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
+
+    findCollisionsAgainstNewName(element, newName, result, methodToRename);
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {

@@ -11,6 +11,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -124,6 +125,56 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
       PsiMember member = (PsiMember)usage.getReferencedElement();
       PsiReferenceExpression ref = createMemberReference(member, collidingRef);
       collidingRef.replace(ref);
+    }
+  }
+
+  protected void findCollisionsAgainstNewName(final PsiElement element, final String newName, final List<UsageInfo> result, final PsiMember memberToRename) {
+    final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
+    PsiMember prototype = (PsiMember)memberToRename.copy();
+    try {
+      ((PsiNamedElement) prototype).setName(newName);
+      prototype = (PsiMember) memberToRename.getContainingClass().add(prototype);
+
+      ReferencesSearch.search(prototype).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference psiReference) {
+          potentialConflicts.add(psiReference);
+          return true;
+        }
+      });
+
+      prototype.delete();
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return;
+    }
+
+    for (PsiReference potentialConflict : potentialConflicts) {
+      if (potentialConflict instanceof PsiJavaReference) {
+        final JavaResolveResult resolveResult = ((PsiJavaReference)potentialConflict).advancedResolve(false);
+        final PsiElement conflictElement = resolveResult.getElement();
+        if (conflictElement != null) {
+          final PsiElement scope = resolveResult.getCurrentFileResolveScope();
+          if (scope instanceof PsiImportStaticStatement) {
+            result.add(new MemberHidesStaticImportUsageInfo(potentialConflict.getElement(), conflictElement, element));
+          }
+        }
+      }
+    }
+  }
+
+  protected void qualifyStaticImportReferences(final List<MemberHidesStaticImportUsageInfo> staticImportHides)
+      throws IncorrectOperationException {
+    for (MemberHidesStaticImportUsageInfo info : staticImportHides) {
+      final PsiReference ref = info.getReference();
+      if (ref == null) return;
+      final PsiElement occurrence = ref.getElement();
+      final PsiElement target = info.getReferencedElement();
+      if (target instanceof PsiMember && occurrence != null) {
+        final PsiMember targetMember = (PsiMember)target;
+        PsiClass containingClass = targetMember.getContainingClass();
+        qualifyMember(occurrence, targetMember.getName(), containingClass, true);
+      }
     }
   }
 }

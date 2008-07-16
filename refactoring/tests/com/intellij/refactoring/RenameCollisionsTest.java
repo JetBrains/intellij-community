@@ -60,10 +60,9 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("siStaticMethod");
   }
 
-  //Fails due to IDEADEV-25198.
-  //public void testRenameMethodStaticToAlien() throws Exception {
-  //  doTest("valueOf");
-  //}
+  public void testRenameMethodStaticToAlien() throws Exception {
+    doTest("valueOf");
+  }
 
   //Fails due to IDEADEV-25198.
   //public void testRenameVarConstToAlien() throws Exception {

@@ -19,6 +19,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RelatedUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -296,10 +297,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       if (usage.getReference() instanceof LightElement) {
         continue; //filter out implicit references (e.g. from derived class to super class' default constructor)
       }
-
       MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
-      if (element.equals(usageInfo.getReferencedElement())) {
-        extractedUsages.add(usageInfo);
+      if (usage instanceof RelatedUsageInfo) {
+        if (((RelatedUsageInfo)usage).getRelatedElement() == element) {
+          extractedUsages.add(usageInfo);
+        }
+      }
+      else {
+        if (element.equals(usageInfo.getReferencedElement())) {
+          extractedUsages.add(usageInfo);
+        }
       }
     }
     return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
