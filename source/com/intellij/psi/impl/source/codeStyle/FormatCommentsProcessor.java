@@ -5,7 +5,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -15,6 +14,7 @@ import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 
 public class FormatCommentsProcessor implements PreFormatProcessor {
   public TextRange process(final ASTNode element, final TextRange range) {
@@ -30,11 +30,9 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
   private static TextRange formatCommentsInner(Project project, ASTNode element, final TextRange range) {
     TextRange result = range;
 
-    PsiElement psi;
 
     // check for RepositoryTreeElement is optimization
-    if (element.getElementType() instanceof JavaStubElementType &&
-        (psi = element.getPsi()) instanceof PsiDocCommentOwner) {
+    if (shouldProcess(element)) {
       final TextRange elementRange = element.getTextRange();
 
       if (range.contains(elementRange)) {
@@ -44,8 +42,9 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
       }
 
       // optimization, does not seek PsiDocComment inside fields / methods or out of range
-      if (psi instanceof PsiField ||
-          psi instanceof PsiMethod ||
+      if (element.getPsi() instanceof PsiField ||
+          element.getPsi() instanceof PsiMethod ||
+          element instanceof PsiDocComment ||
           range.getEndOffset() < elementRange.getStartOffset()
          ) {
         return result;
@@ -68,6 +67,16 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
       }
     }
     return result;
+  }
+
+  private static boolean shouldProcess(final ASTNode element) {
+    if (element instanceof PsiDocComment) {
+      return true;
+    }
+    else {
+      return element.getElementType() instanceof JavaStubElementType &&
+          (element.getPsi()) instanceof PsiDocCommentOwner;
+    }
   }
 
 }

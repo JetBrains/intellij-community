@@ -55,12 +55,15 @@ public class FormatInfoPrinter {
     if (alignment != null) {
       Element alEl = new Element("Alignment");
       result.addContent(alEl);
-      alEl.setAttribute("id", String.valueOf(System.identityHashCode(alignment)));
+      alEl.setAttribute("id", alignment.getId());
     }
     final List<Block> subBlocks = block.getSubBlocks();
     for (int i = 0; i < subBlocks.size(); i++) {
       if (i > 0 && i < subBlocks.size() - 1) {
-        result.addContent(createSpacingElement(block.getSpacing(subBlocks.get(i), subBlocks.get(i+1))));        
+        Spacing spacing = block.getSpacing(subBlocks.get(i), subBlocks.get(i + 1));
+        if (spacing != null) {
+          result.addContent(createSpacingElement(spacing));
+        }
       }
       result.addContent(createBlockElement(subBlocks.get(i)));
     }

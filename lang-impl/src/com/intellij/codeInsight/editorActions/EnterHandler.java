@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -390,7 +391,16 @@ public class EnterHandler extends EditorWriteActionHandler {
       comment = createJavaDocStub(settings, comment, getProject());
 
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
-      comment = (PsiComment)codeStyleManager.reformat(comment);
+      CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+      boolean old = codeStyleSettings.ENABLE_JAVADOC_FORMATTING;
+      codeStyleSettings.ENABLE_JAVADOC_FORMATTING = false;
+
+      try {
+        comment = (PsiComment)codeStyleManager.reformat(comment);
+      }
+      finally {
+        codeStyleSettings.ENABLE_JAVADOC_FORMATTING = old;
+      }
       PsiElement next = comment.getNextSibling();
       if (next == null && comment.getParent().getClass() == comment.getClass()) {
         next = comment.getParent().getNextSibling(); // expanding chameleon comment produces comment under comment

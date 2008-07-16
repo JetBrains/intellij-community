@@ -138,6 +138,8 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
+    if (fsItem == null) throw new FileNotFoundException("Cannot find temp for " + file.getPath());
+    
     assert fsItem instanceof FSFile;
 
     return ((FSFile)fsItem).myContent;

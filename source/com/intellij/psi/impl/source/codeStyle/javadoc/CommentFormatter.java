@@ -69,6 +69,9 @@ public class CommentFormatter {
       String newCommentText = formatFieldComment((PsiField)psiElement);
       replaceDocComment(newCommentText, (PsiDocCommentOwner)psiElement);
     }
+    else if (psiElement instanceof PsiDocComment) {
+      processElementComment(psiElement.getParent());
+    }
   }
 
   private void replaceDocComment(String newCommentText, final PsiDocCommentOwner psiDocCommentOwner) {
