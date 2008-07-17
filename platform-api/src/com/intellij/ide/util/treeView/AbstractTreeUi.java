@@ -878,9 +878,13 @@ class AbstractTreeUi {
   protected void addTaskToWorker(final Runnable runnable, boolean first, final Runnable postRunnable) {
     Runnable runnable1 = new Runnable() {
       public void run() {
+        if (isDisposed()) return;
+
         try {
           Runnable runnable2 = new Runnable() {
             public void run() {
+              if (isDisposed()) return;
+
               ApplicationManager.getApplication().runReadAction(runnable);
               if (postRunnable != null) {
                 ApplicationManager.getApplication().invokeLater(postRunnable, ModalityState.stateForComponent(myTree));
