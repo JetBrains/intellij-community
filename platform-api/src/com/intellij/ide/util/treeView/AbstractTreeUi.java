@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-class AbstractTreeUi  {
+class AbstractTreeUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
   protected JTree myTree;// protected for TestNG
   @SuppressWarnings({"WeakerAccess"}) protected DefaultTreeModel myTreeModel;
@@ -1013,56 +1013,67 @@ class AbstractTreeUi  {
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
-    if (myUpdaterState != null) {
-      myUpdaterState.clearSelection();
-    }
+    final Set<Object> currentElements = getSelectedElements();
 
-    final TreePath[] currentSelection = myTree.getSelectionPaths();
-    if (currentSelection != null) {
-      List<Object> selectedObjects = new ArrayList<Object>();
-      for (TreePath eachPath : currentSelection) {
-        if (eachPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          final DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)eachPath.getLastPathComponent();
-          final Object eachElement = getElementFor(eachNode);
-          if (eachElement != null) {
-            selectedObjects.add(eachElement);
-          }
+    if (currentElements.size() > 0 && elements.length == currentElements.size()) {
+      boolean runSelection = false;
+      for (Object eachToSelect : currentElements) {
+        if (!currentElements.contains(eachToSelect)) {
+          runSelection = true;
+          break;
         }
       }
 
-      if (currentSelection.length > 0 && currentSelection.length == selectedObjects.size()) {
-        boolean runSelection = false;
-        for (Object toSelect : elements) {
-          if (!selectedObjects.contains(toSelect)) {
-            runSelection = true;
-            break;
-          }
+      if (!runSelection) {
+        if (onDone != null) {
+          onDone.run();
         }
-
-        if (!runSelection) {
-          if (onDone != null) {
-            onDone.run();
-          }
-          return;
-        }
+        return;
       }
     }
+
+    Set<Object> toSelect = new HashSet<Object>();
+    myTree.clearSelection();
+    toSelect.addAll(Arrays.asList(elements));
+    if (addToSelection) {
+      toSelect.addAll(currentElements);
+    }
+
+    final Object[] elementsToSelect = toSelect.toArray(new Object[toSelect.size()]);
 
     if (wasRootNodeInitialized()) {
       final int[] originalRows = myTree.getSelectionRows();
       if (!addToSelection) {
         myTree.clearSelection();
       }
-      addNext(elements, 0, onDone, originalRows);
+      addNext(elementsToSelect, 0, onDone, originalRows);
     }
     else {
       myDeferredSelections.clear();
       myDeferredSelections.add(new Runnable() {
         public void run() {
-          select(elements, onDone);
+          select(elementsToSelect, onDone);
         }
       });
     }
+  }
+
+  private Set<Object> getSelectedElements() {
+    final TreePath[] paths = myTree.getSelectionPaths();
+
+    Set<Object> result = new HashSet<Object>();
+    if (paths != null) {
+      for (TreePath eachPath : paths) {
+        if (eachPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
+          final DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)eachPath.getLastPathComponent();
+          final Object eachElement = getElementFor(eachNode);
+          if (eachElement != null) {
+            result.add(eachElement);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows) {
@@ -1337,6 +1348,7 @@ class AbstractTreeUi  {
     final UpdaterTreeState state = new UpdaterTreeState(getBuilder());
 
     myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
+    myTree.clearSelection();
     getRootNode().removeAllChildren();
 
     myRootNodeWasInitialized = false;
