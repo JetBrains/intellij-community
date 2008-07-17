@@ -239,7 +239,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       setName(name, (String)null);
     }
 
-    protected void setName(String name, String hint) {
+    protected void setName(String name, @Nullable String hint) {
       setName(name, getPlainAttributes());
       if (hint != null) {
         addColoredFragment(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
@@ -558,12 +558,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       displayList.add(pluginsNode);
       displayList.add(modulePomsNode);
       displayList.add(nonModulePomsNode);
-    }
-
-    @Nullable
-    @NonNls
-    protected String getActionId() {
-      return "Maven.Run";
     }
 
     @Nullable
@@ -959,13 +953,21 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      String shortcut = null;
+      String hint = null;
       actionId = pomNode.actionIdPrefix + goal;
       if (!isMinimalView()) {
-        shortcut = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
+        hint = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
       }
 
-      setName(goal, shortcut);
+      setName(goal, hint);
+    }
+
+    @Override
+    protected SimpleTextAttributes getPlainAttributes() {
+      if (goal.equals(pomNode.myProjectModel.getDefaultGoal())) {
+        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, getColor());
+      }
+      return super.getPlainAttributes();
     }
 
     public boolean updateShortcut(@Nullable String actionId) {
