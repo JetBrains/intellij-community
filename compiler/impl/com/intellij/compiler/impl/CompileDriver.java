@@ -65,7 +65,6 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -1421,13 +1420,9 @@ public class CompileDriver {
           LOG.debug("\t" + file.getPresentableUrl() + "; ts=" + file.getTimeStamp());
         }
       }
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          for (FileProcessingCompiler.ProcessingItem item : processed) {
-            cacheUpdater.addFileForUpdate(item.getFile(), cache, item.getValidityState());
-          }
-        }
-      });
+      for (FileProcessingCompiler.ProcessingItem item : processed) {
+        cacheUpdater.addFileForUpdate(item, cache);
+      }
     }
     return true;
   }
@@ -1772,15 +1767,16 @@ public class CompileDriver {
   }
 
   private static class CacheDeferredUpdater {
-    private Map<VirtualFile, List<Pair<FileProcessingCompilerStateCache, ValidityState>>> myData = new java.util.HashMap<VirtualFile, List<Pair<FileProcessingCompilerStateCache, ValidityState>>>();
+    private Map<VirtualFile, List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>> myData = new java.util.HashMap<VirtualFile, List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>>();
     
-    public void addFileForUpdate(@NotNull VirtualFile file, FileProcessingCompilerStateCache cache, ValidityState validityState) {
-      List<Pair<FileProcessingCompilerStateCache, ValidityState>> list = myData.get(file);
+    public void addFileForUpdate(final FileProcessingCompiler.ProcessingItem item, FileProcessingCompilerStateCache cache) {
+      final VirtualFile file = item.getFile();
+      List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>> list = myData.get(file);
       if (list == null) {
-        list = new ArrayList<Pair<FileProcessingCompilerStateCache, ValidityState>>();
+        list = new ArrayList<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>();
         myData.put(file, list);
       }
-      list.add(new Pair<FileProcessingCompilerStateCache, ValidityState>(cache, validityState));
+      list.add(new Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>(cache, item));
     }
     
     public void doUpdate() throws IOException{
@@ -1788,9 +1784,10 @@ public class CompileDriver {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           try {
-            for (Map.Entry<VirtualFile, List<Pair<FileProcessingCompilerStateCache, ValidityState>>> entry : myData.entrySet()) {
-              for (Pair<FileProcessingCompilerStateCache, ValidityState> pair : entry.getValue()) {
-                pair.getFirst().update(entry.getKey(), pair.getSecond());
+            for (Map.Entry<VirtualFile, List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>> entry : myData.entrySet()) {
+              for (Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem> pair : entry.getValue()) {
+                final FileProcessingCompiler.ProcessingItem item = pair.getSecond();
+                pair.getFirst().update(entry.getKey(), item.getValidityState());
               }
             }
           }
