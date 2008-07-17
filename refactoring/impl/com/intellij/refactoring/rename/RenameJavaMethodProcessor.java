@@ -47,6 +47,9 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
     methodAndOverriders.add(method);
     containingClasses.add(method.getContainingClass());
+
+    findCollisionsAgainstNewName(method, newName, staticImportHides);
+
     // do actual rename of overriding/implementing methods and of references to all them
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
@@ -56,9 +59,6 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiMethod resolved = (PsiMethod)collidingRef.resolve();
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
-      }
-      else if (usage instanceof MemberHidesStaticImportUsageInfo) {
-        staticImportHides.add((MemberHidesStaticImportUsageInfo) usage);
       }
       else if (!(element instanceof PsiMethod)) {
         final PsiReference ref;
@@ -129,7 +129,6 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     final PsiMethod methodToRename = (PsiMethod)element;
     findSubmemberHidesMemberCollisions(methodToRename, newName, result);
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
-    findCollisionsAgainstNewName(methodToRename, newName, result);
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {

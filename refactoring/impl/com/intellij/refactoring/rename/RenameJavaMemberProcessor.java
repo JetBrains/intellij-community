@@ -128,7 +128,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  protected void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<UsageInfo> result) {
+  protected void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<? super MemberHidesStaticImportUsageInfo> result) {
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
     PsiMember prototype = (PsiMember)memberToRename.copy();
     try {
