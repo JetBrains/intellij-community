@@ -418,6 +418,9 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myStopped) return;
 
     myDebugProcess.stop();
+    myCurrentPosition = null;
+    myCurrentStackFrame = null;
+    mySuspendContext = null;
     myDebuggerManager.updateExecutionPosition(this, null, false);
     XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
     breakpointManager.removeBreakpointListener(myBreakpointListener);
