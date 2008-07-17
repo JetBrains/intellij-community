@@ -1423,15 +1423,6 @@ class AbstractTreeUi {
     public void treeCollapsed(TreeExpansionEvent e) {
       TreePath path = e.getPath();
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (isSelectionInside(node)) {
-        // when running outside invokeLater, in EJB view just collapsed node get expanded again (bug 4585)
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myDisposed) return;
-            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
-          }
-        });
-      }
       if (!(node.getUserObject() instanceof NodeDescriptor)) return;
       NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
       if (getBuilder().isDisposeOnCollapsing(descriptor)) {
