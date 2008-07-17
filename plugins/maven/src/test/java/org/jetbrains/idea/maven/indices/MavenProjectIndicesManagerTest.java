@@ -21,13 +21,13 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testAutomaticallyAddingAndUpdatingLocalRepository() throws Exception {
-    List<MavenIndex> indices = myIndicesFixture.getIndicesManager().getIndices();
+    List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
 
     assertEquals(1, indices.size());
 
     assertEquals(MavenIndex.Kind.LOCAL, indices.get(0).getKind());
     assertTrue(indices.get(0).getRepositoryPathOrUrl().endsWith("local1"));
-    assertTrue(myIndicesFixture.getIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
 
   public void testAutomaticallyRemoteRepositoriesOnProjectUpdate() throws Exception {
@@ -35,7 +35,7 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    List<MavenIndex> indices = myIndicesFixture.getIndicesManager().getIndices();
+    List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
     assertEquals(2, indices.size());
 
     assertTrue(indices.get(0).getRepositoryPathOrUrl().endsWith("local1"));
@@ -44,7 +44,7 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
 
   public void testUpdatingIndicesOnResolution() throws Exception {
     removeFromLocalRepository("junit/junit/4.0");
-    myIndicesFixture.getIndicesManager().scheduleUpdate(myIndicesFixture.getIndicesManager().getIndices());
+    myIndicesFixture.getProjectIndicesManager().scheduleUpdate(myIndicesFixture.getProjectIndicesManager().getIndices());
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -58,10 +58,10 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertFalse(myIndicesFixture.getIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
 
     resolveProject();
 
-    assertTrue(myIndicesFixture.getIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
 }

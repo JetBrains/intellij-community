@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.model.Repository;
 import org.jetbrains.idea.maven.core.MavenCore;
@@ -14,7 +13,10 @@ import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectIndicesManager extends DummyProjectComponent {
@@ -77,46 +79,16 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
   }
 
   private void updateIndicesList() {
-    List<MavenIndex> projectIndices = new ArrayList<MavenIndex>();
-
-    MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();
-    List<MavenIndex> allIndices = indicesManager.getIndices();
-
-    File localRepo = MavenProjectsManager.getInstance(myProject).getLocalRepository();
-    MavenIndex localIndex = null;
-    String localRepoPath = FileUtil.toSystemIndependentName(localRepo.getPath());
-    for (MavenIndex each : allIndices) {
-      if (FileUtil.pathsEqual(localRepoPath, each.getRepositoryPathOrUrl())) {
-        localIndex = each;
-        break;
-      }
-    }
     try {
-      if (localIndex == null) localIndex = indicesManager.add(localRepoPath, MavenIndex.Kind.LOCAL);
-      projectIndices.add(localIndex);
-      if (localIndex.getUpdateTimestamp() == -1) scheduleUpdate(Collections.singletonList(localIndex));
+      MavenIndicesManager m = MavenIndicesManager.getInstance();
+      File repo = MavenProjectsManager.getInstance(myProject).getLocalRepository();
+      myProjectIndices.set(m.ensureIndicesExist(myProject,
+                                                repo.getPath(),
+                                                collectRemoteRepositories()));
     }
     catch (MavenIndexException e) {
       MavenLog.info(e);
     }
-
-    Set<String> remoteRepos = collectRemoteRepositories();
-    for (MavenIndex each : allIndices) {
-      if (remoteRepos.remove(each.getRepositoryPathOrUrl())) {
-        projectIndices.add(each);
-      }
-    }
-
-    for (String eachRemaining : remoteRepos) {
-      try {
-        projectIndices.add(indicesManager.add(eachRemaining, MavenIndex.Kind.REMOTE));
-      }
-      catch (MavenIndexException e) {
-        MavenLog.info(e);
-      }
-    }
-
-    myProjectIndices.set(projectIndices);
   }
 
   private Set<String> collectRemoteRepositories() {
@@ -126,8 +98,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
       for (Repository eachRepository : each.getRepositories()) {
         String url = eachRepository.getUrl();
         if (url == null) continue;
-
-        result.add(FileUtil.toSystemIndependentName(url));
+        result.add(url);
       }
     }
 

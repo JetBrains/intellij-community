@@ -35,16 +35,20 @@ public class MavenIndicesTestFixture {
 
     MavenCore.getInstance(myProject).getState().setLocalRepository(myDataTestFixture.getTestDataPath(myLocalRepoDir));
 
-    MavenIndicesManager.getInstance().setTestIndexDir(new File(myDir, "MavenIndices"));
+    getIndicesManager().setTestIndexDir(new File(myDir, "MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
     myIndicesManager.doInit();
   }
 
   public void tearDown() throws Exception {
-    MavenIndicesManager.getInstance().doShutdown();
+    getIndicesManager().doShutdown();
   }
 
-  public MavenProjectIndicesManager getIndicesManager() {
+  public MavenIndicesManager getIndicesManager() {
+    return MavenIndicesManager.getInstance();
+  }
+
+  public MavenProjectIndicesManager getProjectIndicesManager() {
     return myIndicesManager;
   }
 

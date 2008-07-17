@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -22,8 +23,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MavenIndicesManager implements ApplicationComponent {
   public enum IndexUpdatingState {
@@ -60,7 +60,7 @@ public class MavenIndicesManager implements ApplicationComponent {
 
   private synchronized MavenIndices getIndicesObject() {
     if (myIndices != null) return myIndices;
-    
+
     MavenCoreSettings settings = MavenCore.getInstance(ProjectManager.getInstance().getDefaultProject()).getState();
 
     myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings).getEmbedder();
@@ -103,8 +103,54 @@ public class MavenIndicesManager implements ApplicationComponent {
     return getIndicesObject().getIndices();
   }
 
-  public MavenIndex add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
-    return getIndicesObject().add(repositoryPathOrUrl, kind);
+  public synchronized List<MavenIndex> ensureIndicesExist(Project project,
+                                                          String localRepository,
+                                                          Collection<String> remoteRepositories) throws MavenIndexException {
+    List<MavenIndex> result = new ArrayList<MavenIndex>();
+    List<MavenIndex> indices = getIndices();
+
+    File localRepositoryFile = new File(localRepository);
+    for (MavenIndex each : indices) {
+      if (each.getKind() == MavenIndex.Kind.LOCAL) {
+        if (each.getRepositoryFile().equals(localRepositoryFile)) {
+          result.add(each);
+          break;
+        }
+      }
+    }
+    if (result.isEmpty()) {
+      MavenIndex localIndex = getIndicesObject().add(localRepository, MavenIndex.Kind.LOCAL);
+      result.add(localIndex);
+    }
+    if (result.get(0).getUpdateTimestamp() == -1) {
+      scheduleUpdate(project, Collections.singletonList(result.get(0)));
+    }
+
+    Set<String> toCreate = new HashSet<String>();
+    for (String each : remoteRepositories) {
+      toCreate.add(normalizeRemoteIndexUrl(each));
+    }
+
+    for (MavenIndex each : indices) {
+      if (toCreate.remove(normalizeRemoteIndexUrl(each.getRepositoryPathOrUrl()))) {
+        result.add(each);
+      }
+    }
+
+    for (String each : toCreate) {
+      result.add(getIndicesObject().add(each, MavenIndex.Kind.REMOTE));
+    }
+
+    return result;
+  }
+
+  private String normalizeRemoteIndexUrl(String url) {
+    url = url.trim();
+    url = FileUtil.toSystemIndependentName(url);
+    while (url.endsWith("/")) {
+      url = url.substring(0, url.length() - 1);
+    }
+    return url;
   }
 
   public void addArtifact(File repository, MavenId artifact) {
@@ -156,7 +202,7 @@ public class MavenIndicesManager implements ApplicationComponent {
         }
 
         try {
-          myIndices.update(each, indicator);
+          getIndicesObject().update(each, indicator);
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {

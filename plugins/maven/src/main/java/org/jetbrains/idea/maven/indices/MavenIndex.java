@@ -62,8 +62,6 @@ public class MavenIndex {
 
   private String myFailureMessage;
 
-  private Object myDirectoryLock = new Object();
-
   public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind) throws MavenIndexException {
     myDir = dir;
     myRepositoryPathOrUrl = repositoryPathOrUrl;
@@ -148,12 +146,10 @@ public class MavenIndex {
 
   private void doOpen() throws Exception {
     try {
-      synchronized (myDirectoryLock) {
-        if (myDataDirName == null) {
-          myDataDirName = findAvailableDataDir();
-        }
-        myData = openData(myDataDirName);
+      if (myDataDirName == null) {
+        myDataDirName = findAvailableDataDir();
       }
+      myData = openData(myDataDirName);
     }
     catch (Exception e) {
       try {
@@ -303,10 +299,9 @@ public class MavenIndex {
 
     String newDataDir;
     IndexData newData;
-    synchronized (myDirectoryLock){
-      newDataDir = findAvailableDataDir();
-      newData = openData(newDataDir);
-    }
+
+    newDataDir = findAvailableDataDir();
+    newData = openData(newDataDir);
 
     try {
       doUpdateIndexData(context, newData, progress);
@@ -418,7 +413,6 @@ public class MavenIndex {
   }
 
   private String findAvailableDataDir() {
-    assert Thread.holdsLock(myDirectoryLock);
     return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
   }
 
@@ -447,7 +441,13 @@ public class MavenIndex {
       myData.flush();
     }
     catch (IOException e) {
-      throw new MavenIndexException(e);
+      String message = myRepositoryPathOrUrl +
+          "\nopen: " + myData.isOpen +
+          "\ndataDir: " + myDataDirName +
+          "\nlastUpdate: " + myUpdateTimestamp +
+          "\nfailureMessage: " + myFailureMessage;
+
+      throw new MavenIndexException(message, e);
     }
   }
 
@@ -539,21 +539,20 @@ public class MavenIndex {
   }
 
   private static class IndexData {
-    File myDir;
+    final PersistentStringEnumerator groups;
+    final PersistentStringEnumerator groupsWithArtifacts;
+    final PersistentStringEnumerator groupsWithArtifactsWithVersions;
 
-    PersistentStringEnumerator groups;
-    PersistentStringEnumerator groupsWithArtifacts;
-    PersistentStringEnumerator groupsWithArtifactsWithVersions;
+    final PersistentHashMap<String, Set<String>> groupToArtifactMap;
+    final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
 
-    PersistentHashMap<String, Set<String>> groupToArtifactMap;
-    PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
+    final Map<String, Boolean> hasGroupCache = new HashMap<String, Boolean>();
+    final Map<String, Boolean> hasArtifactCache = new HashMap<String, Boolean>();
+    final Map<String, Boolean> hasVersionCache = new HashMap<String, Boolean>();
 
-    Map<String, Boolean> hasGroupCache = new HashMap<String, Boolean>();
-    Map<String, Boolean> hasArtifactCache = new HashMap<String, Boolean>();
-    Map<String, Boolean> hasVersionCache = new HashMap<String, Boolean>();
+    volatile boolean isOpen = true;
 
     public IndexData(File dir) throws IOException {
-      myDir = dir;
       groups = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
       groupsWithArtifacts = new PersistentStringEnumerator(new File(dir, ARTIFACT_IDS_FILE));
       groupsWithArtifactsWithVersions = new PersistentStringEnumerator(new File(dir, VERSIONS_FILE));
@@ -567,6 +566,8 @@ public class MavenIndex {
     }
 
     public void close() throws IOException {
+      isOpen = false;
+
       safeClose(groups);
       safeClose(groupsWithArtifacts);
       safeClose(groupsWithArtifactsWithVersions);

@@ -23,6 +23,8 @@ public class MavenIndices {
 
   private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
 
+  private static final Object ourDirectoryLock = new Object();
+
   public MavenIndices(MavenEmbedder e, File indicesDir) {
     myEmbedder = e;
     myIndicesDir = indicesDir;
@@ -87,12 +89,18 @@ public class MavenIndices {
   }
 
   static File findAvailableDir(File parent, String prefix, int max) {
-    for (int i = 0; i < max; i++) {
-      String name = prefix + i;
-      File f = new File(parent, name);
-      if (!f.exists()) return f;
+    synchronized (ourDirectoryLock) {
+      for (int i = 0; i < max; i++) {
+        String name = prefix + i;
+        File f = new File(parent, name);
+        if (!f.exists()) {
+          f.mkdirs();
+          assert f.exists();
+          return f;
+        }
+      }
+      throw new RuntimeException("No available dir found");
     }
-    throw new RuntimeException("No available dir found");
   }
 
   public synchronized void remove(MavenIndex i) {
