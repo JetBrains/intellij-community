@@ -207,7 +207,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     if (builder == null) return null;
 
     StructureView structureView = builder.createStructureView(fileEditor, myProject);
-    return new StructureViewComposite.StructureViewDescriptor(IdeBundle.message("tab.structureview.baselanguage.view", language.getID()), structureView, findFileType(language).getIcon());
+    return new StructureViewComposite.StructureViewDescriptor(IdeBundle.message("tab.structureview.baselanguage.view", language.getDisplayName()), structureView, findFileType(language).getIcon());
   }
 
   private void updateTemplateDataFileView() {
