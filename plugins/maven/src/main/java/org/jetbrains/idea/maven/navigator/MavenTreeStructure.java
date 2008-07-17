@@ -1146,6 +1146,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       setNodeErrorLevel(myPluginInfo == null ? ErrorLevel.WARNING : ErrorLevel.NONE);
       updateNameAndDescription();
       setUniformIcon(PLUGIN_ICON);
+
+      for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
+        goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
+      }
     }
 
     @Override
@@ -1155,9 +1159,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       }
       else {
         setName(myPluginInfo.getGoalPrefix(), getId().toString());
-        for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
-          goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
-        }
       }
     }
 

@@ -97,11 +97,13 @@ public class ConsoleAdapter {
         PrintWriter printWriter = new PrintWriter(writer);
         try {
           throwable.printStackTrace(printWriter);
-          myConsoleView.print(writer.getBuffer().toString(), ConsoleViewContentType.ERROR_OUTPUT);
+          myConsoleView.print(MavenLogUtil.LINE_SEPARATOR + writer.getBuffer().toString(), ConsoleViewContentType.ERROR_OUTPUT);
         }
         finally {
           printWriter.close();
         }
+      } else {
+        myConsoleView.print(MavenLogUtil.LINE_SEPARATOR + "To view full stack traces, please go to the Maven Settings->Runner and check the 'Print stack traces' box.", output);
       }
     }
   }
