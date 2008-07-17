@@ -261,7 +261,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   private static BreadcrumbsInfoProvider getInfoProvider(@NotNull final Language language) {
     for (final BreadcrumbsInfoProvider provider : Extensions.getExtensions(BreadcrumbsInfoProvider.EP_NAME)) {
       for (final Language language1 : provider.getLanguages()) {
-        if (language1 == language) {
+        if (language.isKindOf(language1)) {
           return provider;
         }
       }
