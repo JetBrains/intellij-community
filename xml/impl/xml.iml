@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
+    <orderEntry type="module" module-name="css-api" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
