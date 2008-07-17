@@ -1,6 +1,5 @@
 package com.intellij.ide.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
@@ -11,7 +10,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -75,10 +73,7 @@ public class OpenProjectAction extends AnAction {
 
     if (files.length == 0 || files[0] == null) return;
 
-    final Project openedProject = ProjectUtil.openOrImport(files[0].getPath(), project, false);
-    if (openedProject == null) {
-      Messages.showErrorDialog(project, IdeBundle.message("fail.open.project.message", files[0].getPath()), CommonBundle.message("title.error"));
-    }
+    ProjectUtil.openOrImport(files[0].getPath(), project, false);
   }
 
   private static boolean isProjectFile(final VirtualFile file) {
