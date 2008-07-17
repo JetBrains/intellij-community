@@ -35,7 +35,7 @@ public class InlineParameterExpressionProcessor {
   private final PsiExpression myInitializer;
   private final boolean mySameClass;
   private PsiMethod myCallingMethod;
-  private Map<PsiLocalVariable, PsiElement> myLocalReplacements;
+  private Map<PsiVariable, PsiElement> myLocalReplacements;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,
@@ -53,17 +53,17 @@ public class InlineParameterExpressionProcessor {
 
   void run() throws IncorrectOperationException {
     int parameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
-    myLocalReplacements = new HashMap<PsiLocalVariable, PsiElement>();
+    myLocalReplacements = new HashMap<PsiVariable, PsiElement>();
     final PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();
     for(int i=0; i<arguments.length; i++) {
       if (i != parameterIndex && arguments [i] instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)arguments[i];
         final PsiElement element = referenceExpression.resolve();
-        if (element instanceof PsiLocalVariable) {
+        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           final PsiParameter param = myMethod.getParameterList().getParameters()[i];
           final PsiExpression paramRef =
             JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createExpressionFromText(param.getName(), myMethod);
-          myLocalReplacements.put((PsiLocalVariable) element, paramRef);
+          myLocalReplacements.put((PsiVariable) element, paramRef);
         }
       }
     }
@@ -167,7 +167,7 @@ public class InlineParameterExpressionProcessor {
           }
         }
 
-        for(PsiLocalVariable var: myLocalReplacements.keySet()) {
+        for(PsiVariable var: myLocalReplacements.keySet()) {
           if (ReferencesSearch.search(var).findFirst() == null) {
             var.delete();
           }
@@ -198,8 +198,8 @@ public class InlineParameterExpressionProcessor {
   private boolean canEvaluate(final PsiReferenceExpression expression,
                               final PsiElement element,
                               final Map<PsiElement, PsiElement> elementsToReplace) {
-    if (element instanceof PsiLocalVariable) {
-      final PsiLocalVariable localVariable = (PsiLocalVariable)element;
+    if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+      final PsiVariable localVariable = (PsiVariable)element;
       final PsiElement localReplacement = myLocalReplacements.get(localVariable);
       if (localReplacement != null) {
         elementsToReplace.put(expression, localReplacement);
