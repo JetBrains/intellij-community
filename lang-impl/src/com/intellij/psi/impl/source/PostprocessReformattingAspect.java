@@ -258,7 +258,15 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
       // only in following loop real changes in document are made
       for (final Pair<RangeMarker, ? extends PostponedAction> normalizedAction : normalizedActions) {
-        normalizedAction.getSecond().processRange(normalizedAction.getFirst(), key);
+        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
+        boolean old = settings.ENABLE_JAVADOC_FORMATTING;
+        settings.ENABLE_JAVADOC_FORMATTING = false;
+        try {
+          normalizedAction.getSecond().processRange(normalizedAction.getFirst(), key);
+        }
+        finally {
+          settings.ENABLE_JAVADOC_FORMATTING = old;
+        }
       }
     }
   }
