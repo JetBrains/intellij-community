@@ -669,7 +669,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
         desc.append("<td><i>Some modules have problems.</i></td>");
         desc.append("</tr>");
       }
-      
+
       desc.append("</table>");
       desc.append("</html>");
       setDescription(desc.toString());
@@ -1149,8 +1149,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       updateNameAndDescription();
       setUniformIcon(PLUGIN_ICON);
 
-      for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
-        goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
+      if (myPluginInfo != null) {
+        for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
+          goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
+        }
       }
     }
 
