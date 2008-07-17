@@ -331,7 +331,10 @@ public class ActionsTreeUtil {
     mainGroup.addGroup(createEditorActionsGroup(filtered));
     mainGroup.addGroup(createMainMenuGroup(filtered));
     for (KeymapExtension extension : Extensions.getExtensions(KeymapExtension.EXTENSION_POINT_NAME)) {
-      mainGroup.addGroup(createExtensionGroup(filtered, project, extension));
+      final Group group = createExtensionGroup(filtered, project, extension);
+      if (group != null) {
+        mainGroup.addGroup(group);
+      }
     }
     mainGroup.addGroup(createMacrosGroup(filtered));
     mainGroup.addGroup(createQuickListsGroup(filtered, filter, forceFiltering, quickLists));
