@@ -20,16 +20,16 @@ public class LineMarkerInfo<T extends PsiElement> {
   private final Icon myIcon;
   private final WeakReference<T> elementRef;
   public final int startOffset;
+  public int endOffset;
   public Color separatorColor;
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
-  public final int updatePass;
 
+  public final int updatePass;
   @Nullable private final Function<? super T, String> myTooltipProvider;
   private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
   public TextAttributes textAttributes;
-  public int endOffset;
 
 
   public LineMarkerInfo(T element,
@@ -87,10 +87,14 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   @Nullable
   public String getLineMarkerTooltip() {
-    T element = elementRef.get();
+    T element = getElement();
     if (element == null || !element.isValid()) return null;
     if (myTooltipProvider != null) return myTooltipProvider.fun(element);
     return null;
+  }
+
+  public T getElement() {
+    return elementRef.get();
   }
 
 
@@ -98,11 +102,16 @@ public class LineMarkerInfo<T extends PsiElement> {
     public void actionPerformed(AnActionEvent e) {
       if (myNavigationHandler != null) {
         MouseEvent mouseEvent = (MouseEvent)e.getInputEvent();
-        T element = elementRef.get();
+        T element = getElement();
         if (element == null || !element.isValid()) return;
 
         myNavigationHandler.navigate(mouseEvent, element);
       }
     }
+  }
+
+  @Nullable
+  public GutterIconNavigationHandler<T> getNavigationHandler() {
+    return myNavigationHandler;
   }
 }

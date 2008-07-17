@@ -75,6 +75,14 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     action3.doCollectInformation(progress);
     result.addAll(action3.getHighlights());
 
+    LineMarkersPass markersPass = new LineMarkersPass(getProject(), getFile(), document, 0, document.getTextLength(), true);
+    markersPass.collectInformation(progress);
+    markersPass.applyInformationToEditor();
+
+    SlowLineMarkersPass slowPass = new SlowLineMarkersPass(getProject(), getFile(), document, 0, document.getTextLength());
+    slowPass.collectInformation(progress);
+    slowPass.applyInformationToEditor();
+    
     return result;
   }
 

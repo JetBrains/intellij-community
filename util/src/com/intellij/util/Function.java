@@ -26,9 +26,5 @@ public interface Function<Dom, Img> {
       return o;
     }
   };
-  Function NULL = new Function() {
-    public Object fun(final Object o) {
-      return null;
-    }
-  };
+  Function NULL = NullableFunction.NULL;
 }

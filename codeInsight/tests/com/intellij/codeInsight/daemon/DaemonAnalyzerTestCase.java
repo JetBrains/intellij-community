@@ -26,18 +26,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -201,26 +199,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     if (doTestLineMarkers()) {
       collectLineMarkersForFile(file, editor, result);
-
-      if (file instanceof XmlFile) {
-        file.acceptChildren(new PsiRecursiveElementVisitor() {
-          public void visitElement(final PsiElement element) {
-            super.visitElement(element);
-            if (element instanceof PsiLanguageInjectionHost) {
-              ((PsiLanguageInjectionHost)element).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-                public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-                  collectLineMarkersForFile(
-                      injectedPsi,
-                      InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedPsi),
-                      result
-                  );
-                }
-              });
-
-            }
-          }
-        });
-      }
     }
 
     result.addAll(collectHighlighInfos(file, editor));
@@ -270,8 +248,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       GutterIconRenderer gutterIconRenderer = lineMarkerInfo.createGutterRenderer();
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.INFO, lineMarkerInfo.startOffset,
                                                                             lineMarkerInfo.endOffset, gutterIconRenderer != null
-                                                                                                        ? gutterIconRenderer
-          .getTooltipText()
+                                                                                                        ? gutterIconRenderer.getTooltipText()
                                                                                                         : lineMarkerInfo.getLineMarkerTooltip());
       result.add(highlightInfo);
       highlightInfo.setGutterIconRenderer(gutterIconRenderer);
