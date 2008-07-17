@@ -107,10 +107,10 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
             myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType());
           }
         }
+        myInitialized = true;
       }
       finally {
         myComputing.set(null);
-        myInitialized = true;
       }
     }
   }
