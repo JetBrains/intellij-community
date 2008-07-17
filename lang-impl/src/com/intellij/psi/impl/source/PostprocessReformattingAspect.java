@@ -375,7 +375,6 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
           final boolean currentNodeGenerated = CodeEditUtil.isNodeGenerated(current);
           CodeEditUtil.setNodeGenerated(current, false);
           if(currentNodeGenerated && !inGeneratedContext){
-            if(current.getElementType() == TokenType.WHITE_SPACE) return false;            
             rangesToProcess.put(document.createRangeMarker(current.getTextRange()), new ReformatAction());
             inGeneratedContext = true;
           }
