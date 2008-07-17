@@ -7,7 +7,6 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -15,7 +14,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -136,18 +134,6 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
         LOG.assertTrue(editor != null);
         final int duplicatesNo = duplicates.size();
-        final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-        for (final Match match : duplicates) {
-          DuplicatesImpl.highlightMatch(project, editor, match, highlighters);
-        }
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          final MethodDuplicatesDialog dialog = new MethodDuplicatesDialog(project, method, duplicatesNo);
-          dialog.show();
-          for (final RangeHighlighter rangeHighlighter : highlighters) {
-            HighlightManager.getInstance(project).removeSegmentHighlighter(editor, rangeHighlighter);
-          }
-          if (!dialog.isOK()) return;
-        }
         WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
