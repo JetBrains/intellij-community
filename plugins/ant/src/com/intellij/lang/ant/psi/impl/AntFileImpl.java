@@ -363,15 +363,15 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           assert document != null;
           final XmlTag tag = document.getRootTag();
           if (tag == null) return null;
-          final String fileText = baseFile.getText();
+          final CharSequence fileText = baseFile.getViewProvider().getContents();
           final TextRange tagRange = tag.getTextRange();
           final int projectStart = tagRange.getStartOffset();
           if (projectStart > 0) {
-            myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+            myPrologElement = new AntOuterProjectElement(this, 0, fileText.subSequence(0, projectStart).toString());
           }
           final int projectEnd = tagRange.getEndOffset();
           if (projectEnd < fileText.length()) {
-            myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
+            myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.subSequence(projectEnd, fileText.length()).toString());
           }
           final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
           myProject = project;

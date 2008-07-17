@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 public interface AntElement extends PsiAntElement {
   AntElement[] EMPTY_ARRAY = new AntElement[0];
 
-  @NotNull
   XmlElement getSourceElement();
 
   @Nullable
