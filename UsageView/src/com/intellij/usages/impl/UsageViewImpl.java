@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -97,7 +98,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected = false;
   private final Queue<Usage> myUsagesToFlush = new ConcurrentLinkedQueue<Usage>();
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     public int compare(final Usage o1, final Usage o2) {
       if (o1 == NULL_NODE || o2 == NULL_NODE) return -1;
@@ -127,7 +127,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private JPanel myCentralPanel;
   private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
   private final GroupNode myRoot;
-  private final MessageBusConnection myMessageBusConnection;
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -157,14 +156,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     };
     myRootPanel = new MyPanel(myTree);
-    myModelTracker = new UsageModelTracker(project);
+    myModelTracker = new UsageModelTracker(project, this);
 
     final UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)model.getRoot();
     myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot);
 
-    myMessageBusConnection = myProject.getMessageBus().connect();
-    myMessageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
+    final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
+    messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
       public void run() {
         rulesChanged();
       }
@@ -224,13 +223,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
     if (myUsagePreviewPanel != null) {
-      myUsagePreviewPanel.dispose();
+      Disposer.dispose(myUsagePreviewPanel);
       myUsagePreviewPanel = null;
     }
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
       Splitter splitter = new Splitter(false, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
       splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
       myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+      Disposer.register(this, myUsagePreviewPanel);
       splitter.setSecondComponent(myUsagePreviewPanel);
       myCentralPanel.add(splitter, BorderLayout.CENTER);
     }
@@ -374,7 +374,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void scheduleDisposeOnClose(@NotNull Disposable disposable) {
-    myDisposables.add(disposable);
+    Disposer.register(this, disposable);
   }
 
   private AnAction[] createActions() {
@@ -768,21 +768,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void dispose() {
-    myMessageBusConnection.disconnect();
-
     isDisposed = true;
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
-    for (Disposable disposable : myDisposables) {
-      disposable.dispose();
-    }
-    myDisposables.clear();
     myModelTracker.removeListener(this);
-    myModelTracker.dispose();
     myUpdateAlarm.cancelAllRequests();
     myRootPanel.dispose();
     if (myUsagePreviewPanel != null) {
       UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
-      myUsagePreviewPanel.dispose();
       myUsagePreviewPanel = null;
     }
   }
@@ -920,6 +912,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
 
+  @Nullable
   private Node getSelectedNode() {
     TreePath leadSelectionPath = myTree.getLeadSelectionPath();
     if (leadSelectionPath == null) return null;
@@ -928,6 +921,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return node instanceof Node ? (Node)node : null;
   }
 
+  @Nullable
   private Node[] getSelectedNodes() {
     TreePath[] leadSelectionPath = myTree.getSelectionPaths();
     if (leadSelectionPath == null || leadSelectionPath.length == 0) return null;
@@ -943,6 +937,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return result.isEmpty() ? null : result.toArray(new Node[result.size()]);
   }
 
+  @Nullable
   public Set<Usage> getSelectedUsages() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
@@ -986,6 +981,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  @Nullable
   private UsageTarget[] getSelectedUsageTargets() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) return null;
@@ -1005,6 +1001,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return targets.isEmpty() ? null : targets.toArray(new UsageTarget[targets.size()]);
   }
 
+  @Nullable
   private static Navigatable getNavigatableForNode(DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
@@ -1137,6 +1134,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     }
 
+    @Nullable
     private VirtualFile[] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {
       if (usages == null && usageTargets == null) {
         return null;

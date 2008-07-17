@@ -15,7 +15,9 @@
  */
 package com.intellij.usages;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 
 import java.util.List;
@@ -24,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author max
  */
-public class UsageModelTracker {
+public class UsageModelTracker implements Disposable {
   private final PsiTreeChangeListener myPsiListener;
 
   public interface UsageModelTrackerListener {
@@ -34,7 +36,7 @@ public class UsageModelTracker {
   private final Project myProject;
   private final List<UsageModelTrackerListener> myListeners = new CopyOnWriteArrayList<UsageModelTrackerListener>();
 
-  public UsageModelTracker(Project project) {
+  public UsageModelTracker(Project project, Disposable parentDisposable) {
     myProject = project;
     myPsiListener = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
@@ -62,6 +64,7 @@ public class UsageModelTracker {
       }
     };
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
+    Disposer.register(parentDisposable, this);
   }
 
   private void doFire(final PsiTreeChangeEvent event, boolean propertyChange) {

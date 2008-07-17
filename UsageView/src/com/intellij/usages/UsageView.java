@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -66,6 +67,7 @@ public interface UsageView extends Disposable {
   UsageViewPresentation getPresentation();
 
   @NotNull Set<Usage> getExcludedUsages();
+  @Nullable
   Set<Usage> getSelectedUsages();
   @NotNull Set<Usage> getUsages();
   @NotNull List<Usage> getSortedUsages();
