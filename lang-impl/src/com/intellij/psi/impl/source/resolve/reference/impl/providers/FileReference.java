@@ -31,8 +31,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class FileReference
-  implements PsiPolyVariantReference, QuickFixProvider<FileReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
+public class FileReference implements FileReferenceOwner, PsiPolyVariantReference, QuickFixProvider<FileReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
   public static final FileReference[] EMPTY = new FileReference[0];
 
   private final int myIndex;
@@ -415,6 +414,10 @@ public class FileReference
       result.addAll(helper.registerFixes(null, this));
     }
     return result.toArray(new LocalQuickFix[result.size()]);
+  }
+
+  public FileReference getLastFileReference() {
+    return myFileReferenceSet.getLastReference();
   }
 
   static class MyResolver implements ResolveCache.PolyVariantResolver<FileReference> {

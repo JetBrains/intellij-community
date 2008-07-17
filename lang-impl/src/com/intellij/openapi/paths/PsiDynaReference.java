@@ -14,6 +14,7 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
-  implements PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
+  implements FileReferenceOwner, PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
 
   private List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChoosenOne = -1;
@@ -43,7 +44,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public void addReferences(Collection<PsiReference> references) {
     myReferences.addAll(references);
   }
-  
+
   public void addReference(PsiReference reference) {
     myReferences.add(reference);
   }
@@ -169,7 +170,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     if (myCachedResult == null) {
-      myCachedResult = innerResolve(incompleteCode);  
+      myCachedResult = innerResolve(incompleteCode);
     }
     return myCachedResult;
   }
@@ -249,5 +250,14 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "PsiDynaReference containing " + myReferences.toString();
+  }
+
+  public FileReference getLastFileReference() {
+    for (PsiReference reference : myReferences) {
+      if (reference instanceof FileReferenceOwner) {
+        return ((FileReferenceOwner)reference).getLastFileReference();
+      }
+    }
+    return null;
   }
 }

@@ -4,10 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.List;
-import java.util.ArrayList;
 
 public class FileReferenceContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.FileReferenceContextUtil");
@@ -20,8 +18,8 @@ public class FileReferenceContextUtil {
     element.accept(new PsiRecursiveElementVisitor(true) {
       @Override public void visitElement(PsiElement element) {
         final PsiReference[] refs = element.getReferences();
-        if (refs.length > 0 && refs[0] instanceof FileReference) {
-          final FileReference ref = ((FileReference)refs[0]).getFileReferenceSet().getLastReference();
+        if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
+          final FileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
           if (ref != null) {
             final ResolveResult[] results = ref.multiResolve(false);
             for (ResolveResult result : results) {
@@ -37,22 +35,18 @@ public class FileReferenceContextUtil {
     });
   }
 
-  public static List<PsiElement> decodeFileReferences(PsiElement element) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+  public static void decodeFileReferences(PsiElement element) {
     element.accept(new PsiRecursiveElementVisitor(true) {
       @Override public void visitElement(PsiElement element) {
         final PsiFileSystemItem item = element.getCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY);
         element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, null);
         if (item != null && item.isValid()) {
           PsiReference[] refs = element.getReferences();
-          if (refs.length > 0 && refs[0] instanceof FileReference) {
-            final FileReference ref = ((FileReference)refs[0]).getFileReferenceSet().getLastReference();
+          if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
+            final FileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
             if (ref != null) {
               try {
                 element = ref.bindToElement(item);
-                if (element != null) {
-                  result.add(element);
-                }
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
@@ -65,7 +59,5 @@ public class FileReferenceContextUtil {
         }
       }
     });
-
-    return result;
   }
 }
