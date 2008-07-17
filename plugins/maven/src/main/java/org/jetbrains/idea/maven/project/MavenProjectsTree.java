@@ -172,8 +172,10 @@ public class MavenProjectsTree {
       }
     }
 
-    prevInheritors.addAll(findInheritors(project));
-    for (MavenProjectModel each : prevInheritors) {
+
+    Set<MavenProjectModel> allInheritors = findInheritors(project);
+    allInheritors.addAll(prevInheritors);
+    for (MavenProjectModel each : allInheritors) {
       doUpdate(findAggregator(each), each, embedder, false, readFiles, p, force);
     }
   }

@@ -69,7 +69,7 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     SimpleNode node = tree.getNodeFor(tree.getSelectionPath());
     if (node instanceof MavenTreeStructure.GoalNode) {
       final MavenTreeStructure.GoalNode goalNode = (MavenTreeStructure.GoalNode)node;
-      pomPath = goalNode.getParent(MavenTreeStructure.PomNode.class).getMavenProjectModel().getPath();
+      pomPath = goalNode.getParent(MavenTreeStructure.PomNode.class).getProjectModel().getPath();
       goal = goalNode.getGoal();
     }
   }
@@ -109,7 +109,7 @@ public class SelectMavenGoalDialog extends DialogWrapper {
       GoalNode goalNode = null;
       for (MavenProjectModel each : myProjectsManager.getProjects()) {
         final PomNode pomNode = new PomNode(each);
-        root.addToStructure(pomNode);
+        myRoot.addToStructure(pomNode);
 
         if (pomPath != null && pomPath.equals(each.getPath())) {
           goalNode = pomNode.findGoalNode(goalName);

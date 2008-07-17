@@ -111,7 +111,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   private List<MavenProjectModel> extractPomNodes() {
     List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
     for (MavenTreeStructure.PomNode each : getSelectedPomNodes()) {
-      result.add(each.getMavenProjectModel());
+      result.add(each.getProjectModel());
     }
     return result.isEmpty() ? null : result;
   }
@@ -157,7 +157,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   private List<String> extractGoals() {
     final MavenTreeStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
-      MavenProjectModel project = pomNode.getMavenProjectModel();
+      MavenProjectModel project = pomNode.getProjectModel();
       String goal = project.getDefaultGoal();
       if (!StringUtil.isEmptyOrSpaces(goal)) {
         return Collections.singletonList(goal);

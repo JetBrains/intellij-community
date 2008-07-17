@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -16,7 +15,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
-import com.intellij.util.Function;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -43,7 +40,7 @@ import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenProjectNavigator extends MavenTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
-  @NonNls private static final String MAVEN_NAVIGATOR_TOOLWINDOW_ID = "Maven projects";
+  public static final String MAVEN_NAVIGATOR_TOOLWINDOW_ID = "Maven Projects";
   private static final Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
   private PomTreeViewSettings mySettings = new PomTreeViewSettings();
@@ -51,7 +48,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
   private SimpleTreeBuilder myTreeBuilder;
   private SimpleTree myTree;
 
-  private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
+  private Map<VirtualFile, PomNode> myFileToNode = new LinkedHashMap<VirtualFile, PomNode>();
   private MavenProjectsManager.Listener myMavenProjectsListener;
   private MavenEventsHandler.Listener myMavenEventsListener;
 
@@ -138,11 +135,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         TreePath p = myTree.getPathForLocation(e.getX(), e.getY());
         if (p != null) {
           Object last = p.getLastPathComponent();
-          Object object = ((DefaultMutableTreeNode)last).getUserObject();
-          if (object instanceof PomNode) {
-            PomNode pomNode = (PomNode)object;
-            showProblemsToolTip(pomNode);
-          }
+          showProblemsToolTip((CustomNode)((DefaultMutableTreeNode)last).getUserObject());
         }
       }
     });
@@ -166,24 +159,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
   }
 
 
-  private void showProblemsToolTip(PomNode pomNode) {
-    List<MavenProjectModelProblem> problems = pomNode.getMavenProjectModel().getProblems();
-    if (problems.isEmpty()) {
-      myTree.setToolTipText(null);
-      return;
-    }
-
-    String s = StringUtil.join(problems, new Function<MavenProjectModelProblem, String>() {
-      public String fun(MavenProjectModelProblem each) {
-        String image = each.isCritical() ? "/images/error.png" : "/images/warning.png";
-        return formatHtmlImage(image) + each.getDescription();
-      }
-    }, "<br>");
-    myTree.setToolTipText("<html>" + s + "</html>");
-  }
-
-  private String formatHtmlImage(String path) {
-    return "<img src=\"" + getClass().getResource(path) + "\"> ";
+  private void showProblemsToolTip(CustomNode node) {
+    myTree.setToolTipText(node.getDescription());
   }
 
   private void subscribeForChanges() {
@@ -191,7 +168,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       boolean isActivated;
       public void activate() {
         for (MavenProjectModel each : myProjectsManager.getProjects()) {
-          fileToNode.put(each.getFile(), new PomNode(each));
+          myFileToNode.put(each.getFile(), new PomNode(each));
         }
 
         updateFromRoot(true, true);
@@ -201,7 +178,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       public void setIgnored(VirtualFile file, boolean on) {
         if (!isActivated) return;
 
-        final PomNode pomNode = fileToNode.get(file);
+        final PomNode pomNode = myFileToNode.get(file);
         if (pomNode != null) {
           pomNode.setIgnored(on);
         }
@@ -210,7 +187,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
       public void profilesChanged(List<String> profiles) {
         if (!isActivated) return;
 
-        root.setActiveProfiles(profiles);
+        myRoot.setActiveProfiles(profiles);
         myTree.repaint();
       }
 
@@ -222,9 +199,9 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
             if (myProject.isDisposed()) return;
 
             final PomNode newNode = new PomNode(n);
-            fileToNode.put(n.getFile(), newNode);
-            root.addToStructure(newNode);
-            root.updateProfileNodes();
+            myFileToNode.put(n.getFile(), newNode);
+            myRoot.addToStructure(newNode);
+            myRoot.updateProfileNodes();
 
             updateFromRoot(true, true);
             myTree.repaint();
@@ -242,14 +219,14 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
           public void run() {
             if (myProject.isDisposed()) return;
 
-            final PomNode pomNode = fileToNode.get(n.getFile());
+            final PomNode pomNode = myFileToNode.get(n.getFile());
             if (pomNode != null) {
               pomNode.onFileUpdate();
             }
             else {
               projectAdded(n);
             }
-            root.updateProfileNodes();
+            myRoot.updateProfileNodes();
             myTree.repaint();
           }
         });
@@ -262,12 +239,12 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
           public void run() {
             if (myProject.isDisposed()) return;
 
-            final PomNode pomNode = fileToNode.get(n.getFile());
+            final PomNode pomNode = myFileToNode.get(n.getFile());
             if (pomNode != null) {
-              fileToNode.remove(n.getFile());
+              myFileToNode.remove(n.getFile());
               pomNode.removeFromParent();
             }
-            root.updateProfileNodes();
+            myRoot.updateProfileNodes();
             myTree.repaint();
           }
         });
@@ -276,7 +253,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
 
     myMavenEventsListener = new MavenEventsHandler.Listener() {
       public void updateShortcuts(@Nullable String actionId) {
-        for (PomNode pomNode : fileToNode.values()) {
+        for (PomNode pomNode : myFileToNode.values()) {
           pomNode.updateShortcuts(actionId);
         }
       }
@@ -340,16 +317,21 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         return;
       }
     }
-    updateFromRoot(node == root, false);
+    updateFromRoot(node == myRoot, false);
   }
 
   public void updateFromRoot(boolean rebuild, boolean restructure) {
     if (restructure) {
-      root.rebuild(fileToNode.values());
+      myRoot.rebuild(myFileToNode.values());
     }
     myTreeBuilder.updateFromRoot(rebuild);
     if (rebuild) {
       myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
     }
+  }
+
+  public void selectInTree(VirtualFile file) {
+    PomNode node = myFileToNode.get(file);
+    if (node != null) selectNode(myTreeBuilder, node);
   }
 }

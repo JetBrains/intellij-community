@@ -8,7 +8,7 @@ import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectTreeTest extends MavenImportingTestCase {
+public class MavenProjectsTreeTest extends MavenImportingTestCase {
   MavenProjectsTree model = new MavenProjectsTree();
 
   public void testTwoRootProjects() throws Exception {
@@ -303,7 +303,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>");
 
-    model.update(asList(m), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(m);
 
     MavenProjectModel n = model.findProject(m);
     assertEquals("m1", n.getMavenProject().getArtifactId());
@@ -340,7 +340,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                      "  <childName>child2</childName>" +
                      "</properties>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     assertEquals("child2", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -388,7 +388,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                      "  <subChildName>subChild2</subChildName>" +
                      "</properties>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     assertEquals("subChild2", model.findProject(subChild).getMavenProject().getArtifactId());
   }
@@ -417,7 +417,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                                          "  <childName>child</childName>" +
                                          "</properties>");
 
-    model.update(asList(parent), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(parent);
 
     assertEquals("child", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -445,7 +445,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                                         "  <version>1</version>" +
                                         "</parent>");
 
-    model.update(asList(child), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(child);
 
     assertEquals("child", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -476,7 +476,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                                         "  <version>1</version>" +
                                         "</parent>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     assertEquals("child", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -512,7 +512,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -566,7 +566,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                     "  <version>1</version>" +
                     "</parent>");
 
-    model.update(asList(child), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(child);
 
     assertEquals("child2", model.findProject(child).getMavenProject().getArtifactId());
   }
@@ -603,9 +603,57 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                      "  <childName>child</childName>" +
                      "</properties>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     assertEquals("${childName}", model.findProject(child).getMavenProject().getArtifactId());
+  }
+
+  public void testHandlingSelfInheritance() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "</parent>");
+
+    readModel(myProjectPom); // shouldn't hang
+    udpate(myProjectPom); // shouldn't hang
+    readModel(myProjectPom); // shouldn't hang
+  }
+
+  public void testHandlingRecursiveInheritance() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>child</artifactId>" +
+                     "  <version>1</version>" +
+                     "</parent>" +
+
+                     "<modules>" +
+                     "  <module>child</module>" +
+                     "</properties>");
+
+    VirtualFile child = createModulePom("child",
+                                        "<groupId>test</groupId>" +
+                                        "<artifactId>child</artifactId>" +
+                                        "<version>1</version>" +
+
+                                        "<parent>" +
+                                        "  <groupId>test</groupId>" +
+                                        "  <artifactId>parent</artifactId>" +
+                                        "  <version>1</version>" +
+                                        "</parent>");
+
+    readModel(myProjectPom, child); // shouldn't hang
+    udpate(myProjectPom); // shouldn't hang
+    udpate(child); // shouldn't hang
+    readModel(myProjectPom, child); // shouldn't hang
   }
 
   public void testDeletingInheritanceParent() throws Exception {
@@ -703,7 +751,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -736,7 +784,8 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                     "<artifactId>m2</artifactId>" +
                     "<version>1</version>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    VirtualFile files = myProjectPom;
+    udpate(files);
 
     // did not change
     assertEquals("m", model.findProject(m).getMavenProject().getArtifactId());
@@ -763,7 +812,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
 
-    model.update(asList(m), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(m);
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -793,7 +842,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -830,7 +879,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
 
-    model.update(asList(m1), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(m1);
 
     roots = model.getRootProjects();
     assertEquals(2, roots.size());
@@ -869,7 +918,7 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    model.update(asList(myProjectPom), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
+    udpate(myProjectPom);
 
     roots = model.getRootProjects();
     assertEquals(1, roots.size());
@@ -955,5 +1004,9 @@ public class MavenProjectTreeTest extends MavenImportingTestCase {
                profiles,
                getMavenCoreSettings(),
                new MavenProcess(new EmptyProgressIndicator()));
+  }
+
+  private void udpate(VirtualFile files) throws CanceledException {
+    model.update(asList(files), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
   }
 }

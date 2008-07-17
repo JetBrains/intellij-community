@@ -27,6 +27,8 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
 
+    <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
+
     <iconProvider implementation="org.jetbrains.idea.maven.core.MavenIconProvider"/>
 
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>

@@ -60,7 +60,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
         for (MavenProjectModel each : myMavenProjectsManager.getProjects()) {
-          this.root.addUnder(new MavenTreeStructure.PomNode(each));
+          this.myRoot.addUnder(new MavenTreeStructure.PomNode(each));
         }
       }
 
