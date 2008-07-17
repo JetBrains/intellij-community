@@ -612,6 +612,8 @@ class AbstractTreeUi {
 
     Runnable updateRunnable = new Runnable() {
       public void run() {
+        if (isDisposed()) return;
+
         getBuilder().updateNodeDescriptor(descriptor);
         Object element = descriptor.getElement();
         if (element == null) return;
@@ -622,6 +624,8 @@ class AbstractTreeUi {
 
     Runnable postRunnable = new Runnable() {
       public void run() {
+        if (isDisposed()) return;
+
         updateNodeChildren(node);
 
         myLoadingParents.remove(descriptor.getElement());
