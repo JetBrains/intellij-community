@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -313,9 +314,36 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
 
       if (fromOwner != null && fromOwner.isStatic() && !to.isStatic() && refUtil.isInheritor(fromOwner, toOwner)) return false;
 
-      return fromTopLevel == toOwner;
+      if (fromTopLevel == toOwner) {
+        if (from instanceof RefClass && to instanceof RefClass) {
+          final PsiClass fromClass = ((RefClass)from).getElement();
+          LOG.assertTrue(fromClass != null);
+          if (isInExtendsList(to, fromClass.getExtendsList())) return false;
+          if (isInExtendsList(to, fromClass.getImplementsList())) return false;
+        }
+
+        return true;
+      }
     }
 
+    return false;
+  }
+
+
+  private static boolean isInExtendsList(final RefJavaElement to, final PsiReferenceList extendsList) {
+    if (extendsList != null) {
+      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null) {
+          for (PsiType type : parameterList.getTypeArguments()) {
+            if (extendsList.getManager().areElementsEquivalent(PsiUtil.resolveClassInType(type), to.getElement())) {
+              return true;
+            }
+          }
+        }
+      }
+    }
     return false;
   }
 

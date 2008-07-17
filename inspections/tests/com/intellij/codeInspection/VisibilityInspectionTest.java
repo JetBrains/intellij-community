@@ -88,4 +88,11 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
     doTest("visibility/annotationUsages", myTool, false, true);
   }
+
+  public void testTypeArguments() throws Exception {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
+    doTest("visibility/typeArguments", myTool, false, true);
+  }
 }
