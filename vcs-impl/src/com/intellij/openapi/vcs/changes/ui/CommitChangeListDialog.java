@@ -413,7 +413,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         listComment = listTitle;
       }
       else {
-        myLastKnownComment = listComment;
+        // use last know comment; it is already stored in list
+        listComment = myLastKnownComment;
       }
     }
 
