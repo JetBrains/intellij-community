@@ -21,7 +21,7 @@ import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestTreeView;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class TestTreeBuilder extends AbstractTreeBuilder {
+public class TestTreeBuilder extends AbstractTestTreeBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.model.TestTreeBuilder");
 
   private JUnitRunningModel myModel;
@@ -92,18 +92,6 @@ public class TestTreeBuilder extends AbstractTreeBuilder {
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getElement() == myModel.getRoot();
-  }
-
-  public void repaintWithParents(final TestProxy child) {
-    TestProxy test = child;
-    do {
-      final DefaultMutableTreeNode node = getNodeForElement(test);
-      if (node != null) {
-        final JTree tree = getTree();
-        ((DefaultTreeModel) tree.getModel()).nodeChanged(node);
-      }
-      test = test.getParent();
-    } while (test != null);
   }
 
   @Nullable

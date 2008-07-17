@@ -1,6 +1,6 @@
 package com.theoryinpractice.testng.model;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -12,7 +12,7 @@ import javax.swing.tree.DefaultTreeModel;
 /**
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:49:36 PM
  */
-public class TestTreeBuilder extends AbstractTreeBuilder
+public class TestTreeBuilder extends AbstractTestTreeBuilder
 {
     public TestTreeBuilder(JTree tree, AbstractTreeStructure structure) {
         super(tree, new DefaultTreeModel(new DefaultMutableTreeNode(structure.getRootElement())), structure, IndexComparator.INSTANCE);
@@ -27,19 +27,6 @@ public class TestTreeBuilder extends AbstractTreeBuilder
     @Override
     protected boolean isAlwaysShowPlus(NodeDescriptor descriptor) {
         return false;
-    }
-
-    public void repaintWithParents(TestProxy proxy) {
-        TestProxy current = proxy;
-        do {
-            DefaultMutableTreeNode node = getNodeForElement(current);
-            if (node != null) {
-                JTree tree = getTree();
-                ((DefaultTreeModel) tree.getModel()).nodeChanged(node);
-            }
-            current = current.getParent();
-        }
-        while (current != null);
     }
 
     @Override

@@ -345,7 +345,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     public void finish() {
         if (end > 0) return;
         end = System.currentTimeMillis();
-        animator.stop();
+        animator.stopMovie();
         updateLabel(statusLabel);
         rootNode.setInProgress(false);
         if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
