@@ -5,6 +5,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,14 +15,16 @@ import org.jetbrains.annotations.NotNull;
 public class VirtualDomParentStrategy implements DomParentStrategy {
   private final DomInvocationHandler myParentHandler;
   private long myModCount;
+  private final PsiModificationTracker myModificationTracker;
 
   public VirtualDomParentStrategy(final DomInvocationHandler parentHandler) {
     myParentHandler = parentHandler;
+    myModificationTracker = PsiManager.getInstance(myParentHandler.getManager().getProject()).getModificationTracker();
     myModCount = getModCount();
   }
 
   private long getModCount() {
-    return PsiManager.getInstance(myParentHandler.getManager().getProject()).getModificationTracker().getOutOfCodeBlockModificationCount();
+    return myModificationTracker.getOutOfCodeBlockModificationCount();
   }
 
   @NotNull

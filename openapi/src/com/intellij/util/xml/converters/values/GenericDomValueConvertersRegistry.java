@@ -97,7 +97,7 @@ public class GenericDomValueConvertersRegistry {
   }
 
   @Nullable
-  public synchronized Converter<?> getConverter(@NotNull GenericDomValue domValue, @Nullable PsiType type) {
+  public Converter<?> getConverter(@NotNull GenericDomValue domValue, @Nullable PsiType type) {
     final Pair<PsiType, GenericDomValue> pair = new Pair<PsiType, GenericDomValue>(type, domValue);
     for (@NotNull Condition<Pair<PsiType, GenericDomValue>> condition : myConditionConverters.keySet()) {
       if (condition.value(pair)) {

@@ -95,7 +95,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     final Class<T> rootElementClass = description.getRootElementClass();
     final XmlName xmlName = DomImplUtil.createXmlName(description.getRootTagName(), rootElementClass, null);
     assert xmlName != null;
-    final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey());
+    final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey(), false);
     myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description);
 
     if (fireEvents) {

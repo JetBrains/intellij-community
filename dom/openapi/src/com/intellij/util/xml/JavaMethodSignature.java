@@ -15,11 +15,11 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -28,14 +28,16 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public class JavaMethodSignature {
-  private static final Map<Method, JavaMethodSignature> ourSignatures = new THashMap<Method, JavaMethodSignature>();
-  private static final Map<Pair<String, Class[]>, JavaMethodSignature> ourSignatures2 = new THashMap<Pair<String, Class[]>, JavaMethodSignature>();
+  private static final Map<Method, JavaMethodSignature> ourSignatures = new ConcurrentHashMap<Method, JavaMethodSignature>();
   private final String myMethodName;
   private final Class[] myMethodParameters;
   private final Set<Class> myKnownClasses = new THashSet<Class>();
@@ -156,34 +158,36 @@ public class JavaMethodSignature {
     return myMethodName + Arrays.asList(myMethodParameters);
   }
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final JavaMethodSignature that = (JavaMethodSignature)o;
+
+    if (!myMethodName.equals(that.myMethodName)) return false;
+    if (!Arrays.equals(myMethodParameters, that.myMethodParameters)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myMethodName.hashCode();
+    result = 31 * result + Arrays.hashCode(myMethodParameters);
+    return result;
+  }
+
   public static JavaMethodSignature getSignature(Method method) {
-    JavaMethodSignature methodSignature;
-    synchronized (ourSignatures) {
-      methodSignature = ourSignatures.get(method);
-      if (methodSignature == null) {
-        ourSignatures.put(method, methodSignature = _getSignature(method.getName(), method.getParameterTypes()));
-      }
-      //methodSignature.addKnownMethod(method);
-    }
-    return methodSignature;
+    JavaMethodSignature signature = ourSignatures.get(method);
+    if (signature != null) return signature;
+
+    ourSignatures.put(method, signature = new JavaMethodSignature(method.getName(), method.getParameterTypes()));
+    return signature;
   }
 
   public static JavaMethodSignature getSignature(final String name, final Class<?>... parameterTypes) {
-    synchronized (ourSignatures) {
-      return _getSignature(name, parameterTypes);
-    }
-  }
-
-  private static JavaMethodSignature _getSignature(final String name, final Class<?>... parameterTypes) {
-    final JavaMethodSignature methodSignature;
-    final Pair<String, Class[]> key = new Pair<String, Class[]>(name, parameterTypes);
-    JavaMethodSignature oldSignature = ourSignatures2.get(key);
-    if (oldSignature == null) {
-      oldSignature = new JavaMethodSignature(name, parameterTypes);
-      ourSignatures2.put(key, oldSignature);
-    }
-    methodSignature = oldSignature;
-    return methodSignature;
+    return new JavaMethodSignature(name, parameterTypes);
   }
 
 }
