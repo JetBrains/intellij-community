@@ -23,7 +23,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   public MethodCandidatesProcessor(PsiElement place){
-    super(new PsiConflictResolver[]{new DuplicateConflictResolver()}, new SmartList<CandidateInfo>(), place);
+    super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>(), place);
   }
 
   public void add(PsiElement element, PsiSubstitutor substitutor) {

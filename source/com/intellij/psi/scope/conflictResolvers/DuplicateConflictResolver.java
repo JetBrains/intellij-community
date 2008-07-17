@@ -18,6 +18,11 @@ import java.util.Map;
  * To change this template use Options | File Templates.
  */
 public class DuplicateConflictResolver implements PsiConflictResolver{
+  public static final DuplicateConflictResolver INSTANCE = new DuplicateConflictResolver();
+
+  private DuplicateConflictResolver() {
+  }
+
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     final Map<Object, CandidateInfo> uniqueItems = new HashMap<Object, CandidateInfo>();
     for (CandidateInfo info : conflicts) {

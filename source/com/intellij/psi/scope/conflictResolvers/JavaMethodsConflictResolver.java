@@ -6,6 +6,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.*;
+import gnu.trove.THashSet;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -90,6 +91,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       return conflicts.get(0);
     }
 
+    THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
+    if (uniques.size() == 1) return uniques.iterator().next();
     return null;
   }
 
@@ -107,8 +110,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (existing != null) {
         PsiMethod existingMethod = (PsiMethod)existing.getElement();
         assert existingMethod != null;
-        PsiClass class2 = existingMethod.getContainingClass();
-        if (class1.isInterface() && "java.lang.Object".equals(class2.getQualifiedName())) { //prefer interface methods to methods from Object
+        PsiClass existingClass = existingMethod.getContainingClass();
+        if (class1.isInterface() && "java.lang.Object".equals(existingClass.getQualifiedName())) { //prefer interface methods to methods from Object
           signatures.put(signature, info);
           continue;
         }
@@ -127,7 +130,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           returnType1 = info.getSubstitutor().substitute(returnType1);
           returnType2 = existing.getSubstitutor().substitute(returnType2);
           if (returnType1.isAssignableFrom(returnType2)
-              && (InheritanceUtil.isInheritorOrSelf(class1, class2, true) || InheritanceUtil.isInheritorOrSelf(class2, class1, true))
+              && (InheritanceUtil.isInheritorOrSelf(class1, existingClass, true) || InheritanceUtil.isInheritorOrSelf(existingClass, class1, true))
               ) iterator.remove();
         }
         continue;
