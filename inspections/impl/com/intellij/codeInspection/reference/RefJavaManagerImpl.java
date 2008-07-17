@@ -279,6 +279,17 @@ public class RefJavaManagerImpl extends RefJavaManager {
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     }
 
+
+    @Override
+    public void visitReferenceParameterList(final PsiReferenceParameterList list) {
+      super.visitReferenceParameterList(list);
+      final PsiMember member = PsiTreeUtil.getParentOfType(list, PsiMember.class);
+      final PsiType[] typeArguments = list.getTypeArguments();
+      for (PsiType type : typeArguments) {
+        myRefUtil.addTypeReference(member, type, myRefManager);
+      }
+    }
+
     @Override
     public void visitClass(PsiClass aClass) {
       if (!(aClass instanceof PsiTypeParameter)) {
