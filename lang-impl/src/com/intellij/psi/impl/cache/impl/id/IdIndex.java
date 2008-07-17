@@ -1,12 +1,11 @@
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -64,9 +63,6 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
-      if (CachesBasedRefSearcher.DEBUG) {
-        System.out.println("fileName = " + inputData.getFileName());
-      }
       if (indexer != null) {
         return indexer.map(inputData);
       }

@@ -2,7 +2,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 
@@ -32,9 +31,6 @@ public class IdDataConsumer {
     final int hashCode = StringUtil.stringHashCode(charSequence, start, end);
     addOccurrence(hashCode,occurrenceMask);
     final int hashCodeNoCase = StringUtil.stringHashCodeInsensitive(charSequence, start, end);
-    if (CachesBasedRefSearcher.DEBUG) {
-      System.out.println("addOccurrence: word='" + charSequence.subSequence(start, end).toString() + "' code=" + hashCode + "; codeNoCase=" + hashCodeNoCase);
-    }
     if (hashCodeNoCase != hashCode) {
       addOccurrence(hashCodeNoCase,occurrenceMask);
     }
@@ -45,9 +41,6 @@ public class IdDataConsumer {
     addOccurrence(hashCode,occurrenceMask);
     
     final int hashCodeNoCase = StringUtil.stringHashCodeInsensitive(chars, start, end);
-    if (CachesBasedRefSearcher.DEBUG) {
-      System.out.println("addOccurrence: word='" + new String(chars, start, end - start) + "' code=" + hashCode + "; codeNoCase=" + hashCodeNoCase);
-    }
     if (hashCodeNoCase != hashCode) {
       addOccurrence(hashCodeNoCase,occurrenceMask);
     }
