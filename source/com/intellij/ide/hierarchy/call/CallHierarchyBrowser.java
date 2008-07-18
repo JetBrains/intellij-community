@@ -247,6 +247,8 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
       myBuilders.put(typeName, builder);
 
       final HierarchyNodeDescriptor baseDescriptor = structure.getBaseDescriptor();
+      builder.expand(baseDescriptor, null);
+      /*
       builder.buildNodeForElement(baseDescriptor);
       final DefaultMutableTreeNode node = builder.getNodeForElement(baseDescriptor);
       if (node != null) {
@@ -254,6 +256,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
         tree.expandPath(path);
         TreeUtil.selectPath(tree, path);
       }
+      */
 
       restoreCursor();
     }
