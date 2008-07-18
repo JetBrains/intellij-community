@@ -250,6 +250,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     list.add(expression);
     while (!list.isEmpty()) {
       final PsiElement element = list.removeFirst();
+      if (element instanceof PsiCallExpression) continue;  // IDEADEV-28384 - TODO: other cases?
       if (isStringLiteral(element)) {
         return (PsiLiteralExpression)element;
       }
