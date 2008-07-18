@@ -79,10 +79,11 @@ public abstract class XmlSchemaProvider {
   /**
    * Provides specific namespaces for given xml file.
    * @param file an xml or jsp file.
+   * @param tagName optional
    * @return available namespace uris, or <code>null</code> if the provider did not recognize the file.
    */
   @NotNull
-  public Set<String> getAvailableNamespaces(final @NotNull XmlFile file) {
+  public Set<String> getAvailableNamespaces(final @NotNull XmlFile file, final @Nullable String tagName) {
     return Collections.emptySet();
   }
 

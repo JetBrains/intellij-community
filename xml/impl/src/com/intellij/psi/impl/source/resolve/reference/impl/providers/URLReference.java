@@ -185,7 +185,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     final XmlFile file = (XmlFile)myElement.getContainingFile();
     final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
     if (provider != null) {
-      final Set<String> strings = provider.getAvailableNamespaces(file);
+      final Set<String> strings = provider.getAvailableNamespaces(file, null);
       return strings.toArray(new Object[strings.size()]);
     }
     String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);

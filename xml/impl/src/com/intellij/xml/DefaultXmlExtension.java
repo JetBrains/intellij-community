@@ -36,7 +36,7 @@ public class DefaultXmlExtension extends XmlExtension {
     final Set<String> namespaces = new HashSet<String>(Arrays.asList(context.knownNamespaces()));
     final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
     if (provider != null) {
-      namespaces.addAll(provider.getAvailableNamespaces(file));
+      namespaces.addAll(provider.getAvailableNamespaces(file, null));
     }
     final ArrayList<String> nsInfo = new ArrayList<String>();
     final String[] names = TagNameReference.getTagNameVariants(context, namespaces, nsInfo);
@@ -56,8 +56,14 @@ public class DefaultXmlExtension extends XmlExtension {
     if (provider == null) {
       return Collections.emptySet();
     }
+    return provider.getAvailableNamespaces(context, tagName);
+  }
+
+  public static Set<String> filterNamespaces(final Set<String> namespaces, final String tagName, final XmlFile context) {
+    if (tagName == null) {
+      return namespaces;
+    }
     final HashSet<String> set = new HashSet<String>();
-    final Set<String> namespaces = provider.getAvailableNamespaces(context);
     for (String namespace : namespaces) {
       final XmlFile xmlFile = XmlUtil.findNamespace(context, namespace);
       if (xmlFile != null) {
