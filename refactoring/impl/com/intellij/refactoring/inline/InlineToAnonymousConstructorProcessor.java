@@ -80,7 +80,7 @@ class InlineToAnonymousConstructorProcessor {
 
     PsiNewExpression superNewExpressionTemplate = (PsiNewExpression) myElementFactory.createExpressionFromText(builder.toString(),
                                                                                                       myNewExpression.getContainingFile());
-    PsiCodeBlock initializerBlock = myElementFactory.createCodeBlock();
+    PsiClassInitializer initializerBlock = myElementFactory.createClassInitializer();
     PsiVariable outerClassLocal = null;
     if (myNewExpression.getQualifier() != null && myClass.getContainingClass() != null) {
       outerClassLocal = generateOuterClassLocal();
@@ -94,7 +94,7 @@ class InlineToAnonymousConstructorProcessor {
       if (myNewStatement != null) {
         generateLocalsForArguments();
       }
-      analyzeConstructor(initializerBlock);
+      analyzeConstructor(initializerBlock.getBody());
       addSuperConstructorArguments(argumentList);
     }
 
@@ -106,7 +106,7 @@ class InlineToAnonymousConstructorProcessor {
 
     int fieldCount = myClass.getFields().length;
     int processedFields = 0;
-    if (initializerBlock.getStatements().length > 0 && fieldCount == 0) {
+    if (initializerBlock.getBody().getStatements().length > 0 && fieldCount == 0) {
       anonymousClass.addBefore(initializerBlock, anonymousClass.getRBrace());
     }
 
@@ -127,7 +127,7 @@ class InlineToAnonymousConstructorProcessor {
           field.setInitializer(initializer);
         }
         processedFields++;
-        if (processedFields == fieldCount && initializerBlock.getStatements().length > 0) {
+        if (processedFields == fieldCount && initializerBlock.getBody().getStatements().length > 0) {
           anonymousClass.addBefore(initializerBlock, anonymousClass.getRBrace());
         }
       }
