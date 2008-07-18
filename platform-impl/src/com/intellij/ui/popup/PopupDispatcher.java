@@ -136,7 +136,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   }
 
   public Component getComponent() {
-    return ourShowingStep.getContent();
+    return ourShowingStep != null ? ourShowingStep.getContent() : null;
   }
 
   public boolean dispatch(AWTEvent event) {
