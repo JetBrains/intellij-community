@@ -36,10 +36,6 @@ import java.util.List;
 public abstract class MavenTreeStructure extends SimpleTreeStructure {
   private static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
 
-  // todo delete icons
-  private static final Icon MAVEN_PROJECT_WITH_ERRORS_ICON = IconLoader.getIcon("/images/mavenProjectWithErrors.png");
-  private static final Icon MAVEN_PROJECT_WITH_WARNINGS_ICON = IconLoader.getIcon("/images/mavenProjectWithWarnings.png");
-
   private static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
   private static final Icon CLOSED_PROFILES_ICON = IconLoader.getIcon("/images/profilesClosed.png");
 
@@ -479,7 +475,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return myRoot;
     }
 
-    void rebuild(final Collection<PomNode> allPomNodes) {
+    public void rebuild(final Collection<PomNode> allPomNodes) {
       pomNodes.clear();
 
       updateProfileNodes();
@@ -664,7 +660,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       appendProblems(desc, true);
       appendProblems(desc, false);
 
-      if (getChildrenErrorLevel() != ErrorLevel.NONE) {
+      if (getModulesErrorLevel() != ErrorLevel.NONE) {
         desc.append("<tr>");
         desc.append("<td><i>Some modules have problems.</i></td>");
         desc.append("</tr>");
@@ -673,6 +669,15 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       desc.append("</table>");
       desc.append("</html>");
       setDescription(desc.toString());
+    }
+
+    private ErrorLevel getModulesErrorLevel() {
+      ErrorLevel result =  ErrorLevel.NONE;
+      for (PomNode each : modulePomsNode.pomNodes) {
+        ErrorLevel moduleLevel = each.getOverallErrorLevel();
+        if (moduleLevel.compareTo(result) > 0) result = moduleLevel;
+      }
+      return result;
     }
 
     private void appendProblems(StringBuffer desc, boolean critical) {
