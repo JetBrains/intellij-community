@@ -113,9 +113,9 @@ public class ConstantValuesTest extends PsiTestCase{
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
+    assertEquals("2", initializer.getText());
     assertEquals(PsiType.INT, initializer.getType());
     assertEquals(new Integer(2), initializer.getValue());
-    assertEquals("2", initializer.getText());
 
     assertEquals(new Long(2), field.computeConstantValue());
   }

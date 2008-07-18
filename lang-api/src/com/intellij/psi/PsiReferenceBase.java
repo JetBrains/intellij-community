@@ -31,10 +31,11 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   protected final T myElement;
   private TextRange myRange;
-  protected boolean mySoft;
+  protected final boolean mySoft;
 
   public PsiReferenceBase(T element, TextRange range, boolean soft) {
-    this(element, range);
+    myElement = element;
+    myRange = range;
     mySoft = soft;
   }
 
@@ -44,12 +45,13 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public PsiReferenceBase(T element, boolean soft) {
-    this(element);
+    myElement = element;
     mySoft = soft;
   }
 
   public PsiReferenceBase(T element) {
     myElement = element;
+    mySoft = false;
   }
 
   public void setRangeInElement(TextRange range) {

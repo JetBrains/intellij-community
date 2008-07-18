@@ -33,12 +33,10 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   private List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChoosenOne = -1;
-  private boolean mySoft;
   private ResolveResult[] myCachedResult;
 
   public PsiDynaReference(final T psiElement, boolean soft) {
-    super(psiElement);
-    mySoft = soft;
+    super(psiElement, soft);
   }
 
   public void addReferences(Collection<PsiReference> references) {
@@ -215,10 +213,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
       }
     }
     return myChoosenOne >= 0 ? myReferences.get(myChoosenOne) : null;
-  }
-
-  public boolean isSoft() {
-    return mySoft;
   }
 
   public void registerQuickfix(final HighlightInfo info, final PsiDynaReference reference) {
