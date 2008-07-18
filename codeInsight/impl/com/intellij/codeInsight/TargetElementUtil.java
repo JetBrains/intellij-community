@@ -215,4 +215,11 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
     return super.getGotoDeclarationTarget(element, navElement);
   }
+
+  @Override
+  public boolean includeSelfInGotoImplementation(final PsiElement element) {
+    final boolean isAbstract =
+      element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT);
+    return !isAbstract;
+  }
 }

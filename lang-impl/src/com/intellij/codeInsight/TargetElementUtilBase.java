@@ -236,4 +236,8 @@ public class TargetElementUtilBase {
   public PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement) {
     return navElement;
   }
+
+  public boolean includeSelfInGotoImplementation(final PsiElement element) {
+    return true;
+  }
 }

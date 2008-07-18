@@ -11,8 +11,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImplementationSearcher {
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
-    boolean onRef = TargetElementUtilBase.getInstance().findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
-    return searchImplementations(element, offset, onRef, onRef);
+    final TargetElementUtilBase targetElementUtil = TargetElementUtilBase.getInstance();
+    boolean onRef = targetElementUtil.findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+    return searchImplementations(element, offset, onRef && targetElementUtil.includeSelfInGotoImplementation(element), onRef);
   }
 
   @NotNull
