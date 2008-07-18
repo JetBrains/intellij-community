@@ -108,13 +108,15 @@ public final class Match {
     if (type == null) return false;
     if (currentValue == null) {
       if (!(parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter)) {
-        if (!parameterType.isAssignableFrom(type)) return false;
         if (isVararg) {
-          if (!((PsiEllipsisType)psiVariable.getType()).getComponentType().isAssignableFrom(type)) {
+          if (!((PsiEllipsisType)psiVariable.getType()).getComponentType().isAssignableFrom(type) && !((PsiEllipsisType)psiVariable.getType()).toArrayType().equals(type)) {
             myChangedParams.put(psiVariable, new PsiEllipsisType(parameterType));
           }
-        } else if (!psiVariable.getType().isAssignableFrom(type)) {
-          myChangedParams.put(psiVariable, parameterType);
+        } else {
+          if (!parameterType.isAssignableFrom(type)) return false;
+          if (!psiVariable.getType().isAssignableFrom(type)) {
+            myChangedParams.put(psiVariable, parameterType);
+          }
         }
       }
       final List<PsiElement> values = new ArrayList<PsiElement>();
@@ -323,11 +325,17 @@ public final class Match {
   @Nullable
   private PsiImmediateClassType getChangedReturnType(final PsiMethod psiMethod) {
     final PsiType returnType = psiMethod.getReturnType();
-    final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiMethodCallExpression.class);
-    if (callExpression != null) {
-      final PsiMethod calledMethod = callExpression.resolveMethod();
-      if (calledMethod != null) {
-        final PsiImmediateClassType expressionType = new PsiImmediateClassType(calledMethod.getContainingClass(), PsiSubstitutor.EMPTY);
+    final PsiExpression expression = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiExpression.class);
+    if (expression != null) {
+      PsiMember member = null;
+      if (expression instanceof PsiMethodCallExpression) {
+        member = ((PsiMethodCallExpression)expression).resolveMethod();
+      } else if (expression instanceof PsiReferenceExpression){
+        final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+        member = resolved instanceof PsiMember ? (PsiMember)resolved : null;
+      }
+      if (member != null) {
+        final PsiImmediateClassType expressionType = new PsiImmediateClassType(member.getContainingClass(), PsiSubstitutor.EMPTY);
         if (returnType != null && !TypeConversionUtil.isAssignable(expressionType, returnType)) {
           return expressionType;
         }

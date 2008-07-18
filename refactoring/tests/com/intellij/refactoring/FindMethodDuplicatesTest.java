@@ -331,4 +331,8 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   public void testDeclarationUsage() throws Exception {
     doTest(false);
   }
+
+  public void testChangingReturnType() throws Exception {
+    doTest();
+  }
 }
