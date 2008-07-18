@@ -870,7 +870,7 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   @Nullable
-  public static PsiType substituteTypeParameter(final PsiType psiType, final String superClass, final int typeParamIndex,
+  public static PsiType substituteTypeParameter(@Nullable final PsiType psiType, final String superClass, final int typeParamIndex,
                                                 final boolean eraseTypeParameter) {
     if (psiType == null) return null;
 
