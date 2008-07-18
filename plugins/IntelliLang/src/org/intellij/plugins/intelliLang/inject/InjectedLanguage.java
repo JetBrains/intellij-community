@@ -21,10 +21,7 @@ import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class InjectedLanguage {
   private static Map<String, Language> ourLanguageCache;
@@ -96,16 +93,20 @@ public final class InjectedLanguage {
   private static void initLanguageCache() {
     ourLanguageCache = new HashMap<String, Language>();
 
-    final Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
-    for (Language language : registeredLanguages) {
-      if (language == StdLanguages.TEXT || language.getID().startsWith("$")) {
-        continue;
-      }
+    Collection<Language> registeredLanguages;
+    do {
+      registeredLanguages = new ArrayList<Language>(Language.getRegisteredLanguages());
+      for (Language language : registeredLanguages) {
+        if (language == StdLanguages.TEXT || language.getID().startsWith("$")) {
+          continue;
+        }
 
-      if (language != Language.ANY && LanguageParserDefinitions.INSTANCE.forLanguage(language) != null) {
-        ourLanguageCache.put(language.getID(), language);
+        if (language != Language.ANY && LanguageParserDefinitions.INSTANCE.forLanguage(language) != null) {
+          ourLanguageCache.put(language.getID(), language);
+        }
       }
-    }
+    } while (Language.getRegisteredLanguages().size() != registeredLanguages.size());
+
     ourLanguageCount = registeredLanguages.size();
   }
 
