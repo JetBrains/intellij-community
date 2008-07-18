@@ -9,6 +9,8 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
  * Time: 11:58:57 PM
  */
 public class StringConstantAnnotator extends PyAnnotator {
+  public static final String MISSING_Q = "Missing closing quote";
+  public static final String PREMATURE_Q = "Premature closing quote";
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     String s = node.getText();
     String msg = "";
@@ -21,10 +23,10 @@ public class StringConstantAnnotator extends PyAnnotator {
     first_quote = s.charAt(index);
     if ((first_quote == 'r') || (first_quote == 'R')) index += 1;
     first_quote = s.charAt(index);
-    // s can't begin with non-quote, else parser would not say it's a string
+    // s can't begin with a non-quote, else parser would not say it's a string
     index += 1;
     if (index >= s.length()) { // sole opening quote
-      msg = "No closing quote [" + first_quote  + "]";
+      msg = MISSING_Q + " [" + first_quote  + "]";
       ok = false;
     }
     else {
@@ -32,8 +34,8 @@ public class StringConstantAnnotator extends PyAnnotator {
         char c = s.charAt(index);
         if (esc) esc = false;
         else {
-          if (c  == first_quote) {
-            msg = "Premature closing quote [" + first_quote  + "]";
+          if (c  == first_quote) { // impossible with current lexer, but who knows :)
+            msg = PREMATURE_Q + " [" + first_quote  + "]";
             ok = false;
           }
           else if (c  == '\\') esc = true;
@@ -41,7 +43,7 @@ public class StringConstantAnnotator extends PyAnnotator {
         index += 1;
       }
       if (ok && (esc || (s.charAt(index) != first_quote))) {
-        msg = "Missing closing quote [" + first_quote  + "]";
+        msg = MISSING_Q + " [" + first_quote  + "]";
         ok = false;
       }
     }

@@ -27,6 +27,27 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testMalformedStringUnterminated() throws Exception {
+    doTest();
+  }
+
+  public void testMalformedStringEscaped() throws Exception {
+    doTest();
+  }
+
+  public void testStringEscapedOK() throws Exception {
+    doTest();
+  }
+
+  public void testDuplicateClassName() throws Exception {
+    doTest();
+  }
+
+  public void testMethodParams() throws Exception {
+    doTest();
+  }
+
+
   private void doTest() throws Exception {
     doTest(getTestName(true) + ".py", true, true);
   }
