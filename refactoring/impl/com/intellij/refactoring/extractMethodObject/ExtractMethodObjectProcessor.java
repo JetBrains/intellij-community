@@ -153,12 +153,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private PsiMethodCallExpression replaceMethodCallExpression(final String inferredTypeArguments,
                                                               final PsiMethodCallExpression methodCallExpression)
       throws IncorrectOperationException {
-    @NonNls String staticqualifier = null;
-    if (getMethod().getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
-      final int packageNameLength = ((PsiClassOwner)getMethod().getContainingFile()).getPackageName().length();
-      final String fqinnerClassName = getMethod().getContainingClass().getQualifiedName() + "." + getInnerClassName();
-      staticqualifier = packageNameLength > 0 ? fqinnerClassName.substring(packageNameLength + 1) : fqinnerClassName;
-    }
+    @NonNls final String staticqualifier = getMethod().getModifierList().hasModifierProperty(PsiModifier.STATIC) ? getInnerClassName() : null;
     @NonNls String newReplacement;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
