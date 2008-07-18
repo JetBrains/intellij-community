@@ -59,7 +59,7 @@ public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implement
 
 
   public String getUnresolvedMessagePattern() {
-    return JavaErrorMessages.message("cannot.resolve.symbol");
+    return JavaErrorMessages.message("cannot.resolve.package");
   }
 
 }

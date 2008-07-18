@@ -42,7 +42,7 @@ import java.util.*;
 public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<T>> implements CustomReferenceConverter<List<T>> {
 
   protected final static Object[] EMPTY_ARRAY = ArrayUtil.EMPTY_OBJECT_ARRAY;
-  
+
   private final String myDelimiters;
 
   public DelimitedListConverter(@NonNls @NotNull String delimiters) {
@@ -118,21 +118,6 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     return buffer.toString();
   }
 
-  protected int skipDelimiters(String s, int pos) {
-    while (pos < s.length()) {
-      final char ch = s.charAt(pos);
-      if (!isDelimiter(ch)) {
-        break;
-      }
-      pos++;
-    }
-    return pos;
-  }
-
-  protected boolean isDelimiter(char ch) {
-    return ch <= ' ' || myDelimiters.indexOf(ch) != -1;
-  }
-
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<List<T>> genericDomValue,
                                          final PsiElement element,
@@ -142,26 +127,13 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     if (text == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final int shift = 1;
-    int start;
-    int pos = 0;
 
-    ArrayList<PsiReference> references = new ArrayList<PsiReference>();
-    do {
-      start = pos;
-      pos = skipDelimiters(text, pos);
-      if (pos == text.length()) {
-        if (references.size() == 0) {
-          references.add(createPsiReference(element, start + shift, pos + shift, context, genericDomValue));
-        }
-        break;
+    final ArrayList<PsiReference> references = new ArrayList<PsiReference>();
+    new DelimitedListProcessor(myDelimiters) {
+      protected void processToken(final int start, final int end, final boolean delimitersOnly) {
+        references.add(createPsiReference(element, start + 1, end + 1, context, genericDomValue, delimitersOnly));
       }
-      start = pos;
-      while (++pos < text.length() && !isDelimiter(text.charAt(pos))) {}
-      references.add(createPsiReference(element, start + shift, pos + shift, context, genericDomValue));
-      pos++;
-    } while(pos < text.length());
-
+    }.processText(text);
     return references.toArray(new PsiReference[references.size()]);
   }
 
@@ -169,27 +141,35 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   protected PsiReference createPsiReference(final PsiElement element,
                                             int start, int end,
                                             final ConvertContext context,
-                                            final GenericDomValue<List<T>> genericDomValue) {
+                                            final GenericDomValue<List<T>> genericDomValue, final boolean delimitersOnly) {
     
-    return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue);
+    return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue, delimitersOnly);
   }
 
   protected class MyPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
     protected final ConvertContext myContext;
     protected final GenericDomValue<List<T>> myGenericDomValue;
+    private final boolean myDelimitersOnly;
 
-    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<List<T>> genericDomValue) {
-      this(element, range, context, genericDomValue, true);
+    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context,
+                          final GenericDomValue<List<T>> genericDomValue,
+                          final boolean delimitersOnly) {
+      this(element, range, context, genericDomValue, true, delimitersOnly);
     }
 
-    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<List<T>> genericDomValue, boolean soft) {
+    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<List<T>> genericDomValue, boolean soft,
+                          final boolean delimitersOnly) {
       super(element, range, soft);
       myContext = context;
       myGenericDomValue = genericDomValue;
+      myDelimitersOnly = delimitersOnly;
     }
 
     @Nullable
     public PsiElement resolve() {
+      if (myDelimitersOnly) {
+        return getElement();
+      }
       final String value = getValue();
       return resolveReference(convertString(value, myContext), myContext);
     }

@@ -64,6 +64,7 @@ public class ProgressManagerImpl extends ProgressManager {
           progress.checkCanceled();
         }
         catch (ProcessCanceledException e) {
+          System.out.println("Canceled: " + progress.getText());
           if (!Thread.holdsLock(PsiLock.LOCK)) {
             ourLockedCheckCounter = 0;
             progress.checkCanceled();
