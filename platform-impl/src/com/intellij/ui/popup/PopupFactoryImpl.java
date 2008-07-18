@@ -38,7 +38,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class PopupFactoryImpl extends JBPopupFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
@@ -162,14 +161,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
   public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
                                          String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
                                          final boolean autoSelectionEnabled) {
-    final ArrayList<ActionItem> items = new ArrayList<ActionItem>();
-    fillModel(items, actionGroup, dataContext, showNumbers, showDisabledActions, new HashMap<AnAction, Presentation>(), 0, false, null, honorActionMnemonics);
+    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, showDisabledActions, honorActionMnemonics);
+    builder.buildGroup(actionGroup);
+    final List<ActionItem> items = builder.getItems();
 
     return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex,
                                autoSelectionEnabled);
   }
 
-  private static boolean itemsHaveMnemonics(final ArrayList<ActionItem> items) {
+  private static boolean itemsHaveMnemonics(final List<ActionItem> items) {
     for (ActionItem item : items) {
       if (item.getAction().getTemplatePresentation().getMnemonic() != 0) return true;
     }
@@ -275,130 +275,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return AbstractPopup.getCenterOf(container, content);
   }
 
-  private static int fillModel(List<ActionItem> listModel,
-                               ActionGroup actionGroup,
-                               DataContext dataContext,
-                               boolean showNumbers,
-                               boolean showDisabled,
-                               HashMap<AnAction, Presentation> action2presentation,
-                               int startNumberingFrom, boolean prependWithSeparator, String separatorText,
-                               final boolean honorActionMnemonics) {
-    int n = startNumberingFrom;
-    AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null,
-                                                                   dataContext,
-                                                                   ActionPlaces.UNKNOWN,
-                                                                   getPresentation(actionGroup, action2presentation),
-                                                                   ActionManager.getInstance(),
-                                                                   0));
-    int maxWidth = -1;
-    int maxHeight = -1;
-    for (AnAction action : actions) {
-      if (action == null) continue;
-      
-      Icon icon = action.getTemplatePresentation().getIcon();
-      if (icon != null) {
-        final int width = icon.getIconWidth();
-        final int height = icon.getIconHeight();
-        if (maxWidth < width) {
-          maxWidth = width;
-        }
-        if (maxHeight < height) {
-          maxHeight = height;
-        }
-      }
-    }
-    Icon emptyIcon = maxHeight != -1 && maxWidth != -1 ? new EmptyIcon(maxWidth, maxHeight) : null;
-
-    String sepText = separatorText;
-    for (AnAction action : actions) {
-      if (action instanceof Separator) {
-        prependWithSeparator = true;
-        sepText = ((Separator)action).getText();
-      }
-      else {
-        if (action instanceof ActionGroup) {
-
-          ActionGroup group = (ActionGroup)action;
-          n = group.isPopup()
-              ? appendAction(group, action2presentation, dataContext, showDisabled, showNumbers, n, listModel, emptyIcon,
-                             prependWithSeparator, sepText, honorActionMnemonics)
-              : fillModel(listModel, group, dataContext, showNumbers, showDisabled, action2presentation, n, prependWithSeparator, separatorText, honorActionMnemonics);
-        }
-        else {
-          n = appendAction(action, action2presentation, dataContext, showDisabled, showNumbers, n, listModel, emptyIcon,
-                           prependWithSeparator, sepText, honorActionMnemonics);
-        }
-        prependWithSeparator = false;
-        separatorText = null;
-      }
-    }
-
-    return n;
-  }
-
-  private static int appendAction(AnAction action,
-                                  HashMap<AnAction, Presentation> action2presentation,
-                                  DataContext dataContext,
-                                  boolean showDisabled,
-                                  boolean showNumbers,
-                                  int n,
-                                  List<ActionItem> listModel,
-                                  Icon emptyIcon,
-                                  final boolean prependWithSeparator,
-                                  final String separatorText,
-                                  final boolean honorActionMnemonics) {
-    Presentation presentation = getPresentation(action, action2presentation);
-    AnActionEvent event = new AnActionEvent(null,
-                                            dataContext,
-                                            ActionPlaces.UNKNOWN,
-                                            presentation,
-                                            ActionManager.getInstance(),
-                                            0);
-
-    action.beforeActionPerformedUpdate(event);
-    if ((showDisabled || presentation.isEnabled()) && presentation.isVisible()) {
-      String text = presentation.getText();
-      if (showNumbers) {
-        if (n < 9) {
-          text = "&" + (n + 1) + ". " + text;
-        }
-        else if (n == 9) {
-          text = "&" + 0 + ". " + text;
-        }
-        else {
-          text = "&" + (char)('A' + n - 10) + ". " + text;
-        }
-        n++;
-      }
-      else if (honorActionMnemonics) {
-        text = Presentation.restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
-      }
-
-      Icon icon = presentation.getIcon();
-      if (icon == null) {
-        @NonNls final String actionId = ActionManager.getInstance().getId(action);
-        if (actionId != null && actionId.startsWith("QuickList.")){
-          icon = QUICK_LIST_ICON;
-        }
-        else {
-          icon = emptyIcon;
-        }
-
-      }
-      listModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependWithSeparator, separatorText));
-    }
-    return n;
-  }
-
-  private static Presentation getPresentation(AnAction action, Map<AnAction, Presentation> action2presentation) {
-    Presentation presentation = action2presentation.get(action);
-    if (presentation == null) {
-      presentation = (Presentation)action.getTemplatePresentation().clone();
-      action2presentation.put(action, presentation);
-    }
-    return presentation;
-  }
-
   private static class ActionItem {
     private AnAction myAction;
     private String myText;
@@ -441,14 +317,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   private static class ActionPopupStep implements ListPopupStep<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
-    private final ArrayList<ActionItem> myItems;
+    private final List<ActionItem> myItems;
     private final String myTitle;
     private Component myContext;
     private boolean myEnableMnemonics;
     private int myDefaultOptionIndex;
     private boolean myAutoSelectionEnabled;
 
-    public ActionPopupStep(@NotNull final ArrayList<ActionItem> items,
+    public ActionPopupStep(@NotNull final List<ActionItem> items,
                            final String title,
                            Component context,
                            boolean enableMnemonics,
@@ -566,4 +442,135 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return FocusTrackback.getChildPopup(component);
   }
 
+  private static class ActionStepBuilder {
+    private final List<ActionItem> myListModel;
+    private final DataContext myDataContext;
+    private final boolean myShowNumbers;
+    private final boolean myShowDisabled;
+    private final HashMap<AnAction, Presentation> myAction2presentation;
+    private int myCurrentNumber;
+    private boolean myPrependWithSeparator;
+    private String mySeparatorText;
+    private final boolean myHonorActionMnemonics;
+
+    public ActionStepBuilder(final DataContext dataContext,
+                             final boolean showNumbers,
+                             final boolean showDisabled,
+                             final boolean honorActionMnemonics) {
+      myListModel = new ArrayList<ActionItem>();
+      myDataContext = dataContext;
+      myShowNumbers = showNumbers;
+      myShowDisabled = showDisabled;
+      myAction2presentation = new HashMap<AnAction, Presentation>();
+      myCurrentNumber = 0;
+      myPrependWithSeparator = false;
+      mySeparatorText = null;
+      myHonorActionMnemonics = honorActionMnemonics;
+    }
+
+    public List<ActionItem> getItems() {
+      return myListModel;
+    }
+
+    public void buildGroup(ActionGroup actionGroup) {
+      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
+                                                                     ActionPlaces.UNKNOWN,
+                                                                     getPresentation(actionGroup),
+                                                                     ActionManager.getInstance(),
+                                                                     0));
+      int maxWidth = -1;
+      int maxHeight = -1;
+      for (AnAction action : actions) {
+        if (action == null) continue;
+
+        Icon icon = action.getTemplatePresentation().getIcon();
+        if (icon != null) {
+          final int width = icon.getIconWidth();
+          final int height = icon.getIconHeight();
+          if (maxWidth < width) {
+            maxWidth = width;
+          }
+          if (maxHeight < height) {
+            maxHeight = height;
+          }
+        }
+      }
+      Icon emptyIcon = maxHeight != -1 && maxWidth != -1 ? new EmptyIcon(maxWidth, maxHeight) : null;
+
+      for (AnAction action : actions) {
+        if (action instanceof Separator) {
+          myPrependWithSeparator = true;
+          mySeparatorText = ((Separator)action).getText();
+        }
+        else {
+          if (action instanceof ActionGroup) {
+            ActionGroup group = (ActionGroup)action;
+            if (group.isPopup()) {
+              appendAction(group, emptyIcon);
+            }
+            else {
+              buildGroup(group);
+            }
+          }
+          else {
+            appendAction(action, emptyIcon);
+          }
+        }
+      }
+    }
+
+    private void appendAction(AnAction action, Icon emptyIcon) {
+      Presentation presentation = getPresentation(action);
+      AnActionEvent event = new AnActionEvent(null, myDataContext,
+                                              ActionPlaces.UNKNOWN,
+                                              presentation,
+                                              ActionManager.getInstance(),
+                                              0);
+
+      action.beforeActionPerformedUpdate(event);
+      if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
+        String text = presentation.getText();
+        if (myShowNumbers) {
+          if (myCurrentNumber < 9) {
+            text = "&" + (myCurrentNumber + 1) + ". " + text;
+          }
+          else if (myCurrentNumber == 9) {
+            text = "&" + 0 + ". " + text;
+          }
+          else {
+            text = "&" + (char)('A' + myCurrentNumber - 10) + ". " + text;
+          }
+          myCurrentNumber++;
+        }
+        else if (myHonorActionMnemonics) {
+          text = Presentation.restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
+        }
+
+        Icon icon = presentation.getIcon();
+        if (icon == null) {
+          @NonNls final String actionId = ActionManager.getInstance().getId(action);
+          if (actionId != null && actionId.startsWith("QuickList.")){
+            icon = QUICK_LIST_ICON;
+          }
+          else {
+            icon = emptyIcon;
+          }
+
+        }
+        myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, myPrependWithSeparator, mySeparatorText));
+        myPrependWithSeparator = false;
+        mySeparatorText = null;
+      }
+    }
+
+    private Presentation getPresentation(AnAction action) {
+      Presentation presentation = myAction2presentation.get(action);
+      if (presentation == null) {
+        presentation = (Presentation)action.getTemplatePresentation().clone();
+        myAction2presentation.put(action, presentation);
+      }
+      return presentation;
+    }
+
+  }
 }
