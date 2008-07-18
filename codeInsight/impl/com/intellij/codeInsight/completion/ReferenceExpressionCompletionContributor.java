@@ -16,10 +16,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.patterns.PsiMethodPattern;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -152,8 +153,6 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                                                 final CompletionResultSet result, @Nullable PsiElement qualifier) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     PsiType componentType = PsiUtil.extractIterableTypeParameter(parameters.getExpectedType(), true);
-    final String callSpace =
-        getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
     if (componentType == null ||
         !(itemType instanceof PsiArrayType) ||
         !componentType.isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {
@@ -161,11 +160,11 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
 
     }
     final String qualifierText = getQualifierText(qualifier);
-    final PsiExpression conversion = elementFactory
-        .createExpressionFromText(CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + callSpace + qualifierText + prefix + callSpace + ")", element);
+    final PsiExpression conversion = elementFactory.createExpressionFromText("java.util.Arrays.asList(" + qualifierText + prefix + ")", element);
     final LookupItem item = LookupItemUtil.objectToLookupItem(conversion);
+
     @NonNls final String presentable = "Arrays.asList(" + qualifierText + prefix + ")";
-    item.setLookupString(presentable);
+    item.setLookupString(StringUtil.isEmpty(qualifierText) ? presentable : prefix);
     item.setPresentableText(presentable);
     item.addLookupStrings(prefix, presentable, "asList(" + prefix + ")");
     item.setIcon(Icons.METHOD_ICON);
@@ -179,10 +178,12 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         final Document document = editor.getDocument();
         final int tailOffset = startOffset + item.getLookupString().length();
         RangeMarker tail = document.createRangeMarker(tailOffset, tailOffset);
-        document.deleteString(startOffset - qualifierText.length(), startOffset);
         startOffset -= qualifierText.length();
-        document.insertString(startOffset, "java.util.");
         final Project project = element.getProject();
+        final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(project).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+        @NonNls final String newText = "java.util.Arrays.asList(" + callSpace + qualifierText + prefix + callSpace + ")";
+        document.replaceString(startOffset, tailOffset, newText);
+
         PsiDocumentManager.getInstance(project).commitDocument(document);
         final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         try {
