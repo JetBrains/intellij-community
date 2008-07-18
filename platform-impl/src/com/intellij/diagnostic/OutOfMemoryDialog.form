@@ -26,7 +26,7 @@
           <text value="Label"/>
         </properties>
       </component>
-      <component id="9a867" class="javax.swing.JLabel" binding="myHeapUnitLabel">
+      <component id="9a867" class="javax.swing.JLabel" binding="myHeapUnitsLabel">
         <constraints>
           <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -34,7 +34,7 @@
           <text value="MB"/>
         </properties>
       </component>
-      <component id="e1ed0" class="javax.swing.JLabel" binding="myPermGenUnitLabel">
+      <component id="e1ed0" class="javax.swing.JLabel" binding="myPermGenUnitsLabel">
         <constraints>
           <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

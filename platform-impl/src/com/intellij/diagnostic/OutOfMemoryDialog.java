@@ -23,8 +23,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private JLabel myPermGenCurrentValueLabel;
   private JLabel myHeapSizeLabel;
   private JLabel myPermGenSizeLabel;
-  private JLabel myHeapUnitLabel;
-  private JLabel myPermGenUnitLabel;
+  private JLabel myHeapUnitsLabel;
+  private JLabel myPermGenUnitsLabel;
   private JLabel mySettingsFileHintLabel;
   private Action myIgnoreAction;
   private Action myShutdownAction;
@@ -58,28 +58,46 @@ public class OutOfMemoryDialog extends DialogWrapper {
     };
     myShutdownAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
 
-    myHeapSizeLabel.setText(VMOptions.XMX_OPTION_NAME);
-    myHeapSizeField.setText(String.valueOf(VMOptions.readXmx()));
-    myHeapCurrentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", VMOptions.readXmx()));
-
-    myPermGenSizeLabel.setText(VMOptions.PERM_GEN_OPTION_NAME);
-    myPermGenSizeField.setText(String.valueOf(VMOptions.readMaxPermGen()));
-    myPermGenCurrentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", VMOptions.readMaxPermGen()));
-
-    if (memoryKind == MemoryKind.HEAP) {
-      myHeapSizeLabel.setForeground(Color.RED);
-      myHeapSizeField.setForeground(Color.RED);
-      myHeapUnitLabel.setForeground(Color.RED);
-      myHeapCurrentValueLabel.setForeground(Color.RED);
-    }
-    else {
-      myPermGenSizeLabel.setForeground(Color.RED);
-      myPermGenSizeField.setForeground(Color.RED);
-      myPermGenUnitLabel.setForeground(Color.RED);
-      myPermGenCurrentValueLabel.setForeground(Color.RED);
-    }
+    configControls(VMOptions.XMX_OPTION_NAME,
+                   VMOptions.readXmx(),
+                   memoryKind == MemoryKind.HEAP,
+                   myHeapSizeLabel,
+                   myHeapSizeField,
+                   myHeapUnitsLabel,
+                   myHeapCurrentValueLabel);
+    
+    configControls(VMOptions.PERM_GEN_OPTION_NAME,
+                   VMOptions.readMaxPermGen(),
+                   memoryKind == MemoryKind.PERM_GEN,
+                   myPermGenSizeLabel,
+                   myPermGenSizeField,
+                   myPermGenUnitsLabel,
+                   myPermGenCurrentValueLabel);
 
     init();
+  }
+
+  private void configControls(String optionName,
+                              int value,
+                              boolean highlight,
+                              JLabel sizeLabel,
+                              JTextField sizeField,
+                              JLabel unitsLabel,
+                              JLabel currentValueLabel) {
+    sizeLabel.setText(optionName);
+
+    String formatted = value == -1
+           ? DiagnosticBundle.message("diagnostic.out.of.memory.currentValue.unknown")
+           : String.valueOf(value);
+    sizeField.setText(formatted);
+    currentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", formatted));
+
+    if (highlight) {
+      sizeLabel.setForeground(Color.RED);
+      sizeField.setForeground(Color.RED);
+      unitsLabel.setForeground(Color.RED);
+      currentValueLabel.setForeground(Color.RED);
+    }
   }
 
   private void save() {
