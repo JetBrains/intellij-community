@@ -145,8 +145,8 @@ public class InlineParameterHandler {
       final PsiElement element = ((PsiReferenceExpression)argument).resolve();
       if (element instanceof PsiField) {
         final PsiField field = (PsiField)element;
-        if (field.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
-            field.getModifierList().hasModifierProperty(PsiModifier.FINAL)) {
+        final PsiModifierList modifierList = field.getModifierList();
+        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) {
           return field;
         }
       }
