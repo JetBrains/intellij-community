@@ -451,7 +451,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
 
-    String s55 = "for(Iterator<String> iterator = stringlist.getSectionsIterator(); getSectionsIterator.hasNext()) {\n" +
+    String s55 = "for(Iterator<String> iterator = stringlist.iterator(); iterator.hasNext();) {\n" +
                  "      String str = iterator.next();\n" +
                  "      System.out.println( str );\n" +
                  "}";
@@ -459,10 +459,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "    $Type$ $var$ = $variable$.next();\n" +
                  "    $Statements$;\n" +
                  "}";
-    String s57 = "for($var$:$container$) {\n" +
+    String s57 = "for($Type$ $var$:$container$) {\n" +
                  "  $Statements$;\n" +
                  "}";
-    String expectedResult20 = "for(str:stringlist) {\n" +
+    String expectedResult20 = "for(String str :stringlist) {\n" +
                               "  System.out.println( str );\n" +
                               "}";
 
