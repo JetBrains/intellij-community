@@ -557,7 +557,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
           }
 
         }
-        myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, myPrependWithSeparator, mySeparatorText));
+        boolean prependSeparator = myListModel.size() > 0 && myPrependWithSeparator;
+        myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
         mySeparatorText = null;
       }
