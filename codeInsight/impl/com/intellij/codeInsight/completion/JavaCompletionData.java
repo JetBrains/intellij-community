@@ -381,9 +381,18 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     {
 // Keyword completion in start of declaration
-      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, END_OF_BLOCK);
+      final CompletionVariant variant = new CompletionVariant(PsiMethod.class,
+                                                              or(new FilterPattern(END_OF_BLOCK),
+                                                                 psiElement().withParent(
+                                                                     psiElement(PsiReferenceExpression.class).withParent(PsiTypeCastExpression.class))));
       variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
       variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
+      registerVariant(variant);
+    }
+
+    {
+// Keyword completion in start of declaration
+      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, END_OF_BLOCK);
       addKeywords(variant);
       registerVariant(variant);
     }
@@ -613,7 +622,9 @@ public class JavaCompletionData extends JavaAwareCompletionData{
               psiElement(PsiExpression.class).withParent(or(psiElement(PsiIfStatement.class), psiElement(PsiLocalVariable.class))),
               psiElement(PsiAssignmentExpression.class))
           ),
-          not(psiElement().afterLeaf("."))));
+          not(psiElement().afterLeaf(".")),
+          not(psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiTypeCastExpression.class)))
+      ));
       variant.addCompletion(PsiKeyword.NULL, TailType.NONE);
       variant.addCompletion(PsiKeyword.TRUE, TailType.NONE);
       variant.addCompletion(PsiKeyword.FALSE, TailType.NONE);
@@ -688,7 +699,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
                   new NotFilter(
                       new OrFilter(
                           new ParentElementFilter(new ClassFilter(PsiExpressionList.class)),
-                          new ParentElementFilter(new ClassFilter(PsiParameterList.class))
+                          new ParentElementFilter(new ClassFilter(PsiParameterList.class)),
+                          new ParentElementFilter(new ClassFilter(PsiTypeCastExpression.class))
                       )
                   )
               ))),
