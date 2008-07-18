@@ -257,7 +257,7 @@ public final class Match {
 
   @Nullable
   public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString) {
-    final PsiImmediateClassType returnType = getChangedReturnType(method);
+    final PsiType returnType = getChangedReturnType(method);
     if (!myChangedParams.isEmpty() || returnType != null) {
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append(visibilityString);
@@ -314,7 +314,7 @@ public final class Match {
 
   public void changeSignature(final PsiMethod psiMethod) {
     final ArrayList<ParameterInfo> newParameters = patchParams(psiMethod);
-    final PsiImmediateClassType expressionType = getChangedReturnType(psiMethod);
+    final PsiType expressionType = getChangedReturnType(psiMethod);
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
                                                                       expressionType != null ? expressionType : psiMethod.getReturnType(),
                                                                       newParameters.toArray(new ParameterInfo[newParameters.size()]));
@@ -323,21 +323,36 @@ public final class Match {
   }
 
   @Nullable
-  private PsiImmediateClassType getChangedReturnType(final PsiMethod psiMethod) {
+  private PsiType getChangedReturnType(final PsiMethod psiMethod) {
     final PsiType returnType = psiMethod.getReturnType();
-    final PsiExpression expression = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiExpression.class);
-    if (expression != null) {
-      PsiMember member = null;
-      if (expression instanceof PsiMethodCallExpression) {
-        member = ((PsiMethodCallExpression)expression).resolveMethod();
-      } else if (expression instanceof PsiReferenceExpression){
-        final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
-        member = resolved instanceof PsiMember ? (PsiMember)resolved : null;
-      }
-      if (member != null) {
-        final PsiImmediateClassType expressionType = new PsiImmediateClassType(member.getContainingClass(), PsiSubstitutor.EMPTY);
-        if (returnType != null && !TypeConversionUtil.isAssignable(expressionType, returnType)) {
-          return expressionType;
+    if (returnType != null) {
+      final PsiExpression expression = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiExpression.class);
+      if (expression != null) {
+        PsiMember member = null;
+        if (expression instanceof PsiMethodCallExpression) {
+          member = ((PsiMethodCallExpression)expression).resolveMethod();
+        } else if (expression instanceof PsiReferenceExpression){
+          final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+          member = resolved instanceof PsiMember ? (PsiMember)resolved : null;
+        }
+        if (member != null) {
+          final PsiImmediateClassType expressionType = new PsiImmediateClassType(member.getContainingClass(), PsiSubstitutor.EMPTY);
+          if (!TypeConversionUtil.isAssignable(expressionType, returnType)) {
+            return expressionType;
+          }
+        }
+      } else {
+        final PsiDeclarationStatement statement = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiDeclarationStatement.class);
+        if (statement != null) {
+          final PsiElement[] declaredElements = statement.getDeclaredElements();
+          for (PsiElement declaredElement : declaredElements) {
+            if (declaredElement instanceof PsiLocalVariable) {
+              final PsiType localVariableType = ((PsiLocalVariable)declaredElement).getType();
+              if (!TypeConversionUtil.isAssignable(localVariableType, returnType)) {
+                return localVariableType;
+              }
+            }
+          }
         }
       }
     }
@@ -359,5 +374,9 @@ public final class Match {
       newParameters.add(new ParameterInfo(i, oldParameter.getName(), type));
     }
     return newParameters;
+  }
+
+  public PsiFile getFile() {
+    return getMatchStart().getContainingFile();
   }
 }

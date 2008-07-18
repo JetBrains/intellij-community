@@ -11,6 +11,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -330,6 +331,19 @@ public class DuplicatesFinder {
       }
     }
 
+    if (pattern instanceof PsiAssignmentExpression) {
+      final PsiExpression lExpression = ((PsiAssignmentExpression)pattern).getLExpression();
+      if (lExpression.getType() instanceof PsiPrimitiveType &&
+          lExpression instanceof PsiReferenceExpression &&
+          ((PsiReferenceExpression)lExpression).resolve() instanceof PsiParameter) {
+        return false;
+      }
+    } else if (pattern instanceof PsiPrefixExpression) {
+      if (checkParameterModification(((PsiPrefixExpression)pattern).getOperand(), ((PsiPrefixExpression)pattern).getOperationTokenType())) return false;
+    } else if (pattern instanceof PsiPostfixExpression) {
+      if (checkParameterModification(((PsiPostfixExpression)pattern).getOperand(), ((PsiPostfixExpression)pattern).getOperationTokenType())) return false;
+    }
+
     if (pattern instanceof PsiJavaCodeReferenceElement) {
       final PsiElement resolveResult1 = ((PsiJavaCodeReferenceElement)pattern).resolve();
       final PsiElement resolveResult2 = ((PsiJavaCodeReferenceElement)candidate).resolve();
@@ -458,6 +472,14 @@ public class DuplicatesFinder {
     }
 
     return true;
+  }
+
+  private static boolean checkParameterModification(final PsiExpression expression, final IElementType sign) {
+    if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiParameter &&
+        (sign.equals(JavaTokenType.MINUSMINUS)|| sign.equals(JavaTokenType.PLUSPLUS))) {
+      return true;
+    }
+    return false;
   }
 
   private static void traverseParameter(PsiElement pattern, PsiElement candidate, Match match) {

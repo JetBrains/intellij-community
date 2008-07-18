@@ -14,15 +14,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -95,19 +92,18 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   }
 
   public static void invokeOnScope(final Project project, final PsiMethod method, final AnalysisScope scope) {
-    final int [] dupCount = new int[]{0};
+    final List<Match> duplicates = new ArrayList<Match>();
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override public void visitFile(final PsiFile file) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        LOG.assertTrue(virtualFile != null);
-        if (invokeOnElements(project, file, method)) {
-          dupCount[0]++;
-        }
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        if (progressIndicator != null && progressIndicator.isCanceled()) return;
+        duplicates.addAll(hasDuplicates(file, method));
       }
     });
+    replaceDuplicate(project, duplicates, method);
     final Runnable nothingFoundRunnable = new Runnable() {
       public void run() {
-        if (dupCount[0] == 0) {
+        if (duplicates.isEmpty()) {
           final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
                                                            ApplicationNamesInfo.getInstance().getProductName());
           Messages.showInfoMessage(project, message, REFACTORING_NAME);
@@ -121,25 +117,19 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
   }
 
-  private static boolean invokeOnElements(final Project project, final PsiFile file, final PsiMethod method) {
+  private static boolean replaceDuplicate(final Project project, final List<Match> duplicates, final PsiMethod method) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null && progressIndicator.isCanceled()) return false;
-    final List<Match> duplicates = hasDuplicates(file, method);
-    if (duplicates.isEmpty()) return false;
+
     final Runnable replaceRunnable = new Runnable() {
       public void run() {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null || !virtualFile.isValid()) return;
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
-        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
-        LOG.assertTrue(editor != null);
         final int duplicatesNo = duplicates.size();
         WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
             PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
               public void run() {
-                DuplicatesImpl.invoke(project, editor, new MethodDuplicatesMatchProvider(method, duplicates));
+                DuplicatesImpl.invoke(project, new MethodDuplicatesMatchProvider(method, duplicates));
               }
             });
           }

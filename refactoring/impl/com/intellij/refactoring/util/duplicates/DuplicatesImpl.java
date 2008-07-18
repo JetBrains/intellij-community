@@ -17,10 +17,15 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -36,38 +41,61 @@ public class DuplicatesImpl {
 
   public static void invoke(final Project project, Editor editor, final MatchProvider provider) {
     final List<Match> duplicates = provider.getDuplicates();
+    int idx = 0;
     for (final Match match : duplicates) {
       if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
-      final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-      highlightMatch(project, editor, match, highlighters);
-      final TextRange textRange = match.getTextRange();
-      final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
-      expandAllRegionsCoveringRange(project, editor, textRange);
-      editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
-      String prompt = provider.getConfirmDuplicatePrompt(match);
-      final int matchAnswer = ApplicationManager.getApplication().isUnitTestMode()
-                              ? 0
-                              : Messages.showYesNoCancelDialog(project, prompt, RefactoringBundle.message("process.duplicates.title"),
-                                                               Messages.getQuestionIcon());
-      HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
-      if (matchAnswer == 0) {
-        final Runnable action = new Runnable() {
-          public void run() {
-            try {
-              provider.processMatch(match);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        };
-
-        //use outer command
-        ApplicationManager.getApplication().runWriteAction(action);
-      } else if (matchAnswer == 2) {
-        break;
-      }
+      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size())) return;
     }
+  }
+
+  public static void invoke(final Project project, final MatchProvider provider) {
+    final List<Match> duplicates = provider.getDuplicates();
+    int idx = 0;
+    for (final Match match : duplicates) {
+      final PsiFile file = match.getFile();
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile == null || !virtualFile.isValid()) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
+      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      LOG.assertTrue(editor != null);
+      if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
+      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size())) return;
+    }
+  }
+
+  private static boolean replaceMatch(final Project project, final MatchProvider provider, final Match match, final Editor editor,
+                                      final int idx, final int size) {
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    highlightMatch(project, editor, match, highlighters);
+    final TextRange textRange = match.getTextRange();
+    final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
+    expandAllRegionsCoveringRange(project, editor, textRange);
+    editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+    String prompt = provider.getConfirmDuplicatePrompt(match);
+    final int matchAnswer = ApplicationManager.getApplication().isUnitTestMode()
+                            ? 0
+                            : Messages.showYesNoCancelDialog(project, prompt, RefactoringBundle.message("process.duplicates.title", idx, size),
+                                                             Messages.getQuestionIcon());
+    HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+    if (matchAnswer == 0) {
+      final Runnable action = new Runnable() {
+        public void run() {
+          try {
+            provider.processMatch(match);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      };
+
+      //use outer command
+      ApplicationManager.getApplication().runWriteAction(action);
+    }
+    else if (matchAnswer == 2) {
+      return true;
+    }
+    return false;
   }
 
   private static void expandAllRegionsCoveringRange(final Project project, Editor editor, final TextRange textRange) {
