@@ -13,6 +13,7 @@ import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitCo
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.text.NumberFormat;
 
 /**
  * @author Roman Chernyatchik
@@ -25,7 +26,8 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 1));
     assertEquals("Running: 10 of 1  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0));
-    assertEquals("Done: 10 of 0  Failed: 1  (0.005 s)  ",
+    //here number format is platform-dependent
+    assertEquals("Done: 10 of 0  Failed: 1  (" + NumberFormat.getInstance().format((double)5/1000.0) + " s)  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1));
     assertEquals("Done: 10 of 1  (0.0 s)  ",
                  TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0));
