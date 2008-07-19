@@ -7,12 +7,12 @@ import com.intellij.util.Alarm;
 import javax.swing.*;
 
 public abstract class TestsProgressAnimator implements Runnable {
-  public static final Icon PAUSED_ICON = TestsUIUtil.loadIcon("testPaused");
-
   private static final int FRAMES_COUNT = 8;
-  private static final Icon[] ourFrames = new Icon[FRAMES_COUNT];
   private static final int MOVIE_TIME = 800;
   private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;
+
+  public static final Icon PAUSED_ICON = TestsUIUtil.loadIcon("testPaused");
+  public static final Icon[] FRAMES = new Icon[FRAMES_COUNT];
 
   private long myLastInvocationTime = -1;
 
@@ -24,12 +24,12 @@ public abstract class TestsProgressAnimator implements Runnable {
 
   static {
     for (int i = 0; i < FRAMES_COUNT; i++)
-      ourFrames[i] = TestsUIUtil.loadIcon("testInProgress" + (i + 1));
+      FRAMES[i] = TestsUIUtil.loadIcon("testInProgress" + (i + 1));
   }
 
   public static Icon getCurrentFrame() {
     final int frameIndex = (int) ((System.currentTimeMillis() % MOVIE_TIME) / FRAME_TIME);
-    return ourFrames[frameIndex];
+    return FRAMES[frameIndex];
   }
 
   /**
