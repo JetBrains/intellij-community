@@ -22,11 +22,14 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectLongHashMap;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.TIntLongHashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,10 +55,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   @NonNls 
   private static final String PATHS_TO_DELETE_FILENAME = "paths_to_delete.dat";
-  private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 1);
-  private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 1);
+  private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
+  private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
   
-  private final Map<String, TIntHashSet> mySourcesToRecompile = new HashMap<String, TIntHashSet>(); // ProjectId->set of source file paths
+  private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private final Map<String, SourceUrlClassNamePair> myOutputsToDelete = new HashMap<String, SourceUrlClassNamePair>(); // output path -> [sourceUrl; classname]
   
   private final ProjectManager myProjectManager;
@@ -76,7 +79,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final OutputFileInfo outputFileInfo = loadOutputInfo(outputFile);
     if (outputFileInfo != null) {
       final String path = outputFileInfo.getSourceFilePath();
-      return LocalFileSystem.getInstance().findFileByPath(path);
+      if (path != null) {
+        return LocalFileSystem.getInstance().findFileByPath(path);
+      }
     }
     return null;
   }
@@ -86,7 +91,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                            Collection<VirtualFile> toCompile,
                            Collection<Trinity<File, String, Boolean>> toDelete) {
     final Project project = context.getProject();
-    final String projectId = getProjectId(project);
+    final int projectId = getProjectId(project);
     final CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     final boolean _forceCompile = forceCompile || isRebuild; 
     synchronized (mySourcesToRecompile) {
@@ -101,7 +106,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           if (_forceCompile) {
             toCompile.add(file);
             if (pathsToRecompile == null || !pathsToRecompile.contains(fileId)) {
-              addSourceForRecompilation(Collections.singletonList(projectId), file, null);
+              addSourceForRecompilation(projectId, file, null);
             }
           }
           else if (pathsToRecompile.contains(fileId)) {
@@ -138,7 +143,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public void update(final CompileContext context, final TranslatingCompiler.OutputItem[] successfullyCompiled, final VirtualFile[] filesToRecompile)
       throws IOException {
     final Project project = context.getProject();
-    final String projectId = getProjectId(project);
+    final int projectId = getProjectId(project);
 
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final Map<VirtualFile, SourceFileInfo> compiledSources = new HashMap<VirtualFile, SourceFileInfo>();
@@ -178,9 +183,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       removeSourceForRecompilation(projectId, getFileId(file));
     }
 
-    final List<String> projects = Collections.singletonList(projectId);
     for (VirtualFile file : filesToRecompile) {
-      addSourceForRecompilation(projects, file, null);
+      addSourceForRecompilation(projectId, file, null);
     }
   }
 
@@ -314,43 +318,62 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
   
-  private static String getProjectId(Project project) {
-    return project.getLocationHash();
+  private static int getProjectId(Project project) {
+    try {
+      return FSRecords.getNames().enumerate(project.getLocationHash());
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return -1;
   }
   
   private static class OutputFileInfo {
-    private final String mySourcePath;
+    private final int mySourcePath;
     @Nullable
-    private final String myClassName;
+    private final int myClassName;
 
-    OutputFileInfo(final String sourcePath, @Nullable String className) {
-      mySourcePath = sourcePath;
-      myClassName = className;
+    OutputFileInfo(final String sourcePath, @Nullable String className) throws IOException {
+      final PersistentStringEnumerator symtable = FSRecords.getNames();
+      mySourcePath = symtable.enumerate(sourcePath);
+      myClassName = className != null? symtable.enumerate(className) : -1;
     }
 
     OutputFileInfo(final DataInput in) throws IOException {
-      mySourcePath = CompilerIOUtil.readString(in);
-      myClassName = CompilerIOUtil.readString(in);
+      mySourcePath = in.readInt();
+      myClassName = in.readInt();
     }
 
     String getSourceFilePath() {
-      return mySourcePath;
+      try {
+        return FSRecords.getNames().valueOf(mySourcePath);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      return null;
     }
 
     @Nullable
     public String getClassName() {
-      return myClassName;
+      try {
+        return myClassName < 0? null : FSRecords.getNames().valueOf(myClassName);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      return null;
     }
 
     public void save(final DataOutput out) throws IOException {
-      CompilerIOUtil.writeString(mySourcePath, out);
-      CompilerIOUtil.writeString(myClassName, out);
+      out.writeInt(mySourcePath);
+      out.writeInt(myClassName);
     }
   }
 
   private static class SourceFileInfo {
-    private TObjectLongHashMap<String> myTimestamps; // ProjectId -> last compiled stamp
-    private Map<String, Object> myProjectToOutputPathMap; // ProjectId -> either a single output path or a set of output paths 
+    private TIntLongHashMap myTimestamps; // ProjectId -> last compiled stamp
+    private TIntObjectHashMap myProjectToOutputPathMap; // ProjectId -> either a single output path or a set of output paths 
 
     private SourceFileInfo() {
     }
@@ -358,34 +381,47 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     private SourceFileInfo(@NotNull DataInput in) throws IOException {
       final int projCount = in.readInt();
       for (int idx = 0; idx < projCount; idx++) {
-        final String projectId = CompilerIOUtil.readString(in);
+        final int projectId = in.readInt();
         final long stamp = in.readLong();
         updateTimestamp(projectId, stamp);
 
         final int pathsCount = in.readInt();
         for (int i = 0; i < pathsCount; i++) {
-          final String path = CompilerIOUtil.readString(in);
+          final int path = in.readInt();
           addOutputPath(projectId, path);
         }
       }
     }
 
     public void save(@NotNull final DataOutput out) throws IOException {
-      final Collection<String> projects = getProjectIds();
-      out.writeInt(projects.size());
-      for (String projectId : projects) {
-        CompilerIOUtil.writeString(projectId, out);
+      final int[] projects = getProjectIds().toArray();
+      out.writeInt(projects.length);
+      for (int projectId : projects) {
+        out.writeInt(projectId);
         out.writeLong(getTimestamp(projectId));
         final Object value = myProjectToOutputPathMap != null? myProjectToOutputPathMap.get(projectId) : null;
-        if (value instanceof String) {
+        if (value instanceof Integer) {
           out.writeInt(1);
-          CompilerIOUtil.writeString(((String)value), out);
+          out.writeInt(((Integer)value).intValue());
         }
-        else if (value instanceof Set) {
-          final Set<String> set = (Set<String>)value;
+        else if (value instanceof TIntHashSet) {
+          final TIntHashSet set = (TIntHashSet)value;
           out.writeInt(set.size());
-          for (String path : set) {
-            CompilerIOUtil.writeString(path, out);
+          final IOException[] ex = new IOException[] {null};
+          set.forEach(new TIntProcedure() {
+            public boolean execute(final int value) {
+              try {
+                out.writeInt(value);
+                return true;
+              }
+              catch (IOException e) {
+                ex[0] = e;
+                return false;
+              }
+            }
+          });
+          if (ex[0] != null) {
+            throw ex[0];
           }
         }
         else {
@@ -394,10 +430,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
 
-    void updateTimestamp(final String projectId, final long stamp) {
+    void updateTimestamp(final int projectId, final long stamp) {
       if (stamp > 0L) {
         if (myTimestamps == null) {
-          myTimestamps = new TObjectLongHashMap<String>(1, 0.98f);
+          myTimestamps = new TIntLongHashMap(1, 0.98f);
         }
         myTimestamps.put(projectId, stamp);
       }
@@ -408,30 +444,29 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
 
-    Collection<String> getProjectIds() {
-      if (myProjectToOutputPathMap == null && myTimestamps == null) {
-        return Collections.emptyList(); 
+    TIntHashSet getProjectIds() {
+      final TIntHashSet result = new TIntHashSet();
+      if (myTimestamps != null) {
+        result.addAll(myTimestamps.keys());
       }
-      if (myTimestamps == null) {
-        return Collections.unmodifiableCollection(myProjectToOutputPathMap.keySet());
-      }
-      final int capacity = myTimestamps.size();
-      final Set<String> result = new HashSet<String>(capacity);
-      myTimestamps.forEachKey(new TObjectProcedure<String>() {
-        public boolean execute(final String key) {
-          result.add(key);
-          return true;
-        }
-      });
       if (myProjectToOutputPathMap != null) {
-        result.addAll(myProjectToOutputPathMap.keySet());
+        result.addAll(myProjectToOutputPathMap.keys());
       }
-      return Collections.unmodifiableCollection(result);
+      return result;
     }
     
-    private void addOutputPath(final String projectId, String outputPath) {
+    private void addOutputPath(final int projectId, String outputPath) {
+      try {
+        addOutputPath(projectId, FSRecords.getNames().enumerate(outputPath));
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+
+    private void addOutputPath(final int projectId, final int outputPath) {
       if (myProjectToOutputPathMap == null) {
-        myProjectToOutputPathMap = new HashMap<String, Object>(1, 0.98f);
+        myProjectToOutputPathMap = new TIntObjectHashMap(1, 0.98f);
         myProjectToOutputPathMap.put(projectId, outputPath);
       }
       else {
@@ -440,58 +475,79 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           myProjectToOutputPathMap.put(projectId, outputPath);
         }
         else {
-          Set<String> set;
-          if (val instanceof String)  {
-            set = new HashSet<String>();
-            set.add(((String)val));
+          TIntHashSet set;
+          if (val instanceof Integer)  {
+            set = new TIntHashSet();
+            set.add(((Integer)val).intValue());
             myProjectToOutputPathMap.put(projectId, set);
           }
           else {
-            assert val instanceof Set;
-            set = (Set<String>)val;
+            assert val instanceof TIntHashSet;
+            set = (TIntHashSet)val;
           }
           set.add(outputPath);
         }
       }
     }
 
-    public void clearPaths(final String projectId) {
+    public void clearPaths(final int projectId){
       if (myProjectToOutputPathMap != null) {
         myProjectToOutputPathMap.remove(projectId);
       }
     }
 
-    public long getLastCompilationTimestamp(final Project project) {
-      final String projectId = getProjectId(project);
+    public long getLastCompilationTimestamp(final Project project) throws IOException {
+      final int projectId = getProjectId(project);
       return getTimestamp(projectId);
     }
 
-    long getTimestamp(final String projectId) {
+    long getTimestamp(final int projectId) {
       return myTimestamps == null? -1L : myTimestamps.get(projectId);
     }
 
-    void processOutputPaths(final String projectId, Proc proc) {
+    void processOutputPaths(final int projectId, final Proc proc){
       if (myProjectToOutputPathMap != null) {
-        final Object val = myProjectToOutputPathMap.get(projectId);
-        if (val instanceof String)  {
-          proc.execute(((String)val));
-        }
-        else if (val instanceof Set) {
-          for (String path : (Set<String>)val) {
-            proc.execute(path);
+        try {
+          final PersistentStringEnumerator symtable = FSRecords.getNames();
+          final Object val = myProjectToOutputPathMap.get(projectId);
+          if (val instanceof Integer)  {
+            proc.execute(symtable.valueOf(((Integer)val).intValue()));
           }
+          else if (val instanceof TIntHashSet) {
+            ((TIntHashSet)val).forEach(new TIntProcedure() {
+              public boolean execute(final int value) {
+                try {
+                  proc.execute(symtable.valueOf(value));
+                  return true;
+                }
+                catch (IOException e) {
+                  LOG.info(e);
+                  return false;
+                }
+              }
+            });
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
         }
       }
     }
     
-    boolean isAssociated(String projectId, String outputPath) {
+    boolean isAssociated(int projectId, String outputPath) {
       if (myProjectToOutputPathMap != null) {
-        final Object val = myProjectToOutputPathMap.get(projectId);
-        if (val instanceof String)  {
-          return FileUtil.pathsEqual(outputPath, (String)val);
+        try {
+          final Object val = myProjectToOutputPathMap.get(projectId);
+          if (val instanceof Integer)  {
+            return FileUtil.pathsEqual(outputPath, FSRecords.getNames().valueOf(((Integer)val).intValue()));
+          }
+          if (val instanceof TIntHashSet) {
+            final int _outputPath = FSRecords.getNames().enumerate(outputPath);
+            return ((TIntHashSet)val).contains(_outputPath);
+          }
         }
-        if (val instanceof Set) {
-          return ((Set<String>)val).contains(outputPath);
+        catch (IOException e) {
+          LOG.info(e);
         }
       }
       return false;
@@ -527,10 +583,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   // made public for tests
   public void scanSourceContent(final Project project, final Collection<VirtualFile> roots, final int totalRootCount) {
-    final String projectId = getProjectId(project);
+    final int projectId = getProjectId(project);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final List<String> projectIds = Collections.singletonList(projectId);
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     int processed = 0;
     for (VirtualFile srcRoot : roots) {
@@ -544,7 +599,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             if (!isMarkedForRecompilation(projectId, getFileId(file))) {
               final SourceFileInfo srcInfo = loadSourceInfo(file);
               if (srcInfo == null || (srcInfo.getTimestamp(projectId) != file.getTimeStamp())) {
-                addSourceForRecompilation(projectIds, file, srcInfo);
+                addSourceForRecompilation(projectId, file, srcInfo);
               }
             }
           }
@@ -611,14 +666,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               scanSourceContent(project, projectRoots, totalRootsCount);
               
               if (intermediateRoots.size() > 0) {
-                final String projectId = getProjectId(project);
+                final int projectId = getProjectId(project);
                 final FileProcessor processor = new FileProcessor() {
-                  final List<String> projects = Collections.singletonList(projectId);
                   public void execute(final VirtualFile file) {
                     if (!isMarkedForRecompilation(projectId, getFileId(file))) {
                       final SourceFileInfo srcInfo = loadSourceInfo(file);
                       if (srcInfo == null || (srcInfo.getTimestamp(projectId) != file.getTimeStamp())) {
-                        addSourceForRecompilation(projects, file, srcInfo);
+                        addSourceForRecompilation(projectId, file, srcInfo);
                       }
                     }
                   }
@@ -665,13 +719,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final OutputFileInfo outputInfo = loadOutputInfo(file);
           if (outputInfo != null) {
             final String srcPath = outputInfo.getSourceFilePath();
-            final VirtualFile srcFile = LocalFileSystem.getInstance().findFileByPath(srcPath);
+            final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
             if (srcFile != null) {
               final SourceFileInfo srcInfo = loadSourceInfo(srcFile);
               if (srcInfo != null) {
-                for (String projectId : srcInfo.getProjectIds()) {
+                for (int projectId : srcInfo.getProjectIds().toArray()) {
                   if (srcInfo.isAssociated(projectId, filePath)) {
-                    addSourceForRecompilation(Collections.singletonList(projectId), srcFile, srcInfo);
+                    addSourceForRecompilation(projectId, srcFile, srcInfo);
                     break;
                   }
                 }
@@ -684,10 +738,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             
           final SourceFileInfo srcInfo = loadSourceInfo(file); 
           if (srcInfo != null) {
-            final Collection<String> projects = srcInfo.getProjectIds();
+            final TIntHashSet projects = srcInfo.getProjectIds();
             if (projects.size() > 0) {
               final ScheduleOutputsForDeletionProc deletionProc = new ScheduleOutputsForDeletionProc(file.getUrl());
-              for (String projectId : projects) {
+              for (int projectId : projects.toArray()) {
                 // mark associated outputs for deletion
                 srcInfo.processOutputPaths(projectId, deletionProc);
                 removeSourceForRecompilation(projectId, getFileId(file));
@@ -708,7 +762,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         public void execute(final VirtualFile file) {
           final SourceFileInfo srcInfo = loadSourceInfo(file);
           if (srcInfo != null) {
-            addSourceForRecompilation(srcInfo.getProjectIds(), file, srcInfo);
+            for (int projectId : srcInfo.getProjectIds().toArray()) {
+              addSourceForRecompilation(projectId, file, srcInfo);
+            }
           }
         }
       });
@@ -718,15 +774,15 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       for (final Project project : myProjectManager.getOpenProjects()) {
         final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
         if (rootManager.getFileIndex().isInSourceContent(file)) {
-          final String projectId = getProjectId(project);
+          final int projectId = getProjectId(project);
           final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
           processRecursively(file, new FileProcessor() {
             public void execute(final VirtualFile file) {
               if (isCompilable(file)) {
-                addSourceForRecompilation(Collections.singletonList(projectId), file, null);
+                addSourceForRecompilation(projectId, file, null);
               }
             }
-                
+                  
             boolean isCompilable(VirtualFile file) {
               for (TranslatingCompiler translator : translators) {
                 if (translator.isCompilableFile(file, DummyCompileContext.getInstance())) {
@@ -739,9 +795,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
         else {
           if (belongsToIntermediateSources(file, project)) {
+            final int projectId = getProjectId(project);
             processRecursively(file, new FileProcessor() {
               public void execute(final VirtualFile file) {
-                addSourceForRecompilation(Collections.singletonList(getProjectId(project)), file, null);
+                addSourceForRecompilation(projectId, file, null);
               }
             });
           }
@@ -785,37 +842,27 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return false;
   }
   
-  private void addSourceForRecompilation(final Collection<String> projects, final VirtualFile srcFile, final @Nullable SourceFileInfo preloadedInfo) {
-    final int srcFileId = getFileId(srcFile);
+  private void addSourceForRecompilation(final int projectId, final VirtualFile srcFile, final @Nullable SourceFileInfo preloadedInfo) {
     final SourceFileInfo srcInfo = preloadedInfo != null? preloadedInfo : loadSourceInfo(srcFile);
-    if (projects.size() > 0) {
-      ScheduleOutputsForDeletionProc deletionProc = null;
-      boolean isDirty = false;
-      for (String projectId : projects) {
-        final boolean alreadyMarked; 
-        synchronized (mySourcesToRecompile) {
-          TIntHashSet set = mySourcesToRecompile.get(projectId);
-          if (set == null) {
-            set = new TIntHashSet();
-            mySourcesToRecompile.put(projectId, set);
-          }
-          alreadyMarked = !set.add(srcFileId);
-        }
-
-        if (!alreadyMarked && srcInfo != null) {
-          isDirty = true;
-          srcInfo.updateTimestamp(projectId, -1L);
-          srcInfo.processOutputPaths(projectId, deletionProc != null? deletionProc : (deletionProc = new ScheduleOutputsForDeletionProc(srcFile.getUrl())));
-        }
+    
+    final boolean alreadyMarked; 
+    synchronized (mySourcesToRecompile) {
+      TIntHashSet set = mySourcesToRecompile.get(projectId);
+      if (set == null) {
+        set = new TIntHashSet();
+        mySourcesToRecompile.put(projectId, set);
       }
+      alreadyMarked = !set.add(getFileId(srcFile));
+    }
 
-      if (isDirty) {
-        saveSourceInfo(srcFile, srcInfo);
-      }
+    if (!alreadyMarked && srcInfo != null) {
+      srcInfo.updateTimestamp(projectId, -1L);
+      srcInfo.processOutputPaths(projectId, new ScheduleOutputsForDeletionProc(srcFile.getUrl()));
+      saveSourceInfo(srcFile, srcInfo);
     }
   }                             
   
-  private void removeSourceForRecompilation(final String projectId, final int srcId) {
+  private void removeSourceForRecompilation(final int projectId, final int srcId) {
     synchronized (mySourcesToRecompile) {
       TIntHashSet set = mySourcesToRecompile.get(projectId);
       if (set != null) {
@@ -831,7 +878,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return isMarkedForRecompilation(getProjectId(project), getFileId(file));
   }
   
-  private boolean isMarkedForRecompilation(String projectId, final int srcId) {
+  private boolean isMarkedForRecompilation(int projectId, final int srcId) {
     synchronized (mySourcesToRecompile) {
       final TIntHashSet set = mySourcesToRecompile.get(projectId);
       return set != null && set.contains(srcId);
