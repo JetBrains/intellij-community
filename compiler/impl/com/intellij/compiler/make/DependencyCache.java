@@ -77,8 +77,7 @@ public class DependencyCache {
   public Cache getCache() {
     if (myCache == null) {
       // base number of cached record views of each type
-      final int cacheSize = /*ApplicationManager.getApplication().isUnitTestMode() ? 4 :*/ 1024;
-      myCache = new Cache(myStoreDirectoryPath, cacheSize, false);
+      myCache = new Cache(myStoreDirectoryPath, 2048);
     }
 
     return myCache;
@@ -86,7 +85,7 @@ public class DependencyCache {
 
   public Cache getNewClassesCache() {
     if (myNewClassesCache == null) {
-      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 2048, false);
+      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 2048);
     }
     return myNewClassesCache;
   }

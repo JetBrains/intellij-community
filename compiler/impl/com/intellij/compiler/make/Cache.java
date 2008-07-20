@@ -30,15 +30,15 @@ public class Cache {
   @NonNls private static final String DECLARATIONS_INDEX_FILE_NAME = "declarations_index.dat";
   @NonNls private static final String CLASSINFO_INDEX_FILE_NAME = "classinfo_index.dat";
 
-  public Cache(@NonNls String storePath, final int initialCacheSize, final boolean canResize) {
-    myViewPool = new ViewPool(storePath, initialCacheSize, canResize);
+  public Cache(@NonNls String storePath, final int cacheSize) {
+    myViewPool = new ViewPool(storePath, cacheSize);
     myDeclarationsIndexFile = new File(storePath + "/" + DECLARATIONS_INDEX_FILE_NAME);
     myClassInfosIndexFile = new File(storePath + "/" + CLASSINFO_INDEX_FILE_NAME);
   }
 
   public void dispose() throws CacheCorruptedException {
     synchronized (myViewPool) {
-      myViewPool.dispose(true);
+      myViewPool.dispose();
     }
     try {
       synchronized (myViewPool.getClassDeclarationsLock()) {
