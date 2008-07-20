@@ -13,10 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -70,10 +67,12 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) return;
 
     if (extractProcessor.showDialog()) {
+      final SmartPsiElementPointer [] extractedMethod = new SmartPsiElementPointer[1];
       new WriteCommandAction(project, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME) {
         protected void run(final Result result) throws Throwable {
           extractProcessor.doRefactoring();
           processor.run();
+          extractedMethod[0] = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(processor.getMethod());
         }
       }.execute();
 
@@ -87,7 +86,9 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
 
       new WriteCommandAction(project, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME) {
         protected void run(final Result result) throws Throwable {
-          processor.getMethod().delete();
+          final PsiElement method = extractedMethod[0].getElement();
+          LOG.assertTrue(method != null);
+          method.delete();
         }
       }.execute();
     }

@@ -22,6 +22,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -206,7 +207,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     final PsiModifierList innerClassModifierList = innerClass.getModifierList();
     LOG.assertTrue(innerClassModifierList != null);
-    innerClassModifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    innerClassModifierList.setModifierProperty(VisibilityUtil.getVisibilityModifier(methodModifierList), true);
     final boolean isStatic = methodModifierList.hasModifierProperty(PsiModifier.STATIC);
     innerClassModifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     return isStatic;
