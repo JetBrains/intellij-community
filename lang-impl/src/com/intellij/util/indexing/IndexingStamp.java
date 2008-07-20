@@ -9,6 +9,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -22,47 +23,75 @@ public class IndexingStamp {
   private IndexingStamp() {
   }
 
+  /**
+   * The class is meant to be accessed from synchronized block only 
+   */
   private static class Timestamps {
     private static FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 1);
-    private final TObjectLongHashMap<ID<?, ?>> myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(20);
+    private TObjectLongHashMap<ID<?, ?>> myIndexStamps;
+    private boolean myIsDirty = false;
 
-    public void readFromStream(DataInputStream stream) throws IOException {
-      int count = DataInputOutputUtil.readINT(stream);
-      for (int i = 0; i < count; i++) {
-        ID<?, ?> id = ID.findById(stream.readLong());
-        long timestamp = stream.readLong();
-        if (id != null) {
-          myIndexStamps.put(id, timestamp);
+    public Timestamps(@Nullable DataInputStream stream) throws IOException {
+      if (stream != null) {
+        try {
+          int count = DataInputOutputUtil.readINT(stream);
+          if (count > 0) {
+            myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(20);
+            for (int i = 0; i < count; i++) {
+                ID<?, ?> id = ID.findById(stream.readLong());
+                long timestamp = stream.readLong();
+                if (id != null) {
+                  myIndexStamps.put(id, timestamp);
+                }
+              }
+          }
+        }
+        finally {
+          stream.close();
         }
       }
     }
 
     public void writeToStream(final DataOutputStream stream) throws IOException {
-      final int size = myIndexStamps.size();
-      final int[] count = new int[]{0};
-      DataInputOutputUtil.writeINT(stream, size);
-      myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
-        public boolean execute(final ID<?, ?> id, final long timestamp) {
-          try {
-            stream.writeLong(id.getUniqueId());
-            stream.writeLong(timestamp);
-            count[0]++;
-            return true;
+      if (myIndexStamps != null) {
+        final int size = myIndexStamps.size();
+        final int[] count = new int[]{0};
+        DataInputOutputUtil.writeINT(stream, size);
+        myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
+          public boolean execute(final ID<?, ?> id, final long timestamp) {
+            try {
+              stream.writeLong(id.getUniqueId());
+              stream.writeLong(timestamp);
+              count[0]++;
+              return true;
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
           }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
-      assert count[0] == size;
+        });
+        assert count[0] == size;
+      }
     }
 
     public long get(ID<?, ?> id) {
-      return myIndexStamps.get(id);
+      return myIndexStamps != null? myIndexStamps.get(id) : 0L;
     }
 
     public void set(ID<?, ?> id, long tmst) {
-      myIndexStamps.put(id, tmst);
+      try {
+        if (myIndexStamps == null) {
+          myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(20);
+        }
+        myIndexStamps.put(id, tmst);
+      }
+      finally {
+        myIsDirty = true;
+      }
+    }
+
+    public boolean isDirty() {
+      return myIsDirty;
     }
   }
 
@@ -70,12 +99,8 @@ public class IndexingStamp {
     @NotNull
     public Timestamps createValue(final VirtualFile key) {
       try {
-        Timestamps result = new Timestamps();
         final DataInputStream stream = Timestamps.PERSISTENCE.readAttribute(key);
-        if (stream != null) {
-          result.readFromStream(stream);
-        }
-        return result;
+        return new Timestamps(stream);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -85,9 +110,11 @@ public class IndexingStamp {
     @Override
     protected void onDropFromCache(final VirtualFile key, final Timestamps value) {
       try {
-        final DataOutputStream sink = Timestamps.PERSISTENCE.writeAttribute(key);
-        value.writeToStream(sink);
-        sink.close();
+        if (value.isDirty()) {
+          final DataOutputStream sink = Timestamps.PERSISTENCE.writeAttribute(key);
+          value.writeToStream(sink);
+          sink.close();
+        }
       }
       catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
       }
