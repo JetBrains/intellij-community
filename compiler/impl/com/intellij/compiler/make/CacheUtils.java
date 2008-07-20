@@ -132,24 +132,4 @@ public class CacheUtils {
     final int classId = cache.getClassId(classQName);
     return ClsUtil.isFinal(cache.getFlags(classId));
   }
-
-  public static boolean isFieldReferenced(Cache cache, final int fieldId, final int referencerClassQName) throws CacheCorruptedException {
-    final int[] referencers = cache.getFieldReferencers(fieldId);
-    for (int referencer : referencers) {
-      if (referencerClassQName == referencer) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static boolean isMethodReferenced(Cache cache, final int methodId, final int referencerClassQName) throws CacheCorruptedException {
-    final int[] referencers = cache.getMethodReferencers(methodId);
-    for (final int referencer : referencers) {
-      if (referencerClassQName == referencer) {
-        return true;
-      }
-    }
-    return false;
-  }
 }

@@ -1225,4 +1225,34 @@ public class Cache {
       throw new CacheCorruptedException(e);
     }
   }
+
+  public boolean isClassReferenced(final int classDeclarationId, final int referencerClassQName) throws CacheCorruptedException {
+    final int[] referencers = getClassReferencers(classDeclarationId);
+    for (int referencer : referencers) {
+      if (referencerClassQName == referencer) {
+        return true;
+      }
+    }
+    return false;
+  }
+                                                                                                  
+  public boolean isFieldReferenced(final int fieldDeclarationId, final int referencerClassQName) throws CacheCorruptedException {
+    final int[] referencers = getFieldReferencers(fieldDeclarationId);
+    for (int referencer : referencers) {
+      if (referencerClassQName == referencer) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isMethodReferenced(final int methodDeclarationId, final int referencerClassQName) throws CacheCorruptedException {
+    final int[] referencers = getMethodReferencers(methodDeclarationId);
+    for (final int referencer : referencers) {
+      if (referencerClassQName == referencer) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
