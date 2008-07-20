@@ -83,9 +83,12 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (Map.Entry<String, VirtualFile> entry : myFileRootsMap.entrySet()) {
       if (Comparing.equal(vcsRoot, entry.getValue())) {
-        final VirtualFile filePath = myUrl2FileMap.get(entry.getKey()).second;
-        if (filePath != null) {
-          result.add(filePath);
+        final Pair<String, VirtualFile> fileInfo = myUrl2FileMap.get(entry.getKey());
+        if (fileInfo != null) {
+          final VirtualFile filePath = fileInfo.second;
+          if (filePath != null) {
+            result.add(filePath);
+          }
         }
       }
     }
