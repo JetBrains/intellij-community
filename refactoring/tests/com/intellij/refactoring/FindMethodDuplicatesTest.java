@@ -80,6 +80,10 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
+  public void testMappingAny2ParameterPrimitiveLvalue() throws Exception {
+    doTest(false);
+  }
+
   public void testMappingExpression2Field() throws Exception {
     doTest(false);
   }
@@ -212,7 +216,19 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  public void testTypesExtendsReturnDifferent() throws Exception {
+  public void testTypesExtendsReturnDifferentArray() throws Exception {
+    doTest();
+  }
+
+  public void testTypesExtendsReturnDifferentGeneric() throws Exception {
+    doTest();
+  }
+
+  public void testTypesExtendsReturnDifferentPrimitive() throws Exception {
+    doTest();
+  }
+
+  public void testTypesExtendsReturnDifferentReference() throws Exception {
     doTest();
   }
 

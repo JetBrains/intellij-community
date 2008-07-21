@@ -1,6 +1,5 @@
 class Mapping {
   private int myInt;
-  private Mapping myField;
 
   public void method(int p) {
     myInt = p + 1;
