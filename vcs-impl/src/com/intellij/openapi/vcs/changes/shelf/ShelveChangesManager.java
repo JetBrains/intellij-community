@@ -15,19 +15,16 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
+import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -199,73 +196,85 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   }
 
   @Nullable
-  public List<FilePath> unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
-                                           @Nullable final List<ShelvedBinaryFile> binaryFiles) {
+  public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
+                                           @Nullable final List<ShelvedBinaryFile> binaryFiles, final LocalChangeList targetChangeList) {
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
-    ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
+
+    final List<TextFilePatch> textFilePatches;
     try {
-      List<TextFilePatch> patches = loadPatches(changeList.PATH);
-      if (changes != null) {
-        final Iterator<TextFilePatch> iterator = patches.iterator();
-        while (iterator.hasNext()) {
-          TextFilePatch patch = iterator.next();
-          if (!needUnshelve(patch, changes)) {
-            remainingPatches.add(patch);
-            iterator.remove();
-          }
-        }
-      }
-      List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
-      if (!ApplyPatchAction.prepareFiles(myProject, patches, context, filesToMakeWritable)) {
-        return null;
-      }
-
-      List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles);
-      for(ShelvedBinaryFile file: binaryFilesToUnshelve) {
-        if (file.BEFORE_PATH != null) {
-          final String beforePath = file.BEFORE_PATH == null ? null : file.BEFORE_PATH.replace(File.separatorChar, '/');
-          final String afterPath = file.AFTER_PATH == null ? null : file.AFTER_PATH.replace(File.separatorChar, '/');
-          final boolean isNewFile = beforePath == null;
-          VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
-          if (patchTarget != null) {
-            filesToMakeWritable.add(patchTarget);
-          }
-        }
-      }
-
-      final VirtualFile[] fileArray = filesToMakeWritable.toArray(new VirtualFile[filesToMakeWritable.size()]);
-      final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
-      if (readonlyStatus.hasReadonlyFiles()) {
-        return null;
-      }
-
-      if (ApplyPatchAction.applyFilePatches(myProject, patches, context) == ApplyPatchStatus.FAILURE) {
-        return null;
-      }
-      for(ShelvedBinaryFile file: binaryFilesToUnshelve) {
-        FilePath unshelvedFile = unshelveBinaryFile(file);
-        if (unshelvedFile == null) {
-          break;
-        }
-        changeList.getBinaryFiles().remove(file);
-        context.addAffectedFile(unshelvedFile);
-      }
+      textFilePatches = loadTextPatches(changeList, changes, remainingPatches);
     }
     catch (IOException e) {
-      LOG.error(e);
-      return null;
+      LOG.info(e);
+      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+      return;
     }
     catch (PatchSyntaxException e) {
-      LOG.error(e);
-      return null;
+      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+      LOG.info(e);
+      return;
     }
-    if (remainingPatches.size() == 0 && changeList.getBinaryFiles().size() == 0) {
+
+    final List<FilePatch> patches = new ArrayList<FilePatch>(textFilePatches);
+
+    final List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles);
+
+    for (final ShelvedBinaryFile shelvedBinaryFile : binaryFilesToUnshelve) {
+      patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
+    }
+
+    final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
+    final PatchApplier patchApplier = new PatchApplier(myProject, myProject.getBaseDir(), patches, targetChangeList, binaryPatchApplier);
+    patchApplier.execute();
+    remainingPatches.addAll(patchApplier.getRemainingPatches());
+
+    if (remainingPatches.size() == 0) {
       deleteChangeList(changeList);
     }
     else {
       saveRemainingPatches(changeList, remainingPatches);
     }
-    return context.getAffectedFiles();
+  }
+
+  private List<TextFilePatch> loadTextPatches(final ShelvedChangeList changeList, final List<ShelvedChange> changes, final List<FilePatch> remainingPatches)
+      throws IOException, PatchSyntaxException {
+    final List<TextFilePatch> textFilePatches;
+    textFilePatches = loadPatches(changeList.PATH);
+
+    if (changes != null) {
+      final Iterator<TextFilePatch> iterator = textFilePatches.iterator();
+      while (iterator.hasNext()) {
+        TextFilePatch patch = iterator.next();
+        if (!needUnshelve(patch, changes)) {
+          remainingPatches.add(patch);
+          iterator.remove();
+        }
+      }
+    }
+    return textFilePatches;
+  }
+
+  private class BinaryPatchApplier implements CustomBinaryPatchApplier {
+    private final List<FilePatch> myAppliedPatches;
+
+    private BinaryPatchApplier(final int binaryCount) {
+      myAppliedPatches = new ArrayList<FilePatch>();
+    }
+
+    @NotNull
+    public ApplyPatchStatus apply(final List<Pair<VirtualFile, FilePatch>> patches) throws IOException {
+      for (Pair<VirtualFile, FilePatch> patch : patches) {
+        final ShelvedBinaryFilePatch shelvedPatch = (ShelvedBinaryFilePatch) patch.getSecond();
+        unshelveBinaryFile(shelvedPatch.getShelvedBinaryFile(), patch.getFirst());
+        myAppliedPatches.add(shelvedPatch);
+      }
+      return ApplyPatchStatus.SUCCESS;
+    }
+
+    @NotNull
+    public List<FilePatch> getAppliedPatches() {
+      return myAppliedPatches;
+    }
   }
 
   private static List<ShelvedBinaryFile> getBinaryFilesToUnshelve(final ShelvedChangeList changeList, final List<ShelvedBinaryFile> binaryFiles) {
@@ -282,31 +291,22 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   }
 
   @Nullable
-  private FilePath unshelveBinaryFile(final ShelvedBinaryFile file) throws IOException {
-    final String beforePath = file.BEFORE_PATH == null ? null : file.BEFORE_PATH.replace(File.separatorChar, '/');
-    final String afterPath = file.AFTER_PATH == null ? null : file.AFTER_PATH.replace(File.separatorChar, '/');
-    final boolean isNewFile = beforePath == null;
+  private FilePath unshelveBinaryFile(final ShelvedBinaryFile file, @NotNull final VirtualFile patchTarget) throws IOException {
     final Ref<FilePath> result = new Ref<FilePath>();
     final Ref<IOException> ex = new Ref<IOException>();
     final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
     final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
+    
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
-          VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
-          if (patchTarget != null) {
-            result.set(new FilePathImpl(patchTarget));
-            if (shelvedFile == null) {
-              patchTarget.delete(this);
-            }
-            else {
-              if (isNewFile) {
-                patchTarget = patchTarget.createChildData(this, new File(afterPath).getName());
-              }
-              patchTarget.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
-              patchedFileRef.set(patchTarget);
-            }
+          result.set(new FilePathImpl(patchTarget));
+          if (shelvedFile == null) {
+            patchTarget.delete(this);
+          }
+          else {
+            patchTarget.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
+            patchedFileRef.set(patchTarget);
           }
         }
         catch (IOException e) {
@@ -371,5 +371,43 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     char[] text = FileUtil.loadFileText(new File(patchPath));
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
     return reader.readAllPatches();
+  }
+
+  private static class ShelvedBinaryFilePatch extends FilePatch {
+    private final ShelvedBinaryFile myShelvedBinaryFile;
+
+    public ShelvedBinaryFilePatch(final ShelvedBinaryFile shelvedBinaryFile) {
+      myShelvedBinaryFile = shelvedBinaryFile;
+      setBeforeName(myShelvedBinaryFile.BEFORE_PATH);
+      setAfterName(myShelvedBinaryFile.AFTER_PATH);
+    }
+
+    @Override
+    public String getBeforeFileName() {
+      String[] pathNameComponents = myShelvedBinaryFile.BEFORE_PATH.replace(File.separatorChar, '/').split("/");
+      return pathNameComponents [pathNameComponents.length-1];
+    }
+
+    @Override
+    public String getAfterFileName() {
+      String[] pathNameComponents = myShelvedBinaryFile.AFTER_PATH.replace(File.separatorChar, '/').split("/");
+      return pathNameComponents [pathNameComponents.length-1];    
+    }
+
+    protected void applyCreate(final VirtualFile newFile) throws IOException, ApplyPatchException {
+    }
+    protected ApplyPatchStatus applyChange(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
+      return null;
+    }
+    public boolean isNewFile() {
+      return myShelvedBinaryFile.BEFORE_PATH == null;
+    }
+    public boolean isDeletedFile() {
+      return myShelvedBinaryFile.AFTER_PATH == null;
+    }
+
+    public ShelvedBinaryFile getShelvedBinaryFile() {
+      return myShelvedBinaryFile;
+    }
   }
 }

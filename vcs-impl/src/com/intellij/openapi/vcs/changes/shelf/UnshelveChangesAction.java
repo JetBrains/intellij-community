@@ -16,14 +16,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class UnshelveChangesAction extends AnAction {
@@ -53,17 +50,10 @@ public class UnshelveChangesAction extends AnAction {
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    List<FilePath> unshelvedFiles = new ArrayList<FilePath>();
 
     for(ShelvedChangeList changeList: changeLists) {
-      final List<FilePath> result = ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes, binaryFiles);
-      if (result == null) {
-        break;
-      }
-      unshelvedFiles.addAll(result);
+      ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes, binaryFiles, chooser.getSelectedList());
     }
-
-    ApplyPatchAction.moveChangesToList(project, unshelvedFiles, chooser.getSelectedList());
   }
 
   @Override

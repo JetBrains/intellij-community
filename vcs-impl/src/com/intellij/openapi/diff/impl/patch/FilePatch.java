@@ -74,16 +74,6 @@ public abstract class FilePatch {
     return StringUtil.join(components, skipDirs, components.length, "/");
   }
 
-  public ApplyPatchStatus apply(ApplyPatchContext context, final Project project) throws ApplyPatchException, IOException {
-    VirtualFile fileToPatch = findFileToPatch(context);
-
-    if (fileToPatch == null) {
-      throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
-    }
-
-    return apply(fileToPatch, context, project);
-  }
-
   public FilePath getTarget(final VirtualFile file) {
     if (isNewFile()) {
       return new FilePathImpl(file, getBeforeFileName(), false);
@@ -94,11 +84,7 @@ public abstract class FilePatch {
   public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context, final Project project) throws IOException, ApplyPatchException {
     context.addAffectedFile(getTarget(fileToPatch));
     if (isNewFile()) {
-      if (fileToPatch.findChild(getBeforeFileName()) != null) {
-        throw new ApplyPatchException("File " + getBeforeFileName() + " already exists");
-      }
-      VirtualFile newFile = fileToPatch.createChildData(this, getBeforeFileName());
-      applyCreate(newFile);
+      applyCreate(fileToPatch);
     }
     else if (isDeletedFile()) {
       FileEditorManagerImpl.getInstance(project).closeFile(fileToPatch);

@@ -1,9 +1,8 @@
 package com.intellij.historyIntegrTests;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
+import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -37,7 +36,6 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
       patches.add(p);
     }
 
-    ApplyPatchContext ctx = new ApplyPatchContext(root, 0, true, false);
-    ApplyPatchAction.applyFilePatches(myProject, patches, ctx);
+    new PatchApplier(myProject, root, patches, null, null).execute();
   }
 }

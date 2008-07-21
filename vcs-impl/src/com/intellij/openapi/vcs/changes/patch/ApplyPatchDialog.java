@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,12 +16,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -32,7 +35,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
@@ -54,9 +56,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -84,6 +84,8 @@ public class ApplyPatchDialog extends DialogWrapper {
   private boolean myInnerChange;
   private LocalChangeList mySelectedChangeList;
 
+  private final Map<Pair<String, String>, String> myMoveRenameInfo;
+
   public ApplyPatchDialog(Project project) {
     super(project, true);
     myProject = project;
@@ -94,6 +96,7 @@ public class ApplyPatchDialog extends DialogWrapper {
         return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == FileTypes.PLAIN_TEXT;
       }
     };
+    myMoveRenameInfo = new HashMap<Pair<String, String>, String>();
     myFileNameField.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
     myFileNameField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -101,6 +104,7 @@ public class ApplyPatchDialog extends DialogWrapper {
         myStatusLabel.setForeground(UIUtil.getLabelForeground());
         myStatusLabel.setText(VcsBundle.message("patch.load.progress"));
         myPatches = null;
+        myMoveRenameInfo.clear();
         myLoadPatchAlarm.cancelAllRequests();
         myLoadPatchAlarm.addRequest(new Runnable() {
           public void run() {
@@ -168,6 +172,25 @@ public class ApplyPatchDialog extends DialogWrapper {
           final String content = patch.getNewFileText();
           ContentRevision revision = new SimpleContentRevision(content, newFilePath, patch.getAfterVersionId());
           changes.add(new Change(null, revision));
+        } else if ((! patch.isDeletedFile()) && (patch.getBeforeName() != null) && (patch.getAfterName() != null) &&
+            (! patch.getBeforeName().equals(patch.getAfterName()))) {
+
+          final VirtualFile baseDirectory = getBaseDirectory();
+          final VirtualFile beforeFile = PatchApplier.getFile(baseDirectory, patch.getBeforeName());
+
+          if (beforeFile != null) {
+            final List<String> tail = new ArrayList<String>();
+            final VirtualFile partFile = PatchApplier.getFile(baseDirectory, patch.getAfterName(), tail);
+            final StringBuilder sb = new StringBuilder(partFile.getPath());
+            for (String s : tail) {
+              if (sb.charAt(sb.length() - 1) != '/') {
+                sb.append('/');
+              }
+              sb.append(s);
+            }
+            
+            changes.add(changeForPath(beforeFile, patch, FilePathImpl.createNonLocal(FileUtil.toSystemIndependentName(sb.toString()), false)));
+          }
         }
           else {
           final VirtualFile fileToPatch = patch.findFileToPatch(context);
@@ -178,12 +201,7 @@ public class ApplyPatchDialog extends DialogWrapper {
               changes.add(new Change(currentRevision, null));
             }
             else {
-              final Document doc = FileDocumentManager.getInstance().getDocument(fileToPatch);
-              String baseContent = doc.getText();
-              StringBuilder newText = new StringBuilder();
-              patch.applyModifications(baseContent, newText);
-              ContentRevision revision = new SimpleContentRevision(newText.toString(), filePath, patch.getAfterVersionId());
-              changes.add(new Change(currentRevision, revision));
+              changes.add(changeForPath(fileToPatch, patch, null));
             }
           }
         }
@@ -198,6 +216,17 @@ public class ApplyPatchDialog extends DialogWrapper {
       ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), 0, myProject,
                                        ShowDiffAction.DiffExtendUIFactory.NONE, false);
     }
+  }
+
+  private Change changeForPath(final VirtualFile fileToPatch, final TextFilePatch patch, final FilePath newFilePath) throws ApplyPatchException {
+    final FilePathImpl filePath = new FilePathImpl(fileToPatch);
+    final CurrentContentRevision currentRevision = new CurrentContentRevision(filePath);
+    final Document doc = FileDocumentManager.getInstance().getDocument(fileToPatch);
+    String baseContent = doc.getText();
+    StringBuilder newText = new StringBuilder();
+    patch.applyModifications(baseContent, newText);
+    ContentRevision revision = new SimpleContentRevision(newText.toString(), (newFilePath == null) ? filePath : newFilePath, patch.getAfterVersionId());
+    return new Change(currentRevision, revision);
   }
 
   @Override
@@ -288,6 +317,13 @@ public class ApplyPatchDialog extends DialogWrapper {
           }
           if (patch == null) {
             break;
+          }
+
+          final String beforeName = patch.getBeforeName();
+          final String afterName = patch.getAfterName();
+          final String movedMessage = RelativePathCalculator.getMovedString(beforeName, afterName);
+          if (movedMessage != null) {
+            myMoveRenameInfo.put(new Pair<String, String>(beforeName, afterName), movedMessage);
           }
           myPatches.add(patch);
         }
@@ -620,7 +656,16 @@ public class ApplyPatchDialog extends DialogWrapper {
       else {
         append(name, myModifiedAttributes);
       }
+
+      final String afterPath = filePatch.getAfterName();
+      final String beforePath = filePatch.getBeforeName();
+
+      if ((beforePath != null) && (afterPath != null) && (! beforePath.equals(afterPath))) {
+        final String message = myMoveRenameInfo.get(new Pair<String, String>(beforePath, afterPath));
+        if (message != null) {
+          append(message, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
     }
   }
-
 }

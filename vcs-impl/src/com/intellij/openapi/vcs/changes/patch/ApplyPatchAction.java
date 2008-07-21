@@ -14,39 +14,30 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,135 +55,36 @@ public class ApplyPatchAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    applyPatch(project, dialog.getPatches(), dialog.getApplyPatchContext(), dialog.getSelectedChangeList());
+
+    final List<FilePatch> patches = dialog.getPatches();
+    final ApplyPatchContext context = dialog.getApplyPatchContext();
+
+    applySkipDirs(patches, context.getSkipTopDirs());
+
+    new PatchApplier(project, context.getBaseDir(), patches, dialog.getSelectedChangeList(), null).execute();
   }
 
-  public static void applyPatch(final Project project, final List<? extends FilePatch> patches,
-                                final ApplyPatchContext context, final LocalChangeList targetChangeList) {
-    applyPatch(project, patches, context, targetChangeList, null);
-  }
-
-  public static void applyPatch(final Project project, final List<? extends FilePatch> patches,
-                                final ApplyPatchContext context, final LocalChangeList targetChangeList,
-                                final IndirectlyModifiedPathsGetter indirectGetter) {
-    List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
-    if (!prepareFiles(project, patches, context, filesToMakeWritable)) {
+  public static void applySkipDirs(final List<FilePatch> patches, final int skipDirs) {
+    if (skipDirs < 1) {
       return;
     }
-    final VirtualFile[] fileArray = filesToMakeWritable.toArray(new VirtualFile[filesToMakeWritable.size()]);
-    final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileArray);
-    if (readonlyStatus.hasReadonlyFiles()) {
-      return;
+    for (FilePatch patch : patches) {
+      patch.setBeforeName(skipN(patch.getBeforeName(), skipDirs));
+      patch.setAfterName(skipN(patch.getAfterName(), skipDirs));
     }
-    applyFilePatches(project, patches, context);
-    moveChangesToList(project, context.getAffectedFiles(), targetChangeList, indirectGetter);
   }
 
-  public static ApplyPatchStatus applyFilePatches(final Project project, final List<? extends FilePatch> patches,
-                                                  final ApplyPatchContext context) {
-    final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            ApplyPatchStatus status = null;
-            for(FilePatch patch: patches) {
-              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, context);
-              status = ApplyPatchStatus.and(status, patchStatus);
-            }
-            try {
-              context.applyPendingRenames();
-            }
-            catch (IOException e) {
-              Messages.showErrorDialog(project, "Error renaming directories: " + e.getMessage(),
-                                       VcsBundle.message("patch.apply.dialog.title"));
-            }
-            if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-              Messages.showInfoMessage(project, VcsBundle.message("patch.apply.already.applied"),
-                                       VcsBundle.message("patch.apply.dialog.title"));
-            }
-            else if (status == ApplyPatchStatus.PARTIAL) {
-              Messages.showInfoMessage(project, VcsBundle.message("patch.apply.partially.applied"),
-                                       VcsBundle.message("patch.apply.dialog.title"));
-            }
-            statusRef.set(status);
-          }
-        }, VcsBundle.message("patch.apply.command"), null);
-      }
-    });
-    return statusRef.get();
+  private static String skipN(final String path, final int num) {
+    final String[] pieces = path.split("/");
+    final StringBuilder sb = new StringBuilder();
+    for (int i = num; i < pieces.length; i++) {
+      final String piece = pieces[i];
+      sb.append('/').append(piece);
+    }
+    return sb.toString();
   }
 
-  public static boolean prepareFiles(final Project project, final List<? extends FilePatch> patches,
-                                     final ApplyPatchContext context,
-                                     final List<VirtualFile> filesToMakeWritable) {
-    for(FilePatch patch: patches) {
-      VirtualFile fileToPatch;
-      try {
-        fileToPatch = patch.findFileToPatch(context.getPrepareContext());
-      }
-      catch (IOException e) {
-        Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
-                                 VcsBundle.message("patch.apply.dialog.title"));
-        return false;
-      }
-      if ((fileToPatch == null) && (! patch.isNewFile())) {
-        Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(),
-                                 VcsBundle.message("patch.apply.dialog.title"));
-        return false;
-      }
-      // security check to avoid overwriting system files with a patch
-      if (fileToPatch != null && !ExcludedFileIndex.getInstance(project).isInContent(fileToPatch) &&
-          ProjectLevelVcsManager.getInstance(project).getVcsRootFor(fileToPatch) == null) {
-        Messages.showErrorDialog(project, "File to patch found outside content root: " + patch.getBeforeName(),
-                                 VcsBundle.message("patch.apply.dialog.title"));
-        return false;
-      }
-      if (fileToPatch != null && !fileToPatch.isDirectory()) {
-        filesToMakeWritable.add(fileToPatch);
-        FileType fileType = fileToPatch.getFileType();
-        if (fileType == FileTypes.UNKNOWN && patch instanceof TextFilePatch) {
-          fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
-          if (fileType == null) {
-            return false;
-          }
-        }
-      }
-      else if (patch.isNewFile()) {
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(patch.getBeforeFileName());
-        if (fileType == FileTypes.UNKNOWN && patch instanceof TextFilePatch) {
-          fileType = FileTypeChooser.associateFileType(patch.getBeforeFileName());
-          if (fileType == null) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-  }
-
-  private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch,
-                                                   final ApplyPatchContext context) {
-    VirtualFile file;
-    try {
-      file = patch.findFileToPatch(context);
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
-                               VcsBundle.message("patch.apply.dialog.title"));
-      return ApplyPatchStatus.FAILURE;
-    }
-    if (file == null) {
-      Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(),
-                               VcsBundle.message("patch.apply.dialog.title"));
-      return ApplyPatchStatus.FAILURE;
-    }
-    if (file.isDirectory() && !patch.isNewFile() && !patch.isDeletedFile()) {
-      Messages.showErrorDialog(project, "Expected to find a file but found a directory: " + patch.getBeforeName(),
-                               VcsBundle.message("patch.apply.dialog.title"));
-      return ApplyPatchStatus.FAILURE;
-    }
-
+  public static ApplyPatchStatus applyOnly(final Project project, final FilePatch patch, final ApplyPatchContext context, final VirtualFile file) {
     try {
       return patch.apply(file, context, project);
     }
@@ -282,12 +174,26 @@ public class ApplyPatchAction extends AnAction {
     }
   }
 
-  public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList) {
-    moveChangesToList(project, files, targetChangeList, null);
+  public static void moveChangesOfVsToList(final Project project, final List<VirtualFile> files, final LocalChangeList targetChangeList) {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (targetChangeList != changeListManager.getDefaultChangeList()) {
+      changeListManager.invokeAfterUpdate(new Runnable() {
+        public void run() {
+          List<Change> changes = new ArrayList<Change>();
+          for(VirtualFile file: files) {
+            final Change change = changeListManager.getChange(file);
+            if (change != null) {
+              changes.add(change);
+            }
+          }
+
+          changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
+        }
+      });
+    }
   }
 
-  public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList,
-                                       final IndirectlyModifiedPathsGetter indirectGetter) {
+  public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (targetChangeList != changeListManager.getDefaultChangeList()) {
       changeListManager.invokeAfterUpdate(new Runnable() {
@@ -300,18 +206,10 @@ public class ApplyPatchAction extends AnAction {
             }
           }
 
-          if (indirectGetter != null) {
-            indirectGetter.appendPaths(changeListManager, changes);
-          }
-
           changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
         }
       });
     }
-  }
-
-  public interface IndirectlyModifiedPathsGetter {
-    void appendPaths(final ChangeListManager changeListManager, final List<Change> changes);
   }
 
   private static class ApplyPatchMergeRequestFactory implements PatchMergeRequestFactory {

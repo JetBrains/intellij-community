@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -50,10 +52,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private ChangesViewContentManager myContentManager;
@@ -70,6 +69,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
   private static final Object ROOT_NODE_VALUE = new Object();
   private DefaultMutableTreeNode myRoot;
+  private final Map<Pair<String, String>, String> myMoveRenameInfo;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
     return project.getComponent(ShelvedChangesViewManager.class);
@@ -90,11 +90,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         }, ModalityState.NON_MODAL);
       }
     });
+    myMoveRenameInfo = new HashMap<Pair<String, String>, String>();
 
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.setCellRenderer(new ShelfTreeCellRenderer(project));
-    new TreeLinkMouseListener(new ShelfTreeCellRenderer(project)).install(myTree);
+    myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
+    new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).install(myTree);
 
     ActionManager.getInstance().getAction("ShelvedChanges.Diff").registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
 
@@ -167,6 +168,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myRoot = new DefaultMutableTreeNode(ROOT_NODE_VALUE);   // not null for TreeState matching to work
     DefaultTreeModel model = new DefaultTreeModel(myRoot);
     final List<ShelvedChangeList> changeLists = myShelveChangesManager.getShelvedChangeLists();
+    myMoveRenameInfo.clear();
+
     for(ShelvedChangeList changeList: changeLists) {
       DefaultMutableTreeNode node = new DefaultMutableTreeNode(changeList);
       model.insertNodeInto(node, myRoot, myRoot.getChildCount());
@@ -174,15 +177,24 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       List<ShelvedChange> changes = changeList.getChanges();
       for(ShelvedChange change: changes) {
         DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(change);
+        putMovedMessage(change.getBeforePath(), change.getAfterPath());
         model.insertNodeInto(pathNode, node, node.getChildCount());
       }
       List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
       for(ShelvedBinaryFile file: binaryFiles) {
         DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(file);
+        putMovedMessage(file.BEFORE_PATH, file.AFTER_PATH);
         model.insertNodeInto(pathNode, node, node.getChildCount());
       }
     }
     return model;
+  }
+
+  private void putMovedMessage(final String beforeName, final String afterName) {
+    final String movedMessage = RelativePathCalculator.getMovedString(beforeName, afterName);
+    if (movedMessage != null) {
+      myMoveRenameInfo.put(new Pair<String, String>(beforeName, afterName), movedMessage);
+    }
   }
 
   public void activateView(final ShelvedChangeList list) {
@@ -263,8 +275,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
     private IssueLinkRenderer myIssueLinkRenderer;
+    private final Map<Pair<String, String>, String> myMoveRenameInfo;
 
-    public ShelfTreeCellRenderer(Project project) {
+    public ShelfTreeCellRenderer(Project project, final Map<Pair<String, String>, String> moveRenameInfo) {
+      myMoveRenameInfo = moveRenameInfo;
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
 
@@ -280,7 +294,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
-        renderFileName(change.getBeforePath(), change.getFileStatus());
+        final String movedMessage = myMoveRenameInfo.get(new Pair<String, String>(change.getBeforePath(), change.getAfterPath()));
+        renderFileName(change.getBeforePath(), change.getFileStatus(), movedMessage);
       }
       else if (nodeValue instanceof ShelvedBinaryFile) {
         ShelvedBinaryFile binaryFile = (ShelvedBinaryFile) nodeValue;
@@ -288,11 +303,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         if (path == null) {
           path = binaryFile.AFTER_PATH;
         }
-        renderFileName(path, binaryFile.getFileStatus());
+        final String movedMessage = myMoveRenameInfo.get(new Pair<String, String>(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
+        renderFileName(path, binaryFile.getFileStatus(), movedMessage);
       }
     }
 
-    private void renderFileName(String path, final FileStatus fileStatus) {
+    private void renderFileName(String path, final FileStatus fileStatus, final String movedMessage) {
       path = path.replace('/', File.separatorChar);
       int pos = path.lastIndexOf(File.separatorChar);
       String fileName;
@@ -306,6 +322,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         fileName = path;
       }
       append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor()));
+      if (movedMessage != null) {
+        append(movedMessage, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
       append(" ("+ directory + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
     }

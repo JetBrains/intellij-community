@@ -68,12 +68,6 @@ public class PatchBuilder {
         continue;
       }
 
-      if (!allowRename && !beforeRevision.getFile().equals(afterRevision.getFile())) {
-        result.add(buildDeletedFile(basePath, beforeRevision));
-        result.add(buildAddedFile(basePath, afterRevision));
-        continue;
-      }
-
       final String beforeContent = beforeRevision.getContent();
       if (beforeContent == null) {
         throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getFile().getPath());
@@ -131,6 +125,8 @@ public class PatchBuilder {
             }
           }
         }
+      } else if (! beforeRevision.getFile().equals(afterRevision.getFile())) {
+        result.add(buildMovedFile(basePath, beforeRevision, afterRevision, beforeLines));
       }
     }
     return result;
@@ -160,6 +156,20 @@ public class PatchBuilder {
       patchLine = new PatchLine(type, line.substring(0, line.length()-1));
     }
     hunk.addLine(patchLine);
+  }
+
+  private static TextFilePatch buildMovedFile(final String basePath, final ContentRevision beforeRevision,
+                                              final ContentRevision afterRevision, final String[] lines) throws VcsException {
+    final TextFilePatch result = buildPatchHeading(basePath, beforeRevision, afterRevision);
+    final PatchHunk hunk = new PatchHunk(0, lines.length, 0, lines.length);
+    for(String line: lines) {
+      addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
+    }
+    for(String line: lines) {
+      addLineToHunk(hunk, line, PatchLine.Type.ADD);
+    }
+    result.addHunk(hunk);
+    return result;
   }
 
   private static TextFilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) throws VcsException {

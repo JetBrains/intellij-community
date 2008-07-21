@@ -20,7 +20,10 @@ public class PsiPatchBaseDirectoryDetector extends PatchBaseDirectoryDetector {
   @Nullable
   public Result detectBaseDirectory(final String patchFileName) {
     String[] nameComponents = patchFileName.split("/");
-    final String patchName = nameComponents[nameComponents.length - 1];
+    String patchName = nameComponents[nameComponents.length - 1];
+    if (patchName.length() == 0) {
+      return null;
+    }
     final PsiFile[] psiFiles = FilenameIndex.getFilesByName(myProject, patchName, GlobalSearchScope.projectScope(myProject));
     if (psiFiles.length == 1) {
       PsiDirectory parent = psiFiles [0].getContainingDirectory();
