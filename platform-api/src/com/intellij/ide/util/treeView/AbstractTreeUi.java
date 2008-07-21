@@ -113,10 +113,12 @@ class AbstractTreeUi {
 
     final UiNotifyConnector uiNotify = new UiNotifyConnector(tree, new Activatable() {
       public void showNotify() {
+        if (isDisposed()) return;
         getBuilder().processShowNotify();
       }
 
       public void hideNotify() {
+        if (isDisposed()) return;
         getBuilder().processHideNotify();
       }
     });
