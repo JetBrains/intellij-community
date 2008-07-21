@@ -83,6 +83,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private TreeExpander myTreeExpander;
   private String myInitialProfile;
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
+  private boolean myIsInRestore = false;
 
   public SingleInspectionProfilePanel(String inspectionProfileName) {
     this(inspectionProfileName, null);
@@ -111,7 +112,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void updateSelectedProfileState() {
     if (mySelectedProfile == null) return;
-    ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().restoreVisibleState(myTree);
+    restoreTreeState();
     repaintTableData();
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
@@ -275,11 +276,33 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myTree != null) {
       ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().saveVisibleState(myTree);
       fillTreeData(filter, true);
-      ((DefaultTreeModel)myTree.getModel()).reload();
-      ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().restoreVisibleState(myTree);
+      reloadModel();
+      restoreTreeState();
       if (myTree.getSelectionPath() == null) {
         TreeUtil.selectFirstNode(myTree);
       }
+    }
+  }
+
+  private void reloadModel() {
+    try {
+      myIsInRestore = true;
+      ((DefaultTreeModel)myTree.getModel()).reload();      
+    }
+    finally {
+      myIsInRestore = false;
+    }
+
+  }
+
+  private void restoreTreeState() {
+
+    try {
+      myIsInRestore = true;
+      ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().restoreVisibleState(myTree);
+    }
+    finally {
+      myIsInRestore = false;
     }
   }
 
@@ -317,8 +340,8 @@ public class SingleInspectionProfilePanel extends JPanel {
   private void repaintTableData() {
     if (myTree != null) {
       ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().saveVisibleState(myTree);
-      ((DefaultTreeModel)myTree.getModel()).reload();
-      ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().restoreVisibleState(myTree);
+      reloadModel();
+      restoreTreeState();
     }
   }
 
@@ -410,6 +433,13 @@ public class SingleInspectionProfilePanel extends JPanel {
         else {
           initOptionsAndDescriptionPanel();
         }
+
+        if (!myIsInRestore) {
+          InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
+          ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
+          selected.getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
+        }
+
       }
     });
 
@@ -542,7 +572,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
     updateUpHierarchy(node, parent);
-    ((DefaultTreeModel)myTree.getModel()).reload();
+    reloadModel();
     updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
     TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
   }
@@ -1216,7 +1246,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
       fillTreeData(filter, true);
-      ((DefaultTreeModel)myTree.getModel()).reload();
+      reloadModel();
       TreeUtil.expandAll(myTree);
       if (filter == null || filter.length() == 0) {
         TreeUtil.collapseAll(myTree, 0);

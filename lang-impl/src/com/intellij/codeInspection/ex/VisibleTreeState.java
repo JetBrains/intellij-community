@@ -104,18 +104,24 @@ public class VisibleTreeState implements JDOMExternalizable{
         myExpandedNodes.add(expandedNode);
       }
     }
+
+    setSelectionPaths(tree.getSelectionPaths());
+  }
+
+  public void setSelectionPaths(final TreePath[] selectionPaths) {
     mySelectedNodes.clear();
-    final TreePath[] selectionPaths = tree.getSelectionPaths();
-    for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPaths[i].getLastPathComponent();
-      String selectedNode;
-      if (node.getUserObject() instanceof Descriptor) {
-        selectedNode = ((Descriptor)node.getUserObject()).getKey().toString();
+    if (selectionPaths != null) {
+      for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPaths[i].getLastPathComponent();
+        String selectedNode;
+        if (node.getUserObject() instanceof Descriptor) {
+          selectedNode = ((Descriptor)node.getUserObject()).getKey().toString();
+        }
+        else {
+          selectedNode = (String)node.getUserObject();
+        }
+        mySelectedNodes.add(selectedNode);
       }
-      else {
-        selectedNode = (String)node.getUserObject();
-      }
-      mySelectedNodes.add(selectedNode);
     }
   }
 
