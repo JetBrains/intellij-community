@@ -127,8 +127,11 @@ public class LayeredIcon implements Icon {
     }
     myWidth = maxX - minX;
     myHeight = maxY - minY;
-    myXShift = -minX;
-    myYShift = -minY;
+
+    if (myIcons.length > 1) {
+      myXShift = -minX;
+      myYShift = -minY;
+    }
   }
 
   public static Icon create(final Icon backgroundIcon, final Icon foregroundIcon) {
