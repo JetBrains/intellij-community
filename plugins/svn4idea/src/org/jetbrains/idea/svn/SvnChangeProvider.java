@@ -102,7 +102,7 @@ public class SvnChangeProvider implements ChangeProvider {
     for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
       SvnChangedFile deletedFile = iterator.next();
       final SVNStatus deletedStatus = deletedFile.getStatus();
-      if (copyFromURL.equals(deletedStatus.getURL().toString())) {
+      if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
         builder.processChange(new Change(createBeforeRevision(deletedFile),
                                          CurrentContentRevision.create(copiedFile.getFilePath())));
         deletedToDelete.add(deletedFile);
