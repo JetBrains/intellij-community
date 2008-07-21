@@ -715,6 +715,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       processRecursively(event.getFile(), new FileProcessor() {
         public void execute(final VirtualFile file) {
           final String filePath = file.getPath();
+
+          synchronized (myOutputsToDelete) {
+            myOutputsToDelete.remove(filePath);
+          }
             
           final OutputFileInfo outputInfo = loadOutputInfo(file);
           if (outputInfo != null) {
@@ -730,9 +734,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   }
                 }
               }
-            }
-            synchronized (myOutputsToDelete) {
-              myOutputsToDelete.remove(filePath);
             }
           }
             
