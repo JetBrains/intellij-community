@@ -362,6 +362,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
       }
+      else if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER) {
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
+        child = processParenBlock(JavaTokenType.LBRACE, JavaTokenType.RBRACE,
+                                  result,
+                                  child,
+                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                  mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
+      }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.EXPRESSION_LIST) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
         if (mySettings.PREFER_PARAMETERS_WRAP) {
