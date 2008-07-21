@@ -34,13 +34,18 @@ public class Alarm implements Disposable {
   private List<Request> myRequests = new ArrayList<Request>();
   private final ExecutorService myExecutorService;
 
-  @NonNls private static final String THREADS_NAME = "Alarm pool";
-  private static final ThreadFactory THREAD_FACTORY = new ThreadFactory() {
-    public Thread newThread(final Runnable r) {
-      return new Thread(r, THREADS_NAME);
-    }
-  };
-  private static final ExecutorService ourSharedExecutorService = Executors.newSingleThreadExecutor(THREAD_FACTORY);
+  @NonNls private static final String ALARM_THREADS_POOL_NAME = "Alarm pool";
+  private static final ThreadFactory THREAD_FACTORY_OWN = threadFactory(ALARM_THREADS_POOL_NAME + "(own)");
+
+  private static ThreadFactory threadFactory(@NonNls final String threadsName) {
+    return new ThreadFactory() {
+      public Thread newThread(final Runnable r) {
+        return new Thread(r, threadsName);
+      }
+    };
+  }
+
+  private static final ExecutorService ourSharedExecutorService = Executors.newSingleThreadExecutor(threadFactory(ALARM_THREADS_POOL_NAME + "(shared)"));
 
   private final Object LOCK = new Object();
   private final ThreadToUse myThreadToUse;
@@ -75,7 +80,7 @@ public class Alarm implements Disposable {
   }
   public Alarm(ThreadToUse threadToUse, Disposable parentDisposable) {
     myThreadToUse = threadToUse;
-    myExecutorService = (threadToUse == ThreadToUse.OWN_THREAD) ? Executors.newSingleThreadExecutor(THREAD_FACTORY) : ourSharedExecutorService;
+    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? Executors.newSingleThreadExecutor(THREAD_FACTORY_OWN) : ourSharedExecutorService;
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
