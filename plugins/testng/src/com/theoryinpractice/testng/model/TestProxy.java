@@ -95,7 +95,7 @@ public class TestProxy implements AbstractTestProxy {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         PsiClass psiClass = (PsiClass)getParent().getPsiElement();
-        PsiMethod[] methods = psiClass.getMethods();
+        PsiMethod[] methods = psiClass.getAllMethods();
         for (PsiMethod method : methods) {
           if (method.getName().equals(resultMessage.getMethod())) {
             psiElement = method;
