@@ -70,12 +70,14 @@ public class IndexCacheManagerImpl implements CacheManager{
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
             if (scope.contains(virtualFile) && (index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile))) {
+              if (virtualFile.getFileType().isBinary()) return Boolean.TRUE;
+
               final PsiFile psiFile = myPsiManager.findFile(virtualFile);
               return psiFile == null || psiFileProcessor.process(psiFile);
             }
             return Boolean.TRUE;
           }
-        });
+        }).booleanValue();
       }
     };
 
