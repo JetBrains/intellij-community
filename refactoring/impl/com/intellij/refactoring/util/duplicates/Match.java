@@ -107,7 +107,14 @@ public final class Match {
     final PsiType parameterType = parameter.second;
     if (type == null) return false;
     if (currentValue == null) {
-      if (!(parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter)) {
+      if (parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter) {
+        final PsiTypeParameter typeParameter = (PsiTypeParameter)((PsiClassType)parameterType).resolve();
+        LOG.assertTrue(typeParameter != null);
+        for (PsiClassType classType : typeParameter.getExtendsListTypes()) {
+          if (!classType.isAssignableFrom(type)) return false;
+        }
+      }
+      else {
         if (isVararg) {
           if (!((PsiEllipsisType)psiVariable.getType()).getComponentType().isAssignableFrom(type) && !((PsiEllipsisType)psiVariable.getType()).toArrayType().equals(type)) {
             myChangedParams.put(psiVariable, new PsiEllipsisType(parameterType));
