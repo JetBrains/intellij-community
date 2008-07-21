@@ -44,7 +44,6 @@ import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
@@ -536,7 +535,7 @@ public class CompilerTask extends Task.Backgroundable {
         }
         myUserAcceptedCancel = true;
 
-        final MessageBusConnection connection = project.getComponent(MessageBus.class).connect();
+        final MessageBusConnection connection = project.getMessageBus().connect();
         connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
             connection.disconnect();
