@@ -155,11 +155,11 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     return child.getElementType() == JavaDocElementType.DOC_COMMENT;
   }
 
-  protected Wrap getReservedWrap() {
+  protected Wrap getReservedWrap(final IElementType elementType) {
     return null;
   }
 
-  protected void setReservedWrap(final Wrap reservedWrap) {
+  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
   }
 
   @NotNull

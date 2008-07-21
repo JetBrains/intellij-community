@@ -6,6 +6,7 @@ import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Block;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.tree.IElementType;
 
 import java.util.List;
 
@@ -18,10 +19,10 @@ public class MethodCallExpressionBlock extends AbstractJavaBlock{
     return null;
   }
 
-  protected Wrap getReservedWrap() {
+  protected Wrap getReservedWrap(final IElementType elementType) {
     return null;
   }
 
-  protected void setReservedWrap(final Wrap reservedWrap) {
+  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
   }
 }

@@ -245,10 +245,10 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
   }
 
-  protected Wrap getReservedWrap() {
+  protected Wrap getReservedWrap(final IElementType elementType) {
     return null;
   }
 
-  protected void setReservedWrap(final Wrap reservedWrap) {
+  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
   }
 }

@@ -1,24 +1,27 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class SimpleJavaBlock extends AbstractJavaBlock {
   private int myStartOffset = -1;
-  private Wrap myReservedWrap;
+  private Map<IElementType, Wrap> myReservedWrap = new HashMap<IElementType, Wrap>();
 
   public SimpleJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent,settings);
@@ -90,12 +93,12 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     }
   }
 
-  protected Wrap getReservedWrap() {
-    return myReservedWrap;
+  protected Wrap getReservedWrap(final IElementType elementType) {
+    return myReservedWrap.get(elementType);
   }
 
-  protected void setReservedWrap(final Wrap reservedWrap) {
-    myReservedWrap = reservedWrap;
+  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
+    myReservedWrap.put(operationType, reservedWrap);
   }
 
   public void setStartOffset(final int startOffset) {

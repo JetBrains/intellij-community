@@ -219,7 +219,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Wrap.createWrap(getWrapType(mySettings.EXTENDS_LIST_WRAP), false);
     }
     else if (nodeType == JavaElementType.BINARY_EXPRESSION) {
-      Wrap actualWrap = myWrap != null ? myWrap : getReservedWrap();
+      Wrap actualWrap = myWrap != null ? myWrap : getReservedWrap(JavaElementType.BINARY_EXPRESSION);
       if (actualWrap == null) {
         return Wrap.createWrap(getWrapType(mySettings.BINARY_OPERATION_WRAP), false);
       }
@@ -411,17 +411,19 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         if (block instanceof AbstractJavaBlock) {
           final AbstractJavaBlock javaBlock = (AbstractJavaBlock)block;
           if (nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION) {
-            javaBlock.setReservedWrap(getReservedWrap());
+            javaBlock.setReservedWrap(getReservedWrap(nodeType), nodeType);
+            javaBlock.setReservedWrap(getReservedWrap(childType), childType);
           }
           else if (nodeType == JavaElementType.REFERENCE_EXPRESSION &&
                    childType == JavaElementType.METHOD_CALL_EXPRESSION) {
-            javaBlock.setReservedWrap(getReservedWrap());
+            javaBlock.setReservedWrap(getReservedWrap(nodeType), nodeType);
+            javaBlock.setReservedWrap(getReservedWrap(childType), childType);
           }
           else if (nodeType == JavaElementType.BINARY_EXPRESSION) {
-            javaBlock.setReservedWrap(defaultWrap);
+            javaBlock.setReservedWrap(defaultWrap, nodeType);
           }
           else if (childType == JavaElementType.MODIFIER_LIST) {
-            javaBlock.setReservedWrap(myAnnotationWrap);
+            javaBlock.setReservedWrap(myAnnotationWrap, JavaElementType.MODIFIER_LIST);
             if (!lastChildIsAnnotation(child)) {
               myAnnotationWrap = null;
             }
@@ -776,7 +778,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     else if (nodeType == JavaElementType.REFERENCE_EXPRESSION) {
       if (role == ChildRole.DOT) {
-        return getReservedWrap();
+        return getReservedWrap(JavaElementType.REFERENCE_EXPRESSION);
       }
       else {
         return defaultWrap;
@@ -808,11 +810,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     else if (nodeType == JavaElementType.MODIFIER_LIST) {
       if (childType == JavaElementType.ANNOTATION) {
-        return getReservedWrap();
+        return getReservedWrap(JavaElementType.MODIFIER_LIST);
       }
       ASTNode prevElement = getPrevElement(child);
       if (prevElement != null && prevElement.getElementType() == JavaElementType.ANNOTATION) {
-        return getReservedWrap();
+        return getReservedWrap(JavaElementType.MODIFIER_LIST);
       }
       else {
         return null;
@@ -1067,9 +1069,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  protected abstract Wrap getReservedWrap();
+  protected abstract Wrap getReservedWrap(final IElementType elementType);
 
-  protected abstract void setReservedWrap(final Wrap reservedWrap);
+  protected abstract void setReservedWrap(final Wrap reservedWrap, final IElementType operationType);
 
   @Nullable
   protected static ASTNode getTreeNode(final Block child2) {

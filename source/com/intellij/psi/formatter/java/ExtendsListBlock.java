@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.tree.IElementType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,10 +65,10 @@ public class ExtendsListBlock extends AbstractJavaBlock{
     return false;
   }
 
-  protected Wrap getReservedWrap() {
+  protected Wrap getReservedWrap(final IElementType elementType) {
     return null;
   }
 
-  protected void setReservedWrap(final Wrap reservedWrap) {
+  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
   }
 }
