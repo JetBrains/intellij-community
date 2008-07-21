@@ -264,4 +264,8 @@ public class TestProxy implements AbstractTestProxy {
   public void setExceptionMark(int exceptionMark) {
     myExceptionMark = exceptionMark;
   }
+
+  public boolean isInterrupted() {
+    return !isInProgress() && inProgress;
+  }
 }
