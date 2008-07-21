@@ -62,6 +62,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private final Map<String, SourceUrlClassNamePair> myOutputsToDelete = new HashMap<String, SourceUrlClassNamePair>(); // output path -> [sourceUrl; classname]
   
   private final ProjectManager myProjectManager;
+  private final Set<File> myIgnoredRoots = new HashSet<File>();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -72,6 +73,34 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
+  }
+  
+  public void addIgnoredRoots(Collection<File> roots) {
+    myIgnoredRoots.addAll(roots);
+  }
+  
+  public void removeIgnoredRoots(Collection<File> roots) {
+    myIgnoredRoots.removeAll(roots);
+  }
+
+  private boolean isIgnored(final VirtualFile file) {
+    if (myIgnoredRoots.isEmpty()) {
+      return false;
+    }
+    final File _file = new File(file.getPath());
+    if (myIgnoredRoots.contains(_file)) {
+      return true;
+    }
+    for (File root : myIgnoredRoots) {
+      try {
+        if (FileUtil.isAncestor(root, _file, false)) {
+          return true;
+        }
+      }
+      catch (IOException ignored) {
+      }
+    }
+    return false;
   }
   
   @Nullable
@@ -712,44 +741,48 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
      
     public void beforeFileDeletion(final VirtualFileEvent event) {
-      processRecursively(event.getFile(), new FileProcessor() {
+      final VirtualFile eventFile = event.getFile();
+      final boolean suppressAttributesChecking = eventFile.isDirectory() && isIgnored(eventFile);
+      processRecursively(eventFile, new FileProcessor() {
         public void execute(final VirtualFile file) {
           final String filePath = file.getPath();
 
           synchronized (myOutputsToDelete) {
             myOutputsToDelete.remove(filePath);
           }
-            
-          final OutputFileInfo outputInfo = loadOutputInfo(file);
-          if (outputInfo != null) {
-            final String srcPath = outputInfo.getSourceFilePath();
-            final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
-            if (srcFile != null) {
-              final SourceFileInfo srcInfo = loadSourceInfo(srcFile);
-              if (srcInfo != null) {
-                for (int projectId : srcInfo.getProjectIds().toArray()) {
-                  if (srcInfo.isAssociated(projectId, filePath)) {
-                    addSourceForRecompilation(projectId, srcFile, srcInfo);
-                    break;
+
+          if (!suppressAttributesChecking) {
+            final OutputFileInfo outputInfo = loadOutputInfo(file);
+            if (outputInfo != null) {
+              final String srcPath = outputInfo.getSourceFilePath();
+              final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
+              if (srcFile != null) {
+                final SourceFileInfo srcInfo = loadSourceInfo(srcFile);
+                if (srcInfo != null) {
+                  for (int projectId : srcInfo.getProjectIds().toArray()) {
+                    if (srcInfo.isAssociated(projectId, filePath)) {
+                      addSourceForRecompilation(projectId, srcFile, srcInfo);
+                      break;
+                    }
                   }
                 }
               }
             }
-          }
-            
-          final SourceFileInfo srcInfo = loadSourceInfo(file); 
-          if (srcInfo != null) {
-            final TIntHashSet projects = srcInfo.getProjectIds();
-            if (projects.size() > 0) {
-              final ScheduleOutputsForDeletionProc deletionProc = new ScheduleOutputsForDeletionProc(file.getUrl());
-              for (int projectId : projects.toArray()) {
-                // mark associated outputs for deletion
-                srcInfo.processOutputPaths(projectId, deletionProc);
-                removeSourceForRecompilation(projectId, getFileId(file));
+
+            final SourceFileInfo srcInfo = loadSourceInfo(file);
+            if (srcInfo != null) {
+              final TIntHashSet projects = srcInfo.getProjectIds();
+              if (projects.size() > 0) {
+                final ScheduleOutputsForDeletionProc deletionProc = new ScheduleOutputsForDeletionProc(file.getUrl());
+                for (int projectId : projects.toArray()) {
+                  // mark associated outputs for deletion
+                  srcInfo.processOutputPaths(projectId, deletionProc);
+                  removeSourceForRecompilation(projectId, getFileId(file));
+                }
               }
             }
           }
-            
+
         }
       });
     }

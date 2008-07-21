@@ -940,7 +940,14 @@ public class CompileDriver {
     for (final File file : outputDirectories) {
       file.mkdirs();
     }
-    CompilerUtil.refreshIODirectories(outputDirectories);
+    final TranslatingCompilerFilesMonitor filesMonitor = TranslatingCompilerFilesMonitor.getInstance();
+    try {
+      filesMonitor.addIgnoredRoots(outputDirectories);
+      CompilerUtil.refreshIODirectories(outputDirectories);
+    }
+    finally {
+      filesMonitor.removeIgnoredRoots(outputDirectories);
+    }
   }
 
   private void clearCompilerSystemDirectory(final CompileContext context) {
