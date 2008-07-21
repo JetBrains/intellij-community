@@ -17,6 +17,8 @@ package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 
 public interface PackagingConfiguration extends JDOMExternalizable {
   ModuleLink[] getContainingModules();
@@ -28,4 +30,11 @@ public interface PackagingConfiguration extends JDOMExternalizable {
   void setElements(ContainerElement[] elements);
 
   Module[] getContainingIdeaModules();
+
+  ContainerElement[] getElements(ModulesProvider provider, FacetsProvider facetsProvider,
+                                 boolean includeResolved, boolean includeUnresolved, boolean includeNonPackaged);
+
+  void addOrReplaceElement(ContainerElement element);
+
+  boolean removeContainerElement(ContainerElement containerElement);
 }

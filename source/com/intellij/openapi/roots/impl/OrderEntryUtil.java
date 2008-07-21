@@ -4,31 +4,103 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class OrderEntryUtil {
-  public static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel rootModel) {
+  private OrderEntryUtil() {
+  }
+
+  @Nullable
+  public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @Nullable Library library) {
+    return findLibraryOrderEntry(model, library, false, null);
+  }
+
+  @Nullable
+  public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @Nullable Library library,
+                                                        boolean searchInDependencies, final ModulesProvider modulesProvider) {
+    if (library == null) return null;
+    for (OrderEntry orderEntry : getOrderEntries(model, searchInDependencies, modulesProvider)) {
+      if (orderEntry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
+        return (LibraryOrderEntry)orderEntry;
+      }
+    }
+
+    return null;
+  }
+
+  private static Collection<? extends OrderEntry> getOrderEntries(final ModuleRootModel model, final boolean includeDependent, @Nullable ModulesProvider modulesProvider) {
+    if (includeDependent) {
+      return modulesProvider != null ? getDependentOrderEntries(model, modulesProvider) : getDependentOrderEntries(model);
+    }
+    else {
+      return Arrays.asList(model.getOrderEntries());
+    }
+  }
+
+  @Nullable
+  public static ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module) {
+    return findModuleOrderEntry(model, module, false, null);
+  }
+
+  @Nullable
+  public static ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module, boolean searchInDependencies,
+                                                      final ModulesProvider modulesProvider) {
+    if (module == null) return null;
+
+    for (OrderEntry orderEntry : getOrderEntries(model, searchInDependencies, modulesProvider)) {
+      if (orderEntry instanceof ModuleOrderEntry && module.equals(((ModuleOrderEntry)orderEntry).getModule())) {
+        return (ModuleOrderEntry)orderEntry;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static JdkOrderEntry findJdkOrderEntry(@NotNull ModuleRootModel model, @Nullable Sdk sdk) {
+    if (sdk == null) return null;
+
+    for (OrderEntry orderEntry : getOrderEntries(model, false, null)) {
+      if (orderEntry instanceof JdkOrderEntry && sdk.equals(((JdkOrderEntry)orderEntry).getJdk())) {
+        return (JdkOrderEntry)orderEntry;
+      }
+    }
+    return null;
+  }
+
+
+  public static Collection<OrderEntry> getDependentOrderEntries(@NotNull ModuleRootModel rootModel) {
+    return getDependentOrderEntries(rootModel, new DefaultModulesProvider(rootModel.getModule().getProject()));
+  }
+
+  public static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel rootModel, ModulesProvider modulesProvider) {
     HashSet<Module> processedModules = new HashSet<Module>();
     processedModules.add(rootModel.getModule());
-    return getDependentOrderEntries(rootModel,processedModules);
+    return getDependentOrderEntries(rootModel,processedModules, modulesProvider);
   }
-  private static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel rootModel, Set<Module> processedModules) {
-    return rootModel.processOrder(new CollectDependentOrderEntries(processedModules), new HashSet<OrderEntry>());
+
+  private static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel rootModel, Set<Module> processedModules,
+                                                                 ModulesProvider modulesProvider) {
+    return rootModel.processOrder(new CollectDependentOrderEntries(processedModules, modulesProvider), new LinkedHashSet<OrderEntry>());
   }
 
   private static class CollectDependentOrderEntries extends RootPolicy<Set<OrderEntry>> {
     private final Set<Module> myProcessedModules;
+    private ModulesProvider myModulesProvider;
 
-    public CollectDependentOrderEntries(Set<Module> processedModules) {
+    public CollectDependentOrderEntries(Set<Module> processedModules, ModulesProvider modulesProvider) {
       myProcessedModules = processedModules;
+      myModulesProvider = modulesProvider;
     }
 
     public Set<OrderEntry> visitOrderEntry(OrderEntry orderEntry, Set<OrderEntry> orderEntries) {
@@ -40,8 +112,8 @@ public class OrderEntryUtil {
       final Module module = moduleOrderEntry.getModule();
       if (module != null && myProcessedModules.add(module)) {
         orderEntries.add(moduleOrderEntry);
-        final ModuleRootModel modifiableModel = ModuleRootManager.getInstance(module);
-        final Collection<OrderEntry> dependentOrderEntries = getDependentOrderEntries(modifiableModel,myProcessedModules);
+        final ModuleRootModel modifiableModel = myModulesProvider.getRootModel(module);
+        final Collection<OrderEntry> dependentOrderEntries = getDependentOrderEntries(modifiableModel,myProcessedModules, myModulesProvider);
         orderEntries.addAll(dependentOrderEntries);
       }
       return orderEntries;

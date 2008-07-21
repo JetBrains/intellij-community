@@ -1,7 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
-import com.intellij.find.FindBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.impl.convert.ProjectFileVersion;
@@ -17,16 +16,10 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -49,7 +42,6 @@ import java.util.List;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Configurable.Assistant, Place.Navigator {
 
-  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
   protected StructureConfigurableContext myContext;
 
   protected final Project myProject;
@@ -153,7 +145,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
             append(displayName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           } else {
             final Object object = node.getConfigurable().getEditableObject();
-            final boolean unused = myContext.isUnused(object, node);
+            final boolean unused = myContext.isUnused(object);
             final boolean invalid = myContext.isInvalid(object);
             if (unused || invalid){
               Color fg = unused
@@ -257,51 +249,36 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
   }
 
-  protected class MyFindUsagesAction extends AnAction {
-    public MyFindUsagesAction() {
-      super(ProjectBundle.message("find.usages.action.text"), ProjectBundle.message("find.usages.action.text"), FIND_ICON);
-      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), myTree);
+  private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
+
+    public MyFindUsagesAction(JComponent parentComponent) {
+      super(parentComponent, myProject);
     }
 
-    public void update(AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
+    protected boolean isEnabled() {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null){
         final MyNode node = (MyNode)selectionPath.getLastPathComponent();
-        presentation.setEnabled(!node.isDisplayInBold());
+        return !node.isDisplayInBold();
       } else {
-        presentation.setEnabled(false);
+        return false;
       }
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      final Object selectedObject = getSelectedObject();
-      final MyNode selectedNode = (MyNode)myTree.getSelectionPath().getLastPathComponent();
-      final Set<String> dependencies = myContext.getCachedDependencies(selectedObject, selectedNode, true);
-      if (dependencies == null || dependencies.isEmpty()) {
-        Messages.showInfoMessage(myTree, FindBundle.message("find.usage.view.no.usages.text"),
-                                 FindBundle.message("find.pointcut.applications.not.found.title"));
-        return;
-      }
+    protected StructureConfigurableContext getContext() {
+      return myContext;
+    }
+
+    protected Object getSelectedObject() {
+      return BaseStructureConfigurable.this.getSelectedObject();
+    }
+
+    protected RelativePoint getPointToShowResults() {
       final int selectedRow = myTree.getSelectionRows()[0];
       final Rectangle rowBounds = myTree.getRowBounds(selectedRow);
       final Point location = rowBounds.getLocation();
       location.x += rowBounds.width;
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(
-        ProjectBundle.message("dependencies.used.in.popup.title"), dependencies.toArray(new String[dependencies.size()])) {
-
-        public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
-          ProjectStructureConfigurable.getInstance(myProject).select(nameToSelect, null, true);
-          return FINAL_CHOICE;
-        }
-
-        public Icon getIconFor(String selection) {
-          final Module module = myContext.myModulesConfigurator.getModule(selection);
-          LOG.assertTrue(module != null, selection + " was not found");
-          return module.getModuleType().getNodeIcon(false);
-        }
-
-      }).show(new RelativePoint(myTree, location));
+      return new RelativePoint(myTree, location);
     }
   }
 
@@ -340,7 +317,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
     result.add(Separator.getInstance());
 
-    result.add(new MyFindUsagesAction());
+    result.add(new MyFindUsagesAction(myTree));
 
 
     return result;

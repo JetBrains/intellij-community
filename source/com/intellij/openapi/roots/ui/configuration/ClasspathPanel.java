@@ -17,8 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +36,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChoo
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.Messages;
@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.ItemRemovable;
@@ -161,7 +162,7 @@ public class ClasspathPanel extends JPanel {
         }
       },
       KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
-      JComponent.WHEN_FOCUSED
+      WHEN_FOCUSED
     );
 
     add(ScrollPaneFactory.createScrollPane(myEntryTable), BorderLayout.CENTER);
@@ -178,6 +179,10 @@ public class ClasspathPanel extends JPanel {
         }
       }
     });
+
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new MyFindUsagesAction());
+    PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
   private void navigate() {
@@ -258,7 +263,7 @@ public class ClasspathPanel extends JPanel {
     addButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         initPopupActions();
-        final JBPopup popup = JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<PopupAction>(null, myPopupActions, myIcons) {
+        final JBPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PopupAction>(null, myPopupActions, myIcons) {
           public boolean isMnemonicsNavigationEnabled() {
             return true;
           }
@@ -271,7 +276,7 @@ public class ClasspathPanel extends JPanel {
                 selectedValue.execute();
               }
             }, ModalityState.stateForComponent(ClasspathPanel.this));
-            return PopupStep.FINAL_CHOICE;
+            return FINAL_CHOICE;
           }
           @NotNull
           public String getTextFor(PopupAction value) {
@@ -362,7 +367,7 @@ public class ClasspathPanel extends JPanel {
         }
       },
       KeyStroke.getKeyStroke(keyEvent, modifiers),
-      JComponent.WHEN_FOCUSED
+      WHEN_FOCUSED
     );
   }
 
@@ -580,6 +585,15 @@ public class ClasspathPanel extends JPanel {
     }
     myEntryTable.repaint();
     myListeners.getMulticaster().entryMoved();
+  }
+
+  public void selectOrderEntry(@NotNull OrderEntry entry) {
+    for (int row = 0; row < myModel.getRowCount(); row++) {
+      if (entry.equals(myModel.getItemAt(row).getEntry())) {
+        myEntryTable.getSelectionModel().setSelectionInterval(row, row);
+        TableUtil.scrollSelectionToVisible(myEntryTable);
+      }
+    }
   }
 
   private int moveRow(final int row, final int increment) {
@@ -1097,6 +1111,49 @@ public class ClasspathPanel extends JPanel {
 
       public void dispose() {
       }
+    }
+  }
+
+  private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
+    private MyFindUsagesAction() {
+      super(myEntryTable, myProject);
+    }
+
+    protected boolean isEnabled() {
+      return getSelectedObject() != null;
+    }
+
+    protected Object getSelectedObject() {
+      int row = myEntryTable.getSelectedRow();
+      if (0 <= row && row < myModel.getRowCount()) {
+        TableItem item = myModel.getItemAt(row);
+        if (item instanceof LibItem) {
+          LibraryOrderEntry orderEntry = ((LibItem)item).getEntry();
+          if (orderEntry != null) {
+            return orderEntry.getLibrary();
+          }
+        }
+        else if (item instanceof ModuleItem) {
+          ModuleOrderEntry orderEntry = ((ModuleItem)item).getEntry();
+          if (orderEntry != null) {
+            return orderEntry.getModule();
+          }
+        }
+        else if (item instanceof JdkItem) {
+          JdkOrderEntry orderEntry = ((JdkItem)item).getEntry();
+          if (orderEntry != null) {
+            return orderEntry.getJdk();
+          }
+        }
+      }
+      return null;
+    }
+
+    protected RelativePoint getPointToShowResults() {
+      Rectangle rect = myEntryTable.getCellRect(myEntryTable.getSelectedRow(), 1, false);
+      Point location = rect.getLocation();
+      location.y += rect.height;
+      return new RelativePoint(myEntryTable, location);
     }
   }
 }

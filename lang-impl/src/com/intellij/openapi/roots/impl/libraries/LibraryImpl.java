@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
@@ -27,6 +28,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -150,7 +152,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myName = name;
   }
 
-  public Library.ModifiableModel getModifiableModel() {
+  public ModifiableModel getModifiableModel() {
     return new LibraryImpl(this);
   }
 
@@ -165,6 +167,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   public void setRootModel(ModifiableRootModel rootModel) {
     LOG.assertTrue(myLibraryTable == null);
     myRootModel = rootModel;
+  }
+
+  @Nullable("will return non-null value only for module level libraries")
+  public Module getModule() {
+    return myRootModel != null ? myRootModel.getModule() : null;
   }
 
   public boolean allPathsValid(OrderRootType type) {

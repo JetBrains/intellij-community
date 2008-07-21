@@ -318,6 +318,15 @@ public class ModuleEditor implements Place.Navigator {
     }
   }
 
+  @Nullable
+  public ModuleConfigurationEditor getEditor(@NotNull String tabName) {
+    int index = getEditorTabIndex(tabName);
+    if (0 <= index && index < myEditors.size()) {
+      return myEditors.get(index);
+    }
+    return null;
+  }
+
   private class ModifiableRootModelInvocationHandler implements InvocationHandler {
     private final ModifiableRootModel myDelegateModel;
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(

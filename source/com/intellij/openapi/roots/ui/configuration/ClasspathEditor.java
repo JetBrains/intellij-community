@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.OrderPanelListener;
 import org.jetbrains.annotations.NotNull;
@@ -61,11 +60,11 @@ public class ClasspathEditor extends ModuleElementsEditor {
   }
 
   public String getDisplayName() {
-    return ClasspathEditor.NAME;
+    return NAME;
   }
 
   public Icon getIcon() {
-    return ClasspathEditor.ICON;
+    return ICON;
   }
 
   public void saveData() {
@@ -110,6 +109,10 @@ public class ClasspathEditor extends ModuleElementsEditor {
   public void flushChangesToModel() {
     List<OrderEntry> entries = myPanel.getEntries();
     myModel.rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
+  }
+
+  public void selectOrderEntry(@NotNull final OrderEntry entry) {
+    myPanel.selectOrderEntry(entry);
   }
 
   public void moduleStateChanged() {

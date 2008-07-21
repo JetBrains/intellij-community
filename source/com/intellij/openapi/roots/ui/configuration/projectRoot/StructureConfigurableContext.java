@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Alarm;
@@ -68,7 +67,7 @@ public class StructureConfigurableContext implements Disposable {
   }
 
   @Nullable
-  public Set<String> getCachedDependencies(final Object selectedObject, final MasterDetailsComponent.MyNode selectedNode, boolean force) {
+  public Set<String> getCachedDependencies(final Object selectedObject, boolean force) {
     if (selectedObject instanceof Library){
       final Library library = (Library)selectedObject;
       if (myLibraryDependencyCache.containsKey(library)){
@@ -87,13 +86,13 @@ public class StructureConfigurableContext implements Disposable {
     }
     if (force){
       LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-      final Set<String> dep = getDependencies(selectedObject, selectedNode);
+      final Set<String> dep = getDependencies(selectedObject);
       updateCache(selectedObject, dep);
       return dep;
     } else {
       myUpdateDependenciesAlarm.addRequest(new Runnable(){
         public void run() {
-          final Set<String> dep = getDependencies(selectedObject, selectedNode);
+          final Set<String> dep = getDependencies(selectedObject);
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               if (!myDisposed) {
@@ -144,7 +143,7 @@ public class StructureConfigurableContext implements Disposable {
   }
 
   @Nullable
-  private Set<String> getDependencies(final Object selectedObject, final MasterDetailsComponent.MyNode node) {
+  private Set<String> getDependencies(final Object selectedObject) {
     if (selectedObject instanceof Module) {
       return getDependencies(new Condition<OrderEntry>() {
         public boolean value(final OrderEntry orderEntry) {
@@ -153,10 +152,14 @@ public class StructureConfigurableContext implements Disposable {
       });
     }
     else if (selectedObject instanceof Library) {
-      if (((Library)selectedObject).getTable() == null) { //module library navigation
-        final Set<String> set = new HashSet<String>();
-        set.add(((MasterDetailsComponent.MyNode)node.getParent()).getDisplayName());
-        return set;
+      Library library = (Library)selectedObject;
+      if (library.getTable() == null) { //module library navigation
+        HashSet<String> deps = new HashSet<String>();
+        Module module = ((LibraryImpl)library).getModule();
+        if (module != null) {
+          deps.add(module.getName());
+        }
+        return deps;
       }
       return getDependencies(new Condition<OrderEntry>() {
         @SuppressWarnings({"SimplifiableIfStatement"})
@@ -337,13 +340,14 @@ public class StructureConfigurableContext implements Disposable {
 
   public String getRealName(final Module module) {
     final ModifiableModuleModel moduleModel = myModulesConfigurator.getModuleModel();
-    return moduleModel.getNewName(module) != null ? moduleModel.getNewName(module) : module.getName();
+    String newName = moduleModel.getNewName(module);
+    return newName != null ? newName : module.getName();
   }
 
-  public boolean isUnused(final Object object, MasterDetailsComponent.MyNode node) {
+  public boolean isUnused(final Object object) {
      if (object == null) return false;
      if (object instanceof Module){
-       getCachedDependencies(object, node, false);
+       getCachedDependencies(object, false);
        return false;
      }
      if (object instanceof Sdk) {
@@ -351,11 +355,11 @@ public class StructureConfigurableContext implements Disposable {
      }
      if (object instanceof Library) {
        final LibraryTable libraryTable = ((Library)object).getTable();
-       if (libraryTable == null || libraryTable.getTableLevel() != LibraryTablesRegistrar.PROJECT_LEVEL) {
+       if (libraryTable == null || !libraryTable.getTableLevel().equals(LibraryTablesRegistrar.PROJECT_LEVEL)) {
          return false;
        }
      }
-     final Set<String> dependencies = getCachedDependencies(object, node, false);
+     final Set<String> dependencies = getCachedDependencies(object, false);
      return dependencies != null && dependencies.isEmpty();
    }
 

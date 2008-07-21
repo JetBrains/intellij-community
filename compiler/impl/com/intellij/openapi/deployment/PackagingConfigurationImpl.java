@@ -37,8 +37,8 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
     myDefaultModulesProvider = new DefaultModulesProvider(module.getProject());
   }
 
-  public PackagingConfigurationImpl(ModulesProvider modulesProvider) {
-    myDefaultModulesProvider = modulesProvider;
+  public PackagingConfigurationImpl createNewInstance() {
+    return new PackagingConfigurationImpl(myParentModule);
   }
 
   public void removeLibrary(final Library library) {
@@ -177,6 +177,16 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
 
   protected void clearContainer() {
     myContents.clear();
+  }
+
+  public void addOrReplaceElement(final ContainerElement element) {
+    for (Iterator<ContainerElement> it = myContents.iterator(); it.hasNext();) {
+      ContainerElement content = it.next();
+      if (content.equalsIgnoreAttributes(element)) {
+        it.remove();
+      }
+    }
+    addElement(element);
   }
 
   public void addElement(ContainerElement element) {

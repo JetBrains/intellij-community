@@ -19,10 +19,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -36,6 +33,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -380,7 +379,24 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-
+  public void selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+    ProjectStructureConfigurable.getInstance(myProject).select(module.getName(), null, true).doWhenDone(new Runnable() {
+      public void run() {
+        final MyNode node = findModuleNode(module);
+        if (node != null) {
+          ModuleConfigurable moduleConfigurable = (ModuleConfigurable)node.getConfigurable();
+          ModuleEditor moduleEditor = moduleConfigurable.getModuleEditor();
+          moduleEditor.setSelectedTabName(ClasspathEditor.NAME);
+          if (orderEntry != null) {
+            ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
+            if (editor instanceof ClasspathEditor) {
+              ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
+            }
+          }
+        }
+      }
+    });
+  }
 
   public Module[] getModules() {
     if (myContext.myModulesConfigurator != null) {
