@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -291,7 +292,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files) {
     List<SVNException> exceptions = new ArrayList<SVNException>();
 
-    Collections.sort(files, FileComparator.getInstance());
+    Collections.sort(files, FilePathComparator.getInstance());
 
     for (VirtualFile file : files) {
       try {
@@ -303,18 +304,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     return exceptions;
-  }
-
-  private final static class FileComparator implements Comparator<VirtualFile> {
-    private static final FileComparator ourInstance = new FileComparator();
-
-    public static FileComparator getInstance() {
-      return ourInstance;
-    }
-
-    public int compare(final VirtualFile o1, final VirtualFile o2) {
-      return o1.getPath().compareTo(o2.getPath());
-    }
   }
 
   public boolean keepChangeListAfterCommit(ChangeList changeList) {
