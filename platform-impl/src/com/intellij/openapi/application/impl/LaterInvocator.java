@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Stack;
 
+@SuppressWarnings({"SSBasedInspection"})
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
   private static final boolean DEBUG = LOG.isDebugEnabled();

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+@SuppressWarnings({"SSBasedInspection"})
 public class Disposer {
   private static final ObjectTree<Disposable> ourTree = new ObjectTree<Disposable>();
 
