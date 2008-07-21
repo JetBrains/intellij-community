@@ -27,8 +27,8 @@ public class ProjectExcludedFileIndex extends ExcludedFileIndex {
   public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {
     while (true) {
       if (childDir == null) return false;
-      if (myDirectoryIndex.getInfoForDirectory(childDir) == null) return false;
       if (childDir.equals(baseDir)) return true;
+      if (myDirectoryIndex.getInfoForDirectory(childDir) == null) return false;
       childDir = childDir.getParent();
     }
   }
