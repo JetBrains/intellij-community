@@ -53,6 +53,12 @@ public class ClassBodyParsing extends Parsing {
         return;
       }
 
+      if (lexer.getTokenType() == JavaTokenType.PRIVATE_KEYWORD || lexer.getTokenType() == JavaTokenType.PROTECTED_KEYWORD) {
+        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
+        return;
+      }
+
+
       final TreeElement enumConstant = myContext.getDeclarationParsing().parseEnumConstant(lexer);
       if (enumConstant != null) {
         TreeUtil.addChildren(dummyRoot, enumConstant);
