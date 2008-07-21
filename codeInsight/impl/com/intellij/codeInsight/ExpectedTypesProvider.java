@@ -772,11 +772,6 @@ public class ExpectedTypesProvider {
       }
     }
 
-    private boolean isArgumentOfTopLevelExpression(PsiExpression expression) {
-      final PsiElement parent = expression.getParent().getParent();
-      return parent.getParent() instanceof PsiStatement && !(parent instanceof JspMethodCall);
-    }
-
     private ExpectedTypeInfo[] getExpectedArgumentTypesForMethodCall(CandidateInfo[] methodCandidates,
                                                                      PsiExpressionList argumentList,
                                                                      PsiExpression argument,
@@ -824,19 +819,7 @@ public class ExpectedTypesProvider {
           if (parms.length <= index) continue;
           PsiParameter parm = parms[index];
           PsiType parmType = getParameterType(parm, substitutor);
-          TailType tailType;
-          if (index >= parms.length) {
-            tailType = TailType.NONE;
-          }
-          else if (index == parms.length - 1) {
-            //myTailType = CompletionUtil.NONE_TAIL;
-            PsiType returnType = method.getReturnType();
-            if (returnType != null) returnType = substitutor.substitute(returnType);
-            tailType = returnType == PsiType.VOID ? TailTypes.CALL_RPARENTH_SEMICOLON : TailTypes.CALL_RPARENTH;
-          }
-          else {
-            tailType = TailType.COMMA;
-          }
+          TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, parms);
           ExpectedTypeInfoImpl info = createInfoImpl(parmType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, parmType,
                                                      tailType);
           info.expectedName = getPropertyName(parm);
@@ -846,6 +829,25 @@ public class ExpectedTypesProvider {
       }
 
       return array.toArray(new ExpectedTypeInfo[array.size()]);
+    }
+
+    private TailType getMethodArgumentTailType(final PsiExpression argument, final int index, final PsiMethod method, final PsiSubstitutor substitutor,
+                                               final PsiParameter[] parms) {
+      if (index >= parms.length) {
+        return TailType.NONE;
+      }
+      if (index == parms.length - 1) {
+        //myTailType = CompletionUtil.NONE_TAIL;
+        final PsiElement call = argument.getParent().getParent();
+        if (call instanceof JspMethodCall) return TailType.NONE;
+
+        PsiType returnType = method.getReturnType();
+        if (returnType != null) returnType = substitutor.substitute(returnType);
+        return (returnType == PsiType.VOID || returnType == null) && call.getParent() instanceof PsiStatement
+               ? TailTypes.CALL_RPARENTH_SEMICOLON
+               : TailTypes.CALL_RPARENTH;
+      }
+      return TailType.COMMA;
     }
 
     private void inferMethodCallArgumentTypes(final PsiExpression argument,
@@ -866,20 +868,7 @@ public class ExpectedTypesProvider {
       PsiParameter parameter = parameters[Math.min(parameters.length - 1, index)];
       PsiType parameterType = getParameterType(parameter, substitutor);
 
-      TailType tailType;
-      if (index >= parameters.length) {
-        tailType = TailType.NONE;
-      }
-      else if (index == parameters.length - 1) {
-        PsiType returnType = method.getReturnType();
-
-        tailType = (returnType == null || returnType == PsiType.VOID) && isArgumentOfTopLevelExpression(argument) ?
-                   TailTypes.CALL_RPARENTH_SEMICOLON :
-                   TailTypes.CALL_RPARENTH;
-      }
-      else {
-        tailType = TailType.COMMA;
-      }
+      TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, parameters);
       PsiType defaultType = getDefautType(method, substitutor, parameterType, argument);
 
       ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, tailType);

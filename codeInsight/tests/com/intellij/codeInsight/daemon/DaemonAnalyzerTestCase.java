@@ -24,10 +24,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +40,8 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
+import java.io.IOException;
+import java.io.File;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
@@ -320,5 +324,25 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   public void checkHighlighting(Editor editor, boolean checkWarnings, boolean checkInfos) {
     setActiveEditor(editor);
     doDoTest(checkWarnings, checkInfos);
+  }
+
+  public PsiClass createClass(String text) throws IOException {
+    final String qname =
+      ((PsiJavaFile)PsiFileFactory.getInstance(getPsiManager().getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
+    final VirtualFile[] files = ModuleRootManager.getInstance(myModule).getSourceRoots();
+    File dir;
+    if (files.length > 0) {
+      dir = VfsUtil.virtualToIoFile(files[0]);
+    } else {
+      dir = createTempDir("unitTest");
+      addSourceContentToRoots(myModule, LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/')));
+    }
+
+    File file = new File(dir, qname.replace('.', '/') + ".java");
+    file.getParentFile().mkdirs();
+    file.createNewFile();
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+    VfsUtil.saveText(vFile, text);
+    return ((PsiJavaFile)myPsiManager.findFile(vFile)).getClasses()[0];
   }
 }
