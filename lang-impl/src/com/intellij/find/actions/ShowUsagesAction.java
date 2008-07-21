@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -190,7 +191,6 @@ public class ShowUsagesAction extends AnAction {
         UsageNode node = (UsageNode)element;
         Usage usage = node.getUsage();
         navigateAndHint(usage, null);
-        usageView.dispose();
       }
     };
 
@@ -223,7 +223,10 @@ public class ShowUsagesAction extends AnAction {
     if (title != null) {
       builder.setTitle(title + " " +FindBundle.message("some.usages.found", usages.size()));
     }
-    return builder.setItemChoosenCallback(runnable).createPopup();
+
+    final JBPopup popup = builder.setItemChoosenCallback(runnable).createPopup();
+    Disposer.register(popup, usageView);
+    return popup;
   }
 
   private static void addUsageNodes(GroupNode root, List<UsageNode> outNodes, final UsageViewImpl usageView, final Set<Usage> filteredUsages) {
