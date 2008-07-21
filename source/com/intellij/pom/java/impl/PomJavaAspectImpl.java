@@ -31,7 +31,6 @@
  */
 package com.intellij.pom.java.impl;
 
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -46,6 +45,7 @@ import com.intellij.pom.java.events.PomJavaAspectChangeSet;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,8 +86,8 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(model.getModelAspect(TreeAspect.class));
     if(changeSet == null) return;
     final PsiFile containingFile = changeSet.getRootElement().getPsi().getContainingFile();
-    if(!(containingFile.getLanguage() instanceof JavaLanguage)) return;
-    final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, containingFile);
+    if(!(containingFile instanceof PsiJavaFile)) return;
+    final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, (PsiJavaFile) containingFile);
     set.addChange(new JavaTreeChanged(containingFile));
     event.registerChangeSet(PomJavaAspectImpl.this, set);
   }
