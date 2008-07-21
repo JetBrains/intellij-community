@@ -16,7 +16,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private IndentInside myLastLineIndent;
 
   public LeafBlockWrapper(final Block block,
-                          AbstractBlockWrapper parent,
+                          CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           LeafBlockWrapper previousTokenBlock,
