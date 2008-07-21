@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -32,10 +33,23 @@ public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
     }
 
     final XmlTagValue value = tag.getValue();
-    final String text = value.getText();
-    final String trimmedText = value.getTrimmedText();
-    final int index = text.indexOf(trimmedText);
-    int valueStart = value.getTextRange().getStartOffset() + index - tag.getTextOffset();
-    return new TextRange(valueStart, valueStart + trimmedText.length());
+    final XmlText[] texts = value.getTextElements();
+    switch (texts.length) {
+      case 0:
+        return value.getTextRange().shiftRight(-tag.getTextOffset());
+      case 1:
+        return getValueRange(texts[0]);
+      default:
+        return new TextRange(0, 0);
+    }
+  }
+
+  private static TextRange getValueRange(final XmlText xmlText) {
+    final int offset = xmlText.getStartOffsetInParent();
+    final String value = xmlText.getValue();
+    final String trimmed = value.trim();
+    final int i = value.indexOf(trimmed);
+    final int start = xmlText.displayToPhysical(i) + offset;    
+    return trimmed.length() == 0 ? new TextRange(start, start) : new TextRange(start, xmlText.displayToPhysical(i + trimmed.length() - 1) + offset + 1);
   }
 }
