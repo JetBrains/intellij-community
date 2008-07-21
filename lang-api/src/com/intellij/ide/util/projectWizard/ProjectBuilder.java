@@ -21,6 +21,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 
 public abstract class ProjectBuilder {
   public boolean isUpdate() {
@@ -36,5 +37,18 @@ public abstract class ProjectBuilder {
 
   public boolean isOpenProjectSettingsAfter() {
     return false;
+  }
+
+  /**
+   * Used for automatically assigning an SDK to the project when it gets created.
+   * If no SDK is specified in the template project and there is no specific SDK chooser step,
+   * the SDK which is set for the project is the highest version SDK for which
+   * <code>isSuitableSdk</code> returns true.
+   *
+   * @param sdk the candidate SDK
+   * @return true if the SDK can be used for this project type, false otherwise
+   */
+  public boolean isSuitableSdk(Sdk sdk) {
+    return true;
   }
 }

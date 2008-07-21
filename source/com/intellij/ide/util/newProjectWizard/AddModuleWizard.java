@@ -32,6 +32,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ArrayList;
 
 public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
@@ -275,7 +276,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       return projectJdk;
     }
     if (context.getProject() == null) {
-      final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
+      final Sdk[] projectJdks = getSuitableSdks(context);
       Arrays.sort(projectJdks, new Comparator<Sdk>() {
         public int compare(final Sdk o1, final Sdk o2) {
           final String version1 = o1.getVersionString();
@@ -288,6 +289,16 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       }
     }
     return null;
+  }
+
+  private static Sdk[] getSuitableSdks(final WizardContext context) {
+    List<Sdk> result = new ArrayList<Sdk>();
+    for(Sdk sdk: ProjectJdkTable.getInstance().getAllJdks()) {
+      if (context.getProjectBuilder().isSuitableSdk(sdk)) {
+        result.add(sdk);
+      }
+    }
+    return result.toArray(new Sdk[result.size()]);
   }
 
   @Nullable

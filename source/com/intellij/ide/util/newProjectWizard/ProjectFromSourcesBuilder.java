@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -291,5 +293,10 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
 
     void updateModule(final ModuleDescriptor descriptor, Module module, ModifiableRootModel rootModel);
 
+  }
+
+  @Override
+  public boolean isSuitableSdk(final Sdk sdk) {
+    return sdk.getSdkType() instanceof JavaSdkType;
   }
 }
