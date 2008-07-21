@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -545,6 +546,8 @@ public class DuplicatesFinder {
       final PsiMethod method2 = (PsiMethod)resolveResult2;
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
+
+      if (OverridingMethodsSearch.search(method1).findAll().contains(method2)) return true;
       return false;
     }
     else {
