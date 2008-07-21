@@ -9,6 +9,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -53,7 +54,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HighlightInfo infoToGoIfNoLuck = null;
     int caretOffsetIfNoLuck = myGoForward ? -1 : editor.getDocument().getTextLength();
     for (HighlightInfo info : highlights) {
-      int startOffset = getNavigationPositionFor(info);
+      int startOffset = getNavigationPositionFor(info, editor.getDocument());
       if (isBetter(caretOffset, offsetToGo, startOffset)) {
         offsetToGo = startOffset;
         infoToGo = info;
@@ -87,10 +88,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HintManager.getInstance().showInformationHint(editor, message);
   }
 
-  static boolean navigateToError(Project project, final Editor editor, HighlightInfo info) {
+  static void navigateToError(Project project, final Editor editor, HighlightInfo info) {
     int oldOffset = editor.getCaretModel().getOffset();
 
-    final int offset = getNavigationPositionFor(info);
+    final int offset = getNavigationPositionFor(info, editor.getDocument());
     final int endOffset = info.highlighter.getEndOffset();
 
     final ScrollingModel scrollingModel = editor.getScrollingModel();
@@ -111,12 +112,11 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     );
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-
-    return true;
   }
 
-  private static int getNavigationPositionFor(HighlightInfo info) {
+  private static int getNavigationPositionFor(HighlightInfo info, Document document) {
     int shift = info.isAfterEndOfLine ? +1 : info.navigationShift;
-    return info.highlighter.getStartOffset() + shift;
+    int offset = info.highlighter.getStartOffset() + shift;
+    return Math.min(offset, document.getTextLength());
   }
 }
