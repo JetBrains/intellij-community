@@ -26,6 +26,8 @@ public class FormatInfoPrinter {
     final Element result = new Element("Block");
     printSimpleBlock(block, result);
 
+    result.setAttribute("class", block.getClass().getName());
+
     if (block.getSubBlocks().size() == 0) {
       result.setAttribute("text", myDocumentModel.getText(block.getTextRange()).toString());
     }

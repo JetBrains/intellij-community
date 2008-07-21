@@ -131,12 +131,24 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
           childIndent = Indent.getNoneIndent();
         }
+
+        boolean breakOrReturn = isBreakOrReturn(child);
         processChild(localResult, child, null, null, childIndent);
+        if (breakOrReturn) {
+          result.add(createCaseSectionBlock(localResult, childAlignment, indent, childWrap));
+          return child;
+        }
       }
+
       child = child.getTreeNext();
     }
     result.add(createCaseSectionBlock(localResult, childAlignment, indent, childWrap));
     return null;
+  }
+
+  private boolean isBreakOrReturn(final ASTNode child) {
+    IElementType elementType = child.getElementType();
+    return JavaElementType.BREAK_STATEMENT == elementType || JavaElementType.RETURN_STATEMENT == elementType;
   }
 
   private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
