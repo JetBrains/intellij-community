@@ -547,7 +547,8 @@ public class DuplicatesFinder {
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
 
-      if (OverridingMethodsSearch.search(method1).findAll().contains(method2)) return true;
+      //todo compare simple signature
+      if (method1.getName().equals(method2.getName()) && OverridingMethodsSearch.search(method1).findAll().contains(method2)) return true;
       return false;
     }
     else {
