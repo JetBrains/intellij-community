@@ -2,7 +2,6 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
@@ -69,7 +68,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
-  private boolean myCanceled = true;
   private boolean myDisposed = false;
   private LookupItem myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
@@ -364,47 +362,38 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return layeredPanePoint;
   }
 
-  public void finishLookup(final char completionChar){
+  public void finishLookup(final char completionChar) {
     final LookupItem item = (LookupItem)myList.getSelectedValue();
+    doHide(false);
     if (item == null ||
         item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null ||
         item.getObject() instanceof DeferredUserLookupValue &&
         !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item, myProject)) {
       fireItemSelected(null, completionChar);
-      hide();
       return;
     }
 
-    myCanceled = false;
-    hide();
-    final CompletionProgressIndicator indicator = CompletionProgressIndicator.getCurrentCompletion();
-    if (indicator != null) {
-      indicator.cancel();
-    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run(){
+        EditorModificationUtil.deleteSelectedText(myEditor);
+        final int caretOffset = myEditor.getCaretModel().getOffset();
+        final String prefix = item.getPrefixMatcher().getPrefix();
+        int lookupStart = caretOffset - prefix.length() - myAdditionalPrefix.length();
 
-    ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run(){
-            EditorModificationUtil.deleteSelectedText(myEditor);
-            final int caretOffset = myEditor.getCaretModel().getOffset();
-            final String prefix = item.getPrefixMatcher().getPrefix();
-            int lookupStart = caretOffset - prefix.length() - myAdditionalPrefix.length();
-
-            final String lookupString = item.getLookupString();
-            if (!lookupString.startsWith(prefix + myAdditionalPrefix)) {
-              FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
-            }
-
-            myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
-
-            int offset = lookupStart + lookupString.length();
-            myEditor.getCaretModel().moveToOffset(offset);
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            myEditor.getSelectionModel().removeSelection();
-            fireItemSelected(item, completionChar);
-          }
+        final String lookupString = item.getLookupString();
+        if (!lookupString.startsWith(prefix + myAdditionalPrefix)) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
         }
-    );
+
+        myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
+
+        int offset = lookupStart + lookupString.length();
+        myEditor.getCaretModel().moveToOffset(offset);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        myEditor.getSelectionModel().removeSelection();
+        fireItemSelected(item, completionChar);
+      }
+    });
   }
 
   public int getLookupStart() {
@@ -701,11 +690,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (myDisposed) return;
 
+    doHide(true);
+  }
+
+  private void doHide(final boolean fireCanceled) {
+    assert !myDisposed;
+
     super.hide();
 
     Disposer.dispose(this);
 
-    if (myCanceled){
+    if (fireCanceled) {
       fireLookupCanceled();
     }
   }

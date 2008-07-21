@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaAwareCompletionData;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.OrFilter;
@@ -39,6 +40,7 @@ public class MembersGetter {
           if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
           if (result instanceof PsiMethod && annotation != null) continue;
           final LookupItem item = LookupItemUtil.objectToLookupItem(result);
+          item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           JavaAwareCompletionData.qualify(item);
           results.addElement(item);
         }

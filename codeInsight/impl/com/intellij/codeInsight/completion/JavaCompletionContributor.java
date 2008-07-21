@@ -9,16 +9,19 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
+import static com.intellij.patterns.PsiJavaPatterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -35,6 +38,11 @@ import java.util.Set;
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor {
+  private static final ElementPattern<PsiElement> INSIDE_METHOD_TYPE_ELEMENT = psiElement().inside(
+      psiElement(PsiTypeElement.class).withParent(or(psiMethod(), psiElement(PsiVariable.class))));
+  private static final ElementPattern<PsiElement> METHOD_START = or(
+      psiElement(TokenType.WHITE_SPACE).afterLeaf(INSIDE_METHOD_TYPE_ELEMENT),
+      INSIDE_METHOD_TYPE_ELEMENT);
 
   public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return true;
@@ -280,7 +288,24 @@ public class JavaCompletionContributor extends CompletionContributor {
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
 
     if (context.getCompletionType() == CompletionType.BASIC && file instanceof PsiJavaFile) {
-      context.setDummyIdentifier(context.getDummyIdentifier().trim());
+      final PsiElement element = file.findElementAt(context.getStartOffset());
+      if (METHOD_START.accepts(element)) {
+        PsiElement decl = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+        if (decl == null) decl = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
+        if (decl != null) {
+          final int textOffset = decl.getTextOffset();
+          context.setFileCopyPatcher(new FileCopyPatcher() {
+            public void patchFileCopy(@NotNull final PsiFile fileCopy, @NotNull final Document document, @NotNull final OffsetMap map) {
+              document.replaceString(map.getOffset(CompletionInitializationContext.START_OFFSET),
+                                     Math.max(map.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET), textOffset),
+                           CompletionInitializationContext.DUMMY_IDENTIFIER.trim());
+            }
+          });
+          return;
+        }
+      }
+
+      context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim()));
     }
   }
 

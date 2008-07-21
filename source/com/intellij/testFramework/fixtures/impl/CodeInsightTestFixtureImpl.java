@@ -553,11 +553,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 return copy;
               }
 
-              protected void handleEmptyLookup(final CompletionContext context,
-                                               final LookupData lookupData, final CompletionParameters parameters,
+              protected void handleEmptyLookup(final CompletionContext context, final CompletionParameters parameters,
                                                final CompletionProgressIndicator indicator) {
                 empty = true;
-                super.handleEmptyLookup(context, lookupData, parameters, indicator);
+                super.handleEmptyLookup(context, parameters, indicator);
               }
             };
           }

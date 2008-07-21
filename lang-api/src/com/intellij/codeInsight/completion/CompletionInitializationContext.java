@@ -25,7 +25,7 @@ public class CompletionInitializationContext {
   private final PsiFile myFile;
   private final CompletionType myCompletionType;
   private final OffsetMap myOffsetMap;
-  private String myDummyIdentifier = DUMMY_IDENTIFIER;
+  private FileCopyPatcher myFileCopyPatcher = new DummyIdentifierPatcher(DUMMY_IDENTIFIER);
 
   public CompletionInitializationContext(final Editor editor, final PsiFile file, final CompletionType completionType) {
     myEditor = editor;
@@ -54,23 +54,13 @@ public class CompletionInitializationContext {
     }
   }
 
-  private static boolean isWord(final String text) {
-    boolean hasLetters = false;
-    for (int i = 0; i < text.length(); i++) {
-      final char c = text.charAt(i);
-      if (!Character.isUnicodeIdentifierPart(c)) return false;
-      if (Character.isLetter(c)) hasLetters = true;
-    }
-    return hasLetters;
+  public void setFileCopyPatcher(@NotNull final FileCopyPatcher fileCopyPatcher) {
+    myFileCopyPatcher = fileCopyPatcher;
   }
 
-  public void setDummyIdentifier(@NotNull @NonNls final String dummyIdentifier) {
-    myDummyIdentifier = dummyIdentifier;
-  }
-
-  @NonNls @NotNull
-  public String getDummyIdentifier() {
-    return myDummyIdentifier;
+  @NotNull
+  public FileCopyPatcher getFileCopyPatcher() {
+    return myFileCopyPatcher;
   }
 
   @NotNull

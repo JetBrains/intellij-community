@@ -10,8 +10,6 @@ import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -19,17 +17,19 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.HintListener;
 
 import java.awt.*;
+import java.util.EventObject;
 
 /**
  * @author peter
  */
-public class CompletionProgressIndicator extends ProgressIndicatorBase implements Disposable {
+public class CompletionProgressIndicator extends ProgressIndicatorBase {
   private static CompletionProgressIndicator ourCurrentCompletion = null;
 
   private final Editor myEditor;
@@ -55,6 +55,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {
         cancel();
+        finishCompletion();
 
         LookupItem item = event.getItem();
         if (item == null) return;
@@ -66,12 +67,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       public void lookupCanceled(final LookupEvent event) {
         cancel();
+        finishCompletion();
       }
     });
     myLookup.setCalculating(true);
 
     myQueue = new MergingUpdateQueue("completion lookup progress", 2000, true, myEditor.getContentComponent());
-    Disposer.register(this, myQueue);
     myQueue.queue(new Update("initialShow") {
         public void run() {
           final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
@@ -82,8 +83,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       });
 
     ApplicationManager.getApplication().assertIsDispatchThread();
+    registerItself();
+  }
+
+  private void registerItself() {
     assert ourCurrentCompletion == null;
     ourCurrentCompletion = this;
+  }
+
+  public void liveAfterDeath(LightweightHint hint) {
+    registerItself();
+    hint.addHintListener(new HintListener() {
+      public void hintHidden(final EventObject event) {
+        cleanup();
+      }
+    });
   }
 
   public CodeCompletionHandlerBase getHandler() {
@@ -139,24 +153,22 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  public void cancel() {
-    myQueue.cancelAllUpdates();
-    invokeLaterIfNotDispatch(new Runnable() {
-      public void run() {
-        LookupManagerImpl.getInstance(myEditor.getProject()).hideActiveLookup();
-        finishCompletion();
-      }
-    });
-    super.cancel();
-  }
-
   public void closeAndFinish() {
     LookupManager.getInstance(myEditor.getProject()).hideActiveLookup();
-    finishCompletion();
   }
 
   private void finishCompletion() {
-    Disposer.dispose(this);
+    assert !myDisposed;
+    myDisposed = true;
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myQueue.dispose();
+    cleanup();
+  }
+
+  private void cleanup() {
+    assert ourCurrentCompletion == this;
+    ourCurrentCompletion = null;
   }
 
   public void stop() {
@@ -184,15 +196,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     } else {
       application.invokeLater(runnable, myQueue.getModalityState());
     }
-  }
-
-  public void dispose() {
-    if (myDisposed) return;
-    myDisposed = true;
-
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    assert ourCurrentCompletion == this || ourCurrentCompletion == null;
-    ourCurrentCompletion = null;
   }
 
   public boolean fillInCommonPrefix() {

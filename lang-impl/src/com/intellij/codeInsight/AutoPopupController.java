@@ -1,7 +1,7 @@
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.DotAutoLookupHandler;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.DotAutoLookupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -17,8 +17,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +87,7 @@ public class AutoPopupController implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     final CompletionProgressIndicator currentCompletion = CompletionProgressIndicator.getCurrentCompletion();
     if (currentCompletion != null) {
-      currentCompletion.cancel();
+      currentCompletion.closeAndFinish();
     }
 
     // invoke later prevents cancelling request by keyPressed from the same action

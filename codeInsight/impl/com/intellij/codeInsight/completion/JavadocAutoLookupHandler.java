@@ -17,11 +17,11 @@ public class JavadocAutoLookupHandler extends CodeCompletionHandler{
     return false;
   }
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters,
+  protected void handleEmptyLookup(CompletionContext context, final CompletionParameters parameters,
                                    final CompletionProgressIndicator indicator){
   }
 
-  protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final String dummyIdentifier,
+  protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final FileCopyPatcher dummyIdentifier,
                             final Editor editor, final int invocationCount) {
     PsiFile file = context.file;
     int offset = context.getStartOffset();

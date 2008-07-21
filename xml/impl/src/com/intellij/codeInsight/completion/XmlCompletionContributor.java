@@ -97,7 +97,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     final int offset = context.getStartOffset();
     final XmlAttributeValue attributeValue = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, XmlAttributeValue.class, true);
     if (attributeValue != null && offset == attributeValue.getTextRange().getStartOffset()) {
-      context.setDummyIdentifier("");
+      context.setFileCopyPatcher(new DummyIdentifierPatcher(""));
     }
   }
 }

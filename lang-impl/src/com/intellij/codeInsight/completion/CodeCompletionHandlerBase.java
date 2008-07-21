@@ -4,11 +4,12 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -17,8 +18,8 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +31,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -42,6 +46,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +58,6 @@ import java.util.LinkedHashSet;
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
-  private static final Key COMPLETION_EMPTY_MESSAGE = Key.create("COMPLETION_EMPTY_MESSAGE");
 
   protected CodeCompletionHandlerBase(final CompletionType completionType) {
     myCompletionType = completionType;
@@ -79,7 +83,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     CompletionProgressIndicator indicator = CompletionProgressIndicator.getCurrentCompletion();
     if (indicator != null) {
-      if (!indicator.isCanceled() && indicator.getHandler().getClass().equals(getClass())) {
+      if (indicator.getHandler().getClass().equals(getClass())) {
         if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix())) {
           return;
         }
@@ -88,13 +92,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
       }
       indicator.closeAndFinish();
-    } else {
-      for (final LightweightHint hint : HintManager.getInstance().getAllHints()) {
-        indicator = (CompletionProgressIndicator)hint.getComponent().getClientProperty(COMPLETION_EMPTY_MESSAGE);
-        if (indicator != null && indicator.getHandler().getClass().equals(getClass())) {
-          time++;
-        }
-      }
     }
     HintManager.getInstance().hideAllHints();
 
@@ -129,16 +126,16 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final int offset2 = initializationContext.getSelectionEndOffset();
     final CompletionContext context = new CompletionContext(project, editor, file, initializationContext.getOffsetMap());
 
-    doComplete(offset1, offset2, context, initializationContext.getDummyIdentifier(), editor, time);
+    doComplete(offset1, offset2, context, initializationContext.getFileCopyPatcher(), editor, time);
   }
 
   protected void doComplete(final int offset1,
                             final int offset2,
                             final CompletionContext context,
-                            final String dummyIdentifier, final Editor editor, final int invocationCount) {
+                            final FileCopyPatcher patcher, final Editor editor, final int invocationCount) {
     final Pair<CompletionContext, PsiElement> insertedInfo = new WriteCommandAction<Pair<CompletionContext, PsiElement>>(context.project) {
       protected void run(Result<Pair<CompletionContext, PsiElement>> result) throws Throwable {
-        result.setResult(insertDummyIdentifier(context, dummyIdentifier));
+        result.setResult(insertDummyIdentifier(context, patcher));
       }
     }.execute().getResultObject();
 
@@ -232,8 +229,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  protected void computingFinished(final LookupData data, final CompletionProgressIndicator indicator, final CompletionContext context,
+  private void computingFinished(final LookupData data, final CompletionProgressIndicator indicator, final CompletionContext context,
                                    final CompletionParameters parameters, final int offset1, final int offset2) {
+    indicator.getLookup().setCalculating(false);
+
     if (data == null) {
       indicator.closeAndFinish();
       return;
@@ -243,14 +242,14 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (items.length == 0) {
       indicator.closeAndFinish();
       HintManager.getInstance().hideAllHints();
-      handleEmptyLookup(context, data, parameters, indicator);
+      handleEmptyLookup(context, parameters, indicator);
       return;
     }
 
-    indicator.getLookup().setCalculating(false);
+
     if (shouldAutoComplete(items, context)) {
-      LookupItem item = items[0];
       indicator.closeAndFinish();
+      LookupItem item = items[0];
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
       handleSingleItem(offset2, context, data, item.getLookupString(), item);
     } else {
@@ -324,18 +323,17 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                         final LookupData data) {
     final int caretOffset = context.editor.getCaretModel().getOffset();
 
-    final int previousSelectionEndOffset = context.getSelectionEndOffset();
-
     context.setSelectionEndOffset(caretOffset);
+    final int idEnd = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
     final int identifierEndOffset =
-        CompletionUtil.isOverwrite(item, completionChar) && previousSelectionEndOffset ==
-                                                            context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
-                                                                                                                                                    caretOffset:Math.max(caretOffset, context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+        CompletionUtil.isOverwrite(item, completionChar) && context.getSelectionEndOffset() == idEnd ?
+        caretOffset :
+        Math.max(caretOffset, idEnd);
     context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset);
     lookupItemSelected(context, item, completionChar, signatureSelected, data.items);
   }
 
-  private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final String dummyIdentifier) {
+  private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final FileCopyPatcher patcher) {
     PsiFile oldFileCopy = createFileCopy(context.file);
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(oldFileCopy);
     Project project = hostFile.getProject();
@@ -345,8 +343,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         context.getStartOffset(), 0)).getStartOffset();
 
     Document document = oldFileCopy.getViewProvider().getDocument();
-
-    document.replaceString(context.getStartOffset(), context.getSelectionEndOffset(), dummyIdentifier);
+    assert document != null;
+    patcher.patchFileCopy(oldFileCopy, document, context.getOffsetMap());
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (fileCopy == null) {
@@ -400,20 +398,23 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected abstract boolean isAutocompleteCommonPrefixOnInvocation();
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters,
-                                   final CompletionProgressIndicator indicator) {
+  protected void handleEmptyLookup(CompletionContext context, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     Project project = context.project;
     Editor editor = context.editor;
 
-    LOG.assertTrue(lookupData.items.length == 0);
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
       final String text = contributor.handleEmptyLookup(parameters, editor);
       if (StringUtil.isNotEmpty(text)) {
+        final EditorHintListener listener = new EditorHintListener() {
+          public void hintShown(final Project project, final LightweightHint hint, final int flags) {
+            indicator.liveAfterDeath(hint);
+          }
+        };
+        final MessageBusConnection connection = context.project.getMessageBus().connect();
+        connection.subscribe(EditorHintListener.TOPIC, listener);
         HintManager.getInstance().showErrorHint(editor, text);
-        for (final LightweightHint hint : HintManager.getInstance().getAllHints()) {
-          hint.getComponent().putClientProperty(COMPLETION_EMPTY_MESSAGE, indicator);
-        }
+        connection.disconnect();
         break;
       }
     }
