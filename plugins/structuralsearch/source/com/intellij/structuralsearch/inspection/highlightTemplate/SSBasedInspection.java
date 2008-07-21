@@ -35,6 +35,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.codeInsight.CodeInsightUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +112,10 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
       }
 
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        replacer.replace(replacementInfo);
+        PsiElement element = descriptor.getPsiElement();
+        if (element != null && CodeInsightUtil.preparePsiElementsForWrite(element)) {
+          replacer.replace(replacementInfo);
+        }
       }
 
       @NotNull
