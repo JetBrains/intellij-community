@@ -14,10 +14,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collection;
+import java.util.Set;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -48,8 +49,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     context.setHighlightedElement(highlightedElement);
 
     final Language language = psiElement.getLanguage();
-    ParameterInfoHandler[] handlers = getHandlers(language);
-    if (handlers == null) handlers = getHandlers(file.getViewProvider().getBaseLanguage());
+    ParameterInfoHandler[] handlers = getHandlers(language, file.getViewProvider().getBaseLanguage());
     if (handlers == null) handlers = new ParameterInfoHandler[0];
 
     Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
@@ -96,12 +96,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public static ParameterInfoHandler[] getHandlers(final Language language) {
-    final Collection<ParameterInfoHandler> infoHandlersFromLanguage = LanguageParameterInfo.INSTANCE.allForLanguage(language);
-    if (!infoHandlersFromLanguage.isEmpty()) {
-      return infoHandlersFromLanguage.toArray(new ParameterInfoHandler[infoHandlersFromLanguage.size()]);
+  public static ParameterInfoHandler[] getHandlers(final Language... languages) {
+    Set<ParameterInfoHandler> handlers = new THashSet<ParameterInfoHandler>();
+    for (final Language language : languages) {
+      handlers.addAll(LanguageParameterInfo.INSTANCE.allForLanguage(language));
     }
-    return null;
+    if (handlers.isEmpty()) return null;
+    return handlers.toArray(new ParameterInfoHandler[handlers.size()]);
   }
 
   interface BestLocationPointProvider {
