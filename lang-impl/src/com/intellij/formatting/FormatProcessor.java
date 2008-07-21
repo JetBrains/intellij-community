@@ -50,7 +50,6 @@ class FormatProcessor {
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private WhiteSpace myLastWhiteSpace;
   private boolean myDisposed;
-  private final int myInterestingOffset;
   private CodeStyleSettings.IndentOptions myJavaIndentOptions;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
@@ -77,7 +76,6 @@ class FormatProcessor {
                                                                       processHeadingWhitespace,
                                                                       interestingOffset);
     myInfos = builder.getBlockToInfoMap();
-    myInterestingOffset = interestingOffset;
     myRootBlockWrapper = builder.getRootBlockWrapper();
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myLastTokenBlock = builder.getLastTokenBlock();
@@ -443,6 +441,11 @@ class FormatProcessor {
     AbstractBlockWrapper current = myCurrentBlock.getParent();
     while (current != null) {
       if (current.getStartOffset() != myCurrentBlock.getStartOffset() && current.getWhiteSpace().containsLineFeeds()) return current;
+      if (current.getParent() != null) {
+        AbstractBlockWrapper prevIndented = current.getParent().getPrevIndentedSibling(current);
+        if (prevIndented != null) return prevIndented;
+
+      }
       current = current.getParent();
     }
     return null;

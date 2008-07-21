@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public class AbstractBlockWrapper {
   protected WhiteSpace myWhiteSpace;
-  protected AbstractBlockWrapper myParent;
+  protected CompositeBlockWrapper myParent;
   protected int myStart;
   protected int myEnd;
   protected int myFlags;
@@ -27,7 +27,7 @@ public class AbstractBlockWrapper {
   private AlignmentImpl myAlignment;
   private WrapImpl myWrap;
 
-  public AbstractBlockWrapper(final Block block, final WhiteSpace whiteSpace, final AbstractBlockWrapper parent, final TextRange textRange) {
+  public AbstractBlockWrapper(final Block block, final WhiteSpace whiteSpace, final CompositeBlockWrapper parent, final TextRange textRange) {
     myWhiteSpace = whiteSpace;
     myParent = parent;
     myStart = textRange.getStartOffset();
@@ -79,7 +79,7 @@ public class AbstractBlockWrapper {
     return myIndent;
   }
 
-  public AbstractBlockWrapper getParent() {
+  public CompositeBlockWrapper getParent() {
     return myParent;
   }
 

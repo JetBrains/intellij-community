@@ -58,7 +58,7 @@ class InitialInfoBuilder {
 
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
-                                         final AbstractBlockWrapper parent,
+                                         final CompositeBlockWrapper parent,
                                          WrapImpl currentWrapParent,
                                          final TextRange textRange,
                                          final Block parentBlock,
@@ -122,7 +122,7 @@ class InitialInfoBuilder {
   }
 
   private AbstractBlockWrapper processCompositeBlock(final Block rootBlock,
-                                                     final AbstractBlockWrapper parent,
+                                                     final CompositeBlockWrapper parent,
                                                      final TextRange textRange,
                                                      final int index,
                                                      final List<Block> subBlocks,
@@ -186,7 +186,7 @@ class InitialInfoBuilder {
   }
 
   private AbstractBlockWrapper processSimpleBlock(final Block rootBlock,
-                                                  final AbstractBlockWrapper parent,
+                                                  final CompositeBlockWrapper parent,
                                                   final boolean readOnly,
                                                   final TextRange textRange,
                                                   final int index,
