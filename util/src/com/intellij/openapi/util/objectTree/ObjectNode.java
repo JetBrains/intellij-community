@@ -86,12 +86,11 @@ public final class ObjectNode<T> {
       myChildren = new LinkedHashSet<ObjectNode<T>>();
     }
   }
-
+  
   public boolean execute(boolean disposeTree, ObjectTreeAction<T> action) {
     if (myTree.getNodesInExecution().contains(this)) {
       return false;
     }
-
 
     myTree.getNodesInExecution().add(this);
 

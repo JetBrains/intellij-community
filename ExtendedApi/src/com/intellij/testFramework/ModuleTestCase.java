@@ -118,7 +118,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected void readJdomExternalizables(ModuleImpl module) {
-    final ProjectImpl project = ((ProjectImpl)myProject);
+    final ProjectImpl project = (ProjectImpl)myProject;
     project.setOptimiseTestLoadSpeed(false);
     final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
     module.getStateStore().initComponent(moduleRootManager);

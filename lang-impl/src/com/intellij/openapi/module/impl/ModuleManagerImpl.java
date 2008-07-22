@@ -26,8 +26,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.PomManager;
-import com.intellij.pom.PomModel;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -64,7 +62,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private final Project myProject;
   private ModuleModelImpl myModuleModel = new ModuleModelImpl();
-  private PomModel myPomModel;
 
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
@@ -88,7 +85,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myCachedSortedModules = null;
   }
 
-  public ModuleManagerImpl(Project project, PomModel pomModel, MessageBus bus) {
+  public ModuleManagerImpl(Project project, MessageBus bus) {
     myProject = project;
     myMessageBus = bus;
     myConnection = bus.connect();
@@ -106,7 +103,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
     });
 
-    myPomModel = pomModel;
   }
 
 
@@ -206,12 +202,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             catch (final IOException e) {
               errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath));
             }
-            catch (JDOMException e) {
-              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath));
-            }
-            catch (InvalidDataException e) {
-              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath));
-            }
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
               errors.add(new ModuleLoadingErrorDescription(moduleWithNameAlreadyExists.getMessage(), modulePath));
             }
@@ -283,14 +273,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
 
-  private static abstract class SaveItem {
+  private abstract static class SaveItem {
 
     protected abstract String getModuleName();
     protected abstract String getGroupPathString();
     protected abstract String getModuleFilePath();
-    public boolean isDefaultModule() {
-      return false;
-    }
 
     public final void writeExternal(Element parentElement) {
       Element moduleElement = new Element(ELEMENT_MODULE);
@@ -361,9 +348,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   public void writeExternal(Element element) {
     final Element modules = new Element(ELEMENT_MODULES);
-    final Collection<Module> collection = getModulesToWrite();
+    final Module[] collection = getModules();
 
-    ArrayList<SaveItem> sorted = new ArrayList<SaveItem>(collection.size() + myFailedModulePaths.size());
+    ArrayList<SaveItem> sorted = new ArrayList<SaveItem>(collection.length + myFailedModulePaths.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
     }
@@ -376,24 +363,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
     });
     for (SaveItem saveItem : sorted) {
-      if (!saveItem.isDefaultModule()) {
-        saveItem.writeExternal(modules);
-      }
+      saveItem.writeExternal(modules);
     }
 
     element.addContent(modules);
-  }
-
-  private Collection<Module> getModulesToWrite() {
-    Collection<Module> actual = new ArrayList<Module>();
-    actual.addAll(Arrays.asList(getModules()));
-
-    for (String cancelledPath : myModuleModel.myPathToCancelledModule.keySet()) {
-      if (!myModuleModel.myPathToModule.containsKey(cancelledPath)) {
-        actual.add(myModuleModel.myPathToCancelledModule.get(cancelledPath));
-      }
-    }
-    return actual;
   }
 
   private void fireModuleAdded(Module module) {
@@ -551,7 +524,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   class ModuleModelImpl implements ModifiableModuleModel {
     private Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
-    private Map<String, Module> myPathToCancelledModule = new HashMap<String, Module>();
 
     private List<Module> myModulesToDispose = new ArrayList<Module>();
     private Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
@@ -571,7 +543,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         myModuleGroupPath.putAll(that.myModuleGroupPath);
       }
       myIsWritable = true;
-      myPomModel = PomManager.getModel(myProject);
     }
 
     private void assertWritable() {
@@ -636,11 +607,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType, @Nullable Map<String, String> options) {
       assertWritable();
-      try {
-        filePath = FileUtil.resolveShortWindowsName(filePath);
-      }
-      catch (IOException e) {
-      }
+      filePath = resolveShortWindowsName(filePath);
 
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
@@ -652,9 +619,18 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           }
         }
         module.loadModuleComponents();
-        initModule(module, false);
+        initModule(module);
       }
       return module;
+    }
+
+    private String resolveShortWindowsName(String filePath) {
+      try {
+        filePath = FileUtil.resolveShortWindowsName(filePath);
+      }
+      catch (IOException ignored) {
+      }
+      return filePath;
     }
 
     private ModuleImpl getModuleByFilePath(String filePath) {
@@ -675,23 +651,15 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       try {
         return loadModuleInternal(filePath);
       }
-      catch (JDOMException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
-      }
       catch (StateStorage.StateStorageException e) {
         throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
       }
     }
 
     private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists,
-                                                              JDOMException,
-                                                              IOException, InvalidDataException, StateStorage.StateStorageException {
+                                                              IOException, StateStorage.StateStorageException {
       final File moduleFile = new File(filePath);
-      try {
-        filePath = FileUtil.resolveShortWindowsName(filePath);
-      }
-      catch (IOException e) {
-      }
+      filePath = resolveShortWindowsName(filePath);
 
       final String name = moduleFile.getName();
       if (name.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
@@ -710,12 +678,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         module = new ModuleImpl(filePath, myProject);
         module.getStateStore().load();
         module.loadModuleComponents();
-        initModule(module, true);
+        initModule(module);
       }
       return module;
     }
 
-    private void initModule(ModuleImpl module, boolean saveToCancelled) {
+    private void initModule(ModuleImpl module) {
       String path = module.getModuleFilePath();
       myPathToModule.put(path, module);
       module.init();
@@ -782,7 +750,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public void commitWithRunnable(Runnable runnable) {
-      ModuleManagerImpl.this.commitModel(this, runnable);
+      commitModel(this, runnable);
       myIsWritable = false;
       clearRenamingStuff();
     }
@@ -795,7 +763,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final Collection<Module> list = ModuleManagerImpl.this.myModuleModel.myPathToModule.values();
+      final Collection<Module> list = myModuleModel.myPathToModule.values();
       final Collection<Module> thisModules = myPathToModule.values();
       for (Module thisModule1 : thisModules) {
         ModuleImpl thisModule = (ModuleImpl)thisModule1;
@@ -816,14 +784,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         return false;
       }
       Set<Module> thisModules = new HashSet<Module>(myPathToModule.values());
-      Set<Module> thatModules = new HashSet<Module>(ModuleManagerImpl.this.myModuleModel.myPathToModule.values());
-      return !thisModules.equals(thatModules) || !Comparing.equal(ModuleManagerImpl.this.myModuleModel.myModuleGroupPath, myModuleGroupPath);
+      Set<Module> thatModules = new HashSet<Module>(myModuleModel.myPathToModule.values());
+      return !thisModules.equals(thatModules) || !Comparing.equal(myModuleModel.myModuleGroupPath, myModuleGroupPath);
     }
 
     private void disposeModel() {
-      final Collection collection = myPathToModule.values();
-      for (final Object aCollection : collection) {
-        ModuleImpl module = (ModuleImpl)aCollection;
+      for (final Module module : myPathToModule.values()) {
         Disposer.dispose(module);
       }
       myPathToModule.clear();

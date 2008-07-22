@@ -119,10 +119,7 @@ public class RefreshSessionImpl extends RefreshSession {
 
   private List<VFileEvent> mergeEventsAndReset() {
     LinkedHashSet<VFileEvent> mergedEvents = new LinkedHashSet<VFileEvent>(myEvents);
-    final List<VFileEvent> events = new ArrayList<VFileEvent>();
-    for (VFileEvent event : mergedEvents) {
-      events.add(event);
-    }
+    List<VFileEvent> events = new ArrayList<VFileEvent>(mergedEvents);
     myEvents = new ArrayList<VFileEvent>();
     return events;
   }

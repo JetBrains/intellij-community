@@ -638,4 +638,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
     }
   }
+
+  public final int hashCode() {
+    return super.hashCode();
+  }
+
+  public final boolean equals(Object obj) {
+    return super.equals(obj);
+  }
 }

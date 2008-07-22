@@ -266,8 +266,7 @@ public class LibraryTableEditor implements Disposable {
   public void commitChanges() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (Library library : myLibraryToEditorMap.keySet()) {
-          final LibraryEditor libraryEditor = myLibraryToEditorMap.get(library);
+        for (LibraryEditor libraryEditor : myLibraryToEditorMap.values()) {
           libraryEditor.commit();
         }
         myTableModifiableModel.commit();
@@ -413,6 +412,7 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public void dispose() {
+
   }
 
   private class AddLibraryAction implements ActionListener {

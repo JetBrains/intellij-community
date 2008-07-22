@@ -35,7 +35,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
             result.run();
           }
         });
-      } else {
+      }
+      else {
         SwingUtilities.invokeAndWait(new Runnable() {
           public void run() {
             getApplication().runWriteAction(new Runnable() {
@@ -46,14 +47,15 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
           }
         });
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       if (isSilentExecution()) {
         result.setThrowable(e);
-      } else {
+      }
+      else {
         throw new Error(e);
       }
     }
     return result;
   }
-
 }

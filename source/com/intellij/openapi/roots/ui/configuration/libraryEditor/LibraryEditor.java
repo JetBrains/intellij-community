@@ -68,6 +68,7 @@ public class LibraryEditor {
     }
   }
 
+
   public Library.ModifiableModel getModel() {
     if (myModel == null) {
       myModel = myLibrary.getModifiableModel();

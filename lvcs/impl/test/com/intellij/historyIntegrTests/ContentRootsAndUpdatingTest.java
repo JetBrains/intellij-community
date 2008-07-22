@@ -126,8 +126,6 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
 
     VirtualFile parent = findFile(parentPath);
     parent.createChildDirectory(null, name); // shouldn't throw
-
-    assertTrue(hasVcsEntry(path));
   }
 
   public void testUpdateAndRefreshAtTheSameTime() throws Exception {

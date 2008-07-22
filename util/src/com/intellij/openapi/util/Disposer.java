@@ -19,13 +19,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 
 @SuppressWarnings({"SSBasedInspection"})
 public class Disposer {
@@ -140,5 +138,16 @@ public class Disposer {
 
   public static boolean isDebugMode() {
     return ourDebugMode;
+  }
+
+  public static Collection<Disposable> getChildren(Disposable parent) {
+    ObjectNode<Disposable> node = ourTree.getObject2NodeMap().get(parent);
+    Collection<ObjectNode<Disposable>> children = node ==null ? null : node.getChildren();
+    if (children == null) return Collections.emptyList();
+    ArrayList<Disposable> res = new ArrayList<Disposable>(children.size());
+    for (ObjectNode<Disposable> child : children) {
+      res.add(child.getObject());
+    }
+    return res;
   }
 }

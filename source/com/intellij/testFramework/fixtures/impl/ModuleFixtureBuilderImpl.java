@@ -20,12 +20,10 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author mike
@@ -99,7 +97,6 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   }
 
   protected void initModule(Module module) {
-    final Set<String> sourcesLeft = new THashSet<String>();
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
@@ -107,7 +104,6 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
       assert virtualFile != null : "cannot find content root: " + contentRoot;
       final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
-
 
       for (String sourceRoot: mySourceRoots) {
         String s = contentRoot + "/" + sourceRoot;

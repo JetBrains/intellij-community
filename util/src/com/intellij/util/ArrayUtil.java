@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * Author: msk
@@ -299,7 +300,27 @@ public class ArrayUtil {
         return false;
       }
     }
+    return true;
+  }
 
+  public static <T> boolean equals(T[] a1, T[] a2, Comparator<? super T> comparator) {
+    if (a1 == a2) {
+      return true;
+    }
+    if (a1 == null || a2 == null) {
+      return false;
+    }
+
+    int length = a2.length;
+    if (a1.length != length) {
+      return false;
+    }
+
+    for (int i = 0; i < length; i++) {
+      if (comparator.compare(a1[i], a2[i]) != 0) {
+        return false;
+      }
+    }
     return true;
   }
 

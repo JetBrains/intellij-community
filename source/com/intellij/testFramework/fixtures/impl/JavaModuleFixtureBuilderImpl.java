@@ -82,8 +82,6 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   protected void initModule(final Module module) {
     super.initModule(module);
 
-
-
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final LibraryTable libraryTable = model.getModuleLibraryTable();
 
@@ -108,7 +106,6 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
         }
       }
       libraryModel.commit();
-      libraryCreated(library, module);
     }
 
     if (myJdk != null) {
@@ -129,6 +126,13 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
     model.commit();
+
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        Library library = ((LibraryOrderEntry)entry).getLibrary();
+        libraryCreated(library, module);
+      }
+    }
   }
 
   protected void libraryCreated(Library library, Module module) {}

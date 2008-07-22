@@ -22,6 +22,7 @@ public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
   public Module getModule() {
     if (myModule != null) return myModule;
     myModule = myBuilder.buildModule();
+    //disposeOnTearDown(myModule);
     return myModule;
   }
 

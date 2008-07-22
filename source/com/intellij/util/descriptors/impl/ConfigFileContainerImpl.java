@@ -90,6 +90,7 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
   }
 
   public void dispose() {
+    int i = 0;
   }
 
   public void addListener(final ConfigFileListener listener) {

@@ -301,11 +301,11 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return false;
   }
 
-  private ContentEntry[] getContentEntries(Module module) {
+  private static ContentEntry[] getContentEntries(Module module) {
     return ModuleRootManager.getInstance(module).getContentEntries();
   }
 
-  private OrderEntry[] getOrderEntries(Module module) {
+  private static OrderEntry[] getOrderEntries(Module module) {
     return ModuleRootManager.getInstance(module).getOrderEntries();
   }
 
@@ -526,7 +526,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         }
       }
       else if (orderEntry instanceof ModuleSourceOrderEntry) {
-        List<OrderEntry> oneEntryList = Arrays.asList(new OrderEntry[]{orderEntry});
+        List<OrderEntry> oneEntryList = Arrays.asList(orderEntry);
         Module entryModule = orderEntry.getOwnerModule();
 
         VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
@@ -565,7 +565,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private void addEntryToMap(final VirtualFile vRoot, final OrderEntry entry, final Map<VirtualFile, List<OrderEntry>> map) {
+  private static void addEntryToMap(final VirtualFile vRoot, final OrderEntry entry, final Map<VirtualFile, List<OrderEntry>> map) {
     List<OrderEntry> list = map.get(vRoot);
     if (list == null) {
       list = new ArrayList<OrderEntry>();
@@ -616,7 +616,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  private boolean isIgnored(VirtualFile f) {
+  private static boolean isIgnored(VirtualFile f) {
     return FileTypeManager.getInstance().isFileIgnored(f.getName());
   }
 
