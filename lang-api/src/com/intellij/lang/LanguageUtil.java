@@ -17,6 +17,11 @@
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public final class LanguageUtil {
   public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(ASTNode left, ASTNode right, Lexer lexer, int lexerState) {
@@ -29,5 +34,15 @@ public final class LanguageUtil {
     if(lexer.getTokenEnd() != textStr.length()) return ParserDefinition.SpaceRequirements.MUST;
     if(lexer.getTokenType() != right.getElementType()) return ParserDefinition.SpaceRequirements.MUST;
     return ParserDefinition.SpaceRequirements.MAY;
+  }
+
+  @NotNull
+  public static Language[] getLanguageDialects(final Language base) {
+    final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<Language>() {
+      public boolean value(final Language language) {
+        return language.getBaseLanguage() == base;
+      }
+    });
+    return list.toArray(new Language[list.size()]);
   }
 }

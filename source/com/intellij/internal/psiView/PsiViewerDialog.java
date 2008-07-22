@@ -8,6 +8,7 @@ package com.intellij.internal.psiView;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -213,14 +214,8 @@ public class PsiViewerDialog extends DialogWrapper {
         final FileType type = myFileTypes[i];
         if (type instanceof LanguageFileType) {
           final Language baseLang = ((LanguageFileType)type).getLanguage();
-          final HashSet<Language> result = new HashSet<Language>();
-          result.add(null);
-          for (Language language : Language.getRegisteredLanguages()) {
-            if (language.getBaseLanguage() == baseLang) {
-              result.add(language);
-            }
-          }
-          model.setAll(result);
+          model.setAll(LanguageUtil.getLanguageDialects(baseLang));
+          model.add(null);
         }
         break;
       }
