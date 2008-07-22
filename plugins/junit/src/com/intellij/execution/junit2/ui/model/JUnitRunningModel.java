@@ -17,18 +17,19 @@
 package com.intellij.execution.junit2.ui.model;
 
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.junit2.TestProgress;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.TestingStatus;
 import com.intellij.execution.junit2.segments.DispatchListener;
 import com.intellij.execution.junit2.segments.PacketExtractorBase;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.junit2.ui.Animator;
 import com.intellij.execution.junit2.ui.TestProxyClient;
-import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestTreeView;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -42,8 +43,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class JUnitRunningModel implements TestFrameworkRunningModel {
   private final TestProgress myProgress;
@@ -68,6 +69,13 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
 
     myProgress = new TestProgress(this);
     myStatus.setListener(myNotifier);
+
+    Disposer.register(this, myTreeListener);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        myNotifier.onDispose(JUnitRunningModel.this);
+      }
+    });
   }
 
   public TestTreeBuilder getTreeBuilder() {
@@ -78,6 +86,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
 
   public void attachToTree(final TestTreeView treeView) {
     myTreeBuilder = new TestTreeBuilder(treeView, this, myProperties);
+    Disposer.register(this, myTreeBuilder);
     myAnimator.setModel(this);
     myTreeView = treeView;
     selectTest(getRoot());
@@ -85,14 +94,6 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   }
 
   public void dispose() {
-    myTreeListener.dispose();
-    Disposer.dispose(myTreeBuilder);
-    myNotifier.onDispose(this);
-    if (myPacketExtractor != null)
-      myPacketExtractor.setDispatchListener(DispatchListener.DEAF);
-    for (ModelListener listener : myListeners) {
-      listener.onDispose();
-    }
   }
 
   public TestTreeView getTreeView() {
@@ -147,8 +148,13 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     myTreeBuilder.updateFromRoot();
   }
 
-  public void addListener(ModelListener l) {
+  public void addListener(final ModelListener l) {
     myListeners.add(l);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        l.onDispose();
+      }
+    });
   }
 
   public boolean isRunning() {
@@ -189,13 +195,19 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   public void attachTo(final PacketExtractorBase packetExtractor) {
     myPacketExtractor = packetExtractor;
     myPacketExtractor.setDispatchListener(myNotifier);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        myPacketExtractor.setDispatchListener(DispatchListener.DEAF);
+      }
+    });
   }
 
   public JUnitConfiguration getConfiguration() {
     return myProperties.getConfiguration();
   }
 
-  private class MyTreeSelectionListener extends FocusAdapter implements TreeSelectionListener {
+  private class MyTreeSelectionListener extends FocusAdapter implements TreeSelectionListener, Disposable {
+
     public void valueChanged(final TreeSelectionEvent e) {
       final TestProxy test = TestProxyClient.from(e.getPath());
       if (myTreeView.isFocusOwner())
