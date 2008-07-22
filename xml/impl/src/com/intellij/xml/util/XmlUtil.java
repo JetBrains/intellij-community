@@ -387,11 +387,16 @@ public class XmlUtil {
 
         processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
           public boolean execute(final PsiElement element) {
-            if (element instanceof XmlTag &&
-                ((XmlTag)element).getLocalName().equals(XSD_SIMPLE_CONTENT_TAG) &&
-                ((XmlTag)element).getNamespace().equals(XML_SCHEMA_URI)) {
-              simpleContent[0] = (XmlTag)element;
-              return false;
+            if (element instanceof XmlTag) {
+              final XmlTag tag = (XmlTag)element;
+              final @NonNls String s = ((XmlTag)element).getLocalName();
+
+              if((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
+                  s.equals("restriction") && "string".equals(findLocalNameByQualifiedName(tag.getAttributeValue("base")))
+                 ) && tag.getNamespace().equals(XML_SCHEMA_URI)) {
+                simpleContent[0] = tag;
+                return false;
+              }
             }
 
             return true;

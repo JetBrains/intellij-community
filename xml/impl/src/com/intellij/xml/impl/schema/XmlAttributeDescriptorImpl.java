@@ -181,9 +181,10 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
 
     boolean attributeShouldBeQualified = false;
 
-    if (targetNs != null && !contextTag.getNamespace().equals(targetNs)) {
+    String contextNs = contextTag.getNamespace();
+    if (targetNs != null && !contextNs.equals(targetNs)) {
       final XmlElementDescriptor xmlElementDescriptor = contextTag.getDescriptor();
-      
+
       if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
         final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
         final TypeDescriptor type = elementDescriptor.getType();
@@ -191,6 +192,10 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
         if (type instanceof ComplexTypeDescriptor) {
           final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
           attributeShouldBeQualified = typeDescriptor.canContainAttribute(name, targetNs) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
+        }
+
+        if (!attributeShouldBeQualified && contextNs.length() == 0 && targetNs.length() > 0) {
+          attributeShouldBeQualified = !targetNs.equals(elementDescriptor.getNamespace());
         }
       }
     }
