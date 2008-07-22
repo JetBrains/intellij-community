@@ -7,6 +7,8 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -117,33 +119,39 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
   }
 
-  private static boolean replaceDuplicate(final Project project, final List<Match> duplicates, final PsiMethod method) {
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null && progressIndicator.isCanceled()) return false;
+  private static void replaceDuplicate(final Project project, final List<Match> duplicates, final PsiMethod method) {
+    LocalHistoryAction a = LocalHistory.startAction(project, REFACTORING_NAME);
+    try {
+      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (progressIndicator != null && progressIndicator.isCanceled()) return;
 
-    final Runnable replaceRunnable = new Runnable() {
-      public void run() {
-        final int duplicatesNo = duplicates.size();
-        WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
-              public void run() {
-                DuplicatesImpl.invoke(project, new MethodDuplicatesMatchProvider(method, duplicates));
-              }
-            });
-          }
-        }, REFACTORING_NAME, null);
+      final Runnable replaceRunnable = new Runnable() {
+        public void run() {
+          final int duplicatesNo = duplicates.size();
+          WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+            public void run() {
+              PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
+                public void run() {
+                  DuplicatesImpl.invoke(project, new MethodDuplicatesMatchProvider(method, duplicates));
+                }
+              });
+            }
+          }, REFACTORING_NAME, REFACTORING_NAME);
 
-        WindowManager.getInstance().getStatusBar(project).setInfo("");
+          WindowManager.getInstance().getStatusBar(project).setInfo("");
+        }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        replaceRunnable.run();
       }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      replaceRunnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(replaceRunnable, ModalityState.NON_MODAL);
+      else {
+        ApplicationManager.getApplication().invokeLater(replaceRunnable, ModalityState.NON_MODAL);
+      }
     }
-    return true;
+    finally {
+      a.finish();
+    }
   }
 
   public static List<Match> hasDuplicates(final PsiFile file, final PsiMethod method) {
