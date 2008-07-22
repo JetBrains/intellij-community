@@ -8,8 +8,8 @@ package com.intellij.compiler;
  * @author Eugene Zhuravlev
  *         Date: Mar 21, 2005
  */
-public class PackageInfoTestForMake extends Jdk15CompilerTestCase{
-public PackageInfoTestForMake() {
+public class PackageInfoForMakeTest extends Jdk15CompilerTestCase{
+public PackageInfoForMakeTest() {
     super("packageInfo");
   }
 
