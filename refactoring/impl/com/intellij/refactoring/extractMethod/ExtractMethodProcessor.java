@@ -1037,7 +1037,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void declareNecessaryVariablesInsideBody(int start, int end, PsiCodeBlock body) throws IncorrectOperationException {
-    PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
+    List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
     for (PsiVariable variable : usedVariables) {
       boolean toDeclare = !isDeclaredInside(variable) && !contains(myInputVariables, variable);
       if (toDeclare) {
@@ -1049,7 +1049,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void declareNecessaryVariablesAfterCall(int end, PsiVariable outputVariable) throws IncorrectOperationException {
-    PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
+    List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
     Collection<ControlFlowUtil.VariableInfo> reassigned = ControlFlowUtil.getInitializedTwice(myControlFlow, end, myControlFlow.getSize());
     for (PsiVariable variable : usedVariables) {
       boolean toDeclare = isDeclaredInside(variable) && !variable.equals(outputVariable);

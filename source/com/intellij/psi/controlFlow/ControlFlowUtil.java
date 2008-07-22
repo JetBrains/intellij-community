@@ -51,14 +51,14 @@ public class ControlFlowUtil {
     }
   }
 
-  public static PsiVariable[] getSSAVariables(ControlFlow flow) {
+  public static List<PsiVariable> getSSAVariables(ControlFlow flow) {
     return getSSAVariables(flow, 0, flow.getSize(), false);
   }
 
-  public static PsiVariable[] getSSAVariables(ControlFlow flow, int from, int to,
+  public static List<PsiVariable> getSSAVariables(ControlFlow flow, int from, int to,
                                               boolean reportVarsIfNonInitializingPathExists) {
     List<Instruction> instructions = flow.getInstructions();
-    PsiVariable[] writtenVariables = getWrittenVariables(flow, from, to, false);
+    Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, from, to, false);
     ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(1);
 
     variables:
@@ -125,7 +125,7 @@ public class ControlFlowUtil {
       result.add(psiVariable);
     }
 
-    return result.toArray(new PsiVariable[result.size()]);
+    return result;
   }
 
   private static boolean needVariableValueAt(final PsiVariable variable, final ControlFlow flow, final int offset) {
@@ -164,7 +164,7 @@ public class ControlFlowUtil {
     return visitor.getResult().booleanValue();
   }
 
-  public static PsiVariable[] getWrittenVariables(ControlFlow flow, int start, int end, final boolean ignoreNotReachingWrites) {
+  public static Collection<PsiVariable> getWrittenVariables(ControlFlow flow, int start, int end, final boolean ignoreNotReachingWrites) {
     Set<PsiVariable> set = new HashSet<PsiVariable>();
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
@@ -173,10 +173,10 @@ public class ControlFlowUtil {
         set.add(((WriteVariableInstruction)instruction).variable);
       }
     }
-    return set.toArray(new PsiVariable[set.size()]);
+    return set;
   }
 
-  public static PsiVariable[] getUsedVariables(ControlFlow flow, int start, int end) {
+  public static List<PsiVariable> getUsedVariables(ControlFlow flow, int start, int end) {
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
@@ -194,11 +194,11 @@ public class ControlFlowUtil {
         }
       }
     }
-    return array.toArray(new PsiVariable[array.size()]);
+    return array;
   }
 
   public static PsiVariable[] getInputVariables(ControlFlow flow, int start, int end) {
-    PsiVariable[] usedVariables = getUsedVariables(flow, start, end);
+    List<PsiVariable> usedVariables = getUsedVariables(flow, start, end);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     for (PsiVariable variable : usedVariables) {
       if (needVariableValueAt(variable, flow, start)) {
@@ -216,7 +216,7 @@ public class ControlFlowUtil {
   }
 
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
-    PsiVariable[] writtenVariables = getWrittenVariables(flow, start, end, true);
+    Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, true);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     for (PsiVariable variable : writtenVariables) {
       for (int exitPoint : exitPoints) {
@@ -472,7 +472,7 @@ public class ControlFlowUtil {
 
       if (instruction.isReturn) {
         final PsiElement element = myFlow.getElement(offset);
-        if ((element != null) && (element instanceof PsiReturnStatement)) {
+        if (element instanceof PsiReturnStatement) {
           final PsiReturnStatement returnStatement = (PsiReturnStatement) element;
           myAffectedReturns.add(returnStatement);
         }

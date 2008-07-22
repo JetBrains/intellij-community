@@ -97,7 +97,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     int start = flow.getStartOffset(body);
     int end = flow.getEndOffset(body);
 
-    final List<PsiVariable> writtenVariables = new ArrayList<PsiVariable>(Arrays.asList(ControlFlowUtil.getWrittenVariables(flow, start, end, false)));
+    final List<PsiVariable> writtenVariables = new ArrayList<PsiVariable>(ControlFlowUtil.getWrittenVariables(flow, start, end, false));
     
     final HashSet<PsiVariable> ssaVarsSet = new HashSet<PsiVariable>();
     body.accept(new JavaRecursiveElementVisitor() {
@@ -109,7 +109,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         }
         int from = flow.getStartOffset(anchor);
         int end = flow.getEndOffset(anchor);
-        PsiVariable[] ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
+        List<PsiVariable> ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
         HashSet<PsiElement> declared = getDeclaredVariables(block);
         for (PsiVariable psiVariable : ssa) {
           if (declared.contains(psiVariable)) {
@@ -124,7 +124,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         final PsiStatement body = statement.getBody();
         int from = flow.getStartOffset(body);
         int end = flow.getEndOffset(body);
-        if (!Arrays.asList(ControlFlowUtil.getWrittenVariables(flow, from, end, false)).contains(param)) {
+        if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(param)) {
           writtenVariables.remove(param);
           ssaVarsSet.add(param);
         }

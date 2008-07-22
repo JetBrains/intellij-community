@@ -5,10 +5,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
@@ -116,10 +113,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
           }
-          PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow);
-          PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
-          for (int j = 0; j < ssaVariables.length; j++) {
-            PsiVariable psiVariable = writtenVariables[j];
+          Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
+          for (PsiVariable psiVariable : writtenVariables) {
             if (allFields.contains(psiVariable)) {
               if (instanceInitializerInitializedFields.contains(psiVariable)) {
                 allFields.remove(psiVariable);
@@ -150,7 +145,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                 flow = ControlFlow.EMPTY;
               }
 
-              PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
+              Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
               for (PsiVariable psiVariable : writtenVariables) {
                 if (instanceInitializerInitializedFields.contains(psiVariable)) {
                   allFields.remove(psiVariable);
@@ -159,13 +154,13 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
               }
               List<PsiMethod> redirectedConstructors = HighlightControlFlowUtil.getChainedConstructors(psiMethod);
               if (redirectedConstructors == null || redirectedConstructors.isEmpty()) {
-                PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow);
-                ArrayList<PsiVariable> good = new ArrayList<PsiVariable>(Arrays.asList(ssaVariables));
+                List<PsiVariable> ssaVariables = ControlFlowUtil.getSSAVariables(flow);
+                ArrayList<PsiVariable> good = new ArrayList<PsiVariable>(ssaVariables);
                 good.addAll(instanceInitializerInitializedFields);
                 allFields.retainAll(good);
               }
               else {
-                allFields.removeAll(Arrays.asList(writtenVariables));
+                allFields.removeAll(writtenVariables);
               }
             }
           }
@@ -173,7 +168,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
 
         for (PsiField psiField : psiFields) {
           if ((!hasInitializers || !allFields.contains(psiField)) && psiField.getInitializer() == null) {
-            final RefFieldImpl refField = ((RefFieldImpl)myManager.getReference(psiField));
+            final RefFieldImpl refField = (RefFieldImpl)myManager.getReference(psiField);
             if (refField != null) {
               refField.setFlag(false, CAN_BE_FINAL_MASK);
             }

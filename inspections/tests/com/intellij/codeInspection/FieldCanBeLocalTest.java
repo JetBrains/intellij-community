@@ -7,10 +7,6 @@ import com.intellij.testFramework.InspectionTestCase;
  * @author ven
  */
 public class FieldCanBeLocalTest extends InspectionTestCase {
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
   private void doTest() throws Exception {
     doTest("fieldCanBeLocal/" + getTestName(true), new FieldCanBeLocalInspection());
   }
@@ -21,4 +17,5 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
 
   public void testConstructor () throws Exception { doTest(); }
   public void testStaticFinal() throws Exception { doTest(); }
+  public void testStaticAccess() throws Exception { doTest(); }
 }
