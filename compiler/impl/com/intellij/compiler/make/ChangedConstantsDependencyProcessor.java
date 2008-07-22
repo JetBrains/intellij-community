@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtil;
@@ -164,6 +165,15 @@ public class ChangedConstantsDependencyProcessor {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Marked dependent class " + myDependencyCache.resolve(qualifiedName) + "; reason: constants changed in " +
                       myDependencyCache.resolve(myQName));
+          }
+        }
+      }
+      else if (ownerClass == null) {
+        final PsiFile containingFile = usage.getContainingFile();
+        if (containingFile != null) {
+          final VirtualFile file = containingFile.getVirtualFile();
+          if (file != null) {
+            myDependencyCache.markFile(file);
           }
         }
       }

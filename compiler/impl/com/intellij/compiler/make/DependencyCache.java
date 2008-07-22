@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -30,9 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.rmi.Remote;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 public class DependencyCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyCache");
@@ -47,7 +46,8 @@ public class DependencyCache {
   private final TIntHashSet myClassesWithSourceRemoved = new TIntHashSet();
   private final TIntHashSet myPreviouslyRemoteClasses = new TIntHashSet(); // classes that were Remote, but became non-Remote for some reason
   private TIntHashSet myMarkedInfos = new TIntHashSet(); // classes to be recompiled
-
+  private Set<VirtualFile> myMarkedFiles = new HashSet<VirtualFile>();
+  
   private DependencyCacheNavigator myCacheNavigator;
   private SymbolTable mySymbolTable;
   private final String mySymbolTableFilePath;
@@ -419,9 +419,9 @@ public class DependencyCache {
   /**
    * @return qualified names of the classes that should be additionally recompiled
    */
-  public int[] findDependentClasses(CompileContext context, Project project, Set successfullyCompiled) throws CacheCorruptedException {
+  public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set successfullyCompiled) throws CacheCorruptedException {
     markDependencies(context, project, successfullyCompiled);
-    return myMarkedInfos.toArray();
+    return new Pair<int[], Set<VirtualFile>>(myMarkedInfos.toArray(), Collections.unmodifiableSet(myMarkedFiles));
   }
 
   private void markDependencies(CompileContext context, Project project, final Set successfullyCompiled) throws CacheCorruptedException {
@@ -582,6 +582,10 @@ public class DependencyCache {
 
   public boolean isClassInfoMarked(int qName) {
     return myMarkedInfos.contains(qName);
+  }
+  
+  public void markFile(VirtualFile file) {
+    myMarkedFiles.add(file);
   }
 
   /**

@@ -321,8 +321,8 @@ public class BackendCompilerWrapper {
 
   private VirtualFile[] findDependentFiles() throws CacheCorruptedException {
     myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.checking.dependencies"));
-    final int[] dependentClassInfos =
-      myCompileContext.getDependencyCache().findDependentClasses(myCompileContext, myProject, mySuccesfullyCompiledJavaFiles);
+    final Pair<int[], Set<VirtualFile>> deps =
+        myCompileContext.getDependencyCache().findDependentClasses(myCompileContext, myProject, mySuccesfullyCompiledJavaFiles);
     final Set<VirtualFile> dependentFiles = new HashSet<VirtualFile>();
     final CacheCorruptedException[] _ex = new CacheCorruptedException[]{null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -331,7 +331,7 @@ public class BackendCompilerWrapper {
           CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
           SourceFileFinder sourceFileFinder = new SourceFileFinder(myProject, myCompileContext);
           final Cache cache = myCompileContext.getDependencyCache().getCache();
-          for (final int infoQName : dependentClassInfos) {
+          for (final int infoQName : deps.getFirst()) {
             final String qualifiedName = myCompileContext.getDependencyCache().resolve(infoQName);
             final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, cache.getSourceFileName(cache.getClassId(infoQName)));
             if (file != null) {
@@ -345,6 +345,14 @@ public class BackendCompilerWrapper {
             else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("No source file for " + myCompileContext.getDependencyCache().resolve(infoQName) + " found");
+              }
+            }
+          }
+          for (final VirtualFile file : deps.getSecond()) {
+            if (!compilerConfiguration.isExcludedFromCompilation(file)) {
+              dependentFiles.add(file);
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                CompilerManagerImpl.addRecompiledPath(file.getPath());
               }
             }
           }
