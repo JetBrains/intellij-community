@@ -187,6 +187,14 @@ public class JdkChooserPanel extends JPanel {
     if (jdkToSelect != null) {
       jdkChooserPanel.selectJdk(jdkToSelect);
     }
+    jdkChooserPanel.myList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(final MouseEvent e) {
+        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+          dialog.clickDefaultButton();
+        }
+      }
+    });
     dialog.show();
     return dialog.isOK() ? jdkChooserPanel.getChosenJdk() : null;
   }

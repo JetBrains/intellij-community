@@ -31,16 +31,19 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
+import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
-import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -123,5 +126,15 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   private static Icon getWizardIcon() {
 
     return WizardIconHolder.WIZARD_ICON;
+  }
+
+  @Override
+  public boolean isValidSdk(final Module module, final Sdk projectSdk) {
+    return isValidJavaSdk(module);
+  }
+
+  public static boolean isValidJavaSdk(final Module module) {
+    return JavaPsiFacade.getInstance(module.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, 
+                                                                    module.getModuleWithLibrariesScope()) != null;
   }
 }

@@ -82,13 +82,14 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
   public static boolean isInspectionsEnabled(final boolean online, Project project) {
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (online) {
-      while (JavaPsiFacade.getInstance(project).findClass("java.lang.Object", GlobalSearchScope.allScope(project)) == null) {
-        if (ModuleManager.getInstance(project).getModules().length == 0) {
-          Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.modules.error.message"),
-                                     CommonBundle.message("title.error"), Messages.getErrorIcon());
-          return false;
-        }
+      if (modules.length == 0) {
+        Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.modules.error.message"),
+                                   CommonBundle.message("title.error"), Messages.getErrorIcon());
+        return false;
+      }
+      while (isBadSdk(project, modules)) {
         Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.jdk.error.message"),
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
         final Sdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
@@ -96,18 +97,16 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       }
     }
     else {
-      PsiClass psiObjectClass = JavaPsiFacade.getInstance(project).findClass("java.lang.Object", GlobalSearchScope.allScope(project));
-      if (psiObjectClass == null) {
-        if (ModuleManager.getInstance(project).getModules().length == 0) {
-          System.err.println(InspectionsBundle.message("inspection.no.modules.error.message"));
-          return false;
-        }
+      if (modules.length == 0) {
+        System.err.println(InspectionsBundle.message("inspection.no.modules.error.message"));
+        return false;
+      }
+      if (isBadSdk(project, modules)) {
         System.err.println(InspectionsBundle.message("inspection.no.jdk.error.message"));
         System.err.println(
           InspectionsBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectJdkName()));
         return false;
       }
-      final Module[] modules = ModuleManager.getInstance(project).getModules();
       for (Module module : modules) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         final Sdk jdk = rootManager.getSdk();
@@ -132,6 +131,21 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       }
     }
     return true;
+  }
+
+  private static boolean isBadSdk(final Project project, final Module[] modules) {
+    boolean anyModuleAcceptsSdk = false;
+    boolean anyModuleUsesProjectSdk = false;
+    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    for (Module module : modules) {
+      if (ModuleRootManager.getInstance(module).isSdkInherited()) {
+        anyModuleUsesProjectSdk = true;
+        if (module.getModuleType().isValidSdk(module, projectSdk)) {
+          anyModuleAcceptsSdk = true;
+        }
+      }
+    }
+    return anyModuleUsesProjectSdk && !anyModuleAcceptsSdk;
   }
 
   private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {

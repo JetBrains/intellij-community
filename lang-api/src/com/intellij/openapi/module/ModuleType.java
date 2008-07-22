@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -77,5 +78,9 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     catch (Exception e) {
       throw new IllegalArgumentException(e);
     }
+  }
+
+  public boolean isValidSdk(final Module module, final Sdk projectSdk) {
+    return true;
   }
 }
