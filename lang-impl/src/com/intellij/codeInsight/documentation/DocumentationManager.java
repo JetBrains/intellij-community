@@ -403,13 +403,10 @@ public class DocumentationManager implements ProjectComponent {
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
     }
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (component.isEmpty()) {
-          component.setText(CodeInsightBundle.message("javadoc.fetching.progress"));
-        }
-      }
-    });
+    if (component.isEmpty()) {
+      component.setText(CodeInsightBundle.message("javadoc.fetching.progress"));
+    }
+
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
         final Exception[] ex = new Exception[1];
@@ -426,6 +423,7 @@ public class DocumentationManager implements ProjectComponent {
           }
         });
         if (ex[0] != null) {
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               component.setText(CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage()), true);
@@ -440,6 +438,7 @@ public class DocumentationManager implements ProjectComponent {
             return provider.getElement();
           }
         });
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
 
