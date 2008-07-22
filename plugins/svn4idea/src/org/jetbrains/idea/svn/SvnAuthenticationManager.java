@@ -41,9 +41,18 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         };
     }
 
-  static class ApplicationAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
+  class ApplicationAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+          if (ISVNAuthenticationManager.SSL.equals(kind)) {
+                  String host = url.getHost();
+                  Map properties = getHostProperties(host);
+                  String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
+                  String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
+                  File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
+                  return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored);
+          }
+
           // get from key-ring, use realm.
             Map info = SvnApplicationSettings.getInstance().getAuthenticationInfo(realm, kind);
             // convert info to SVNAuthentication.
