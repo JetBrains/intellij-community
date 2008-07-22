@@ -6,6 +6,7 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -263,6 +264,36 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       for (ScopeDescriptor scopeDescriptor : provider.getScopeDescriptors(myProject)) {
         model.addElement(scopeDescriptor);
       }
+    }
+
+    final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
+    for (final String favorite : favoritesManager.getAvailableFavoritesLists()) {
+      model.addElement(new ScopeDescriptor(new GlobalSearchScope() {
+        @Override
+        public String getDisplayName() {
+          return "Favorite \'" + favorite + "\'";
+        }
+
+        @Override
+        public boolean contains(final VirtualFile file) {
+          return favoritesManager.contains(favorite, file);
+        }
+
+        @Override
+        public int compare(final VirtualFile file1, final VirtualFile file2) {
+          return 0;
+        }
+
+        @Override
+        public boolean isSearchInModuleContent(@NotNull final Module aModule) {
+          return true;
+        }
+
+        @Override
+        public boolean isSearchInLibraries() {
+          return true;
+        }
+      }));
     }
   }
 
