@@ -10,7 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -353,7 +352,8 @@ public class DuplicatesFinder {
         traverseParameter(resolveResult1, resolveResult2, match);
         return match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
       }
-      if (!equivalentResolve(resolveResult1, resolveResult2)) {
+      final PsiElement qualifier2 = ((PsiJavaCodeReferenceElement)candidate).getQualifier();
+      if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
         return false;
       }
     }
@@ -538,7 +538,7 @@ public class DuplicatesFinder {
     else return false;
   }
 
-  private static boolean equivalentResolve(final PsiElement resolveResult1, final PsiElement resolveResult2) {
+  private static boolean equivalentResolve(final PsiElement resolveResult1, final PsiElement resolveResult2, PsiElement qualifier2) {
     final boolean b = Comparing.equal(resolveResult1, resolveResult2);
     if (b) return b;
     if (resolveResult1 instanceof PsiMethod && resolveResult2 instanceof PsiMethod) {
@@ -547,8 +547,18 @@ public class DuplicatesFinder {
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
 
-      //todo compare simple signature
-      if (method1.getName().equals(method2.getName()) && OverridingMethodsSearch.search(method1).findAll().contains(method2)) return true;
+      if (method1.getName().equals(method2.getName())) {
+        PsiClass class2 = method2.getContainingClass();
+        if (qualifier2 instanceof PsiReferenceExpression) {
+          final PsiType type = ((PsiReferenceExpression)qualifier2).getType();
+          if (type instanceof PsiClassType) class2 = PsiUtil.resolveClassInType(type);
+        }
+
+        if (class2 != null) {
+          final PsiMethod[] methods = class2.getAllMethods();
+          if (ArrayUtil.find(methods, method1) != -1) return true;
+        }
+      }
       return false;
     }
     else {
