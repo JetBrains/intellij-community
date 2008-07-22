@@ -452,6 +452,8 @@ public class SvnChangeProvider implements ChangeProvider {
             parentURL = parentDirEntry.getURL();
           }
         }
+      } catch (SVNException e) {
+        parentURL = null;
       }
       finally {
         try {
