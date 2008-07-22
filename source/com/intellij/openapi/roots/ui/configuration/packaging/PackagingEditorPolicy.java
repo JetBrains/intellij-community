@@ -123,7 +123,7 @@ public abstract class PackagingEditorPolicy {
         addedLibraries.add(((LibraryLink)element).getLibrary());
       }
     }
-    libraries.retainAll(addedLibraries);
+    libraries.removeAll(addedLibraries);
     return libraries;
   }
 
@@ -135,7 +135,7 @@ public abstract class PackagingEditorPolicy {
         addedModules.add(((ModuleLink)element).getModule());
       }
     }
-    moduleList.retainAll(addedModules);
+    moduleList.removeAll(addedModules);
     return moduleList;
   }
 

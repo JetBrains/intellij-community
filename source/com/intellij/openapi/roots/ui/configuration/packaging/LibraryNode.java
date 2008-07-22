@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.LibraryLink;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -9,11 +10,11 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
@@ -60,7 +61,10 @@ class LibraryNode extends PackagingTreeNode {
       if (name != null) {
         renderer.setIcon(Icons.LIBRARY_ICON);
         renderer.append(name, getMainAttributes());
-        renderer.append(" (" + library.getTable().getPresentation().getDisplayName(false) + ")", getCommentAttributes());
+        LibraryTable libraryTable = library.getTable();
+        if (libraryTable != null) {
+          renderer.append(" (" + libraryTable.getPresentation().getDisplayName(false) + ")", getCommentAttributes());
+        }
       }
       else {
         VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
@@ -78,7 +82,9 @@ class LibraryNode extends PackagingTreeNode {
     if (belongsToIncludedArtifact()) {
       PackagingArtifact owner = getOwner();
       LOG.assertTrue(owner != null);
-      renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
+      if (library != null) {
+        renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
+      }
     }
   }
 

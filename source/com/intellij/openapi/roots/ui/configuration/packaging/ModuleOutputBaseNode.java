@@ -2,14 +2,13 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ abstract class ModuleOutputBaseNode extends PackagingTreeNode {
     if (belongsToIncludedArtifact()) {
       PackagingArtifact owner = getOwner();
       LOG.assertTrue(owner != null);
-      renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
+      //renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
     }
   }
 

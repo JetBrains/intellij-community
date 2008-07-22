@@ -48,10 +48,10 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode {
   }
 
   @Nullable
-  public PackagingTreeNode findChildByName(final @NotNull String name) {
+  public PackagingTreeNode findChildByName(final @NotNull String outputFileName) {
     for (int i = 0; i < getChildCount(); i++) {
       PackagingTreeNode node = (PackagingTreeNode)getChildAt(i);
-      if (node.getOutputFileName().equals(name)) {
+      if (node.getOutputFileName().equals(outputFileName)) {
         return node;
       }
     }
@@ -63,6 +63,7 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode {
     return (PackagingTreeNode)super.getParent();
   }
 
+  @NotNull 
   public List<PackagingTreeNode> getChildren() {
     List<PackagingTreeNode> children = new ArrayList<PackagingTreeNode>(getChildCount());
     for (int i = 0; i < getChildCount(); i++) {

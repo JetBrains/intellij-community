@@ -1,5 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,8 +28,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DefaultTreeExpander;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,14 +107,6 @@ public class PackagingEditorImpl implements PackagingEditor {
         Set<PackagingArtifact> owners = pair.getSecond();
 
         if (!owners.isEmpty()) {
-          StringBuilder ownersBuffer = new StringBuilder();
-          for (PackagingArtifact owner : owners) {
-            if (ownersBuffer.length() > 0) {
-              ownersBuffer.append(", ");
-            }
-            ownersBuffer.append(owner.getDisplayName());
-          }
-
           String message;
           if (owners.size() == 1 && toRemove.isEmpty()) {
             PackagingArtifact artifact = owners.iterator().next();
@@ -122,6 +114,13 @@ public class PackagingEditorImpl implements PackagingEditor {
                                             artifact.getDisplayName(), artifact.getDisplayName(), myRootArtifact.getDisplayName());
           }
           else {
+            StringBuilder ownersBuffer = new StringBuilder();
+            for (PackagingArtifact owner : owners) {
+              if (ownersBuffer.length() > 0) {
+                ownersBuffer.append(", ");
+              }
+              ownersBuffer.append(owner.getDisplayName());
+            }
             message = ProjectBundle .message("message.text.packaging.do.you.want.to.exlude.0.from.1", ownersBuffer, myRootArtifact.getDisplayName());
           }
           int answer = Messages.showYesNoDialog(myMainPanel, message, ProjectBundle.message("dialog.title.packaging.remove.included"), null);
@@ -262,6 +261,7 @@ public class PackagingEditorImpl implements PackagingEditor {
   }
 
   public void rebuildTree() {
+    PackagingTreeState state = PackagingTreeState.saveState(myTree);
     myRoot.removeAllChildren();
     myRootArtifact = myBuilder.createRootArtifact();
     PackagingArtifactNode root = PackagingTreeNodeFactory.createArtifactNode(myRootArtifact, myRoot, null);
@@ -270,7 +270,7 @@ public class PackagingEditorImpl implements PackagingEditor {
       myBuilder.createNodes(root, element, null, parameters);
     }
     myTreeModel.nodeStructureChanged(myRoot);
-    TreeUtil.expandAll(myTree);
+    state.restoreState(myTree);
   }
 
   public void saveData() {
@@ -357,6 +357,7 @@ public class PackagingEditorImpl implements PackagingEditor {
 
     PopupHandler.installPopupHandler(myTree, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
     rebuildTree();
+    TreeUtil.expandAll(myTree);
     updateButtons();
     return myMainPanel;
   }
