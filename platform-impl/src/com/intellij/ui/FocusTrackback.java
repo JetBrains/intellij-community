@@ -231,7 +231,7 @@ public class FocusTrackback {
 
     final FocusTrackback[] all = stack.toArray(new FocusTrackback[stack.size()]);
     for (FocusTrackback each : all) {
-      if (each != this && each.isConsumed()) {
+      if (each == null || (each != this && each.isConsumed())) {
         stack.remove(each);
       }
     }
