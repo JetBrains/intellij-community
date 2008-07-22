@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 class LookupCellRenderer implements ListCellRenderer {
@@ -79,6 +80,7 @@ class LookupCellRenderer implements ListCellRenderer {
     };
     myPanel.add(myNameComponent, BorderLayout.WEST);
     myPanel.add(myLabel2, BorderLayout.CENTER);
+    myLabel2.setBorder(new EmptyBorder(0, 0, 0, 10));
     myPanel.add(myLabel3, BorderLayout.EAST);
 
     JLabel label = myLabel3;
@@ -172,16 +174,7 @@ class LookupCellRenderer implements ListCellRenderer {
                                 final Font forceFont, final boolean strikeout) {
     StrikeoutLabel label = myLabel2;
     if (text != null){
-      String s = text;
-      int width = getTextWidth(item);
-      int n = width - MAX_LENGTH * myFontWidth;
-      if (n > 0){
-        n = Math.min(n, (s.length() - 7) * myFontWidth);
-        if (n >= 0){
-          s = s.substring(0, s.length() - n / myFontWidth - 3) + "...";
-        }
-      }
-      label.setText(s);
+      label.setText(text);
     }
     else{
       label.setText("");
@@ -210,7 +203,7 @@ class LookupCellRenderer implements ListCellRenderer {
     String text = text3;
 
     final int listWidth = Math.max(list.getFixedCellWidth(), list.getWidth());
-    final int maxWidth = listWidth - myNameComponent.getPreferredSize().width - myLabel2.getPreferredSize().width - 3 * myFontWidth;
+    final int maxWidth = listWidth - myNameComponent.getPreferredSize().width - 3 * myFontWidth;
 
     JLabel label = myLabel3;
     if (text == null) text = "";
