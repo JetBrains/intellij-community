@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -185,15 +184,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private void selectElement(final ErrorTreeElement element) {
-    myBuilder.updateFromRoot();
-    DefaultMutableTreeNode node = myBuilder.getNodeForElement(element);
-    if (node == null) {
-      myBuilder.buildNodeForElement(element);
-      node = myBuilder.getNodeForElement(element);
-    }
-    LOG.assertTrue(node != null);
-    TreeNode[] pathToRoot = ((DefaultTreeModel)myTree.getModel()).getPathToRoot(node);
-    TreeUtil.selectPath(myTree, new TreePath(pathToRoot));
+    myBuilder.select(element, null);
   }
 
   protected boolean shouldShowFirstErrorInEditor() {
