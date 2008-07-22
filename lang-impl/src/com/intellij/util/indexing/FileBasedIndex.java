@@ -2,6 +2,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -27,12 +28,15 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,16 +77,29 @@ public class FileBasedIndex implements ApplicationComponent {
   private final ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
   private final Semaphore myUnsavedDataIndexingSemaphore = new Semaphore();
+  private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private final FileContentStorage myFileContentAttic;
-  
+
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
   }
 
-  public FileBasedIndex(final VirtualFileManagerEx vfManager) throws IOException {
+  public FileBasedIndex(final VirtualFileManagerEx vfManager, MessageBus bus) throws IOException {
     myVfManager = vfManager;
-    
+
+    bus.connect().subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
+      public void transactionStarted(final Document doc, final PsiFile file) {
+        if (file != null) {
+          myTransactionMap.put(doc, file);
+        }
+      }
+
+      public void transactionCompleted(final Document doc, final PsiFile file) {
+        myTransactionMap.remove(doc);
+      }
+    });
+
     final File workInProgressFile = getMarkerFile();
     if (workInProgressFile.exists()) {
       // previous IDEA session was closed incorrectly, so drop all indices
@@ -513,41 +530,23 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
+  private Set<Document> getUnsavedOrTransactedDocuments() {
+    Set<Document> docs = new HashSet<Document>(Arrays.asList(FileDocumentManager.getInstance().getUnsavedDocuments()));
+    docs.addAll(myTransactionMap.keySet());
+    return docs;
+  }
+
   private void indexUnsavedDocuments() throws StorageException {
     myChangedFilesUpdater.forceUpdate();
     
-    final FileDocumentManager fdManager = FileDocumentManager.getInstance();
-    final Document[] documents = fdManager.getUnsavedDocuments();
-    if (documents.length > 0) {
+    final Set<Document> documents = getUnsavedOrTransactedDocuments();
+    if (!documents.isEmpty()) {
       // now index unsaved data
       setDataBufferingEnabled(true);
       myUnsavedDataIndexingSemaphore.down();
       try {
         for (Document document : documents) {
-          final VirtualFile vFile = fdManager.getFile(document);
-          if (!vFile.isValid() || !(vFile instanceof VirtualFileWithId)) {
-            continue; // since the corresponding file is invalid, the document should be ignored
-          }
-
-          // Do not index content until document is committed. It will cause problems for indices, that depend on PSI otherwise.
-          if (isUncomitted(document)) continue;
-
-          final long currentDocStamp = document.getModificationStamp();
-          if (currentDocStamp != getLastIndexedStamp(document).getAndSet(currentDocStamp)) {
-            CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document);
-            if (lastIndexed == null) {
-              lastIndexed = loadContent(vFile);
-            }
-            final FileContent oldFc = new FileContent(vFile, lastIndexed);
-            final FileContent newFc = new FileContent(vFile, document.getText());
-            for (ID<?, ?> indexId : myIndices.keySet()) {
-              if (getInputFilter(indexId).acceptInput(vFile)) {
-                final int inputId = Math.abs(getFileId(vFile));
-                getIndex(indexId).update(inputId, newFc, oldFc);
-              }
-            }
-            myLastIndexedUnsavedContent.put(document, newFc.getContentAsText());
-          }
+          indexUnsavedDocument(document);
         }
       }
       catch (StorageException e) {
@@ -563,6 +562,93 @@ public class FileBasedIndex implements ApplicationComponent {
         myUnsavedDataIndexingSemaphore.waitFor(); // may need to wait until another thread is done with indexing 
       }
     }
+  }
+
+  private interface DocumentContent {
+    String getText();
+    long getModificationStamp();
+  }
+
+  private static class AuthenticContent implements DocumentContent {
+    private final Document myDocument;
+
+    public AuthenticContent(final Document document) {
+      myDocument = document;
+    }
+
+    public String getText() {
+      return myDocument.getText();
+    }
+
+    public long getModificationStamp() {
+      return myDocument.getModificationStamp();
+    }
+  }
+
+  private static class PsiContent implements DocumentContent {
+    private final Document myDocument;
+    private final PsiFile myFile;
+
+    public PsiContent(final Document document, final PsiFile file) {
+      myDocument = document;
+      myFile = file;
+    }
+
+    public String getText() {
+      if (myFile.getModificationStamp() != myDocument.getModificationStamp()) {
+        final ASTNode node = myFile.getNode();
+        assert node != null;
+        return node.getText();
+      }
+      return myDocument.getText();
+    }
+
+    public long getModificationStamp() {
+      return myFile.getModificationStamp();
+    }
+  }
+
+  private void indexUnsavedDocument(final Document document) throws StorageException {
+    final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+    if (!vFile.isValid() || !(vFile instanceof VirtualFileWithId)) {
+      return;
+    }
+
+    PsiFile dominantContentFile = findDominantPsiForDocument(document);
+
+    DocumentContent content;
+    if (dominantContentFile != null) {
+      content = new PsiContent(document, dominantContentFile);
+    }
+    else {
+      content = new AuthenticContent(document);
+    }
+
+    final long currentDocStamp = content.getModificationStamp();
+    if (currentDocStamp != getLastIndexedStamp(document).getAndSet(currentDocStamp)) {
+      CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document);
+      if (lastIndexed == null) {
+        lastIndexed = loadContent(vFile);
+      }
+      final FileContent oldFc = new FileContent(vFile, lastIndexed);
+      final FileContent newFc = new FileContent(vFile, content.getText());
+      for (ID<?, ?> indexId : myIndices.keySet()) {
+        if (getInputFilter(indexId).acceptInput(vFile)) {
+          final int inputId = Math.abs(getFileId(vFile));
+          getIndex(indexId).update(inputId, newFc, oldFc);
+        }
+      }
+      myLastIndexedUnsavedContent.put(document, newFc.getContentAsText());
+    }
+  }
+
+  @Nullable
+  private PsiFile findDominantPsiForDocument(final Document document) {
+    if (myTransactionMap.containsKey(document)) {
+      return myTransactionMap.get(document);
+    }
+
+    return findUncomittedPsi(document);
   }
 
   @NotNull
@@ -994,14 +1080,16 @@ public class FileBasedIndex implements ApplicationComponent {
     myIndexableSets.remove(set);
   }
 
-  private static boolean isUncomitted(Document doc) {
+  @Nullable
+  private static PsiFile findUncomittedPsi(Document doc) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (PsiDocumentManager.getInstance(project).isUncommited(doc)) {
-        return true;
+      final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
+      if (pdm.isUncommited(doc)) {
+        return pdm.getPsiFile(doc);
       }
     }
 
-    return false;
+    return null;
   }
   
   private static class IndexableFilesFilter implements InputFilter {

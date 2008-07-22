@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -18,11 +19,15 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
 
   private final PsiDocumentManagerImpl myPsiDocumentManager;
-  private Document mySyncDocument = null;
+  private final MessageBus myBus;
+  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
   private final Object mySyncLock = this;
 
-  public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager) {
+  private Document mySyncDocument = null;
+
+  public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager, MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;
+    myBus = bus;
   }
 
   @Nullable
@@ -40,6 +45,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private static interface DocSyncAction {
     void syncDocument(Document document, PsiTreeChangeEventImpl event);
   }
+
   private void doSync(PsiTreeChangeEvent event, DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
     PsiFile psiFile = event.getFile();
@@ -114,8 +120,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
 
-  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
-
   public void replaceString(Document document, int startOffset, int endOffset, String s) {
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null) {
@@ -151,6 +155,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if (pair == null) {
       final PsiFile psiFile = scope != null ? scope.getContainingFile() : null;
       pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope != null ? psiFile : null), 0);
+      myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
     }
     else {
       pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() + 1);
@@ -175,6 +180,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
             doCommitTransaction(document, documentChangeTransaction);
           }
         });
+
+        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, (PsiFile)changeScope);
       }
       finally {
         mySyncDocument = null;

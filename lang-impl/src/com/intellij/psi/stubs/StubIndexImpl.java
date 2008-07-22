@@ -6,7 +6,9 @@ package com.intellij.psi.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,8 +18,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -148,10 +152,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         FileBasedIndex.getInstance().disableUpToDateCheckForCurrentThread(); 
         index.getReadLock().lock();
         final ValueContainer<TIntArrayList> container = index.getData(key);
+
         container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           public void perform(final int id, final TIntArrayList value) {
             final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
             if (file != null && (scope == null || scope.contains(file))) {
+              Document doc = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getDocument(file);
               final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
               if (psiFile != null && !(psiFile instanceof PsiPlainTextFile)) {
                 StubTree stubTree = psiFile.getStubTree();
@@ -162,13 +168,24 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                     for (int i = 0; i < value.size(); i++) {
                       final StubElement<?> stub = plained.get(value.get(i));
                       final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
-  
+
                       if (tree != null) {
                         if (tree.getElementType() == stub.getStubType()) {
                           result.add((Psi)tree.getPsi());
                         }
                         else {
+                          String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
+
+                          String stubTreeJustBuilt =
+                              ((PsiFileStubImpl)((IStubFileElementType)((PsiFileImpl)psiFile).getContentElementType()).getBuilder()
+                                  .buildStubTree(psiFile)).printTree();
+
                           System.out.println("Oops");
+
+                          System.out.println("Recorded stub:-----------------------------------");
+                          System.out.println(persistedStubTree);
+                          System.out.println("AST built stub: ------------------------------------");
+                          System.out.println(stubTreeJustBuilt);
                         }
                       }
                     }

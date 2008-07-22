@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,12 +59,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public PsiDocumentManagerImpl(Project project,
                                 PsiManager psiManager,
                                 SmartPointerManager smartPointerManager,
-                                BlockSupport blockSupport, EditorFactory editorFactory) {
+                                BlockSupport blockSupport,
+                                EditorFactory editorFactory,
+                                MessageBus bus) {
     myProject = project;
     myPsiManager = psiManager;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     myBlockSupport = (BlockSupportImpl)blockSupport;
-    myPsiManager.addPsiTreeChangeListener(mySynchronizer = new PsiToDocumentSynchronizer(this));
+    myPsiManager.addPsiTreeChangeListener(mySynchronizer = new PsiToDocumentSynchronizer(this, bus));
     editorFactory.getEventMulticaster().addDocumentListener(this);
   }
 

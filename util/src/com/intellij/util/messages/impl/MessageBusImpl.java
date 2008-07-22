@@ -166,6 +166,15 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void pumpMessages() {
+    if (myParentBus != null) {
+      myParentBus.pumpMessages();
+    }
+    else {
+      doPumpMessages();
+    }
+  }
+
+  private void doPumpMessages() {
     do {
       DeliveryJob job = myMessageQueue.get().poll();
       if (job == null) break;
@@ -174,7 +183,7 @@ public class MessageBusImpl implements MessageBus {
     while (true);
 
     for (MessageBusImpl childBus : myChildBusses) {
-      childBus.pumpMessages();
+      childBus.doPumpMessages();
     }
   }
 
