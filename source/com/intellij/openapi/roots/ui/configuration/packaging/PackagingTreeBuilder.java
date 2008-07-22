@@ -20,7 +20,7 @@ public abstract class PackagingTreeBuilder {
 
   @NotNull
   public List<? extends PackagingTreeNode> createNodes(@NotNull PackagingArtifactNode artifactRoot, @NotNull ContainerElement element,
-                                                       final PackagingArtifact owner) {
+                                                       final PackagingArtifact owner, final PackagingTreeParameters parameters) {
     if (element instanceof LibraryLink) {
       return Collections.singletonList(createLibraryNode((LibraryLink)element, artifactRoot, owner));
     }

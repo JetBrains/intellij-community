@@ -1,10 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.deployment.ContainerElement;
-import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.deployment.ModuleLink;
-import com.intellij.openapi.deployment.PackagingMethod;
+import com.intellij.openapi.deployment.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -14,8 +11,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDi
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -36,6 +32,12 @@ public abstract class PackagingEditorPolicy {
   public abstract void setDefaultAttributes(ContainerElement element);
 
   public abstract String suggestDefaultRelativePath(ContainerElement element);
+
+  protected abstract List<Module> getSuitableModules(final PackagingEditor packagingEditor);
+
+  protected abstract List<Library> getSuitableLibraries(final PackagingEditor packagingEditor);
+
+  protected abstract ContainerElement[] getModifiedElements(PackagingEditor packagingEditor);
 
   public boolean isRelativePathCellEditable(final ContainerElement element) {
     return element instanceof LibraryLink
@@ -87,7 +89,8 @@ public abstract class PackagingEditorPolicy {
 
       public void perform(final PackagingEditor packagingEditor) {
         ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(packagingEditor.getMainPanel(),
-                                                                 ProjectBundle.message("dialog.title.packaging.choose.library"), getLibrariesToAdd(packagingEditor));
+                                                                 ProjectBundle.message("dialog.title.packaging.choose.library"),
+                                                                 getLibrariesToAdd(packagingEditor));
         dialog.show();
         if (dialog.isOK()) {
           packagingEditor.addLibraries(dialog.getChosenElements());
@@ -112,7 +115,58 @@ public abstract class PackagingEditorPolicy {
     return actions;
   }
 
-  protected abstract List<Module> getModulesToAdd(final PackagingEditor packagingEditor);
+  private List<Library> getLibrariesToAdd(final PackagingEditor editor) {
+    List<Library> libraries = getSuitableLibraries(editor);
+    Set<Library> addedLibraries = new HashSet<Library>();
+    for (ContainerElement element : getModifiedElements(editor)) {
+      if (element instanceof LibraryLink) {
+        addedLibraries.add(((LibraryLink)element).getLibrary());
+      }
+    }
+    libraries.retainAll(addedLibraries);
+    return libraries;
+  }
 
-  protected abstract List<Library> getLibrariesToAdd(final PackagingEditor packagingEditor);
+  private List<Module> getModulesToAdd(final PackagingEditor editor) {
+    List<Module> moduleList = getSuitableModules(editor);
+    Set<Module> addedModules = new HashSet<Module>();
+    for (ContainerElement element : getModifiedElements(editor)) {
+      if (element instanceof ModuleLink) {
+        addedModules.add(((ModuleLink)element).getModule());
+      }
+    }
+    moduleList.retainAll(addedModules);
+    return moduleList;
+  }
+
+  public boolean removeObsoleteElements(final PackagingEditor packagingEditor) {
+    boolean modelChanged = false;
+    List<Library> libraries = getSuitableLibraries(packagingEditor);
+    List<Module> modules = getSuitableModules(packagingEditor);
+    List<ContainerElement> elements = new ArrayList<ContainerElement>(Arrays.asList(getModifiedElements(packagingEditor)));
+    PackagingConfiguration configuration = packagingEditor.getModifiedConfiguration();
+    for (ContainerElement element : elements) {
+      boolean remove;
+      if (element instanceof LibraryLink) {
+        Library library = ((LibraryLink)element).getLibrary();
+        remove = library != null && !libraries.contains(library);
+      }
+      else if (element instanceof ModuleLink) {
+        Module module = ((ModuleLink)element).getModule();
+        remove = module != null && !modules.contains(module);
+      }
+      else {
+        remove = isObsolete(element, packagingEditor);
+      }
+      if (remove) {
+        configuration.removeContainerElement(element);
+        modelChanged = true;
+      }
+    }
+    return modelChanged;
+  }
+
+  protected boolean isObsolete(final ContainerElement element, final PackagingEditor packagingEditor) {
+    return false;
+  }
 }

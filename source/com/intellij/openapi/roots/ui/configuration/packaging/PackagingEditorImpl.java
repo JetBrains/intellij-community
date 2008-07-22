@@ -26,6 +26,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +71,7 @@ public class PackagingEditorImpl implements PackagingEditor {
   private JButton myAddButton;
   private JButton myRemoveButton;
   private JButton myEditButton;
+  private JCheckBox myShowIncludedCheckBox;
   private PackagingArtifact myRootArtifact;
   private Project myProject;
 
@@ -137,6 +140,11 @@ public class PackagingEditorImpl implements PackagingEditor {
             myModifiedConfiguration.removeContainerElement(element);
           }
         }
+        rebuildTree();
+      }
+    });
+    myShowIncludedCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
         rebuildTree();
       }
     });
@@ -257,8 +265,9 @@ public class PackagingEditorImpl implements PackagingEditor {
     myRoot.removeAllChildren();
     myRootArtifact = myBuilder.createRootArtifact();
     PackagingArtifactNode root = PackagingTreeNodeFactory.createArtifactNode(myRootArtifact, myRoot, null);
+    PackagingTreeParameters parameters = new PackagingTreeParameters(myShowIncludedCheckBox.isSelected());
     for (ContainerElement element : getPackagedElements()) {
-      myBuilder.createNodes(root, element, null);
+      myBuilder.createNodes(root, element, null, parameters);
     }
     myTreeModel.nodeStructureChanged(myRoot);
     TreeUtil.expandAll(myTree);
@@ -269,7 +278,9 @@ public class PackagingEditorImpl implements PackagingEditor {
   }
 
   public void moduleStateChanged() {
-
+    if (myPolicy.removeObsoleteElements(this)) {
+      rebuildTree();
+    }
   }
 
   public PackagingConfiguration getModifiedConfiguration() {
@@ -337,6 +348,13 @@ public class PackagingEditorImpl implements PackagingEditor {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new MyNavigateAction());
     actionGroup.add(new MyFindUsagesAction());
+
+    actionGroup.add(Separator.getInstance());
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(myTree);
+    actionGroup.add(actionsManager.createExpandAllAction(treeExpander, myTree));
+    actionGroup.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
+
     PopupHandler.installPopupHandler(myTree, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
     rebuildTree();
     updateButtons();

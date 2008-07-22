@@ -44,6 +44,10 @@ public class JarPackagingEditorPolicy extends PackagingEditorPolicy {
     return PackagingMethod.EMPTY_ARRAY;
   }
 
+  protected ContainerElement[] getModifiedElements(final PackagingEditor packagingEditor) {
+    return packagingEditor.getModifiedConfiguration().getElements();
+  }
+
   protected PackagingMethod[] getPackagingMethodForUnresolvedElement(final ContainerElement element) {
     return PackagingMethod.EMPTY_ARRAY;
   }
@@ -77,11 +81,11 @@ public class JarPackagingEditorPolicy extends PackagingEditorPolicy {
     return relativePath;
   }
 
-  protected List<Module> getModulesToAdd(final PackagingEditor packagingEditor) {
+  protected List<Module> getSuitableModules(final PackagingEditor packagingEditor) {
     return Collections.emptyList();
   }
 
-  protected List<Library> getLibrariesToAdd(final PackagingEditor packagingEditor) {
+  protected List<Library> getSuitableLibraries(final PackagingEditor packagingEditor) {
     return Collections.emptyList();
   }
 }
