@@ -48,11 +48,12 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     }
 
     Alignment childAlignment = createChildAlignment();
+    Alignment childAlignment2 = createChildAlignment2(childAlignment);
     Wrap childWrap = createChildWrap();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final ASTNode astNode = child;
-        child = processChild(result, astNode, childAlignment, childWrap, indent, offset);
+        child = processChild(result, astNode, chooseAlignment(childAlignment, childAlignment2, child) , childWrap, indent, offset);
         if (astNode != child && child != null) {
           offset = child.getTextRange().getStartOffset();
         }

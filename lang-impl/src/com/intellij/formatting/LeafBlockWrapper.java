@@ -14,6 +14,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private LeafBlockWrapper myNextBlock;
   private SpacingImpl mySpaceProperty;
   private IndentInside myLastLineIndent;
+  private CharSequence myText;
 
   public LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
@@ -40,6 +41,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
       myLastLineIndent = null;
     }
 
+    myText = model.getText(getTextRange());
 
     myFlags = flagsValue;
   }
@@ -135,4 +137,8 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new TextRange(myStart, myEnd);
   }
 
+  @Override
+  public String toString() {
+    return myText.toString();
+  }
 }

@@ -318,6 +318,39 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
+  @Nullable
+  protected Alignment createChildAlignment2(Alignment base) {
+    final IElementType nodeType = myNode.getElementType();
+    if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
+      return base == null ? createAlignment(mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null) : createAlignment(base, mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null);
+    }
+
+    else {
+      return null;
+    }
+  }
+
+  protected Alignment chooseAlignment(Alignment alignment, Alignment alignment2, ASTNode child) {
+    if (preferesSlaveAlignment(child)) {
+      return alignment2;
+    }
+    else {
+      return alignment;
+    }
+  }
+
+  private boolean preferesSlaveAlignment(final ASTNode child) {
+    final IElementType nodeType = myNode.getElementType();
+
+    if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
+      IElementType childType = child.getElementType();
+      return childType == JavaTokenType.QUEST || childType ==JavaTokenType.COLON;
+    }
+    else {
+      return false;
+    }
+  }
+
   private boolean shouldInheritAlignment() {
     if (myNode.getElementType() == JavaElementType.BINARY_EXPRESSION) {
       final ASTNode treeParent = myNode.getTreeParent();
@@ -724,7 +757,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   */
   private static Alignment createAlignment(final boolean alignOption, final Alignment defaultAlignment) {
-    return alignOption ? createAlignmentOrDefault(defaultAlignment) : defaultAlignment;
+    return alignOption ? createAlignmentOrDefault(null, defaultAlignment) : defaultAlignment;
+  }
+
+  private static Alignment createAlignment(Alignment base, final boolean alignOption, final Alignment defaultAlignment) {
+    return alignOption ? createAlignmentOrDefault(base, defaultAlignment) : defaultAlignment;
   }
 
   @Nullable
@@ -1015,8 +1052,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myChildIndent = internalIndent;
   }
 
-  private static Alignment createAlignmentOrDefault(final Alignment defaultAlignment) {
-    return defaultAlignment == null ? Alignment.createAlignment() : defaultAlignment;
+  private static Alignment createAlignmentOrDefault(Alignment base, final Alignment defaultAlignment) {
+    if (defaultAlignment == null) {
+      return base == null ? Alignment.createAlignment() : Alignment.createChildAlignment(base);
+    }
+    else {
+      return defaultAlignment;
+    }
   }
 
   private int getBraceStyle() {
@@ -1143,5 +1185,5 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   public boolean isLeaf() {
     return JavaBlockUtil.mayShiftIndentInside(myNode);
   }
-  
+
 }

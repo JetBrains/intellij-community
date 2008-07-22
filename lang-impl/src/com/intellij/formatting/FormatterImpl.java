@@ -48,6 +48,12 @@ public class FormatterImpl extends FormatterEx
     return new AlignmentImpl(AlignmentImpl.Type.NORMAL);
   }
 
+  public Alignment createChildAlignment(final Alignment base) {
+    AlignmentImpl result = new AlignmentImpl(AlignmentImpl.Type.NORMAL);
+    result.setParent(base);
+    return result;
+  }
+
   public Indent getNormalIndent() {
     return myNormalIndent;
   }

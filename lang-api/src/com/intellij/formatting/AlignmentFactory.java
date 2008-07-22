@@ -21,4 +21,6 @@ package com.intellij.formatting;
 
 interface AlignmentFactory {
   public Alignment createAlignment();
+
+  Alignment createChildAlignment(final Alignment base);
 }

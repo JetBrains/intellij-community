@@ -15,8 +15,6 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 /**
  * The alignment setting for a formatting model block. Blocks which return the same
  * alignment object instance from the <code>getAlignment</code> method
@@ -29,8 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 public abstract class Alignment {
   private static AlignmentFactory myFactory;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Alignment");
-
   static void setFactory(AlignmentFactory factory) {
     myFactory = factory;
   }
@@ -42,5 +38,9 @@ public abstract class Alignment {
    */
   public static Alignment createAlignment() {
     return myFactory.createAlignment();
+  }
+
+  public static Alignment createChildAlignment(final Alignment base) {
+    return myFactory.createChildAlignment(base);
   }
 }

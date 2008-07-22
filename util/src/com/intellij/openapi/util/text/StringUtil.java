@@ -21,11 +21,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -1250,5 +1252,25 @@ public class StringUtil {
     }
 
     return true;
+  }
+
+  public static String shiftIndentInside(final String initial, final int i, boolean shiftEmptyLines) throws IOException {
+    StringBuffer result = new StringBuffer();
+    LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes()));
+    boolean first = true;
+    for (byte[] line : reader.readLines()) {
+      try {
+        if (!first) result.append('\n');
+        if (line.length > 0 || shiftEmptyLines) {
+          result.append(repeatSymbol(' ', i));
+        }
+        result.append(new String(line));
+      }
+      finally {
+        first = false;
+      }
+    }
+
+    return result.toString();
   }
 }

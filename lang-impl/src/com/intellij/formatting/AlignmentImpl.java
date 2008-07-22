@@ -1,16 +1,14 @@
 package com.intellij.formatting;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Collections;
+import java.util.*;
 
 class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.unmodifiableList(new ArrayList<LeafBlockWrapper>(0));
-  private List<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
+  private Collection<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
   private final int myFlags;
   private static int ourId = 0;
   private static final int ID_SHIFT = 1;
+  private AlignmentImpl myParentAlignment;
 
   public String getId() {
     return String.valueOf(myFlags >>> ID_SHIFT);
@@ -18,6 +16,10 @@ class AlignmentImpl extends Alignment {
 
   public void reset() {
     if (myOffsetRespBlocks != EMPTY) myOffsetRespBlocks.clear();
+  }
+
+  public void setParent(final Alignment base) {
+    myParentAlignment = (AlignmentImpl)base;
   }
 
   static enum Type{
@@ -32,14 +34,15 @@ class AlignmentImpl extends Alignment {
     return Type.values()[myFlags & 1];
   }
 
-  LeafBlockWrapper getOffsetRespBlockBefore(final LeafBlockWrapper blockAfter) {
+  LeafBlockWrapper getOffsetRespBlockBefore(final LeafBlockWrapper block) {
+    LeafBlockWrapper result = null;
     if (myOffsetRespBlocks != EMPTY) {
       LeafBlockWrapper lastBlockAfterLineFeed = null;
       LeafBlockWrapper firstAlignedBlock = null;
       LeafBlockWrapper lastAlignedBlock = null;
-      for (ListIterator<LeafBlockWrapper> each = myOffsetRespBlocks.listIterator(myOffsetRespBlocks.size()); each.hasPrevious();) {
-        final LeafBlockWrapper current = each.previous();
-        if (blockAfter == null || current.getStartOffset() < blockAfter.getStartOffset()) {
+      for (Iterator<LeafBlockWrapper> each = myOffsetRespBlocks.iterator(); each.hasNext();) {
+        final LeafBlockWrapper current = each.next();
+        if (block == null || current.getStartOffset() < block.getStartOffset()) {
           if (firstAlignedBlock == null || firstAlignedBlock.getStartOffset() > current.getStartOffset()) {
             firstAlignedBlock = current;
           }
@@ -56,15 +59,27 @@ class AlignmentImpl extends Alignment {
         }
         //each.remove();
       }
-      if (lastBlockAfterLineFeed != null) return lastBlockAfterLineFeed;
-      if (firstAlignedBlock != null) return firstAlignedBlock;
-      return lastAlignedBlock;
+      if (lastBlockAfterLineFeed != null) {
+        result = lastBlockAfterLineFeed;
+      }
+      else if (firstAlignedBlock != null) {
+        result = firstAlignedBlock;
+      }
+      else {
+        result = lastAlignedBlock;
+      }
     }
-    return null;
+    if (result == null && myParentAlignment != null) {
+      return myParentAlignment.getOffsetRespBlockBefore(block);
+    }
+    else {
+      return result;
+    }
+
   }
 
   void setOffsetRespBlock(final LeafBlockWrapper block) {
-    if (myOffsetRespBlocks == EMPTY) myOffsetRespBlocks = new ArrayList<LeafBlockWrapper>(1);
+    if (myOffsetRespBlocks == EMPTY) myOffsetRespBlocks = new LinkedHashSet<LeafBlockWrapper>(1);
     myOffsetRespBlocks.add(block);
   }
 
