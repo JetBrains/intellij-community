@@ -54,16 +54,16 @@ public interface Sorter extends TreeAction {
         }
 
         private String toString(Object object) {
+          String result = null;
           if (object instanceof SortableTreeElement) {
-            return ((SortableTreeElement) object).getAlphaSortKey();
-          }
-          if (object instanceof TreeElement){
-            return ((TreeElement)object).getPresentation().getPresentableText();
+            result = ((SortableTreeElement) object).getAlphaSortKey();
+          } else if (object instanceof TreeElement){
+            result =  ((TreeElement)object).getPresentation().getPresentableText();
           } else if (object instanceof Group){
-            return ((Group)object).getPresentation().getPresentableText();
-          } else {
-            return object.toString();
+            result = ((Group)object).getPresentation().getPresentableText();
           }
+
+          return result != null ? result : "";
         }
       };
     }
