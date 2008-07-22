@@ -29,6 +29,8 @@ public class ToggleShowWhitespacesAction extends ToggleAction {
   }
 
   public void update(AnActionEvent e) {
+    super.update(e);
+    
     if (getEditor(e) == null) {
       e.getPresentation().setEnabled(false);
       e.getPresentation().setVisible(false);
@@ -36,7 +38,6 @@ public class ToggleShowWhitespacesAction extends ToggleAction {
     else {
       e.getPresentation().setEnabled(true);
       e.getPresentation().setVisible(true);
-      super.update(e);
     }
   }
 }
