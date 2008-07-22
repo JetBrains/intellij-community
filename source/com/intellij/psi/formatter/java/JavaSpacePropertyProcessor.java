@@ -55,9 +55,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return;
     }
 
-    if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && StdTokenSets.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
-      myResult = Spacing
-        .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+    if (myChild2 != null && StdTokenSets.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
+      if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
+        myResult = Spacing
+          .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+      else {
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0,  mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
     }
     else {
 
