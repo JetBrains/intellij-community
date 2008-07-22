@@ -59,10 +59,14 @@ public class SmartEnterAction extends EditorAction {
       }
 
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
-      final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
-      if (processors.size() > 0) {
-        for (SmartEnterProcessor processor : processors) {
-          processor.process(project, editor, psiFile);
+      if (language != null) {
+        final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
+        if (processors.size() > 0) {
+          for (SmartEnterProcessor processor : processors) {
+            processor.process(project, editor, psiFile);
+          }
+        } else {
+          plainEnter(editor, dataContext);
         }
       } else {
         plainEnter(editor, dataContext);
