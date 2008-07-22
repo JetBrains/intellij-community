@@ -845,6 +845,8 @@ class AbstractTreeUi {
         final boolean[] hasNoChildren = new boolean[1];
         Runnable runnable = new Runnable() {
           public void run() {
+            if (isDisposed()) return;
+
             getBuilder().updateNodeDescriptor(descriptor);
             Object element = getBuilder().getTreeStructureElement(descriptor);
             if (element == null) return;
@@ -856,6 +858,8 @@ class AbstractTreeUi {
 
         Runnable postRunnable = new Runnable() {
           public void run() {
+            if (isDisposed()) return;
+
             if (hasNoChildren[0]) {
               getBuilder().updateNodeDescriptor(descriptor);
               Object element = descriptor.getElement();
