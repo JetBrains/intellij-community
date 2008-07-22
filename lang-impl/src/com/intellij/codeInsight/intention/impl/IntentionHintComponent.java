@@ -25,10 +25,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
@@ -126,7 +123,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         final int caretOffset = myEditor.getCaretModel().getOffset();
         final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
         PsiElement element;
-        if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+        if (myFile instanceof PsiCompiledElement) {
+          element = myFile;
+        }
+        else if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
           //???
           FileViewProvider viewProvider = myFile.getViewProvider();
           element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
