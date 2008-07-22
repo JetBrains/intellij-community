@@ -158,7 +158,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               continue; // do not collect files that were compiled by another compiler
             }
             //noinspection UnnecessaryBoxing
-            toDelete.add(new Trinity<File, String, Boolean>(new File(outputPath), classNamePair.getClassName(), Boolean.valueOf(sourcePresent)));
+            final File file = new File(outputPath);
+            toDelete.add(new Trinity<File, String, Boolean>(file, classNamePair.getClassName(), Boolean.valueOf(sourcePresent)));
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Found file to delete: " + file);
+            }
           }
         }
       }
@@ -236,6 +240,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             final String srcUrl = CompilerIOUtil.readString(is);
             final String className = CompilerIOUtil.readString(is);
             if (lfs.findFileByPath(outputPath) != null) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("INIT path to delete: " + outputPath);
+              }
               myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
             }
           }
@@ -748,7 +755,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final String filePath = file.getPath();
 
           synchronized (myOutputsToDelete) {
-            myOutputsToDelete.remove(filePath);
+            final SourceUrlClassNamePair val = myOutputsToDelete.remove(filePath);
+            if (val != null && LOG.isDebugEnabled()) {
+              LOG.debug("REMOVE path to delete: " + filePath);
+            }
           }
 
           if (!suppressAttributesChecking) {
@@ -939,6 +949,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         final String classname = outputInfo != null? outputInfo.getClassName() : null;
         synchronized (myOutputsToDelete) {
           myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(mySrcUrl, classname));
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("ADD path to delete: " + outputPath + "; source: " + mySrcUrl);
+          }
         }
       }
       return true;
