@@ -735,6 +735,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
   
   private class MyVfsListener extends VirtualFileAdapter {
+    public void propertyChanged(final VirtualFilePropertyEvent event) {
+      if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        markDirtyIfSource(event.getFile());
+      }
+    }
+
     public void contentsChanged(final VirtualFileEvent event) {
       markDirtyIfSource(event.getFile());
     }
