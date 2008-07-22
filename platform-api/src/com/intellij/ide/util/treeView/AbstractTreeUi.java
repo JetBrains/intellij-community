@@ -1027,7 +1027,7 @@ class AbstractTreeUi {
 
     if (currentElements.size() > 0 && elements.length == currentElements.size()) {
       boolean runSelection = false;
-      for (Object eachToSelect : currentElements) {
+      for (Object eachToSelect : elements) {
         if (!currentElements.contains(eachToSelect)) {
           runSelection = true;
           break;
