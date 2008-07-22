@@ -6,9 +6,9 @@
  */
 package com.theoryinpractice.testng.model;
 
-import org.testng.remote.strprotocol.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.ui.TestNGResults;
+import org.testng.remote.strprotocol.*;
 
 public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestListener {
     private TestNGConsoleView console;
@@ -42,7 +42,7 @@ public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestLi
     }
 
     public void onTestStart(TestResultMessage trm) {
-        console.addTestResult(trm);
+        //console.addTestResult(trm);
     }
 
     public void onFinish(TestMessage tm) {
