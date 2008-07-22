@@ -105,7 +105,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       resourceBundle = myResourceBundleManager.getResourceBundle();
     }
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
-      //can't be
+      LOG.error(e);
     }
     myShowJavaCodeInfo = showJavaCodeInfo && myResourceBundleManager.canShowJavaCodeInfo();
     if (myShowJavaCodeInfo) {
