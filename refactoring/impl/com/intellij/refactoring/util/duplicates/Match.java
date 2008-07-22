@@ -11,10 +11,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -333,13 +333,14 @@ public final class Match {
   private PsiType getChangedReturnType(final PsiMethod psiMethod) {
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType != null) {
-      final PsiExpression expression = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiExpression.class);
-      if (expression != null) {
+      final PsiElement parent = getMatchEnd().getParent();
+      if (parent instanceof PsiExpression) {
         PsiMember member = null;
-        if (expression instanceof PsiMethodCallExpression) {
-          member = ((PsiMethodCallExpression)expression).resolveMethod();
-        } else if (expression instanceof PsiReferenceExpression){
-          final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+        if (parent instanceof PsiMethodCallExpression) {
+          member = ((PsiMethodCallExpression)parent).resolveMethod();
+        }
+        else if (parent instanceof PsiReferenceExpression) {
+          final PsiElement resolved = ((PsiReferenceExpression)parent).resolve();
           member = resolved instanceof PsiMember ? (PsiMember)resolved : null;
         }
         if (member != null) {
@@ -348,25 +349,35 @@ public final class Match {
             return expressionType;
           }
         }
-      } else {
-        final PsiDeclarationStatement statement = PsiTreeUtil.getParentOfType(getMatchEnd(), PsiDeclarationStatement.class);
-        if (statement != null) {
-          final PsiElement[] declaredElements = statement.getDeclaredElements();
-          for (PsiElement declaredElement : declaredElements) {
-            if (declaredElement instanceof PsiLocalVariable) {
-              final PsiType localVariableType = ((PsiLocalVariable)declaredElement).getType();
-              if (!TypeConversionUtil.isAssignable(localVariableType, returnType)) {
-                return localVariableType;
+      }
+      else if (parent instanceof PsiExpressionList) {
+        final PsiExpression[] expressions = ((PsiExpressionList)parent).getExpressions();
+        final PsiElement call = parent.getParent();
+        if (call instanceof PsiMethodCallExpression) {
+          final PsiMethod method = ((PsiMethodCallExpression)call).resolveMethod();
+          if (method != null) {
+            final int idx = ArrayUtil.find(expressions, getMatchEnd());
+            final PsiParameter[] psiParameters = method.getParameterList().getParameters();
+            if (idx >= 0 && idx < psiParameters.length) {
+              final PsiType type = psiParameters[idx].getType();
+              if (!TypeConversionUtil.isAssignable(type, returnType)) {
+                return type;
               }
             }
           }
+        }
+      }
+      else if (parent instanceof PsiLocalVariable) {
+        final PsiType localVariableType = ((PsiLocalVariable)parent).getType();
+        if (!TypeConversionUtil.isAssignable(localVariableType, returnType)) {
+          return localVariableType;
         }
       }
     }
     return null;
   }
 
-  private ArrayList<ParameterInfo> patchParams(final PsiMethod psiMethod) {
+    private ArrayList<ParameterInfo> patchParams(final PsiMethod psiMethod) {
     final ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
     final PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
     for (int i = 0; i < oldParameters.length; i++) {
