@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -35,6 +36,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -718,6 +720,23 @@ public class CreateFromUsageUtils {
     if (range.getLength() == 0) return false;
     boolean isInNamedElement = range.contains(offset);
     return isInNamedElement || element.getTextRange().contains(offset-1);
+  }
+
+  public static void addClassesWithMethod(String methodName, final PsiFile file, final Set<String> possibleClassNames) {
+    final Project project = file.getProject();
+    final Module moduleForFile = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file.getVirtualFile());
+    GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleForFile, false);
+    GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
+    final PsiMethod[] psiMethods = JavaPsiFacade.getInstance(project).getShortNamesCache().getMethodsByName(methodName, searchScope
+      );
+    for(int i = 0; i < psiMethods.length; ++i) {
+      final PsiClass containingClass = psiMethods[i].getContainingClass();
+      for(PsiClass clazz: ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).findAll()) {
+        possibleClassNames.add(clazz.getQualifiedName());
+      }
+      possibleClassNames.add(containingClass.getQualifiedName());
+      psiMethods[i] = null;
+    }
   }
 
   private static class ParameterNameExpression implements Expression {

@@ -533,10 +533,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Nullable
   public LookupItem[] completeBasic() {
-    return new WriteCommandAction<LookupItem[]>(getProject()) {
-      boolean empty = false;
-
-      protected void run(final Result<LookupItem[]> result) throws Throwable {
+    final Ref<Boolean> empty = Ref.create(false);
+    new WriteCommandAction(getProject()) {
+      protected void run(final Result result) throws Throwable {
         new CodeCompletionAction() {
           public CodeInsightActionHandler getHandler() {
             return new CodeCompletionHandler() {
@@ -555,16 +554,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
               protected void handleEmptyLookup(final CompletionContext context, final CompletionParameters parameters,
                                                final CompletionProgressIndicator indicator) {
-                empty = true;
+                empty.set(true);
                 super.handleEmptyLookup(context, parameters, indicator);
               }
             };
           }
         }.actionPerformedImpl(getProject(), InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile));
-        LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-        result.setResult(lookup == null ? (empty ? LookupItem.EMPTY_ARRAY : null) : lookup.getSortedItems());
+
       }
     }.execute().getResultObject();
+    if (empty.get().booleanValue()) return LookupItem.EMPTY_ARRAY;
+
+    return getLookupElements();
+  }
+
+  public LookupItem[] getLookupElements() {
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+    return lookup == null ? null : lookup.getSortedItems();
   }
 
   public void checkResult(final String text) throws IOException {

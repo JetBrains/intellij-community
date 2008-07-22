@@ -1,9 +1,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.completion.SmartCodeCompletionHandler;
+import com.intellij.codeInsight.completion.*;
 
 public class CompleteSmartMacro extends BaseCompleteMacro {
   public CompleteSmartMacro() {
@@ -12,9 +10,11 @@ public class CompleteSmartMacro extends BaseCompleteMacro {
 
   CodeInsightActionHandler getCompletionHandler() {
     return new SmartCodeCompletionHandler() {
-      protected void handleEmptyLookup(CompletionContext context, LookupData lookupData) {
-        // nothing
+      @Override
+      protected void handleEmptyLookup(final CompletionContext context, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
+        super.handleEmptyLookup(context, parameters, indicator);
       }
+
     };
   }
 }
