@@ -759,46 +759,49 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       processRecursively(eventFile, new FileProcessor() {
         public void execute(final VirtualFile file) {
           final String filePath = file.getPath();
-
-          synchronized (myOutputsToDelete) {
-            final SourceUrlClassNamePair val = myOutputsToDelete.remove(filePath);
-            if (val != null && LOG.isDebugEnabled()) {
-              LOG.debug("REMOVE path to delete: " + filePath);
-            }
-          }
-
-          if (!suppressAttributesChecking) {
-            final OutputFileInfo outputInfo = loadOutputInfo(file);
-            if (outputInfo != null) {
-              final String srcPath = outputInfo.getSourceFilePath();
-              final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
-              if (srcFile != null) {
-                final SourceFileInfo srcInfo = loadSourceInfo(srcFile);
-                if (srcInfo != null) {
-                  for (int projectId : srcInfo.getProjectIds().toArray()) {
-                    if (srcInfo.isAssociated(projectId, filePath)) {
-                      addSourceForRecompilation(projectId, srcFile, srcInfo);
-                      break;
+          try {
+            if (!suppressAttributesChecking) {
+              final OutputFileInfo outputInfo = loadOutputInfo(file);
+              if (outputInfo != null) {
+                final String srcPath = outputInfo.getSourceFilePath();
+                final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
+                if (srcFile != null) {
+                  final SourceFileInfo srcInfo = loadSourceInfo(srcFile);
+                  if (srcInfo != null) {
+                    for (int projectId : srcInfo.getProjectIds().toArray()) {
+                      if (srcInfo.isAssociated(projectId, filePath)) {
+                        addSourceForRecompilation(projectId, srcFile, srcInfo);
+                        break;
+                      }
                     }
                   }
                 }
               }
-            }
-
-            final SourceFileInfo srcInfo = loadSourceInfo(file);
-            if (srcInfo != null) {
-              final TIntHashSet projects = srcInfo.getProjectIds();
-              if (projects.size() > 0) {
-                final ScheduleOutputsForDeletionProc deletionProc = new ScheduleOutputsForDeletionProc(file.getUrl());
-                for (int projectId : projects.toArray()) {
-                  // mark associated outputs for deletion
-                  srcInfo.processOutputPaths(projectId, deletionProc);
-                  removeSourceForRecompilation(projectId, getFileId(file));
+  
+              final SourceFileInfo srcInfo = loadSourceInfo(file);
+              if (srcInfo != null) {
+                final TIntHashSet projects = srcInfo.getProjectIds();
+                if (projects.size() > 0) {
+                  final ScheduleOutputsForDeletionProc deletionProc = new ScheduleOutputsForDeletionProc(file.getUrl());
+                  for (int projectId : projects.toArray()) {
+                    // mark associated outputs for deletion
+                    srcInfo.processOutputPaths(projectId, deletionProc);
+                    removeSourceForRecompilation(projectId, getFileId(file));
+                  }
                 }
               }
             }
           }
-
+          finally {
+            synchronized (myOutputsToDelete) {
+              // it is important that update of myOutputsToDelete is done at the end
+              // otherwise the filePath of the file that is about to be deleted may be re-scheduled for deletion in addSourceForRecompilation()
+              final SourceUrlClassNamePair val = myOutputsToDelete.remove(filePath);
+              if (val != null && LOG.isDebugEnabled()) {
+                LOG.debug("REMOVE path to delete: " + filePath);
+              }
+            }
+          }
         }
       });
     }
