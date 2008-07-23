@@ -373,8 +373,8 @@ class FormatProcessor {
       if (!whiteSpace.containsLineFeeds()) {
         whiteSpace.ensureLineFeed();
         if (!wrapWasPresent && wrap != null) {
-          if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap()) && wrap.isFirstWrapped(myCurrentBlock)) {
-            wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap());
+          if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap(), myCurrentBlock)) {
+            wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap(), myCurrentBlock);
             myCurrentBlock = myFirstWrappedBlockOnLine;
             return true;
           }
@@ -386,13 +386,6 @@ class FormatProcessor {
 
       myWrapCandidate = null;
     }
-    /*
-    else if (wrapWasPresent && !wrapIsPresent) {
-      myWrapCandidate = null;
-      myFirstWrappedBlockOnLine = null;
-      myCurrentBlock = getFirstBlockOnNewLine();
-      return true;
-    }*/
     else {
       for (int i = 0; i < wrapsCount; ++i) {
         final WrapImpl wrap1 = wraps.get(i);
@@ -427,9 +420,10 @@ class FormatProcessor {
 
   private boolean canReplaceWrapCandidate(WrapImpl wrap) {
     if (myWrapCandidate == null) return true;
-    if (wrap.isIsActive()) return true;
+    WrapImpl.Type type = wrap.getType();
+    if (wrap.isIsActive() && (type == WrapImpl.Type.CHOP_IF_NEEDED || type == WrapImpl.Type.WRAP_ALWAYS)) return true;
     final WrapImpl currentWrap = myWrapCandidate.getWrap();
-    return wrap == currentWrap || !wrap.isChildOf(currentWrap);
+    return wrap == currentWrap || !wrap.isChildOf(currentWrap, myCurrentBlock);
   }
 
   private boolean isCandidateToBeWrapped(final WrapImpl wrap) {

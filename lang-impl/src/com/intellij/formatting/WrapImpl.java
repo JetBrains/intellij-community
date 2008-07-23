@@ -1,9 +1,6 @@
 package com.intellij.formatting;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 class WrapImpl extends Wrap {
   private LeafBlockWrapper myFirstEntry = null;
@@ -13,7 +10,7 @@ class WrapImpl extends Wrap {
 
   private static final Set<WrapImpl> emptyParentsSet = Collections.emptySet();
   private Set<WrapImpl> myParents = emptyParentsSet;
-  private Collection<WrapImpl> myIgnoredWraps;
+  private Map<WrapImpl, Collection<LeafBlockWrapper>> myIgnoredWraps;
 
   private static final int IGNORE_PARENT_WRAPS_MASK = 1;
   private static final int ACTIVE_MASK = 2;
@@ -24,12 +21,17 @@ class WrapImpl extends Wrap {
   private static final int ID_MAX = 1 << 26;
   private static final Type[] myTypes = Type.values();
 
-  public boolean isChildOf(final WrapImpl wrap) {
+  public boolean isChildOf(final WrapImpl wrap, LeafBlockWrapper leaf) {
     if ((myFlags & IGNORE_PARENT_WRAPS_MASK) != 0) return false;
-    if (myIgnoredWraps != null && myIgnoredWraps.contains(wrap)) return false;
+    if (leaf != null && myIgnoredWraps != null) {
+      Collection<LeafBlockWrapper> leaves = myIgnoredWraps.get(wrap);
+      if (leaves != null && leaves.contains(leaf)) {
+        return false;
+      }
+    }
     for (WrapImpl parent : myParents) {
       if (parent == wrap) return true;
-      if (parent.isChildOf(wrap)) return true;
+      if (parent.isChildOf(wrap, leaf)) return true;
     }
     return false;
   }
@@ -37,7 +39,7 @@ class WrapImpl extends Wrap {
   void registerParent(WrapImpl parent) {
     if (parent == this) return;
     if (parent == null) return;
-    if (parent.isChildOf(this)) return;
+    if (parent.isChildOf(this, null)) return;
     if (myParents == emptyParentsSet) myParents = new HashSet<WrapImpl>(5);
     myParents.add(parent);
   }
@@ -60,11 +62,14 @@ class WrapImpl extends Wrap {
     return (myFlags & IGNORE_PARENT_WRAPS_MASK) != 0;
   }
 
-  public void ignoreParentWrap(final WrapImpl wrap) {
+  public void ignoreParentWrap(final WrapImpl wrap, final LeafBlockWrapper currentBlock) {
     if (myIgnoredWraps == null) {
-      myIgnoredWraps = new HashSet<WrapImpl>(5);
+      myIgnoredWraps = new HashMap<WrapImpl, Collection<LeafBlockWrapper>>(5);
     }
-    myIgnoredWraps.add(wrap);
+    if (myIgnoredWraps.get(wrap) == null) {
+      myIgnoredWraps.put(wrap, new HashSet<LeafBlockWrapper>(2));
+    }
+    myIgnoredWraps.get(wrap).add(currentBlock);
   }
 
   public boolean isFirstWrapped(final LeafBlockWrapper currentBlock) {
