@@ -190,16 +190,16 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     return modules.toArray(new Module[modules.size()]);
   }
 
-  public void readProperties(Element element) throws InvalidDataException {
+  public void readExternal(Element element) throws InvalidDataException {
     Element module = element.getChild(MODULE);
     if (module != null) {
       myModuleName = module.getAttributeValue(NAME);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
-    super.readProperties(element);
+    super.readExternal(element);
   }
 
-  public void writeProperties(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) throws WriteExternalException {
     Element moduleElement = new Element(MODULE);
     moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
@@ -208,7 +208,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     }));
     element.addContent(moduleElement);
     DefaultJDOMExternalizer.writeExternal(this, element);
-    super.writeProperties(element);
+    super.writeExternal(element);
   }
 
   public Module getModule() {

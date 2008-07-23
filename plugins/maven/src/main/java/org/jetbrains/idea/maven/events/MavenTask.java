@@ -15,7 +15,7 @@ public class MavenTask implements Cloneable, Comparable {
   public MavenTask() {
   }
 
-  public MavenTask(String pomPath, String goal) {
+  public MavenTask(final String pomPath, final String goal) {
     this.pomPath = pomPath;
     this.goal = goal;
   }
@@ -52,9 +52,11 @@ public class MavenTask implements Cloneable, Comparable {
   }
 
   @Nullable
-  public MavenRunnerParameters createBuildParameters(MavenProjectsManager manager) {
-    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(pomPath);
-    if (f == null) return null;
-    return new MavenRunnerParameters(pomPath, Arrays.asList(goal), manager.getActiveProfiles());
+  public MavenRunnerParameters createBuildParameters(final MavenProjectsManager projectsManager) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(pomPath);
+    if (virtualFile != null) {
+      return new MavenRunnerParameters(pomPath, Arrays.asList(goal), projectsManager.getActiveProfiles());
+    }
+    return null;
   }
 }

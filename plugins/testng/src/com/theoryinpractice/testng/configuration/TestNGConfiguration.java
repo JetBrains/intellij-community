@@ -239,9 +239,9 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   }
 
   @Override
-  public void readProperties(Element element) throws InvalidDataException {
+  public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
-    super.readProperties(element);
+    super.readExternal(element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistantData(), element);
@@ -269,8 +269,8 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   }
 
   @Override
-  public void writeProperties(Element element) throws WriteExternalException {
-    super.writeProperties(element);
+  public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);

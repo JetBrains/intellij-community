@@ -165,6 +165,34 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     myTaskSelector = selector;
   }
 
+  @Nullable
+  private MavenTask selectMavenTask(Project project, RunConfiguration runConfiguration) {
+    if (myTaskSelector == null) {
+      return null;
+    }
+
+    final MavenTask mavenTask = myState.getTask(runConfiguration.getType(), runConfiguration.getName());
+
+    if (!myTaskSelector.select(project, mavenTask != null ? mavenTask.pomPath : null, mavenTask != null ? mavenTask.goal : null,
+                               EventsBundle.message("maven.event.select.goal.title"))) {
+      return mavenTask;
+    }
+
+    final String pomPath = myTaskSelector.getSelectedPomPath();
+    if (pomPath != null) {
+      final MavenTask newMavenTask = new MavenTask(pomPath, myTaskSelector.getSelectedGoal());
+      if (!myState.isAssignedForType(runConfiguration.getType(), newMavenTask)) {
+        myState.assignTask(runConfiguration.getType(), runConfiguration.getName(), newMavenTask);
+        updateTaskShortcuts(newMavenTask);
+      }
+      return newMavenTask;
+    }
+
+    myState.clearAssignment(runConfiguration.getType(), runConfiguration.getName());
+    updateShortcuts(null);
+    return null;
+  }
+
   public void projectClosed() {
     if (myKeymapListener != null) {
       myKeymapListener.stopListen();
@@ -201,34 +229,8 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     return getDescription(selectMavenTask(myProject, runConfiguration));
   }
 
-  @Nullable
-  private MavenTask selectMavenTask(Project project, RunConfiguration runConfiguration) {
-    if (myTaskSelector == null) {
-      return null;
-    }
-
-    final MavenTask mavenTask = myState.getTask(runConfiguration);
-
-    if (!myTaskSelector.select(project, mavenTask != null ? mavenTask.pomPath : null, mavenTask != null ? mavenTask.goal : null,
-                               EventsBundle.message("maven.event.select.goal.title"))) {
-      return mavenTask;
-    }
-
-    final String pomPath = myTaskSelector.getSelectedPomPath();
-    if (pomPath != null) {
-      final MavenTask newMavenTask = new MavenTask(pomPath, myTaskSelector.getSelectedGoal());
-      myState.assignTask(runConfiguration, newMavenTask);
-      updateTaskShortcuts(newMavenTask);
-      return newMavenTask;
-    }
-
-    myState.clearAssignment(runConfiguration);
-    updateShortcuts(null);
-    return null;
-  }
-
   public String getRunStepDescription(final RunConfiguration runConfiguration) {
-    return getDescription(myState.getTask(runConfiguration));
+    return getDescription(myState.getTask(runConfiguration.getType(), runConfiguration.getName()));
   }
 
   @Nullable

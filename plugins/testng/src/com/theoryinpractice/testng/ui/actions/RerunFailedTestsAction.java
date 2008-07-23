@@ -130,10 +130,6 @@ public class RerunFailedTestsAction extends AnAction {
       };
     }
 
-    public UUID getUUID() {
-      return myConfiguration.getUUID();
-    }
-
     public String getName() {
       return ExecutionBundle.message("rerun.failed.tests.action.name");
     }

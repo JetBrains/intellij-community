@@ -1,14 +1,12 @@
 package org.jetbrains.idea.maven.events.actions;
 
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.events.MavenEventsState;
-import org.jetbrains.idea.maven.events.MavenExecuteOnRunDialog;
-import org.jetbrains.idea.maven.events.MavenTask;
+import org.jetbrains.idea.maven.events.*;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -25,10 +23,26 @@ public class BeforeRunAction extends ToggleAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenTask task = MavenEventsState.getMavenTask(e.getDataContext());
     if (project != null && task != null) {
-      DialogWrapper dialog = new MavenExecuteOnRunDialog(project, task);
+      final MavenEventsHandler eventsHandler = project.getComponent(MavenEventsHandler.class);
+      final MavenEventsState state = eventsHandler.getState();
+
+      final DialogWrapper dialog = new ExecuteOnRunDialog(project, EventsBundle.message("maven.event.execute.before.run.debug")) {
+        protected boolean isAssigned(ConfigurationType type, String configurationName) {
+          return task.equals(state.getAssignedTask(type, configurationName));
+        }
+
+        protected void assign(final ConfigurationType type, final String configurationName) {
+          state.assignTask(type, configurationName, task);
+        }
+
+        protected void clearAll() {
+          state.clearAssignments(task);
+        }
+      };
+
       dialog.show();
       if (dialog.isOK()) {
-        project.getComponent(MavenEventsHandler.class).updateTaskShortcuts(task);
+        eventsHandler.updateTaskShortcuts(task);
         update(e);
       }
     }

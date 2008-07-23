@@ -89,8 +89,8 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     mySettings.myRunnerParameters = p;
   }
 
-  public void readProperties(Element element) throws InvalidDataException {
-    super.readProperties(element);
+  public void readExternal(Element element) throws InvalidDataException {
+    super.readExternal(element);
 
     Element mavenSettingsElement = element.getChild(MavenSettings.TAG);
     if(mavenSettingsElement!=null){
@@ -98,8 +98,8 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     }
   }
 
-  public void writeProperties(Element element) throws WriteExternalException {
-    super.writeProperties(element);
+  public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
     element.addContent(XmlSerializer.serialize(mySettings));
   }
 
