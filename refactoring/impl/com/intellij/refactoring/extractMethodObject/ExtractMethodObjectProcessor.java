@@ -347,8 +347,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     @Override
     public PsiElement processMatch(final Match match) throws IncorrectOperationException {
-      PsiElement element = super.processMatch(match);
-      PsiMethodCallExpression methodCallExpression;
+      final PsiElement element = super.processMatch(match);
+      PsiMethodCallExpression methodCallExpression = null;
       if (element instanceof PsiMethodCallExpression) {
         methodCallExpression = (PsiMethodCallExpression)element;
       }
@@ -357,13 +357,26 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         if (expression instanceof PsiMethodCallExpression) {
           methodCallExpression = (PsiMethodCallExpression)expression;
         }
-        else {
-          return element;
+        else if (expression instanceof PsiAssignmentExpression) {
+          final PsiExpression psiExpression = ((PsiAssignmentExpression)expression).getRExpression();
+          if (psiExpression instanceof PsiMethodCallExpression) {
+            methodCallExpression = (PsiMethodCallExpression)psiExpression;
+          }
+        }
+      } else if (element instanceof PsiDeclarationStatement) {
+        final PsiElement[] declaredElements = ((PsiDeclarationStatement)element).getDeclaredElements();
+        for (PsiElement declaredElement : declaredElements) {
+          if (declaredElement instanceof PsiLocalVariable) {
+            final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
+            if (initializer instanceof PsiMethodCallExpression) {
+              methodCallExpression = (PsiMethodCallExpression)initializer;
+              break;
+            }
+          }
         }
       }
-      else {
-        return element;
-      }
+      if (methodCallExpression == null) return element;
+
       PsiExpression expression = processMethodDeclaration(methodCallExpression.getArgumentList());
 
       return methodCallExpression.replace(expression);
