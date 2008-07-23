@@ -12,6 +12,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -40,6 +41,16 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   @NotNull
   public PsiTryStatement getTryStatement() {
     return (PsiTryStatement)getParent();
+  }
+
+  @Nullable
+  public PsiJavaToken getLParenth() {
+    return (PsiJavaToken)findChildByRole(ChildRole.CATCH_BLOCK_PARAMETER_LPARENTH);
+  }
+
+  @Nullable
+  public PsiJavaToken getRParenth() {
+    return (PsiJavaToken)findChildByRole(ChildRole.CATCH_BLOCK_PARAMETER_RPARENTH);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

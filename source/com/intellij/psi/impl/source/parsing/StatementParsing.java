@@ -857,9 +857,9 @@ public class StatementParsing extends Parsing {
     TreeElement parm = myContext.getDeclarationParsing().parseParameter(lexer, false);
     if (parm == null) {
       TreeUtil.addChildren(catchSection, Factory.createErrorElement(JavaErrorMessages.message("expected.parameter")));
-      return catchSection;
+    } else {
+      TreeUtil.addChildren(catchSection, parm);
     }
-    TreeUtil.addChildren(catchSection, parm);
 
     if (lexer.getTokenType() != RPARENTH) {
       TreeUtil.addChildren(catchSection, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));

@@ -60,4 +60,10 @@ public interface PsiCatchSection extends PsiElement {
    */
   @NotNull
   PsiTryStatement getTryStatement();
+
+  @Nullable
+  PsiJavaToken getRParenth();
+
+  @Nullable
+  PsiJavaToken getLParenth();
 }
