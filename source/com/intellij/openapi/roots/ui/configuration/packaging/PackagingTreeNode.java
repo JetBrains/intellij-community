@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class PackagingTreeNode extends DefaultMutableTreeNode {
+public abstract class PackagingTreeNode extends DefaultMutableTreeNode implements Comparable<PackagingTreeNode> {
   private final PackagingArtifact myOwner;
 
   protected PackagingTreeNode(final @Nullable PackagingArtifact owner) {
@@ -23,6 +23,8 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode {
 
   @NotNull
   protected abstract String getOutputFileName();
+
+  public abstract double getWeight();
 
   public String getSearchName() {
     return getOutputFileName();
@@ -36,6 +38,10 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode {
 
   @Nullable
   public abstract Object getSourceObject();
+
+  public int compareTo(final PackagingTreeNode node) {
+    return getOutputFileName().compareToIgnoreCase(node.getOutputFileName());
+  }
 
   @Nullable
   public PackagingArtifact getOwner() {

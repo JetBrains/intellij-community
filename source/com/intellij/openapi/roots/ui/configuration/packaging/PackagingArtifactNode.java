@@ -25,6 +25,10 @@ public class PackagingArtifactNode extends PackagingTreeNode {
     return myArtifact.getOutputFileName();
   }
 
+  public double getWeight() {
+    return PackagingNodeWeights.ARTIFACT;
+  }
+
   public void render(final ColoredTreeCellRenderer renderer) {
     myArtifact.render(renderer, getMainAttributes(), getCommentAttributes());
   }

@@ -42,6 +42,10 @@ abstract class ModuleOutputBaseNode extends PackagingTreeNode {
     }
   }
 
+  public double getWeight() {
+    return PackagingNodeWeights.MODULE;
+  }
+
   public void render(final ColoredTreeCellRenderer renderer) {
     if (belongsToIncludedArtifact()) {
       PackagingArtifact owner = getOwner();

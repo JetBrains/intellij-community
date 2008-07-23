@@ -22,6 +22,10 @@ class DirectoryNode extends PackagingTreeNode {
     return myDirectoryName;
   }
 
+  public double getWeight() {
+    return PackagingNodeWeights.DIRECTORY;
+  }
+
   public void render(final ColoredTreeCellRenderer renderer) {
     renderer.setIcon(Icons.FOLDER_ICON);
     renderer.append(myDirectoryName, SimpleTextAttributes.REGULAR_ATTRIBUTES);

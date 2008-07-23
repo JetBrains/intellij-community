@@ -41,13 +41,30 @@ class LibraryNode extends PackagingTreeNode {
     return myLibraryLink.getPresentableName();
   }
 
+  public double getWeight() {
+    return PackagingNodeWeights.LIBRARY;
+  }
+
   @Override
   public String getSearchName() {
     Library library = myLibraryLink.getLibrary();
-    if (library != null) {
-      return CellAppearanceUtils.forLibrary(library).getText();
+    if (library == null) {
+      return myLibraryLink.getPresentableName();
+    }
+    String name = library.getName();
+    if (name != null) {
+      return name;
+    }
+    VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+    if (files.length > 0) {
+      return files[0].getName();
     }
     return super.getSearchName();
+  }
+
+  @Override
+  public int compareTo(final PackagingTreeNode node) {
+    return getSearchName().compareToIgnoreCase(node.getSearchName());
   }
 
   public void render(final ColoredTreeCellRenderer renderer) {

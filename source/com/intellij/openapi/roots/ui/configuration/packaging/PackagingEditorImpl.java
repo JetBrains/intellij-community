@@ -270,6 +270,16 @@ public class PackagingEditorImpl implements PackagingEditor {
       myBuilder.createNodes(root, element, null, parameters);
     }
     myTreeModel.nodeStructureChanged(myRoot);
+    TreeUtil.sort(myTreeModel, new Comparator<PackagingTreeNode>() {
+      public int compare(final PackagingTreeNode node1, final PackagingTreeNode node2) {
+        double weight1 = node1.getWeight();
+        double weight2 = node2.getWeight();
+        if (weight1 < weight2) return -1;
+        if (weight1 > weight2) return 1;
+
+        return node1.compareTo(node2);
+      }
+    });
     state.restoreState(myTree);
   }
 
@@ -387,6 +397,10 @@ public class PackagingEditorImpl implements PackagingEditor {
     @NotNull
     protected String getOutputFileName() {
       return "";
+    }
+
+    public double getWeight() {
+      return 0;
     }
 
     public void render(final ColoredTreeCellRenderer renderer) {
