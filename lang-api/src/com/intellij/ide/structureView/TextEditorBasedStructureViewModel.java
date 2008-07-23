@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -118,10 +117,11 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     if (myEditor == null) return null;
     final int offset = myEditor.getCaretModel().getOffset();
     final PsiFile file = getPsiFile();
-    FileViewProvider viewProvider = file.getViewProvider();
 
-    PsiElement element = viewProvider.findElementAt(offset, file.getLanguage());
+    return findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
+  }
 
+  protected Object findAcceptableElement(PsiElement element) {
     while (element != null && !(element instanceof PsiFile)) {
       if (isSuitable(element)) return element;
       element = element.getParent();
