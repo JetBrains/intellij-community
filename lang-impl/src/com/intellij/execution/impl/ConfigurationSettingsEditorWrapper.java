@@ -21,29 +21,50 @@ import java.util.Map;
  * Date: 27-Mar-2006
  */
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettingsImpl> {
+  private ConfigurationSettingsEditor myEditor;
+  private RunnerAndConfigurationSettingsImpl mySettings;
+
+  private Map<String,Boolean> myStepsBeforeLaunch;
+  private boolean mySharedConfiguration;
 
   private JPanel myComponentPlace;
   private JCheckBox myCbStoreProjectConfiguration;
   private JPanel myWholePanel;
 
   private JPanel myStepsPanel;
-  private Map<String,Boolean> myStepsBeforeLaunch;
-
-  private boolean mySharedConfiguration;
-
-  private ConfigurationSettingsEditor myEditor;
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettingsImpl settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
+    mySettings = settings;
     Disposer.register(this, myEditor);
 
-    final RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
+    additionalReset(settings);
+  }
 
+  @NotNull
+  protected JComponent createEditor() {
+    myComponentPlace.setLayout(new GridBagLayout());
+    myComponentPlace.add(myEditor.getComponent(), new GridBagConstraints(0,0,1,1,1.0,1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
+    myComponentPlace.doLayout();
+    return myWholePanel;
+  }
+
+  protected void disposeEditor() {
+  }
+
+  public void resetEditorFrom(final RunnerAndConfigurationSettingsImpl settings) {
+    myEditor.resetEditorFrom(settings);
+    additionalReset(settings);
+  }
+
+  private void additionalReset(RunnerAndConfigurationSettingsImpl settings) {
+    RunConfiguration runConfiguration = settings.getConfiguration();
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     myStepsBeforeLaunch = runManager.getStepsBeforeRun(runConfiguration);
 
     final StepsBeforeRunProvider[] providers = Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME,
                                                                         runConfiguration.getProject());
+    myStepsPanel.removeAll();
     if (providers.length == 0) {
       myStepsPanel.setVisible(false);
     }
@@ -64,37 +85,24 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     });
   }
 
-  @NotNull
-  protected JComponent createEditor() {
-    myComponentPlace.setLayout(new GridBagLayout());
-    myComponentPlace.add(myEditor.getComponent(), new GridBagConstraints(0,0,1,1,1.0,1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
-    myComponentPlace.doLayout();
-    return myWholePanel;
-  }
-
-  protected void disposeEditor() {
-  }
-
-  public void resetEditorFrom(final RunnerAndConfigurationSettingsImpl settings) {
-    myEditor.resetEditorFrom(settings);
-  }
-
   public void applyEditorTo(final RunnerAndConfigurationSettingsImpl settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
     additionalApply(settings);
   }
 
+  public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
+    RunnerAndConfigurationSettingsImpl result = myEditor.getSnapshot();
+    additionalApply(result);
+    return result;
+  }
+
   private void additionalApply(final RunnerAndConfigurationSettingsImpl settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
+    runManager.createStepsBeforeRun(mySettings, runConfiguration);
     runManager.setStepsBeforeRun(runConfiguration, myStepsBeforeLaunch);
     runManager.shareConfiguration(runConfiguration, mySharedConfiguration);
   }
-
-  public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
-    return myEditor.getSnapshot();
-  }
-
 
   public Map<String, Boolean> getStepsBeforeLaunch() {
     return myStepsBeforeLaunch;

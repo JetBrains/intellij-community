@@ -193,7 +193,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   private static String getUniqueName(final RunConfiguration settings) {
-    return settings.getType().getDisplayName() + "." + settings.getName();
+    return settings.getUUID().toString();
   }
 
   public void removeConfigurations(@NotNull final ConfigurationType type) {

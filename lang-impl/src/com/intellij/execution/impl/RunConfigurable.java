@@ -840,8 +840,6 @@ class RunConfigurable extends BaseConfigurable {
         final DefaultMutableTreeNode typeNode = getSelectedConfigurationTypeNode();
         final RunnerAndConfigurationSettingsImpl settings = configuration.getSnapshot();
         settings.setName(createUniqueName(typeNode));
-        getRunManager().createStepsBeforeRun(configuration.getSettings(),
-                                             settings.getConfiguration());
         createNewConfiguration(settings, typeNode);
       }
       catch (ConfigurationException e1) {
