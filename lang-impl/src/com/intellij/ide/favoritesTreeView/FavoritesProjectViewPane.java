@@ -77,7 +77,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   }
 
   public JComponent createComponent() {
-    if (myViewPanel != null) return myViewPanel;
+    //if (myViewPanel != null) return myViewPanel;
 
     myViewPanel = new FavoritesTreeViewPanel(myProject, null, getSubId());
     myTree = myViewPanel.getTree();
