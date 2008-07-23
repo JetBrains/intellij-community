@@ -47,6 +47,7 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     myProperties.setConsole(this);
     getPrinter().setCollectOutput(true);
     myConsolePanel = new ConsolePanel(getConsole().getComponent(), getPrinter(), myProperties, runnerSettings, configurationSettings);
+    Disposer.register(this, myConsolePanel);
   }
 
   protected void attachTo(final PacketExtractorBase outPacketExtractor, final PacketExtractorBase errPacketExtractor, final ProcessHandler process, final DeferedActionsQueue queue) {
@@ -65,12 +66,14 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
                                           final TestStateUpdater testStateUpdater) {
     return new TreeConsumer() {
       protected void onTreeAvailable(final TestProxy test) {
-        disposeModel();
-        if (myConsolePanel == null)
-          return;
+        if (myModel != null) {
+          Disposer.dispose(myModel);
+        }
+        if (myConsolePanel == null) return;
         getPrinter().setCollectOutput(false);
         testingStatus.setInputConsumer(test);
         myModel = new JUnitRunningModel(test, testingStatus, myProperties);
+        Disposer.register(JUnitTreeConsoleView.this, myModel);
         myModel.attachTo(outPacketExtractor);
         myConsolePanel.attachToModel(myModel);
         myModel.attachToTree(myConsolePanel.getTreeView());
@@ -100,19 +103,10 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
 
   public void dispose() {
     super.dispose();
-    disposeModel();
-    if (myConsolePanel != null){
-      Disposer.dispose(myConsolePanel);
-      myConsolePanel = null;
-    }
+    myModel = null;
+    myConsolePanel = null;
   }
 
-  private void disposeModel() {
-    if (myModel != null) {
-      Disposer.dispose(myModel);
-      myModel = null;
-    }
-  }
 
   public JUnitRunningModel getModel() {
     return myModel;
