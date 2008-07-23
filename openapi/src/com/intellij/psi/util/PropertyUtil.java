@@ -114,13 +114,30 @@ public class PropertyUtil {
       if(method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
 
       final String className = method.getContainingClass().getQualifiedName();
-      if(className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) continue;
-      if (PropertyUtil.isSimplePropertySetter(method) && acceptSetters ||
-          PropertyUtil.isSimplePropertyGetter(method) && acceptGetters) {
+      if (className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) continue;
+      if (acceptSetters && PropertyUtil.isSimplePropertySetter(method)||
+          acceptGetters && PropertyUtil.isSimplePropertyGetter(method)) {
         map.put(PropertyUtil.getPropertyName(method), method);
       }
     }
     return map;
+  }
+
+  @NotNull
+  public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass, final String propertyName) {
+    final String setterName = suggestSetterName(propertyName);
+    final PsiMethod[] psiMethods = psiClass.findMethodsByName(setterName, true);
+    final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(psiMethods.length);
+    for (PsiMethod method : psiMethods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
+
+      final String className = method.getContainingClass().getQualifiedName();
+      if (className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) continue;
+      if (PropertyUtil.isSimplePropertySetter(method)) {
+        list.add(method);
+      }
+    }
+    return list;
   }
 
   @Nullable public static PsiMethod findPropertyGetter(PsiClass aClass,
