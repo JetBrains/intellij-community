@@ -166,7 +166,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         iFile.isDirectory() ? iFile.getChild(Project.DIRECTORY_STORE_FOLDER) : iFile.getParentFile().getChild(Project.DIRECTORY_STORE_FOLDER);
 
       final StateStorageManager stateStorageManager = getStateStorageManager();
-      if (dir_store.exists()) {
+      if (dir_store.exists() && iFile.isDirectory()) {
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir_store);
 
         myScheme = StorageScheme.DIRECTORY_BASED;
