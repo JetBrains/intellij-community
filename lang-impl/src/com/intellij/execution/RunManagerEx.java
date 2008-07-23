@@ -39,6 +39,8 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract RunnerAndConfigurationSettingsImpl createConfiguration(String name, ConfigurationFactory type);
 
+  public abstract RunnerAndConfigurationSettingsImpl createConfiguration(String name, RunConfiguration template);
+
   public abstract RunnerAndConfigurationSettingsImpl createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
 
   public abstract RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(ConfigurationType type);
@@ -49,5 +51,5 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettingsImpl settings);
 
-  public abstract Map<String,Boolean> getStepsBeforeLaunch(RunConfiguration settings);
+  public abstract Map<String,Boolean> getStepsBeforeRun(RunConfiguration settings);
 }

@@ -182,16 +182,16 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     return true;
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readProperties(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
-    super.readExternal(element);
+    super.readProperties(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
-    super.writeExternal(element);
+  public void writeProperties(final Element element) throws WriteExternalException {
+    super.writeProperties(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());

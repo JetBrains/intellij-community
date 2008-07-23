@@ -15,33 +15,33 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author dyoma
  */
 public abstract class RunConfigurationBase implements RunConfiguration {
+  @NonNls private static final String UUID_ELEMENT = "uuid";
+  @NonNls private static final String LOG_FILE_ELEMENT = "log_file";
+  @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
+
   private final ConfigurationFactory myFactory;
   private final Project myProject;
+  private UUID myUUID = UUID.randomUUID();
   private String myName = "";
 
   private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
   private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
-  @NonNls private static final String LOG_FILE = "log_file";
-  @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
 
   private Map<Class<? extends RunConfigurationExtension>, Object> myExtensionSettings =
     new HashMap<Class<? extends RunConfigurationExtension>, Object>();
@@ -63,6 +63,10 @@ public abstract class RunConfigurationBase implements RunConfiguration {
 
   public final ConfigurationFactory getFactory() {
     return myFactory;
+  }
+
+  public UUID getUUID() {
+    return myUUID;
   }
 
   public final void setName(final String name) {
@@ -150,9 +154,22 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   public void createAdditionalTabComponents(AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  // DO NOT CALL read/writeExternal from clone since these methods read and write UUID.
+  public final void readExternal(Element element) throws InvalidDataException {
+    String uuidString = element.getAttributeValue(UUID_ELEMENT);
+    if (uuidString != null) myUUID = UUID.fromString(uuidString);
+    readProperties(element);
+  }
+
+  // DO NOT CALL read/writeExternal from clone since these methods read and write UUID.
+  public final void writeExternal(Element element) throws WriteExternalException {
+    element.setAttribute(UUID_ELEMENT, myUUID.toString());
+    writeProperties(element);
+  }
+
+  protected void readProperties(Element element) throws InvalidDataException {
     myLogFiles.clear();
-    for (final Object o : element.getChildren(LOG_FILE)) {
+    for (final Object o : element.getChildren(LOG_FILE_ELEMENT)) {
       LogFileOptions logFileOptions = new LogFileOptions();
       logFileOptions.readExternal((Element)o);
       myLogFiles.add(logFileOptions);
@@ -166,9 +183,9 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  protected void writeProperties(Element element) throws WriteExternalException {
     for (final LogFileOptions options : myLogFiles) {
-      Element logFile = new Element(LOG_FILE);
+      Element logFile = new Element(LOG_FILE_ELEMENT);
       options.writeExternal(logFile);
       element.addContent(logFile);
     }

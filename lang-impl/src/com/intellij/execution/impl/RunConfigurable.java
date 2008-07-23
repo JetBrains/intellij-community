@@ -123,7 +123,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     final RunManagerEx manager = getRunManager();
-    final ConfigurationType[] factories = manager.getConfigurationFactories();
+    final ConfigurationType[] factories = manager.getConfigurationTypes();
     for (ConfigurationType type : factories) {
       final RunnerAndConfigurationSettingsImpl[] configurations = manager.getConfigurationSettings(type);
       if (configurations != null && configurations.length > 0) {
@@ -379,7 +379,7 @@ class RunConfigurable extends BaseConfigurable {
 
   public void apply() throws ConfigurationException {
     final RunManagerEx manager = getRunManager();
-    final ConfigurationType[] configurationTypes = manager.getConfigurationFactories();
+    final ConfigurationType[] configurationTypes = manager.getConfigurationTypes();
     for (ConfigurationType configurationType : configurationTypes) {
       applyByType(configurationType);
     }
@@ -423,7 +423,7 @@ class RunConfigurable extends BaseConfigurable {
           else {
             stableConfigurations.add(new RunConfigurationBean(settings,
                                                               manager.isConfigurationShared(settings),
-                                                              manager.getStepsBeforeLaunch(settings.getConfiguration())));
+                                                              manager.getStepsBeforeRun(settings.getConfiguration())));
           }
         }
       }
@@ -658,7 +658,7 @@ class RunConfigurable extends BaseConfigurable {
 
     public void actionPerformed(AnActionEvent e) {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final ConfigurationType[] configurationTypes = getRunManager().getConfigurationFactories();
+      final ConfigurationType[] configurationTypes = getRunManager().getConfigurationTypes();
       Arrays.sort(configurationTypes, new Comparator<ConfigurationType>() {
         public int compare(final ConfigurationType type1, final ConfigurationType type2) {
           return type1.getDisplayName().compareTo(type2.getDisplayName());
@@ -840,6 +840,8 @@ class RunConfigurable extends BaseConfigurable {
         final DefaultMutableTreeNode typeNode = getSelectedConfigurationTypeNode();
         final RunnerAndConfigurationSettingsImpl settings = configuration.getSnapshot();
         settings.setName(createUniqueName(typeNode));
+        getRunManager().createStepsBeforeRun(configuration.getSettings(),
+                                             settings.getConfiguration());
         createNewConfiguration(settings, typeNode);
       }
       catch (ConfigurationException e1) {
@@ -932,7 +934,7 @@ class RunConfigurable extends BaseConfigurable {
       myConfigurable = configurable;
       mySettings = (RunnerAndConfigurationSettingsImpl)myConfigurable.getSettings();
       final ConfigurationSettingsEditorWrapper editorWrapper = (ConfigurationSettingsEditorWrapper)myConfigurable.getEditor();
-      myShared = editorWrapper.isStoreProjectConfiguration();
+      myShared = editorWrapper.isSharedConfiguration();
       myStepsBeforeLaunch = editorWrapper.getStepsBeforeLaunch();
     }
 

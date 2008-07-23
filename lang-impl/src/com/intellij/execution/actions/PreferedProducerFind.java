@@ -41,7 +41,7 @@ class PreferedProducerFind {
       }
     }
     if (producers.isEmpty()) { //try to find by locatable type
-      final ConfigurationType[] factories = RunManager.getInstance(location.getProject()).getConfigurationFactories();
+      final ConfigurationType[] factories = RunManager.getInstance(location.getProject()).getConfigurationTypes();
       for (final ConfigurationType type : factories) {
         if (type instanceof LocatableConfigurationType) {
           final DefaultRuntimeConfigurationProducer prototype = new DefaultRuntimeConfigurationProducer(((LocatableConfigurationType)type));

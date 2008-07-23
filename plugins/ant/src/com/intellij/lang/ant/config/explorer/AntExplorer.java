@@ -604,7 +604,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final ExecuteOnRunDialog dialog = new ExecuteOnRunDialog(myProject, myTarget, myBuildFile);
+      AntExecuteOnRunDialog dialog = new AntExecuteOnRunDialog(myProject, myTarget, myBuildFile);
       dialog.show();
       myBuilder.refresh();
     }

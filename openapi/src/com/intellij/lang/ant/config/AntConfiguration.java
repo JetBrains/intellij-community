@@ -16,7 +16,6 @@
 
 package com.intellij.lang.ant.config;
 
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -87,13 +86,13 @@ public abstract class AntConfiguration {
 
   public abstract boolean hasTasksToExecuteBeforeRun(final RunConfiguration configuration);
 
-  public abstract boolean executeTaskBeforeRun(final DataContext context, final RunConfiguration configuration);
+  public abstract boolean executeTaskBeforeRun(final DataContext context, RunConfiguration configuration);
 
   public abstract boolean executeTargetBeforeCompile(DataContext context);
 
   public abstract boolean executeTargetAfterCompile(DataContext context);
 
-  public abstract AntBuildTarget getTargetForBeforeRunEvent(ConfigurationType type, String runConfigurationName);
+  public abstract AntBuildTarget getTargetForBeforeRunEvent(RunConfiguration configuration);
 
-  public abstract void setTargetForBeforeRunEvent(final AntBuildFile buildFile, final String targetName, ConfigurationType type, String runConfigurationName);
+  public abstract void setTargetForBeforeRunEvent(AntBuildFile buildFile, String targetName, RunConfiguration configuration);
 }

@@ -47,7 +47,7 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
     wholePanel.add(pane, BorderLayout.WEST);
     final JPanel rightPanel = new JPanel(new BorderLayout());
     wholePanel.add(rightPanel, BorderLayout.CENTER);
-    final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactories();
+    final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationTypes();
     for (ConfigurationType type : configurationTypes) {
       myRoot.add(new DefaultMutableTreeNode(type));
     }

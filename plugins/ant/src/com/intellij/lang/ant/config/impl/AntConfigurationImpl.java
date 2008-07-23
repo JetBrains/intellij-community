@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataAccessors;
 import com.intellij.lang.ant.AntBundle;
@@ -497,16 +496,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return runTargetSynchronously(context, foundEvent);
   }
 
-  public AntBuildTarget getTargetForBeforeRunEvent(ConfigurationType type, String runConfigurationName) {
-    ExecutionEvent event = new ExecuteBeforeRunEvent(type, runConfigurationName);
-    return getTargetForEvent(event);
+  public AntBuildTarget getTargetForBeforeRunEvent(RunConfiguration configuration) {
+    return getTargetForEvent(new ExecuteBeforeRunEvent(configuration));
   }
 
-  public void setTargetForBeforeRunEvent(final AntBuildFile buildFile,
-                                         final String targetName,
-                                         ConfigurationType type,
-                                         String runConfigurationName) {
-    setTargetForEvent(buildFile, targetName, new ExecuteBeforeRunEvent(type, runConfigurationName));
+  public void setTargetForBeforeRunEvent(AntBuildFile buildFile,
+                                         String targetName,
+                                         RunConfiguration configuration) {
+    setTargetForEvent(buildFile, targetName, new ExecuteBeforeRunEvent(configuration));
   }
 
   private AntBuildModelBase createModel(final AntBuildFile buildFile) {
@@ -817,19 +814,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   
   @Nullable
   ExecuteBeforeRunEvent findExecuteBeforeRunEvent(RunConfiguration configuration) {
-    final ConfigurationType type = configuration.getType();
     for (final ExecutionEvent e : getEventsByClass(ExecuteBeforeRunEvent.class)) {
       final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
-      final ConfigurationType eventConfigType = event.getConfigurationType();
-      if (eventConfigType != null && Comparing.strEqual(type.getId(), eventConfigType.getId())) {
-        if (event.getRunConfigurationName() == null) {
-          // run for any configuration of this type
-          return event;
-        }
-        if (event.getRunConfigurationName().equals(configuration.getName())) {
-          return event;
-        }
-      }
+      if (event.isFor(configuration)) return event;
     }
     return null;
   }
@@ -840,8 +827,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     private static final String[] COMPARABLE_ATTRIB_NAMES = new String[] {
       EVENT_ELEMENT, 
       TARGET_ELEMENT, 
-      ExecuteBeforeRunEvent.RUN_CONFIGURATION_TYPE_ATTR, 
-      ExecuteBeforeRunEvent.RUN_CONFIUGRATION_NAME_ATTR,
+      ExecuteBeforeRunEvent.RUN_CONFIUGRATION_UUID_ATTR,
       ExecuteCompositeTargetEvent.PRESENTABLE_NAME
     };
     

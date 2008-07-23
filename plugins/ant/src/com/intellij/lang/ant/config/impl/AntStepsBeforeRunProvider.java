@@ -42,11 +42,11 @@ public class AntStepsBeforeRunProvider implements StepsBeforeRunProvider {
 
   public void copyTaskData(RunConfiguration from, RunConfiguration to) {
     AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-    final AntBuildTarget antBuildTarget = antConfiguration.getTargetForBeforeRunEvent(from.getType(), from.getName());
+    final AntBuildTarget antBuildTarget = antConfiguration.getTargetForBeforeRunEvent(from);
 
     if (antBuildTarget != null) {
       antConfiguration
-          .setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), to.getType(), to.getName());
+          .setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), to);
     }
   }
 
@@ -67,7 +67,7 @@ public class AntStepsBeforeRunProvider implements StepsBeforeRunProvider {
     if (dlg.isOK()) {
       buildTarget = dlg.getSelectedTarget();
       if (event == null) {
-        event = new ExecuteBeforeRunEvent(runConfiguration.getType(), runConfiguration.getName());
+        event = new ExecuteBeforeRunEvent(runConfiguration);
       }
       if (buildTarget != null) {
         antConfiguration.setTargetForEvent(buildTarget.getModel().getBuildFile(), buildTarget.getName(), event);

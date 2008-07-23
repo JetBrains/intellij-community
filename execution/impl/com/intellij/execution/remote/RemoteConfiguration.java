@@ -26,13 +26,13 @@ import java.util.Collection;
 
 public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> {
 
-  public void writeExternal(final Element element) throws WriteExternalException {
-    super.writeExternal(element);
+  public void writeProperties(final Element element) throws WriteExternalException {
+    super.writeProperties(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
-    super.readExternal(element);
+  public void readProperties(final Element element) throws InvalidDataException {
+    super.readProperties(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 

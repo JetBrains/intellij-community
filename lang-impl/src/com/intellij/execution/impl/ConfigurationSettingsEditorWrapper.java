@@ -29,7 +29,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private JPanel myStepsPanel;
   private Map<String,Boolean> myStepsBeforeLaunch;
 
-  private boolean myStoreProjectConfiguration;
+  private boolean mySharedConfiguration;
 
   private ConfigurationSettingsEditor myEditor;
 
@@ -40,7 +40,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
 
-    myStepsBeforeLaunch = runManager.getStepsBeforeLaunch(runConfiguration);
+    myStepsBeforeLaunch = runManager.getStepsBeforeRun(runConfiguration);
 
     final StepsBeforeRunProvider[] providers = Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME,
                                                                         runConfiguration.getProject());
@@ -55,11 +55,11 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
       }
     }
 
-    myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
-    myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
+    mySharedConfiguration = runManager.isConfigurationShared(settings);
+    myCbStoreProjectConfiguration.setSelected(mySharedConfiguration);
     myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
+        mySharedConfiguration = myCbStoreProjectConfiguration.isSelected();
       }
     });
   }
@@ -87,8 +87,8 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void additionalApply(final RunnerAndConfigurationSettingsImpl settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.setCompileMethodBeforeRun(runConfiguration, myStepsBeforeLaunch);
-    runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
+    runManager.setStepsBeforeRun(runConfiguration, myStepsBeforeLaunch);
+    runManager.shareConfiguration(runConfiguration, mySharedConfiguration);
   }
 
   public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
@@ -100,8 +100,8 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     return myStepsBeforeLaunch;
   }
 
-  public boolean isStoreProjectConfiguration() {
-    return myStoreProjectConfiguration;
+  public boolean isSharedConfiguration() {
+    return mySharedConfiguration;
   }
 
   private class StepBeforeLaunchRow extends JPanel {
