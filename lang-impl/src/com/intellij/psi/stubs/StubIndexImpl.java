@@ -6,9 +6,7 @@ package com.intellij.psi.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -157,7 +155,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           public void perform(final int id, final TIntArrayList value) {
             final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
             if (file != null && (scope == null || scope.contains(file))) {
-              Document doc = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getDocument(file);
               final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
               if (psiFile != null && !(psiFile instanceof PsiPlainTextFile)) {
                 StubTree stubTree = psiFile.getStubTree();
