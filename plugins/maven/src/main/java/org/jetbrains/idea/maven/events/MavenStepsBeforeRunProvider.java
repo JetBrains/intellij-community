@@ -27,12 +27,12 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
     return MavenEventsComponent.RUN_MAVEN_STEP;
   }
 
-  public String getStepDescription(final RunConfiguration runConfiguration) {
+  public String getStepDescription(RunConfiguration runConfiguration) {
     return MavenEventsComponent.getInstance(myProject).getRunStepDescription(runConfiguration);
   }
 
   public boolean hasTask(RunConfiguration configuration) {
-    return getState().getTask(configuration.getType(), configuration.getName()) != null;
+    return getState().getTask(configuration) != null;
   }
 
   public boolean executeTask(final DataContext context, final RunConfiguration configuration) {
@@ -43,7 +43,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
                        EventsBundle.message("execute.before.launch.steps.title"),
                        true) {
           public void run(@NotNull ProgressIndicator indicator) {
-            final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
+            MavenTask task = getState().getTask(configuration);
             result[0] = task != null && getEventsHandler().execute(Arrays.asList(task), indicator);
           }
         };
@@ -52,10 +52,10 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
     return result[0];
   }
 
-  public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
-    final MavenTask mavenTask = getState().getAssignedTask(from.getType(), from.getName());
+  public void copyTaskData(RunConfiguration from, RunConfiguration to) {
+    final MavenTask mavenTask = getState().getAssignedTask(from);
     if (mavenTask != null) {
-      getState().assignTask(to.getType(), to.getName(), mavenTask.clone());
+      getState().assignTask(to, mavenTask.clone());
       // no need to update shortcut description actually, as the presentation of mavenTask should not change
     }
   }
@@ -68,7 +68,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
     return true;
   }
 
-  public String configureStep(final RunConfiguration runConfiguration) {
+  public String configureStep(RunConfiguration runConfiguration) {
     return MavenEventsComponent.getInstance(myProject).configureRunStep(runConfiguration);
   }
 

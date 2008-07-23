@@ -84,8 +84,8 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     return workDir;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    super.readExternal(element);
+  public void readProperties(Element element) throws InvalidDataException {
+    super.readProperties(element);
     readModule(element);
     scriptPath = JDOMExternalizer.readString(element, "path");
     vmParams = JDOMExternalizer.readString(element, "vmparams");
@@ -95,8 +95,8 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     workDir = getWorkDir();
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    super.writeExternal(element);
+  public void writeProperties(Element element) throws WriteExternalException {
+    super.writeProperties(element);
     writeModule(element);
     JDOMExternalizer.write(element, "path", scriptPath);
     JDOMExternalizer.write(element, "vmparams", vmParams);

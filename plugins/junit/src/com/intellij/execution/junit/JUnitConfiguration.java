@@ -235,17 +235,17 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     return false;
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readProperties(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
-    super.readExternal(element);
+    super.readProperties(element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
-    super.writeExternal(element);
+  public void writeProperties(final Element element) throws WriteExternalException {
+    super.writeProperties(element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);

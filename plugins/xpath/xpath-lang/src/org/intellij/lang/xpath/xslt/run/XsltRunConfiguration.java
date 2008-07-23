@@ -229,8 +229,8 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     @SuppressWarnings({ "unchecked" })
-    public void readExternal(Element element) throws InvalidDataException {
-        super.readExternal(element);
+    public void readProperties(Element element) throws InvalidDataException {
+        super.readProperties(element);
         DefaultJDOMExternalizer.readExternal(this, element);
 
         Element e = element.getChild("XsltFile");
@@ -282,8 +282,8 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return null;
     }
 
-    public void writeExternal(Element element) throws WriteExternalException {
-        super.writeExternal(element);
+    public void writeProperties(Element element) throws WriteExternalException {
+        super.writeProperties(element);
         DefaultJDOMExternalizer.writeExternal(this, element);
 
         Element e = new Element("XsltFile");

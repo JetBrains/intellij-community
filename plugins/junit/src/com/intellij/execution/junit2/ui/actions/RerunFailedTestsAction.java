@@ -46,6 +46,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Alexey
@@ -125,6 +126,10 @@ public class RerunFailedTestsAction extends AnAction {
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
       myTestMethods.clear();
       return myTestMethods;
+    }
+
+    public UUID getUUID() {
+      return myConfiguration.getUUID();
     }
 
     public String getName() {
