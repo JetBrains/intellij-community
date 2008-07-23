@@ -21,10 +21,8 @@ import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.segments.InputConsumer;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,9 +34,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class TestProxy extends CompositePrintable implements AbstractTestProxy, InputConsumer, ChangingPrintable, TestProxyListener, TestProxyParent {
+public class TestProxy extends CompositePrintable implements PrintableTestProxy, InputConsumer, ChangingPrintable, TestProxyParent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.TestProxy");
-  public static final String NEW_LINE = "\n";
 
   private final TestInfo myInfo;
   private TestState myState = TestState.DEFAULT;

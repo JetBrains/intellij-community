@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 
 public class IgnoredState extends ReadableState {
@@ -32,6 +33,6 @@ public class IgnoredState extends ReadableState {
   public void printOn(final Printer printer) {
     String parentName = myPeformedTest.getParent() == null ? myPeformedTest.getInfo().getComment() : myPeformedTest.getParent().toString();
     String message = ExecutionBundle.message("junit.runing.info.ignored.console.message", parentName, myPeformedTest.getInfo().getName());
-    printer.print(message + TestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    printer.print(message + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
   }
 }

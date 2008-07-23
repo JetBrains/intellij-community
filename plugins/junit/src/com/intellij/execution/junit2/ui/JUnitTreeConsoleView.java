@@ -18,19 +18,21 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.junit2.*;
+import com.intellij.execution.junit2.InputRouter;
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.TestingStatus;
+import com.intellij.execution.junit2.TreeConsumer;
 import com.intellij.execution.junit2.segments.*;
 import com.intellij.execution.junit2.states.TestStateUpdater;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.TreeCollapser;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.ExternalOutput;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ProfilingUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -137,10 +139,5 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     public void onOutput(final String text, final ConsoleViewContentType contentType) {
       myPrinter.onNewAvaliable(new ExternalOutput(text, contentType));
     }
-  }
-
-  @NotNull
-  public AnAction[] createUpDownStacktraceActions() {
-    return getConsole().createUpDownStacktraceActions();
   }
 }

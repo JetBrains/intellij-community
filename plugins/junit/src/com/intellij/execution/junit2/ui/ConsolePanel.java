@@ -26,7 +26,9 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit2.ui.actions.JUnitToolbarPanel;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
+import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -34,6 +36,7 @@ import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,7 +75,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   private final JUnitToolbarPanel myToolbarPanel;
   private final StatisticsPanel myStatisticsPanel;
   private final TestTreeView myTreeView;
-  private ConsoleViewPrinter myPrinter;
+  private TestsOutputConsolePrinter myPrinter;
   private StartingProgress myStartingProgress;
   private TabbedPaneWrapper myTabs;
 
@@ -82,7 +85,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   private Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
 
   public ConsolePanel(final JComponent console,
-                      final ConsoleViewPrinter printer,
+                      final TestsOutputConsolePrinter printer,
                       final JUnitConsoleProperties properties,
                       final RunnerSettings runnerSettings,
                       final ConfigurationPerRunnerSettings configurationSettings) {
@@ -183,7 +186,13 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
     setLeftComponent(treeView);
     myToolbarPanel.setModel(model);
     myStatusLine.setModel(model);
-    model.addListener(myPrinter);
+
+    model.addListener(new JUnitAdapter() {
+      @Override
+      public void onTestSelected(final TestProxy test) {
+        myPrinter.updateOnTestSelected(test);
+      }
+    });
     myStatisticsPanel.attachTo(model);
   }
 
