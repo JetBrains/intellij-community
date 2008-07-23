@@ -246,16 +246,13 @@ public class JarHandler implements FileSystemInterface {
       final ZipFile zip = getZip();
       assert zip != null;
 
-      ByteArrayOutputStream result = new ByteArrayOutputStream((int)entry.getSize());
-      InputStream nativeStream = new BufferedInputStream(zip.getInputStream(entry));
+      final InputStream stream = zip.getInputStream(entry);
       try {
-        FileUtil.copy(nativeStream, result);
+        return FileUtil.loadBytes(stream, (int)entry.getSize());
       }
       finally {
-        nativeStream.close();
+        stream.close();
       }
-
-      return result.toByteArray();
     }
   }
 

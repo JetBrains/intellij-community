@@ -21,8 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.Processor;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,8 +157,8 @@ public class FileUtil {
   }
 
   public static byte[] loadFileBytes(File file) throws IOException {
-    final InputStream stream = new BufferedInputStream(new FileInputStream(file));
     byte[] bytes;
+    final InputStream stream = new FileInputStream(file);
     try{
       bytes = loadBytes(stream, (int)file.length());
     }

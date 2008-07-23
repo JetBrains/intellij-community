@@ -720,13 +720,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
-    final FileInputStream stream = new FileInputStream(convertToIOFile(file));
-    try {
-      return FileUtil.adaptiveLoadBytes(stream);
-    }
-    finally {
-      stream.close();
-    }
+    return FileUtil.loadFileBytes(convertToIOFile(file));
   }
 
   public long getTimeStamp(final VirtualFile file) {
