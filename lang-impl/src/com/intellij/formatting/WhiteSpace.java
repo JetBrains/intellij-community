@@ -390,7 +390,8 @@ class WhiteSpace {
         result.append('\n');
       }
       appendNonWhitespaces(result, lines, lines.length-1);
-      repeatTrailingSymbols(indentOptions, result, myIndentSpaces, mySpaces);
+      result.append(lines[lines.length - 1]);
+
     }
     return result;
   }
