@@ -321,7 +321,13 @@ public class GenericsHighlightUtil {
 
     final PsiType returnType1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
     final PsiType returnType2 = TypeConversionUtil.erasure(superMethod.getReturnType());
-    if (!Comparing.equal(returnType1, returnType2) && !TypeConversionUtil.isVoidType(returnType1) && !TypeConversionUtil.isVoidType(returnType2)) return null;
+    if (!Comparing.equal(returnType1, returnType2) &&
+        !TypeConversionUtil.isVoidType(returnType1) &&
+        !TypeConversionUtil.isVoidType(returnType2) &&
+        !(checkContainingClass.equals(superContainingClass) &&
+          Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes()))) {
+      return null;
+    }
 
     if (!checkContainingClass.equals(superContainingClass) && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
       return null;

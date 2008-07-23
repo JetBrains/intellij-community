@@ -331,7 +331,7 @@ public final class PsiUtil extends PsiUtilBase {
     }
   }
 
-  //@Modifier
+  @Modifier
   @Nullable
   public static String getAccessModifier(int accessLevel) {
     return accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];

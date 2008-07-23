@@ -673,8 +673,8 @@ public class HighlightMethodUtil {
     int methodCount = 0;
     final PsiMethod[] methodsByName = aClass.findMethodsByName(method.getName(), false);
     for (PsiMethod other : methodsByName) {
-      if (other.isConstructor() == method.isConstructor() &&
-          other.getSignature(PsiSubstitutor.EMPTY).equals(methodSignature)) {
+      if (other == method ||
+          other.isConstructor() == method.isConstructor() && other.getSignature(PsiSubstitutor.EMPTY).equals(methodSignature)) {
         methodCount++;
         if (methodCount > 1) break;
       }
