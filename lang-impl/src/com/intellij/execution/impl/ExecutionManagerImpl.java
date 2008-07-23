@@ -82,7 +82,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         if (configuration instanceof RunConfiguration) {
           final RunConfiguration runConfiguration = (RunConfiguration)configuration;
           final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-          final Map<String, Boolean> beforeRun = runManager.getStepsBeforeRun(runConfiguration);
+          final Map<String, Boolean> beforeRun = runManager.getStepsBeforeLaunch(runConfiguration);
 
           final Collection<StepsBeforeRunProvider> activeProviders = new ArrayList<StepsBeforeRunProvider>();
           for (final StepsBeforeRunProvider provider : Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME, myProject)) {

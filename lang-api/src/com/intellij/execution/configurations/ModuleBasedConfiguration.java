@@ -57,6 +57,13 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule.setModule(module);
   }
 
+  public void readExternal(Element element) throws InvalidDataException{
+    super.readExternal(element);
+  }
+  public void writeExternal(Element element) throws WriteExternalException{
+    super.writeExternal(element);
+  }
+
   protected void readModule(final Element element) throws InvalidDataException {
     myModule.readExternal(element);
   }
@@ -74,10 +81,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public ModuleBasedConfiguration clone() {
     final Element element = new Element(TO_CLONE_ELEMENT_NAME);
     try {
-      writeProperties(element);
+      writeExternal(element);
       final ModuleBasedConfiguration configuration = createInstance();
       configuration.init();
-      configuration.readProperties(element);
+      configuration.readExternal(element);
       return configuration;
     } catch (InvalidDataException e) {
       LOG.error(e);

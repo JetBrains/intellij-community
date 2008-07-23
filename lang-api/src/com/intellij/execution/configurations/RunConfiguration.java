@@ -23,11 +23,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.UUID;
-
 public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
-  UUID getUUID();
-
   ConfigurationFactory getFactory();
 
   void setName(String name);

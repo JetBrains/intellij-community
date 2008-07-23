@@ -166,29 +166,29 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
   }
 
-  public void readProperties(final Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    readModule(element);
+  public void readExternal(final Element parentNode) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, parentNode);
+    readModule(parentNode);
     final ArrayList<AppletParameter> parameters = new ArrayList<AppletParameter>();
     for (
-      Iterator iterator = element.getChildren(PARAMETER_ELEMENT_NAME).iterator(); iterator.hasNext();) {
-      final Element each = (Element)iterator.next();
-      final String name = each.getAttributeValue(NAME_ATTR);
-      final String value = each.getAttributeValue(VALUE_ATTR);
+      Iterator iterator = parentNode.getChildren(PARAMETER_ELEMENT_NAME).iterator(); iterator.hasNext();) {
+      final Element element = (Element)iterator.next();
+      final String name = element.getAttributeValue(NAME_ATTR);
+      final String value = element.getAttributeValue(VALUE_ATTR);
       parameters.add(new AppletParameter(name, value));
     }
     myAppletParameters = parameters.toArray(new AppletParameter[parameters.size()]);
   }
 
-  public void writeProperties(final Element element) throws WriteExternalException {
-    writeModule(element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void writeExternal(final Element parentNode) throws WriteExternalException {
+    writeModule(parentNode);
+    DefaultJDOMExternalizer.writeExternal(this, parentNode);
     if (myAppletParameters != null) {
       for (int i = 0; i < myAppletParameters.length; i++) {
-        final Element each = new Element(PARAMETER_ELEMENT_NAME);
-        element.addContent(each);
-        each.setAttribute(NAME_ATTR, myAppletParameters[i].getName());
-        each.setAttribute(VALUE_ATTR, myAppletParameters[i].getValue());
+        final Element element = new Element(PARAMETER_ELEMENT_NAME);
+        parentNode.addContent(element);
+        element.setAttribute(NAME_ATTR, myAppletParameters[i].getName());
+        element.setAttribute(VALUE_ATTR, myAppletParameters[i].getValue());
       }
     }
   }

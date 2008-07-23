@@ -106,9 +106,8 @@ public class CreateAction extends BaseRunConfigurationAction {
       final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
       final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(configuration.getFactory());
       final RunConfiguration templateConfiguration = template.getConfiguration();
-      runManager.addConfiguration(configuration,
-                                  runManager.isConfigurationShared(template),
-                                  runManager.getStepsBeforeRun(templateConfiguration));
+      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getStepsBeforeLaunch(
+        templateConfiguration));
       runManager.createStepsBeforeRun(template, configuration.getConfiguration());
       runManager.setActiveConfiguration(configuration);
     }
@@ -125,7 +124,7 @@ public class CreateAction extends BaseRunConfigurationAction {
         final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
         runManager.addConfiguration(configuration,
                                     runManager.isConfigurationShared(configuration),
-                                    runManager.getStepsBeforeRun(configuration.getConfiguration()));
+                                    runManager.getStepsBeforeLaunch(configuration.getConfiguration()));
         runManager.setActiveConfiguration(configuration);
       }
     }

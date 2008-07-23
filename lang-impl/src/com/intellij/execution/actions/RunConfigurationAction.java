@@ -107,7 +107,7 @@ public class RunConfigurationAction extends ComboBoxAction {
       allActionsGroup.add(new SaveTemporaryAction());
       allActionsGroup.addSeparator();
 
-      final ConfigurationType[] types = runManager.getConfigurationTypes();
+      final ConfigurationType[] types = runManager.getConfigurationFactories();
       for (ConfigurationType type : types) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
         final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(type);

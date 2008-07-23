@@ -30,7 +30,7 @@ public abstract class RunManager {
     return project.getComponent(RunManager.class);
   }
 
-  public abstract ConfigurationType[] getConfigurationTypes();
+  public abstract ConfigurationType[] getConfigurationFactories();
 
   public abstract RunConfiguration[] getConfigurations(ConfigurationType type);
 
