@@ -551,7 +551,12 @@ public class DuplicatesFinder {
         PsiClass class2 = method2.getContainingClass();
         if (qualifier2 instanceof PsiReferenceExpression) {
           final PsiType type = ((PsiReferenceExpression)qualifier2).getType();
-          if (type instanceof PsiClassType) class2 = PsiUtil.resolveClassInType(type);
+          if (type instanceof PsiClassType){
+            final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
+            if (!(resolvedClass instanceof PsiTypeParameter)) {
+              class2 = resolvedClass;
+            }
+          }
         }
 
         if (class2 != null) {
