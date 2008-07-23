@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,5 +30,6 @@ public interface SourcesFinder<Scope> {
    * @param project
    * @param scope a search scope
    */
+  @Nullable
   PsiFile findSourceFile(String relPath, Project project, Scope scope);
 }
