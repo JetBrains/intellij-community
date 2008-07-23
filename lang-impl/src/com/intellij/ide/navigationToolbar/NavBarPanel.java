@@ -55,6 +55,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
@@ -259,13 +260,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   public void select() {
     if (!myList.isEmpty()) {
       myModel.setSelectedIndex(myList.size() - 1);
-      paintComponent();
+      rebuildComponent();
       scrollSelectionToVisible(1);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          requestFocusInWindow();
-        }
-      });
+      IdeFocusManager.getInstance(myProject).requestFocus(this, true);
     }
   }
 
@@ -278,7 +275,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     final int firstIndex = myFirstIndex;
     while (!myList.get(myModel.getSelectedIndex()).isShowing()) {
       myFirstIndex = myModel.getIndexByMode(myFirstIndex + direction);
-      paintComponent();
+      rebuildComponent();
       if (firstIndex == myFirstIndex) break; //to be sure not to hang
     }
     setSize(getPreferredSize());  //not to miss right button && font corrections
@@ -333,7 +330,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         installActions(index, hasChildren, icon, label);
         myList.add(label);
       }
-      paintComponent();
+      rebuildComponent();
     }
   }
 
@@ -364,7 +361,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
 
 
-  private void paintComponent() {
+  private void rebuildComponent() {
     myPreferredWidth = 0;
     myScrollablePanel.removeAll();
     myScrollablePanel.invalidate();
@@ -597,24 +594,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         public void actionPerformed(ActionEvent e) {
           myNodePopup.goBack();
           shiftFocus(-1);
-          SwingUtilities.invokeLater(new Runnable(){
-            public void run() {
-              restorePopup();
-            }
-          });
+          restorePopup();
         }
       });
       myNodePopup.registerAction("right", KeyEvent.VK_RIGHT, 0, new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
           myNodePopup.goBack();
           shiftFocus(1);
-          SwingUtilities.invokeLater(new Runnable(){
-            public void run() {
-              restorePopup();
-            }
-          });
+          restorePopup();
         }
       });
+
       myNodePopup.showUnderneathOf(item.getColoredComponent());
     }
     repaint();
@@ -648,13 +638,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void restorePopup() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        cancelPopup();
-        ctrlClick(myModel.getSelectedIndex());
-      }
-    });
+    cancelPopup();
+    ctrlClick(myModel.getSelectedIndex());
   }
 
   private void cancelPopup() {
@@ -861,12 +846,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       p.y = container.getHeight() / 4;
       HintManager.getInstance().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true);
     }
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        select();
-      }
-    });
+    select();
   }
 
   public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
@@ -1057,7 +1037,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void run() {
         if (myProject.isDisposed()) return;
         immediateUpdateList(true);
-        paintComponent();
+        rebuildComponent();
       }
     }, 500, ModalityState.NON_MODAL);
   }

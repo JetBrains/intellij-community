@@ -356,11 +356,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   }
 
   public void showUnderneathOf(@NotNull Component aComponent) {
-    final JComponent component = getTargetComponent(aComponent);
-
-    final Point point = aComponent.getLocationOnScreen();
-    point.y += component.getVisibleRect().height;
-    show(aComponent, point.x, point.y, false);
+    show(new RelativePoint(aComponent, new Point(0, aComponent.getHeight())));
   }
 
   private static Point getCenterPoint(Rectangle aContainerRec, Dimension aPopupSize) {
