@@ -26,12 +26,18 @@ public class ImplementationSearcher {
     if (elements == null) return PsiElement.EMPTY_ARRAY; //the search has been cancelled
     if (elements.length > 0) {
       if (!includeSelfAlways) return filterElements(element, elements, offset);
-      PsiElement[] all = new PsiElement[elements.length + 1];
-      all[0] = element;
-      System.arraycopy(elements, 0, all, 1, elements.length);
+      final PsiElement[] all;
+      if (element.getTextRange() != null) {
+        all = new PsiElement[elements.length + 1];
+        all[0] = element;
+        System.arraycopy(elements, 0, all, 1, elements.length);
+      }
+      else {
+        all = elements;
+      }
       return filterElements(element, all, offset);
     }
-    return includeSelfAlways || includeSelfIfNoOthers ?
+    return (includeSelfAlways || includeSelfIfNoOthers) && element.getTextRange() != null ?
            new PsiElement[] {element} :
            PsiElement.EMPTY_ARRAY;
   }

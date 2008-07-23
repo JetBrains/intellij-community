@@ -13,7 +13,7 @@ public abstract class MetadataPsiElementBase extends PsiElementBase {
   }
 
   public TextRange getTextRange() {
-    return mySourceElement.getTextRange();
+    return mySourceElement != null? mySourceElement.getTextRange() : null;
   }
 
   public int getStartOffsetInParent() {

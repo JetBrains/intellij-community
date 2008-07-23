@@ -4,6 +4,7 @@ import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
@@ -23,6 +24,9 @@ public class AntElementCompletionWrapper extends AntElementImpl implements PsiNa
     myRole = role;
   }
 
+  public TextRange getTextRange() {
+    return super.getTextRange();
+  }
 
   public boolean equals(final Object that) {
     if (this == that) {

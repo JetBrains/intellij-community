@@ -202,6 +202,6 @@ public class ShowImplementationsAction extends AnAction {
       psiFile = element.getContainingFile();
       if (psiFile == null) return PsiElement.EMPTY_ARRAY;
     }
-    return psiFile.getVirtualFile() != null ? new PsiElement[] {element} : PsiElement.EMPTY_ARRAY;
+    return (psiFile.getVirtualFile() != null && element.getTextRange() != null) ? new PsiElement[] {element} : PsiElement.EMPTY_ARRAY;
   }
 }
