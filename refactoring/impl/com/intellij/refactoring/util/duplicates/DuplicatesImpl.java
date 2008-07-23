@@ -133,7 +133,7 @@ public class DuplicatesImpl {
       final int answer = Messages.showYesNoDialog(project,
         RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
         ApplicationNamesInfo.getInstance().getProductName(), provider.getDuplicates().size()),
-        RefactoringBundle.message("process.duplicates.title"), Messages.getQuestionIcon());
+        "Process Duplicates", Messages.getQuestionIcon());
       if (answer == 0) {
         invoke(project, editor, provider);
       }
