@@ -44,8 +44,8 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
   }
 
   
-  private static void doStep(final Project project, final SourcePosition position, final DebuggerSession session) {
-    final VirtualFile file = position.getFile().getVirtualFile();
+  private static void doStep(final @NotNull Project project, final @Nullable SourcePosition position, final @NotNull DebuggerSession session) {
+    final VirtualFile file = position != null ? position.getFile().getVirtualFile() : null;
     final FileEditor fileEditor = file != null? FileEditorManager.getInstance(project).getSelectedEditor(file) : null;
     if (fileEditor instanceof TextEditor) {
       final List<PsiMethod> methods = findReferencedMethods(position);
