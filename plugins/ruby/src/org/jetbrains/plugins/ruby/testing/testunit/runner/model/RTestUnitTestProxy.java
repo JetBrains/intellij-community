@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.model;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class RTestUnitTestProxy implements AbstractTestProxy {
+public class RTestUnitTestProxy extends CompositePrintable implements PrintableTestProxy { 
   private List<RTestUnitTestProxy> myChildren;
   private RTestUnitTestProxy myParent;
 
@@ -22,6 +22,8 @@ public class RTestUnitTestProxy implements AbstractTestProxy {
   private String myName;
 
   private Boolean isDefectWasReallyFound = null; // null - is unset
+
+  private Printer myPrinter = Printer.DEAF;
 
   public RTestUnitTestProxy(final String testName) {
     myName = testName;
@@ -84,12 +86,17 @@ public class RTestUnitTestProxy implements AbstractTestProxy {
     return myChildren == null || myChildren.isEmpty();
   }
 
-  public void addChild(final RTestUnitTestProxy proxy) {
+  public void addChild(final RTestUnitTestProxy child) {
     if (myChildren == null) {
       myChildren = new ArrayList<RTestUnitTestProxy>();
     }
-    myChildren.add(proxy);
-    proxy.setParent(this);
+    myChildren.add(child);
+    child.setParent(this);
+
+    if (myPrinter != Printer.DEAF) {
+      child.setPrintLinstener(myPrinter);
+      child.fireOnNewPrintable(child);
+    }
   }
 
   public String getName() {
@@ -165,5 +172,45 @@ public class RTestUnitTestProxy implements AbstractTestProxy {
    */
   public boolean wasRun() {
     return myState != PassState.NOT_RUN;
+  }
+
+  public boolean isRoot() {
+    return getParent() == null;
+  }
+
+  public void setPrintLinstener(final Printer printer) {
+    myPrinter = printer;
+
+    if (myChildren == null) {
+      return;
+    }
+
+    for (ChangingPrintable child : myChildren) {
+      child.setPrintLinstener(printer);
+    }
+  }
+
+  public void printOn(final Printer printer) {
+    super.printOn(printer);
+    CompositePrintable.printAllOn(getChildren(), printer);
+
+    //TODO: Implement Tests State, that provide and formats additional output
+    // (contains stactrace info, ignored tests, etc)
+    //myState.printOn(printer);
+  }
+
+  @Override
+  public void addLast(final Printable printable) {
+    super.addLast(printable);
+    fireOnNewPrintable(printable);
+  }
+
+  @Override
+  public String toString() {
+    return getName(); 
+  }
+
+  private void fireOnNewPrintable(final Printable printable) {
+    myPrinter.onNewAvaliable(printable);
   }
 }

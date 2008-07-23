@@ -21,7 +21,6 @@ public class TestsPresentationUtil {
   private TestsPresentationUtil() {
   }
 
-  //TODO to rbundle!
   public static String getProgressStatus_Text(final long startTime,
                                               final long endTime,
                                               final int testsTotal,

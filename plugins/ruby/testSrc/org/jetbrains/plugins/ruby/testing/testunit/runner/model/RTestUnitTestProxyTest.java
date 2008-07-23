@@ -6,7 +6,7 @@ import com.intellij.execution.testframework.Filter;
 /**
  * @author Roman Chernyatchik
  */
-public class TestProxyTest extends BaseRUnitTestsTestCase {
+public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
   public void testNewInstance() {
     final RTestUnitTestProxy proxy = createTestProxy("newTest");
 
@@ -18,6 +18,16 @@ public class TestProxyTest extends BaseRUnitTestsTestCase {
     assertTrue(!proxy.wasRun());
     assertTrue(!proxy.isInProgress());
     assertTrue(!proxy.isDefect());
+  }
+
+  public void testIsRoot() {
+    final RTestUnitTestProxy rootTest = createTestProxy("root");
+    assertTrue(rootTest.isRoot());
+
+    final RTestUnitTestProxy childTest = createTestProxy("child");
+    rootTest.addChild(childTest);
+
+    assertFalse(childTest.isRoot());
   }
 
   public void testProxyStarted() {

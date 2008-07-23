@@ -2,7 +2,10 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.model;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 
 import java.util.HashMap;
@@ -16,7 +19,6 @@ import java.util.HashSet;
 public class RTestUnitEventsProcessor {
   private static final Logger LOG = Logger.getInstance(RTestUnitEventsProcessor.class.getName());
 
-  private final RTestUnitConsoleView myConsole;
   private final RTestUnitResultsForm myResultsForm;
   private final Map<String, RTestUnitTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, RTestUnitTestProxy>();
 
@@ -27,9 +29,8 @@ public class RTestUnitEventsProcessor {
 
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
 
-  public RTestUnitEventsProcessor(final RTestUnitConsoleView console) {
-    myConsole = console;
-    myResultsForm = console.getResultsForm();
+  public RTestUnitEventsProcessor(final RTestUnitResultsForm resultsForm) {
+    myResultsForm = resultsForm;
   }
 
   public void onStartTesting() {
@@ -100,7 +101,7 @@ public class RTestUnitEventsProcessor {
 
   public void onTestFailure(final String testName,
                             final String localizedMessage, final String stackTrace) {
-    //TODO[romeo] exception info
+
     final String fullTestName = getFullTestName(testName);
     final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
 
@@ -113,7 +114,16 @@ public class RTestUnitEventsProcessor {
 
     testProxy.setFailed();
 
+
     myFailedTestsSet.add(testProxy);
+
+    //TODO[romeo] move to state
+    testProxy.addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(stackTrace + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+        //printer.print(localizedMessage + PrintableTestProxy.NEW_LINE + stackTrace + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+      }
+    });
 
     // update progress bar
     updateProgress();
@@ -121,7 +131,15 @@ public class RTestUnitEventsProcessor {
 
   public void onTestOutput(final String testName,
                            final String text, final boolean stdOut) {
-    //TODO[romeo] implement printers
+    final String fullTestName = getFullTestName(testName);
+    final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
+
+    //TODO[romeo] move to state
+    testProxy.addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(text, stdOut ? ConsoleViewContentType.NORMAL_OUTPUT : ConsoleViewContentType.ERROR_OUTPUT);
+      }
+    });
   }
 
   public void onTestsCount(final int count) {
@@ -131,17 +149,6 @@ public class RTestUnitEventsProcessor {
   protected String getFullTestName(final String testName) {
     //TODO[romeo]
     return testName;
-  }
-
-  private RTestUnitTestProxy getProxyByFullTestName(final String testName) {
-    final RTestUnitTestProxy testProxy = myRunningTestsFullNameToProxy.get(testName);
-    LOG.assertTrue(testProxy != null);
-    return testProxy;
-  }
-
-  private void updateProgress() {
-    myResultsForm.updateStatusLabel(myStartTime, myEndTime, myTestsTotal,
-                                    myTestsCurrentCount, myFailedTestsSet);
   }
 
   protected Map<String, RTestUnitTestProxy> getRunningTestsFullNameToProxy() {
@@ -167,4 +174,15 @@ public class RTestUnitEventsProcessor {
   protected Set<AbstractTestProxy> getFailedTestsSet() {
     return myFailedTestsSet;
   }
+
+  private RTestUnitTestProxy getProxyByFullTestName(final String testName) {
+    final RTestUnitTestProxy testProxy = myRunningTestsFullNameToProxy.get(testName);
+    LOG.assertTrue(testProxy != null);
+    return testProxy;
+  }
+
+  private void updateProgress() {
+    myResultsForm.updateStatusLabel(myStartTime, myEndTime, myTestsTotal,
+                                    myTestsCurrentCount, myFailedTestsSet);
+  }  
 }

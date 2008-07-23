@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.model;
 
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestTreeView;
@@ -16,7 +17,6 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   private RTestUnitConsoleView myConsole;
   private RTestUnitEventsProcessor myEventsProcessor;
   private TreeModel myTreeModel;
-  private RTestUnitResultsForm myResultsForm;
 
   @Override
   protected void setUp() throws Exception {
@@ -24,10 +24,12 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
 
     final RTestsRunConfiguration runConfiguration = createRTestsRunConfiguration();
 
-    myConsole = new RTestUnitConsoleView(runConfiguration);
-    myEventsProcessor = new RTestUnitEventsProcessor(myConsole);
-    myResultsForm = myConsole.getResultsForm();
-    myTreeModel = myResultsForm.getTreeView().getModel();
+    final RTestUnitConsoleProperties consoleProperties = new RTestUnitConsoleProperties(runConfiguration);
+    myConsole = new RTestUnitConsoleView(runConfiguration, consoleProperties);
+
+    final RTestUnitResultsForm resultsForm = myConsole.getResultsForm();
+    myEventsProcessor = new RTestUnitEventsProcessor(resultsForm);
+    myTreeModel = resultsForm.getTreeView().getModel();
 
     myEventsProcessor.onStartTesting();
   }
@@ -59,7 +61,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     assertTrue(rootProxy.isInProgress());
     assertTrue(rootProxy.isLeaf());
 
-    assertEquals("", rootTreeNode.toString());
+    assertEquals("[root]", rootTreeNode.toString());
   }
 
   public void test_OnTestsCount() {

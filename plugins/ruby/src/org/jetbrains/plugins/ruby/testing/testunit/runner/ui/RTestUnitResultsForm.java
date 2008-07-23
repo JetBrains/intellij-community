@@ -8,32 +8,33 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ide.ui.SplitterProportionsDataImpl;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.*;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTreeBuilder;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTreeStructure;
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 
 /**
  * @author: Roman Chernyatchik
@@ -55,7 +56,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
   private final RTestUnitTestProxy myTestsRootNode;
   private final RTestUnitTreeBuilder myTreeBuilder;
-  private final RTestUnitConsoleProperties myConsoleProperties;
+  private final TestConsoleProperties myConsoleProperties;
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
 
   // Manages console tabs for runConfigurations's log files
@@ -71,7 +72,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private final RTestsRunConfiguration myRunConfiguration;
 
   public RTestUnitResultsForm(final RTestsRunConfiguration runConfiguration,
-                              final RTestUnitConsoleProperties consoleProperties) {
+                              final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
     myRunConfiguration = runConfiguration;
 
@@ -79,7 +80,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myProject = project;
     myLogFilesManager = new LogFilesManager(project, this);
 
-    myTestsRootNode = new RTestUnitTestProxy(TextUtil.EMPTY_STRING);
+    //noinspection HardCodedStringLiteral
+    myTestsRootNode = new RTestUnitTestProxy("[root]");
 
     tree.attachToModel(this);
     final RTestUnitTreeStructure structure = new RTestUnitTreeStructure(project, myTestsRootNode);
@@ -108,6 +110,10 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
             splitter.dispose();
           }
         });
+  }
+
+  public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {
+    tree.getSelectionModel().addTreeSelectionListener(listener);
   }
 
   public JComponent getContentPane() {
