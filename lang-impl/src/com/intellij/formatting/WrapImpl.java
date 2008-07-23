@@ -67,6 +67,10 @@ class WrapImpl extends Wrap {
     myIgnoredWraps.add(wrap);
   }
 
+  public boolean isFirstWrapped(final LeafBlockWrapper currentBlock) {
+    return myFirstEntry != null && myFirstEntry == currentBlock;
+  }
+
   static enum Type{
     DO_NOT_WRAP, WRAP_AS_NEEDED, CHOP_IF_NEEDED, WRAP_ALWAYS
   }

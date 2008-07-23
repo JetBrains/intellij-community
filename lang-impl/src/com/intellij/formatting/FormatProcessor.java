@@ -361,7 +361,8 @@ class FormatProcessor {
         return true;
       }
       if (wrap != null && wrap.getFirstEntry() != null) {
-        myCurrentBlock = wrap.getFirstEntry();
+        //myCurrentBlock = wrap.getFirstEntry();
+        myCurrentBlock = getFirstBlockOnNewLine();
         wrap.markAsUsed();
         return true;
       }
@@ -372,7 +373,7 @@ class FormatProcessor {
       if (!whiteSpace.containsLineFeeds()) {
         whiteSpace.ensureLineFeed();
         if (!wrapWasPresent && wrap != null) {
-          if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap())) {
+          if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap()) && wrap.isFirstWrapped(myCurrentBlock)) {
             wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap());
             myCurrentBlock = myFirstWrappedBlockOnLine;
             return true;
@@ -385,6 +386,13 @@ class FormatProcessor {
 
       myWrapCandidate = null;
     }
+    /*
+    else if (wrapWasPresent && !wrapIsPresent) {
+      myWrapCandidate = null;
+      myFirstWrappedBlockOnLine = null;
+      myCurrentBlock = getFirstBlockOnNewLine();
+      return true;
+    }*/
     else {
       for (int i = 0; i < wrapsCount; ++i) {
         final WrapImpl wrap1 = wraps.get(i);
@@ -406,8 +414,20 @@ class FormatProcessor {
     return false;
   }
 
+  private LeafBlockWrapper getFirstBlockOnNewLine() {
+    LeafBlockWrapper current = myCurrentBlock;
+    while (current != null) {
+      WhiteSpace whiteSpace = current.getWhiteSpace();
+      if (whiteSpace.containsLineFeeds() && whiteSpace.containsLineFeedsInitially()) return current;
+      if (current.getPreviousBlock() == null) return current;
+      current = current.getPreviousBlock();
+    }
+    return null;
+  }
+
   private boolean canReplaceWrapCandidate(WrapImpl wrap) {
     if (myWrapCandidate == null) return true;
+    if (wrap.isIsActive()) return true;
     final WrapImpl currentWrap = myWrapCandidate.getWrap();
     return wrap == currentWrap || !wrap.isChildOf(currentWrap);
   }
@@ -799,7 +819,7 @@ class FormatProcessor {
 
     if (current.getParent() == null) return null;
 
-    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)current.getParent()).getChildren();
+    final List<AbstractBlockWrapper> subBlocks = current.getParent().getChildren();
     final int index = subBlocks.indexOf(current);
     if (index < 0) {
       LOG.assertTrue(false);
