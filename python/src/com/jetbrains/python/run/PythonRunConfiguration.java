@@ -92,14 +92,14 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
     }
   }
 
-  public void readProperties(Element element) throws InvalidDataException {
-    super.readProperties(element);
+  public void readExternal(Element element) throws InvalidDataException {
+    super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
-  public void writeProperties(Element element) throws WriteExternalException {
-    super.writeProperties(element);
+  public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
   }
