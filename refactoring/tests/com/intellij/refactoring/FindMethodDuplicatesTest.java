@@ -10,6 +10,26 @@ public class FindMethodDuplicatesTest extends FindMethodDuplicatesBaseTest{
     return "/refactoring/methodDuplicates/" + getTestName(false) + ".java";
   }
 
+  public void testGenmethExtends() throws Exception {
+    doTest();
+  }
+
+  public void testGenmethExtendsGenericExact() throws Exception {
+    doTest();
+  }
+
+  public void testGenmethExtendsGenericWildcard() throws Exception {
+    doTest();
+  }
+
+  public void testGenmethGeneral() throws Exception {
+    doTest();
+  }
+
+  public void testGenmethSeveral() throws Exception {
+    doTest();
+  }
+
   public void testIdentityComplete() throws Exception {
     doTest();
   }
