@@ -75,7 +75,7 @@ public class FileReferenceSet {
   public FileReferenceSet(String str,
                           PsiElement element,
                           int startInElement,
-                          PsiReferenceProvider provider,
+                          @Nullable PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
     this(str, element, startInElement, provider, isCaseSensitive, true);
   }
