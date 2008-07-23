@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +148,22 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   protected abstract List<PropertiesFile> getPropertiesFiles();
 
   public Object[] getVariants() {
-    Set<Object> variants = new THashSet<Object>();
+    Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
+      public int computeHashCode(final Object object) {
+        if (object instanceof Property) {
+          final String key = ((Property)object).getKey();
+          return key == null ? 0 : key.hashCode();
+        }
+        else {
+          return 0;
+        }
+      }
+
+      public boolean equals(final Object o1, final Object o2) {
+        return o1 instanceof Property && o2 instanceof Property &&
+               Comparing.equal(((Property)o1).getKey(), ((Property)o2).getKey());
+      }
+    });
     List<PropertiesFile> propertiesFileList = getPropertiesFiles();
     if (propertiesFileList == null) {
       PsiManager psiManager = myElement.getManager();
