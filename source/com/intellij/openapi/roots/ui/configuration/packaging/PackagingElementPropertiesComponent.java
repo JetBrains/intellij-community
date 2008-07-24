@@ -2,8 +2,10 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.PackagingMethod;
+import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,12 +22,14 @@ public class PackagingElementPropertiesComponent {
   private JTextField myOutputPathField;
   private JLabel myPackagingMethodLabel;
   private JLabel myOutputPathLabel;
+  private JLabel myElementNameLabel;
   private final ContainerElement myElement;
   private final PackagingEditorPolicy myEditorPolicy;
   private PackagingMethod myLastSelectedMethod;
 
   private PackagingElementPropertiesComponent(ContainerElement element, PackagingEditorPolicy editorPolicy) {
     myElement = element;
+    myElementNameLabel.setText(editorPolicy.getElementText(element));
     myEditorPolicy = editorPolicy;
     if (editorPolicy.getAllowedPackagingMethods(element).length > 1) {
       for (PackagingMethod method : myEditorPolicy.getAllowedPackagingMethods(element)) {
@@ -70,7 +74,11 @@ public class PackagingElementPropertiesComponent {
 
   public void applyChanges() {
     myElement.setPackagingMethod(getSelectedMethod());
-    myElement.setURI(myOutputPathField.getText());
+    String text = myOutputPathField.getText();
+    if (text.length() == 0) {
+      text = "/";
+    }
+    myElement.setURI(FileUtil.toSystemIndependentName(text));
   }
 
   private PackagingMethod getSelectedMethod() {
@@ -119,7 +127,7 @@ public class PackagingElementPropertiesComponent {
     public PackagingElementPropertiesDialog(JComponent parent, final ContainerElement element,
                                             PackagingElementPropertiesComponent propertiesComponent) {
       super(parent, false);
-      setTitle(ProjectBundle.message("dialog.title.packaging.edit.0.properties", element.getPresentableName()));
+      setTitle(ProjectBundle.message("dialog.title.packaging.edit.properties"));
       myPropertiesComponent = propertiesComponent;
       init();
     }

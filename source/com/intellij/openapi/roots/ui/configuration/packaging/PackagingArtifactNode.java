@@ -38,7 +38,7 @@ public class PackagingArtifactNode extends PackagingTreeNode {
   }
 
   public void navigate(final ModuleStructureConfigurable configurable) {
-    myArtifact.navigate(configurable);
+    myArtifact.navigate(configurable, null);
   }
 
   public Object getSourceObject() {

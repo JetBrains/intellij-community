@@ -1,18 +1,11 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
-import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -23,17 +16,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-class LibraryNode extends PackagingTreeNode {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.packaging.LibraryNode");
-  private LibraryLink myLibraryLink;
-
+class LibraryNode extends LibraryNodeBase {
   LibraryNode(final LibraryLink libraryLink, PackagingArtifact owner) {
-    super(owner);
-    myLibraryLink = libraryLink;
-  }
-
-  public LibraryLink getLibraryLink() {
-    return myLibraryLink;
+    super(owner, libraryLink);
   }
 
   @NotNull
@@ -78,10 +63,7 @@ class LibraryNode extends PackagingTreeNode {
       if (name != null) {
         renderer.setIcon(Icons.LIBRARY_ICON);
         renderer.append(name, getMainAttributes());
-        LibraryTable libraryTable = library.getTable();
-        if (libraryTable != null) {
-          renderer.append(" (" + libraryTable.getPresentation().getDisplayName(false) + ")", getCommentAttributes());
-        }
+        renderer.append(getLibraryTableComment(library), getCommentAttributes());
       }
       else {
         VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
@@ -89,6 +71,7 @@ class LibraryNode extends PackagingTreeNode {
           VirtualFile file = files[0];
           renderer.setIcon(file.getIcon());
           renderer.append(file.getName(), getMainAttributes());
+          renderer.append(getLibraryTableComment(library), getCommentAttributes());
         }
         else {
           CellAppearanceUtils.forLibrary(library).customize(renderer);
@@ -96,35 +79,23 @@ class LibraryNode extends PackagingTreeNode {
       }
     }
 
-    if (belongsToIncludedArtifact()) {
-      PackagingArtifact owner = getOwner();
-      LOG.assertTrue(owner != null);
-      if (library != null) {
-        renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
-      }
+  }
+
+  private static String getLibraryTableComment(final Library library) {
+    LibraryTable libraryTable = library.getTable();
+    String displayName;
+    if (libraryTable != null) {
+      displayName = libraryTable.getPresentation().getDisplayName(false);
     }
+    else {
+      Module module = ((LibraryImpl)library).getModule();
+      String tableName = PackagingEditorUtil.getLibraryTableDisplayName(library);
+      displayName = module != null ? "'" + module.getName() + "' " + tableName : tableName;
+    }
+    return " (" + displayName + ")";
   }
 
   public boolean canNavigate() {
     return true;
-  }
-
-  public void navigate(final ModuleStructureConfigurable configurable) {
-    Module parentModule = myLibraryLink.getParentModule();
-    if (parentModule != null) {
-      ModulesConfigurator modulesConfigurator = configurable.getContext().myModulesConfigurator;
-      ModuleRootModel rootModel = modulesConfigurator.getRootModel(parentModule);
-      LibraryOrderEntry orderEntry = OrderEntryUtil.findLibraryOrderEntry(rootModel, myLibraryLink.getLibrary(), true, modulesConfigurator);
-      configurable.selectOrderEntry(orderEntry != null ? orderEntry.getOwnerModule() : parentModule, orderEntry);
-    }
-  }
-
-  public Object getSourceObject() {
-    return myLibraryLink.getLibrary();
-  }
-
-  @Override
-  public ContainerElement getContainerElement() {
-    return myLibraryLink;
   }
 }

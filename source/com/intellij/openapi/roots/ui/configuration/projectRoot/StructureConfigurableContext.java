@@ -215,6 +215,10 @@ public class StructureConfigurableContext implements Disposable {
     });
   }
 
+  public ModulesConfigurator getModulesConfigurator() {
+    return myModulesConfigurator;
+  }
+
   public void clearCaches(final Module module, final List<Library> chosen) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     for (Library library : chosen) {

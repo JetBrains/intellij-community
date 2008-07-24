@@ -6,9 +6,10 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 public class PackagingNodeWeights {
   public static final double ARTIFACT = 0;
   public static final double DIRECTORY = 1;
-  public static final double ARCHIVE = 2;
-  public static final double MODULE = 3;
-  public static final double LIBRARY = 4;
+  public static final double FILE = 2;
+  public static final double ARCHIVE = FILE;
+  public static final double MODULE = FILE;
+  public static final double LIBRARY = FILE;
 
 
   private PackagingNodeWeights() {

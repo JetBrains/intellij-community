@@ -20,10 +20,8 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.openapi.util.Ref;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
@@ -72,8 +70,10 @@ public class PackagingEditorImpl implements PackagingEditor {
   private JButton myRemoveButton;
   private JButton myEditButton;
   private JCheckBox myShowIncludedCheckBox;
+  private JCheckBox myShowLibraryFilesCheckBox;
   private PackagingArtifact myRootArtifact;
   private Project myProject;
+  private int myRowUnderMouse = -1;
 
   public PackagingEditorImpl(final PackagingConfiguration originalConfiguration,
                              final PackagingConfiguration modifiedConfiguration,
@@ -142,11 +142,13 @@ public class PackagingEditorImpl implements PackagingEditor {
         rebuildTree();
       }
     });
-    myShowIncludedCheckBox.addActionListener(new ActionListener() {
+    ActionListener actionListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         rebuildTree();
       }
-    });
+    };
+    myShowIncludedCheckBox.addActionListener(actionListener);
+    myShowLibraryFilesCheckBox.addActionListener(actionListener);
   }
 
   @Nullable
@@ -218,6 +220,27 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
   }
 
+  public void selectElement(@NotNull final ContainerElement toSelect) {
+    final Ref<PackagingTreeNode> ref = Ref.create(null);
+    TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
+      public boolean accept(final Object node) {
+        if (node instanceof PackagingTreeNode) {
+          PackagingTreeNode packagingNode = (PackagingTreeNode)node;
+          ContainerElement element = packagingNode.getContainerElement();
+          if (toSelect.equals(element)) {
+            ref.set(packagingNode);
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+    PackagingTreeNode node = ref.get();
+    if (node != null) {
+      TreeUtil.selectNode(myTree, node);
+    }
+  }
+
   public void addLibraries(final List<Library> libraries) {
     if (libraries.isEmpty()) return;
 
@@ -265,7 +288,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     myRoot.removeAllChildren();
     myRootArtifact = myBuilder.createRootArtifact();
     PackagingArtifactNode root = PackagingTreeNodeFactory.createArtifactNode(myRootArtifact, myRoot, null);
-    PackagingTreeParameters parameters = new PackagingTreeParameters(myShowIncludedCheckBox.isSelected());
+    PackagingTreeParameters parameters = new PackagingTreeParameters(myShowIncludedCheckBox.isSelected(), myShowLibraryFilesCheckBox.isSelected());
     for (ContainerElement element : getPackagedElements()) {
       myBuilder.createNodes(root, element, null, parameters);
     }
@@ -326,7 +349,16 @@ public class PackagingEditorImpl implements PackagingEditor {
   public JComponent createMainComponent() {
     myRoot = new RootNode();
     myTreeModel = new DefaultTreeModel(myRoot);
-    myTree = new Tree(myTreeModel);
+    myTree = new Tree(myTreeModel) {
+      @Override
+      public String getToolTipText(final MouseEvent event) {
+        TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
+        if (path != null) {
+          return ((PackagingTreeNode)path.getLastPathComponent()).getTooltipText();
+        }
+        return super.getToolTipText();
+      }
+    };
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new PackagingTreeCellRenderer());
@@ -337,23 +369,7 @@ public class PackagingEditorImpl implements PackagingEditor {
         updateButtons();
       }
     });
-    myTree.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          PackagingTreeNode[] nodes = myTree.getSelectedNodes(PackagingTreeNode.class, null);
-          if (nodes.length == 1) {
-            PackagingTreeNode node = nodes[0];
-            if (node.getChildren().isEmpty()) {
-              ContainerElement element = node.getContainerElement();
-              if (element != null && node.getOwner() == null) {
-                editElement(element);
-              }
-            }
-          }
-        }
-      }
-    });
+    myTree.addMouseListener(new PackagingTreeMouseListener());
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new MyNavigateAction());
@@ -366,6 +382,8 @@ public class PackagingEditorImpl implements PackagingEditor {
     actionGroup.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
 
     PopupHandler.installPopupHandler(myTree, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    TreeToolTipHandler.install(myTree);
+    ToolTipManager.sharedInstance().registerComponent(myTree);
     rebuildTree();
     TreeUtil.expandAll(myTree);
     updateButtons();
@@ -387,6 +405,10 @@ public class PackagingEditorImpl implements PackagingEditor {
 
   public PackagingTreeNode getRoot() {
     return myRoot;
+  }
+
+  private void navigate(PackagingTreeNode treeNode) {
+    treeNode.navigate(ModuleStructureConfigurable.getInstance(myProject));
   }
 
   private static class RootNode extends PackagingTreeNode {
@@ -418,7 +440,56 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
   }
 
-  private static class PackagingTreeCellRenderer extends ColoredTreeCellRenderer {
+  private class PackagingTreeMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(final MouseEvent e) {
+      if (e.getClickCount() == 2) {
+        PackagingTreeNode[] nodes = myTree.getSelectedNodes(PackagingTreeNode.class, null);
+        if (nodes.length == 1) {
+          PackagingTreeNode node = nodes[0];
+          if (node.getChildren().isEmpty()) {
+            ContainerElement element = node.getContainerElement();
+            if (element != null) {
+              if (node.getOwner() == null) {
+                editElement(element);
+              }
+              else {
+                navigate(node);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /*
+    @Override
+    public void mouseEntered(final MouseEvent e) {
+      handleMouseEvent(e);
+    }
+
+    @Override
+    public void mouseExited(final MouseEvent e) {
+      handleMouseEvent(e);
+    }
+
+    @Override
+    public void mouseDragged(final MouseEvent e) {
+      handleMouseEvent(e);
+    }
+
+    @Override
+    public void mouseMoved(final MouseEvent e) {
+      handleMouseEvent(e);
+    }
+    */
+  }
+
+  private void handleMouseEvent(final MouseEvent e) {
+    myRowUnderMouse = myTree.getRowForLocation(e.getX(), e.getY());
+  }
+
+  private class PackagingTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(final JTree tree,
                                       final Object value,
                                       final boolean selected,
@@ -426,7 +497,13 @@ public class PackagingEditorImpl implements PackagingEditor {
                                       final boolean leaf,
                                       final int row,
                                       final boolean hasFocus) {
-      ((PackagingTreeNode)value).render(this);
+      PackagingTreeNode node = (PackagingTreeNode)value;
+      node.render(this);
+      /*
+      if (myRowUnderMouse == row) {
+        node.renderTooltip(this);
+      }
+      */
     }
   }
 
@@ -444,7 +521,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     public void actionPerformed(final AnActionEvent e) {
       PackagingTreeNode[] treeNodes = myTree.getSelectedNodes(PackagingTreeNode.class, null);
       if (treeNodes.length == 1) {
-        treeNodes[0].navigate(ModuleStructureConfigurable.getInstance(myProject));
+        navigate(treeNodes[0]);
       }
     }
   }

@@ -6,8 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
@@ -169,4 +172,35 @@ public abstract class PackagingEditorPolicy {
   protected boolean isObsolete(final ContainerElement element, final PackagingEditor packagingEditor) {
     return false;
   }
+
+  public String getElementText(final ContainerElement element) {
+    if (element instanceof LibraryLink) {
+      final LibraryLink libraryLink = (LibraryLink)element;
+      Library library = libraryLink.getLibrary();
+      if (library != null) {
+        String name = library.getName();
+        VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+        if (name != null) {
+          return "'" + name + "' " + PackagingEditorUtil.getLibraryTableDisplayName(library);
+        }
+        else if (files.length > 0) {
+          Module module = ((LibraryImpl)library).getModule();
+          final String description;
+          if (module == null) {
+            description = "(" + PackagingEditorUtil.getLibraryTableDisplayName(library) + ")";
+          }
+          else {
+            description = ProjectBundle.message("node.text.library.of.module", module.getName());
+          }
+          return files[0].getName() + " " + description;
+        }
+      }
+    }
+    if (element instanceof ModuleLink) {
+      final ModuleLink moduleLink = (ModuleLink)element;
+      return ProjectBundle.message("text.module.link.description.0.module", moduleLink.getName());
+    }
+    return element.getPresentableName();
+  }
+
 }

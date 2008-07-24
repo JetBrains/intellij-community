@@ -39,6 +39,14 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode implement
   @Nullable
   public abstract Object getSourceObject();
 
+  @Nullable
+  public String getTooltipText() {
+    return null;
+  }
+
+  public void renderTooltip(ColoredTreeCellRenderer renderer) {
+  }
+
   public int compareTo(final PackagingTreeNode node) {
     return getOutputFileName().compareToIgnoreCase(node.getOutputFileName());
   }

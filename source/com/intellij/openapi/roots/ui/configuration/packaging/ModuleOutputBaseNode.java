@@ -4,6 +4,7 @@ import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.ModuleLink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
@@ -34,8 +35,14 @@ abstract class ModuleOutputBaseNode extends PackagingTreeNode {
 
   public void navigate(final ModuleStructureConfigurable configurable) {
     Module parentModule = myModuleLink.getParentModule();
-    if (parentModule != null) {
-      ModulesConfigurator modulesConfigurator = configurable.getContext().myModulesConfigurator;
+    if (parentModule == null) return;
+
+    PackagingArtifact owner = getOwner();
+    if (owner != null) {
+      owner.navigate(configurable, myModuleLink);
+    }
+    else {
+      ModulesConfigurator modulesConfigurator = configurable.getContext().getModulesConfigurator();
       ModuleRootModel rootModel = modulesConfigurator.getRootModel(parentModule);
       ModuleOrderEntry orderEntry = OrderEntryUtil.findModuleOrderEntry(rootModel, myModuleLink.getModule(), true, modulesConfigurator);
       configurable.selectOrderEntry(orderEntry != null ? orderEntry.getOwnerModule() : parentModule, orderEntry);
@@ -46,11 +53,22 @@ abstract class ModuleOutputBaseNode extends PackagingTreeNode {
     return PackagingNodeWeights.MODULE;
   }
 
-  public void render(final ColoredTreeCellRenderer renderer) {
+  @Override
+  public String getTooltipText() {
     if (belongsToIncludedArtifact()) {
       PackagingArtifact owner = getOwner();
       LOG.assertTrue(owner != null);
-      //renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
+      return ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName());
+    }
+    return null;
+  }
+
+  @Override
+  public void renderTooltip(final ColoredTreeCellRenderer renderer) {
+    if (belongsToIncludedArtifact()) {
+      PackagingArtifact owner = getOwner();
+      LOG.assertTrue(owner != null);
+      renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
     }
   }
 

@@ -31,7 +31,6 @@ class ModuleOutputNode extends ModuleOutputBaseNode {
       renderer.setIcon(module.getModuleType().getNodeIcon(false));
     }
     renderer.append(" " + ProjectBundle.message("node.text.packaging.compile.output"), getCommentAttributes());
-    super.render(renderer);
   }
 
 }

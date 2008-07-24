@@ -34,7 +34,6 @@ class PackedModuleOutputNode extends ModuleOutputBaseNode {
       renderer.append(myJarFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
       renderer.append(getComment(myModuleLink.getName()), getCommentAttributes());
     }
-    super.render(renderer);
   }
 
   private static String getComment(final String name) {

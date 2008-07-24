@@ -2,7 +2,10 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
 
@@ -83,6 +86,18 @@ public class PackagingTreeNodeFactory {
   public static PackagingArtifactNode createArtifactNode(@NotNull PackagingArtifact artifact, @NotNull PackagingTreeNode parent,
                                                          PackagingArtifact owner) {
     PackagingArtifactNode node = new PackagingArtifactNode(artifact, owner);
+    parent.add(node);
+    return node;
+  }
+
+  public static PackagingTreeNode createLibraryFileNode(@NotNull VirtualFile file, @NotNull Library library, @NotNull LibraryLink libraryLink, 
+                                                        @NotNull PackagingTreeNode parent, @Nullable PackagingArtifact owner) {
+    for (PackagingTreeNode child : parent.getChildren()) {
+      if (child instanceof LibraryFileNode && ((LibraryFileNode)child).getFile().equals(file)) {
+        return child;
+      }
+    }
+    LibraryFileNode node = new LibraryFileNode(file, library, libraryLink, owner);
     parent.add(node);
     return node;
   }

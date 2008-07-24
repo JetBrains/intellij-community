@@ -4,6 +4,7 @@ import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -36,4 +37,6 @@ public interface PackagingEditor {
   void rebuildTree();
 
   void addElement(ContainerElement element);
+
+  void selectElement(@NotNull ContainerElement toSelect);
 }

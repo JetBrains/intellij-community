@@ -18,7 +18,7 @@ public abstract class PackagingArtifact {
   public abstract void render(@NotNull ColoredTreeCellRenderer renderer, final SimpleTextAttributes mainAttributes,
                               final SimpleTextAttributes commentAttributes);
 
-  public abstract void navigate(ModuleStructureConfigurable configurable);
+  public abstract void navigate(ModuleStructureConfigurable configurable, @Nullable ContainerElement element);
 
   public abstract String getDisplayName();
 
