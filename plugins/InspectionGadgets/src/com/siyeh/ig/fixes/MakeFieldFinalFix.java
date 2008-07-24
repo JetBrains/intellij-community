@@ -50,12 +50,21 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
         return new MakeFieldFinalFix(name);
     }
 
+    @NotNull
+    public static InspectionGadgetsFix buildFixUnconditional(PsiField field) {
+        return new MakeFieldFinalFix(field.getName());
+    }
+
     private static boolean canStaticFieldBeFinal(PsiField field) {
         final boolean hasInitializer = field.hasInitializer();
-        final boolean initializedInStaticInitializer =
-                isInitializedInStaticInitializer(field);
+        final boolean initializedInOneStaticInitializer =
+                isInitializedInOneStaticInitializer(field);
         if (hasInitializer) {
-            if (initializedInStaticInitializer) {
+            if (initializedInOneStaticInitializer) {
+                return false;
+            }
+        } else {
+            if (!initializedInOneStaticInitializer) {
                 return false;
             }
         }
@@ -80,18 +89,18 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
 
     private static boolean canInstanceFieldBeFinal(PsiField field) {
         final boolean hasInitializer = field.hasInitializer();
-        final boolean initializedInInitializer =
-                isInitializedInInitializer(field);
+        final boolean initializedInOneInitializer =
+                isInitializedInOneInitializer(field);
         final boolean initializedInConstructors =
                 isInitializedInConstructors(field);
         if (hasInitializer) {
-            if (initializedInInitializer) {
+            if (initializedInOneInitializer) {
                 return false;
             }
             if (initializedInConstructors) {
                 return false;
             }
-        } else if (initializedInInitializer) {
+        } else if (initializedInOneInitializer) {
             if (initializedInConstructors) {
                 return false;
             }
@@ -123,6 +132,7 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
                 fieldName);
     }
 
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException {
         final PsiElement element = descriptor.getPsiElement();
@@ -149,11 +159,13 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
     }
 
-    private static boolean isInitializedInInitializer(@NotNull PsiField field){
+    private static boolean isInitializedInOneInitializer(
+            @NotNull PsiField field){
         final PsiClass aClass = field.getContainingClass();
         if(aClass == null){
             return false;
         }
+        boolean initializedInOneInitializer = false;
         final PsiClassInitializer[] initializers = aClass.getInitializers();
         for(final PsiClassInitializer initializer : initializers){
             if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
@@ -161,29 +173,36 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
             }
             final PsiCodeBlock body = initializer.getBody();
             if(InitializationUtils.blockAssignsVariableOrFails(body, field)) {
-                return true;
+                if (initializedInOneInitializer) {
+                    return false;
+                }
+                initializedInOneInitializer = true;
             }
         }
-        return false;
+        return true;
     }
 
-    private static boolean isInitializedInStaticInitializer(
+    private static boolean isInitializedInOneStaticInitializer(
             @NotNull PsiField field){
         final PsiClass aClass = field.getContainingClass();
         if(aClass == null){
             return false;
         }
         final PsiClassInitializer[] initializers = aClass.getInitializers();
+        boolean initializedInOneStaticInitializer = false;
         for(final PsiClassInitializer initializer : initializers){
             if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
                 continue;
             }
             final PsiCodeBlock body = initializer.getBody();
             if(InitializationUtils.blockAssignsVariableOrFails(body, field)) {
-                return true;
+                if (initializedInOneStaticInitializer) {
+                    return false;
+                }
+                initializedInOneStaticInitializer = true;
             }
         }
-        return false;
+        return initializedInOneStaticInitializer;
     }
 
     private static boolean isInitializedInConstructors(

@@ -712,6 +712,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ConstantOnRHSOfComparisonInspection.class);
         m_inspectionClasses.add(ControlFlowStatementWithoutBracesInspection.class);
         m_inspectionClasses.add(ExtendsObjectInspection.class);
+        m_inspectionClasses.add(FieldMayBeFinalInspection.class);
         m_inspectionClasses.add(ImplicitCallToSuperInspection.class);
         m_inspectionClasses.add(ListIndexOfReplaceableByContainsInspection.class);
         m_inspectionClasses.add(LiteralAsArgToStringEqualsInspection.class);
