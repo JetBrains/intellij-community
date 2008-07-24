@@ -26,7 +26,7 @@ class XPathInsertHandler implements InsertHandler {
     private static final Logger LOG = Logger.getInstance(XPathInsertHandler.class.getName());
 
     public void handleInsert(InsertionContext context, LookupElement lookupItem) {
-        final Object object = lookupItem.getObject();
+        final Object object = ((LookupItem)lookupItem).getObject();
         LOG.debug("object = " + object);
 
         handleInsertImpl(context, lookupItem, context.getCompletionChar());
@@ -91,7 +91,7 @@ class XPathInsertHandler implements InsertHandler {
     }
 
     private static void adjustIdentifierEnd(InsertionContext context, LookupElement item) {
-        final boolean isNamespace = (item.getObject() instanceof NamespaceLookup);
+        final boolean isNamespace = (((LookupItem)item).getObject() instanceof NamespaceLookup);
         final CharSequence charsSequence = context.getEditor().getDocument().getCharsSequence();
         final int textLength = context.getEditor().getDocument().getTextLength();
 

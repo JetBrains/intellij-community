@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +41,7 @@ import java.util.Arrays;
  */
 public class GroovyInsertHandler extends DefaultInsertHandler {
   public void handleInsert(InsertionContext context, LookupElement item) {
-    Object obj = item.getObject();
+    Object obj = ((MutableLookupElement)item).getObject();
     if (obj instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -96,7 +97,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       }
     }
 
-    addTailType(item);
+    addTailType((MutableLookupElement)item);
     super.handleInsert(context, item);
 
   }
@@ -117,7 +118,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     document.deleteString(offset, i);
   }
 
-  private static void addTailType(LookupElement item) {
+  private static void addTailType(MutableLookupElement item) {
     if ("default".equals(item.toString())) {
       item.setTailType(TailType.CASE_COLON);
       return;

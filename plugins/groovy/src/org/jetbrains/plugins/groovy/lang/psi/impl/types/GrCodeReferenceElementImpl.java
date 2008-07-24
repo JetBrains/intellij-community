@@ -15,8 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -175,11 +175,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     for (Object variant : classVariants) {
       if (variant instanceof PsiClass) {
         final PsiClass clazz = (PsiClass) variant;
-        final LookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
+        final MutableLookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
         GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement);
         result.add(lookupElement);
-      } else if (variant instanceof LookupElement) {
-        final LookupElement lookupElement = (LookupElement) variant;
+      } else if (variant instanceof MutableLookupElement) {
+        final MutableLookupElement lookupElement = (MutableLookupElement) variant;
         final Object obj = lookupElement.getObject();
         if (obj instanceof PsiClass) {
           GroovyCompletionUtil.setTailTypeForConstructor((PsiClass) obj, lookupElement);
