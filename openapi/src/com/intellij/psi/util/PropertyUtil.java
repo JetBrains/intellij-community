@@ -111,10 +111,7 @@ public class PropertyUtil {
   public static Map<String, PsiMethod> getAllProperties(@NotNull final PsiClass psiClass, final boolean acceptSetters, final boolean acceptGetters) {
     final Map<String, PsiMethod> map = new HashMap<String, PsiMethod>();
     for (PsiMethod method : psiClass.getAllMethods()) {
-      if(method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
-
-      final String className = method.getContainingClass().getQualifiedName();
-      if (className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) continue;
+      if (filterMethods(method)) continue;
       if (acceptSetters && PropertyUtil.isSimplePropertySetter(method)||
           acceptGetters && PropertyUtil.isSimplePropertyGetter(method)) {
         map.put(PropertyUtil.getPropertyName(method), method);
@@ -123,18 +120,39 @@ public class PropertyUtil {
     return map;
   }
 
+  private static boolean filterMethods(final PsiMethod method) {
+    if(method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return true;
+
+    final String className = method.getContainingClass().getQualifiedName();
+    if (className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) return true;
+    return false;
+  }
+
   @NotNull
   public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass, final String propertyName) {
     final String setterName = suggestSetterName(propertyName);
     final PsiMethod[] psiMethods = psiClass.findMethodsByName(setterName, true);
     final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(psiMethods.length);
     for (PsiMethod method : psiMethods) {
-      if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
-
-      final String className = method.getContainingClass().getQualifiedName();
-      if (className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) continue;
+      if (filterMethods(method)) continue;
       if (PropertyUtil.isSimplePropertySetter(method)) {
         list.add(method);
+      }
+    }
+    return list;
+  }
+
+  @NotNull
+  public static List<PsiMethod> getGetters(@NotNull final PsiClass psiClass, final String propertyName) {
+    final String[] names = suggestGetterNames(propertyName);
+    final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    for (String name : names) {
+      final PsiMethod[] psiMethods = psiClass.findMethodsByName(name, true);
+      for (PsiMethod method : psiMethods) {
+        if (filterMethods(method)) continue;
+        if (PropertyUtil.isSimplePropertyGetter(method)) {
+          list.add(method);
+        }
       }
     }
     return list;
@@ -256,9 +274,8 @@ public class PropertyUtil {
     return suggestGetterName(propertyName, propertyType, null);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String suggestGetterName(String propertyName, PsiType propertyType, String existingGetterName) {
-    StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
+  public static String suggestGetterName(String propertyName, PsiType propertyType, @NonNls String existingGetterName) {
+    @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
     if (propertyType == PsiType.BOOLEAN) {
       if (existingGetterName == null || !existingGetterName.startsWith("get")) {
         name.insert(0, "is");
@@ -272,6 +289,12 @@ public class PropertyUtil {
     }
 
     return name.toString();
+  }
+
+  @NonNls
+  public static String[] suggestGetterNames(String propertyName) {
+    final String str = StringUtil.capitalize(propertyName);
+    return new String[] { "is" + str, "get" + str };
   }
 
   public static String suggestSetterName(String propertyName) {

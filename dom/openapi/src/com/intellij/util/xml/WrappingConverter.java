@@ -20,32 +20,46 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Collections;
+
 /**
  * @author Gregory.Shrago
  */
 public abstract class WrappingConverter extends Converter<Object> {
+
   public Object fromString(@Nullable @NonNls String s, final ConvertContext context) {
-    final Converter converter = getConverter((GenericDomValue)context.getInvocationElement());
-    if (converter != null) {
-      return converter.fromString(s, context);
+    final List<Converter> converters = getConverters((GenericDomValue)context.getInvocationElement());
+    if (converters.isEmpty()) return s;
+    for (Converter converter : converters) {
+      final Object o = converter.fromString(s, context);
+      if (o != null) {
+        return o;
+      }
     }
-    else {
-      return s;
-    }
+    return null;
   }
 
   public String toString(@Nullable Object t, final ConvertContext context) {
-    final Converter converter = getConverter((GenericDomValue)context.getInvocationElement());
-    if (converter != null) {
-      return converter.toString(t, context);
+    final List<Converter> converters = getConverters((GenericDomValue)context.getInvocationElement());
+    if (converters.isEmpty()) return String.valueOf(t);
+    for (Converter converter : converters) {
+      final String s = converter.toString(t, context);
+      if (s != null) {
+        return s;
+      }
     }
-    else {
-      return String.valueOf(t);
-    }
+    return null;
+  }
+
+  @NotNull
+  public List<Converter> getConverters(@NotNull final GenericDomValue domElement) {
+    final Converter converter = getConverter(domElement);
+    return converter == null ? Collections.<Converter>emptyList() : Collections.singletonList(converter);
   }
 
   @Nullable
-  public abstract Converter<?> getConverter(@NotNull final GenericDomValue domElement);
+  public abstract Converter getConverter(@NotNull final GenericDomValue domElement);
 
   public static Converter getDeepestConverter(final Converter converter, final GenericDomValue domValue) {
     Converter cur = converter;
