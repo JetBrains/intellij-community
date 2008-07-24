@@ -724,6 +724,29 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertEquals("${subChildName}", model.findProject(subChild).getMavenProject().getArtifactId());
   }
 
+  public void testRecursiveInheritanceAndAggregation() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+                     "" +
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>child</artifactId>" +
+                     "  <version>1</version>" +
+                     "</parent>" +
+
+                     "<modules>" +
+                     " <module>child</module>" +
+                     "</modules>");
+
+    VirtualFile child = createModulePom("child",
+                                        "<groupId>test</groupId>" +
+                                        "<artifactId>child</artifactId>" +
+                                        "<version>1</version>");
+    readModel(myProjectPom); // should not recurse
+    readModel(child); // should not recurse
+  }
+
   public void testUpdatingAddsModules() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

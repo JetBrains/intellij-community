@@ -56,14 +56,15 @@ public class MavenProjectsTree {
 
     try {
       Set<VirtualFile> readFiles = new HashSet<VirtualFile>();
+      Stack<MavenProjectModel> updateStack = new Stack<MavenProjectModel>();
 
       for (VirtualFile each : files) {
         MavenProjectModel project = findProject(each);
         if (project == null) {
-          doAdd(each, e, readFiles, p, force);
+          doAdd(each, e, readFiles, updateStack, p, force);
         }
         else {
-          doUpdate(findAggregator(project), project, e, false, readFiles, p, force);
+          doUpdate(findAggregator(project), project, e, false, readFiles, updateStack, p, force);
         }
       }
     }
@@ -72,7 +73,11 @@ public class MavenProjectsTree {
     }
   }
 
-  private void doAdd(final VirtualFile f, MavenEmbedderWrapper reader, Set<VirtualFile> readFiles, MavenProcess p, boolean force)
+  private void doAdd(final VirtualFile f,
+                     MavenEmbedderWrapper reader,
+                     Set<VirtualFile> readFiles,
+                     Stack<MavenProjectModel> updateStack,
+                     MavenProcess p, boolean force)
       throws CanceledException {
     MavenProjectModel newProject = new MavenProjectModel(f);
 
@@ -84,7 +89,7 @@ public class MavenProjectsTree {
       }
     });
 
-    doUpdate(intendedAggregator, newProject, reader, true, readFiles, p, force);
+    doUpdate(intendedAggregator, newProject, reader, true, readFiles, updateStack, p, force);
   }
 
   private void doUpdate(MavenProjectModel aggregator,
@@ -92,9 +97,16 @@ public class MavenProjectsTree {
                         MavenEmbedderWrapper embedder,
                         boolean isNew,
                         Set<VirtualFile> readFiles,
+                        Stack<MavenProjectModel> updateStack,
                         MavenProcess p,
                         boolean force) throws CanceledException {
     p.checkCanceled();
+
+    if (updateStack.contains(project)) {
+      MavenLog.info("Recursion detected in " + project.getFile());
+      return;
+    }
+    updateStack.push(project);
 
     p.setText(ProjectBundle.message("maven.reading", project.getPath()));
     p.setText2("");
@@ -165,7 +177,7 @@ public class MavenProjectsTree {
       }
 
       if (isNewChildProject || force) {
-        doUpdate(project, child, embedder, true, readFiles, p, force);
+        doUpdate(project, child, embedder, isNewChildProject, readFiles, updateStack, p, force);
       }
       else {
         reconnect(project, child);
@@ -176,8 +188,10 @@ public class MavenProjectsTree {
     Set<MavenProjectModel> allInheritors = findInheritors(project);
     allInheritors.addAll(prevInheritors);
     for (MavenProjectModel each : allInheritors) {
-      doUpdate(findAggregator(each), each, embedder, false, readFiles, p, force);
+      doUpdate(findAggregator(each), each, embedder, false, readFiles, updateStack, p, force);
     }
+
+    updateStack.pop();
   }
 
   private void reconnect(MavenProjectModel aggregator, MavenProjectModel project) {
