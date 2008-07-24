@@ -222,9 +222,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   private void processVfsChange(final VirtualFile file) {
-    if (myFileIndex.isInContent(file)) {
-      processFileOrDirectoryChange(file);
-    }
+    processFileOrDirectoryChange(file);
   }
 
   public DomInvocationHandler getCachedHandler(XmlElement element) {
@@ -282,6 +280,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   private void processFileOrDirectoryChange(final VirtualFile file) {
+    if (!myFileIndex.isInContent(file)) return;
     if (!file.isDirectory()) {
       processFileChange(file);
     } else {
