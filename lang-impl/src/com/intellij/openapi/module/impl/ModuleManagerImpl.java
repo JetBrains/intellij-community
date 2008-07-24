@@ -242,6 +242,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private void fireErrors(final List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
+    myModuleModel.myModulesCache = null;
     for (ModuleLoadingErrorDescription error : errors) {
       final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
       if (module != null) {
@@ -524,6 +525,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   class ModuleModelImpl implements ModifiableModuleModel {
     private Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
+    private Module[] myModulesCache;
 
     private List<Module> myModulesToDispose = new ArrayList<Module>();
     private Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
@@ -551,8 +553,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     @NotNull
     public Module[] getModules() {
-      Collection<Module> modules = myPathToModule.values();
-      return modules.toArray(new Module[modules.size()]);
+      if (myModulesCache == null) {
+        Collection<Module> modules = myPathToModule.values();
+        myModulesCache = modules.toArray(new Module[modules.size()]);
+      }
+      return myModulesCache;
     }
 
     private Module[] getSortedModules() {
@@ -685,12 +690,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     private void initModule(ModuleImpl module) {
       String path = module.getModuleFilePath();
+      myModulesCache = null;
       myPathToModule.put(path, module);
       module.init();
     }
 
     public void disposeModule(@NotNull Module module) {
       assertWritable();
+      myModulesCache = null;
       if (myPathToModule.values().contains(module)) {
         myPathToModule.values().remove(module);
         myModulesToDispose.add(module);
@@ -789,6 +796,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     private void disposeModel() {
+      myModulesCache = null;
       for (final Module module : myPathToModule.values()) {
         Disposer.dispose(module);
       }
@@ -834,6 +842,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   private void commitModel(ModuleModelImpl moduleModel, Runnable runnable) {
+    myModuleModel.myModulesCache = null;
     myModificationCount++;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = myModuleModel.myPathToModule.values();

@@ -21,10 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.JavaPsiFacadeImpl;
-import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
@@ -331,7 +328,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public boolean isValid() {
-    return new DirectoriesSearch().search(GlobalSearchScope.allScope(getProject())).findFirst() != null;
+    if (new DirectoriesSearch().search(GlobalSearchScope.allScope(getProject())).findFirst() != null) return true;
+    return ((JavaPsiFacadeImpl)JavaPsiFacade.getInstance(getProject())).packagePrefixExists(myQualifiedName);
   }
 
   public boolean isWritable() {

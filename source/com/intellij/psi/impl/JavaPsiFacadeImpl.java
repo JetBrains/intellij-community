@@ -56,6 +56,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final Project myProject;
   private final JavaFileManager myFileManager;
   private final ProgressManager myProgressManager;
+  private final PackagePrefixIndex myPackagePrefixIndex;
 
 
   public JavaPsiFacadeImpl(Project project,
@@ -74,9 +75,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     elementFinders.addAll(Arrays.asList(myProject.getComponents(PsiElementFinder.class)));
-    elementFinders.add(new PsiElementFinderImpl()); //this finder should be added at end for Fabrique's needs
+    elementFinders.add(new PsiElementFinderImpl());
     myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 
+    myPackagePrefixIndex = new PackagePrefixIndex(myProject);
 
     boolean isProjectDefault = project.isDefault();
     if (!isProjectDefault) {
@@ -247,6 +249,15 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return myFileManager;
   }
 
+  public boolean packagePrefixExists(String packageQName) {
+    for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(null)) {
+        if (prefix.startsWith(packageQName + '.') || prefix.equals(packageQName)) {
+          return true;
+        }
+      }
+    return false;
+  }
+
   private class PsiElementFinderImpl implements PsiElementFinder {
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
@@ -277,6 +288,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         if (migrationPackage != null) return migrationPackage;
       }
 
+      if (packagePrefixExists(qualifiedName)) {
+        return new PsiPackageImpl((PsiManagerEx)PsiManager.getInstance(myProject), qualifiedName);
+      }
+
       return aPackage;
     }
 
@@ -284,8 +299,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
       final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
       final String qualifiedName = psiPackage.getQualifiedName();
-      final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
-      for (PsiDirectory dir : dirs) {
+      for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
         PsiDirectory[] subdirs = dir.getSubdirectories();
         for (PsiDirectory subdir : subdirs) {
           final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subdir);
@@ -297,6 +311,16 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
           }
         }
       }
+      for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(scope)) {
+        if (prefix.startsWith(qualifiedName + '.')) {
+          final int i = prefix.indexOf('.', qualifiedName.length() + 1);
+          String childName = i >= 0 ? prefix.substring(0, i) : prefix;
+          if (!packagesMap.containsKey(childName)) {
+            packagesMap.put(childName, new PsiPackageImpl((PsiManagerEx)psiPackage.getManager(), childName));
+          }
+        }
+      }
+
       return packagesMap.values().toArray(new PsiPackage[packagesMap.size()]);
     }
 
