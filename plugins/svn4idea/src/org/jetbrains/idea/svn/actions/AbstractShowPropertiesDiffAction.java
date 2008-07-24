@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -63,7 +64,8 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
       }
 
       final VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
-      return virtualFile != null && SvnVcs.VCS_NAME.equals(ChangesUtil.getVcsForFile(virtualFile, project).getName());
+      final AbstractVcs vcs = ChangesUtil.getVcsForFile(virtualFile, project);
+      return virtualFile != null && (vcs != null) && SvnVcs.VCS_NAME.equals(vcs.getName());
     }
   }
 
