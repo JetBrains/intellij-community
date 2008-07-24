@@ -1120,6 +1120,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
+  protected Indent getCodeBlockChildExternalIndent() {
+    final int braceStyle = getBraceStyle();
+    if (braceStyle == CodeStyleSettings.NEXT_LINE ||
+        braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+      return Indent.getNoneIndent();
+    }
+    else {
+      return Indent.getNormalIndent();
+    }
+  }
+
   protected abstract Wrap getReservedWrap(final IElementType elementType);
 
   protected abstract void setReservedWrap(final Wrap reservedWrap, final IElementType operationType);

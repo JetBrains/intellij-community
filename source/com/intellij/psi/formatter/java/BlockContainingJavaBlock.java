@@ -175,8 +175,12 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       }
     }
 
-    if (newChildIndex == 0 || newChildIndex == getSubBlocks().size()) {
+    if (newChildIndex == 0) {
       return new ChildAttributes(getCodeBlockExternalIndent(), null);
+    }
+
+    if (newChildIndex == getSubBlocks().size()) {
+      return new ChildAttributes(getCodeBlockChildExternalIndent(), null);
     }
 
     return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
