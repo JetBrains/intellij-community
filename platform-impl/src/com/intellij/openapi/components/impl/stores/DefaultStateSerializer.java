@@ -3,22 +3,25 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageId;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.Accessor;
-import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.io.IOException;
 
 
 @SuppressWarnings({"deprecation"})
 class DefaultStateSerializer {
-  private static final SerializationFilter ourSerializationFilter = new SkipDefaultValuesSerializationFilters();
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DefaultStateSerializer");
 
   private DefaultStateSerializer() {
   }
@@ -68,7 +71,15 @@ class DefaultStateSerializer {
       return (T)stateElement;
     }
     else if (JDOMExternalizable.class.isAssignableFrom(stateClass)) {
-      assert mergeInto == null;
+      if (mergeInto != null) {
+        try {
+          String elementText = JDOMUtil.writeElement(stateElement, "\n");
+          LOG.error("State is " + stateClass.getName() + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
       try {
         final T t = stateClass.newInstance();
         try {
