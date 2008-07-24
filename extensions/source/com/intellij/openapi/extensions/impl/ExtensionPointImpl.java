@@ -16,6 +16,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +33,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author AKireyev
  */
 public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
+
   private final LogProvider myLogger;
 
   private final AreaInstance myArea;
@@ -145,7 +149,22 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         result = myExtensionsCache;
         if (result == null) {
           processAdapters();
-          List<T> extensions = myExtensions;
+          List<T> extensions = new ArrayList<T>(myExtensions);
+
+          List<T> problemExtensions = new ArrayList<T>();
+
+          for (Iterator<T> iterator = extensions.iterator(); iterator.hasNext();) {
+            T t = iterator.next();
+            if (!isExtensionClassSuitable(t)) {
+              problemExtensions.add(t);
+              iterator.remove();
+            }
+          }
+
+          for (T problemExtension : problemExtensions) {
+            LOG.error("Extension '" + problemExtension.getClass() + "' should be instance of '" + getExtensionClass() + "'", new ExtensionException(problemExtension.getClass()));            
+          }
+
           //noinspection unchecked
           myExtensionsCache = result = extensions.toArray((T[])Array.newInstance(getExtensionClass(), extensions.size()));
           for (int i = 1; i < result.length; i++) {
@@ -158,6 +177,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       }
     }
     return result;
+  }
+
+  private boolean isExtensionClassSuitable(final T t) {
+    return getExtensionClass().isAssignableFrom(t.getClass());
   }
 
   private void processAdapters() {

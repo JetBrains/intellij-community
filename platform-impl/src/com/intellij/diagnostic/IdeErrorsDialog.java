@@ -19,10 +19,7 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -389,6 +386,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             return PluginManager.getPluginByClassName(s);
           }
         }
+      }
+    }
+
+    else if (t instanceof ExtensionException) {
+      String className = ((ExtensionException)t).getExtensionClass().getName();
+      if (PluginManager.isPluginClass(className)) {
+        return PluginManager.getPluginByClassName(className);
       }
     }
 
