@@ -1,10 +1,12 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
@@ -19,8 +21,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class ActionMenuItem extends JMenuItem {
   private static final Icon ourCheckedIcon = IconLoader.getIcon("/actions/check.png");
@@ -62,19 +64,22 @@ public class ActionMenuItem extends JMenuItem {
     init();
   }
 
+  public void removeNotify() {
+    uninstallSynchronizer();
+    super.removeNotify();
+  }
+
   private void installSynchronizer() {
     if (myMenuItemSynchronizer == null) {
       myMenuItemSynchronizer = new MenuItemSynchronizer();
-      myPresentation.addPropertyChangeListener(myMenuItemSynchronizer);
     }
   }
 
-  public void removeNotify() {
+  private void uninstallSynchronizer() {
     if (myMenuItemSynchronizer != null) {
-      myPresentation.removePropertyChangeListener(myMenuItemSynchronizer);
+      Disposer.dispose(myMenuItemSynchronizer);
       myMenuItemSynchronizer = null;
     }
-    super.removeNotify();
   }
 
   private void init() {
@@ -181,12 +186,22 @@ public class ActionMenuItem extends JMenuItem {
     }
   }
 
-  private final class MenuItemSynchronizer implements PropertyChangeListener {
+  private final class MenuItemSynchronizer implements PropertyChangeListener, Disposable {
     @NonNls private static final String SELECTED = "selected";
 
     private Set<String> mySynchronized = new HashSet<String>();
 
+    private MenuItemSynchronizer() {
+      myPresentation.addPropertyChangeListener(this);
+    }
+
+    public void dispose() {
+      myPresentation.removePropertyChangeListener(this);
+    }
+
     public void propertyChange(PropertyChangeEvent e) {
+      boolean queueForDispose = getParent() == null;
+
       String name = e.getPropertyName();
       if (mySynchronized.contains(name)) return;
 
@@ -224,7 +239,19 @@ public class ActionMenuItem extends JMenuItem {
       }
       finally {
         mySynchronized.remove(name);
+        if (queueForDispose) {
+          // later since we cannot remove property listeners inside event processing
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              if (getParent() == null) {
+                uninstallSynchronizer();  
+              }
+            }
+          });
+        }
       }
     }
+
   }
 }
