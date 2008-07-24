@@ -126,7 +126,7 @@ public class PatchApplier {
     for (Pair<VirtualFile, FilePatch> textPatch : textPatches) {
       final ApplyPatchStatus patchStatus =
           ApplyPatchAction.applyOnly(myProject, textPatch.getSecond(), context, textPatch.getFirst());
-      if (ApplyPatchStatus.SUCCESS.equals(status)) {
+      if (ApplyPatchStatus.SUCCESS.equals(patchStatus)) {
         myRemainingPatches.remove(textPatch.getSecond());
       }
       status = ApplyPatchStatus.and(status, patchStatus);
