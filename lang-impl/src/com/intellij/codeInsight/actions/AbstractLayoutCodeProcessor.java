@@ -127,8 +127,13 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private void runProcessFile(final PsiFile file) {
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+
+    if (document == null) {
+      return;
+    }
+
     if (!file.isWritable()){
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, myProject)) {
         Messages.showMessageDialog(myProject, PsiBundle.message("cannot.modify.a.read.only.file", file.getName()),
         CodeInsightBundle.message("error.dialog.readonly.file.title"),
