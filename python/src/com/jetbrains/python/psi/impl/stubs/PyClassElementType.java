@@ -7,6 +7,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
@@ -19,8 +21,6 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
@@ -51,23 +51,21 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassStubImpl(psi.getName(), parentStub, superClasses);
   }
 
-  public void serialize(final PyClassStub pyClassStub, final DataOutputStream dataStream,
-                        final PersistentStringEnumerator nameStorage) throws IOException {
-    DataInputOutputUtil.writeNAME(dataStream, pyClassStub.getName(), nameStorage);
+  public void serialize(final PyClassStub pyClassStub, final StubOutputStream dataStream) throws IOException {
+    dataStream.writeName(pyClassStub.getName());
     final String[] classes = pyClassStub.getSuperClasses();
     dataStream.writeByte(classes.length);
     for(String s: classes) {
-      DataInputOutputUtil.writeNAME(dataStream, s, nameStorage);
+      dataStream.writeName(s);
     }
   }
 
-  public PyClassStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
-                                 final PersistentStringEnumerator nameStorage) throws IOException {
-    String name = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
+  public PyClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+    String name = StringRef.toString(dataStream.readName());
     int superClassCount = dataStream.readByte();
     String[] superClasses = new String[superClassCount];
     for(int i=0; i<superClassCount; i++) {
-      superClasses[i] = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
+      superClasses[i] = StringRef.toString(dataStream.readName());
     }
     return new PyClassStubImpl(name, parentStub, superClasses);
   }

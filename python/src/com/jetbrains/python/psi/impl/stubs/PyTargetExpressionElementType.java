@@ -4,6 +4,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
@@ -15,8 +17,6 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
@@ -39,14 +39,14 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     return new PyTargetExpressionStubImpl(psi.getName(), parentStub);
   }
 
-  public void serialize(final PyTargetExpressionStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PyTargetExpressionStub stub, final StubOutputStream dataStream)
       throws IOException {
-    DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
+    dataStream.writeName(stub.getName());
   }
 
-  public PyTargetExpressionStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
+  public PyTargetExpressionStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
-    String name = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
+    String name = StringRef.toString(dataStream.readName());
     return new PyTargetExpressionStubImpl(name, parentStub);
   }
 

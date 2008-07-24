@@ -7,6 +7,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
@@ -16,8 +18,6 @@ import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyFunction> {
@@ -37,14 +37,13 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     return new PyFunctionStubImpl(psi.getName(), parentStub);
   }
 
-  public void serialize(final PyFunctionStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PyFunctionStub stub, final StubOutputStream dataStream)
       throws IOException {
-    DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
+    dataStream.writeName(stub.getName());
   }
 
-  public PyFunctionStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
-                                    final PersistentStringEnumerator nameStorage) throws IOException {
-    String name = StringRef.toString(DataInputOutputUtil.readNAME(dataStream, nameStorage));
+  public PyFunctionStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+    String name = StringRef.toString(dataStream.readName());
     return new PyFunctionStubImpl(name, parentStub);
   }
 
