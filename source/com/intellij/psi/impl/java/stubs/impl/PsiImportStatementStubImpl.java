@@ -132,4 +132,23 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     return refElement;
   }
 
+  @Override
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("PsiImportStatementStub[");
+
+    if (isStatic()) {
+      builder.append("static ");
+    }
+
+    builder.append(getImportReferenceText());
+
+    if (isOnDemand()) {
+      builder.append(".*");
+    }
+
+    builder.append("]");
+    return builder.toString();
+  }
 }
