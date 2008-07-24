@@ -18,8 +18,8 @@ public class RelativePathCalculator {
   }
 
   public void execute() {
-    final String[] baseParts = myBase.split("/");
-    final String[] shiftedParts = myShifted.split("/");
+    final String[] baseParts = split(myBase);
+    final String[] shiftedParts = split(myShifted);
 
     myRename = checkRename(baseParts, shiftedParts);
 

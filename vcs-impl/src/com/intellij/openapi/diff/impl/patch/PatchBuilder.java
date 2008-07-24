@@ -161,13 +161,7 @@ public class PatchBuilder {
   private static TextFilePatch buildMovedFile(final String basePath, final ContentRevision beforeRevision,
                                               final ContentRevision afterRevision, final String[] lines) throws VcsException {
     final TextFilePatch result = buildPatchHeading(basePath, beforeRevision, afterRevision);
-    final PatchHunk hunk = new PatchHunk(0, lines.length, 0, lines.length);
-    for(String line: lines) {
-      addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
-    }
-    for(String line: lines) {
-      addLineToHunk(hunk, line, PatchLine.Type.ADD);
-    }
+    final PatchHunk hunk = new PatchHunk(0, 0, 0, 0);
     result.addHunk(hunk);
     return result;
   }

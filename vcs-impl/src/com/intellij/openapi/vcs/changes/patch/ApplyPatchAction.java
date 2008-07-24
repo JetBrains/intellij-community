@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -90,7 +91,8 @@ public class ApplyPatchAction extends AnAction {
     }
     catch(ApplyPatchException ex) {
       if (!patch.isNewFile() && !patch.isDeletedFile() && patch instanceof TextFilePatch) {
-        ApplyPatchStatus mergeStatus = mergeAgainstBaseVersion(project, file, context, (TextFilePatch) patch,
+        //final VirtualFile beforeRename = (pathBeforeRename == null) ? file : pathBeforeRename;
+        ApplyPatchStatus mergeStatus = mergeAgainstBaseVersion(project, file, new FilePathImpl(file), (TextFilePatch) patch,
                                                                ApplyPatchMergeRequestFactory.INSTANCE);
         if (mergeStatus != null) {
           return mergeStatus;
@@ -109,7 +111,13 @@ public class ApplyPatchAction extends AnAction {
   public static ApplyPatchStatus mergeAgainstBaseVersion(Project project, VirtualFile file, ApplyPatchContext context,
                                                          final TextFilePatch patch,
                                                          final PatchMergeRequestFactory mergeRequestFactory) {
-    FilePath pathBeforeRename = context.getPathBeforeRename(file);
+    final FilePath pathBeforeRename = context.getPathBeforeRename(file);
+    return mergeAgainstBaseVersion(project, file, pathBeforeRename, patch, mergeRequestFactory);
+  }
+
+  @Nullable
+  public static ApplyPatchStatus mergeAgainstBaseVersion(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
+                                                         final TextFilePatch patch, final PatchMergeRequestFactory mergeRequestFactory) {
     final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project, file, patch.getBeforeVersionId());
     if (provider.canProvideContent()) {
       final StringBuilder newText = new StringBuilder();
@@ -212,13 +220,26 @@ public class ApplyPatchAction extends AnAction {
     }
   }
 
-  private static class ApplyPatchMergeRequestFactory implements PatchMergeRequestFactory {
-    public static final ApplyPatchMergeRequestFactory INSTANCE = new ApplyPatchMergeRequestFactory();
+  public static class ApplyPatchMergeRequestFactory implements PatchMergeRequestFactory {
+    private final boolean myReadOnly;
+
+    public static final ApplyPatchMergeRequestFactory INSTANCE = new ApplyPatchMergeRequestFactory(false);
+    public static final ApplyPatchMergeRequestFactory INSTANCE_READ_ONLY = new ApplyPatchMergeRequestFactory(true);
+
+    public ApplyPatchMergeRequestFactory(final boolean readOnly) {
+      myReadOnly = readOnly;
+    }
 
     public MergeRequest createMergeRequest(final String leftText, final String rightText, final String originalContent, @NotNull final VirtualFile file,
                                            final Project project) {
-      MergeRequest request = DiffRequestFactory.getInstance().createMergeRequest(leftText, rightText, originalContent,
+      MergeRequest request;
+      if (myReadOnly) {
+        request = DiffRequestFactory.getInstance().create3WayDiffRequest(leftText, rightText, originalContent, project, null);
+      } else {
+        request = DiffRequestFactory.getInstance().createMergeRequest(leftText, rightText, originalContent,
                                                                                  file, project, ActionButtonPresentation.createApplyButton());
+      }
+
       request.setVersionTitles(new String[] {
         VcsBundle.message("patch.apply.conflict.local.version"),
         VcsBundle.message("patch.apply.conflict.merged.version"),

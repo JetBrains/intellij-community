@@ -38,6 +38,7 @@ public class PatchApplier {
   private final LocalChangeList myTargetChangeList;
 
   private final List<FilePatch> myRemainingPatches;
+  private final PathsVerifier myVerifier;
 
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
                       final LocalChangeList targetChangeList, final CustomBinaryPatchApplier customForBinaries) {
@@ -47,11 +48,10 @@ public class PatchApplier {
     myTargetChangeList = targetChangeList;
     myCustomForBinaries = customForBinaries;
     myRemainingPatches = new ArrayList<FilePatch>();
+    myVerifier = new PathsVerifier(myProject, myBaseDirectory, myPatches);
   }
 
   public ApplyPatchStatus execute() {
-    final PathsVerifier verifier = new PathsVerifier(myProject, myBaseDirectory, myPatches);
-
     myRemainingPatches.addAll(myPatches);
 
     final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
@@ -59,20 +59,20 @@ public class PatchApplier {
       public void run() {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
-            if (! verifier.execute()) {
+            if (! myVerifier.execute()) {
               return;
             }
 
-            if (! makeWritable(verifier.getWritableFiles())) {
+            if (! makeWritable(myVerifier.getWritableFiles())) {
               return;
             }
 
-            final List<Pair<VirtualFile, FilePatch>> textPatches = verifier.getTextPatches();
+            final List<Pair<VirtualFile, FilePatch>> textPatches = myVerifier.getTextPatches();
             if (! fileTypesAreOk(textPatches)) {
               return;
             }
 
-            final ApplyPatchStatus status = actualApply(verifier);
+            final ApplyPatchStatus status = actualApply(myVerifier);
             showApplyStatus(status);
 
             if (status != null) {
@@ -83,8 +83,8 @@ public class PatchApplier {
       }
     });
 
-    final List<VirtualFile> directlyAffected = verifier.getDirectlyAffected();
-    final List<VirtualFile> indirectlyAffected = verifier.getAllAffected();
+    final List<VirtualFile> directlyAffected = myVerifier.getDirectlyAffected();
+    final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
 
     if ((myTargetChangeList != null) && (! directlyAffected.isEmpty())) {
       ApplyPatchAction.moveChangesOfVsToList(myProject, directlyAffected, myTargetChangeList);
@@ -103,33 +103,50 @@ public class PatchApplier {
     final ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     ApplyPatchStatus status = null;
 
-    status = applyList(textPatches, context, status);
+    try {
+      status = applyList(textPatches, context, status);
 
-    if (myCustomForBinaries == null) {
-      status = applyList(verifier.getBinaryPatches(), context, status);
-    } else {
-      try {
-        final ApplyPatchStatus patchStatus = myCustomForBinaries.apply(verifier.getBinaryPatches());
+      if (myCustomForBinaries == null) {
+        status = applyList(verifier.getBinaryPatches(), context, status);
+      } else {
+        final List<Pair<VirtualFile, FilePatch>> binaryPatches = verifier.getBinaryPatches();
+        ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
+        final List<FilePatch> appliedPatches = myCustomForBinaries.getAppliedPatches();
+        moveForCustomBinaries(binaryPatches, patchStatus, appliedPatches);
+        
         status = ApplyPatchStatus.and(status, patchStatus);
-        myRemainingPatches.removeAll(myCustomForBinaries.getAppliedPatches());
+        myRemainingPatches.removeAll(appliedPatches);
       }
-      catch (IOException e) {
-        showError(myProject, e.getMessage(), true);
-        return ApplyPatchStatus.FAILURE;
-      }
+    }
+    catch (IOException e) {
+      showError(myProject, e.getMessage(), true);
+      return ApplyPatchStatus.FAILURE;
     }
     return status;
   }
 
-  private ApplyPatchStatus applyList(final List<Pair<VirtualFile, FilePatch>> textPatches, final ApplyPatchContext context,
-                                     ApplyPatchStatus status) {
-    for (Pair<VirtualFile, FilePatch> textPatch : textPatches) {
-      final ApplyPatchStatus patchStatus =
-          ApplyPatchAction.applyOnly(myProject, textPatch.getSecond(), context, textPatch.getFirst());
-      if (ApplyPatchStatus.SUCCESS.equals(patchStatus)) {
-        myRemainingPatches.remove(textPatch.getSecond());
+  private void moveForCustomBinaries(final List<Pair<VirtualFile, FilePatch>> patches, ApplyPatchStatus status,
+                                                 final List<FilePatch> appliedPatches) throws IOException {
+    for (Pair<VirtualFile, FilePatch> patch : patches) {
+      if (appliedPatches.contains(patch.getSecond())) {
+        myVerifier.doMoveIfNeeded(patch.getFirst());
       }
+    }
+  }
+
+  private ApplyPatchStatus applyList(final List<Pair<VirtualFile, FilePatch>> patches, final ApplyPatchContext context,
+                                     ApplyPatchStatus status) throws IOException {
+    for (Pair<VirtualFile, FilePatch> patch : patches) {
+      ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst());
+      myVerifier.doMoveIfNeeded(patch.getFirst());
+
       status = ApplyPatchStatus.and(status, patchStatus);
+      if (ApplyPatchStatus.SUCCESS.equals(patchStatus)) {
+        myRemainingPatches.remove(patch.getSecond());
+      } else {
+        // interrupt if failure
+        return status;
+      }
     }
     return status;
   }

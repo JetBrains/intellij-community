@@ -188,8 +188,15 @@ public class ApplyPatchDialog extends DialogWrapper {
               }
               sb.append(s);
             }
-            
-            changes.add(changeForPath(beforeFile, patch, FilePathImpl.createNonLocal(FileUtil.toSystemIndependentName(sb.toString()), false)));
+
+            final Change change =
+                changeForPath(beforeFile, patch, FilePathImpl.createNonLocal(FileUtil.toSystemIndependentName(sb.toString()), false));
+            if (change != null) {
+              changes.add(change);
+            }
+          } else {
+            Messages.showErrorDialog(myProject, "Cannot show difference: cannot find file " + patch.getBeforeName(),
+                                     VcsBundle.message("patch.apply.dialog.title"));
           }
         }
           else {
@@ -201,7 +208,10 @@ public class ApplyPatchDialog extends DialogWrapper {
               changes.add(new Change(currentRevision, null));
             }
             else {
-              changes.add(changeForPath(fileToPatch, patch, null));
+              final Change change = changeForPath(fileToPatch, patch, null);
+              if (change != null) {
+                changes.add(change);
+              }
             }
           }
         }
@@ -218,7 +228,9 @@ public class ApplyPatchDialog extends DialogWrapper {
     }
   }
 
-  private Change changeForPath(final VirtualFile fileToPatch, final TextFilePatch patch, final FilePath newFilePath) throws ApplyPatchException {
+  @Nullable
+  private Change changeForPath(final VirtualFile fileToPatch, final TextFilePatch patch, final FilePath newFilePath) {
+    try {
     final FilePathImpl filePath = new FilePathImpl(fileToPatch);
     final CurrentContentRevision currentRevision = new CurrentContentRevision(filePath);
     final Document doc = FileDocumentManager.getInstance().getDocument(fileToPatch);
@@ -227,6 +239,12 @@ public class ApplyPatchDialog extends DialogWrapper {
     patch.applyModifications(baseContent, newText);
     ContentRevision revision = new SimpleContentRevision(newText.toString(), (newFilePath == null) ? filePath : newFilePath, patch.getAfterVersionId());
     return new Change(currentRevision, revision);
+    } catch (ApplyPatchException e) {
+      ApplyPatchContext context = new ApplyPatchContext(getBaseDirectory(), 0, false, false);
+      // just show diff here. maybe refactor further..
+      ApplyPatchAction.mergeAgainstBaseVersion(myProject, fileToPatch, context, patch, ApplyPatchAction.ApplyPatchMergeRequestFactory.INSTANCE_READ_ONLY);
+      return null;
+    }
   }
 
   @Override

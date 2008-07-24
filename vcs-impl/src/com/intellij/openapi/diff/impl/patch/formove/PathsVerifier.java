@@ -11,11 +11,14 @@ import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PathsVerifier {
   // in
@@ -23,7 +26,8 @@ public class PathsVerifier {
   private final VirtualFile myBaseDirectory;
   private final List<FilePatch> myPatches;
   // temp
-  private final List<MovedFileData> myMovedFiles;
+  private final Map<VirtualFile, MovedFileData> myMovedFiles;
+  private final List<VirtualFile> myMoveResults;
   private final List<VirtualFile> myCreatedDirectories;
   // out
   private final List<Pair<VirtualFile, FilePatch>> myTextPatches;
@@ -35,7 +39,8 @@ public class PathsVerifier {
     myBaseDirectory = baseDirectory;
     myPatches = patches;
 
-    myMovedFiles = new ArrayList<MovedFileData>();
+    myMovedFiles = new HashMap<VirtualFile, MovedFileData>();
+    myMoveResults = new ArrayList<VirtualFile>();
     myCreatedDirectories = new ArrayList<VirtualFile>();
     myTextPatches = new ArrayList<Pair<VirtualFile,FilePatch>>();
     myBinaryPatches = new ArrayList<Pair<VirtualFile,FilePatch>>();
@@ -47,14 +52,17 @@ public class PathsVerifier {
     final List<VirtualFile> affected = new ArrayList<VirtualFile>();
     affected.addAll(myCreatedDirectories);
     affected.addAll(myWritableFiles);
+    affected.removeAll(myMovedFiles.keySet());
+    affected.addAll(myMoveResults);
     return affected;
   }
 
   // old parents of moved files
   public List<VirtualFile> getAllAffected() {
     final List<VirtualFile> affected = getDirectlyAffected();
-    for (MovedFileData data : myMovedFiles) {
-      affected.add(data.getOldParent());
+    for (MovedFileData data : myMovedFiles.values()) {
+      affected.add(data.getNewParent());
+      // old parent
       affected.add(data.getCurrent().getParent());
     }
     return affected;
@@ -187,22 +195,8 @@ public class PathsVerifier {
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;
       }
-      final VirtualFile oldParent = beforeFile.getParent();
-      final VirtualFile afterFile;
-      if (afterFileParent.equals(oldParent)) {
-        // rename: no move
-        afterFile = beforeFile;
-      } else {
-        afterFile = moveFile(beforeFile, afterFileParent);
-        if (! checkExistsAndValid(afterFile, myAfterName)) {
-          return false;
-        }
-      }
-      if (! Comparing.equal(myPatch.getBeforeFileName(), myPatch.getAfterFileName())) {
-        afterFile.rename(PatchApplier.class, myPatch.getAfterFileName());
-      }
-      myMovedFiles.add(new MovedFileData(oldParent, afterFile, myPatch.getBeforeFileName()));
-      addPatch(myPatch, afterFile);
+      myMovedFiles.put(beforeFile, new MovedFileData(afterFileParent, beforeFile, myPatch.getAfterFileName()));
+      addPatch(myPatch, beforeFile);
       return true;
     }
   }
@@ -337,7 +331,7 @@ public class PathsVerifier {
     return result.get();*/
   }
 
-  private VirtualFile moveFile(final VirtualFile file, final VirtualFile newParent) throws IOException {
+  private static VirtualFile moveFile(final VirtualFile file, final VirtualFile newParent) throws IOException {
     file.move(FilePatch.class, newParent);
     return file;
     /*final Ref<IOException> ioExceptionRef = new Ref<IOException>();
@@ -394,27 +388,51 @@ public class PathsVerifier {
     return myWritableFiles;
   }
 
-  private static class MovedFileData {
-    private final VirtualFile myOldParent;
-    private final VirtualFile myCurrent;
-    private final String myOldName;
-
-    private MovedFileData(final VirtualFile oldParent, final VirtualFile current, final String oldName) {
-      myOldParent = oldParent;
-      myCurrent = current;
-      myOldName = oldName;
+  public void doMoveIfNeeded(final VirtualFile file) throws IOException {
+    final MovedFileData movedFile = myMovedFiles.get(file);
+    if (movedFile != null) {
+      final VirtualFile moveResult = movedFile.doMove();
+      myMoveResults.add(moveResult);
     }
+  }
 
-    public VirtualFile getOldParent() {
-      return myOldParent;
+  private static class MovedFileData {
+    private final VirtualFile myNewParent;
+    private final VirtualFile myCurrent;
+    private final String myNewName;
+
+    private MovedFileData(@NotNull final VirtualFile newParent, @NotNull final VirtualFile current, @NotNull final String newName) {
+      myNewParent = newParent;
+      myCurrent = current;
+      myNewName = newName;
     }
 
     public VirtualFile getCurrent() {
       return myCurrent;
     }
 
-    public String getOldName() {
-      return myOldName;
+    public VirtualFile getNewParent() {
+      return myNewParent;
+    }
+
+    public String getNewName() {
+      return myNewName;
+    }
+
+    public VirtualFile doMove() throws IOException {
+      final VirtualFile oldParent = myCurrent.getParent();
+      final VirtualFile afterFile;
+      if (myNewParent.equals(oldParent)) {
+        // rename: no move
+        afterFile = myCurrent;
+      } else {
+        myCurrent.move(PatchApplier.class, myNewParent);
+        afterFile = myCurrent;
+      }
+      if (! Comparing.equal(myCurrent.getName(), myNewName)) {
+        afterFile.rename(PatchApplier.class, myNewName);
+      }
+      return afterFile;
     }
   }
 }

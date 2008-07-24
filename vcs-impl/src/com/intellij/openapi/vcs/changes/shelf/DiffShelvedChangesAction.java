@@ -54,7 +54,7 @@ public class DiffShelvedChangesAction extends AnAction {
     TextFilePatch patch = c.loadFilePatch();
     if (patch == null) return false;
 
-    ApplyPatchContext context = new ApplyPatchContext(project.getBaseDir(), 0, true, true);
+    ApplyPatchContext context = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     VirtualFile f = patch.findFileToPatch(context);
     if (f == null) return false;
 

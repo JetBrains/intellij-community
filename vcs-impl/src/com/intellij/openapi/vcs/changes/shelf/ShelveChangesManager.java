@@ -217,7 +217,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
     final List<FilePatch> patches = new ArrayList<FilePatch>(textFilePatches);
 
-    final List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles);
+    final List<ShelvedBinaryFile> remainingBinaries = new ArrayList<ShelvedBinaryFile>();
+    final List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles, remainingBinaries);
 
     for (final ShelvedBinaryFile shelvedBinaryFile : binaryFilesToUnshelve) {
       patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
@@ -228,7 +229,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     patchApplier.execute();
     remainingPatches.addAll(patchApplier.getRemainingPatches());
 
-    if (remainingPatches.size() == 0) {
+    if ((remainingPatches.size() == 0) && remainingBinaries.isEmpty()) {
       deleteChangeList(changeList);
     }
     else {
@@ -277,7 +278,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
   }
 
-  private static List<ShelvedBinaryFile> getBinaryFilesToUnshelve(final ShelvedChangeList changeList, final List<ShelvedBinaryFile> binaryFiles) {
+  private static List<ShelvedBinaryFile> getBinaryFilesToUnshelve(final ShelvedChangeList changeList,
+                                                                  final List<ShelvedBinaryFile> binaryFiles,
+                                                                  final List<ShelvedBinaryFile> remainingBinaries) {
     if (binaryFiles == null) {
       return new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles());
     }
@@ -285,6 +288,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     for(ShelvedBinaryFile file: changeList.getBinaryFiles()) {
       if (binaryFiles.contains(file)) {
         result.add(file);
+      } else {
+        remainingBinaries.add(file);
       }
     }
     return result;

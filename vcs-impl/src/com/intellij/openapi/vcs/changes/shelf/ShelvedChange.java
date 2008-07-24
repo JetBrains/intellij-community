@@ -118,6 +118,30 @@ public class ShelvedChange {
     return null;
   }
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ShelvedChange)) return false;
+
+    final ShelvedChange that = (ShelvedChange)o;
+
+    if (myAfterPath != null ? !myAfterPath.equals(that.myAfterPath) : that.myAfterPath != null) return false;
+    if (myBeforePath != null ? !myBeforePath.equals(that.myBeforePath) : that.myBeforePath != null) return false;
+    if (myFileStatus != null ? !myFileStatus.equals(that.myFileStatus) : that.myFileStatus != null) return false;
+    if (myPatchPath != null ? !myPatchPath.equals(that.myPatchPath) : that.myPatchPath != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPatchPath != null ? myPatchPath.hashCode() : 0;
+    result = 31 * result + (myBeforePath != null ? myBeforePath.hashCode() : 0);
+    result = 31 * result + (myAfterPath != null ? myAfterPath.hashCode() : 0);
+    result = 31 * result + (myFileStatus != null ? myFileStatus.hashCode() : 0);
+    return result;
+  }
+
   private class PatchedContentRevision implements ContentRevision {
     private final FilePath myBeforeFilePath;
     private final FilePath myAfterFilePath;
