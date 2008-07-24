@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -442,10 +441,14 @@ public class OverrideImplementUtil {
                                                             boolean copyJavadoc,
                                                             boolean insertAtOverride) {
     try{
-      List<PsiGenerationInfo<PsiMethod>> resultMembers;
-
       int offset = editor.getCaretModel().getOffset();
+      if (aClass.getLBrace() == null) {
+        PsiClass psiClass = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createClass("X");
+        aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
+      }
+      
       int lbraceOffset = aClass.getLBrace().getTextOffset();
+      List<PsiGenerationInfo<PsiMethod>> resultMembers;
       if (offset <= lbraceOffset || aClass.isEnum()) {
         resultMembers = new ArrayList<PsiGenerationInfo<PsiMethod>>();
         for (PsiMethodMember candidate : candidates) {
