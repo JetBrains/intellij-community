@@ -14,10 +14,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.MoveDestination;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.DocumentAdapter;
@@ -140,7 +137,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
                                RefactoringBundle.message("cannot.move"));
       return;
     }
-    final RefactoringFactory factory = RefactoringFactory.getInstance(project);
+    final JavaRefactoringFactory factory = JavaRefactoringFactory.getInstance(project);
     final MoveDestination destination = factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
 
     MoveClassesOrPackagesProcessor processor = new MoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,

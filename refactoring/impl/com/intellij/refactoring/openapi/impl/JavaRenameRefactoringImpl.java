@@ -6,14 +6,14 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.refactoring.JavaRenameRefactoring;
 import com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory;
 import com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory;
 
 /**
  * @author dsl
  */
-public class JavaRenameRefactoringImpl extends RenameRefactoringImpl implements RenameRefactoring {
+public class JavaRenameRefactoringImpl extends RenameRefactoringImpl implements JavaRenameRefactoring {
   private static final AutomaticVariableRenamerFactory ourVariableRenamerFactory = new AutomaticVariableRenamerFactory();
   private static final AutomaticInheritorRenamerFactory ourInheritorRenamerFactory = new AutomaticInheritorRenamerFactory();
 

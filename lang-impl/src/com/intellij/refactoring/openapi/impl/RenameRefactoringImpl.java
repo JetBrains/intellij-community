@@ -3,12 +3,13 @@ package com.intellij.refactoring.openapi.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringImpl;
+import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
 
 import java.util.Collection;
 import java.util.Set;
 
-public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> {
+public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> implements RenameRefactoring {
   public RenameRefactoringImpl(Project project,
                                PsiElement element,
                                String newName,

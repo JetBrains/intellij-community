@@ -17,15 +17,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class RefactoringFactoryImpl extends RefactoringFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl");
+public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl");
   private final Project myProject;
 
-  public RefactoringFactoryImpl(Project project) {
+  public JavaRefactoringFactoryImpl(Project project) {
     myProject = project;
   }
 
-  public RenameRefactoring createRename(PsiElement element, String newName) {
+  public JavaRenameRefactoring createRename(PsiElement element, String newName) {
     return new JavaRenameRefactoringImpl(myProject, element, newName, true, true);
   }
 

@@ -38,6 +38,8 @@
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
                     serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
+    <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
+                    serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <applicationService serviceInterface="com.intellij.platform.ProjectBaseDirectory"

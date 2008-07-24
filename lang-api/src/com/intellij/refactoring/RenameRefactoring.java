@@ -39,10 +39,6 @@ public interface RenameRefactoring extends Refactoring {
 
   Collection<String> getNewNames();
 
-  void setShouldRenameVariables(boolean value);
-
-  void setShouldRenameInheritors(boolean value);
-
   void setSearchInComments(boolean value);
 
   void setSearchInNonJavaFiles(boolean value);
