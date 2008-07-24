@@ -11,6 +11,10 @@ import com.intellij.refactoring.RefactoringActionHandler;
  *
  */
 public class ExtractMethodAction extends BaseRefactoringAction {
+  public ExtractMethodAction() {
+    setInjectedContext(true);
+  }
+
   public boolean isAvailableInEditorOnly() {
     return true;
   }

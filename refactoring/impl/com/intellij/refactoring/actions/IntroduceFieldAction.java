@@ -9,6 +9,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 
 public class IntroduceFieldAction extends BaseRefactoringAction {
+  public IntroduceFieldAction() {
+    setInjectedContext(true);
+  }
+
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
     final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
     if (language != null) {
