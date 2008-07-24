@@ -342,11 +342,16 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
       Map<String, PsiField> cachedFields = myCachedFieldsMap;
       if(cachedFields == null){
         final PsiField[] fields = getFields();
-        cachedFields = new THashMap<String, PsiField>();
-        for (final PsiField field : fields) {
-          cachedFields.put(field.getName(), field);
+        if (fields.length > 0) {
+          cachedFields = new THashMap<String, PsiField>();
+          for (final PsiField field : fields) {
+            cachedFields.put(field.getName(), field);
+          }
+          myCachedFieldsMap = cachedFields;
+        } else {
+          myCachedFieldsMap = Collections.emptyMap();
+          return null;
         }
-        myCachedFieldsMap = cachedFields;
       }
       return cachedFields.get(name);
     }
@@ -408,11 +413,16 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
       Map<String, PsiClass> inners = myCachedInnersMap;
       if(inners == null){
         final PsiClass[] classes = getInnerClasses();
-        inners = new THashMap<String,PsiClass>();
-        for (final PsiClass psiClass : classes) {
-          inners.put(psiClass.getName(), psiClass);
+        if (classes.length > 0) {
+          inners = new THashMap<String,PsiClass>();
+          for (final PsiClass psiClass : classes) {
+            inners.put(psiClass.getName(), psiClass);
+          }
+          myCachedInnersMap = inners;
+        } else {
+          myCachedInnersMap = Collections.emptyMap();
+          return null;
         }
-        myCachedInnersMap = inners;
       }
       return inners.get(name);
     }

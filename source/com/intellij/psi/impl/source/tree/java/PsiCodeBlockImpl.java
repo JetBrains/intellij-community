@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBlock, Constants {
@@ -100,8 +101,8 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
         }
       }, ResolveState.initial(), this, this);
 
-      myClassesSet = set1 = classesSet;
-      myVariablesSet = set2 = localsSet;
+      myClassesSet = set1 = (classesSet.isEmpty() ? Collections.<String>emptySet() : classesSet);
+      myVariablesSet = set2 = (localsSet.isEmpty() ? Collections.<String>emptySet() : localsSet);
       myConflict = wasConflict = conflict.get();
     }
     return wasConflict ? null : Pair.create(set1, set2);
