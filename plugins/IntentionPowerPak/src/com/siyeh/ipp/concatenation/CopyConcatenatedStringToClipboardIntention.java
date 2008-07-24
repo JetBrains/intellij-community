@@ -31,11 +31,12 @@ import java.awt.datatransfer.Transferable;
 
 public class CopyConcatenatedStringToClipboardIntention extends Intention {
 
-    @NotNull
+    @Override @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new SimpleStringConcatenationPredicate();
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         if (!(element instanceof PsiBinaryExpression)) {
@@ -73,7 +74,8 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
         if (expression instanceof PsiLiteralExpression) {
             final String text = expression.getText();
             final PsiType type = expression.getType();
-            if (type != null && type.equalsToText("java.lang.String")) {
+            if (type != null && (type.equalsToText("java.lang.String")
+                    || type.equalsToText("char"))) {
                 final int textLength = text.length();
                 if (textLength > 2) {
                     out.append(text.substring(1, textLength - 1));
