@@ -15,7 +15,7 @@ public class SerializedStubTree {
   }
 
   public StubElement getStub() {
-    return SerializationManager.getInstance().deserialize(new DataInputStream(new ByteArrayInputStream(myBytes)));
+    return SerializationManager.getInstance().deserialize(new ByteArrayInputStream(myBytes));
   }
 
   public boolean equals(final Object that) {

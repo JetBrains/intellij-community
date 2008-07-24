@@ -14,6 +14,8 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -24,7 +26,10 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -381,7 +386,7 @@ public class RecordUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.repositoryCache");
 
-  public static TypeInfo readTYPE(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
+  public static TypeInfo readTYPE(StubInputStream record) throws IOException {
     final int b = 0xFF & record.readByte();
     final int tag = b & 0x3;
     final int index = 0xF & (b >> 2);
@@ -399,7 +404,7 @@ public class RecordUtil {
       arrayCount = (flags & 1) != 0 ? record.readByte() : 0;
       isEllipsis = (flags & 2) != 0;
       if (tag == 0x00) {
-        text = DataInputOutputUtil.readNAME(record, nameStore);
+        text = record.readName();
         //view.text = readSTR(record);
       }
       else {
@@ -449,9 +454,7 @@ public class RecordUtil {
     }
   }
 
-  public static void writeTYPE(final DataOutputStream dataStream,
-                               final TypeInfo typeInfo,
-                               final PersistentStringEnumerator nameStorage) throws IOException {
+  public static void writeTYPE(final StubOutputStream dataStream, final TypeInfo typeInfo) throws IOException {
     if (typeInfo == null) {
       dataStream.writeByte(0x02);
       return;
@@ -476,7 +479,7 @@ public class RecordUtil {
       if (arrayCount != 0) {
         dataStream.writeByte(arrayCount);
       }
-      DataInputOutputUtil.writeNAME(dataStream, text, nameStorage);
+      dataStream.writeName(text);
       //writeSTR(record, text);
     }
   }

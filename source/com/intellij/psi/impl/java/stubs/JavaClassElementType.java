@@ -21,14 +21,14 @@ import com.intellij.psi.impl.source.tree.java.AnonymousClassElement;
 import com.intellij.psi.impl.source.tree.java.EnumConstantInitializerElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
@@ -85,21 +85,20 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
   }
 
 
-  public void serialize(final PsiClassStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiClassStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeByte(((PsiClassStubImpl)stub).getFlags());
     if (!stub.isAnonymous()) {
-      DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
-      DataInputOutputUtil.writeNAME(dataStream, stub.getQualifiedName(), nameStorage);
-      DataInputOutputUtil.writeNAME(dataStream, stub.getSourceFileName(), nameStorage);
+      dataStream.writeName(stub.getName());
+      dataStream.writeName(stub.getQualifiedName());
+      dataStream.writeName(stub.getSourceFileName());
     }
     else {
-      DataInputOutputUtil.writeNAME(dataStream, stub.getBaseClassReferenceText(), nameStorage);
+      dataStream.writeName(stub.getBaseClassReferenceText());
     }
   }
 
-  public PsiClassStub deserialize(final DataInputStream dataStream,
-                                  final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
+  public PsiClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte flags = dataStream.readByte();
 
     final boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
@@ -107,15 +106,15 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
 
     if (!isAnonymous) {
-      StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      StringRef qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      final StringRef sourceFileName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      StringRef name = dataStream.readName();
+      StringRef qname = dataStream.readName();
+      final StringRef sourceFileName = dataStream.readName();
       final PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
       classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
     else {
-      StringRef baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      StringRef baseref = dataStream.readName();
       return new PsiClassStubImpl(type, parentStub, null, null, baseref, flags);
     }
   }

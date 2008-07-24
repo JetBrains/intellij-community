@@ -18,14 +18,14 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
@@ -50,16 +50,15 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
     return "java.FILE";
   }
 
-  public void serialize(final PsiJavaFileStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiJavaFileStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeBoolean(stub.isCompiled());
-    DataInputOutputUtil.writeNAME(dataStream, stub.getPackageName(), nameStorage);
+    dataStream.writeName(stub.getPackageName());
   }
 
-  public PsiJavaFileStub deserialize(final DataInputStream dataStream,
-                                     final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
+  public PsiJavaFileStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
-    StringRef packName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef packName = dataStream.readName();
     return new PsiJavaFileStubImpl(packName, compiled);
   }
 

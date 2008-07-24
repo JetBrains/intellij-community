@@ -6,18 +6,15 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -131,18 +128,23 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     }
   }
 
-  public void serialize(StubElement rootStub, DataOutputStream stream) {
+  public void serialize(StubElement rootStub, OutputStream stream) {
+    StubOutputStream stubOutputStream = new StubOutputStream(stream, myNameStorage);
+    doSerialize(rootStub, stubOutputStream);
+  }
+
+  private void doSerialize(final StubElement rootStub, final StubOutputStream stream) {
     initSerializers();
     try {
       final StubSerializer serializer = getSerializer(rootStub);
 
       DataInputOutputUtil.writeINT(stream, getClassId(serializer));
-      serializer.serialize(rootStub, stream, myNameStorage);
+      serializer.serialize(rootStub, stream);
 
       final List<StubElement> children = rootStub.getChildrenStubs();
       DataInputOutputUtil.writeINT(stream, children.size());
       for (StubElement child : children) {
-        serialize(child, stream);
+        doSerialize(child, stream);
       }
     }
     catch (IOException e) {
@@ -160,10 +162,11 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     return rootStub.getStubType();
   }
 
-  public StubElement deserialize(DataInputStream stream) {
+  public StubElement deserialize(InputStream stream) {
+    StubInputStream inputStream = new StubInputStream(stream, myNameStorage);
     initSerializers();
     try {
-      return deserialize(stream, null);
+      return deserialize(inputStream, null);
     }
     catch (IOException e) {
       myNameStorageCrashed.set(true);
@@ -172,13 +175,13 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     }
   }
 
-  private StubElement deserialize(DataInputStream stream, StubElement parentStub) throws IOException {
+  private StubElement deserialize(StubInputStream stream, StubElement parentStub) throws IOException {
     final int id = DataInputOutputUtil.readINT(stream);
     final StubSerializer serializer = getClassById(id);
     
     assert serializer != null : "No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null");
     
-    StubElement stub = serializer.deserialize(stream, parentStub, myNameStorage);
+    StubElement stub = serializer.deserialize(stream, parentStub);
     int childCount = DataInputOutputUtil.readINT(stream);
     for (int i = 0; i < childCount; i++) {
       deserialize(stream, stub);

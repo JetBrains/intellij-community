@@ -9,8 +9,6 @@ import com.intellij.psi.stubs.*;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class IStubFileElementType<T extends PsiFileStub> extends IFileElementType implements StubSerializer<T>{
@@ -30,12 +28,11 @@ public class IStubFileElementType<T extends PsiFileStub> extends IFileElementTyp
     return "psi.file";
   }
 
-  public void serialize(final T stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final T stub, final StubOutputStream dataStream)
       throws IOException {
   }
 
-  public T deserialize(final DataInputStream dataStream,
-                       final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
+  public T deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return (T)new PsiFileStubImpl(null);
   }
 

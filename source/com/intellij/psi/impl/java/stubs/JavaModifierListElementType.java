@@ -11,11 +11,10 @@ import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
 import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.PersistentStringEnumerator;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStub, PsiModifierList> {
@@ -40,14 +39,14 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
     return new PsiModifierListStubImpl(parentStub, RecordUtil.packModifierList(psi));
   }
 
-  public void serialize(final PsiModifierListStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiModifierListStub stub, final StubOutputStream dataStream)
       throws IOException {
-    DataInputOutputUtil.writeINT(dataStream, stub.getModifiersMask());
+    dataStream.writeVarInt(stub.getModifiersMask());
   }
 
-  public PsiModifierListStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
+  public PsiModifierListStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
-    return new PsiModifierListStubImpl(parentStub, DataInputOutputUtil.readINT(dataStream));
+    return new PsiModifierListStubImpl(parentStub, dataStream.readVarInt());
   }
 
   public void indexStub(final PsiModifierListStub stub, final IndexSink sink) {

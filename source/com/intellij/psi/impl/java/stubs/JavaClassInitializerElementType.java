@@ -9,10 +9,10 @@ import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
 import com.intellij.psi.impl.source.PsiClassInitializerImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.util.io.PersistentStringEnumerator;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer> {
@@ -33,11 +33,11 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
     return new PsiClassInitializerStubImpl(parentStub);
   }
 
-  public void serialize(final PsiClassInitializerStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiClassInitializerStub stub, final StubOutputStream dataStream)
       throws IOException {
   }
 
-  public PsiClassInitializerStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
+  public PsiClassInitializerStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     return new PsiClassInitializerStubImpl(parentStub);
   }

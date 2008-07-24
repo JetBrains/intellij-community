@@ -15,14 +15,13 @@ import com.intellij.psi.impl.source.PsiReferenceListImpl;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterExtendsBoundsListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaClassReferenceListElementType extends JavaStubElementType<PsiClassReferenceListStub, PsiReferenceList> {
@@ -80,23 +79,22 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     return texts;
   }
 
-  public void serialize(final PsiClassReferenceListStub stub,
-                        final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage) throws IOException {
+  public void serialize(final PsiClassReferenceListStub stub, final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(encodeRole(stub.getRole()));
     final String[] names = stub.getReferencedNames();
-    DataInputOutputUtil.writeINT(dataStream, names.length);
+    dataStream.writeVarInt(names.length);
     for (String name : names) {
-      DataInputOutputUtil.writeNAME(dataStream, name, nameStorage);
+      dataStream.writeName(name);
     }
   }
 
-  public PsiClassReferenceListStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
+  public PsiClassReferenceListStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     byte role = dataStream.readByte();
-    int len = DataInputOutputUtil.readINT(dataStream);
+    int len = dataStream.readVarInt();
     StringRef[] names = StringRef.createArray(len);
     for (int i = 0; i < names.length; i++) {
-      names[i] = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      names[i] = dataStream.readName();
     }
 
     final PsiReferenceList.Role decodedRole = decodeRole(role);

@@ -113,8 +113,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
             if (rootStub == null) return;
 
             final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            DataOutputStream stream = new DataOutputStream(bytes);
-            SerializationManager.getInstance().serialize(rootStub, stream);
+            SerializationManager.getInstance().serialize(rootStub, bytes);
 
             final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
             result.put(key, new SerializedStubTree(bytes.toByteArray()));

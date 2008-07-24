@@ -19,14 +19,13 @@ import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
@@ -62,11 +61,11 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     return new PsiFieldStubImpl(parentStub, psi.getName(), type, initializer != null ? initializer.getText() : null, flags);
   }
 
-  public void serialize(final PsiFieldStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiFieldStub stub, final StubOutputStream dataStream)
       throws IOException {
-    DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
-    RecordUtil.writeTYPE(dataStream, stub.getType(), nameStorage);
-    DataInputOutputUtil.writeNAME(dataStream, getInitializerText(stub), nameStorage);
+    dataStream.writeName(stub.getName());
+    RecordUtil.writeTYPE(dataStream, stub.getType());
+    dataStream.writeName(getInitializerText(stub));
     dataStream.writeByte(((PsiFieldStubImpl)stub).getFlags());
   }
 
@@ -79,13 +78,12 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     }
   }
 
-  public PsiFieldStub deserialize(final DataInputStream dataStream,
-                                  final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
-    StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+  public PsiFieldStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+    StringRef name = dataStream.readName();
 
-    final TypeInfo type = RecordUtil.readTYPE(dataStream, nameStorage);
+    final TypeInfo type = RecordUtil.readTYPE(dataStream);
 
-    StringRef initializerText = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef initializerText = dataStream.readName();
     byte flags = dataStream.readByte();
     return new PsiFieldStubImpl(parentStub, name, type, initializerText, flags);
   }

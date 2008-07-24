@@ -12,11 +12,10 @@ import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.PersistentStringEnumerator;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotationStub, PsiAnnotation> {
@@ -41,14 +40,14 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     return new PsiAnnotationStubImpl(parentStub, psi.getText());
   }
 
-  public void serialize(final PsiAnnotationStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiAnnotationStub stub, final StubOutputStream dataStream)
       throws IOException {
-    DataInputOutputUtil.writeNAME(dataStream, stub.getText(), nameStorage);
+    dataStream.writeName(stub.getText());
   }
 
-  public PsiAnnotationStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
+  public PsiAnnotationStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
-    return new PsiAnnotationStubImpl(parentStub, DataInputOutputUtil.readNAME(dataStream, nameStorage));
+    return new PsiAnnotationStubImpl(parentStub, dataStream.readName());
   }
 
   public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {

@@ -13,14 +13,14 @@ import com.intellij.psi.impl.source.PsiImportStaticStatementImpl;
 import com.intellij.psi.impl.source.tree.java.ImportStaticStatementElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaImportStatementElementType extends JavaStubElementType<PsiImportStatementStub, PsiImportStatementBase> {
@@ -53,17 +53,15 @@ public class JavaImportStatementElementType extends JavaStubElementType<PsiImpor
     return new PsiImportStatementStubImpl(parentStub, ref != null ? ref.getCanonicalText() : null, flags);
   }
 
-  public void serialize(final PsiImportStatementStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiImportStatementStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeByte(((PsiImportStatementStubImpl)stub).getFlags());
-    DataInputOutputUtil.writeNAME(dataStream, stub.getImportReferenceText(), nameStorage);
+    dataStream.writeName(stub.getImportReferenceText());
   }
 
-  public PsiImportStatementStub deserialize(final DataInputStream dataStream,
-                                            final StubElement parentStub,
-                                            final PersistentStringEnumerator nameStorage) throws IOException {
+  public PsiImportStatementStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte flags = dataStream.readByte();
-    StringRef reftext = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    StringRef reftext = dataStream.readName();
     return new PsiImportStatementStubImpl(parentStub, reftext, flags);
   }
 

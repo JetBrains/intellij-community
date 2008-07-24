@@ -13,13 +13,12 @@ import com.intellij.psi.impl.source.PsiParameterImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaParameterElementType extends JavaStubElementType<PsiParameterStub, PsiParameter> {
@@ -45,17 +44,17 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     return new PsiParameterStubImpl(parentStub, psi.getName(), type, psi.isVarArgs());
   }
 
-  public void serialize(final PsiParameterStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+  public void serialize(final PsiParameterStub stub, final StubOutputStream dataStream)
       throws IOException {
-    DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
-    RecordUtil.writeTYPE(dataStream, stub.getParameterType(), nameStorage);
+    dataStream.writeName(stub.getName());
+    RecordUtil.writeTYPE(dataStream, stub.getParameterType());
     dataStream.writeBoolean(stub.isParameterTypeEllipsis());
   }
 
-  public PsiParameterStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
+  public PsiParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
-    StringRef name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-    TypeInfo type = RecordUtil.readTYPE(dataStream, nameStorage);
+    StringRef name = dataStream.readName();
+    TypeInfo type = RecordUtil.readTYPE(dataStream);
     boolean isEll = dataStream.readBoolean();
     return new PsiParameterStubImpl(parentStub, name, type, isEll);
   }
