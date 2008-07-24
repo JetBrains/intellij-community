@@ -1,16 +1,18 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.util.net.HttpConfigurable;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
@@ -112,6 +114,118 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         }
 
     }
+
+  public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
+    // this code taken from default manager (changed for system properties reading)
+      String host = url.getHost();
+
+      Map properties = getHostProperties(host);
+      String proxyHost = (String) properties.get("http-proxy-host");
+      if (proxyHost == null || "".equals(proxyHost.trim())) {
+        // ! use common proxy if it is set
+        final String ideaWideProxyHost = System.getProperty("http.proxyHost");
+        String ideaWideProxyPort = System.getProperty("http.proxyPort");
+
+        if (ideaWideProxyPort == null) {
+          ideaWideProxyPort = "3128";
+        }
+
+        if (ideaWideProxyHost != null) {
+          return new MyPromptingProxyManager(ideaWideProxyHost, ideaWideProxyPort);
+        }
+        return null;
+      }
+      String proxyExceptions = (String) properties.get("http-proxy-exceptions");
+      String proxyExceptionsSeparator = ",";
+      if (proxyExceptions == null) {
+          proxyExceptions = System.getProperty("http.nonProxyHosts");
+          proxyExceptionsSeparator = "|";
+      }
+      if (proxyExceptions != null) {
+        for(StringTokenizer exceptions = new StringTokenizer(proxyExceptions, proxyExceptionsSeparator); exceptions.hasMoreTokens();) {
+            String exception = exceptions.nextToken().trim();
+            if (DefaultSVNOptions.matches(exception, host)) {
+                return null;
+            }
+        }
+      }
+      String proxyPort = (String) properties.get("http-proxy-port");
+      String proxyUser = (String) properties.get("http-proxy-username");
+      String proxyPassword = (String) properties.get("http-proxy-password");
+      return new MySimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
+  }
+
+  private static class MyPromptingProxyManager extends MySimpleProxyManager {
+    private static final String ourPrompt = "Proxy authentication";
+
+    private MyPromptingProxyManager(final String host, final String port) {
+      super(host, port, null, null);
+    }
+
+    @Override
+    public String getProxyUserName() {
+      if (myProxyUser != null) {
+        return myProxyUser;
+      }
+      final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+      if (httpConfigurable.PROXY_AUTHENTICATION && (! httpConfigurable.KEEP_PROXY_PASSWORD)) {
+        httpConfigurable.getPromptedAuthentication(myProxyHost, ourPrompt);
+      }
+      myProxyUser = httpConfigurable.PROXY_LOGIN;
+      return myProxyUser;
+    }
+
+    @Override
+    public String getProxyPassword() {
+      if (myProxyPassword != null) {
+        return myProxyPassword;
+      }
+      final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+      if (httpConfigurable.PROXY_AUTHENTICATION && (! httpConfigurable.KEEP_PROXY_PASSWORD)) {
+        httpConfigurable.getPromptedAuthentication(myProxyUser, ourPrompt);
+      }
+      myProxyPassword = httpConfigurable.getPlainProxyPassword();
+      return myProxyPassword;
+    }
+  }
+
+  private static class MySimpleProxyManager implements ISVNProxyManager {
+      protected String myProxyHost;
+      private String myProxyPort;
+      protected String myProxyUser;
+      protected String myProxyPassword;
+
+      public MySimpleProxyManager(String host, String port, String user, String password) {
+          myProxyHost = host;
+          myProxyPort = port == null ? "3128" : port;
+          myProxyUser = user;
+          myProxyPassword = password;
+      }
+
+      public String getProxyHost() {
+          return myProxyHost;
+      }
+
+      public int getProxyPort() {
+          try {
+              return Integer.parseInt(myProxyPort);
+          } catch (NumberFormatException nfe) {
+              //
+          }
+          return 3128;
+      }
+
+      public String getProxyUserName() {
+          return myProxyUser;
+      }
+
+      public String getProxyPassword() {
+          return myProxyPassword;
+      }
+
+      public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
+      }
+  }
 
   // 30 seconds
   private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
