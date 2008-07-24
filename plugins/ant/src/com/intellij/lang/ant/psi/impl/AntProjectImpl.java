@@ -99,12 +99,18 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   @NotNull
   public AntTarget[] getTargets() {
     synchronized (PsiLock.LOCK) {
-      if (myTargets != null) return myTargets;
+      if (myTargets != null) {
+        return myTargets;
+      }
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      if (myInGettingChildren) return AntTarget.EMPTY_ARRAY;
+      if (myInGettingChildren) {
+        return AntTarget.EMPTY_ARRAY;
+      }
       final List<AntTarget> targets = new ArrayList<AntTarget>();
       for (final AntElement child : getChildren()) {
-        if (child instanceof AntTarget) targets.add((AntTarget)child);
+        if (child instanceof AntTarget) {
+          targets.add((AntTarget)child);
+        }
       }
       final int size = targets.size();
       return myTargets = (size == 0) ? AntTarget.EMPTY_ARRAY : targets.toArray(new AntTarget[size]);

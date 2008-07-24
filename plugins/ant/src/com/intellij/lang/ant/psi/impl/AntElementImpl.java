@@ -188,7 +188,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   @Nullable
   public AntElement lightFindElementAt(int offset) {
     synchronized (PsiLock.LOCK) {
-      if (myChildren == null) return this;
+      if (myChildren == null) {
+        return this;
+      }
       final TextRange ownRange = getTextRange();
       final int offsetInFile = offset + ownRange.getStartOffset();
       for (final AntElement element : getChildren()) {
