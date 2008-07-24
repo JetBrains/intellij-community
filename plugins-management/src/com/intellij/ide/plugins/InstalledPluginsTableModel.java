@@ -91,18 +91,19 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     int state = IdeaPluginDescriptorImpl.compareVersion(descr.getVersion(), existing.getVersion());
     if (state > 0 && !PluginManager.isIncompatible(descr)) {
       NewVersions2Plugins.put(existing.getPluginId(), 1);
+
+      final IdeaPluginDescriptorImpl plugin = (IdeaPluginDescriptorImpl)existing;
+      plugin.setDownloadsCount(descr.getDownloads());
+      plugin.setVendor(descr.getVendor());
+      plugin.setVendorEmail(descr.getVendorEmail());
+      plugin.setVendorUrl(descr.getVendorUrl());
+      plugin.setUrl(descr.getUrl());
+
     } else {
       if (NewVersions2Plugins.remove(existing.getPluginId()) != null) {
         updatedPlugins.add(existing.getPluginId());
       }
     }
-
-    final IdeaPluginDescriptorImpl plugin = (IdeaPluginDescriptorImpl)existing;
-    plugin.setDownloadsCount(descr.getDownloads());
-    plugin.setVendor(descr.getVendor());
-    plugin.setVendorEmail(descr.getVendorEmail());
-    plugin.setVendorUrl(descr.getVendorUrl());
-    plugin.setUrl(descr.getUrl());
   }
 
   public static boolean hasNewerVersion(PluginId descr) {
