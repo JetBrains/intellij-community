@@ -108,7 +108,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    * It's updated together with the set of custom definitons.
    */
   private volatile HashMap<AntTypeId, String> myProjectElements;
-  private volatile long myModificationCount = 0;
+  private long myModificationCount = 0;
   public static final Key ANT_BUILD_FILE = Key.create("ANT_BUILD_FILE");
 
   public AntFileImpl(final FileViewProvider viewProvider) {
@@ -262,15 +262,19 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
-  public synchronized void incModificationCount() {
-    ++myModificationCount;
-    for (final AntFile file : AntSupport.getImpotingFiles(this)) {
-      file.clearCaches();
+  public void incModificationCount() {
+    synchronized (PsiLock.LOCK) {
+      ++myModificationCount;
+      for (final AntFile file : AntSupport.getImpotingFiles(this)) {
+        file.clearCaches();
+      }
     }
   }
 
-  public synchronized long getModificationCount() {
-    return myModificationCount;
+  public long getModificationCount() {
+    synchronized (PsiLock.LOCK) {
+      return myModificationCount;
+    }
   }
 
   public void subtreeChanged() {

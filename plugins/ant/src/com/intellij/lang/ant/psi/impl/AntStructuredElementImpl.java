@@ -47,12 +47,12 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private boolean myDefinitionCloned;
   private volatile AntNameIdentifier myIdElement;
   private volatile AntNameIdentifier myNameElement;
-  @NonNls private volatile String myNameElementAttribute;
-  private volatile int myLastFoundElementOffset = -1;
-  private volatile AntElement myLastFoundElement;
+  @NonNls 
+  private volatile String myNameElementAttribute;
+  private int myLastFoundElementOffset = -1;
+  private AntElement myLastFoundElement;
   private volatile boolean myIsImported;
-  private volatile Set<String> myComputingAttrValue;
-  private volatile boolean myShouldDisposeSet = true; 
+  private StringSetHolder myComputingAttrValue;
   protected volatile boolean myInGettingChildren;
   @NonNls private static final String ANTLIB_NS_PREFIX = "antlib:";
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
@@ -271,14 +271,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         if (myComputingAttrValue == null || !myComputingAttrValue.contains(value)) {
           try {
             if (myComputingAttrValue == null) {
-              try {
-                myComputingAttrValue = StringSetSpinAllocator.alloc();
-                myShouldDisposeSet = true;
-              }
-              catch (SpinAllocator.AllocatorExhaustedException e) {
-                myComputingAttrValue = new HashSet<String>();
-                myShouldDisposeSet = false;
-              }
+              myComputingAttrValue = new StringSetHolder();
             }
             final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(getProject());
             myComputingAttrValue.add(value);
@@ -298,11 +291,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           finally {
             myComputingAttrValue.remove(value);
             if (myComputingAttrValue.size() == 0) {
-              final Set<String> _strSet = myComputingAttrValue;
+              myComputingAttrValue.dispose();
               myComputingAttrValue = null;
-              if (myShouldDisposeSet) {
-                StringSetSpinAllocator.dispose(_strSet);
-              }
             }
           }
         }
@@ -360,8 +350,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public AntElement lightFindElementAt(int offset) {
-    if (offset == myLastFoundElementOffset) {
-      return myLastFoundElement;
+    synchronized (PsiLock.LOCK) {
+      if (offset == myLastFoundElementOffset) {
+        return myLastFoundElement;
+      }
     }
     return super.lightFindElementAt(offset);
   }
@@ -425,7 +417,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       if (element instanceof AntStructuredElement) {
         AntStructuredElement se = (AntStructuredElement)element;
         if (se.getTypeDefinition() == null) {
-          se = (AntStructuredElement)AntElementFactory.createAntElement(this, se.getSourceElement());
+          final XmlTag sourceElement = se.getSourceElement();
+          
+          assert sourceElement.isValid();
+          
+          se = (AntStructuredElement)AntElementFactory.createAntElement(this, sourceElement);
           if (se != null && se.getTypeDefinition() != null) {
             elements[i] = se;
           }
@@ -531,7 +527,13 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             if (endProp < value.length() - 1) {
               builder.append(value, endProp + 1, value.length());
             }
-            value = builder.toString();
+            final String substituted = builder.toString();
+            if (!substituted.equals(value)) {
+              value = substituted;
+            }
+            else {
+              startProp += 2;
+            }
           }
           finally {
             StringBuilderSpinAllocator.dispose(builder);
@@ -576,6 +578,44 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+  
+  private static final class StringSetHolder {
+    @NotNull
+    private Set<String> mySet;
+    private boolean myShouldDispose = true;
+
+    public StringSetHolder() {
+      try {
+        mySet = StringSetSpinAllocator.alloc();
+      }
+      catch (SpinAllocator.AllocatorExhaustedException e) {
+        mySet = new HashSet<String>();
+        myShouldDispose = false;
+      }
+    }
+    
+    public boolean contains(String str) {
+      return mySet.contains(str);
+    }
+
+    public int size() {
+      return mySet.size();
+    }
+
+    public boolean add(final String s) {
+      return mySet.add(s);
+    }
+
+    public boolean remove(final String s) {
+      return mySet.remove(s);
+    }
+    
+    public void dispose()  {
+      if (myShouldDispose) {
+        StringSetSpinAllocator.dispose(mySet);
+      }
     }
   }
 }
