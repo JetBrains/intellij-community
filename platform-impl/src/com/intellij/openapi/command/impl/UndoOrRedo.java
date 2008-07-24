@@ -282,12 +282,8 @@ abstract class UndoOrRedo {
         LinkedList<UndoableGroup> stack = getStackHolder().getStack(docRef);
         if (!stack.isEmpty()) {
           long modificationStamp;
-          if (docRef instanceof DocumentReferenceByDocument) {
-            DocumentReferenceByDocument doc = (DocumentReferenceByDocument) docRef;
-            modificationStamp = doc.getDocument().getModificationStamp();
-          } else {
-            modificationStamp = docRef.getFile().getModificationStamp();
-          }
+          Document doc = docRef.getDocument();
+          modificationStamp = doc != null ? doc.getModificationStamp() : docRef.getFile().getTimeStamp();
           if (recentDocumentTimeStamp < modificationStamp) {
             result = stack;
             recentDocumentTimeStamp = modificationStamp;
