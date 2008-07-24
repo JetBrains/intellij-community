@@ -19,8 +19,7 @@
  */
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 
-public interface OuterLanguageElement extends ASTNode, PsiElement {
+public interface OuterLanguageElement extends PsiElement {
 }
