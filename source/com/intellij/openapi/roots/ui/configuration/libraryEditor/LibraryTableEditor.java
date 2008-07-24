@@ -5,6 +5,7 @@ import com.intellij.ide.util.JavaUtilForVfs;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -14,9 +15,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -91,6 +92,8 @@ public class LibraryTableEditor implements Disposable {
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
   @Nullable private Project myProject = null;
+
+  private Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
 
   private LibraryTableEditor(final LibraryTable libraryTableProvider) {
     this(new LibraryTableModifiableModelProvider() {
@@ -239,6 +242,9 @@ public class LibraryTableEditor implements Disposable {
     myAttachUrlJavadocsButton.setVisible(false);
   }
 
+  public <T> void addFileChooserContext(DataKey<T> key, T value) {
+    myFileChooserUserData.put(key, value);
+  }
 
   public LibraryEditor getLibraryEditor(Library library) {
     if (myTableModifiableModel instanceof LibrariesModifiableModel){
@@ -520,6 +526,9 @@ public class LibraryTableEditor implements Disposable {
       if (library != null) {
         myDescriptor.setTitle(getTitle());
         myDescriptor.setTitle(getDescription());
+        for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
+          myDescriptor.putUserData(entry.getKey(), entry.getValue());
+        }
         VirtualFile toSelect = null;
         if (Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
           final Project project = myProject;
