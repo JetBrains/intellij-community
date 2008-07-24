@@ -2,12 +2,14 @@ package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -245,11 +248,50 @@ public final class Match {
   }
 
   public PsiElement replace(final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
+    declareLocalVariables();
     if (getMatchStart() == getMatchEnd() && getMatchStart() instanceof PsiExpression) {
       return replaceWithExpression(methodCallExpression);
     }
     else {
       return replaceByStatement(methodCallExpression, outputVariable);
+    }
+  }
+
+  private void declareLocalVariables() throws IncorrectOperationException {
+    final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(getMatchStart());
+    try {
+      final Project project = getMatchStart().getProject();
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(project)
+          .getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment));
+      final int endOffset = controlFlow.getEndOffset(getMatchEnd());
+      final int startOffset = controlFlow.getStartOffset(getMatchStart());
+      final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, endOffset, controlFlow.getSize());
+      Collection<ControlFlowUtil.VariableInfo> reassigned = ControlFlowUtil.getInitializedTwice(controlFlow, endOffset, controlFlow.getSize());
+      final Collection<PsiVariable> outVariables = ControlFlowUtil.getWrittenVariables(controlFlow, startOffset, endOffset, false);
+      for (PsiVariable variable : usedVariables) {
+        if (!outVariables.contains(variable)) {
+          final PsiIdentifier identifier = variable.getNameIdentifier();
+          if (identifier != null) {
+            if (identifier.getTextRange().getStartOffset() >= getMatchStart().getTextRange().getStartOffset() &&
+                identifier.getTextRange().getEndOffset() <= getMatchEnd().getTextRange().getEndOffset()) {
+              final String name = variable.getName();
+              LOG.assertTrue(name != null);
+              PsiDeclarationStatement statement =
+                  JavaPsiFacade.getInstance(project).getElementFactory().createVariableDeclarationStatement(name, variable.getType(), null);
+              if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
+                final PsiElement[] psiElements = statement.getDeclaredElements();
+                final PsiModifierList modifierList = ((PsiVariable)psiElements[0]).getModifierList();
+                LOG.assertTrue(modifierList != null);
+                modifierList.setModifierProperty(PsiModifier.FINAL, false);
+              }
+              getMatchStart().getParent().addBefore(statement, getMatchStart());
+            }
+          }
+        }
+      }
+    }
+    catch (AnalysisCanceledException e) {
+      LOG.error(e);
     }
   }
 
