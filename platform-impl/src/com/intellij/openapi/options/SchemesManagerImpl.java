@@ -1,12 +1,13 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -352,7 +353,14 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
       }
     }
     else {
-      LOG.error("Cannot read directory: " + myBaseDir.getAbsolutePath());
+      ApplicationManager.getApplication().invokeLater(
+          new Runnable(){
+            public void run() {
+              String msg = "Cannot read directory: " + myBaseDir.getAbsolutePath() + " directory does not exist";
+              Messages.showErrorDialog(msg, "Read Settings");
+            }
+          }
+      );
     }
     return result;
   }
@@ -375,8 +383,17 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
           result.add(scheme);
         }
       }
-      catch (Exception e) {
-        LOG.error("Cannot read scheme " + file.getName() + "  from '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
+      catch (final Exception e) {
+        ApplicationManager.getApplication().invokeLater(
+            new Runnable(){
+              public void run() {
+                String msg = "Cannot read scheme " + file.getName() + "  from '" + myFileSpec + "': " + e.getLocalizedMessage();
+                LOG.warn(msg, e);
+                Messages.showErrorDialog(msg, "Load Settings");
+              }
+            }
+        );
+
       }
     }
   }
@@ -682,8 +699,17 @@ public class SchemesManagerImpl<T extends Scheme,E extends ExternalizableScheme>
 
             saveIfNeeded(eScheme, file, document, newHash, oldHash);
           }
-          catch (IOException e) {
-            LOG.error("Cannot write scheme " + file.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
+          catch (final IOException e) {
+            ApplicationManager.getApplication().invokeLater(
+                new Runnable(){
+                  public void run() {
+                    String msg = "Cannot write scheme " + file.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage();
+                    LOG.warn(msg, e);
+                    Messages.showErrorDialog(msg, "Save Settings");
+                  }
+                }
+            );
+
           }
         }
 
