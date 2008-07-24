@@ -19,6 +19,10 @@ public class ConvertContextImpl extends AbstractConvertContext {
     myHandler = handler;
   }
 
+  public ConvertContextImpl(DomElement element) {
+    this(DomManagerImpl.getDomInvocationHandler(element));
+  }
+
   @NotNull
   public final DomElement getInvocationElement() {
     return myHandler.getProxy();
