@@ -246,7 +246,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       return;
     }
 
-    boolean nextUnreachable = flow.getEndOffset(ifStatement) + 1 == flow.getSize();
+    boolean nextUnreachable = flow.getEndOffset(ifStatement) == flow.getSize();
     if (!nextUnreachable) {
       PsiElement nearestCodeBlock = findNearestCodeBlock(ifStatement);
       if (nearestCodeBlock != null) {
