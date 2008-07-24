@@ -197,7 +197,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         if (len > 0) {
           if (statements[len - 1] instanceof PsiReturnStatement) len--;
           if (len > 0) {
-            ifStatement.getParent().addRangeAfter(statements[0], statements[len - 1], ifStatement);
+            PsiElement firstElement = statements [0];
+            while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {
+              firstElement = firstElement.getPrevSibling();
+            }              
+            ifStatement.getParent().addRangeAfter(firstElement, statements[len - 1], ifStatement);
           }
         }
       } else {
