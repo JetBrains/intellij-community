@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -683,7 +684,16 @@ public class InjectedLanguageUtil {
 
           String documentText = documentWindow.getText();
           assert outChars.toString().equals(parsedNode.getText()) : "Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
-          patchLeafs(parsedNode, escapers, shreds);
+          try {
+            patchLeafs(parsedNode, escapers, shreds);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (RuntimeException e) {
+            e.printStackTrace();
+            assert false: "Patch error, file:"+myHostVirtualFile+"; places:"+injectionHosts+"; ranges:"+relevantRangesInHostDocument;
+          }
           assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
 
           ((FileElement)parsedNode).setManager((PsiManagerEx)myPsiManager);
