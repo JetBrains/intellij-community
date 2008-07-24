@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,19 +94,23 @@ public class InstanceVariableInitializationInspection extends BaseInspection{
             if(aClass == null){
                 return;
             }
-            for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-                if (provider.isImplicitWrite(field)) return;
+            final ImplicitUsageProvider[] implicitUsageProviders =
+                    Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+            for(ImplicitUsageProvider provider: implicitUsageProviders){
+                if(provider.isImplicitWrite(field)){
+                    return;
+                }
             }
             final boolean isTestClass = TestUtils.isJUnitTestClass(aClass);
             if(isTestClass){
-                if(isInitializatedInSetup(field, aClass)){
+                if(isInitializedInSetup(field, aClass)){
                     return;
                 }
             }
             if(isInitializedInInitializer(field)){
                 return;
             }
-            if(isInitializatedInConstructors(field, aClass)){
+            if(isInitializedInConstructors(field, aClass)){
                 return;
             }
             if (isTestClass) {
@@ -116,8 +120,8 @@ public class InstanceVariableInitializationInspection extends BaseInspection{
             }
         }
 
-        private boolean isInitializatedInConstructors(PsiField field,
-                                                      PsiClass aClass){
+        private boolean isInitializedInConstructors(PsiField field,
+                                                    PsiClass aClass){
             final PsiMethod[] constructors = aClass.getConstructors();
             if(constructors.length == 0){
                 return false;
@@ -131,8 +135,8 @@ public class InstanceVariableInitializationInspection extends BaseInspection{
             return true;
         }
 
-        private boolean isInitializatedInSetup(PsiField field,
-                                               PsiClass aClass){
+        private boolean isInitializedInSetup(PsiField field,
+                                             PsiClass aClass){
             final PsiMethod setupMethod = getSetupMethod(aClass);
             return InitializationUtils.methodAssignsVariableOrFails(setupMethod,
                     field);
