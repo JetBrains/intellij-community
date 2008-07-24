@@ -2,8 +2,8 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -25,8 +25,8 @@ public class ClassLiteralGetter implements ContextGetter {
     myBaseGetter = baseGetter;
   }
 
-  public LookupElement<PsiExpression>[] get(PsiElement context, CompletionContext completionContext) {
-    final List<LookupElement<PsiExpression>> result = new ArrayList<LookupElement<PsiExpression>>();
+  public MutableLookupElement<PsiExpression>[] get(PsiElement context, CompletionContext completionContext) {
+    final List<MutableLookupElement<PsiExpression>> result = new ArrayList<MutableLookupElement<PsiExpression>>();
     for (final Object element : myBaseGetter.get(context, completionContext)) {
       if (element instanceof PsiClassType) {
         PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)element).resolveGenerics();
@@ -57,10 +57,10 @@ public class ClassLiteralGetter implements ContextGetter {
       }
     }
 
-    return result.toArray(new LookupElement[result.size()]);
+    return result.toArray(new MutableLookupElement[result.size()]);
   }
 
-  private static void createLookupElement(@Nullable final PsiType type, final PsiElement context, final int priority, final List<LookupElement<PsiExpression>> list) {
+  private static void createLookupElement(@Nullable final PsiType type, final PsiElement context, final int priority, final List<MutableLookupElement<PsiExpression>> list) {
     if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters() && !(((PsiClassType) type).resolve() instanceof PsiTypeParameter)) {
       try {
         final PsiManager manager = context.getManager();

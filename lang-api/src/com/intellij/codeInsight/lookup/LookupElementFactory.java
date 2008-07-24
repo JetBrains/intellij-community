@@ -30,10 +30,10 @@ public abstract class LookupElementFactory {
     return ServiceManager.getService(LookupElementFactory.class);
   }
 
-  public abstract LookupElement<String> createLookupElement(@NotNull String lookupString);
+  public abstract MutableLookupElement<String> createLookupElement(@NotNull String lookupString);
 
-  public abstract <T extends PsiNamedElement> LookupElement<T> createLookupElement(@NotNull T element);
+  public abstract <T extends PsiNamedElement> MutableLookupElement<T> createLookupElement(@NotNull T element);
 
-  public abstract <T> LookupElement<T> createLookupElement(@NotNull T element, @NotNull String lookupString);
+  public abstract <T> MutableLookupElement<T> createLookupElement(@NotNull T element, @NotNull String lookupString);
 
 }

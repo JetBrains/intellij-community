@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
-  public static final Key<WeighingComparable<LookupElement<?>, CompletionLocation>> PRESELECT_WEIGHT = Key.create("PRESELECT_WEIGHT");
+  public static final Key<WeighingComparable<LookupElement, CompletionLocation>> PRESELECT_WEIGHT = Key.create("PRESELECT_WEIGHT");
   @NonNls public static final String SELECTED = "selected";
   @NonNls public static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
@@ -66,10 +66,10 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     return preselectWeigh(item2).compareTo(preselectWeigh(item1));
   }
 
-  private WeighingComparable<LookupElement<?>, CompletionLocation> preselectWeigh(final LookupItem item) {
-    WeighingComparable<LookupElement<?>, CompletionLocation> data = item.getUserData(PRESELECT_WEIGHT);
+  private WeighingComparable<LookupElement, CompletionLocation> preselectWeigh(final LookupItem item) {
+    WeighingComparable<LookupElement, CompletionLocation> data = item.getUserData(PRESELECT_WEIGHT);
     if (data == null) {
-      item.putUserData(PRESELECT_WEIGHT, data = WeighingService.weigh(CompletionService.PRESELECT_KEY, (LookupElement<?>)item, myLocation));
+      item.putUserData(PRESELECT_WEIGHT, data = WeighingService.weigh(CompletionService.PRESELECT_KEY, item, myLocation));
     }
     return data;
   }

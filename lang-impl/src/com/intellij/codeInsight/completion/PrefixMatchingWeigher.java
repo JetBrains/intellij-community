@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PrefixMatchingWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
     if (location.getCompletionType() == CompletionType.CLASS_NAME) return 0;
 
     final String lookupString = item.getLookupString();

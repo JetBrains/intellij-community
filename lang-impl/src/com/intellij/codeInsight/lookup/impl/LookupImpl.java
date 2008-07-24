@@ -186,12 +186,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public synchronized void addItem(LookupItem item) {
     myItems.add(item);
     addItemWeight(item);
-    final Icon icon = myCellRenderer.getRawIcon(item);
-    if (icon != null) {
-      myCellRenderer.updateIconWidth(icon.getIconWidth());
-    }
-
-    int maxWidth = myCellRenderer.getMaximumWidth(new LookupItem[]{item});
+    int maxWidth = myCellRenderer.updateMaximumWidth(item);
     myList.setFixedCellWidth(Math.max(maxWidth, myList.getFixedCellWidth()));
   }
 

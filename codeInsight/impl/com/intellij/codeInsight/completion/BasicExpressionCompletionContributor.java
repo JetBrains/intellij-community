@@ -6,8 +6,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
@@ -103,7 +103,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
                 return new Object[]{expectedType};
               }
             }, new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class))));
-        for (final LookupElement<PsiExpression> element : classGetter.get(parameters.getPosition(), null)) {
+        for (final MutableLookupElement<PsiExpression> element : classGetter.get(parameters.getPosition(), null)) {
           result.addElement(element.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
         }
 

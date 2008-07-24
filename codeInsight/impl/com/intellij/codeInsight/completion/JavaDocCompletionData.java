@@ -197,12 +197,12 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
   private class MethodSignatureInsertHandler extends BasicInsertHandler {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
-      if (!(item.getObject() instanceof PsiMethod)) {
+      if (!(((LookupItem)item).getObject() instanceof PsiMethod)) {
         return;
       }
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
       final Editor editor = context.getEditor();
-      final PsiMethod method = (PsiMethod)item.getObject();
+      final PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final StringBuffer buffer = new StringBuffer();

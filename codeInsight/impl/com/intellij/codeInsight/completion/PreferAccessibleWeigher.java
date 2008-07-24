@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocCommentOwner;
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +15,10 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PreferAccessibleWeigher extends CompletionWeigher {
 
-  public MyEnum weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    final Object object = item.getObject();
+  public MyEnum weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+    if (!(item instanceof MutableLookupElement)) return MyEnum.NORMAL;
+
+    final Object object = ((MutableLookupElement)item).getObject();
     if (object instanceof PsiDocCommentOwner) {
       final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
       if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, location.getCompletionParameters().getPosition(), null)) return MyEnum.INACCESSIBLE;

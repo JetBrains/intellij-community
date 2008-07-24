@@ -15,78 +15,67 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author peter
  */
-public interface LookupElement<T> extends UserDataHolder{
-  LookupElement[] EMPTY_ARRAY = new LookupElement[0];
+public abstract class LookupElement extends UserDataHolderBase {
+  public static final LookupElement[] EMPTY_ARRAY = new LookupElement[0];
+  private final NotNullLazyValue<LookupElementRenderer> myRenderer = new NotNullLazyValue<LookupElementRenderer>() {
+    @NotNull
+    protected LookupElementRenderer compute() {
+      return getRenderer();
+    }
+  };
+  private PrefixMatcher myPrefixMatcher = PrefixMatcher.FALSE_MATCHER;
 
   @NotNull
-  T getObject();
+  public abstract String getLookupString();
+
+  public Set<String> getAllLookupStrings() {
+    return Collections.singleton(getLookupString());
+  }
+
+  public final boolean setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+    myPrefixMatcher = matcher;
+    return isPrefixMatched();
+  }
+
+  public final boolean isPrefixMatched() {
+    return myPrefixMatcher.prefixMatches(this);
+  }
 
   @NotNull
-  String getLookupString();
+  public final PrefixMatcher getPrefixMatcher() {
+    return myPrefixMatcher;
+  }
 
-  @NotNull
-  TailType getTailType();
+  public abstract InsertHandler<? extends LookupElement> getInsertHandler();
 
-  @NotNull
-  LookupElement<T> setTailType(@NotNull TailType type);
+  public void handleInsert(InsertionContext context) {
+    //noinspection unchecked
+    ((InsertHandler)getInsertHandler()).handleInsert(context, this);
+  }
 
-  @NotNull
-  LookupElement<T> setIcon(@Nullable Icon icon);
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return AutoCompletionPolicy.SETTINGS_DEPENDENT;
+  }
 
-  /**
-   * Sets the lookup element priority. Elements with higher priorities are on the top of the lookup, they are also preferred
-   * in SmartType completion.
-   * @param priority
-   * @return this
-   */
-  @NotNull
-  LookupElement<T> setPriority(double priority);
+  @NotNull 
+  protected abstract LookupElementRenderer<? extends LookupElement> getRenderer();
 
-  /**
-   * Sets the lookup element grouping. It works like priotity in lookup elements sorting but doesn't affect the auto-selection policy.
-   * @param grouping
-   * @return this
-   */
-  @NotNull
-  LookupElement<T> setGrouping(int grouping);
+  public void renderElement(LookupElementPresentation presentation) {
+    //noinspection unchecked
+    myRenderer.getValue().renderElement(this, presentation);
+  }
 
-  @NotNull
-  LookupElement<T> setPresentableText(@NotNull String presentableText);
-
-  /*@NotNull
-  LookupElement setTypeText(@Nullable String text);*/
-
-  @NotNull
-  LookupElement<T> setCaseSensitive(boolean caseSensitive);
-
-  LookupElement<T> setBold();
-
-  LookupElement<T> setAutoCompletionPolicy(AutoCompletionPolicy policy);
-
-  /**
-   * @param matcher
-   * @return whether this item is matched by prefix matcher
-   */
-  boolean setPrefixMatcher(@NotNull PrefixMatcher matcher);
-
-  /**
-   * @return whether {@link #setPrefixMatcher(com.intellij.codeInsight.completion.PrefixMatcher)} was called and returned true
-   */
-  boolean isPrefixMatched();
-
-  @NotNull PrefixMatcher getPrefixMatcher();
-
-  InsertHandler getInsertHandler();
 }

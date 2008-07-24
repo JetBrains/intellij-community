@@ -6,6 +6,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -20,7 +21,9 @@ public class JavaCompletionStatistician extends CompletionStatistician{
   @NonNls public static final String CLASS_NAME_COMPLETION_PREFIX = "classNameCompletion#";
 
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
-    final Object o = element.getObject();
+    if (!(element instanceof MutableLookupElement)) return null;
+
+    final Object o = ((MutableLookupElement)element).getObject();
 
     if (o instanceof PsiLocalVariable || o instanceof PsiParameter || o instanceof PsiThisExpression) {
       return StatisticsInfo.EMPTY;

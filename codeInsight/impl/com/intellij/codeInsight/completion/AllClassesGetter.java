@@ -128,7 +128,7 @@ public class AllClassesGetter {
     public void handleInsert(final InsertionContext context, final LookupElement item) {
       int endOffset = _handleInsert(context, (LookupItem)item);
       context.getEditor().getCaretModel().moveToOffset(endOffset);
-      item.getTailType().processTail(context.getEditor(), endOffset);
+      ((LookupItem)item).getTailType().processTail(context.getEditor(), endOffset);
     }
 
   };

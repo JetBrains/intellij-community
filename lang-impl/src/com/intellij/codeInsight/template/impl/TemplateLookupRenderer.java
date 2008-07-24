@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
-import com.intellij.codeInsight.lookup.impl.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.impl.LookupElementPresentationEx;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.util.Key;
@@ -14,12 +14,12 @@ public class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
     return element instanceof Template;
   }
 
-  public void renderElement(final LookupItem item, final Template element, final LookupElementPresentation presentation) {
+  public void renderElement(final LookupItem item, final Template element, final LookupElementPresentationEx presentation) {
     presentation.setItemText(element.getKey());
     presentation.setTypeText(getTemplateDescriptionString(element, presentation));
   }
 
-  private static String getTemplateDescriptionString(Template template, final LookupElementPresentation presentation) {
+  private static String getTemplateDescriptionString(Template template, final LookupElementPresentationEx presentation) {
     TemplateItemsData data = getTemplateItemsData(presentation);
     final int KEY_LENGTH_LIMIT = 10; // longer keys are not really useful, but make popup ugly
     int max = presentation.getMaxLength() - Math.min(KEY_LENGTH_LIMIT, TemplateSettings.getInstance().getMaxKeyLength());
@@ -43,7 +43,7 @@ public class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
     return buffer.toString();
   }
 
-  private static TemplateItemsData getTemplateItemsData(final LookupElementPresentation presentation) {
+  private static TemplateItemsData getTemplateItemsData(final LookupElementPresentationEx presentation) {
     TemplateItemsData data = presentation.getUserData(KEY);
     if (data == null) {
       data = new TemplateItemsData();

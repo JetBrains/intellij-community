@@ -7,6 +7,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,17 +26,18 @@ public class SkipAbstractExpectedTypeWeigher extends CompletionWeigher {
     ACCEPT
   }
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
     return getSkippingStatus(item, location);
   }
 
-  public static Result getSkippingStatus(final LookupElement<?> item, final CompletionLocation location) {
+  public static Result getSkippingStatus(final LookupElement item, final CompletionLocation location) {
     if (location.getCompletionType() != CompletionType.SMART) return Result.ACCEPT;
+    if (!(item instanceof MutableLookupElement)) return Result.ACCEPT;
 
     final PsiExpression expression = PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiExpression.class);
     if (!(expression instanceof PsiNewExpression)) return Result.ACCEPT;
 
-    final Object object = item.getObject();
+    final Object object = ((MutableLookupElement)item).getObject();
     if (!(object instanceof PsiClass)) return Result.ACCEPT;
 
     if (StatisticsManager.getInstance().getUseCount(CompletionService.STATISTICS_KEY, item, location) > 1) return Result.ACCEPT;

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class NegativeStatisticsWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
     final StatisticsManager manager = StatisticsManager.getInstance();
     final StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
     if (info == null || info == StatisticsInfo.EMPTY) return 0;

@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +15,12 @@ import org.jetbrains.annotations.NotNull;
 */
 public class LookupElementProximityWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    if (location.getCompletionType() != CompletionType.CLASS_NAME && item.getObject() instanceof PsiElement) {
-      return PsiProximityComparator.getProximity((PsiElement)item.getObject(), location.getCompletionParameters().getPosition());
+  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+    if (location.getCompletionType() != CompletionType.CLASS_NAME && item instanceof MutableLookupElement) {
+      final Object o = ((MutableLookupElement)item).getObject();
+      if (o instanceof PsiElement) {
+        return PsiProximityComparator.getProximity((PsiElement)o, location.getCompletionParameters().getPosition());
+      }
     }
     return null;
   }

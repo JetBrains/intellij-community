@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hint.api.impls;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,7 +35,8 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   };
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    final Object lookupItem = item.getObject();
+    if (!(item instanceof MutableLookupElement)) return null;
+    final Object lookupItem = ((MutableLookupElement)item).getObject();
     if (lookupItem instanceof XmlElementDescriptor) return new Object[]{lookupItem};
     return null;
   }

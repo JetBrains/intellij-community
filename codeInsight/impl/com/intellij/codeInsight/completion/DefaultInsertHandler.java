@@ -61,9 +61,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private InsertHandlerState myState;
 
   public void handleInsert(final InsertionContext context, LookupElement item) {
-    if (!(item instanceof SimpleLookupItem)) {
-      if (item.getObject() instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)item.getObject();
+    if (!(item instanceof SimpleLookupItem) && item instanceof LookupItem) {
+      if (((LookupItem)item).getObject() instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
         LookupItem<PsiMethod> simpleItem = LookupElementFactoryImpl.getInstance().createLookupElement(method, item.getLookupString());
         final SimpleInsertHandler handler = SimpleInsertHandlerFactory.createInsertHandler(method);
         if (handler != null) {
@@ -71,10 +71,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         }
         simpleItem.setCompletionCharHandler(new CompletionCharHandler<PsiMethod>() {
           public TailType handleCompletionChar(@NotNull final Editor editor,
-                                               @NotNull final LookupElement<PsiMethod> element, final char completionChar) {
-            if (completionChar == '!') return element.getTailType();
+                                               @NotNull final LookupElement element, final char completionChar) {
+            final LookupItem item = (LookupItem)element;
+            if (completionChar == '!') return item.getTailType();
             if (completionChar == '(') {
-              final PsiMethod psiMethod = element.getObject();
+              final PsiMethod psiMethod = (PsiMethod)item.getObject();
               return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
                      ? TailType.NONE : TailType.SEMICOLON;
             }                     

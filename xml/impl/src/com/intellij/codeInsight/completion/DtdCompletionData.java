@@ -20,6 +20,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.codeInsight.TailType;
 import com.intellij.xml.util.XmlUtil;
 
@@ -115,7 +116,7 @@ public class DtdCompletionData extends CompletionData {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
 
-      if (item.getObject().toString().startsWith("<!")) {
+      if (((MutableLookupElement)item).getObject().toString().startsWith("<!")) {
         PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
         int caretOffset = context.getEditor().getCaretModel().getOffset();

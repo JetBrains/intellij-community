@@ -172,7 +172,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                      ExpressionSmartCompletionContributor.CONTRIBUTORS, parameters, null,
                      new Consumer<LookupElement>() {
                        public void consume(final LookupElement lookupElement) {
-                         final Object object = lookupElement.getObject();
+                         final Object object = ((LookupItem)lookupElement).getObject();
                          if (!filter.isClassAcceptable(object.getClass())) return;
 
                          final PsiSubstitutor substitutor;

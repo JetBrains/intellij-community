@@ -2,8 +2,8 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -361,7 +361,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     public Object[] getVariants() {
-      final List<LookupElement<String>> variants = new ArrayList<LookupElement<String>>();
+      final List<MutableLookupElement<String>> variants = new ArrayList<MutableLookupElement<String>>();
 
       final XmlElementDescriptor parentDescriptor = getParent().getDescriptor();
       if (parentDescriptor != null){
@@ -376,12 +376,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       return variants.toArray();
     }
 
-    private void addVariants(final Collection<LookupElement<String>> variants, final XmlAttribute[] attributes, final XmlAttributeDescriptor[] descriptors) {
+    private void addVariants(final Collection<MutableLookupElement<String>> variants, final XmlAttribute[] attributes, final XmlAttributeDescriptor[] descriptors) {
       final XmlTag tag = getParent();
       final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
       for (XmlAttributeDescriptor descriptor : descriptors) {
         if (isValidVariant(descriptor, attributes, extension)) {
-          final LookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(descriptor.getName(tag));
+          final MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(descriptor.getName(tag));
           if (descriptor instanceof PsiPresentableMetaData) {
             element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
           }

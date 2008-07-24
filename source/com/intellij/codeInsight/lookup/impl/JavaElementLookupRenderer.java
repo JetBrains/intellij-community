@@ -2,6 +2,7 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,12 +25,14 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
            element instanceof PsiTypeElement || element instanceof BeanPropertyElement;
   }
 
-  public void renderElement(final LookupItem item, final Object element, final LookupElementPresentation presentation) {
+  public void renderElement(final LookupItem item, final Object element, final LookupElementPresentationEx presentation) {
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item));
+
     boolean strikeout = isToStrikeout(item);
     presentation.setItemText(getName(element, item), strikeout);
 
     final String tailText = getTailText(element, item);
-    presentation.setTailText(tailText != null ? tailText : "", strikeout);
+    presentation.setTailText(tailText != null ? tailText : "", null, false, strikeout);
 
     final String typeText = getTypeText(element, item);
     presentation.setTypeText(typeText != null ? typeText : "");

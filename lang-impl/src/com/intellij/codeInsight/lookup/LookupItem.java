@@ -2,12 +2,13 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
+import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
+import com.intellij.codeInsight.lookup.impl.LookupElementPresentationEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -22,7 +23,7 @@ import java.util.Set;
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem<T> extends UserDataHolderBase implements Comparable, LookupElement<T>{
+public class LookupItem<T> extends MutableLookupElement<T> implements Comparable {
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
   public static final Object TYPE_ATTR = Key.create("type");
   public static final Object ICON_ATTR = Key.create("icon");
@@ -54,7 +55,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
 
   private Object myObject;
   private String myLookupString;
-  private InsertHandler myInsertHandler;
+  private InsertHandler<? extends LookupItem> myInsertHandler;
   private double myPriority;
   private int myGrouping;
   private Map<Object,Object> myAttributes = null;
@@ -63,7 +64,6 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   private final Set<String> myAllLookupStrings = new THashSet<String>();
   private String myPresentable;
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
-  private PrefixMatcher myPrefixMatcher = PrefixMatcher.FALSE_MATCHER;
 
   public LookupItem(T o, @NotNull @NonNls String lookupString){
     setObject(o);
@@ -159,7 +159,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
     myAttributes.put(key, value);
   }
 
-  public InsertHandler getInsertHandler(){
+  public InsertHandler<? extends LookupItem> getInsertHandler(){
     return myInsertHandler;
   }
 
@@ -185,7 +185,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
     return getLookupString().compareTo(((LookupItem)o).getLookupString());
   }
 
-  public LookupItem<T> setInsertHandler(@NotNull final InsertHandler handler) {
+  public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupItem> handler) {
     myInsertHandler = handler;
     return this;
   }
@@ -193,6 +193,18 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   public LookupItem<T> setCompletionCharHandler(@NotNull final CompletionCharHandler<T> completionCharHandler) {
     myCompletionCharHandler = completionCharHandler;
     return this;
+  }
+
+  @NotNull
+  protected LookupElementRenderer<? extends LookupItem> getRenderer() {
+    for (final ElementLookupRenderer renderer : Extensions.getExtensions(ElementLookupRenderer.EP_NAME)) {
+      if (renderer.handlesItem(getObject())) return new LookupElementRenderer<LookupItem>() {
+        public void renderElement(final LookupItem element, final LookupElementPresentation presentation) {
+          renderer.renderElement(element, element.getObject(), (LookupElementPresentationEx)presentation);
+        }
+      };
+    }
+    return DefaultLookupItemRenderer.INSTANCE;
   }
 
   public LookupItem<T> setBold() {
@@ -203,20 +215,6 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   public LookupItem<T> setAutoCompletionPolicy(final AutoCompletionPolicy policy) {
     myAutoCompletionPolicy = policy;
     return this;
-  }
-
-  public boolean setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
-    myPrefixMatcher = matcher;
-    return isPrefixMatched();
-  }
-
-  public boolean isPrefixMatched() {
-    return myPrefixMatcher.prefixMatches(this);
-  }
-
-  @NotNull
-  public PrefixMatcher getPrefixMatcher() {
-    return myPrefixMatcher;
   }
 
   public AutoCompletionPolicy getAutoCompletionPolicy() {

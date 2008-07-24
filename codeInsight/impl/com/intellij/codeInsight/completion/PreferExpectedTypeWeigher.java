@@ -6,6 +6,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -23,8 +24,10 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
     expectedNoSelect
   }
 
-  public MyResult weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    final Object object = item.getObject();
+  public MyResult weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+    if (!(item instanceof MutableLookupElement)) return MyResult.normal;
+
+    final Object object = ((MutableLookupElement)item).getObject();
     final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     if (expectedInfos == null) return MyResult.normal;
 

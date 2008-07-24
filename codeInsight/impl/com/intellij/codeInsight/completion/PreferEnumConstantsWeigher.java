@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.PsiEnumConstant;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PreferEnumConstantsWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    return item.getObject() instanceof PsiEnumConstant;
+  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+    return item instanceof MutableLookupElement && ((MutableLookupElement)item).getObject() instanceof PsiEnumConstant;
   }
 }

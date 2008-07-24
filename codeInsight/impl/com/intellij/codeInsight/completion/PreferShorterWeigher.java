@@ -6,6 +6,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +15,10 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PreferShorterWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    final Object object = item.getObject();
+  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+    if (!(item instanceof MutableLookupElement)) return 0;
+
+    final Object object = ((MutableLookupElement)item).getObject();
     final String name = JavaCompletionUtil.getLookupObjectName(object);
     final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
 

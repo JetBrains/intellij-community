@@ -5,10 +5,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 /**
  * @author Mike
  */
-public interface InsertHandler {
+public interface InsertHandler<T extends LookupElement> {
 
   /**
    * Invoked inside atomic action.
    */
-  void handleInsert(InsertionContext context, LookupElement item);
+  void handleInsert(InsertionContext context, T item);
 }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class StatisticsWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
     return StatisticsManager.getInstance().getUseCount(CompletionService.STATISTICS_KEY, item, location);
   }
 }

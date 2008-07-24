@@ -82,7 +82,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (item.getInsertHandler() == null) {
           item.setInsertHandler(new InsertHandler() {
             public void handleInsert(final InsertionContext context, final LookupElement item) {
-              analyzeItem(context, (LookupItem)item, item.getObject(), parameters.getPosition());
+              analyzeItem(context, (LookupItem)item, ((LookupItem)item).getObject(), parameters.getPosition());
               new DefaultInsertHandler().handleInsert(context, item);
             }
           });

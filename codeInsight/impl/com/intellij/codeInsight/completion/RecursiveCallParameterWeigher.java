@@ -6,6 +6,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,10 +16,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RecursiveCallParameterWeigher extends CompletionWeigher {
 
-  public Integer weigh(@NotNull final LookupElement<?> element, final CompletionLocation location) {
+  public Integer weigh(@NotNull final LookupElement element, final CompletionLocation location) {
     if (location.getCompletionType() != CompletionType.BASIC && location.getCompletionType() != CompletionType.SMART) return 0;
+    if (!(element instanceof MutableLookupElement)) return 0;
 
-    final Object object = element.getObject();
+    final Object object = ((MutableLookupElement)element).getObject();
     if (!(object instanceof PsiModifierListOwner) && !(object instanceof PsiExpression)) return 0;
 
     final PsiMethod positionMethod = JavaCompletionUtil.POSITION_METHOD.getValue(location);
