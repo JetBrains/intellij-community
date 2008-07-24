@@ -5,6 +5,7 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -103,7 +104,7 @@ public class FileBasedIndex implements ApplicationComponent {
     final File workInProgressFile = getMarkerFile();
     if (workInProgressFile.exists()) {
       // previous IDEA session was closed incorrectly, so drop all indices
-      FileUtil.delete(IndexInfrastructure.getPersistenceRoot());
+      FileUtil.delete(PathManager.getIndexRoot());
     }
 
     try {
@@ -133,7 +134,7 @@ public class FileBasedIndex implements ApplicationComponent {
       myChangedFilesUpdater = new ChangedFilesUpdater();
       vfManager.addVirtualFileListener(myChangedFilesUpdater);
       vfManager.registerRefreshUpdater(myChangedFilesUpdater);
-      myFileContentAttic = new FileContentStorage(new File(IndexInfrastructure.getPersistenceRoot(), "updates.tmp"));
+      myFileContentAttic = new FileContentStorage(new File(PathManager.getIndexRoot(), "updates.tmp"));
     }
     finally {
       workInProgressFile.createNewFile();
@@ -217,11 +218,11 @@ public class FileBasedIndex implements ApplicationComponent {
   }
   
   private static File getRegisteredIndicesFile() {
-    return new File(IndexInfrastructure.getPersistenceRoot(), "registered");
+    return new File(PathManager.getIndexRoot(), "registered");
   }
 
   private static File getMarkerFile() {
-    return new File(IndexInfrastructure.getPersistenceRoot(), "work_in_progress");
+    return new File(PathManager.getIndexRoot(), "work_in_progress");
   }
 
   private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) {
@@ -685,7 +686,7 @@ public class FileBasedIndex implements ApplicationComponent {
       indicesToDrop.remove(key.toString());
     }
     for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(new ID(s, -1L)));
+      FileUtil.delete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
     }
   }
 

@@ -40,20 +40,9 @@ public class IndexInfrastructure {
     // when StubUpdatingIndex version is changed 
     final File indexDir = (indexName instanceof StubIndexKey)? 
                           new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), dirName) : 
-                          new File(getPersistenceRoot(), dirName);
+                          new File(PathManager.getIndexRoot(), dirName);
     indexDir.mkdirs();
     return indexDir;
-  }
-
-  public static File getPersistenceRoot() {
-    File file = new File(PathManager.getSystemPath(), "index");
-    try {
-      file = file.getCanonicalFile();
-    }
-    catch (IOException ignored) {
-    }
-    file.mkdirs();
-    return file;
   }
 
   public static void rewriteVersion(final File file, final int version) throws IOException {

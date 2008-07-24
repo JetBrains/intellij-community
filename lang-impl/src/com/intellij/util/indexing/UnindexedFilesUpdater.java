@@ -5,6 +5,8 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,13 +48,15 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     // iterate project content
     projectFileIndex.iterateContent(processor);
 
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
     Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
       final Set<VirtualFile> rootsToIndex = provider.getRootsToIndex(myProject);
       for (VirtualFile root : rootsToIndex) {
         if (!visitedRoots.contains(root)) {
           visitedRoots.add(root);
-          iterateRecursively(root, processor);
+          iterateRecursively(root, processor, indicator);
         }
       }
     }
@@ -66,7 +70,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
             for (VirtualFile root : roots) {
               if (!visitedRoots.contains(root)) {
                 visitedRoots.add(root);
-                iterateRecursively(root, processor);
+                iterateRecursively(root, processor, indicator);
               }
             }
           }
@@ -75,11 +79,16 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     }
   }
 
-  private static void iterateRecursively(final VirtualFile root, final ContentIterator processor) {
+  private static void iterateRecursively(final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
     if (root != null) {
+      if (indicator != null) {
+        indicator.setText("Scanning files to index");
+        indicator.setText2(root.getPresentableUrl());
+      }
+
       for (VirtualFile file : root.getChildren()) {
         if (file.isDirectory()) {
-          iterateRecursively(file, processor);
+          iterateRecursively(file, processor, indicator);
         }
         else {
           processor.processFile(file);

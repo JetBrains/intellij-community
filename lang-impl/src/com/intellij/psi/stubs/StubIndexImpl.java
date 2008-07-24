@@ -311,7 +311,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
 
     for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(new ID(s, -1L)));
+      FileUtil.delete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
     }
   }
 

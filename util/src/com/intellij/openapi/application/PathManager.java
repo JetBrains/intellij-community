@@ -199,6 +199,17 @@ public class PathManager {
     return getConfigPathWithoutDialog() + File.separator + OPTIONS_FOLDER;
   }
 
+  public static File getIndexRoot() {
+    File file = new File(getSystemPath(), "index");
+    try {
+      file = file.getCanonicalFile();
+    }
+    catch (IOException ignored) {
+    }
+    file.mkdirs();
+    return file;
+  }
+
   private static class StringHolder {
     private static final String ourPreinstalledPluginsPath = getHomePath() + File.separatorChar + PLUGINS_DIRECTORY;
   }

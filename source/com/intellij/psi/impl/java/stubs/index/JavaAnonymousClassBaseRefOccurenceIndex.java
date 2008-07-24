@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExtension<PsiAnonymousClass> {
-  public static final StubIndexKey<String,PsiAnonymousClass> KEY = new StubIndexKey<String, PsiAnonymousClass>("java.anonymous.baseref", 6635686578954654788L);
+  public static final StubIndexKey<String,PsiAnonymousClass> KEY = StubIndexKey.createIndexKey("java.anonymous.baseref");
 
   private static final JavaAnonymousClassBaseRefOccurenceIndex ourInstance = new JavaAnonymousClassBaseRefOccurenceIndex();
   public static JavaAnonymousClassBaseRefOccurenceIndex getInstance() {

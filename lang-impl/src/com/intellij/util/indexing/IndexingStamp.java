@@ -38,8 +38,8 @@ public class IndexingStamp {
           if (count > 0) {
             myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(20);
             for (int i = 0; i < count; i++) {
-                ID<?, ?> id = ID.findById(stream.readLong());
-                long timestamp = stream.readLong();
+                ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
+                long timestamp = DataInputOutputUtil.readTIME(stream);
                 if (id != null) {
                   myIndexStamps.put(id, timestamp);
                 }
@@ -60,8 +60,8 @@ public class IndexingStamp {
         myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
           public boolean execute(final ID<?, ?> id, final long timestamp) {
             try {
-              stream.writeLong(id.getUniqueId());
-              stream.writeLong(timestamp);
+              DataInputOutputUtil.writeINT(stream, (int)id.getUniqueId());
+              DataInputOutputUtil.writeTIME(stream, timestamp);
               count[0]++;
               return true;
             }

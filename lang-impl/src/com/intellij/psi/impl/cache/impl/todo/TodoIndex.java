@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.cache.impl.todo;
 
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -8,6 +7,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Integer> {
 
-  @NonNls public static final ID<TodoIndexEntry, Integer> NAME = new ID<TodoIndexEntry, Integer>("TodoIndex", 4568899884462144567L);
+  @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
   public TodoIndex(TodoConfiguration config) {
     config.addPropertyChangeListener(new PropertyChangeListener() {

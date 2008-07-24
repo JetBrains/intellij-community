@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation> {
-  public static final StubIndexKey<String,PsiAnnotation> KEY = new StubIndexKey<String, PsiAnnotation>("java.annotations", 6568687654321356546L);
+  public static final StubIndexKey<String,PsiAnnotation> KEY = StubIndexKey.createIndexKey("java.annotations");
 
   private static final JavaAnnotationIndex ourInstance = new JavaAnnotationIndex();
   public static JavaAnnotationIndex getInstance() {

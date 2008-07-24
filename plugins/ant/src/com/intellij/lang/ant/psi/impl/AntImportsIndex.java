@@ -19,7 +19,7 @@ import java.util.Set;
  *         Date: Apr 28, 2008
  */
 public class AntImportsIndex extends ScalarIndexExtension<Integer>{
-  public static final ID<Integer, Void> INDEX_NAME = new ID<Integer, Void>("ant-imports", 6889111234654678811L);
+  public static final ID<Integer, Void> INDEX_NAME = ID.create("ant-imports");
   private static final int VERSION = 4;
   public static final Integer ANT_FILES_WITH_IMPORTS_KEY = new Integer(0);
   

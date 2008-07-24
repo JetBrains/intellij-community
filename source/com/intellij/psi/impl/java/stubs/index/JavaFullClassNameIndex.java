@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
-  public static final StubIndexKey<Integer,PsiClass> KEY = new StubIndexKey<Integer, PsiClass>("java.class.fqn", 998979532132165487L);
+  public static final StubIndexKey<Integer,PsiClass> KEY = StubIndexKey.createIndexKey("java.class.fqn");
 
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();
   public static JavaFullClassNameIndex getInstance() {

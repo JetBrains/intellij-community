@@ -1,33 +1,109 @@
 package com.intellij.util.indexing;
 
-import gnu.trove.TLongObjectHashMap;
+import com.intellij.openapi.application.PathManager;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
+
+import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Feb 12, 2008
  */
 public class ID<K, V> {
-  private static final TLongObjectHashMap<ID> ourRegistry = new TLongObjectHashMap<ID>();
+  private static final TIntObjectHashMap<ID> ourRegistry = new TIntObjectHashMap<ID>();
+  private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
 
   private final String myName;
-  private final long myUniqueId;
+  private final short myUniqueId;
 
-  public ID(String name, long uniqueId) {
-    myName = name;
-    myUniqueId = uniqueId;
-
-    if (uniqueId != -1L) {
-      final ID old = ourRegistry.put(uniqueId, this);
-      if (old != null) {
-        ourRegistry.put(uniqueId, old);
-        throw new IllegalArgumentException("ID: " + uniqueId + " is not unique. It's already occupied by " + old.myName);
-      }      
+  static {
+    final File indicies = getEnumFile();
+    try {
+      final BufferedReader reader = new BufferedReader(new FileReader(indicies));
+      try {
+        int cnt = 0;
+        do {
+            cnt++;
+            final String name = reader.readLine();
+            if (name == null) break;
+            ourNameToIdRegistry.put(name, cnt);
+          }
+          while (true);
+      }
+      finally {
+        reader.close();
+      }
+    }
+    catch (IOException e) {
+      ourNameToIdRegistry.clear();
+      writeEnumFile();
     }
   }
 
-  public static <K, V> ID<K, V> create(@NonNls String name, long uniqueId) {
-    return new ID<K,V>(name, uniqueId);
+  private static File getEnumFile() {
+    final File indexFolder = PathManager.getIndexRoot();
+    return new File(indexFolder, "indices.enum");
+  }
+
+  protected ID(String name) {
+    myName = name;
+    myUniqueId = stringToId(name);
+
+    final ID old = ourRegistry.put(myUniqueId, this);
+    assert old == null;
+  }
+
+  private static short stringToId(String name) {
+    if (ourNameToIdRegistry.containsKey(name)) {
+      return (short)ourNameToIdRegistry.get(name);
+    }
+
+    int n = ourNameToIdRegistry.size() + 1;
+    ourNameToIdRegistry.put(name, n);
+
+    writeEnumFile();
+
+    return (short)n;
+  }
+
+  private static void writeEnumFile() {
+    try {
+      final File f = getEnumFile();
+      final BufferedWriter w = new BufferedWriter(new FileWriter(f));
+      try {
+        final String[] names = new String[ourNameToIdRegistry.size()];
+
+        ourNameToIdRegistry.forEachEntry(new TObjectIntProcedure<String>() {
+            public boolean execute(final String key, final int value) {
+              names[value - 1] = key;
+              return true;
+            }
+          });
+
+        for (String name : names) {
+            w.write(name);
+            w.newLine();
+          }
+      }
+      finally {
+        w.close();
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <K, V> ID<K, V> create(@NonNls String name) {
+    short id = stringToId(name);
+
+    final ID<K, V> found = (ID<K, V>)findById(id);
+    if (found != null) return found;
+
+    return new ID<K, V>(name);
   }
 
   public int hashCode() {
@@ -42,7 +118,7 @@ public class ID<K, V> {
     return myUniqueId;
   }
 
-  public static ID<?, ?> findById(long id) {
+  public static ID<?, ?> findById(int id) {
     return ourRegistry.get(id);
   }
 }

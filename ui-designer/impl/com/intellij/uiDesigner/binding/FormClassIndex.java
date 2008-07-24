@@ -21,7 +21,7 @@ import java.util.*;
  * @author yole
  */
 public class FormClassIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final ID<String, Void> NAME = new ID<String, Void>("FormClassIndex", 6662113321654657981L);
+  @NonNls public static final ID<String, Void> NAME = ID.create("FormClassIndex");
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private MyInputFilter myInputFilter = new MyInputFilter();
   private MyDataIndexer myDataIndexer = new MyDataIndexer();
