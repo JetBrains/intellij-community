@@ -17,4 +17,8 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testChangeReturnTypeByField() throws Exception {
     doTest();
   }
+
+  public void testMethodTypeParameters() throws Exception {
+    doTest();
+  }
 }

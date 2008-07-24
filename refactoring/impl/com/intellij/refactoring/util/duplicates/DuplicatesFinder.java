@@ -202,7 +202,14 @@ public class DuplicatesFinder {
         if (PsiUtil.isAccessedForWriting(candidateExpression)) return null;
         final PsiType patternType = ((PsiExpression)myPattern[0]).getType();
         final PsiType candidateType = candidateExpression.getType();
-        if (!canTypesBeEquivalent(patternType, candidateType)) return null;
+        PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+        final PsiMethod method = PsiTreeUtil.getParentOfType(myPattern[0], PsiMethod.class);
+        if (method != null) {
+          final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(candidate.getProject()).getResolveHelper();
+          substitutor = resolveHelper.inferTypeArguments(method.getTypeParameters(), new PsiType[]{patternType},
+                                                         new PsiType[]{candidateType}, PsiUtil.getLanguageLevel(method));
+        }
+        if (!canTypesBeEquivalent(substitutor.substitute(patternType), candidateType)) return null;
       }
       else {
         return null;

@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
@@ -345,7 +346,7 @@ public final class Match {
         }
         if (member != null) {
           final PsiImmediateClassType expressionType = new PsiImmediateClassType(member.getContainingClass(), PsiSubstitutor.EMPTY);
-          if (!TypeConversionUtil.isAssignable(expressionType, returnType)) {
+          if (weakerType(psiMethod, returnType, expressionType)) {
             return expressionType;
           }
         }
@@ -360,7 +361,7 @@ public final class Match {
             final PsiParameter[] psiParameters = method.getParameterList().getParameters();
             if (idx >= 0 && idx < psiParameters.length) {
               final PsiType type = psiParameters[idx].getType();
-              if (!TypeConversionUtil.isAssignable(type, returnType)) {
+              if (weakerType(psiMethod, returnType, type)){
                 return type;
               }
             }
@@ -369,15 +370,21 @@ public final class Match {
       }
       else if (parent instanceof PsiLocalVariable) {
         final PsiType localVariableType = ((PsiLocalVariable)parent).getType();
-        if (!TypeConversionUtil.isAssignable(localVariableType, returnType)) {
-          return localVariableType;
-        }
+        if (weakerType(psiMethod, returnType, localVariableType)) return localVariableType;
       }
     }
     return null;
   }
 
-    private ArrayList<ParameterInfo> patchParams(final PsiMethod psiMethod) {
+  private static boolean weakerType(final PsiMethod psiMethod, final PsiType returnType, final PsiType currentType) {
+    final PsiTypeParameter[] typeParameters = psiMethod.getTypeParameters();
+    final PsiSubstitutor substitutor =
+        JavaPsiFacade.getInstance(psiMethod.getProject()).getResolveHelper().inferTypeArguments(typeParameters, new PsiType[]{returnType}, new PsiType[]{currentType}, PsiUtil.getLanguageLevel(psiMethod));
+
+    return !TypeConversionUtil.isAssignable(currentType, substitutor.substitute(returnType));
+  }
+
+  private ArrayList<ParameterInfo> patchParams(final PsiMethod psiMethod) {
     final ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
     final PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
     for (int i = 0; i < oldParameters.length; i++) {
