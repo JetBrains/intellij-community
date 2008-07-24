@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -86,13 +87,16 @@ public class PatchApplier {
     final List<VirtualFile> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
 
+    refreshIndirectlyAffected(indirectlyAffected);
+    for (VirtualFile file : directlyAffected) {
+      VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+    }
     if ((myTargetChangeList != null) && (! directlyAffected.isEmpty())) {
       ApplyPatchAction.moveChangesOfVsToList(myProject, directlyAffected, myTargetChangeList);
     } else {
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       changeListManager.scheduleUpdate();
     }
-    refreshIndirectlyAffected(indirectlyAffected);
 
     return refStatus.get();
   }
