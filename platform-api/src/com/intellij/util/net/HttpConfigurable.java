@@ -83,31 +83,34 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
     PROXY_PASSWORD_CRYPT = new String(new Base64().encode(password.getBytes()));
   }
 
+  public PasswordAuthentication getPromptedAuthentication(final String host, final String prompt) {
+    if (PROXY_AUTHENTICATION &&
+        ! KEEP_PROXY_PASSWORD) {
+      Runnable runnable = new Runnable() {
+        public void run() {
+          AuthenticationDialog dlg = new AuthenticationDialog(host, prompt);
+          dlg.show();
+        }
+      };
+      if (SwingUtilities.isEventDispatchThread()) {
+        runnable.run();
+      }
+      else {
+        try {
+          SwingUtilities.invokeAndWait(runnable);
+        }
+        catch (Exception e) {
+          // ignore
+        }
+      }
+    }
+    return new PasswordAuthentication(PROXY_LOGIN, getPlainProxyPassword().toCharArray());
+  }
+
   private Authenticator getAuthenticator () {
     return new Authenticator () {
       protected PasswordAuthentication getPasswordAuthentication() {
-        if (PROXY_AUTHENTICATION &&
-            ! KEEP_PROXY_PASSWORD) {
-          Runnable runnable = new Runnable() {
-            public void run() {
-              AuthenticationDialog dlg = new AuthenticationDialog(getRequestingHost(), getRequestingPrompt());
-              dlg.show();
-            }
-          };
-          if (SwingUtilities.isEventDispatchThread()) {
-            runnable.run();
-          }
-          else {
-            try {
-              SwingUtilities.invokeAndWait(runnable);
-            }
-            catch (Exception e) {
-              // ignore
-            }
-          }
-        }
-        return new PasswordAuthentication(PROXY_LOGIN,
-                                          getPlainProxyPassword().toCharArray());
+        return getPromptedAuthentication(getRequestingHost(), getRequestingPrompt());
       }
     };
   }
