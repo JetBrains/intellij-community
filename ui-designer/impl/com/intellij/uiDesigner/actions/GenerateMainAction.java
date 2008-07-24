@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.binding.FormClassIndex;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.IncorrectOperationException;
@@ -58,6 +59,11 @@ public class GenerateMainAction extends AnAction {
     final LwRootContainer rootContainer;
     try {
       rootContainer = Utils.getRootContainer(boundForms.get(0).getText(), null);
+    }
+    catch (AlienFormFileException ex) {
+      Messages.showMessageDialog(project, "The form bound to the class is not a valid IntelliJ IDEA form",
+                                 UIDesignerBundle.message("generate.main.title"), Messages.getErrorIcon());
+      return;
     }
     catch (Exception ex) {
       LOG.error(ex);
