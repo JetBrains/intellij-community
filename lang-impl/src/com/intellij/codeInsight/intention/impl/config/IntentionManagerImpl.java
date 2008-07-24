@@ -82,7 +82,7 @@ public class IntentionManagerImpl extends IntentionManager {
   @NotNull
   private static String getDescriptionDirectoryName(final IntentionAction action) {
     final String fqn = action.getClass().getName();
-    return fqn.substring(fqn.lastIndexOf('.') + 1);
+    return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull @NonNls String descriptionDirectoryName) {
