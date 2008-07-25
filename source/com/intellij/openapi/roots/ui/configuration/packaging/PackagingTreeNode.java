@@ -22,7 +22,7 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode implement
   }
 
   @NotNull
-  protected abstract String getOutputFileName();
+  public abstract String getOutputFileName();
 
   public abstract double getWeight();
 

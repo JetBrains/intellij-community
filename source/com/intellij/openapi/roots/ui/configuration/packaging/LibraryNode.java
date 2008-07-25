@@ -22,7 +22,7 @@ class LibraryNode extends LibraryNodeBase {
   }
 
   @NotNull
-  protected String getOutputFileName() {
+  public String getOutputFileName() {
     return myLibraryLink.getPresentableName();
   }
 

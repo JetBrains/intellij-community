@@ -17,7 +17,7 @@ class ModuleOutputNode extends ModuleOutputBaseNode {
   }
 
   @NotNull
-  protected String getOutputFileName() {
+  public String getOutputFileName() {
     return myModuleLink.getName();
   }
 

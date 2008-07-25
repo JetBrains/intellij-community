@@ -19,7 +19,7 @@ class PackedModuleOutputNode extends ModuleOutputBaseNode {
   }
 
   @NotNull
-  protected String getOutputFileName() {
+  public String getOutputFileName() {
     return myJarFileName;
   }
 

@@ -241,6 +241,10 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
   }
 
+  public Tree getTree() {
+    return myTree;
+  }
+
   public void addLibraries(final List<Library> libraries) {
     if (libraries.isEmpty()) return;
 
@@ -417,7 +421,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
 
     @NotNull
-    protected String getOutputFileName() {
+    public String getOutputFileName() {
       return "";
     }
 

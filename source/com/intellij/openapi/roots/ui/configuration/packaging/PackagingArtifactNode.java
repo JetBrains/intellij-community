@@ -21,7 +21,7 @@ public class PackagingArtifactNode extends PackagingTreeNode {
   }
 
   @NotNull
-  protected String getOutputFileName() {
+  public String getOutputFileName() {
     return myArtifact.getOutputFileName();
   }
 

@@ -18,7 +18,7 @@ class DirectoryNode extends PackagingTreeNode {
   }
 
   @NotNull
-  protected String getOutputFileName() {
+  public String getOutputFileName() {
     return myDirectoryName;
   }
 

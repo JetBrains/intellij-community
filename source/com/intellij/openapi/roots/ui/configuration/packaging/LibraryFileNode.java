@@ -25,7 +25,7 @@ class LibraryFileNode extends LibraryNodeBase {
   }
 
   @NotNull
-  protected String getOutputFileName() {
+  public String getOutputFileName() {
     return myFile.getName();
   }
 
