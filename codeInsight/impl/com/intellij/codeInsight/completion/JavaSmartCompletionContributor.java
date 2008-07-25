@@ -337,7 +337,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         for (final PsiClassType type : expectedClassTypes) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              addExpectedType(result, type);
+              addExpectedType(result, type, parameters);
 
               final PsiClassType.ClassResolveResult baseResult = JavaCompletionUtil.originalize(type).resolveGenerics();
               final PsiClass baseClass = baseResult.getElement();
@@ -359,7 +359,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               }
 
               for (final PsiType variant : statVariants) {
-                addExpectedType(result, variant);
+                addExpectedType(result, variant, parameters);
               }
             }
           });
@@ -387,7 +387,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               if (!psiClass.hasModifierProperty(PsiModifier.FINAL) &&
                   !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
                 for (final PsiType psiType : CodeInsightUtil.addSubtypes(type, identifierCopy, false)) {
-                  addExpectedType(result, psiType);
+                  addExpectedType(result, psiType, parameters);
                 }
               }
             }
@@ -419,12 +419,19 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     return ExpectedTypesProvider.getInstance(position.getProject()).getExpectedTypes(expression, true);
   }
 
-  private static void addExpectedType(final CompletionResultSet result, final PsiType type) {
+  private static void addExpectedType(final CompletionResultSet result, final PsiType type, final CompletionParameters parameters) {
     if (!InheritorsGetter.hasAccessibleConstructor(type)) return;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null) return;
 
+    final PsiClass parentClass = psiClass.getContainingClass();
+    if (parentClass != null && !psiClass.hasModifierProperty(PsiModifier.STATIC) &&
+        !PsiTreeUtil.isAncestor(parentClass, parameters.getPosition(), false) &&
+        !(parentClass.getContainingFile().equals(parameters.getOriginalFile()) &&
+          parentClass.getTextRange().contains(parameters.getOffset()))) {
+      return;
+    }
 
     final LookupItem item = LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
     item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");

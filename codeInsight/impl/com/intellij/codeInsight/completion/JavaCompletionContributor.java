@@ -293,16 +293,27 @@ public class JavaCompletionContributor extends CompletionContributor {
         PsiElement decl = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
         if (decl == null) decl = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
         if (decl != null) {
-          final int textOffset = decl.getTextOffset();
-          context.setFileCopyPatcher(new FileCopyPatcher() {
-            public void patchFileCopy(@NotNull final PsiFile fileCopy, @NotNull final Document document, @NotNull final OffsetMap map) {
-              document.replaceString(map.getOffset(CompletionInitializationContext.START_OFFSET),
-                                     Math.max(map.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET), textOffset),
-                           CompletionInitializationContext.DUMMY_IDENTIFIER.trim());
-            }
-          });
-          return;
+          PsiElement sibling = decl.getPrevSibling();
+          while (sibling != null && (sibling instanceof PsiWhiteSpace || sibling instanceof PsiErrorElement)) {
+            sibling = sibling.getPrevSibling();
+          }
+          if (sibling instanceof PsiClassInitializer && ((PsiClassInitializer) sibling).getBody().getRBrace() == null ||
+              sibling instanceof PsiMethod && ((PsiMethod) sibling).getBody() != null && ((PsiMethod) sibling).getBody().getRBrace() == null) {
+            final int textOffset = decl.getTextOffset();
+            context.setFileCopyPatcher(new FileCopyPatcher() {
+              public void patchFileCopy(@NotNull final PsiFile fileCopy, @NotNull final Document document, @NotNull final OffsetMap map) {
+                document.replaceString(map.getOffset(CompletionInitializationContext.START_OFFSET),
+                                       Math.max(map.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET), textOffset),
+                                       CompletionInitializationContext.DUMMY_IDENTIFIER.trim());
+              }
+            });
+            return;
+          }
         }
+      }
+
+      if (psiElement(PsiIdentifier.class).withParent(PsiMethod.class).accepts(element)) {
+        return;
       }
 
       context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim()));
