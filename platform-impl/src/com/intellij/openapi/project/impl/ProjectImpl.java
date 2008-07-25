@@ -66,6 +66,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       return isDisposed();
     }
   };
+  private String myName;
 
   protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
     super(ApplicationManager.getApplication());
@@ -204,7 +205,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public String getName() {
-    return ProjectDetailsComponent.getInstance(this).getProjectName();
+    if (myName == null) {
+      synchronized (this) {
+        if (myName == null) {
+          myName = ProjectDetailsComponent.getInstance(this).getProjectName();
+        }
+      }
+    }
+    return myName;
   }
 
   @Nullable
