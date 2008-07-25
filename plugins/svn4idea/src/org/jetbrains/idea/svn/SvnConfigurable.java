@@ -58,6 +58,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
   private JCheckBox myUseDefaultCheckBox;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
   private JButton myClearAuthButton;
+  private JCheckBox myUseCommonProxy;
   private JButton myEditProxiesButton;
   private JPanel myComponent;
 
@@ -155,6 +156,19 @@ public class SvnConfigurable implements Configurable, ActionListener {
     label.setEnabled(false);
     add(label, gb);
 
+    myUseCommonProxy = new JCheckBox(SvnBundle.message("use.idea.proxy.as.default"));
+    gb.gridx = 0;
+    gb.gridy += 1;
+    gb.gridwidth = 1;
+    add(myUseCommonProxy, gb);
+    gb.gridwidth = 2;
+    gb.gridx = 1;
+    gb.fill = GridBagConstraints.HORIZONTAL;
+    label = new JLabel(SvnBundle.message("use.idea.proxy.as.default.label.text"));
+    label.setEnabled(false);
+    label.setLabelFor(myUseCommonProxy);
+    add(label, gb);
+
     gb.gridx = 0;
     gb.gridy += 1;
     gb.gridwidth = 1;
@@ -204,6 +218,9 @@ public class SvnConfigurable implements Configurable, ActionListener {
     if (configuration.isUseDefaultConfiguation() != myUseDefaultCheckBox.isSelected()) {
       return true;
     }
+    if (configuration.isIsUseDefaultProxy() != myUseCommonProxy.isSelected()) {
+      return true;
+    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -211,6 +228,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     configuration.setConfigurationDirectory(myConfigurationDirectoryText.getText());
     configuration.setUseDefaultConfiguation(myUseDefaultCheckBox.isSelected());
+    configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
   }
 
   public void reset() {
@@ -221,6 +239,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     }
     myConfigurationDirectoryText.setText(path);
     myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());
+    myUseCommonProxy.setSelected(configuration.isIsUseDefaultProxy());
 
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);

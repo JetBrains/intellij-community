@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.openapi.project.Project;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -23,8 +24,10 @@ import java.util.StringTokenizer;
  * To change this template use File | Settings | File Templates.
  */
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
-    public SvnAuthenticationManager(final File configDirectory) {
+  private final Project myProject;
+    public SvnAuthenticationManager(final Project project, final File configDirectory) {
         super(configDirectory, true, null, null);
+      myProject = project;
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
@@ -121,7 +124,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
       Map properties = getHostProperties(host);
       String proxyHost = (String) properties.get("http-proxy-host");
-      if (proxyHost == null || "".equals(proxyHost.trim())) {
+    if ((proxyHost == null) || "".equals(proxyHost.trim())) {
+      if (SvnConfiguration.getInstance(myProject).isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
         final String ideaWideProxyHost = System.getProperty("http.proxyHost");
         String ideaWideProxyPort = System.getProperty("http.proxyPort");
@@ -130,11 +134,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
           ideaWideProxyPort = "3128";
         }
 
-        if (ideaWideProxyHost != null) {
+        if ((ideaWideProxyHost != null) && (! "".equals(ideaWideProxyHost.trim()))) {
           return new MyPromptingProxyManager(ideaWideProxyHost, ideaWideProxyPort);
         }
-        return null;
       }
+      return null;
+    }
       String proxyExceptions = (String) properties.get("http-proxy-exceptions");
       String proxyExceptionsSeparator = ",";
       if (proxyExceptions == null) {

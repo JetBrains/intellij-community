@@ -70,9 +70,11 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   private String myConfigurationDirectory;
   private boolean myIsUseDefaultConfiguration;
+  private boolean myIsUseDefaultProxy;
   private ISVNOptions myOptions;
   private boolean myIsKeepLocks;
   private boolean myRemoteStatus;
+  private final Project myProject;
   private SvnAuthenticationManager myAuthManager;
   private String myUpgradeMode;
 
@@ -89,6 +91,10 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public static SvnConfiguration getInstance(Project project) {
     return project.getComponent(SvnConfiguration.class);
+  }
+
+  public SvnConfiguration(final Project project) {
+    myProject = project;
   }
 
   public String getConfigurationDirectory() {
@@ -130,7 +136,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public ISVNAuthenticationManager getAuthenticationManager(Project project) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
-        myAuthManager = new SvnAuthenticationManager(new File(getConfigurationDirectory()));
+        myAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
         myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(project));
         myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
@@ -189,6 +195,12 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myIsKeepLocks = element.getChild("keepLocks") != null;
     myRemoteStatus = element.getChild("remoteStatus") != null;
     myUpgradeMode = element.getChild("upgradeMode") != null ? element.getChild("upgradeMode").getText() : null;
+    final Element useProxy = element.getChild("myIsUseDefaultProxy");
+    if (useProxy == null) {
+      myIsUseDefaultProxy = true;
+    } else {
+      myIsUseDefaultProxy = Boolean.parseBoolean(useProxy.getText());
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -216,6 +228,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     if (myUpgradeMode != null) {
       element.addContent(new Element("upgradeMode").setText(myUpgradeMode));
     }
+    element.addContent(new Element("myIsUseDefaultProxy").setText(myIsUseDefaultProxy ? "true" : "false"));
   }
 
   public void projectOpened() {
@@ -248,6 +261,14 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public void setRemoteStatus(boolean remote) {
     myRemoteStatus = remote;
+  }
+
+  public boolean isIsUseDefaultProxy() {
+    return myIsUseDefaultProxy;
+  }
+
+  public void setIsUseDefaultProxy(final boolean isUseDefaultProxy) {
+    myIsUseDefaultProxy = isUseDefaultProxy;
   }
 
   public static class AuthStorage implements ISVNAuthenticationStorage {
