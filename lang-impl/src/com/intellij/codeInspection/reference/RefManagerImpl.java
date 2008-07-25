@@ -348,10 +348,7 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   public RefElement getReference(final PsiElement elem) {
-    if (elem instanceof PsiDirectory) {
-      return new RefDirectoryImpl((PsiDirectory)elem, this);
-    }
-    if (elem != null && belongsToScope(elem)) {
+    if (elem != null && (elem instanceof PsiDirectory || belongsToScope(elem))) {
       if (!elem.isValid()) return null;
 
       RefElement ref = getFromRefTable(elem);
@@ -371,6 +368,9 @@ public class RefManagerImpl extends RefManager {
             }
             if (elem instanceof PsiFile) {
               return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+            }
+            else if (elem instanceof PsiDirectory) {
+              return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
             }
             else {
               return null;
