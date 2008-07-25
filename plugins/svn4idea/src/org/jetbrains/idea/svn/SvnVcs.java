@@ -86,6 +86,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.io.InputStream;
@@ -133,7 +134,10 @@ public class SvnVcs extends AbstractVcs {
 
   static {
     //noinspection UseOfArchaicSystemPropertyAccessors
-    SVNDebugLog.setDefaultLog(new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG));
+    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG);
+    SVNDebugLog.setDefaultLog(logger);
+    SVNDebugLog.registerLog(SVNLogType.NETWORK, logger);
+    SVNDebugLog.registerLog(SVNLogType.WC, logger);
     SVNAdminAreaFactory.setSelector(new SvnFormatSelector());
 
     DAVRepositoryFactory.setup();
