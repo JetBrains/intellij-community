@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -9,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,6 +59,19 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
       else {
         if (getTree() != null)
           getTree().repaint();
+      }
+    }
+  }
+
+  public void setUserObject(final Object userObject) {
+    final Object oldObject = getUserObject();
+    try {
+      super.setUserObject(userObject);
+    }
+    finally {
+      if (oldObject instanceof VirtualFilePointer) {
+        final VirtualFilePointer pointer = (VirtualFilePointer)oldObject;
+        VirtualFilePointerManager.getInstance().kill(pointer, this);
       }
     }
   }
