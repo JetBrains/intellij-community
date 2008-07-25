@@ -200,7 +200,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
       else {
-        final int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
+        final int blankLines = getLinesAroundMethod() + 1;
         myResult = Spacing
           .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
@@ -211,7 +211,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
           .createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
-        final int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
+        final int blankLines = getLinesAroundMethod() + 1;
         myResult = Spacing
           .createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
@@ -247,7 +247,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
       else {
-        final int blankLines = mySettings.BLANK_LINES_AROUND_FIELD + 1;
+        final int blankLines = getLinesAroundField() + 1;
         myResult = Spacing
           .createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
@@ -269,7 +269,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
           .createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
-        final int blankLines = mySettings.BLANK_LINES_AROUND_FIELD + 1;
+        final int blankLines = getLinesAroundField() + 1;
         myResult = Spacing
           .createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
@@ -305,6 +305,31 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing
         .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
     }
+  }
+
+  private int getLinesAroundMethod() {
+    if (isClass(myParent)) {
+      return mySettings.BLANK_LINES_AROUND_METHOD;
+    }
+    else {
+      return mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE;
+    }
+  }
+
+  private int getLinesAroundField() {
+    if (isClass(myParent)) {
+      return mySettings.BLANK_LINES_AROUND_FIELD;
+    }
+    else {
+      return mySettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE;
+    }
+  }
+
+  private boolean isClass(final PsiElement parent) {
+    if (parent instanceof PsiClass) {
+      return !((PsiClass)parent).isInterface();
+    }
+    return false;
   }
 
 
