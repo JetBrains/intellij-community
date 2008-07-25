@@ -24,11 +24,11 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit2.ui.actions.JUnitToolbarPanel;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.junit2.ui.model.JUnitAdapter;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.ui.actions.JUnitToolbarPanel;
+import com.intellij.execution.junit2.ui.model.JUnitAdapter;
+import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -190,7 +190,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
     model.addListener(new JUnitAdapter() {
       @Override
       public void onTestSelected(final TestProxy test) {
-        myPrinter.updateOnTestSelected(test);
+        if (myPrinter != null) myPrinter.updateOnTestSelected(test);
       }
     });
     myStatisticsPanel.attachTo(model);
