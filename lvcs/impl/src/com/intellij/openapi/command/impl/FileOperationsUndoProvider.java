@@ -118,8 +118,10 @@ public class FileOperationsUndoProvider extends VirtualFileAdapter implements Un
 
   public void beforeFileDeletion(VirtualFileEvent e) {
     if (shouldNotProcess(e)) return;
-    if (nonUndoableDeletion(e)) return;
     if (isUndoable(e)) {
+      // only check if the action is undoable to prevent unnecessary
+      // content reading during refresh.
+      if (nonUndoableDeletion(e)) return;
       e.getFile().putUserData(DELETION_WAS_UNDOABLE, true);
     }
     else {
