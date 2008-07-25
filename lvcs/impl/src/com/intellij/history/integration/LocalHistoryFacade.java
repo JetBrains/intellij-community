@@ -4,6 +4,7 @@ import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.Reversed;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class LocalHistoryFacade {
   }
 
   public void endChangeSet(String name) {
-    assert depthIsValid();
+    if (!checkDepthIsValid()) return;
 
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {
@@ -80,14 +81,16 @@ public class LocalHistoryFacade {
     }
   }
 
-  private boolean depthIsValid() {
+  private boolean checkDepthIsValid() {
     if (myChangeSetDepth > 0) return true;
 
-    String log = "";
+    String log = "Depth is invalid: " + myChangeSetDepth + "\n";
     for (String s : Reversed.list(myLog)) {
       log += s + "\n";
     }
-    throw new AssertionError(log);
+    LocalHistoryLog.LOG.warn(log);
+
+    return false;
   }
 
   public void create(VirtualFile f) {

@@ -2,6 +2,7 @@ package com.intellij.history.integration;
 
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -162,7 +163,7 @@ public class Updater implements CacheUpdater {
     if (notAllowed(fileOrDir)) return;
 
     // todo catching IDEADEV-19864 bug
-    assert doesNotExist(fileOrDir);
+    if (!checkDoesNotExist(fileOrDir)) return;
 
     if (fileOrDir.isDirectory()) {
       myVcs.createDirectory(fileOrDir.getPath());
@@ -179,7 +180,11 @@ public class Updater implements CacheUpdater {
     return !myGateway.getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 
-  private boolean doesNotExist(VirtualFile f) {
+  private boolean checkDoesNotExist(VirtualFile f) {
+    boolean isReleaseMode = true;
+    assert (isReleaseMode = false) == false;
+    if (isReleaseMode) return true;
+
     Entry e = myVcs.findEntry(f.getPath());
     if (e == null) return true;
 
@@ -203,7 +208,8 @@ public class Updater implements CacheUpdater {
     if (f.getParent() != null) log(b, "vfs siblings:", f.getParent().getChildren());
     log(b, "vcs siblings:", e.getParent().getChildren());
 
-    throw new RuntimeException(b.toString());
+    LocalHistoryLog.LOG.warn(b.toString());
+    return false;
   }
 
   private void log(StringBuilder b, String title, VirtualFile[] roots) {

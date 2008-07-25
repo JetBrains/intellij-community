@@ -5,6 +5,7 @@ import com.intellij.history.core.IdPath;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.history.utils.Reversed;
 
 import java.io.IOException;
@@ -53,7 +54,13 @@ public class ChangeList {
   }
 
   public void endChangeSet(String name) {
-    assert myChangeSetDepth > 0;
+    if (myChangeSetDepth <= 0) {
+      LocalHistoryLog.LOG.warn("Depth is invalid: " + myChangeSetDepth + "\n" +
+                               "ChangeSet's Name: " + name + "\n" +
+                               "Current ChangeSet: " + (myCurrentChangeSet == null ? null : myCurrentChangeSet.getChanges().size()));
+      myChangeSetDepth = 0;
+      return;
+    }
 
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {

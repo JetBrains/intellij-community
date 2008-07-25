@@ -3,6 +3,7 @@ package com.intellij.history.integration;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.command.CommandEvent;
@@ -22,7 +23,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   private LocalHistoryFacade myFacade;
 
   private boolean isFirstTimeRefresh = true;
-  private boolean isRefreshing;
+  private int myRefreshDepth = 0;
   private CacheUpdaterProcessor myProcessor;
 
   public EventDispatcher(ILocalVcs vcs, IdeaGateway gw) {
@@ -32,21 +33,22 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   public void beforeRefreshStart(boolean asynchonous) {
+    myRefreshDepth++;
     myFacade.startRefreshing();
-    isRefreshing = true;
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
-    if (checkFirstTimeRefresh() && !isRefreshing) return;
-    
-    isRefreshing = false;
+    if (myRefreshDepth == 0) {
+      // the listener may may be attached during a refresh.
+      return;
+    }
+
+    myRefreshDepth--;
     myFacade.finishRefreshing();
   }
 
-  private boolean checkFirstTimeRefresh() {
-    if (!isFirstTimeRefresh) return false;
-    isFirstTimeRefresh = false;
-    return true;
+  private boolean isRefreshing() {
+    return myRefreshDepth > 0;
   }
 
   public VirtualFile[] queryNeededFiles() {
@@ -118,7 +120,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   private void createRecursively(VirtualFile f) {
     if (notAllowedOrNotUnderContentRoot(f)) return;
 
-    if (isRefreshing && !f.isDirectory()) {
+    if (isRefreshing() && !f.isDirectory()) {
       getOrInitProcessor().addFileToCreate(f);
       return;
     }
@@ -136,11 +138,11 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   public void contentsChanged(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
     // todo catching IDEADEV-21269 exception (comment #2)
-    assert fileIsValid(e.getFile());
+    if (!checkFileValidity(e.getFile())) return;
     changeContent(e.getFile());
   }
 
-  private boolean fileIsValid(VirtualFile f) {
+  private boolean checkFileValidity(VirtualFile f) {
     if (f.isValid() && hasEntryFor(f)) return true;
 
     String s = "\nhas entry for file: " + hasEntryFor(f);
@@ -153,11 +155,12 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
     s += "\nfirst valid parent: " + (validParent == null ? "null" : validParent.getPath());
 
-    throw new RuntimeException(s);
+    LocalHistoryLog.LOG.warn(s);
+    return false;
   }
 
   private void changeContent(VirtualFile f) {
-    if (isRefreshing) {
+    if (isRefreshing()) {
       getOrInitProcessor().addFileToUpdate(f);
     }
     else {

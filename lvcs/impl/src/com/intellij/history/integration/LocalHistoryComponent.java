@@ -1,6 +1,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.ThreadSafeLocalVcs;
@@ -202,7 +203,10 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     if (!isUnderControl(f)) return false;
 
     // TODO IDEADEV-21269 bug hook
-    assert f.isValid();
+    if (!f.isValid()) {
+      LocalHistoryLog.LOG.warn("File is invalid: " + f);
+      return false;
+    }
 
     return myVcs.getEntry(f.getPath()).hasUnavailableContent();
   }
