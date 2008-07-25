@@ -34,7 +34,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,13 +59,19 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private final String myNamespacePrefix;
   private final PsiElement myElement;
   private final XmlFile myFile;
+  private final XmlToken myToken;
 
   public CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
                                          @NotNull final String namespacePrefix
                                          ) {
+    this(element, namespacePrefix, null);
+  }
+
+  public CreateNSDeclarationIntentionFix(final PsiElement element, final String namespacePrefix, final XmlToken token) {
     myNamespacePrefix = namespacePrefix;
     myElement = element;
     myFile = (XmlFile)element.getContainingFile();
+    myToken = token;
   }
 
   @NotNull
@@ -149,12 +154,12 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       final String title = getTitle();
       final ImportNSAction action = new ImportNSAction(namespaces, myFile, myElement, editor, title);
       if (myElement instanceof XmlTag) {
-        final XmlToken nameElement = XmlTagUtil.getStartTagNameElement((XmlTag)myElement);
-        assert nameElement != null;
-        HintManager.getInstance().showQuestionHint(editor, message,
-                                                   nameElement.getTextOffset(),
-                                                   nameElement.getTextOffset() + myNamespacePrefix.length(), action);
-        return true;
+        if (ShowAutoImportPass.getVisibleRange(editor).contains(myToken.getTextRange())) {
+          HintManager.getInstance().showQuestionHint(editor, message,
+                                                     myToken.getTextOffset(),
+                                                     myToken.getTextOffset() + myNamespacePrefix.length(), action);
+          return true;        
+        }
       } else {
         HintManager.getInstance().showQuestionHint(editor, message,
                                                    myElement.getTextOffset(),

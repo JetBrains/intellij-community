@@ -46,7 +46,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     myFile = file;
   }
 
-  private static TextRange getVisibleRange(Editor editor) {
+  public static TextRange getVisibleRange(Editor editor) {
     Rectangle visibleRect = editor.getScrollingModel().getVisibleArea();
 
     LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(visibleRect.x, visibleRect.y));

@@ -81,13 +81,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
           XmlTag tag = (XmlTag)parent;
-          checkTag(tag);
+          checkTag(tag, token);
         }
       }
     }
   }
 
-  private void checkTag(XmlTag tag) {
+  private void checkTag(XmlTag tag, final XmlToken token) {
     if (ourDoJaxpTesting) return;
 
     if (myResult == null) {
@@ -95,7 +95,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     if (myResult == null) {
-      checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix());
+      checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix(), token);
     }
 
     if (myResult == null) {
@@ -115,7 +115,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
-  private void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix) {
+  private void checkUnboundNamespacePrefix(final XmlElement element,
+                                           final XmlTag context,
+                                           String namespacePrefix, final XmlToken token) {
+
     if (namespacePrefix.length() > 0 || element instanceof XmlTag && element.getParent() instanceof XmlDocument) {
       final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
 
@@ -137,7 +140,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
               addElementsForTag(tag,
                 localizedMessage,
                 HighlightInfoType.INFORMATION,
-                new CreateNSDeclarationIntentionFix(context, namespacePrefix)
+                new CreateNSDeclarationIntentionFix(context, namespacePrefix, token)
               );
             }
 
@@ -151,7 +154,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             bindMessageToTag(
               (XmlTag)element,
               infoType, messageLength,
-              localizedMessage, null, new CreateNSDeclarationIntentionFix(context, namespacePrefix)
+              localizedMessage, null, new CreateNSDeclarationIntentionFix(context, namespacePrefix, token)
             );
           } else {
             bindMessageToAstNode(
@@ -384,7 +387,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     final String name = attribute.getName();
 
-    checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name));
+    checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name), null);
 
     if (attributeDescriptor == null) {
       if (!XmlUtil.attributeFromTemplateFramework(name, tag)) {
