@@ -64,6 +64,8 @@ public abstract class RParenthTailType extends TailType {
 
   private static int getExistingRParenthOffset(final Editor editor, final int tailOffset) {
     final Document document = editor.getDocument();
+    if (tailOffset >= document.getTextLength()) return -1;
+
     final CharSequence charsSequence = document.getCharsSequence();
     EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
 
