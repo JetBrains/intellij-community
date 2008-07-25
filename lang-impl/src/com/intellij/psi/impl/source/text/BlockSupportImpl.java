@@ -235,6 +235,12 @@ public class BlockSupportImpl extends BlockSupport {
       final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), viewProvider.getVirtualFile().getFileType(), newFileText,
                                                               fileImpl.getModificationStamp());
       final PsiFileImpl newFile = (PsiFileImpl)viewProvider.createCopy(lightFile).getPsi(fileImpl.getLanguage());
+
+      if (newFile == null) {
+        LOG.error("View provider " + viewProvider + " refused to parse text with language " + fileImpl.getLanguage());
+        return;
+      }
+
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();
