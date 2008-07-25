@@ -66,7 +66,6 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   protected AbstractProjectViewPane(Project project) {
     myProject = project;
-    Disposer.register(project, this);
   }
 
   protected final void fireTreeChangeListener() {
