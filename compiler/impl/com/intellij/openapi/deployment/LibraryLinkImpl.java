@@ -48,7 +48,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import gnu.trove.Equality;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -315,11 +317,6 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   private static boolean isInTable(final Library library, final LibraryTable table) {
-    for (Library aLibrary : table.getLibraries()) {
-      if (aLibrary == library) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOf(table.getLibraries(), library, Equality.IDENTITY) != -1;
   }
 }

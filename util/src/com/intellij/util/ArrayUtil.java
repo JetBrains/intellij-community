@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Author: msk
@@ -351,6 +352,18 @@ public class ArrayUtil {
     }
     return 0;
   }
+  //must be Comparables
+  public static <T> int lexicographicCompare(@NotNull T[] obj1, @NotNull T[] obj2) {
+    for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
+      T o1 = i < obj1.length ? obj1[i] : null;
+      T o2 = i < obj2.length ? obj2[i] : null;
+      if (o1 == null) return -1;
+      if (o2 == null) return 1;
+      int res = ((Comparable)o1).compareTo(o2);
+      if (res != 0) return res;
+    }
+    return 0;
+  }
 
   public static <T>void swap(T[] array, int i1, int i2) {
     final T t = array[i1];
@@ -379,7 +392,19 @@ public class ArrayUtil {
     for (int i = 0; i < objects.length; i++) {
       if (ObjectUtils.equals(objects[i], object)) return i;
     }
+    return -1;
+  }
 
+  public static <T> int indexOf(List<T> objects, T object, Equality<T> comparator) {
+    for (int i = 0; i < objects.size(); i++) {
+      if (comparator.equals(objects.get(i), object)) return i;
+    }
+    return -1;
+  }
+  public static <T> int indexOf(T[] objects, T object, Equality<T> comparator) {
+    for (int i = 0; i < objects.length; i++) {
+      if (comparator.equals(objects[i], object)) return i;
+    }
     return -1;
   }
 

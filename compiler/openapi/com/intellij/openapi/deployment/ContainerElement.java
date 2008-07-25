@@ -23,7 +23,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +74,8 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
 
   public void readExternal(Element element) throws InvalidDataException {
     final List attrs = element.getChildren(ELEMENT_ATTRIBUTE);
-    for (int i = 0; i < attrs.size(); i++) {
-      Element attribute = (Element)attrs.get(i);
+    for (Object attr : attrs) {
+      Element attribute = (Element)attr;
       final String name = attribute.getAttributeValue(ATTRIBUTE_NAME);
       final String value = attribute.getAttributeValue(ATTRIBUTE_VALUE);
       setAttribute(name, value);
@@ -84,12 +83,12 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator iterator = myAttributes.keySet().iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
+    for (Object o : myAttributes.keySet()) {
+      String name = (String)o;
       String value = getAttribute(name);
       final Element attr = new Element(ELEMENT_ATTRIBUTE);
       attr.setAttribute(ATTRIBUTE_NAME, name);
-      attr.setAttribute(ATTRIBUTE_VALUE, value==null?"":value);
+      attr.setAttribute(ATTRIBUTE_VALUE, value == null ? "" : value);
       element.addContent(attr);
     }
   }
