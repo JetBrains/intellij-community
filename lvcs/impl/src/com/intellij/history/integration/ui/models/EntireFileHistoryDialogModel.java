@@ -9,14 +9,6 @@ public class EntireFileHistoryDialogModel extends FileHistoryDialogModel {
     super(gw, vcs, f);
   }
 
-  public boolean canShowDifference(RevisionProcessingProgress p) {
-    p.processingLeftRevision();
-    if (getLeftEntry().hasUnavailableContent()) return false;
-
-    p.processingRightRevision();
-    return !getRightEntry().hasUnavailableContent();
-  }
-
   public FileDifferenceModel getDifferenceModel() {
     return new EntireFileDifferenceModel(myGateway, getLeftEntry(), getRightEntry(), isCurrentRevisionSelected());
   }

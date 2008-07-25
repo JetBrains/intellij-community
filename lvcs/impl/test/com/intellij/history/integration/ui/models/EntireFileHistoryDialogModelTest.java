@@ -5,7 +5,6 @@ import com.intellij.history.core.LocalVcsTestCase;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.TestIdeaGateway;
 import com.intellij.history.integration.TestVirtualFile;
-import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.util.List;
@@ -32,41 +31,6 @@ public class EntireFileHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCanNotShowDifferenceIfOneOfEntriesHasUnavailableContent() {
-    long timestamp = -1;
-    vcs.createFile("f", cf("abc"), timestamp, false);
-    vcs.changeFileContent("f", bigContentFactory(), -1);
-    vcs.changeFileContent("f", cf("def"), -1);
-
-    initModelFor("f");
-
-    m.selectRevisions(0, 1);
-    assertFalse(m.canShowDifference(new NullRevisionsProgress()));
-
-    m.selectRevisions(0, 2);
-    assertTrue(m.canShowDifference(new NullRevisionsProgress()));
-
-    m.selectRevisions(1, 2);
-    assertFalse(m.canShowDifference(new NullRevisionsProgress()));
-  }
-
-  @Test
-  public void testCanShowDifferenceProgress() {
-    long timestamp = -1;
-    vcs.createFile("f", cf("abc"), timestamp, false);
-    vcs.changeFileContent("f", cf(("def")), -1);
-
-    initModelFor("f");
-    RevisionProcessingProgress p = createMock(RevisionProcessingProgress.class);
-    p.processingLeftRevision();
-    p.processingRightRevision();
-    replay(p);
-
-    m.canShowDifference(p);
-    verify(p);
-  }
-
-  @Test
   public void testDifferenceModelTitles() {
     vcs.createFile("old", cf(""), (long)123, false);
     vcs.rename("old", "new");
@@ -76,8 +40,8 @@ public class EntireFileHistoryDialogModelTest extends LocalVcsTestCase {
     m.selectRevisions(1, 2);
 
     FileDifferenceModel dm = m.getDifferenceModel();
-    assertTrue(dm.getLeftTitle().endsWith(" - old"));
-    assertTrue(dm.getRightTitle().endsWith(" - new"));
+    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - old"));
+    assertTrue(dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - new"));
   }
 
   @Test
@@ -86,8 +50,8 @@ public class EntireFileHistoryDialogModelTest extends LocalVcsTestCase {
     initModelFor("f");
 
     FileDifferenceModel dm = m.getDifferenceModel();
-    assertTrue(dm.getLeftTitle().endsWith(" - f"));
-    assertEquals("Current", dm.getRightTitle());
+    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f"));
+    assertEquals("Current", dm.getRightTitle(new NullRevisionsProgress()));
   }
 
   private void initModelFor(String path) {

@@ -1,6 +1,7 @@
 package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
+import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.views.DirectoryChange;
@@ -9,6 +10,7 @@ import com.intellij.historyIntegrTests.PatchingTestCase;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -40,6 +42,39 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
     assertEquals("current", new String(right.getBytes()));
 
     assertTrue(right instanceof DocumentContent);
+  }
+
+  @Test
+  public void testFileDifferenceModelWhenOneOfTheEntryIsNull() throws IOException {
+    root.createChildData(null, "dummy.java");
+
+    getVcs().beginChangeSet();
+    VirtualFile f = root.createChildData(null, "f.java");
+    f.setBinaryContent("content".getBytes(), -1, 123);
+    getVcs().endChangeSet(null);
+
+    f.delete(null);
+
+    HistoryDialogModel dm = createModelAndSelectRevisions(0, 1);
+    FileDifferenceModel m = ((DirectoryChange)dm.getChanges().get(0)).getFileDifferenceModel();
+
+    assertTrue(m.getTitle(), m.getTitle().endsWith("f.java"));
+    assertTrue(m.getLeftTitle(new NullRevisionsProgress()).endsWith("f.java"));
+    assertEquals("File does not exist", m.getRightTitle(new NullRevisionsProgress()));
+    assertContents(m, "content", "");
+
+    dm.selectRevisions(1, 2);
+    m = ((DirectoryChange)dm.getChanges().get(0)).getFileDifferenceModel();
+
+    assertTrue(m.getTitle(), m.getTitle().endsWith("f.java"));
+    assertEquals("File does not exist", m.getLeftTitle(new NullRevisionsProgress()));
+    assertTrue(m.getRightTitle(new NullRevisionsProgress()).endsWith("f.java"));
+    assertContents(m, "", "content");
+  }
+
+  private void assertContents(FileDifferenceModel m, String expectedLeft, String expectedRight) throws IOException {
+    assertEquals(expectedLeft, new String(m.getLeftDiffContent(new NullRevisionsProgress()).getBytes()));
+    assertEquals(expectedRight, new String(m.getRightDiffContent(new NullRevisionsProgress()).getBytes()));
   }
 
   public void testRevertion() throws Exception {

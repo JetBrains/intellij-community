@@ -11,8 +11,6 @@ public abstract class FileHistoryDialogModel extends HistoryDialogModel {
     super(gw, vcs, f);
   }
 
-  public abstract boolean canShowDifference(RevisionProcessingProgress p);
-
   public abstract FileDifferenceModel getDifferenceModel();
 
   @Override

@@ -1,5 +1,6 @@
 package com.intellij.historyIntegrTests.ui;
 
+import com.intellij.history.core.ContentFactory;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
@@ -8,6 +9,7 @@ import com.intellij.history.integration.ui.views.FileHistoryDialog;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
+import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -34,11 +36,26 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
     f.setBinaryContent(new byte[0]); // to create current content to skip.
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 3);
-
     assertEquals(f.getPath(), m.getDifferenceModel().getTitle());
 
-    assertEquals("03.02.01 12:00 - old.java", m.getDifferenceModel().getLeftTitle());
-    assertEquals("04.03.02 14:00 - new.java", m.getDifferenceModel().getRightTitle());
+    assertEquals("03.02.01 12:00 - old.java", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
+    assertEquals("04.03.02 14:00 - new.java", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
+  }
+
+  public void testTitlesForAnavailableContent() throws IOException {
+    long leftTime = new Date(2001, 01, 03, 12, 0).getTime();
+    long rightTime = new Date(2002, 02, 04, 14, 0).getTime();
+
+    VirtualFile f = root.createChildData(null, "f.java");
+    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, leftTime);
+    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, rightTime);
+
+    f.setBinaryContent(new byte[0]); // to create current content to skip.
+
+    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 2);
+
+    assertEquals("03.02.01 12:00 - f.java - File content is not available", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
+    assertEquals("04.03.02 14:00 - f.java - File content is not available", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 
   public void testContent() throws IOException {
@@ -71,6 +88,18 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
 
     assertDiffContents("old", "current", m);
     assertEquals(DocumentContent.class, getRightDiffContent(m).getClass());
+  }
+
+  public void testDiffContentIsEmptyForUnavailableCurrent() throws IOException {
+    VirtualFile f = root.createChildData(null, "f.java");
+    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
+    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
+
+    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 1);
+
+    assertDiffContents("", "", m);
+    assertEquals(SimpleContent.class, getLeftDiffContent(m).getClass());
+    assertEquals(SimpleContent.class, getRightDiffContent(m).getClass());
   }
 
   public void testRevertion() throws Exception {

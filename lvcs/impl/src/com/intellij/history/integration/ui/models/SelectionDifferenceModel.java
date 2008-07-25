@@ -41,15 +41,26 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  public DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
+  protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
+    return myCalculator.canCalculateFor(myLeftRevision, p);
+  }
+
+  @Override
+  protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
+    return myCalculator.canCalculateFor(myRightRevision, p);
+  }
+
+  @Override
+  protected DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myLeftRevision, p);
   }
 
   @Override
-  public DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myRightRevision, p);
   }
 
+  @Override
   protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
     Document d = getDocument();
 

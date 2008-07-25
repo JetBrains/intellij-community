@@ -28,15 +28,26 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  public DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
+  protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
+    return myLeft.getContent().isAvailable();
+  }
+
+  @Override
+  protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
+    return myRight.getContent().isAvailable();
+  }
+
+  @Override
+  protected DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myLeft);
   }
 
   @Override
-  public DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myRight);
   }
 
+  @Override
   protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
     Document d = getDocument();
     return DocumentContent.fromDocument(getProject(), d);

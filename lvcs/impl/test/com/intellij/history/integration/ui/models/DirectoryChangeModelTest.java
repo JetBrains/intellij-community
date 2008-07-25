@@ -2,7 +2,6 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.LocalVcsTestCase;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.storage.UnavailableContent;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
@@ -33,15 +32,15 @@ public class DirectoryChangeModelTest extends LocalVcsTestCase {
 
   @Test
   public void testFileDifferenceModel() {
-    Entry left = new FileEntry(-1, "left", null, 123L, false);
-    Entry right = new FileEntry(-1, "right", null, 123L, false);
+    Entry left = new FileEntry(-1, "left", c(""), 123L, false);
+    Entry right = new FileEntry(-1, "right", c(""), 123L, false);
 
     Difference d = new Difference(false, left, right);
     DirectoryChangeModel dm = createModelOn(d);
     FileDifferenceModel m = dm.getFileDifferenceModel();
 
-    assertTrue(m.getLeftTitle().endsWith("left"));
-    assertTrue(m.getRightTitle().endsWith("right"));
+    assertTrue(m.getLeftTitle(new NullRevisionsProgress()).endsWith("left"));
+    assertTrue(m.getRightTitle(new NullRevisionsProgress()).endsWith("right"));
   }
 
   @Test
@@ -54,8 +53,8 @@ public class DirectoryChangeModelTest extends LocalVcsTestCase {
     Difference d3 = new Difference(true, left, null);
 
     assertTrue(createModelOn(d1).canShowFileDifference());
-    assertFalse(createModelOn(d2).canShowFileDifference());
-    assertFalse(createModelOn(d3).canShowFileDifference());
+    assertTrue(createModelOn(d2).canShowFileDifference());
+    assertTrue(createModelOn(d3).canShowFileDifference());
   }
 
   @Test
@@ -65,18 +64,6 @@ public class DirectoryChangeModelTest extends LocalVcsTestCase {
 
     Difference d = new Difference(false, left, right);
     assertFalse(createModelOn(d).canShowFileDifference());
-  }
-
-  @Test
-  public void testCantShowDifferenceIfOneOfFileHasUnavailableContent() {
-    Entry e1 = new FileEntry(-1, "one", c("abc"), -1, false);
-    Entry e2 = new FileEntry(-1, "two", new UnavailableContent(), -1, false);
-
-    Difference d1 = new Difference(true, e1, e2);
-    Difference d2 = new Difference(true, e2, e1);
-
-    assertFalse(createModelOn(d1).canShowFileDifference());
-    assertFalse(createModelOn(d2).canShowFileDifference());
   }
 
   private DirectoryChangeModel createModelOn(Difference d) {

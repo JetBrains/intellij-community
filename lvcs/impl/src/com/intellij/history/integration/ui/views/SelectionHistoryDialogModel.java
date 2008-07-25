@@ -31,15 +31,6 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   }
 
   @Override
-  public boolean canShowDifference(RevisionProcessingProgress p) {
-    p.processingLeftRevision();
-    if (!getCalculator().canCalculateFor(getLeftRevision(), p)) return false;
-
-    p.processingRightRevision();
-    return getCalculator().canCalculateFor(getRightRevision(), p);
-  }
-
-  @Override
   public FileDifferenceModel getDifferenceModel() {
     return new SelectionDifferenceModel(myGateway,
                                         getCalculator(),

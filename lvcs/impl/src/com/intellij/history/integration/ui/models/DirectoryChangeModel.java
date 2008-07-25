@@ -34,11 +34,7 @@ public class DirectoryChangeModel {
   }
 
   public boolean canShowFileDifference() {
-    if (!isFile()) return false;
-    if (getEntry(0) == null || getEntry(1) == null) return false;
-    if (getEntry(0).hasUnavailableContent()) return false;
-    if (getEntry(1).hasUnavailableContent()) return false;
-    return true;
+    return isFile();
   }
 
   public ContentRevision getContentRevision(int i) {

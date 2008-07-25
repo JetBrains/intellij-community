@@ -1,14 +1,17 @@
 package com.intellij.historyIntegrTests.ui;
 
+import com.intellij.history.core.ContentFactory;
+import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
+import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel;
-import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.vfs.VirtualFile;
+import static org.easymock.classextension.EasyMock.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -40,8 +43,44 @@ public class SelectionHistoryDialogTest extends IntegrationTestCase {
     initModelOnSecondLineAndSelectRevisions(1, 2);
 
     assertEquals(f.getPath(), dm.getTitle());
-    assertTrue(dm.getLeftTitle(), dm.getLeftTitle().endsWith(" - f.java"));
-    assertTrue(dm.getRightTitle(), dm.getRightTitle().endsWith(" - ff.java"));
+    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()), dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.java"));
+    assertTrue(dm.getRightTitle(new NullRevisionsProgress()), dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - ff.java"));
+  }
+
+  public void testCalculationProgress() {
+    initModelOnSecondLineAndSelectRevisions(3, 3);
+
+    RevisionProcessingProgress p = createMock(RevisionProcessingProgress.class);
+    p.processed(25);
+    p.processed(50);
+    p.processed(75);
+    p.processed(100);
+    replay(p);
+
+    dm.getLeftTitle(p);
+    verify(p);
+
+    reset(p);
+    // already processed - shouldn't process one more time
+    replay(p);
+
+    dm.getRightTitle(p);
+    verify(p);
+  }
+
+  public void testRecreatingCalculatorAfterShowChangesOnlyOptionIsChanged() throws IOException {
+    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, 1234);
+    getVcs().putUserLabel("label");
+
+    initModelOnSecondLineAndSelectRevisions(0, 0);
+
+    m.showChangesOnly(false);
+    m.selectRevisions(0, 0);
+    assertEquals("", new String(dm.getLeftDiffContent((new NullRevisionsProgress())).getBytes())); // shouldn't raise exceptions
+
+    m.showChangesOnly(true);
+    m.selectRevisions(0, 0);
+    assertEquals("", new String(dm.getRightDiffContent((new NullRevisionsProgress())).getBytes())); // shouldn't raise exceptions
   }
 
   public void testDiffContents() throws IOException {
@@ -57,12 +96,31 @@ public class SelectionHistoryDialogTest extends IntegrationTestCase {
   public void testDiffContentsAndTitleForCurrentRevision() throws IOException {
     initModelOnSecondLineAndSelectRevisions(0, 0);
 
-    assertEquals("Current", dm.getRightTitle());
+    assertEquals("Current", dm.getRightTitle(new NullRevisionsProgress()));
 
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
 
     assertEquals("bcd", new String(right.getBytes()));
     assertTrue(right instanceof FragmentContent);
+  }
+
+  public void testDiffContentAndTitlesWhenSomeContentIsUnavailable() throws IOException {
+    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, 1234);
+    f.setBinaryContent("a\nb\nc\n".getBytes(), -1, 2345);
+    f.setBinaryContent("a\nbc\nd\n".getBytes(), -1, 3456);
+
+    initModelOnSecondLineAndSelectRevisions(1, 4);
+
+    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()),
+               dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.java - File content is not available"));
+    assertTrue(dm.getRightTitle(new NullRevisionsProgress()),
+               dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - f.java"));
+
+    DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
+    assertEquals("", new String(left.getBytes()));
+
+    DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
+    assertEquals("b", new String(right.getBytes()));
   }
 
   public void testRevert() throws IOException {

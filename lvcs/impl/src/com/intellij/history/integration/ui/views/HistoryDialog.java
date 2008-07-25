@@ -166,7 +166,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
         DiffContent right = m.getRightDiffContent(p);
 
         r.setContents(left, right);
-        r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
+        r.setContentTitles(m.getLeftTitle(p), m.getRightTitle(p));
       }
     });
 
