@@ -185,7 +185,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   }
 
   private void update() {
-    myCbMakeStatic.setEnabled(myCanBeStatic);
+    myCbMakeStatic.setEnabled(myCanBeStatic && !myStaticFlag);
     updateSignature();
     final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
     setOKActionEnabled((myCreateInnerClassRb.isSelected() && helper.isIdentifier(myInnerClassName.getText())) ||
