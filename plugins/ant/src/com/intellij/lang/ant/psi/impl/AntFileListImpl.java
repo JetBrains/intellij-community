@@ -5,6 +5,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFilesProvider;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlTag;
@@ -12,10 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,7 +37,7 @@ public class AntFileListImpl extends AntFilesProviderImpl{
   }
 
   @NotNull
-  protected List<File> getFiles(final AntPattern pattern) {
+  protected List<File> getFiles(final AntPattern pattern, final Set<AntFilesProvider> processed) {
     final File root = getCanonicalFile(computeAttributeValue(getSourceElement().getAttributeValue("dir")));
     if (root == null) {
       return Collections.emptyList();

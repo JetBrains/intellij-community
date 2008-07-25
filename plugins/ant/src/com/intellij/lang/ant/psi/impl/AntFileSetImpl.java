@@ -5,6 +5,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFilesProvider;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -34,7 +36,7 @@ public class AntFileSetImpl extends AntFilesProviderImpl{
   }
 
   @NotNull
-  protected List<File> getFiles(final AntPattern pattern) {
+  protected List<File> getFiles(final AntPattern pattern, final Set<AntFilesProvider> processed) {
     final File singleFile = getCanonicalFile(computeAttributeValue(getSourceElement().getAttributeValue("file")));
     if (singleFile == null || pattern.hasIncludePatterns()) {
       // if singleFile is specified, there are no implicit includes

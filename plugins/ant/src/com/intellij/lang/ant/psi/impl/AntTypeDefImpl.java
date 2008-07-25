@@ -36,6 +36,7 @@ import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -505,19 +506,20 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     
     final List<File> files = new ArrayList<File>();
+    final HashSet<AntFilesProvider> processed = new HashSet<AntFilesProvider>(); // aux collection 
     // check 'classpathref'
     for (PsiReference reference : getReferences()) {
       if (reference instanceof AntRefIdReference) {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof AntFilesProvider) {
-          files.addAll(((AntFilesProvider)resolved).getFiles());
+          files.addAll(((AntFilesProvider)resolved).getFiles(processed));
         }
       }
     }
     // check nested elements
     for (AntElement antElement : getChildren()) {
       if (antElement instanceof AntFilesProvider) {
-        files.addAll(((AntFilesProvider)antElement).getFiles());
+        files.addAll(((AntFilesProvider)antElement).getFiles(processed));
       }
     }
     

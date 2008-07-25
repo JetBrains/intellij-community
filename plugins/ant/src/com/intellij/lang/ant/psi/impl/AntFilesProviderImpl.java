@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -62,25 +63,34 @@ public class AntFilesProviderImpl extends AntStructuredElementImpl implements An
   }
 
   @NotNull
-  public final List<File> getFiles() {
+  public final List<File> getFiles(final Set<AntFilesProvider> processed) {
+    if (processed.contains(this)) {
+      return Collections.emptyList();
+    }
     List<File> result = myCachedFiles == null? null : myCachedFiles.get();
     if (result == null) {
-      result = getFilesImpl();
+      result = getFilesImpl(processed);
       myCachedFiles = new SoftReference<List<File>>(result);
     }
     return result;
   }
 
-  private List<File> getFilesImpl() {
-    final AntFilesProvider referenced = getReferencedProvider();
-    if (referenced != null) {
-      return referenced.getFiles();
+  private List<File> getFilesImpl(final Set<AntFilesProvider> processed) {
+    processed.add(this);
+    try {
+      final AntFilesProvider referenced = getReferencedProvider();
+      if (referenced != null) {
+        return referenced.getFiles(processed);
+      }
+      return getFiles(getPattern(), processed);
     }
-    return getFiles(getPattern());
+    finally {
+      processed.remove(this);
+    }
   }
 
   @NotNull
-  protected List<File> getFiles(AntPattern pattern) {
+  protected List<File> getFiles(AntPattern pattern, final Set<AntFilesProvider> processed) {
     return Collections.emptyList();
   }
   

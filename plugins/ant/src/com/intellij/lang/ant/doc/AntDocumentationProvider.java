@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 
 public class AntDocumentationProvider implements DocumentationProvider {
@@ -84,7 +85,7 @@ public class AntDocumentationProvider implements DocumentationProvider {
     }
     final AntElement antElement = (AntElement)elem;
     if (antElement instanceof AntFilesProvider) {
-      final List<File> list = ((AntFilesProvider)antElement).getFiles();
+      final List<File> list = ((AntFilesProvider)antElement).getFiles(new HashSet<AntFilesProvider>());
       if (list.size() > 0) {
         final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
         try {

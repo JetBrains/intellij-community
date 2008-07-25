@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -16,5 +17,5 @@ import java.util.List;
 public interface AntFilesProvider {
   
   @NotNull
-  List<File> getFiles();
+  List<File> getFiles(final Set<AntFilesProvider> processed);
 }

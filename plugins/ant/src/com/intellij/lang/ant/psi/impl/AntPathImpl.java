@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -38,7 +39,7 @@ public class AntPathImpl extends AntFilesProviderImpl{
   }
 
   @NotNull
-  protected List<File> getFiles(final AntPattern pattern) {
+  protected List<File> getFiles(final AntPattern pattern, final Set<AntFilesProvider> processed) {
     final List<File> files = new ArrayList<File>();
     final File baseDir = getCanonicalFile(".");
     
@@ -55,7 +56,7 @@ public class AntPathImpl extends AntFilesProviderImpl{
     final AntElement[] children = getChildren();
     for (AntElement child : children) {
       if (child instanceof AntFilesProvider) {
-        files.addAll(((AntFilesProvider)child).getFiles());
+        files.addAll(((AntFilesProvider)child).getFiles(processed));
       }
     }
     return files;
