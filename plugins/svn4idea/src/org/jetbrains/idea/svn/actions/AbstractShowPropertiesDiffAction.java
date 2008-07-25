@@ -64,8 +64,11 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
       }
 
       final VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
+      if (virtualFile == null) {
+        return false;
+      }
       final AbstractVcs vcs = ChangesUtil.getVcsForFile(virtualFile, project);
-      return virtualFile != null && (vcs != null) && SvnVcs.VCS_NAME.equals(vcs.getName());
+      return (vcs != null) && SvnVcs.VCS_NAME.equals(vcs.getName());
     }
   }
 
