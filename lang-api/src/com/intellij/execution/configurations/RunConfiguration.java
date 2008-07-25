@@ -46,4 +46,6 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
   Object getExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass);
 
   void setExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass, Object value);
+
+  int getUniqueID();
 }

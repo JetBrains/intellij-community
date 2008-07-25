@@ -187,7 +187,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (!myConfigurations.containsKey(configName)) { //do not add shared configuration twice
       myConfigurations.put(configName, settings);
     }
-    int id = getUniqueID(settings.getConfiguration());
+    int id = settings.getConfiguration().getUniqueID();
     mySharedConfigurations.put(id, shared);
     myMethod2CompileBeforeRun.put(id, method);
   }
@@ -196,13 +196,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return settings.getType().getDisplayName() + "." + settings.getName();
   }
 
-  public static int getUniqueID(RunConfiguration setting) {
-    return System.identityHashCode(setting);
-  }
-
   public RunConfiguration getConfigurationByUniqueID(int id) {
     for (RunConfiguration each : getAllConfigurations()) {
-      if (getUniqueID(each) == id) {
+      if (each.getUniqueID() == id) {
         return each;
       }
     }
@@ -328,7 +324,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     final Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
     template.writeExternal(configurationElement);
-    final Map<String, Boolean> methods = myMethod2CompileBeforeRun.get(getUniqueID(template.getConfiguration()));
+    final Map<String, Boolean> methods = myMethod2CompileBeforeRun.get(template.getConfiguration().getUniqueID());
     if (methods != null) {
       Element methodsElement = new Element(METHOD);
       for (String key : methods.keySet()) {
@@ -483,19 +479,19 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
 
   public boolean isConfigurationShared(final RunnerAndConfigurationSettingsImpl settings) {
-    Boolean shared = mySharedConfigurations.get(getUniqueID(settings.getConfiguration()));
+    Boolean shared = mySharedConfigurations.get(settings.getConfiguration().getUniqueID());
     if (shared == null) {
       final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(settings.getFactory());
-      shared = mySharedConfigurations.get(getUniqueID(template.getConfiguration()));
+      shared = mySharedConfigurations.get(template.getConfiguration().getUniqueID());
     }
     return shared != null && shared.booleanValue();
   }
 
   public Map<String, Boolean> getStepsBeforeLaunch(final RunConfiguration settings) {
-    Map<String, Boolean> method = myMethod2CompileBeforeRun.get(getUniqueID(settings));
+    Map<String, Boolean> method = myMethod2CompileBeforeRun.get(settings.getUniqueID());
     if (method == null) {
       final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(settings.getFactory());
-      method = myMethod2CompileBeforeRun.get(getUniqueID(template.getConfiguration()));
+      method = myMethod2CompileBeforeRun.get(template.getConfiguration().getUniqueID());
     }
     if (method == null) {
       method = new HashMap<String, Boolean>();
@@ -509,11 +505,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
-    mySharedConfigurations.put(getUniqueID(runConfiguration), shareConfiguration);
+    mySharedConfigurations.put(runConfiguration.getUniqueID(), shareConfiguration);
   }
 
   public void setCompileMethodBeforeRun(final RunConfiguration runConfiguration, Map<String, Boolean> method) {
-    myMethod2CompileBeforeRun.put(getUniqueID(runConfiguration), method);
+    myMethod2CompileBeforeRun.put(runConfiguration.getUniqueID(), method);
   }
 
   public void addConfiguration(final RunnerAndConfigurationSettingsImpl settings, final boolean isShared) {

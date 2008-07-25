@@ -15,20 +15,20 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author dyoma
@@ -59,6 +59,10 @@ public abstract class RunConfigurationBase implements RunConfiguration {
 
   public void setExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass, Object value) {
     myExtensionSettings.put(extensionClass, value);
+  }
+
+  public int getUniqueID() {
+    return System.identityHashCode(this);
   }
 
   public final ConfigurationFactory getFactory() {
