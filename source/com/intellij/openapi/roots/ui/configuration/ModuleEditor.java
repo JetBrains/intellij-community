@@ -1,7 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.extensions.Extensions;
@@ -15,9 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -48,7 +45,6 @@ public class ModuleEditor implements Place.Navigator {
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
 
   private static String ourSelectedTabName;
-  private static String ourSelectedViewKey;
 
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
@@ -61,10 +57,6 @@ public class ModuleEditor implements Place.Navigator {
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
 
-  private Disposable myRoot = new Disposable() {
-    public void dispose() {
-    }
-  };
   private History myHistory;
 
   private ProjectFacetsConfigurator myFacetsConfigurator;
@@ -77,9 +69,6 @@ public class ModuleEditor implements Place.Navigator {
     addChangeListener(facetsConfigurator);
     myModule = module;
     myName = module.getName();
-  }
-
-  public void setHistoryFacade(ModuleConfigurable configurable) {
   }
 
   public void init(final String selectedTab, History history) {
@@ -240,7 +229,7 @@ public class ModuleEditor implements Place.Navigator {
     return myGenericSettingsPanel;
   }
 
-  public void moduleCountChanged(int oldCount, int newCount) {
+  public void moduleCountChanged() {
     updateOrderEntriesInEditors();
   }
 
@@ -278,8 +267,6 @@ public class ModuleEditor implements Place.Navigator {
 
 
       myGenericSettingsPanel = null;
-
-      Disposer.dispose(myRoot);
 
       return myModifiableRootModel;
     }
@@ -330,10 +317,8 @@ public class ModuleEditor implements Place.Navigator {
   private class ModifiableRootModelInvocationHandler implements InvocationHandler {
     private final ModifiableRootModel myDelegateModel;
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
-      Arrays.asList(
-        new String[]{"addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
-                     "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType"}
-      ));
+      Arrays.asList("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
+                    "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType"));
 
     ModifiableRootModelInvocationHandler(ModifiableRootModel model) {
       myDelegateModel = model;
@@ -359,7 +344,7 @@ public class ModuleEditor implements Place.Navigator {
 
   private class LibraryTableInvocationHandler implements InvocationHandler {
     private final LibraryTable myDelegateTable;
-    @NonNls private final Set<String> myCheckedNames = new HashSet<String>(Arrays.asList(new String[]{"removeLibrary", /*"createLibrary"*/}));
+    @NonNls private final Set<String> myCheckedNames = new HashSet<String>(Arrays.asList("removeLibrary" /*,"createLibrary"*/));
 
     LibraryTableInvocationHandler(LibraryTable table) {
       myDelegateTable = table;

@@ -74,6 +74,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     if (myProject.isOpen()) {
       myReloadProjectRequest = new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           if (myReloadProjectRequest != this) {
             // obsolete, another request has already replaced this one
             return;

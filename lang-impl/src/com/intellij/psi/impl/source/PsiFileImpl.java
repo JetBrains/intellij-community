@@ -418,14 +418,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return roots;
   }
 
-  public <T> T getCopyableUserData(Key<T> key) {
-    return getCopyableUserDataImpl(key);
-  }
-
-  public <T> void putCopyableUserData(Key<T> key, T value) {
-    putCopyableUserDataImpl(key, value);
-  }
-
   public boolean isPhysical() {
     // TODO[ik] remove this shit with dummy file system
     return getViewProvider().isEventSystemEnabled();

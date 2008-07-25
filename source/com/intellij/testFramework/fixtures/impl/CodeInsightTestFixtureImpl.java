@@ -7,7 +7,10 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
@@ -36,7 +39,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -278,12 +280,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Nullable
   public PsiReference getReferenceAtCaretPosition(final String... filePaths) throws Throwable {
-    final RunResult<PsiReference> runResult = new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
+    new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
       protected void run(final Result<PsiReference> result) throws Throwable {
         configureByFilesInner(filePaths);
       }
-    }.execute();
-    runResult.throwException();
+    }.execute().throwException();
     return getFile().findReferenceAt(myEditor.getCaretModel().getOffset());
   }
 

@@ -7,7 +7,6 @@ import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -46,7 +45,6 @@ import java.util.List;
  *         Date: Dec 15, 2003
  */
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ModulesConfigurator");
   private final Project myProject;
   //private final ModuleStructureConfigurable myProjectRootConfigurable;
 
@@ -320,7 +318,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           Collections.sort(myModuleEditors, myModuleEditorComparator);
         }
       });
-      processModuleCountChanged(myModuleEditors.size() - 1, myModuleEditors.size());
+      processModuleCountChanged();
     }
     return module;
   }
@@ -378,14 +376,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     // destroyProcess editor
     final ModifiableRootModel model = selectedEditor.dispose();
     ModuleDeleteProvider.removeModule(moduleToRemove, model, modifiableRootModels, myModuleModel);
-    processModuleCountChanged(myModuleEditors.size() + 1, myModuleEditors.size());
+    processModuleCountChanged();
     return true;
   }
 
 
-  private void processModuleCountChanged(int oldCount, int newCount) {
+  private void processModuleCountChanged() {
     for (ModuleEditor moduleEditor : myModuleEditors) {
-      moduleEditor.moduleCountChanged(oldCount, newCount);
+      moduleEditor.moduleCountChanged();
     }
   }
 
@@ -426,7 +424,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
-                                                final @Nullable String tabNameToSelect) {
+                                                @Nullable final String tabNameToSelect) {
     final Project project = facet.getModule().getProject();
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {

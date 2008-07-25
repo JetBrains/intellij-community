@@ -82,9 +82,10 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     List<PsiReference> mergedReferences = new ArrayList<PsiReference>();
     processProvider(psiElement, myGlobalPathsProvider, mergedReferences, soft);
 
-    myStaticProvider.setEndingSlashNotAllowed(endingSlashNotAllowed);
-    myStaticProvider.setRelativePathsAllowed(relativePathsAllowed);
-    processProvider(psiElement, myStaticProvider, mergedReferences, soft);
+    StaticPathReferenceProvider staticProvider = new StaticPathReferenceProvider();
+    staticProvider.setEndingSlashNotAllowed(endingSlashNotAllowed);
+    staticProvider.setRelativePathsAllowed(relativePathsAllowed);
+    processProvider(psiElement, staticProvider, mergedReferences, soft);
 
     for (PathReferenceProvider provider : getProviders()) {
       processProvider(psiElement, provider, mergedReferences, soft);

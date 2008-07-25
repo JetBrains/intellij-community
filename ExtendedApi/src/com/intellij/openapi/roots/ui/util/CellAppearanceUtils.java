@@ -10,12 +10,8 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
@@ -43,7 +39,7 @@ public class CellAppearanceUtils {
   }
 
 
-  public static CellAppearance forVirtualFilePointer(VirtualFilePointer filePointer) {
+  private static CellAppearance forVirtualFilePointer(LightFilePointer filePointer) {
     return filePointer.isValid() ?
            forValidVirtualFile(filePointer.getFile()) :
            forInvalidVirtualFilePointer(filePointer);
@@ -55,7 +51,7 @@ public class CellAppearanceUtils {
            forInvalidVirtualFilePointer(new LightFilePointer(virtualFile.getUrl()));
   }
 
-  private static SimpleTextCellAppearance forInvalidVirtualFilePointer(VirtualFilePointer filePointer) {
+  private static SimpleTextCellAppearance forInvalidVirtualFilePointer(LightFilePointer filePointer) {
     return SimpleTextCellAppearance.invalid(filePointer.getPresentableUrl(), INVALID_ICON);
   }
 
@@ -167,21 +163,19 @@ public class CellAppearanceUtils {
   }
 
   public static SimpleTextCellAppearance formatRelativePath(ContentFolder folder, Icon icon) {
-    VirtualFilePointer contentFile = new LightFilePointer(folder.getContentEntry().getUrl());
-    VirtualFilePointer folderFile = new LightFilePointer(folder.getUrl());
-    if (!contentFile.isValid()) return forInvalidVirtualFilePointer(folderFile);
-    String contentPath = contentFile.getFile().getPath();
-    char separator = File.separatorChar;
+    LightFilePointer folderFile = new LightFilePointer(folder.getUrl());
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(folder.getContentEntry().getUrl());
+    if (file == null) return forInvalidVirtualFilePointer(folderFile);
+    String contentPath = file.getPath();
     String relativePath;
     SimpleTextAttributes textAttributes;
     if (!folderFile.isValid()) {
       textAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
       String absolutePath = folderFile.getPresentableUrl();
-      relativePath =
-      absolutePath.startsWith(contentPath) ? absolutePath.substring(contentPath.length()) : absolutePath;
+      relativePath = absolutePath.startsWith(contentPath) ? absolutePath.substring(contentPath.length()) : absolutePath;
     }
     else {
-      relativePath = VfsUtil.getRelativePath(folderFile.getFile(), contentFile.getFile(), separator);
+      relativePath = VfsUtil.getRelativePath(folderFile.getFile(), file, File.separatorChar);
       textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
     if (relativePath == null) relativePath = "";
@@ -197,9 +191,8 @@ public class CellAppearanceUtils {
     CompositeAppearance appearance = new CompositeAppearance();
     appearance.setIcon(jdk.getSdkType().getIcon());
     VirtualFile homeDirectory = jdk.getHomeDirectory();
-    SimpleTextAttributes attributes = (homeDirectory != null && homeDirectory.isValid())
-                                      ? createSimpleCellAttributes(selected)
-                                      : SimpleTextAttributes.ERROR_ATTRIBUTES;
+    SimpleTextAttributes attributes =
+        homeDirectory != null && homeDirectory.isValid() ? createSimpleCellAttributes(selected) : SimpleTextAttributes.ERROR_ATTRIBUTES;
     CompositeAppearance.DequeEnd ending = appearance.getEnding();
     ending.addText(name, attributes);
     String versionString = jdk.getVersionString();
