@@ -125,7 +125,7 @@ public class MavenEventsHandler extends DummyProjectComponent implements Persist
         RunManagerImpl runManager = (RunManagerImpl)RunManagerImpl.getInstance(myProject);
         RunConfiguration config = runManager.getConfigurationByUniqueName(type + "." + name);
         if (config != null) {
-          map.put(new Pair<String, Integer>(type, RunManagerImpl.getUniqueID(config)), task);
+          map.put(new Pair<String, Integer>(type, config.getUniqueID()), task);
         }
       }
     }
@@ -320,8 +320,7 @@ public class MavenEventsHandler extends DummyProjectComponent implements Persist
 
   static Pair<String, Integer> getKey(ConfigurationType type, RunConfiguration configuration) {
     if (configuration != null) {
-      return new Pair<String, Integer>(type.getDisplayName(),
-                                       RunManagerImpl.getUniqueID(configuration));
+      return new Pair<String, Integer>(type.getDisplayName(), configuration.getUniqueID());
     }
     else {
       return new Pair<String, Integer>(type.getDisplayName(), null);

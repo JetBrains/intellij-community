@@ -36,7 +36,10 @@ import com.theoryinpractice.testng.ui.TestNGResults;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class RerunFailedTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
@@ -189,6 +192,10 @@ public class RerunFailedTestsAction extends AnAction {
 
     public void setExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass, final Object value) {
       myConfiguration.setExtensionSettings(extensionClass, value);
+    }
+
+    public int getUniqueID() {
+      return myConfiguration.getUniqueID();
     }
   }
 }

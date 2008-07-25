@@ -188,5 +188,9 @@ public class RerunFailedTestsAction extends AnAction {
     public void setExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass, final Object value) {
       myConfiguration.setExtensionSettings(extensionClass, value);
     }
+
+    public int getUniqueID() {
+      return myConfiguration.getUniqueID();
+    }
   }
 }
