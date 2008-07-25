@@ -24,15 +24,15 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public String getStepName() {
-    return MavenEventsComponent.RUN_MAVEN_STEP;
+    return MavenEventsHandler.RUN_MAVEN_STEP;
   }
 
   public String getStepDescription(final RunConfiguration runConfiguration) {
-    return MavenEventsComponent.getInstance(myProject).getRunStepDescription(runConfiguration);
+    return MavenEventsHandler.getInstance(myProject).getRunStepDescription(runConfiguration);
   }
 
   public boolean hasTask(RunConfiguration configuration) {
-    return getState().getTask(configuration.getType(), configuration.getName()) != null;
+    return getEventsHandler().getTask(configuration.getType(), configuration) != null;
   }
 
   public boolean executeTask(final DataContext context, final RunConfiguration configuration) {
@@ -43,7 +43,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
                        EventsBundle.message("execute.before.launch.steps.title"),
                        true) {
           public void run(@NotNull ProgressIndicator indicator) {
-            final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
+            final MavenTask task = getEventsHandler().getTask(configuration.getType(), configuration);
             result[0] = task != null && getEventsHandler().execute(Arrays.asList(task), indicator);
           }
         };
@@ -53,9 +53,9 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
-    final MavenTask mavenTask = getState().getAssignedTask(from.getType(), from.getName());
+    final MavenTask mavenTask = getEventsHandler().getAssignedTask(from.getType(), from);
     if (mavenTask != null) {
-      getState().assignTask(to.getType(), to.getName(), mavenTask.clone());
+      getEventsHandler().assignTask(to.getType(), to, mavenTask.clone());
       // no need to update shortcut description actually, as the presentation of mavenTask should not change
     }
   }
@@ -69,14 +69,10 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public String configureStep(final RunConfiguration runConfiguration) {
-    return MavenEventsComponent.getInstance(myProject).configureRunStep(runConfiguration);
+    return MavenEventsHandler.getInstance(myProject).configureRunStep(runConfiguration);
   }
 
   private MavenEventsHandler getEventsHandler() {
     return myProject.getComponent(MavenEventsHandler.class);
-  }
-
-  public MavenEventsState getState() {
-    return getEventsHandler().getState();
   }
 }

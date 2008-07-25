@@ -140,7 +140,7 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
           }
           addedNames.add(configurationName);
           typeNode.add(new DefaultMutableTreeNode(
-            new ConfigurationDescriptor(type, configurationName, isAssigned(type, configurationName))));
+            new ConfigurationDescriptor(type, configuration, configurationName, isAssigned(type, configuration))));
         }
       }
       finally {
@@ -151,11 +151,11 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
     return root;
   }
 
-  abstract protected boolean isAssigned(ConfigurationType type, String configurationName);
+  abstract protected boolean isAssigned(ConfigurationType type, RunConfiguration configuration);
 
   abstract protected void clearAll();
 
-  abstract protected void assign (ConfigurationType type, String configurationName);
+  abstract protected void assign (ConfigurationType type, RunConfiguration configuration);
 
 
 
@@ -169,7 +169,7 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
       if (!descriptor.isChecked()) continue;
       if (descriptor instanceof DescriptorBase) {
         DescriptorBase descriptorBase = (DescriptorBase)descriptor;
-        assign ( descriptorBase.getConfigurationType(), descriptorBase.getName());
+        assign ( descriptorBase.getConfigurationType(), descriptorBase.getConfiguration());
       }
     }
 
@@ -190,9 +190,11 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
 
   private static abstract class DescriptorBase extends Descriptor {
     private final ConfigurationType myConfigurationType;
+    private final RunConfiguration myConfiguration;
 
-    public DescriptorBase(ConfigurationType type, boolean isChecked) {
+    public DescriptorBase(ConfigurationType type, RunConfiguration configuration, boolean isChecked) {
       myConfigurationType = type;
+      myConfiguration = configuration;
       setChecked(isChecked);
     }
 
@@ -202,13 +204,17 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
 
     @Nullable
     public abstract String getName();
+
+    public RunConfiguration getConfiguration() {
+      return myConfiguration;
+    }
   }
 
   private static final class ConfigurationTypeDescriptor extends DescriptorBase {
     private final Icon myIcon;
 
     public ConfigurationTypeDescriptor(ConfigurationType type, Icon icon, boolean isChecked) {
-      super(type, isChecked);
+      super(type, null, isChecked);
       myIcon = icon;
     }
 
@@ -225,8 +231,8 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
   private static final class ConfigurationDescriptor extends DescriptorBase {
     private final String myName;
 
-    public ConfigurationDescriptor(ConfigurationType type, String name, boolean isChecked) {
-      super(type, isChecked);
+    public ConfigurationDescriptor(ConfigurationType type, RunConfiguration configuration, String name, boolean isChecked) {
+      super(type, configuration, isChecked);
       myName = name;
     }
 

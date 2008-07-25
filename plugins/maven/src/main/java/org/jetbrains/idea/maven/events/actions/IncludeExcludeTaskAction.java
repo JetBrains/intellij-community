@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.events.MavenEventsState;
 import org.jetbrains.idea.maven.events.MavenTask;
 
 import java.util.Collection;
@@ -14,7 +13,7 @@ import java.util.Collection;
  */
 public abstract class IncludeExcludeTaskAction extends IncludeExcludeAction<MavenTask> {
   protected MavenTask getElement(AnActionEvent e) {
-    return MavenEventsState.getMavenTask(e.getDataContext());
+    return MavenEventsHandler.getMavenTask(e.getDataContext());
   }
 
   private MavenEventsHandler getEventsHandler(final AnActionEvent e) {

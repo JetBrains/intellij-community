@@ -7,7 +7,6 @@ import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.events.MavenEventsState;
 import org.jetbrains.idea.maven.events.MavenTask;
 
 /**
@@ -33,7 +32,7 @@ public class AssignShortcutAction extends AnAction {
 
   @Nullable
   private static String getGoalActionId(final AnActionEvent e, final Project project) {
-    final MavenTask task = MavenEventsState.getMavenTask(e.getDataContext());
+    final MavenTask task = MavenEventsHandler.getMavenTask(e.getDataContext());
     if(task!=null){
       return project.getComponent(MavenEventsHandler.class).getActionId(task.pomPath, task.goal);
     }

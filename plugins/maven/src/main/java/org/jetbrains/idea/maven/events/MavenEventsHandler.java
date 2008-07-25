@@ -1,6 +1,10 @@
 package org.jetbrains.idea.maven.events;
 
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -14,35 +18,34 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
+import org.jetbrains.idea.maven.project.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Kaznacheev
  */
 @State(name = "MavenEventsHandler", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenEventsComponent extends DummyProjectComponent implements PersistentStateComponent<MavenEventsState>, MavenEventsHandler {
-
-  public static MavenEventsComponent getInstance(Project project) {
-    return (MavenEventsComponent)project.getComponent(MavenEventsHandler.class);
+public class MavenEventsHandler extends DummyProjectComponent implements PersistentStateComponent<MavenEventsState> {
+  public static MavenEventsHandler getInstance(Project project) {
+    return project.getComponent(MavenEventsHandler.class);
   }
 
   @NonNls private static final String ACTION_ID_PREFIX = "Maven_";
@@ -58,12 +61,13 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   private final MavenRunner myRunner;
 
   private MavenEventsState myState = new MavenEventsState();
+  private Map<Pair<String, Integer>, MavenTask> myBeforeRunMap = new HashMap<Pair<String, Integer>, MavenTask>();
 
   private MyKeymapListener myKeymapListener;
   private Collection<Listener> myListeners = new HashSet<Listener>();
   private TaskSelector myTaskSelector;
 
-  public MavenEventsComponent(final Project project, final MavenProjectsManager projectsManager, final MavenRunner runner) {
+  public MavenEventsHandler(final Project project, final MavenProjectsManager projectsManager, final MavenRunner runner) {
     myProject = project;
     myProjectsManager = projectsManager;
     myRunner = runner;
@@ -81,11 +85,52 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
 
   @NotNull
   public MavenEventsState getState() {
+    HashMap<String, MavenTask> map = new HashMap<String, MavenTask>();
+
+    for (Map.Entry<Pair<String, Integer>, MavenTask> each : myBeforeRunMap.entrySet()) {
+      Pair<String, Integer> key = each.getKey();
+      String type = key.first;
+      Integer configID = key.second;
+      MavenTask task = each.getValue();
+
+      if (configID == null) {
+        map.put(type, task);
+      }
+      else {
+        RunManagerImpl runManager = (RunManagerImpl)RunManagerImpl.getInstance(myProject);
+        RunConfiguration config = runManager.getConfigurationByUniqueID(configID);
+        if (config != null) {
+          map.put(type + "#" + config.getName(), task);
+        }
+      }
+    }
+    myState.beforeRun = map;
     return myState;
   }
 
   public void loadState(MavenEventsState state) {
+    HashMap<Pair<String, Integer>, MavenTask> map = new HashMap<Pair<String, Integer>, MavenTask>();
+
+    for (Map.Entry<String, MavenTask> each : state.beforeRun.entrySet()) {
+      String key = each.getKey();
+      MavenTask task = each.getValue();
+      int delimIndex = key.indexOf("#");
+      if (delimIndex == -1) { // configurationType
+        map.put(new Pair<String, Integer>(key, null), task);
+      }
+      else {
+        String type = key.substring(0, delimIndex);
+        String name = key.substring(delimIndex + 1);
+
+        RunManagerImpl runManager = (RunManagerImpl)RunManagerImpl.getInstance(myProject);
+        RunConfiguration config = runManager.getConfigurationByUniqueName(type + "." + name);
+        if (config != null) {
+          map.put(new Pair<String, Integer>(type, RunManagerImpl.getUniqueID(config)), task);
+        }
+      }
+    }
     myState = state;
+    myBeforeRunMap = map;
   }
 
   public boolean execute(@NotNull Collection<MavenTask> mavenTasks, ProgressIndicator indicator) {
@@ -126,7 +171,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     appendIf(stringBuilder, shortcutString != null, shortcutString);
     appendIf(stringBuilder, myState.beforeCompile.contains(mavenTask), BEFORE_MAKE);
     appendIf(stringBuilder, myState.afterCompile.contains(mavenTask), AFTER_MAKE);
-    appendIf(stringBuilder, myState.hasAssginments(mavenTask), BEFORE_RUN);
+    appendIf(stringBuilder, hasAssginments(mavenTask), BEFORE_RUN);
 
     return stringBuilder.length() == 0 ? null : stringBuilder.toString();
   }
@@ -171,7 +216,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
       return null;
     }
 
-    final MavenTask mavenTask = myState.getTask(runConfiguration.getType(), runConfiguration.getName());
+    final MavenTask mavenTask = getTask(runConfiguration.getType(), runConfiguration);
 
     if (!myTaskSelector.select(project, mavenTask != null ? mavenTask.pomPath : null, mavenTask != null ? mavenTask.goal : null,
                                EventsBundle.message("maven.event.select.goal.title"))) {
@@ -181,14 +226,14 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     final String pomPath = myTaskSelector.getSelectedPomPath();
     if (pomPath != null) {
       final MavenTask newMavenTask = new MavenTask(pomPath, myTaskSelector.getSelectedGoal());
-      if (!myState.isAssignedForType(runConfiguration.getType(), newMavenTask)) {
-        myState.assignTask(runConfiguration.getType(), runConfiguration.getName(), newMavenTask);
+      if (!isAssignedForType(runConfiguration.getType(), newMavenTask)) {
+        assignTask(runConfiguration.getType(), runConfiguration, newMavenTask);
         updateTaskShortcuts(newMavenTask);
       }
       return newMavenTask;
     }
 
-    myState.clearAssignment(runConfiguration.getType(), runConfiguration.getName());
+    clearAssignment(runConfiguration.getType(), runConfiguration);
     updateShortcuts(null);
     return null;
   }
@@ -213,12 +258,12 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return MavenEventsComponent.this.execute(getState().beforeCompile, context.getProgressIndicator());
+        return MavenEventsHandler.this.execute(getState().beforeCompile, context.getProgressIndicator());
       }
     });
     compilerManager.addAfterTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return MavenEventsComponent.this.execute(getState().afterCompile, context.getProgressIndicator());
+        return MavenEventsHandler.this.execute(getState().afterCompile, context.getProgressIndicator());
       }
     });
 
@@ -230,7 +275,80 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   }
 
   public String getRunStepDescription(final RunConfiguration runConfiguration) {
-    return getDescription(myState.getTask(runConfiguration.getType(), runConfiguration.getName()));
+    return getDescription(getTask(runConfiguration.getType(), runConfiguration));
+  }
+
+  public MavenTask getAssignedTask(ConfigurationType type, RunConfiguration config) {
+    return myBeforeRunMap.get(getKey(type, config));
+  }
+
+  MavenTask getTask(ConfigurationType type, RunConfiguration config) {
+    final MavenTask task = getAssignedTask(type, config);
+    return task != null ? task : getAssignedTask(type, null);
+  }
+
+  public boolean hasAssginments(MavenTask task) {
+    return myBeforeRunMap.containsValue(task);
+  }
+
+  public boolean isAssignedForType(ConfigurationType type, MavenTask mavenTask) {
+    return mavenTask.equals(getAssignedTask(type, null));
+  }
+
+  public void assignTask(ConfigurationType type, RunConfiguration config, MavenTask mavenTask) {
+    myBeforeRunMap.put(getKey(type, config), mavenTask);
+  }
+
+  public void clearAssignment(ConfigurationType type, RunConfiguration config) {
+    myBeforeRunMap.remove(getKey(type, config));
+  }
+
+  public void clearAssignments(MavenTask task) {
+    final Collection<Pair<String, Integer>> keysToRemove = new ArrayList<Pair<String, Integer>>();
+    final Collection<String> oldKeysToRemove = new ArrayList<String>();
+
+    for (Map.Entry<Pair<String, Integer>, MavenTask> each : myBeforeRunMap.entrySet()) {
+      if (each.getValue().equals(task)) {
+        keysToRemove.add(each.getKey());
+      }
+    }
+
+    for (Pair<String, Integer> each : keysToRemove) {
+      myBeforeRunMap.remove(each);
+    }
+  }
+
+  static Pair<String, Integer> getKey(ConfigurationType type, RunConfiguration configuration) {
+    if (configuration != null) {
+      return new Pair<String, Integer>(type.getDisplayName(),
+                                       RunManagerImpl.getUniqueID(configuration));
+    }
+    else {
+      return new Pair<String, Integer>(type.getDisplayName(), null);
+    }
+  }
+
+  static String getOldVersionKey(ConfigurationType type, RunConfiguration configuration) {
+    if (configuration != null) {
+      return type.getDisplayName() + "#" + configuration.getName();
+    }
+    else {
+      return type.getDisplayName();
+    }
+  }
+
+  @Nullable
+  public static MavenTask getMavenTask(DataContext dataContext) {
+    if (dataContext != null) {
+      final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      if (virtualFile != null && MavenConstants.POM_XML.equals(virtualFile.getName())) {
+        final List<String> goals = MavenDataKeys.MAVEN_GOALS_KEY.getData(dataContext);
+        if (goals != null && goals.size() == 1) {
+          return new MavenTask(virtualFile.getPath(), goals.get(0));
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -289,7 +407,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     }
   }
 
-  private class MyProjectStateListener implements MavenProjectsManager.Listener  {
+  private class MyProjectStateListener implements MavenProjectsManager.Listener {
 
     boolean updateScheduled;
     private final Project myProject;
@@ -340,5 +458,17 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
         });
       }
     }
+  }
+
+  public static interface Listener {
+    void updateShortcuts(@Nullable String actionId);
+  }
+
+  public static interface TaskSelector {
+    boolean select(Project project, @Nullable String pomPath, @Nullable String goal, @NotNull String title);
+
+    String getSelectedPomPath();
+
+    String getSelectedGoal();
   }
 }
