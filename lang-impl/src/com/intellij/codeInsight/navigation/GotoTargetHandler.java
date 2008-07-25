@@ -27,15 +27,16 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
 
     Pair<PsiElement, PsiElement[]> sourceAndTarget = getSourceAndTargetElements(editor, file);
-    show(editor, sourceAndTarget.first, sourceAndTarget.second);
+    show(project, editor, file, sourceAndTarget.first, sourceAndTarget.second);
   }
 
   protected abstract String getFeatureUsedKey();
 
   protected abstract Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  protected void show(Editor editor, final PsiElement sourceElement, final PsiElement[] elements) {
+  private void show(Project project, Editor editor, PsiFile file, final PsiElement sourceElement, final PsiElement[] elements) {
     if (elements == null || elements.length == 0) {
+      handleNoVariansCase(project, editor, file);
       return;
     }
 
@@ -92,6 +93,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   protected boolean shouldSortResult() {
     return true;
+  }
+
+  protected void handleNoVariansCase(Project project, Editor editor, PsiFile file) {
   }
 
   protected abstract String getChooserInFileTitleKey(PsiElement sourceElement);

@@ -1,9 +1,10 @@
-package com.intellij.codeInsight.intention.impl.createTest;
+package com.intellij.testIntegration.createTest;
 
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.module.Module;
+import com.intellij.testIntegration.CreateTestProvider;
 
 public abstract class CreateTestBaseProvider implements CreateTestProvider {
   public boolean isLibraryAttached(Module m) {

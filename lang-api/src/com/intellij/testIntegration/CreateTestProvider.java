@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.intention.impl.createTest;
+package com.intellij.testIntegration;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;

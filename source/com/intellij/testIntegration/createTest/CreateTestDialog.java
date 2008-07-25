@@ -1,6 +1,7 @@
-package com.intellij.codeInsight.intention.impl.createTest;
+package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
+import com.intellij.testIntegration.CreateTestProvider;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.ide.util.*;
