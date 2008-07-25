@@ -217,8 +217,6 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
 
     fireRefreshFinished();
     fireRefreshFinished();
-
-    assertExtraRefreshFinishWillFail();
   }
 
   @Test
@@ -232,10 +230,8 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     fireRefreshFinished();
     fireRefreshFinished();
 
-    assertExtraRefreshFinishWillFail();
-
     // This is not the ideal case: ideally, if we started inside a refresh we would
-    // treat all the changes as external and merge them into one changeset.
+    // consider all the changes as external and merge them into one changeset.
     // But since it is qute hard to implement and the situation ir rather uncommon
     // I leave it as it is.
     List<Change> changes = vcs.getChangeList().getChanges();
@@ -252,8 +248,6 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
 
     fireRefreshFinished();
     fireRefreshFinished();
-
-    assertExtraRefreshFinishWillFail();
   }
 
   private void assertExtraRefreshFinishWillFail() {
