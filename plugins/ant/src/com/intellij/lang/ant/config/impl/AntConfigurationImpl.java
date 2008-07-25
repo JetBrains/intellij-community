@@ -451,7 +451,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         Element eventElement = new Element(EXECUTE_ON_ELEMENT);
         eventElement.setAttribute(EVENT_ELEMENT, event.getTypeId());
         eventElement.setAttribute(TARGET_ELEMENT, pair.second);
-        event.writeExternal(eventElement);
+        event.writeExternal(eventElement, getProject());
         if (events == null) {
           events = new ArrayList<Element>();
         }
@@ -497,16 +497,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return runTargetSynchronously(context, foundEvent);
   }
 
-  public AntBuildTarget getTargetForBeforeRunEvent(ConfigurationType type, String runConfigurationName) {
-    ExecutionEvent event = new ExecuteBeforeRunEvent(type, runConfigurationName);
-    return getTargetForEvent(event);
+  public AntBuildTarget getTargetForBeforeRunEvent(RunConfiguration configuration) {
+    return getTargetForEvent(new ExecuteBeforeRunEvent(configuration));
   }
 
-  public void setTargetForBeforeRunEvent(final AntBuildFile buildFile,
-                                         final String targetName,
-                                         ConfigurationType type,
-                                         String runConfigurationName) {
-    setTargetForEvent(buildFile, targetName, new ExecuteBeforeRunEvent(type, runConfigurationName));
+  public void setTargetForBeforeRunEvent(AntBuildFile buildFile,
+                                         String targetName,
+                                         RunConfiguration configuration) {
+    setTargetForEvent(buildFile, targetName, new ExecuteBeforeRunEvent(configuration));
   }
 
   private AntBuildModelBase createModel(final AntBuildFile buildFile) {
@@ -728,7 +726,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                         }
                       }
                       if (event != null) {
-                        event.readExternal(e);
+                        event.readExternal(e, getProject());
                         setTargetForEvent(buildFile, targetName, event);
                       }
                     }
@@ -820,16 +818,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final ConfigurationType type = configuration.getType();
     for (final ExecutionEvent e : getEventsByClass(ExecuteBeforeRunEvent.class)) {
       final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
-      final ConfigurationType eventConfigType = event.getConfigurationType();
-      if (eventConfigType != null && Comparing.strEqual(type.getId(), eventConfigType.getId())) {
-        if (event.getRunConfigurationName() == null) {
-          // run for any configuration of this type
-          return event;
-        }
-        if (event.getRunConfigurationName().equals(configuration.getName())) {
-          return event;
-        }
-      }
+      if (event.isFor(type) || event.isFor(configuration)) return event;
     }
     return null;
   }

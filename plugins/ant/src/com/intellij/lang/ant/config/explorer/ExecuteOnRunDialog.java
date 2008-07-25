@@ -11,7 +11,6 @@ import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.lang.ant.config.impl.ExecuteBeforeRunEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.StringSetSpinAllocator;
@@ -137,7 +136,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
     for (final ConfigurationType type : configurationFactories) {
       final Icon icon = type.getIcon();
       DefaultMutableTreeNode typeNode =
-        new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type, null)));
+        new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
       root.add(typeNode);
       final Set<String> addedNames = StringSetSpinAllocator.alloc();
       try {
@@ -150,7 +149,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
           }
           addedNames.add(configurationName);
           typeNode.add(new DefaultMutableTreeNode(
-            new ConfigurationDescriptor(type, configurationName, isConfigurationAssigned(type, configurationName))));
+            new ConfigurationDescriptor(configuration, isConfigurationAssigned(configuration))));
         }
       }
       finally {
@@ -162,14 +161,20 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
   }
 
 
-  private boolean isConfigurationAssigned(ConfigurationType type, String configurationName) {
+  private boolean isConfigurationAssigned(ConfigurationType type) {
     for (final ExecutionEvent event : AntConfigurationBase.getInstance(myProject).getEventsForTarget(myTarget)) {
       if (event instanceof ExecuteBeforeRunEvent) {
         ExecuteBeforeRunEvent beforeRunEvent = (ExecuteBeforeRunEvent)event;
-        if (type.equals(beforeRunEvent.getConfigurationType()) &&
-            Comparing.equal(configurationName, beforeRunEvent.getRunConfigurationName())) {
-          return true;
-        }
+        if (beforeRunEvent.isFor(type))  return true;
+      }
+    }
+    return false;
+  }
+  private boolean isConfigurationAssigned(RunConfiguration configuration) {
+    for (final ExecutionEvent event : AntConfigurationBase.getInstance(myProject).getEventsForTarget(myTarget)) {
+      if (event instanceof ExecuteBeforeRunEvent) {
+        ExecuteBeforeRunEvent beforeRunEvent = (ExecuteBeforeRunEvent)event;
+        if (beforeRunEvent.isFor(configuration))  return true;
       }
     }
     return false;
@@ -193,13 +198,13 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
       if (!descriptor.isChecked()) continue;
       if (descriptor instanceof ConfigurationTypeDescriptor) {
         ConfigurationTypeDescriptor configurationTypeDescriptor = (ConfigurationTypeDescriptor)descriptor;
-        ExecuteBeforeRunEvent event = new ExecuteBeforeRunEvent(configurationTypeDescriptor.getConfigurationFactory(), null);
+        ExecuteBeforeRunEvent event = new ExecuteBeforeRunEvent(configurationTypeDescriptor.getConfigurationFactory());
         antConfiguration.setTargetForEvent(myFile, myTarget.getName(), event);
       }
       else if (descriptor instanceof ConfigurationDescriptor) {
         ConfigurationDescriptor configurationDescriptor = (ConfigurationDescriptor)descriptor;
         ExecuteBeforeRunEvent event =
-          new ExecuteBeforeRunEvent(configurationDescriptor.getConfigurationFactory(), configurationDescriptor.getName());
+          new ExecuteBeforeRunEvent(configurationDescriptor.getConfiguration());
         antConfiguration.setTargetForEvent(myFile, myTarget.getName(), event);
       }
     }
@@ -239,21 +244,23 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
   }
 
   private static final class ConfigurationDescriptor extends Descriptor {
-    private final ConfigurationType myConfigurationType;
-    private final String myName;
+    private RunConfiguration myConfiguration;
 
-    public ConfigurationDescriptor(ConfigurationType type, String name, boolean isChecked) {
-      myConfigurationType = type;
-      myName = name;
+    public ConfigurationDescriptor(RunConfiguration configuration, boolean isChecked) {
+      myConfiguration = configuration;
       setChecked(isChecked);
     }
 
     public ConfigurationType getConfigurationFactory() {
-      return myConfigurationType;
+      return myConfiguration.getType();
     }
 
     public String getName() {
-      return myName;
+      return myConfiguration.getName();
+    }
+
+    public RunConfiguration getConfiguration() {
+      return myConfiguration;
     }
   }
 
