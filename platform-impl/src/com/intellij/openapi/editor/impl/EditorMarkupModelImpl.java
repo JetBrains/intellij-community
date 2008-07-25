@@ -55,7 +55,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   };
 
-  private @NotNull ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
+  @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
   private static int myMinMarkHeight = 3;
 
   private int offsetToLine(int offset) {
@@ -162,7 +162,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       else {
         final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-        return myEditorScrollbarTop + (int)(((float)lineNumber / lineCount) * myEditorTargetHeight);
+        return myEditorScrollbarTop + (int)((float)lineNumber / lineCount * myEditorTargetHeight);
       }
     }
 
@@ -538,7 +538,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       if (e.getY() < buttonHeight && myErrorStripeRenderer != null) {
         String tooltipMessage = myErrorStripeRenderer.getTooltipMessage();
-        showTooltip(e, myTooltipRendererProvider.calcTooltipRenderer(tooltipMessage));
+        if (tooltipMessage != null) {
+          showTooltip(e, myTooltipRendererProvider.calcTooltipRenderer(tooltipMessage));
+        }
         return;
       }
 
