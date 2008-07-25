@@ -16,8 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
@@ -27,10 +27,10 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
-import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -198,8 +198,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
       goNextLine(indentLevel, buffer);
       goNextLine(indentLevel, buffer);
     }
-    PsiClass aClass = getClasses()[0];
-    ((ClsElementImpl)aClass).appendMirrorText(0, buffer);
+    
+    final PsiClass[] classes = getClasses();
+    if (classes.length > 0) {
+      PsiClass aClass = classes[0];
+      ((ClsElementImpl)aClass).appendMirrorText(0, buffer);
+    }
   }
 
   public void setMirror(@NotNull TreeElement element) {
