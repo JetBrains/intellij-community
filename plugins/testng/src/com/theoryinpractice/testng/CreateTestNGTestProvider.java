@@ -1,6 +1,6 @@
 package com.theoryinpractice.testng;
 
-import com.intellij.codeInsight.intention.impl.createTest.CreateTestBaseProvider;
+import com.intellij.testIntegration.createTest.CreateTestBaseProvider;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
