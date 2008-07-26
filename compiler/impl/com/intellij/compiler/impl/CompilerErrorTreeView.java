@@ -38,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
-  public CompilerErrorTreeView(Project project) {
-    super(project, HelpID.COMPILER);
+  public CompilerErrorTreeView(Project project, Runnable rerunAction) {
+    super(project, HelpID.COMPILER, true, true, rerunAction);
   }
 
   protected void fillRightToolbarGroup(DefaultActionGroup group) {

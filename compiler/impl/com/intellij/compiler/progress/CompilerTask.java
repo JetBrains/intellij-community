@@ -78,6 +78,7 @@ public class CompilerTask extends Task.Backgroundable {
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
   private Runnable myCompileWork;
   private AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
+  private Runnable myRestartWork;
 
   public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
     super(project, contentName);
@@ -289,8 +290,9 @@ public class CompilerTask extends Task.Backgroundable {
     return 0;
   }
 
-  public void start(Runnable compileWork) {
+  public void start(Runnable compileWork, Runnable restartWork) {
     myCompileWork = compileWork;
+    myRestartWork = restartWork;
     queue();
   }
 
@@ -354,7 +356,11 @@ public class CompilerTask extends Task.Backgroundable {
       if (myErrorTreeView != null) {
         return;
       }
-      myErrorTreeView = new CompilerErrorTreeView(myProject);
+      myErrorTreeView = new CompilerErrorTreeView(
+          myProject,
+          myRestartWork
+      );
+      
       myErrorTreeView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
         public void stopProcess() {
           cancel();

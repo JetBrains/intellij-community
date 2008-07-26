@@ -162,7 +162,7 @@ public class CompileDriver {
       public void run() {
         status.set(doCompile(compileContext, false, false, false, getAllOutputDirectories(), true));
       }
-    });
+    }, null);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation finished");
@@ -322,6 +322,10 @@ public class CompileDriver {
             LOG.debug("COMPILATION FINISHED");
           }
         }
+      }
+    }, new Runnable() {
+      public void run() {
+        startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion, trackDependencies);
       }
     });
   }
@@ -1463,7 +1467,7 @@ public class CompileDriver {
           }
         }
       }
-    });
+    }, null);
   }
 
   private boolean executeCompileTasks(CompileContext context, boolean beforeTasks) {
