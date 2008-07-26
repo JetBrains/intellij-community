@@ -21,9 +21,9 @@ import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTreeBuilder;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTreeStructure;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeBuilder;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeStructure;
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
@@ -81,7 +81,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myLogFilesManager = new LogFilesManager(project, this);
 
     //noinspection HardCodedStringLiteral
-    myTestsRootNode = new RTestUnitTestProxy("[root]");
+    myTestsRootNode = new RTestUnitTestProxy("[root]", true);
 
     tree.attachToModel(this);
     final RTestUnitTreeStructure structure = new RTestUnitTreeStructure(project, myTestsRootNode);
@@ -193,7 +193,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
     myTabbedPane.removeTabAt(myAdditionalComponents.get(component).intValue());
     myAdditionalComponents.remove(component);
-    component.dispose();
+    Disposer.dispose(component);
   }
 
   public void startTesting() {
@@ -298,7 +298,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
       listener.onDispose();
     }
     myAnimator.dispose();
-    myTreeBuilder.dispose();
+    Disposer.dispose(myTreeBuilder);
     myLogFilesManager.unregisterFileMatcher();
   }
 

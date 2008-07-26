@@ -3,9 +3,9 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitNodeDescriptor;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitNodeDescriptor;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;

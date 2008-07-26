@@ -4,9 +4,9 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestTreeView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitNodeDescriptor;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitNodeDescriptor;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.testing.testunit.runner.properties;
+package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.ide.util.PropertiesComponent;

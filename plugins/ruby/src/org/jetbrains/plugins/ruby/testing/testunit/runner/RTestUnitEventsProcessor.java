@@ -1,17 +1,13 @@
-package org.jetbrains.plugins.ruby.testing.testunit.runner.model;
+package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
-import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author: Roman Chernyatchik
@@ -65,7 +61,7 @@ public class RTestUnitEventsProcessor {
       return;
     }
 
-    final RTestUnitTestProxy testProxy = new RTestUnitTestProxy(testName);
+    final RTestUnitTestProxy testProxy = new RTestUnitTestProxy(testName, false);
     myRunningTestsFullNameToProxy.put(fullName, testProxy);
 
     // Prerequisites
@@ -112,19 +108,11 @@ public class RTestUnitEventsProcessor {
       return;
     }
 
-    testProxy.setFailed();
+    testProxy.setTestFailed(localizedMessage, stackTrace);
 
 
     myFailedTestsSet.add(testProxy);
-
-    //TODO[romeo] move to state
-    testProxy.addLast(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(stackTrace + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-        //printer.print(localizedMessage + PrintableTestProxy.NEW_LINE + stackTrace + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-      }
-    });
-
+   
     // update progress bar
     updateProgress();
   }
@@ -134,12 +122,11 @@ public class RTestUnitEventsProcessor {
     final String fullTestName = getFullTestName(testName);
     final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
 
-    //TODO[romeo] move to state
-    testProxy.addLast(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(text, stdOut ? ConsoleViewContentType.NORMAL_OUTPUT : ConsoleViewContentType.ERROR_OUTPUT);
-      }
-    });
+    if (stdOut) {
+      testProxy.addStdOutput(text);
+    } else {
+      testProxy.addStdErr(text);
+    }
   }
 
   public void onTestsCount(final int count) {
@@ -175,8 +162,8 @@ public class RTestUnitEventsProcessor {
     return myFailedTestsSet;
   }
 
-  private RTestUnitTestProxy getProxyByFullTestName(final String testName) {
-    final RTestUnitTestProxy testProxy = myRunningTestsFullNameToProxy.get(testName);
+  protected RTestUnitTestProxy getProxyByFullTestName(final String fullTestName) {
+    final RTestUnitTestProxy testProxy = myRunningTestsFullNameToProxy.get(fullTestName);
     LOG.assertTrue(testProxy != null);
     return testProxy;
   }

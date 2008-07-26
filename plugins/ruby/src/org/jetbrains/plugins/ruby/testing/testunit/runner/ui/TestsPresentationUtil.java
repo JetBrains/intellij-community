@@ -5,8 +5,8 @@ import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.ruby.RBundle;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 
 import javax.swing.*;
 import java.text.NumberFormat;
@@ -67,14 +67,15 @@ public class TestsPresentationUtil {
       renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
       renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    } else if (!testProxy.wasRun()) {
+    } else if (!testProxy.wasLaunched()) {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.not.test.results"),
                       SimpleTextAttributes.ERROR_ATTRIBUTES);
     } else {
-      renderer.setIcon(PoolOfTestIcons.PASSED_ICON);
-      renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.all.tests.passed"), 
-                      SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.setIcon(PoolOfTestIcons.NOT_RAN);
+      renderer.append(RBundle.message(
+          "ruby.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
+                      SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 
@@ -92,7 +93,7 @@ public class TestsPresentationUtil {
              : TestsProgressAnimator.PAUSED_ICON;
     }
 
-    if (!testProxy.wasRun()) {
+    if (!testProxy.wasLaunched()) {
       return PoolOfTestIcons.NOT_RAN;
     }
 

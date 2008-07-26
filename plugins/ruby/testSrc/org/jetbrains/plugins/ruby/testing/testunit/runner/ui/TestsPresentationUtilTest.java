@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.model.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -20,6 +20,14 @@ import java.text.NumberFormat;
  */
 public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
   @NonNls private static final String FAKE_TEST_NAME = "my test";
+  private TestsPresentationUtilTest.MyRenderer myRenderer;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    myRenderer = new MyRenderer(false);
+  }
 
   public void testProgressText() {
     assertEquals("Running: 10 of 1  Failed: 1  ",
@@ -34,110 +42,97 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
   }
 
   public void testFormatTestProxyTest_NewTest() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
-    TestsPresentationUtil.formatTestProxy(proxy1, renderer1);
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
-    assertEquals(PoolOfTestIcons.NOT_RAN, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals(FAKE_TEST_NAME, renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_NewTestPaused() {
     //paused
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(true);
-    TestsPresentationUtil.formatTestProxy(proxy1, renderer1);
+    final MyRenderer pausedRenderer = new MyRenderer(true);
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, pausedRenderer);
 
-    assertEquals(PoolOfTestIcons.NOT_RAN, renderer1.getIcon());
-    assertEquals(1, renderer1.getFragments().size());
-    assertEquals(FAKE_TEST_NAME, renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertEquals(PoolOfTestIcons.NOT_RAN, pausedRenderer.getIcon());
+    assertEquals(1, pausedRenderer.getFragments().size());
+    assertEquals(FAKE_TEST_NAME, pausedRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, pausedRenderer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_Started() {
     //paused
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
-    proxy1.setStarted();
-    TestsPresentationUtil.formatTestProxy(proxy1, renderer1);
+    mySimpleTest.setStarted();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
-    assertIsAnimatorProgressIcon(renderer1.getIcon());
-    assertEquals(1, renderer1.getFragments().size());
-    assertEquals(FAKE_TEST_NAME, renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertIsAnimatorProgressIcon(myRenderer.getIcon());
+    assertEquals(1, myRenderer.getFragments().size());
+    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_StartedAndPaused() {
     //paused
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(true);
-    proxy1.setStarted();
-    TestsPresentationUtil.formatTestProxy(proxy1, renderer1);
+    final MyRenderer pausedRenderer = new MyRenderer(true);
 
-    assertEquals(TestsProgressAnimator.PAUSED_ICON, renderer1.getIcon());
-    assertEquals(1, renderer1.getFragments().size());
-    assertEquals(FAKE_TEST_NAME, renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    mySimpleTest.setStarted();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, pausedRenderer);
+
+    assertEquals(TestsProgressAnimator.PAUSED_ICON, pausedRenderer.getIcon());
+    assertEquals(1, pausedRenderer.getFragments().size());
+    assertEquals(FAKE_TEST_NAME, pausedRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, pausedRenderer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_Passed() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
-    proxy1.setStarted();
-    proxy1.setFinished();
-    TestsPresentationUtil.formatTestProxy(proxy1, renderer1);
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
-    assertEquals(PoolOfTestIcons.PASSED_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals(FAKE_TEST_NAME, renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_Failed() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
-    proxy1.setStarted();
-    proxy1.setFailed();
-    TestsPresentationUtil.formatTestProxy(proxy1, renderer1);
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "");
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
-    assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals(FAKE_TEST_NAME, renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
 
-    proxy1.setFinished();
-    TestsPresentationUtil.formatTestProxy(proxy1, renderer1);
-    assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+    assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
   }
 
   public void testFormatRootNodeWithChildren_Started() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
+    mySimpleTest.setStarted();
 
-    proxy1.setStarted();
+    TestsPresentationUtil.formatRootNodeWithChildren(mySimpleTest, myRenderer);
 
-    TestsPresentationUtil.formatRootNodeWithChildren(proxy1, renderer1);
-
-    assertIsAnimatorProgressIcon(renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("Running tests...", renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertIsAnimatorProgressIcon(myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("Running tests...", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Failed() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final RTestUnitTestProxy child = createTestProxy();
-    proxy1.addChild(child);
     final MyRenderer renderer1 = new MyRenderer(false);
-    proxy1.setStarted();
-    child.setStarted();
-    child.setFailed();
-    child.setFinished();
-    proxy1.setFailed();
 
-    TestsPresentationUtil.formatRootNodeWithChildren(proxy1, renderer1);
+    mySuite.addChild(mySimpleTest);
+    mySuite.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "");
+    mySimpleTest.setFinished();
+    mySuite.setTestFailed("", "");
+
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer1);
 
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragments());
@@ -145,74 +140,63 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
 
     final MyRenderer renderer2 = new MyRenderer(false);
-    TestsPresentationUtil.formatRootNodeWithChildren(proxy1, renderer2);
-    proxy1.setFinished();
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer2);
+    mySuite.setFinished();
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragments());
     assertEquals("Test Results", renderer1.getFragmentAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Passed() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final RTestUnitTestProxy child = createTestProxy();
-    proxy1.addChild(child);
-    final MyRenderer renderer1 = new MyRenderer(false);
-    proxy1.setStarted();
-    child.setStarted();
-    child.setFinished();
-    proxy1.setFinished();
+    mySuite.addChild(mySimpleTest);
+    mySuite.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
 
-    TestsPresentationUtil.formatRootNodeWithChildren(proxy1, renderer1);
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, myRenderer);
 
-    assertEquals(PoolOfTestIcons.PASSED_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("Test Results", renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("Test Results", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
   }
 
   public void testFormatRootNodeWithoutChildren() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
-    TestsPresentationUtil.formatRootNodeWithoutChildren(proxy1, renderer1);
-
-    assertEquals(PoolOfTestIcons.NOT_RAN, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("No Test Results.", renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("No Test Results.", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myRenderer.getAttribsAt(0));
 
   }
 
   public void testFormatRootNodeWithoutChildren_Started() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
-    proxy1.setStarted();
-    TestsPresentationUtil.formatRootNodeWithoutChildren(proxy1, renderer1);
+    mySimpleTest.setStarted();
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
-    assertIsAnimatorProgressIcon(renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("Instantiating tests...", renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertIsAnimatorProgressIcon(myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("Instantiating tests...", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
 
   }
 
   public void testFormatRootNodeWithoutChildren_Passed() {
-    final RTestUnitTestProxy proxy1 = createTestProxy();
-    final MyRenderer renderer1 = new MyRenderer(false);
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
-    proxy1.setStarted();
-    proxy1.setFinished();
-    TestsPresentationUtil.formatRootNodeWithoutChildren(proxy1, renderer1);
-
-    assertEquals(PoolOfTestIcons.PASSED_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("All Tests Passed.", renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("No tests were found.", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myRenderer.getAttribsAt(0));
 
   }
 
   protected RTestUnitTestProxy createTestProxy() {
-    return new RTestUnitTestProxy(FAKE_TEST_NAME);
+    return createTestProxy(FAKE_TEST_NAME);
   }
 
   private void assertIsAnimatorProgressIcon(final Icon icon) {

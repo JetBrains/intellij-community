@@ -1,11 +1,14 @@
-package org.jetbrains.plugins.ruby.testing.testunit.runner.model;
+package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.states.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,65 +21,34 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
   private List<RTestUnitTestProxy> myChildren;
   private RTestUnitTestProxy myParent;
 
-  private PassState myState = PassState.NOT_RUN;
+  private AbstractState myState = NotRunState.getInstance();
   private String myName;
 
-  private Boolean isDefectWasReallyFound = null; // null - is unset
 
   private Printer myPrinter = Printer.DEAF;
 
-  public RTestUnitTestProxy(final String testName) {
+  private final boolean myIsSuite;
+
+  public RTestUnitTestProxy(final String testName, final boolean isSuite) {
     myName = testName;
+    myIsSuite = isSuite;
   }
 
   public boolean isInProgress() {
     //final RTestUnitTestProxy parent = getParent();
 
-    return myState == PassState.STARTED;
+    return myState.isInProgress();
   }
 
   public boolean isDefect() {
-    if (isDefectWasReallyFound != null) {
-      return isDefectWasReallyFound.booleanValue();
-    }
-
-    // didn't pass
-    if (myState == PassState.FAILED) {
-      isDefectWasReallyFound = true;
-      return true;
-    }
-
-    //passed
-    if (myState == PassState.PASSED) {
-      isDefectWasReallyFound = false;
-      return false;
-    }
-
-    if (isLeaf()) {
-      // test in progress
-      return false;
-    }
-
-    // Test suit fails if any of its tests fails
-    final List<? extends RTestUnitTestProxy> children = getChildren();
-    for (RTestUnitTestProxy child : children) {
-      if (child.isDefect()) {
-        isDefectWasReallyFound = true;
-        return true;
-      }
-    }
-
-    if (myState == PassState.SUITE_FINISHED) {
-      //Test suite finished, we can cache result
-      isDefectWasReallyFound = false;
-    }
-    return false;
+    return myState.isDefect();
   }
 
   public boolean shouldRun() {
     return true;
   }
 
+  @Deprecated
   public int getMagnitude() {
     //TODO[romeo] what it is?
     return 0;
@@ -113,6 +85,10 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     return null;
   }
 
+  public boolean isSuite() {
+    return myIsSuite;
+  }
+
   public RTestUnitTestProxy getParent() {
     return myParent;
   }
@@ -135,23 +111,32 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
 
 
   public void setStarted() {
-    myState = PassState.STARTED;
+    myState = !myIsSuite ? TestInProgressState.TEST : new SuiteInProgressState(this);
   }
 
   public void setFinished() {
-    if (isLeaf()) {
+    if (!isSuite()) {
       // if isn't in other finished state (ignored, failed or passed)
-      if (myState == PassState.NOT_RUN || myState == PassState.STARTED) {
-        myState = PassState.PASSED;
+      if (myState.isFinal()) {
+        // we shouldn't fire new printable because final state
+        // has been already fired
+        return;
       }
+      myState = TestPassedState.INSTACE;
     } else {
       //Test Suite
-      myState = PassState.SUITE_FINISHED;
+      myState = isLeaf()
+                ? SuiteFinishedState.EMPTY_SUITE
+                : myState.isDefect() ? SuiteFinishedState.FAILED_SUITE : SuiteFinishedState.PASSED_SUITE;
     }
+    // prints final state additional info
+    fireOnNewPrintable(myState);
   }
 
-  public void setFailed() {
-    myState = PassState.FAILED;
+  public void setTestFailed(@NotNull final String localizedMessage,
+                            @NotNull final String stackTrace) {
+    myState = new TestFailedState(localizedMessage, stackTrace);
+    fireOnNewPrintable(myState);
   }
 
   public void setParent(final RTestUnitTestProxy parent) {
@@ -166,12 +151,8 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     return Collections.<RTestUnitTestProxy>emptyList();
   }
 
-  /**
-   * TODO[romeo] if wan't run is it deffect or not?
-   * @return
-   */
-  public boolean wasRun() {
-    return myState != PassState.NOT_RUN;
+  public boolean wasLaunched() {
+    return myState.wasLaunched();
   }
 
   public boolean isRoot() {
@@ -190,19 +171,44 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     }
   }
 
+  /**
+   * Prints this proxy and all it's chidren on ginven printer
+   * @param printer Printer
+   */
   public void printOn(final Printer printer) {
     super.printOn(printer);
     CompositePrintable.printAllOn(getChildren(), printer);
 
-    //TODO: Implement Tests State, that provide and formats additional output
+    //Tests State, that provide and formats additional output
     // (contains stactrace info, ignored tests, etc)
-    //myState.printOn(printer);
+    myState.printOn(printer);
   }
 
+  /**
+   * Stores printable information in internal buffer and notifies
+   * proxy's printer about new text available
+   * @param printable Printable info
+   */
   @Override
   public void addLast(final Printable printable) {
     super.addLast(printable);
     fireOnNewPrintable(printable);
+  }
+
+  public void addStdOutput(final String output) {
+    addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(output, ConsoleViewContentType.NORMAL_OUTPUT);
+      }
+    });
+  }
+
+  public void addStdErr(final String output) {
+    addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(output, ConsoleViewContentType.ERROR_OUTPUT);
+      }
+    });
   }
 
   @Override

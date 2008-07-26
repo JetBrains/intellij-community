@@ -1,8 +1,5 @@
-package org.jetbrains.plugins.ruby.testing.testunit.runner.model;
+package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
-import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.properties.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestTreeView;
@@ -22,10 +19,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final RTestsRunConfiguration runConfiguration = createRTestsRunConfiguration();
-
-    final RTestUnitConsoleProperties consoleProperties = new RTestUnitConsoleProperties(runConfiguration);
-    myConsole = new RTestUnitConsoleView(runConfiguration, consoleProperties);
+    myConsole = createRTestUnitConsoleView();
 
     final RTestUnitResultsForm resultsForm = myConsole.getResultsForm();
     myEventsProcessor = new RTestUnitEventsProcessor(resultsForm);
@@ -38,6 +32,10 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   protected void tearDown() throws Exception {
     myEventsProcessor.onFinishTesting();
     myConsole.dispose();
+
+    myTreeModel = null;
+    myConsole = null;
+    myEventsProcessor = null;
 
     super.tearDown();
   }
@@ -52,12 +50,12 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
 
     final RTestUnitNodeDescriptor nodeDescriptor =
         (RTestUnitNodeDescriptor)((DefaultMutableTreeNode)rootTreeNode).getUserObject();
-    assertTrue(!nodeDescriptor.expandOnDoubleClick());
+    assertFalse(nodeDescriptor.expandOnDoubleClick());
 
     final RTestUnitTestProxy rootProxy = RTestUnitTestTreeView.getTestProxyFor(rootTreeNode);
     assertNotNull(rootProxy);
 
-    assertTrue(rootProxy.wasRun());
+    assertTrue(rootProxy.wasLaunched());
     assertTrue(rootProxy.isInProgress());
     assertTrue(rootProxy.isLeaf());
 
@@ -80,7 +78,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy proxy =
         myEventsProcessor.getRunningTestsFullNameToProxy().get(fullName);
 
-    assertTrue(proxy != null);
+    assertNotNull(proxy);
     assertTrue(proxy.isInProgress());
 
     final Object rootTreeNode = myTreeModel.getRoot();
@@ -128,7 +126,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
         myEventsProcessor.getRunningTestsFullNameToProxy().get(fullName);
 
     assertTrue(proxy.isDefect());
-    assertTrue(!proxy.isInProgress());
+    assertFalse(proxy.isInProgress());
   }
 
   public void testFailed_Twice() {
@@ -153,11 +151,11 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     assertEquals(0, myEventsProcessor.getFailedTestsSet().size());
 
 
-    assertTrue(!proxy.isDefect());
-    assertTrue(!proxy.isInProgress());
+    assertFalse(proxy.isDefect());
+    assertFalse(proxy.isInProgress());
 
     //Tree
-     final Object rootTreeNode = myTreeModel.getRoot();
+    final Object rootTreeNode = myTreeModel.getRoot();
     assertEquals(1, myTreeModel.getChildCount(rootTreeNode));
     final RTestUnitTestProxy rootProxy = RTestUnitTestTreeView.getTestProxyFor(rootTreeNode);
     assertNotNull(rootProxy);
@@ -176,21 +174,24 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   //
   //}
 
-  public void testTestingFinished() {
+  public void testTestingFinished_EmptySuite() {
     myEventsProcessor.onFinishTesting();
-    assertTrue(myEventsProcessor.getEndTime() > 0);
 
     //Tree
-     final Object rootTreeNode = myTreeModel.getRoot();
+    final Object rootTreeNode = myTreeModel.getRoot();
     assertEquals(0, myTreeModel.getChildCount(rootTreeNode));
     final RTestUnitTestProxy rootProxy = RTestUnitTestTreeView.getTestProxyFor(rootTreeNode);
     assertNotNull(rootProxy);
 
-    assertTrue(!rootProxy.isInProgress());
-    assertTrue(!rootProxy.isDefect());
+    assertFalse(rootProxy.isInProgress());
+    assertTrue(rootProxy.isDefect());
   }
 
-  public void testTestingFinished_withDefect() {
+  public void testTestingFinished_EndTime() {
+    myEventsProcessor.onFinishTesting();
+    assertTrue(myEventsProcessor.getEndTime() > 0);
+  }
+  public void testTestingFinished_WithDefect() {
     myEventsProcessor.onTestStart("test");
     myEventsProcessor.onTestFailure("test", "", "");
     myEventsProcessor.onTestFinish("test");
@@ -199,12 +200,12 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     assertTrue(myEventsProcessor.getEndTime() > 0);
 
     //Tree
-     final Object rootTreeNode = myTreeModel.getRoot();
+    final Object rootTreeNode = myTreeModel.getRoot();
     assertEquals(1, myTreeModel.getChildCount(rootTreeNode));
     final RTestUnitTestProxy rootProxy = RTestUnitTestTreeView.getTestProxyFor(rootTreeNode);
     assertNotNull(rootProxy);
 
-    assertTrue(!rootProxy.isInProgress());
+    assertFalse(rootProxy.isInProgress());
     assertTrue(rootProxy.isDefect());
   }
 

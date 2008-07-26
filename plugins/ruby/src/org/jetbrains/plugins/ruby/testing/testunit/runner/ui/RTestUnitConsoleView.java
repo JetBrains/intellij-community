@@ -65,9 +65,9 @@ public class RTestUnitConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void dispose() {
-    super.dispose();
-
     Disposer.dispose(myResultsForm);
     myResultsForm = null;
+
+    super.dispose();
   }
 }

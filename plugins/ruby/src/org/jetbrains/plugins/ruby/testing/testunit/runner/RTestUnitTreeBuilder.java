@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.testing.testunit.runner.model;
+package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -19,8 +19,9 @@ public class RTestUnitTreeBuilder extends AbstractTestTreeBuilder {
   public RTestUnitTreeBuilder(final JTree tree, final AbstractTreeStructure structure) {
     super(tree,
           new DefaultTreeModel(new DefaultMutableTreeNode(structure.getRootElement())),
-                              structure,
-                              IndexComparator.INSTANCE);
+          structure,
+          IndexComparator.INSTANCE);
+    
     initRootNode();
   }
 
