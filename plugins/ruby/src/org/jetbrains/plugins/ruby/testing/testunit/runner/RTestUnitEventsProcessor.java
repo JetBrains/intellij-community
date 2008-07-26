@@ -2,7 +2,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import java.util.Set;
 public class RTestUnitEventsProcessor {
   private static final Logger LOG = Logger.getInstance(RTestUnitEventsProcessor.class.getName());
 
-  private final RTestUnitResultsForm myResultsForm;
+  private final TestResultsViewer myResultsViewer;
   private final Map<String, RTestUnitTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, RTestUnitTestProxy>();
 
   private int myTestsCurrentCount;
@@ -24,17 +24,21 @@ public class RTestUnitEventsProcessor {
   private long myEndTime;
 
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
+  private final TestSuiteStack mySuitesStack = new TestSuiteStack();
 
-  public RTestUnitEventsProcessor(final RTestUnitResultsForm resultsForm) {
-    myResultsForm = resultsForm;
+  public RTestUnitEventsProcessor(final TestResultsViewer resultsViewer) {
+    myResultsViewer = resultsViewer;
   }
 
   public void onStartTesting() {
     // prepare view
-    myResultsForm.startTesting();
+    myResultsViewer.startTesting();
 
     myStartTime = System.currentTimeMillis();
-    myResultsForm.getTestsRootNode().setStarted();
+
+    final RTestUnitTestProxy testsRootNode = myResultsViewer.getTestsRootNode();
+    mySuitesStack.pushSuite(testsRootNode);
+    testsRootNode.setStarted();
     updateProgress();
   }
 
@@ -46,9 +50,14 @@ public class RTestUnitEventsProcessor {
     myEndTime = System.currentTimeMillis();
     updateProgress();
 
-    myResultsForm.getTestsRootNode().setFinished();
+    final RTestUnitTestProxy testsRootNode = myResultsViewer.getTestsRootNode();
+    testsRootNode.setFinished();
+
     // update view
-    myResultsForm.finishTesting();
+    myResultsViewer.finishTesting();
+
+    mySuitesStack.popSuite(testsRootNode.getName());
+    LOG.assertTrue(mySuitesStack.getStackSize() == 0);
   }
 
   public void onTestStart(final String testName) {
@@ -61,7 +70,11 @@ public class RTestUnitEventsProcessor {
       return;
     }
 
+    // creates test
     final RTestUnitTestProxy testProxy = new RTestUnitTestProxy(testName, false);
+    final RTestUnitTestProxy parentSuite = mySuitesStack.getCurrentSuite();
+    testProxy.setParent(parentSuite);
+    // adds to running tests map
     myRunningTestsFullNameToProxy.put(fullName, testProxy);
 
     // Prerequisites
@@ -74,13 +87,24 @@ public class RTestUnitEventsProcessor {
     //Progress started
     testProxy.setStarted();
     // update tree
-    myResultsForm.addTestNode(testProxy, myTestsTotal, myTestsCurrentCount);
+    myResultsViewer.addTestNode(testProxy, myTestsTotal, myTestsCurrentCount);
     // update progress bar
     updateProgress();
   }
 
   public void onTestSuiteStart(final String suiteName) {
-    //TODO[romeo] implement
+    final RTestUnitTestProxy newSuite = new RTestUnitTestProxy(suiteName, true);
+
+    final RTestUnitTestProxy parentSuite = mySuitesStack.getCurrentSuite();
+    newSuite.setParent(parentSuite);
+
+    mySuitesStack.pushSuite(newSuite);
+
+    //Progress started
+    newSuite.setStarted();
+
+    //update tree
+    myResultsViewer.addSuiteNode(newSuite);
   }
 
   public void onTestFinish(final String testName) {
@@ -92,7 +116,8 @@ public class RTestUnitEventsProcessor {
   }
 
   public void onTestSuiteFinish(final String suiteName) {
-    //TODO[romeo] implement
+    final RTestUnitTestProxy mySuite = mySuitesStack.popSuite(suiteName);
+    mySuite.setFinished();
   }
 
   public void onTestFailure(final String testName,
@@ -169,7 +194,7 @@ public class RTestUnitEventsProcessor {
   }
 
   private void updateProgress() {
-    myResultsForm.updateStatusLabel(myStartTime, myEndTime, myTestsTotal,
-                                    myTestsCurrentCount, myFailedTestsSet);
+    myResultsViewer.updateStatusLabel(myStartTime, myEndTime, myTestsTotal,
+                                      myTestsCurrentCount, myFailedTestsSet);
   }  
 }

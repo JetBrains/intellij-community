@@ -5,6 +5,8 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.MockPrinter;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 
 /**
  * @author Roman Chernyatchik
@@ -18,11 +20,13 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myConsole = createRTestUnitConsoleView();
+    final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
+    final TestResultsViewer resultsViewer = new RTestUnitResultsForm(consoleProperties.getConfiguration(), consoleProperties);
 
-    myEventsProcessor = new RTestUnitEventsProcessor(myConsole.getResultsForm());
+    myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
+    myEventsProcessor = new RTestUnitEventsProcessor(resultsViewer);
+
     myEventsProcessor.onStartTesting();
-
     myMockResetablePrinter = new MockPrinter(true);
   }
 

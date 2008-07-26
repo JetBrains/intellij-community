@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestTreeView;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -19,11 +20,12 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myConsole = createRTestUnitConsoleView();
+    final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
+    final TestResultsViewer resultsViewer = new RTestUnitResultsForm(consoleProperties.getConfiguration(), consoleProperties);
 
-    final RTestUnitResultsForm resultsForm = myConsole.getResultsForm();
-    myEventsProcessor = new RTestUnitEventsProcessor(resultsForm);
-    myTreeModel = resultsForm.getTreeView().getModel();
+    myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
+    myEventsProcessor = new RTestUnitEventsProcessor(resultsViewer);
+    myTreeModel = ((RTestUnitResultsForm)resultsViewer).getTreeView().getModel();
 
     myEventsProcessor.onStartTesting();
   }
@@ -191,6 +193,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     myEventsProcessor.onFinishTesting();
     assertTrue(myEventsProcessor.getEndTime() > 0);
   }
+
   public void testTestingFinished_WithDefect() {
     myEventsProcessor.onTestStart("test");
     myEventsProcessor.onTestFailure("test", "", "");
@@ -215,5 +218,35 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     final long time = myEventsProcessor.getEndTime();
     myEventsProcessor.onFinishTesting();
     assertEquals(time, myEventsProcessor.getEndTime());
+  }
+
+  public void testSuiteStarted() {
+    assertEquals(0, myEventsProcessor.getTestsCurrentCount());
+    myEventsProcessor.onTestSuiteStart("suite1");
+    assertEquals(0, myEventsProcessor.getTestsCurrentCount());
+
+    //lets check that new tests have right parent
+    myEventsProcessor.onTestStart("test1");
+    final RTestUnitTestProxy test1 =
+        myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test1"));
+    assertEquals("suite1", test1.getParent().getName());
+
+    //lets check that new suits have righ parent
+    myEventsProcessor.onTestSuiteStart("suite2");
+    myEventsProcessor.onTestSuiteStart("suite3");
+    myEventsProcessor.onTestStart("test2");
+    final RTestUnitTestProxy test2 =
+        myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test2"));
+    assertEquals("suite3", test2.getParent().getName());
+    assertEquals("suite2", test2.getParent().getParent().getName());
+
+    myEventsProcessor.onTestFinish("test2");
+
+    //check that after finishing suite (suite3), current will be parent of finished suite (i.e. suite2)
+    myEventsProcessor.onTestSuiteFinish("suite3");
+    myEventsProcessor.onTestStart("test3");
+    final RTestUnitTestProxy test3 =
+        myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test3"));
+    assertEquals("suite2", test3.getParent().getName());
   }
 }

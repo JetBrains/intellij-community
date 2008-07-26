@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
@@ -39,7 +41,7 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConsoleManager, Disposable {
+public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConsoleManager, TestResultsViewer {
   @NonNls private static final String RTEST_UNIT_SPLITTER_PROPERTY = "RubyTestUnit.Splitter.Proportion";
 
   private JPanel myContentPane;
@@ -54,6 +56,9 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   //private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
+  /**
+   * Fake parent suite for all tests and suites
+   */
   private final RTestUnitTestProxy myTestsRootNode;
   private final RTestUnitTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
@@ -116,12 +121,32 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     tree.getSelectionModel().addTreeSelectionListener(listener);
   }
 
+  public void attachToProcess(final ProcessHandler processHandler) {
+    myRunProcess = processHandler;
+    
+    //attachStopLogConsoleTrackingListener
+    for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
+      if (component instanceof LogConsole){
+        ((LogConsole)component).attachStopLogConsoleTrackingListener(null);
+      }
+    }
+  }
+
   public JComponent getContentPane() {
     return myContentPane;
   }
 
   public void addTab(@NotNull final String tabTitle, @NotNull final Component component) {
     myTabbedPane.addTab(tabTitle, component);
+  }
+
+  public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {
+     addTestsTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(final TreeSelectionEvent e) {
+        final PrintableTestProxy selectedProxy =(PrintableTestProxy)getTreeView().getSelectedTest();
+        listener.onSelected(selectedProxy);
+      }
+    });
   }
 
   public void addLogConsole(@NotNull final String name, @NotNull final String path,
@@ -158,17 +183,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     });
   }
 
-  public void attachStopLogConsoleTrackingListeners(@NotNull final ProcessHandler process) {
-    myRunProcess = process;
-    for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
-      if (component instanceof LogConsole){
-        ((LogConsole)component).attachStopLogConsoleTrackingListener(process);
-      }
-    }
-  }
 
-
-  public void initLogConsole() {
+  public void initLogFilesManager() {
     myLogFilesManager.registerFileMatcher(myRunConfiguration);
     myLogFilesManager.initLogConsoles(myRunConfiguration, myRunProcess);
   }
@@ -196,6 +212,10 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     Disposer.dispose(component);
   }
 
+  /**
+   * Returns root node, fake parent suite for all tests and suites
+   * @return
+   */
   public void startTesting() {
     // Status line
     myProgressLine.setColor(ColorProgressBar.GREEN);
@@ -218,21 +238,32 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     LvcsHelper.addLabel(this);
   }
 
+  /**
+   * Adds test to tree and updates status line.
+   * Test proxy should be initialized, proxy parent must be some suite (already added to tree)
+   * If parent is null, then test will be added to tests root.
+   *
+   * @param testProxy Proxy
+   * @param testsTotal Total tests
+   * @param testsCurrentCount Current count
+   */
   public void addTestNode(final RTestUnitTestProxy testProxy,
-                         final int testsTotal, final int testsCurrentCount) {
+                          final int testsTotal, final int testsCurrentCount) {
     // update progress if total is set
     myProgressLine.setFraction(testsTotal != 0 ? (double)testsCurrentCount / testsTotal : 0);
 
-    // Tree
-    //TODO[romeo] suite instad of root node
-    myTreeBuilder.addItem(myTestsRootNode, testProxy);
-    myTreeBuilder.repaintWithParents(testProxy);
+    _addTestOrSuite(testProxy);
+  }
 
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
-      public void run() {
-        myAnimator.setCurrentTestCase(testProxy);
-      }
-    }, ModalityState.NON_MODAL);
+  /**
+   * Adds suite to tree
+   * Suite proxy should be initialized, proxy parent must be some suite (already added to tree)
+   * If parent is null, then suite will be added to tests root.
+   *
+   * @param newSuite Tests suite
+   */
+  public void addSuiteNode(final RTestUnitTestProxy newSuite) {
+    _addTestOrSuite(newSuite);
   }
 
   public RTestUnitTestProxy getTestsRootNode() {
@@ -302,6 +333,24 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myLogFilesManager.unregisterFileMatcher();
   }
 
+
+  private void _addTestOrSuite(@NotNull final RTestUnitTestProxy newTestOrSuite) {
+
+    RTestUnitTestProxy parentSuite = newTestOrSuite.getParent();
+    if (parentSuite == null) {
+      parentSuite = myTestsRootNode;
+    }
+    
+    // Tree
+    myTreeBuilder.addItem(parentSuite, newTestOrSuite);
+    myTreeBuilder.repaintWithParents(newTestOrSuite);
+
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        myAnimator.setCurrentTestCase(newTestOrSuite);
+      }
+    }, ModalityState.NON_MODAL);
+  }
 
 
   private static class MyAnimator extends TestsProgressAnimator {

@@ -4,7 +4,6 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunConfigurationFactory;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.TestUnitRunConfigurationType;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
 
 /**
  * @author Roman Chernyatchik
@@ -43,10 +42,9 @@ public abstract class BaseRUnitTestsTestCase extends LightIdeaTestCase {
     return new RTestsRunConfiguration(getProject(), factory, "name");
   }
 
-  protected RTestUnitConsoleView createRTestUnitConsoleView() {
+  protected RTestUnitConsoleProperties createConsoleProperties() {
     final RTestsRunConfiguration runConfiguration = createRTestsRunConfiguration();
 
-    final RTestUnitConsoleProperties consoleProperties = new RTestUnitConsoleProperties(runConfiguration);
-    return new RTestUnitConsoleView(runConfiguration, consoleProperties);
+    return new RTestUnitConsoleProperties(runConfiguration);
   }
 }

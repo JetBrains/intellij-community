@@ -82,7 +82,26 @@ public class TestsPresentationUtil {
   public static void formatTestProxy(final RTestUnitTestProxy testProxy,
                                      final RTestUnitTestTreeRenderer renderer) {
     renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
-    renderer.append(testProxy.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(testProxy.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  public static String getPresentableName(final RTestUnitTestProxy testProxy) {
+    final RTestUnitTestProxy parent = testProxy.getParent();
+    final String name = testProxy.getName();
+
+    if (parent != null) {
+      final String parentName = parent.getName();
+      if (name.startsWith(parentName)) {
+        final String presentationCandidate = name.substring(parentName.length());
+        if (presentationCandidate.startsWith(".")) {
+          return presentationCandidate.substring(1).trim();
+        }
+        return presentationCandidate.trim();
+      }
+    }
+
+    return name.trim();
+
   }
 
   private static Icon getIcon(final RTestUnitTestProxy testProxy,

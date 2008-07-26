@@ -22,6 +22,22 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertFalse(mySimpleTest.isDefect());
   }
 
+  public void testGetName() {
+    mySimpleTest = createTestProxy("newTest");
+    assertEquals("newTest", mySimpleTest.getName());
+
+    mySuite = createSuiteProxy("newSuite");
+    assertEquals("newSuite", mySuite.getName());
+
+    mySuite.setParent(mySimpleTest);
+    assertEquals("newTest", mySimpleTest.getName());
+  }
+
+  public void testGetName_trim() {
+    mySimpleTest = createTestProxy(" newTest ");
+    assertEquals(" newTest ", mySimpleTest.getName());
+  }
+
   public void testSuiteInstance() {
     mySuite = createSuiteProxy("newSuite");
 

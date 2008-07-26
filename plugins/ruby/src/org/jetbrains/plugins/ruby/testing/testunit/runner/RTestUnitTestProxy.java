@@ -9,6 +9,7 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.states.*;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestsPresentationUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,7 +140,7 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     fireOnNewPrintable(myState);
   }
 
-  public void setParent(final RTestUnitTestProxy parent) {
+  public void setParent(@Nullable final RTestUnitTestProxy parent) {
     myParent = parent;
   }
 
@@ -211,12 +212,16 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     });
   }
 
-  @Override
-  public String toString() {
-    return getName(); 
-  }
-
   private void fireOnNewPrintable(final Printable printable) {
     myPrinter.onNewAvaliable(printable);
+  }
+
+  public String getPresentableName() {
+    return TestsPresentationUtil.getPresentableName(this);
+  }
+
+  @Override
+  public String toString() {
+    return getPresentableName();
   }
 }

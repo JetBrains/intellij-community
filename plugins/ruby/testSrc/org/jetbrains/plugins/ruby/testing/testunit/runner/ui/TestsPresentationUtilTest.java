@@ -195,6 +195,51 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
 
   }
 
+  public void testGetPresentableName() {
+    //Test unit examples
+    assertProxyPresentation("testFirst", "MyRubyTest1", "MyRubyTest1.testFirst");
+    assertProxyPresentation("MyRubyTest1.testFirst", "/some/path/on/my/comp", "MyRubyTest1.testFirst");
+
+    //Spec example
+    assertProxyPresentation("should be beautifull", "World", "should be beautifull");
+
+    //Common example
+    assertProxyPresentation("some phrase", "Begin of", "Begin of some phrase");
+
+
+    //Bound examples
+    assertEquals("suite without parent",
+                 TestsPresentationUtil.getPresentableName(createSuiteProxy("suite without parent")));
+    assertEquals("test without parent",
+                 TestsPresentationUtil.getPresentableName(createTestProxy("test without parent")));
+    assertEquals("with spaces",
+                 TestsPresentationUtil.getPresentableName(createSuiteProxy("    with spaces  ")));
+
+  }
+
+  private void assertProxyPresentation(final String expectedPresentation, final String parentName,
+                                       final String childName) {
+    assertEquals(expectedPresentation,
+                 TestsPresentationUtil.getPresentableName(createChildSuiteOfParentSuite(parentName, childName)));
+    assertEquals(expectedPresentation,
+                 TestsPresentationUtil.getPresentableName(createChildTestOfSuite(parentName, childName)));
+  }
+
+  protected RTestUnitTestProxy createChildSuiteOfParentSuite(final String parentName, final String childName) {
+    final RTestUnitTestProxy parentSuite = createSuiteProxy(parentName);
+    final RTestUnitTestProxy childSuite = createTestProxy(childName);
+    parentSuite.addChild(childSuite);
+
+    return childSuite;
+  }
+
+  protected RTestUnitTestProxy createChildTestOfSuite(final String suiteName, final String childName) {
+    final RTestUnitTestProxy suiteProxy = createSuiteProxy(suiteName);
+    final RTestUnitTestProxy test = createTestProxy(childName);
+    suiteProxy.addChild(test);
+    return test;
+  }
+
   protected RTestUnitTestProxy createTestProxy() {
     return createTestProxy(FAKE_TEST_NAME);
   }
