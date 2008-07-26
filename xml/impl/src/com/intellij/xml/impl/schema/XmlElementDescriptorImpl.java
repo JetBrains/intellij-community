@@ -144,7 +144,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public TypeDescriptor getType(XmlElement context) {
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(context);
-    if (nsDescriptor == null) return null;
+    if (!(nsDescriptor instanceof XmlNSDescriptorImpl)) return null;
 
     TypeDescriptor type = ((XmlNSDescriptorImpl) nsDescriptor).getTypeDescriptor(myDescriptorTag);
     if (type == null) {
