@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,27 +30,24 @@ import org.jetbrains.annotations.NotNull;
 public class ConstantConditionalExpressionInspection
         extends BaseInspection {
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "constant.conditional.expression.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantConditionalExpressionVisitor();
-    }
-
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos) {
-        final PsiConditionalExpression exp =
+        final PsiConditionalExpression expression =
                 (PsiConditionalExpression)infos[0];
         return InspectionGadgetsBundle.message(
                 "constant.conditional.expression.problem.descriptor",
-                exp.getText(), calculateReplacementExpression(exp));
+                calculateReplacementExpression(expression));
     }
 
     static String calculateReplacementExpression(
@@ -67,6 +64,7 @@ public class ConstantConditionalExpressionInspection
         }
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ConstantConditionalFix();
     }
@@ -79,6 +77,7 @@ public class ConstantConditionalExpressionInspection
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiConditionalExpression expression =
@@ -87,6 +86,11 @@ public class ConstantConditionalExpressionInspection
                     calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);
         }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConstantConditionalExpressionVisitor();
     }
 
     private static class ConstantConditionalExpressionVisitor
