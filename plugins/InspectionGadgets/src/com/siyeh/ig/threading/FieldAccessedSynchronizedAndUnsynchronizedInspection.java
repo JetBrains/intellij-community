@@ -18,9 +18,12 @@ package com.siyeh.ig.threading;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,21 +37,21 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
     /** @noinspection PublicField*/
     public boolean countGettersAndSetters = false;
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "field.accessed.synchronized.and.unsynchronized.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "field.accessed.synchronized.and.unsynchronized.problem.descriptor");
     }
 
+    @Override
     @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
+    public JComponent createOptionsPanel() { return new SingleCheckboxOptionsPanel(
           InspectionGadgetsBundle.message(
                   "field.accessed.synchronized.and.unsynchronized.option"),
                 this, "countGettersAndSetters");
@@ -59,6 +62,12 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
         return true;
     }
 
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        return MakeFieldFinalFix.buildFix((PsiField)infos[0]);
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
     }
@@ -82,15 +91,15 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
                 }
                 final PsiClass containingClass = field.getContainingClass();
                 if(aClass.equals(containingClass)){
-                    registerFieldError(field);
+                    registerFieldError(field, field);
                 }
             }
         }
 
-        private boolean containsSynchronization(PsiClass aClass){
+        private boolean containsSynchronization(PsiElement context){
             final ContainsSynchronizationVisitor visitor =
                     new ContainsSynchronizationVisitor();
-            aClass.accept(visitor);
+            context.accept(visitor);
             return visitor.containsSynchronization();
         }
     }
