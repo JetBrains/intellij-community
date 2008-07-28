@@ -545,6 +545,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
+  private void processReferenceNode(final Element element, final PluginId pluginId) {
+    final AnAction action = processReferenceElement(element, pluginId);
+
+    for (final Object o : element.getChildren()) {
+      Element child = (Element)o;
+      if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
+        processAddToGroupNode(action, child, pluginId);
+      }
+    }
+  }
+
   private static Map<String, ResourceBundle> ourBundlesCache = new HashMap<String, ResourceBundle>();
 
   private static ResourceBundle getBundle(final ClassLoader loader, final String resBundleName) {
@@ -780,6 +791,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
           processSeparatorNode(null, child, pluginId);
+        }
+        else if (REFERENCE_ELEMENT_NAME.equals(name)) {
+          processReferenceNode(child, pluginId);
         }
         else {
           reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
