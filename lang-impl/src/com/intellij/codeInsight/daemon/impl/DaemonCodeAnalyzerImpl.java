@@ -293,7 +293,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myFileStatusMap;
   }
 
-  public ProgressIndicator getUpdateProgress() {
+  public synchronized ProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }
 
@@ -303,7 +303,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     boolean restart = toRestartAlarm && !myDisposed && myInitialized/* && myDaemonListeners.myIsFrameFocused*/;
     if (restart) {
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
-      //LOG.debug("restarted ",new Throwable());
     }
   }
 
@@ -320,7 +319,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       if (start) {
         indicator.start();
       }
-
     }
   }
 

@@ -19,9 +19,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Key;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
@@ -29,15 +29,10 @@ import com.intellij.openapi.util.Key;
  * @see EditorActionManager#getTypedAction()
  */
 public class TypedAction {
-
-  private static final Object TYPING_COMMAND_GROUP = Key.create("Typing");
-
   private TypedActionHandler myHandler;
-  private final TypedActionHandler myBaseHandler;
 
   public TypedAction() {
-    myBaseHandler = new Handler();
-    myHandler = myBaseHandler;
+    myHandler = new Handler();
   }
 
   private static class Handler implements TypedActionHandler {
@@ -93,7 +88,7 @@ public class TypedAction {
 
     Runnable command = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument()) {
           public void run() {
             Document doc = editor.getDocument();
             doc.startGuardedBlockChecking();
@@ -111,6 +106,6 @@ public class TypedAction {
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, "", TYPING_COMMAND_GROUP);
+    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
   }
 }

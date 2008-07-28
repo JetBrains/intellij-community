@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -203,7 +204,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
               }
             }
           }
-        }, null, null);
+        }, null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
       }
     });
   }

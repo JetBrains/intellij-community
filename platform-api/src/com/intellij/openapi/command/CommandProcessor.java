@@ -16,6 +16,7 @@
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
@@ -53,4 +54,10 @@ public abstract class CommandProcessor {
   public abstract boolean isUndoTransparentActionInProgress();
 
   public abstract void markCurrentCommandAsComplex(Project project);
+
+  public abstract void executeCommand(Project project,
+                             Runnable command,
+                             String name,
+                             Object groupId,
+                             UndoConfirmationPolicy undoConfirmationPolicy, Document document);
 }

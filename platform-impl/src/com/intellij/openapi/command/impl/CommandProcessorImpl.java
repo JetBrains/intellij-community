@@ -6,6 +6,7 @@ import com.intellij.openapi.command.*;
 import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -24,22 +25,24 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.CommandProcessorImpl");
 
   private static class CommandDescriptor {
-    public Runnable myCommand;
-    public Project myProject;
+    public final Runnable myCommand;
+    public final Project myProject;
     public String myName;
     public Object myGroupId;
-    public UndoConfirmationPolicy myUndoConfirmationPolicy;
+    public final Document myDocument;
+    public final UndoConfirmationPolicy myUndoConfirmationPolicy;
 
     public CommandDescriptor(Runnable command,
                              Project project,
                              String name,
                              Object groupId,
-                             UndoConfirmationPolicy undoConfirmationPolicy) {
+                             UndoConfirmationPolicy undoConfirmationPolicy, Document document) {
       myCommand = command;
       myProject = project;
       myName = name;
       myGroupId = groupId;
       myUndoConfirmationPolicy = undoConfirmationPolicy;
+      myDocument = document;
     }
   }
 
@@ -65,6 +68,14 @@ public class CommandProcessorImpl extends CommandProcessorEx {
                              final String name,
                              final Object groupId,
                              UndoConfirmationPolicy undoConfirmationPolicy) {
+    executeCommand(project, command, name, groupId, undoConfirmationPolicy, null);
+  }
+
+  public void executeCommand(Project project,
+                             final Runnable command,
+                             final String name,
+                             final Object groupId,
+                             UndoConfirmationPolicy undoConfirmationPolicy, Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project != null && project.isDisposed()) return;
 
@@ -78,7 +89,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     }
     Throwable throwable = null;
     try {
-      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy);
+      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy, document);
       fireCommandStarted();
       command.run();
     }
@@ -103,7 +114,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
       return null;
     }
 
-    myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy);
+    myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, null);
     fireCommandStarted();
     return myCurrentCommand;
   }
@@ -148,7 +159,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
   private void fireCommandFinished() {
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
-                                            myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
+                                            myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy, myCurrentCommand.myDocument);
     try {
       for (CommandListener listener : myListeners) {
         try {
@@ -266,7 +277,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   private void fireCommandStarted() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName, myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
+    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName, myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy, myCurrentCommand.myDocument);
     for (CommandListener listener : myListeners) {
       try {
         listener.commandStarted(event);

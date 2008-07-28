@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -236,7 +237,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
               }
             },
             "",
-            null
+            null, UndoConfirmationPolicy.DEFAULT, editor.getDocument()
           );
         }
       };

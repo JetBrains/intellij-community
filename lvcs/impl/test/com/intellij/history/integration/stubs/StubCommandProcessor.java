@@ -1,6 +1,7 @@
 package com.intellij.history.integration.stubs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -22,6 +23,11 @@ public class StubCommandProcessor extends CommandProcessor {
                              @Nls String name,
                              Object groupId,
                              UndoConfirmationPolicy undoConfirmationPolicy) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void executeCommand(Project project, Runnable command, String name, Object groupId, UndoConfirmationPolicy undoConfirmationPolicy,
+                             Document document) {
     throw new UnsupportedOperationException();
   }
 

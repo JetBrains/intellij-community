@@ -186,7 +186,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   private void doCommit(final Document document, final PsiFile excludeFile) {
     ApplicationManager.getApplication().runWriteAction(
-      new CommitToPsiFileAction() {
+      new CommitToPsiFileAction(document) {
         public void run() {
           if (isCommittingDocument(document)) return;
           document.putUserData(KEY_COMMITING, Boolean.TRUE);

@@ -16,6 +16,7 @@
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Document;
 
 import java.util.EventObject;
 
@@ -25,6 +26,7 @@ public class CommandEvent extends EventObject {
   private final String myCommandName;
   private final Object myCommandGropupId;
   private final UndoConfirmationPolicy myUndoConfirmationPolicy;
+  private final Document myDocument;
 
   public CommandEvent(CommandProcessor processor, Runnable command, Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
     this(processor, command, null, null, project, undoConfirmationPolicy);
@@ -35,12 +37,20 @@ public class CommandEvent extends EventObject {
                       String commandName,
                       Object commandGropupId,
                       Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
+    this(processor, command, commandName, commandGropupId, project, undoConfirmationPolicy, null);
+  }
+  public CommandEvent(CommandProcessor processor,
+                      Runnable command,
+                      String commandName,
+                      Object commandGropupId,
+                      Project project, UndoConfirmationPolicy undoConfirmationPolicy, Document document) {
     super(processor);
     myCommand = command;
     myCommandName = commandName;
     myCommandGropupId = commandGropupId;
     myProject = project;
     myUndoConfirmationPolicy = undoConfirmationPolicy;
+    myDocument = document;
   }
 
   public CommandProcessor getCommandProcessor() {
@@ -65,5 +75,9 @@ public class CommandEvent extends EventObject {
 
   public UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return myUndoConfirmationPolicy;
+  }
+
+  public Document getDocument() {
+    return myDocument;
   }
 }

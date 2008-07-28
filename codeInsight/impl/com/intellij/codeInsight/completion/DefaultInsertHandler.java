@@ -20,6 +20,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -579,7 +580,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
             clear();
           }
-        }, CompletionBundle.message("completion.smart.type.generate.anonymous.body"), null);
+        }, CompletionBundle.message("completion.smart.type.generate.anonymous.body"), null, UndoConfirmationPolicy.DEFAULT, myDocument);
       }
     });
   }

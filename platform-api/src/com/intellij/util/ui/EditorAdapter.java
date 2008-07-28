@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -92,29 +93,29 @@ public class EditorAdapter {
 
   private Runnable writingCommand(final Collection<Line> lines) {
     final Runnable command = new Runnable() {
-          public void run() {
+      public void run() {
 
-            Document document = myEditor.getDocument();
+        Document document = myEditor.getDocument();
 
-            StringBuffer buffer = new StringBuffer();
-            for (Line line : lines) {
-              buffer.append(line.getValue());
-            }
-            int endBefore = document.getTextLength();
-            int endBeforeLine = endBefore;
-            document.insertString(endBefore, buffer.toString());
-            for (Line line : lines) {
-              myEditor.getMarkupModel().addRangeHighlighter(endBeforeLine, endBeforeLine + line.getValue().length(),
-                                                            HighlighterLayer.ADDITIONAL_SYNTAX, line.getAttributes(),
-                                                            HighlighterTargetArea.EXACT_RANGE);
-              endBeforeLine += line.getValue().length();
-            }
-            shiftCursorToTheEndOfDocument();
-          }
-        };
+        StringBuilder buffer = new StringBuilder();
+        for (Line line : lines) {
+          buffer.append(line.getValue());
+        }
+        int endBefore = document.getTextLength();
+        int endBeforeLine = endBefore;
+        document.insertString(endBefore, buffer.toString());
+        for (Line line : lines) {
+          myEditor.getMarkupModel()
+              .addRangeHighlighter(endBeforeLine, endBeforeLine + line.getValue().length(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                                   line.getAttributes(), HighlighterTargetArea.EXACT_RANGE);
+          endBeforeLine += line.getValue().length();
+        }
+        shiftCursorToTheEndOfDocument();
+      }
+    };
     return new Runnable() {
       public void run() {
-        CommandProcessor.getInstance().executeCommand(myProject, command, "", null);
+        CommandProcessor.getInstance().executeCommand(myProject, command, "", null, UndoConfirmationPolicy.DEFAULT, myEditor.getDocument());
       }
     };
   }

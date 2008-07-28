@@ -17,10 +17,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -98,7 +95,9 @@ public class DaemonListeners {
     myDocumentListener = new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       public void beforeDocumentChange(final DocumentEvent e) {
-        if (!worthBothering(e.getDocument())) return; //no need to stop daemon if something happened in the console
+        if (!worthBothering(e.getDocument())) {
+          return; //no need to stop daemon if something happened in the console
+        }
 
         stopDaemon(true);
         UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
@@ -109,7 +108,9 @@ public class DaemonListeners {
     myCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
         Editor editor = e.getEditor();
-        if (!worthBothering(editor.getDocument())) return; //no need to stop daemon if something happened in the console
+        if (!worthBothering(editor.getDocument())) {
+          return; //no need to stop daemon if something happened in the console
+        }
 
         stopDaemon(true);
         IntentionHintComponent component = myDaemonCodeAnalyzer.getLastIntentionHint();
@@ -137,9 +138,10 @@ public class DaemonListeners {
       public void editorCreated(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
-        if (worthBothering(document)) {
-          myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
+        if (!worthBothering(document)) {
+          return;
         }
+        myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
@@ -206,7 +208,9 @@ public class DaemonListeners {
   }
 
   private boolean worthBothering(final Document document) {
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(document) != null;
+    if (document == null) return true;
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    return psiFile != null;
   }
 
   public void dispose() {
@@ -254,13 +258,26 @@ public class DaemonListeners {
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
       }
+      if (action instanceof DocumentRunnable) {
+        Document document = ((DocumentRunnable)action).getDocument();
+        if (!worthBothering(document)) {
+          return;
+        }
+      }
       stopDaemon(false);
     }
 
     public void writeActionFinished(Object action) {
-      if (!myDaemonCodeAnalyzer.getUpdateProgress().isRunning()) {
-        stopDaemon(true);
+      if (myDaemonCodeAnalyzer.getUpdateProgress().isRunning()) {
+        return;
       }
+      if (action instanceof DocumentRunnable) {
+        Document document = ((DocumentRunnable)action).getDocument();
+        if (!worthBothering(document)) {
+          return;
+        }
+      }
+      stopDaemon(true);
     }
   }
 
@@ -269,12 +286,10 @@ public class DaemonListeners {
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     public void commandStarted(CommandEvent event) {
-      Object id = event.getCommandGroupId();
-      Document affectedDocument = null;
-
-      if (id instanceof Document) affectedDocument = (Document)id;
-      if (id instanceof Ref && ((Ref)id).get() instanceof Document) affectedDocument = (Document)((Ref)id).get();
-      if (affectedDocument != null && !worthBothering(affectedDocument)) return;
+      Document affectedDocument = extractDocumentFromCommand(event);
+      if (!worthBothering(affectedDocument)) {
+        return;
+      }
 
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
       if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
@@ -284,16 +299,27 @@ public class DaemonListeners {
       stopDaemon(false);
     }
 
-    public void commandFinished(CommandEvent event) {
+    private Document extractDocumentFromCommand(CommandEvent event) {
+      Document affectedDocument = event.getDocument();
+      if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();
-      if (id instanceof Document && !worthBothering((Document)id)) return;
+
+      if (id instanceof Document) affectedDocument = (Document)id;
+      if (id instanceof Ref && ((Ref)id).get() instanceof Document) affectedDocument = (Document)((Ref)id).get();
+      return affectedDocument;
+    }
+
+    public void commandFinished(CommandEvent event) {
+      Document affectedDocument = extractDocumentFromCommand(event);
+      if (!worthBothering(affectedDocument)) {
+        return;
+      }
 
       if (myEscPressed) {
         myEscPressed = false;
-        if (id instanceof Document) {
-          Document document = (Document)id;
+        if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
-          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(document)) {
+          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument)) {
             stopDaemon(true);
           }
         }
@@ -339,8 +365,11 @@ public class DaemonListeners {
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {
-      if (LangDataKeys.PSI_FILE.getData(dataContext) == null) return; //no need to stop daemon if something happened in the console
-
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      //no need to stop daemon if something happened in the console
+      if (editor != null && !worthBothering(editor.getDocument())) {
+        return;
+      }
       stopDaemon(true);
     }
   }

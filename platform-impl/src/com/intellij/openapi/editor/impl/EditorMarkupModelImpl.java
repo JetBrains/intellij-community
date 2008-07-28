@@ -13,6 +13,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.*;
@@ -509,7 +510,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             doMouseClicked(e);
           }
         },
-        EditorBundle.message("move.caret.command.name"), getDocument()
+        EditorBundle.message("move.caret.command.name"), getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument()
       );
     }
 

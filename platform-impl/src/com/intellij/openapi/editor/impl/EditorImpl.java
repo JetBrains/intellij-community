@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -2256,7 +2257,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           processMousePressed(e);
         }
       };
-      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument());
+      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument());
     }
     else {
       processMousePressed(e);
@@ -2291,7 +2292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           processMouseReleased(e);
         }
       };
-      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument());
+      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument());
     }
     else {
       processMouseReleased(e);
@@ -2565,7 +2566,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void run() {
         processMouseDragged(e);
       }
-    }, "", MOUSE_DRAGGED_GROUP);
+    }, "", MOUSE_DRAGGED_GROUP, UndoConfirmationPolicy.DEFAULT, getDocument());
   }
 
   private void processMouseDragged(MouseEvent e) {
@@ -2991,7 +2992,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
               }
             }
-          }, EditorBundle.message("move.cursor.command.name"), getDocument());
+          }, EditorBundle.message("move.cursor.command.name"), getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument());
         }
       });
       myTimer.start();
@@ -3522,7 +3523,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             public void run() {
               ApplicationManager.getApplication().runWriteAction(runnable);
             }
-          }, "", getDocument());
+          }, "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument());
         }
       });
     }
@@ -3855,7 +3856,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           });
         }
-      }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY);
+      }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
 
       return true;
     }
@@ -3921,7 +3922,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             });
           }
-        }, EditorBundle.message("move.selection.command.name"), DND_COMMAND_KEY);
+        }, EditorBundle.message("move.selection.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
       }
 
       myDraggedRange = null;
@@ -4115,7 +4116,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (c == '\t') {
         int prevX = x;
         x = nextTabStop(x);
-        column += (x - prevX) / spaceSize;
+        column += ( (x - prevX) / spaceSize);
+        //column += Math.max(1, (x - prevX) / spaceSize);
       }
       else {
         x += charWidth(c, fontType);

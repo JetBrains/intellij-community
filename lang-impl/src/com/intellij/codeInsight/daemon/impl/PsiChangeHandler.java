@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +93,11 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
 
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document == null) return;
+
+    if (!file.getViewProvider().isPhysical()) {
+      fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()));
+      return;
+    }
 
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
