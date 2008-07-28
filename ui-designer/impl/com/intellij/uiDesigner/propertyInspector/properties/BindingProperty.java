@@ -34,7 +34,6 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +81,9 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    //TODO[anton,vova]: check identifier!!!
+    if (!JavaPsiFacade.getInstance(component.getProject()).getNameHelper().isIdentifier(value)) {
+      throw new Exception("Value '" + value + "' is not a valid identifier");
+    }
 
     final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     final String oldBinding = getValue(component);
