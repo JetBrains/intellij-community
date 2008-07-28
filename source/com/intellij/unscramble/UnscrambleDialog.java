@@ -334,7 +334,7 @@ public class UnscrambleDialog extends DialogWrapper{
         inAuxInfo = true;
       }
       if (inAuxInfo) {
-        builder.append(line).append("\n");
+        builder.append(line.trim()).append("\n");
         continue;
       }
       if (!first && mustHaveNewLineBefore(line)) {
@@ -345,7 +345,7 @@ public class UnscrambleDialog extends DialogWrapper{
       int i = builder.lastIndexOf("\n");
       CharSequence lastLine = i == -1 ? builder : builder.subSequence(i + 1, builder.length());
       if (lastLine.toString().matches("\\s*at") && !line.matches("\\s+.*")) builder.append(" "); // separate 'at' from file name
-      builder.append(line);
+      builder.append(line.trim());
     }
     return builder.toString();
   }
