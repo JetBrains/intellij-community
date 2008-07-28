@@ -1512,6 +1512,13 @@ class AbstractTreeUi {
       TreePath path = e.getPath();
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (!(node.getUserObject() instanceof NodeDescriptor)) return;
+
+      TreePath pathToSelect = null;
+      if (isSelectionInside(node)) {
+        pathToSelect = new TreePath(node.getPath());
+      }
+
+
       NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
       if (getBuilder().isDisposeOnCollapsing(descriptor)) {
         removeChildren(node);
@@ -1522,6 +1529,10 @@ class AbstractTreeUi {
         else {
           myTreeModel.reload(node);
         }
+      }
+
+      if (pathToSelect != null && myTree.isSelectionEmpty()) {
+        addSelectionPath(pathToSelect);
       }
     }
 
