@@ -190,11 +190,9 @@
       <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchActions" />
     </group>
 
-    <group id="XPathView.MainMenu.View">
-      <reference id="XPathView.Actions.ShowPath" />
-
+    <reference id="XPathView.Actions.ShowPath">
       <add-to-group group-id="CodeEditorViewGroup" anchor="after" relative-to-action="ShowErrorDescription" />
-    </group>
+    </reference>
 
     <!-- Editor Popup -->
     <group id="XPathView.EditorPopup">
