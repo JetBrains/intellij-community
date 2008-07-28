@@ -17,11 +17,10 @@ import java.util.*;
  * Date: 01-Feb-2006
  */
 public class LogFilesManager {
-
-  private Map<LogFileOptions, Set<String>> myLogFileManagerMap = new LinkedHashMap<LogFileOptions, Set<String>>();
-  private Map<LogFileOptions, RunConfigurationBase> myLogFileToConfiguration = new HashMap<LogFileOptions, RunConfigurationBase>();
-  private Runnable myUpdateRequest;
-  private LogConsoleManager myManager;
+  private final Map<LogFileOptions, Set<String>> myLogFileManagerMap = new LinkedHashMap<LogFileOptions, Set<String>>();
+  private final Map<LogFileOptions, RunConfigurationBase> myLogFileToConfiguration = new HashMap<LogFileOptions, RunConfigurationBase>();
+  private final Runnable myUpdateRequest;
+  private final LogConsoleManager myManager;
   private Alarm myUpdateAlarm = new Alarm();
 
   public LogFilesManager(final Project project, LogConsoleManager manager) {
@@ -62,7 +61,10 @@ public class LogFilesManager {
     }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        myUpdateAlarm.addRequest(myUpdateRequest, 300, ModalityState.NON_MODAL);
+        Alarm updateAlarm = myUpdateAlarm;
+        if (updateAlarm != null) {
+          updateAlarm.addRequest(myUpdateRequest, 300, ModalityState.NON_MODAL);
+        }
       }
     });
   }
