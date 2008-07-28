@@ -81,7 +81,10 @@ public class PackagingElementPropertiesComponent {
   }
 
   public void applyChanges() {
-    myElement.setPackagingMethod(getSelectedMethod());
+    PackagingMethod packagingMethod = getSelectedMethod();
+    if (packagingMethod != null) {
+      myElement.setPackagingMethod(packagingMethod);
+    }
     String text = myOutputPathField.getText();
     if (text.length() == 0) {
       text = "/";
@@ -92,6 +95,7 @@ public class PackagingElementPropertiesComponent {
     }
   }
 
+  @Nullable
   private PackagingMethod getSelectedMethod() {
     return (PackagingMethod)myPackagingMethodBox.getSelectedItem();
   }
@@ -115,7 +119,7 @@ public class PackagingElementPropertiesComponent {
       return false;
     }
 
-    PackagingElementPropertiesDialog dialog = new PackagingElementPropertiesDialog(component, element, propertiesComponent);
+    PackagingElementPropertiesDialog dialog = new PackagingElementPropertiesDialog(component, propertiesComponent);
     dialog.show();
     return dialog.isOK();
   }
@@ -135,8 +139,7 @@ public class PackagingElementPropertiesComponent {
   public static class PackagingElementPropertiesDialog extends DialogWrapper {
     private PackagingElementPropertiesComponent myPropertiesComponent;
 
-    public PackagingElementPropertiesDialog(JComponent parent, final ContainerElement element,
-                                            PackagingElementPropertiesComponent propertiesComponent) {
+    public PackagingElementPropertiesDialog(JComponent parent, PackagingElementPropertiesComponent propertiesComponent) {
       super(parent, false);
       setTitle(ProjectBundle.message("dialog.title.packaging.edit.properties"));
       myPropertiesComponent = propertiesComponent;
