@@ -97,6 +97,20 @@ public class FileReferenceSet {
     reparse(str);
   }
 
+  public FileReferenceSet(final @NotNull PsiElement element) {
+
+    myElement = element;
+    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
+    final TextRange range = manipulator.getRangeInElement(element);
+    myStartInElement = range.getStartOffset();
+    final String s = range.substring(element.getText());
+    myPathString = s.trim();
+    myEndingSlashNotAllowed = true;
+
+    reparse(s);
+  }
+
+
   public PsiElement getElement() {
     return myElement;
   }
