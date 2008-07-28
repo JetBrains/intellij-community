@@ -37,6 +37,12 @@ public class CopyReferenceAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     boolean enabled = isEnabled(dataContext);
     e.getPresentation().setEnabled(enabled);
+    if (e.getPlace().equals(ActionPlaces.EDITOR_POPUP)) {
+      e.getPresentation().setVisible(enabled);
+    }
+    else {
+      e.getPresentation().setVisible(true);
+    }
   }
 
   private static boolean isEnabled(final DataContext dataContext) {
