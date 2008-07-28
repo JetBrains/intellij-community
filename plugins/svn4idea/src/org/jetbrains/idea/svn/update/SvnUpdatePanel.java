@@ -16,16 +16,20 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
   private JPanel myConfigureRootsPanel;
   private JCheckBox myStatusBox;
   private JCheckBox myRecursiveBox;
   private JPanel myPanel;
+  private JCheckBox myLockOnDemand;
 
   public SvnUpdatePanel(SvnVcs vcs, Collection<FilePath> roots) {
     super(vcs);
@@ -39,6 +43,22 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
       }
     }
     myRecursiveBox.setVisible(descend);
+
+    final String updateOnDemandEnabled = System.getProperty("subversion.update.on.demand");
+    final boolean enable = "yes".equals(updateOnDemandEnabled);
+
+    myLockOnDemand.setVisible(enable);
+    if (enable) {
+      myLockOnDemand.setSelected(SvnConfiguration.getInstance(myVCS.getProject()).UPDATE_LOCK_ON_DEMAND);
+      myLockOnDemand.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          SvnConfiguration.getInstance(myVCS.getProject()).UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
+        }
+      });
+    } else {
+      // to be completely sure
+      SvnConfiguration.getInstance(myVCS.getProject()).UPDATE_LOCK_ON_DEMAND = false;
+    }
   }
 
   protected JPanel getRootsPanel() {

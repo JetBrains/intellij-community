@@ -78,23 +78,25 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
       final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
 
+      final SVNUpdateClient updateClient = myVcs.createUpdateClient();
+      updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);
       if (rootInfo != null) {
         final SVNURL url = rootInfo.getUrl();
         if (url != null && url.equals(getSourceUrl(root))) {
           if (rootInfo.isUpdateToRevision()) {
-            rev = client.doUpdate(root, rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY);
+            rev = updateClient.doUpdate(root, rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY);
           } else {
-            rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+            rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
           }
 
         } else if (url != null) {
-          rev = client.doSwitch(root, url,
+          rev = updateClient.doSwitch(root, url,
                                 rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY);
         } else {
-          rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+          rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
         }
       } else {
-        rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+        rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
       }
 
       myPostUpdateFiles.setRevisions(root.getAbsolutePath(), myVcs, new SvnRevisionNumber(SVNRevision.create(rev)));
