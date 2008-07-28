@@ -75,7 +75,6 @@ public class UIUtil {
     }
 
     TemplateContext context = new TemplateContext();
-    context.JAVA_CODE = true;
 
     TemplateEditorUtil.setHighlighter(editor, context);
 
