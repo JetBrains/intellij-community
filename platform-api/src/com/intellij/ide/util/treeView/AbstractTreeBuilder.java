@@ -64,23 +64,23 @@ public abstract class AbstractTreeBuilder implements Disposable {
     getUi().init(this, tree, treeModel, treeStructure, comparator, updateIfInactive);
   }
 
-  public void select(final Object element, @Nullable final Runnable onDone) {
+  public final void select(final Object element, @Nullable final Runnable onDone) {
     getUi().select(element, onDone);
   }
 
-  public void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
+  public final void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
     getUi().select(element, onDone, addToSelection);
   }
 
-  public void expand(Object element, @Nullable Runnable onDone) {
+  public final void expand(Object element, @Nullable Runnable onDone) {
     getUi().expand(element, onDone);
   }
 
-  public void select(final Object[] elements, @Nullable final Runnable onDone) {
+  public final void select(final Object[] elements, @Nullable final Runnable onDone) {
     getUi().select(elements, onDone);
   }
 
-  public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
+  public final void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
     getUi().select(elements, onDone, addToSelection);
   }
 
@@ -88,7 +88,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return new AbstractTreeNodeWrapper();
   }
 
-  public AbstractTreeBuilder setClearOnHideDelay(final long clearOnHideDelay) {
+  public final AbstractTreeBuilder setClearOnHideDelay(final long clearOnHideDelay) {
     getUi().setClearOnHideDelay(clearOnHideDelay);
     return this;
   }
@@ -97,7 +97,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return new AbstractTreeUpdater(this);
   }
 
-  protected AbstractTreeUpdater getUpdater() {
+  protected final AbstractTreeUpdater getUpdater() {
     return getUi().getUpdater();
   }
 
@@ -113,7 +113,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return getUi().getRootNode();
   }
 
-  public void setNodeDescriptorComparator(Comparator<NodeDescriptor> nodeDescriptorComparator) {
+  public final void setNodeDescriptorComparator(Comparator<NodeDescriptor> nodeDescriptorComparator) {
     getUi().setNodeDescriptorComparator(nodeDescriptorComparator);
   }
 
@@ -148,7 +148,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return getUi().getTreeStructure();
   }
 
-  public void setTreeStructure(final AbstractTreeStructure structure) {
+  public final void setTreeStructure(final AbstractTreeStructure structure) {
     getUi().setTreeStructure(structure);
   }
 
@@ -183,7 +183,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
    */
   @Nullable
   public DefaultMutableTreeNode getNodeForElement(Object element) {
-    return getUi().getNodeForElement(element);
+    return getUi().getNodeForElement(element, false);
   }
 
   public void cleanUp() {

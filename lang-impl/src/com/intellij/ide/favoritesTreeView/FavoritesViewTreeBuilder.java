@@ -63,11 +63,11 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         return ((FavoritesTreeStructure)getTreeStructure()).isFlattenPackages();
       }
 
-      protected void childrenChanged(PsiElement parent) {
+      protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
         if (findNodeByElement(parent) == null){
           getUpdater().addSubtreeToUpdate(getRootNode());
         } else {
-          super.childrenChanged(parent);
+          super.childrenChanged(parent, true);
         }
       }
     };

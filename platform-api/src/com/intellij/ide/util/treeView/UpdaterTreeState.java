@@ -7,15 +7,15 @@ import java.util.*;
 
 public class UpdaterTreeState {
 
-  private AbstractTreeBuilder myBuilder;
+  private AbstractTreeUi myUi;
   protected WeakHashMap<Object, Object> myToSelect = new WeakHashMap<Object, Object>();
   protected WeakHashMap<Object, Object> myToExpand = new WeakHashMap<Object, Object>();
   private boolean myProcessingNow;
 
-  public UpdaterTreeState(AbstractTreeBuilder builder) {
-    myBuilder = builder;
+  public UpdaterTreeState(AbstractTreeUi ui) {
+    myUi = ui;
 
-    final JTree tree = myBuilder.getTree();
+    final JTree tree = myUi.getTree();
     putAll(addPaths(tree.getSelectionPaths()), myToSelect);
     putAll(addPaths(tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()))), myToExpand);
   }
@@ -140,12 +140,12 @@ public class UpdaterTreeState {
     final Runnable expandRunnable = new Runnable() {
       public void run() {
         for (Object each : toExpand) {
-          myBuilder.expand(each, null);
+          myUi.getBuilder().expand(each, null);
         }
       }
     };
     if (toSelect.length > 0) {
-      myBuilder.select(toSelect, expandRunnable, true);
+      myUi._select(toSelect, expandRunnable, false, false);
     } else {
       expandRunnable.run();
     }
@@ -157,5 +157,9 @@ public class UpdaterTreeState {
 
   public void clearSelection() {
     myToSelect.clear();
+  }
+
+  public void addSelection(final Object element) {
+    myToSelect.put(element, element);
   }
 }

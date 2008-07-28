@@ -31,32 +31,32 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
   public final void childRemoved(PsiTreeChangeEvent event) {
     PsiElement child = event.getOldChild();
     if (child instanceof PsiWhiteSpace) return; //optimization
-    childrenChanged(event.getParent());
+    childrenChanged(event.getParent(), true);
   }
 
   public final void childAdded(PsiTreeChangeEvent event) {
     PsiElement child = event.getNewChild();
     if (child instanceof PsiWhiteSpace) return; //optimization
-    childrenChanged(event.getParent());
+    childrenChanged(event.getParent(), true);
   }
 
   public final void childReplaced(PsiTreeChangeEvent event) {
     PsiElement oldChild = event.getOldChild();
     PsiElement newChild = event.getNewChild();
     if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
-    childrenChanged(event.getParent());
+    childrenChanged(event.getParent(), true);
   }
 
   public final void childMoved(PsiTreeChangeEvent event) {
-    childrenChanged(event.getOldParent());
-    childrenChanged(event.getNewParent());
+    childrenChanged(event.getOldParent(), false);
+    childrenChanged(event.getNewParent(), true);
   }
 
   public final void childrenChanged(PsiTreeChangeEvent event) {
-    childrenChanged(event.getParent());
+    childrenChanged(event.getParent(), true);
   }
 
-  protected void childrenChanged(PsiElement parent) {
+  protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
     if (parent instanceof PsiDirectory && isFlattenPackages()){
       getUpdater().addSubtreeToUpdate(getRootNode());
       return;
@@ -64,7 +64,10 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
 
     long newModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
     if (newModificationCount == myOutOfCodeBlockModificationCount) return;
-    myOutOfCodeBlockModificationCount = newModificationCount;
+    if (stopProcessingForThisModificationCount) {
+      myOutOfCodeBlockModificationCount = newModificationCount;
+    }
+
     while(true){
       if (parent == null) break;
       if (parent instanceof PsiFile) {
