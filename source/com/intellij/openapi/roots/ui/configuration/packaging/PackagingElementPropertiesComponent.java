@@ -2,7 +2,6 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.PackagingMethod;
-import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,9 +22,12 @@ public class PackagingElementPropertiesComponent {
   private JLabel myPackagingMethodLabel;
   private JLabel myOutputPathLabel;
   private JLabel myElementNameLabel;
+  private JPanel myLabelsPanel;
+  private JPanel myFieldPanel;
   private final ContainerElement myElement;
   private final PackagingEditorPolicy myEditorPolicy;
   private PackagingMethod myLastSelectedMethod;
+  private PackagingEditorPolicy.AdditionalPropertiesConfigurable myAdditionalPropertiesConfigurable;
 
   private PackagingElementPropertiesComponent(ContainerElement element, PackagingEditorPolicy editorPolicy) {
     myElement = element;
@@ -55,6 +57,12 @@ public class PackagingElementPropertiesComponent {
       myOutputPathField.setVisible(false);
       myOutputPathLabel.setVisible(false);
     }
+    myAdditionalPropertiesConfigurable = editorPolicy.getAdditionalPropertiesConfigurable(element);
+    if (myAdditionalPropertiesConfigurable != null) {
+      myLabelsPanel.add(myAdditionalPropertiesConfigurable.getLabelsComponent(), BorderLayout.CENTER);
+      myFieldPanel.add(myAdditionalPropertiesConfigurable.getFieldsComponent(), BorderLayout.CENTER);
+      myAdditionalPropertiesConfigurable.resetFrom(element);
+    }
   }
 
   private void updateOutputPath() {
@@ -79,6 +87,9 @@ public class PackagingElementPropertiesComponent {
       text = "/";
     }
     myElement.setURI(FileUtil.toSystemIndependentName(text));
+    if (myAdditionalPropertiesConfigurable != null) {
+      myAdditionalPropertiesConfigurable.applyTo(myElement);
+    }
   }
 
   private PackagingMethod getSelectedMethod() {

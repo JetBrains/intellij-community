@@ -13,7 +13,9 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDi
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -45,6 +47,11 @@ public abstract class PackagingEditorPolicy {
   public boolean isRelativePathCellEditable(final ContainerElement element) {
     return element instanceof LibraryLink
            || element instanceof ModuleLink && ((ModuleLink)element).getModule() != null;
+  }
+
+  @Nullable
+  public AdditionalPropertiesConfigurable getAdditionalPropertiesConfigurable(@NotNull ContainerElement element) {
+    return null;
   }
 
   public PackagingMethod[] getAllowedPackagingMethods(ContainerElement element) {
@@ -144,12 +151,12 @@ public abstract class PackagingEditorPolicy {
 
   public boolean removeObsoleteElements(final PackagingEditor packagingEditor) {
     boolean modelChanged = false;
-    List<Library> libraries = getSuitableLibraries(packagingEditor);
-    List<Module> modules = getSuitableModules(packagingEditor);
+    Set<Library> libraries = new HashSet<Library>(getSuitableLibraries(packagingEditor));
+    Set<Module> modules = new HashSet<Module>(getSuitableModules(packagingEditor));
     List<ContainerElement> elements = new ArrayList<ContainerElement>(Arrays.asList(getModifiedElements(packagingEditor)));
     PackagingConfiguration configuration = packagingEditor.getModifiedConfiguration();
     for (ContainerElement element : elements) {
-      boolean remove;
+      boolean remove = false;
       if (element instanceof LibraryLink) {
         Library library = ((LibraryLink)element).getLibrary();
         remove = library != null && !libraries.contains(library);
@@ -158,19 +165,12 @@ public abstract class PackagingEditorPolicy {
         Module module = ((ModuleLink)element).getModule();
         remove = module != null && !modules.contains(module);
       }
-      else {
-        remove = isObsolete(element, packagingEditor);
-      }
       if (remove) {
         configuration.removeContainerElement(element);
         modelChanged = true;
       }
     }
     return modelChanged;
-  }
-
-  protected boolean isObsolete(final ContainerElement element, final PackagingEditor packagingEditor) {
-    return false;
   }
 
   public String getElementText(final ContainerElement element) {
@@ -203,4 +203,12 @@ public abstract class PackagingEditorPolicy {
     return element.getPresentableName();
   }
 
+  protected static abstract class AdditionalPropertiesConfigurable {
+
+    public abstract JComponent getLabelsComponent();
+    public abstract JComponent getFieldsComponent();
+
+    public abstract void resetFrom(ContainerElement element);
+    public abstract void applyTo(ContainerElement element);
+  }
 }

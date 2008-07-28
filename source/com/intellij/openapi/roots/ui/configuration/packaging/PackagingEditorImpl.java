@@ -287,6 +287,11 @@ public class PackagingEditorImpl implements PackagingEditor {
     };
   }
 
+  public void setTreeParameters(PackagingTreeParameters parameters) {
+    myShowIncludedCheckBox.setSelected(parameters.isShowIncludedContent());
+    myShowLibraryFilesCheckBox.setSelected(parameters.isShowLibraryFiles());
+  }
+
   public void rebuildTree() {
     PackagingTreeState state = PackagingTreeState.saveState(myTree);
     myRoot.removeAllChildren();
