@@ -4,7 +4,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 
@@ -12,8 +11,6 @@ import org.jetbrains.annotations.NonNls;
  * @author max
  */
 public class ApplicationManagerEx extends ApplicationManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.ApplicationManagerEx");
-
   public static ApplicationEx getApplicationEx() {
     return (ApplicationEx) ourApplication;
   }
