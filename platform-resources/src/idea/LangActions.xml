@@ -33,7 +33,7 @@
     <!-- File -->
 
     <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction">
-      <add-to-group group-id="SynchronizeGroup" anchor="last"/>
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="Synchronize"/>
     </action>
 
 
@@ -42,9 +42,12 @@
       <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
       <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>
 
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="SynchronizeGroup"/>
-
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ReloadFromDisk"/>
     </group>
+
+    <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ChangeFileEncodingGroup"/>
+    </action>
 
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
@@ -110,7 +113,7 @@
       <reference ref="AddToFavorites"/>
       <separator/>
 
-      <add-to-group group-id="ViewMenu" relative-to-action="ViewModeActions" anchor="after"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="after"/>
     </group>
 
     <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingGroup" popup="true">
@@ -123,7 +126,6 @@
       <group id="LanguageSpecificFoldingGroup"/>
       <separator/>
       <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
-      <group id="LanguageSpecificCollapseGroup"/>
 
       <add-to-group group-id="ViewMenu" anchor="last"/>
     </group>
@@ -483,6 +485,10 @@
 
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CloseEditor" anchor="after"/>
     </group>
+
+    <reference ref="ChangeTemplateDataLanguage">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ChangeFileEncodingGroup"/>
+    </reference>
 
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>

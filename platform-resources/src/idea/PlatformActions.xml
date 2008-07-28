@@ -106,21 +106,17 @@
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
         </group>
         <separator/>
-        <group id="FileSaveGroup">
-          <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
-          <group id="ExportImportGroup">
-            <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
-            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
-            <action id="SaveInNewFormat" class="com.intellij.ide.actions.OpenInNewFormatAction" text="Open in New (Directory Based) Format" internal="true"/>
-          </group>
+        <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
+        <group id="ExportImportGroup">
+          <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
+          <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
+          <action id="SaveInNewFormat" class="com.intellij.ide.actions.OpenInNewFormatAction" text="Open in New (Directory Based) Format" internal="true"/>
         </group>
         <separator/>
-        <group id="SynchronizeGroup">
-          <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
-          <group id="ChangeFileEncodingGroup" popup="true" text="" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
-            <action id="ChangeFileEncodingGroupAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingGroup" text=""/>
-          </group>
-          <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction"/>
+        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
+        
+        <group id="ChangeFileEncodingGroup" popup="true" text="" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
+          <action id="ChangeFileEncodingGroupAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingGroup" text=""/>
         </group>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
@@ -165,10 +161,8 @@
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
         <separator/>
-        <group id="ViewModeActions">
-          <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
-          <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
-        </group>
+        <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
+        <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
         <separator/>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
@@ -297,7 +291,6 @@
       <separator/>
       <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
-      <reference ref="ChangeTemplateDataLanguage"/>
     </group>
 
     <group id="EditorTabPopupMenu">

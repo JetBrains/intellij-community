@@ -83,27 +83,23 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <group id="ProjectSettingsGroup">
-      <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
-      <action id="ConvertProject" class="com.intellij.ide.impl.convert.ConvertProjectAction"/>
-
+    <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
-    </group>
+    </action>
+    <action id="ConvertProject" class="com.intellij.ide.impl.convert.ConvertProjectAction">
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </action>
 
     <!-- Edit -->
-    <group id="EditSmartGroupEx">
-      <reference ref="EditorCompleteStatement"/>
-
+    <reference ref="EditorCompleteStatement">
       <add-to-group group-id="EditSmartGroup" anchor="first"/>
-    </group>
+    </reference>
 
     <!-- View -->
 
-    <group id="JavaCodeEditorGroup">
-      <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
-
+    <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction">
       <add-to-group group-id="CodeEditorViewGroup" anchor="before" relative-to-action="ShowErrorDescription"/>
-    </group>
+    </action>
 
     <group id="HierarchyGroup">
       <separator/>
@@ -122,16 +118,13 @@
       <add-to-group group-id="LanguageSpecificFoldingGroup" anchor="last"/>
     </group>
 
-    <group id="JavaCollapseGroup">
-      <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
+    <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
+      <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>
+    </action>
 
-      <add-to-group group-id="LanguageSpecificCollapseGroup" anchor="last"/>
-    </group>
-
-    <group id="CodeMenu1">
-      <reference ref="DelegateMethods"/>
+    <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
-    </group>
+    </reference>
 
     <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction">
       <add-to-group group-id="CodeSurroundGroup" anchor="last"/>
