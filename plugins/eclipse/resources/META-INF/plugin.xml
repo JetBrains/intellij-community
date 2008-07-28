@@ -9,7 +9,7 @@
     <![CDATA[]]>
   </change-notes>
   <idea-version since-build="7020"/>
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.action.EclipseProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.eclipse.action.EclipseProjectOpenProcessor"/>
