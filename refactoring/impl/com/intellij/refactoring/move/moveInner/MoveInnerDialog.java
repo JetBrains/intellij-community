@@ -4,19 +4,21 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -77,6 +79,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     return myClassNameField.getText().trim();
   }
 
+  @Nullable
   public String getParameterName() {
     if (myParameterField != null) {
       return myParameterField.getEnteredName();
@@ -182,12 +185,16 @@ public class MoveInnerDialog extends RefactoringDialog {
         }
         PsiDirectory dir = RefactoringUtil.findPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
         if (dir == null) {
-          try {
-            dir = RefactoringUtil.createPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
-          }
-          catch (IncorrectOperationException e) {
-            return null;
-          }
+          dir = ApplicationManager.getApplication().runWriteAction(new NullableComputable<PsiDirectory>() {
+            public PsiDirectory compute() {
+              try {
+                return RefactoringUtil.createPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
+              }
+              catch (IncorrectOperationException e) {
+                return null;
+              }
+            }
+          });
         }
         return dir;
       }
