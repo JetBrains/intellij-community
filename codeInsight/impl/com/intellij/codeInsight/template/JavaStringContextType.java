@@ -27,6 +27,10 @@ public class JavaStringContextType implements TemplateContextType {
     return false;
   }// these methods mostly exist for serialization compatibility with pre-8.0 live templates
 
+  public boolean isInContext(final FileType fileType) {
+    return false;
+  }
+
   public boolean isEnabled(final TemplateContext context) {
     return context.JAVA_STRING;
   }

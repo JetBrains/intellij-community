@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 
 /**
@@ -16,6 +17,10 @@ public class HtmlContextType implements TemplateContextType {
 
   public boolean isInContext(final PsiFile file, final int offset) {
     return file.getFileType() == StdFileTypes.HTML;
+  }
+
+  public boolean isInContext(final FileType fileType) {
+    return fileType == StdFileTypes.HTML;
   }
 
   public boolean isEnabled(final TemplateContext context) {

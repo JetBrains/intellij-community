@@ -30,6 +30,10 @@ public class JavaCodeContextType implements TemplateContextType {
     return false;
   }
 
+  public boolean isInContext(final FileType fileType) {
+    return fileType == StdFileTypes.JAVA;
+  }
+
   public boolean isEnabled(final TemplateContext context) {
     return context.JAVA_CODE;
   }

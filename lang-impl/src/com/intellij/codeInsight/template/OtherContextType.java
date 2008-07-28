@@ -4,6 +4,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 
 /**
  * @author yole
@@ -14,6 +15,10 @@ public class OtherContextType implements TemplateContextType {
   }
 
   public boolean isInContext(final PsiFile file, final int offset) {
+    return true;
+  }
+
+  public boolean isInContext(final FileType fileType) {
     return true;
   }
 

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 
 /**
  * @author yole
@@ -16,6 +17,10 @@ public class XmlContextType implements TemplateContextType {
 
   public boolean isInContext(final PsiFile file, final int offset) {
     return file.getFileType() == StdFileTypes.XML;
+  }
+
+  public boolean isInContext(final FileType fileType) {
+    return fileType == StdFileTypes.XML;
   }
 
   public boolean isEnabled(final TemplateContext context) {

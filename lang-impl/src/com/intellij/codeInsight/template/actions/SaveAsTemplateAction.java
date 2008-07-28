@@ -9,6 +9,8 @@
 package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.OtherContextType;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.EditTemplateDialog;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -19,9 +21,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -98,21 +100,15 @@ public class SaveAsTemplateAction extends AnAction {
     TemplateImpl template = new TemplateImpl("", document.getText(), TemplateSettings.USER_GROUP_NAME);
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file.getVirtualFile());
-    if (fileType == StdFileTypes.HTML) {
-      template.getTemplateContext().HTML = true;
-      template.getTemplateContext().JAVA_CODE = false;
+    boolean anyApplicable = false;
+    for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
+      if (contextType.isInContext(fileType)) {
+        contextType.setEnabled(template.getTemplateContext(), true);
+        anyApplicable = true;
+      }
     }
-    else if (fileType == StdFileTypes.XML) {
-      template.getTemplateContext().XML = true;
-      template.getTemplateContext().JAVA_CODE = false;
-    }
-    else if (fileType == StdFileTypes.JSP) {
-      template.getTemplateContext().JSP = true;
-      template.getTemplateContext().JAVA_CODE = false;
-    }
-    else if (fileType != StdFileTypes.JAVA) {
-      template.getTemplateContext().OTHER = true;
-      template.getTemplateContext().JAVA_CODE = false;
+    if (!anyApplicable) {
+      new OtherContextType().setEnabled(template.getTemplateContext(), true);
     }
 
     String defaultShortcut = "";

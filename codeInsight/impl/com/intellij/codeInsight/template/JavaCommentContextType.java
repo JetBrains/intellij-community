@@ -27,6 +27,10 @@ public class JavaCommentContextType implements TemplateContextType {
     return false;
   }
 
+  public boolean isInContext(final FileType fileType) {
+    return false;
+  }
+
   public boolean isEnabled(final TemplateContext context) {
     return context.JAVA_COMMENT;
   }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,9 +15,11 @@ public interface TemplateContextType {
   
   String getName();
   boolean isInContext(PsiFile file, int offset);
+  boolean isInContext(final FileType fileType);
 
   // these methods mostly exist for serialization compatibility with pre-8.0 live templates
   boolean isEnabled(TemplateContext context);
+
   void setEnabled(TemplateContext context, boolean value);
 
   @Nullable
