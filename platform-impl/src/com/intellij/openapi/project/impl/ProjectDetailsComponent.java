@@ -17,8 +17,11 @@ import org.jetbrains.annotations.NotNull;
     )}
 )
 public class ProjectDetailsComponent implements PersistentStateComponent<ProjectDetailsComponent.State>, ProjectComponent {
+  private final Project myProject;
+
   public void setProjectName(final String projectName) {
     myState.projectName = projectName;
+    ((ProjectImpl)myProject).updateName(projectName);
   }
 
   public String getProjectName() {
@@ -33,7 +36,8 @@ public class ProjectDetailsComponent implements PersistentStateComponent<Project
   private State myState = new State();
 
   public ProjectDetailsComponent(Project project) {
-    myState.projectName = ((ProjectImpl)project).getDefaultName();
+    myProject = project;
+    myState.projectName = ((ProjectImpl)myProject).getDefaultName();
   }
 
   public State getState() {

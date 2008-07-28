@@ -328,6 +328,10 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return getStateStore().getProjectName();    
   }
 
+  public void updateName(final String projectName) {
+    myName = projectName;
+  }
+
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
