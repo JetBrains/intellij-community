@@ -92,7 +92,7 @@ public class SegmentArray {
     }
 
     if(offset > myEnds[mySegmentCount -1] || offset < 0){
-      throw new IndexOutOfBoundsException("Wrong offset: " + offset);
+      throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + myEnds[mySegmentCount - 1] + "]");
     }
 
     if (offset == myEnds[mySegmentCount - 1]) return mySegmentCount - 1;
