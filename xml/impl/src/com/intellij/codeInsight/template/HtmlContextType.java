@@ -2,36 +2,29 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.PsiFile;
 
 /**
  * @author yole
  */
-public class HtmlContextType implements TemplateContextType {
+public class HtmlContextType extends AbstractContextType {
   public String getName() {
     return CodeInsightBundle.message("dialog.edit.template.checkbox.html");
   }
 
-  public boolean isInContext(final PsiFile file, final int offset) {
-    return file.getFileType() == StdFileTypes.HTML;
-  }
-
+  @Override
   public boolean isInContext(final FileType fileType) {
-    return fileType == StdFileTypes.HTML;
+    return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
   }
 
-  public boolean isEnabled(final TemplateContext context) {
+  protected LanguageFileType getExpectedFileType() {
+    return StdFileTypes.HTML;
+  }
+
+  protected TemplateContext.ContextElement getContextElement(final TemplateContext context) {
     return context.HTML;
   }
 
-  public void setEnabled(final TemplateContext context, final boolean value) {
-    context.HTML = value;
-  }
-
-  public SyntaxHighlighter createHighlighter() {
-    return  SyntaxHighlighter.PROVIDER.create(StdFileTypes.HTML, null, null);
-  }
 }

@@ -1,37 +1,23 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
 
 /**
  * @author yole
  */
-public class XmlContextType implements TemplateContextType {
+public class XmlContextType extends AbstractContextType {
   public String getName() {
     return CodeInsightBundle.message("dialog.edit.template.checkbox.xml");
   }
 
-  public boolean isInContext(final PsiFile file, final int offset) {
-    return file.getFileType() == StdFileTypes.XML;
+  protected LanguageFileType getExpectedFileType() {
+    return StdFileTypes.XML;
   }
 
-  public boolean isInContext(final FileType fileType) {
-    return fileType == StdFileTypes.XML;
-  }
-
-  public boolean isEnabled(final TemplateContext context) {
+  protected TemplateContext.ContextElement getContextElement(final TemplateContext context) {
     return context.XML;
-  }
-
-  public void setEnabled(final TemplateContext context, final boolean value) {
-    context.XML = value;
-  }
-
-  public SyntaxHighlighter createHighlighter() {
-    return  SyntaxHighlighter.PROVIDER.create(StdFileTypes.XML, null, null);
   }
 }

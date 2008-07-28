@@ -106,6 +106,9 @@ public class SaveAsTemplateAction extends AnAction {
         contextType.setEnabled(template.getTemplateContext(), true);
         anyApplicable = true;
       }
+      else {
+        contextType.setEnabled(template.getTemplateContext(), false);
+      }
     }
     if (!anyApplicable) {
       new OtherContextType().setEnabled(template.getTemplateContext(), true);

@@ -1,36 +1,27 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 
 /**
  * @author yole
  */
-public class OtherContextType implements TemplateContextType {
+public class OtherContextType extends AbstractContextType {
   public String getName() {
     return CodeInsightBundle.message("dialog.edit.template.checkbox.other");
-  }
-
-  public boolean isInContext(final PsiFile file, final int offset) {
-    return true;
   }
 
   public boolean isInContext(final FileType fileType) {
     return true;
   }
 
-  public boolean isEnabled(final TemplateContext context) {
+  protected TemplateContext.ContextElement getContextElement(final TemplateContext context) {
     return context.OTHER;
   }
 
-  public void setEnabled(final TemplateContext context, final boolean value) {
-    context.OTHER = value;
-  }
-
-  public SyntaxHighlighter createHighlighter() {
+  protected LanguageFileType getExpectedFileType() {
     return null;
   }
 }

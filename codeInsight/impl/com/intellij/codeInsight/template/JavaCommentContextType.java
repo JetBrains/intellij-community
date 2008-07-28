@@ -3,8 +3,8 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 /**
  * @author yole
  */
-public class JavaCommentContextType implements TemplateContextType {
+public class JavaCommentContextType extends AbstractContextType {
   public String getName() {
     return CodeInsightBundle.message("dialog.edit.template.checkbox.java.comment");
   }
@@ -27,19 +27,11 @@ public class JavaCommentContextType implements TemplateContextType {
     return false;
   }
 
-  public boolean isInContext(final FileType fileType) {
-    return false;
+  protected LanguageFileType getExpectedFileType() {
+    return null;
   }
 
-  public boolean isEnabled(final TemplateContext context) {
+  protected TemplateContext.ContextElement getContextElement(final TemplateContext context) {
     return context.JAVA_COMMENT;
-  }
-
-  public void setEnabled(final TemplateContext context, final boolean value) {
-    context.JAVA_COMMENT = value;
-  }
-
-  public SyntaxHighlighter createHighlighter() {
-     return null;
   }
 }

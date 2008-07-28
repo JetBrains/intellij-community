@@ -7,11 +7,10 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -428,7 +427,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
       Element context = element.getChild(CONTEXT);
       if (context != null) {
-        DefaultJDOMExternalizer.readExternal(template.getTemplateContext(), context);
+        template.getTemplateContext().readExternal(context);
       }
 
       created.put(template.getKey(), template);
@@ -498,7 +497,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     try {
       Element contextElement = new Element(CONTEXT);
-      DefaultJDOMExternalizer.writeExternal(template.getTemplateContext(), contextElement);
+      template.getTemplateContext().writeExternal(contextElement);
       element.addContent(contextElement);
     } catch (WriteExternalException e) {
     }

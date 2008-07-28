@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.Language;
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlToken;
@@ -39,11 +41,15 @@ public class TemplateSurrounder implements Surrounder {
   public boolean isApplicableForFileType(FileType fileType) {
     final TemplateContext templateContext = myTemplate.getTemplateContext();
 
-    if (templateContext.HTML && (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML)) return true;
+    if (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML || templateContext.XML.getValue()) {
+      for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
+        if (contextType.isInContext(fileType)) {
+          if (contextType.isEnabled(templateContext)) return true;
+        }
+      }
 
-    if (templateContext.XML) {
-      return fileType == StdFileTypes.XML;
     }
+
     return false;
   }
 

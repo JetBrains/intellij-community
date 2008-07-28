@@ -5,13 +5,13 @@ import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 
-public class JavaCodeContextType implements TemplateContextType {
+public class JavaCodeContextType extends AbstractContextType {
   public String getName() {
     return CodeInsightBundle.message("dialog.edit.template.checkbox.java.code");
   }
@@ -30,19 +30,16 @@ public class JavaCodeContextType implements TemplateContextType {
     return false;
   }
 
+  @Override
   public boolean isInContext(final FileType fileType) {
-    return fileType == StdFileTypes.JAVA;
+    return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX ;
   }
 
-  public boolean isEnabled(final TemplateContext context) {
+  protected LanguageFileType getExpectedFileType() {
+    return StdFileTypes.JAVA;
+  }
+
+  protected TemplateContext.ContextElement getContextElement(final TemplateContext context) {
     return context.JAVA_CODE;
-  }
-
-  public void setEnabled(final TemplateContext context, final boolean value) {
-    context.JAVA_CODE = value;
-  }
-
-  public SyntaxHighlighter createHighlighter() {
-     return SyntaxHighlighter.PROVIDER.create(StdFileTypes.JAVA, null, null);
   }
 }
