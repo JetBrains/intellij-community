@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.model.Repository;
+import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
@@ -65,9 +65,6 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
         updateIndicesList();
       }
 
-      public void beforeProjectUpdate(MavenProjectModel n) {
-      }
-
       public void projectUpdated(MavenProjectModel n) {
         updateIndicesList();
       }
@@ -95,7 +92,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     Set<String> result = new HashSet<String>();
 
     for (MavenProjectModel each : getMavenProjectManager().getProjects()) {
-      for (Repository eachRepository : each.getRepositories()) {
+      for (ArtifactRepository eachRepository : each.getRepositories()) {
         String url = eachRepository.getUrl();
         if (url == null) continue;
         result.add(url);

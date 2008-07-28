@@ -116,8 +116,6 @@ public class MavenProjectsTree {
                                             ? new HashSet<MavenProjectModel>()
                                             : findInheritors(project);
 
-    if (!isNew) fireBeforeUpdate(project);
-
     // todo hook for IDEADEV-27583
     if (isNew) {
       VirtualFile f = project.getFile();
@@ -404,6 +402,7 @@ public class MavenProjectsTree {
         p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");
         each.resolve(e);
+        fireUpdated(each);
       }
 
       doDownload(artifactSettings, p, e, projects, false);
@@ -446,7 +445,7 @@ public class MavenProjectsTree {
                           MavenProcess p,
                           MavenEmbedderWrapper embedder,
                           List<MavenProjectModel> projects, boolean demand) throws CanceledException {
-    new MavenArtifactDownloader(artifactSettings, embedder, p).download(projects, demand);
+    MavenArtifactDownloader.download(this, projects, artifactSettings, demand, embedder, p);
   }
 
   public <Result> Result visit(Visitor<Result> visitor) {
@@ -504,13 +503,7 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireBeforeUpdate(MavenProjectModel n) {
-    for (Listener each : myListeners) {
-      each.beforeProjectUpdate(n);
-    }
-  }
-
-  private void fireUpdated(MavenProjectModel n) {
+  protected void fireUpdated(MavenProjectModel n) {
     for (Listener each : myListeners) {
       each.projectUpdated(n);
     }
@@ -524,8 +517,6 @@ public class MavenProjectsTree {
 
   public static interface Listener {
     void projectAdded(MavenProjectModel n);
-
-    void beforeProjectUpdate(MavenProjectModel n);
 
     void projectUpdated(MavenProjectModel n);
 

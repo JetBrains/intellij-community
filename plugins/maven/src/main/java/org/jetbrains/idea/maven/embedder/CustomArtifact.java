@@ -69,11 +69,11 @@ public class CustomArtifact implements Artifact {
 
   private void update() {
     if ("pom".equals(getType()) && isResolved()) {
-      ensurePosFileExists();
+      ensurePomFileExists();
     }
   }
 
-  private void ensurePosFileExists() {
+  private void ensurePomFileExists() {
     File f = myWrapee.getFile();
     if (f == null || f.exists()) return;
 

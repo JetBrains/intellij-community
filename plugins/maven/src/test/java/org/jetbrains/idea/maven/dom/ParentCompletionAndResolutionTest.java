@@ -92,7 +92,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
 
-    String filePath = myIndicesFixture.getDataTestFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    String filePath = myIndicesFixture.getRepositoryFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
     assertEquals(getPsiFile(f), ref.resolve());
   }

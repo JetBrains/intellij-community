@@ -1,51 +1,67 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.model.Plugin;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 
 import java.io.File;
 import java.util.*;
 
 public class MavenArtifactDownloader {
-  static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenArtifactDownloader");
-
   private final MavenArtifactSettings mySettings;
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProcess myProgress;
+  private final MavenProjectsTree myProjectsTree;
+  private final List<MavenProjectModel> myMavenProjects;
 
-  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedderWrapper embedder, MavenProcess p) {
+  public static void download(MavenProjectsTree projectsTree,
+                              List<MavenProjectModel> mavenProjects,
+                              MavenArtifactSettings settings,
+                              boolean demand,
+                              MavenEmbedderWrapper embedder,
+                              MavenProcess p) throws CanceledException {
+    new MavenArtifactDownloader(projectsTree, mavenProjects, settings, embedder, p).download(demand);
+  }
+
+  private MavenArtifactDownloader(MavenProjectsTree projectsTree,
+                                  List<MavenProjectModel> mavenProjects,
+                                  MavenArtifactSettings settings,
+                                  MavenEmbedderWrapper embedder,
+                                  MavenProcess p) {
+    myProjectsTree = projectsTree;
+    myMavenProjects = mavenProjects;
     mySettings = settings;
     myEmbedder = embedder;
     myProgress = p;
   }
 
-  public void download(List<MavenProjectModel> mavenProjects,
-                       boolean demand) throws CanceledException {
-    Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(mavenProjects);
+  private void download(boolean demand) throws CanceledException {
     List<File> downloadedFiles = new ArrayList<File>();
-
     try {
-      if (isEnabled(mySettings.getDownloadSources(), demand)) {
-        download(libraryArtifacts, MavenConstants.SOURCES_CLASSIFIER, downloadedFiles);
+      Map<Artifact, Set<ArtifactRepository>> artifacts = collectArtifactsToDownload();
+
+      if (shouldDownload(mySettings.getDownloadSources(), demand)) {
+        download(MavenConstants.SOURCES_CLASSIFIER, artifacts, downloadedFiles);
       }
 
-      if (isEnabled(mySettings.getDownloadJavadoc(), demand)) {
-        download(libraryArtifacts, MavenConstants.JAVADOC_CLASSIFIER, downloadedFiles);
+      if (shouldDownload(mySettings.getDownloadJavadoc(), demand)) {
+        download(MavenConstants.JAVADOC_CLASSIFIER, artifacts, downloadedFiles);
       }
 
-      if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
-        downloadPlugins(mavenProjects);
+      if (shouldDownload(mySettings.getDownloadPlugins(), demand)) {
+        downloadPlugins();
       }
     }
     finally {
       scheduleFilesRefresh(downloadedFiles);
     }
+  }
+
+  private boolean shouldDownload(MavenArtifactSettings.UPDATE_MODE level, boolean demand) {
+    return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
   private void scheduleFilesRefresh(final List<File> downloadedFiles) {
@@ -64,81 +80,68 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private boolean isEnabled(MavenArtifactSettings.UPDATE_MODE level, boolean demand) {
-    return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
-  }
+  private Map<Artifact, Set<ArtifactRepository>> collectArtifactsToDownload() {
+    Map<Artifact, Set<ArtifactRepository>> result = new TreeMap<Artifact, Set<ArtifactRepository>>();
 
-  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(List<MavenProjectModel> mavenProjects) {
-    Map<MavenId, Set<ArtifactRepository>> result = new TreeMap<MavenId, Set<ArtifactRepository>>();
+    for (MavenProjectModel each : myMavenProjects) {
+      List<ArtifactRepository> repositories = each.getRepositories();
 
-    for (MavenProjectModel each : mavenProjects) {
-      Collection<Artifact> artifacts = each.getDependencies();
-      List remoteRepositories = each.getMavenProject().getRemoteArtifactRepositories();
+      for (Artifact eachDependency : each.getDependencies()) {
+        if (!MavenConstants.JAR_TYPE.equalsIgnoreCase(eachDependency.getType())) continue;
+        if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
+        if (myProjectsTree.findProject(eachDependency) != null) continue;
 
-      for (Artifact artifact : artifacts) {
-        if (artifact.getType().equalsIgnoreCase(MavenConstants.JAR_TYPE) &&
-            !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
-          MavenId id = new MavenId(artifact);
-          if (!isExistingProject(artifact, mavenProjects)) {
-            Set<ArtifactRepository> repos = result.get(id);
-            if (repos == null) {
-              repos = new HashSet<ArtifactRepository>();
-              result.put(id, repos);
-            }
-            //noinspection unchecked
-            repos.addAll(remoteRepositories);
-          }
+        Set<ArtifactRepository> registeredRepositories = result.get(eachDependency);
+        if (registeredRepositories == null) {
+          registeredRepositories = new LinkedHashSet<ArtifactRepository>();
+          result.put(eachDependency, registeredRepositories);
         }
+        registeredRepositories.addAll(repositories);
       }
     }
     return result;
   }
 
-  private static boolean isExistingProject(Artifact artifact, List<MavenProjectModel> mavenProjects) {
-    for (MavenProjectModel each : mavenProjects) {
-      if (each.getMavenId().equals(new MavenId(artifact))) return true;
-    }
-    return false;
-  }
-
-  private void download(Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, String classifier, List<File> downloadedFiles)
-      throws CanceledException {
+  private void download(String classifier,
+                        Map<Artifact, Set<ArtifactRepository>> libraryArtifacts,
+                        List<File> downloadedFiles) throws CanceledException {
     myProgress.setText(ProjectBundle.message("maven.downloading.artifact", classifier));
+
     int step = 0;
-    for (Map.Entry<MavenId, Set<ArtifactRepository>> entry : libraryArtifacts.entrySet()) {
+    for (Map.Entry<Artifact, Set<ArtifactRepository>> eachEntry : libraryArtifacts.entrySet()) {
+      Artifact eachArtifact = eachEntry.getKey();
+
       myProgress.checkCanceled();
-
-      final MavenId id = entry.getKey();
-
       myProgress.setFraction(((double)step++) / libraryArtifacts.size());
-      myProgress.setText2(id.toString());
+      myProgress.setText2(eachArtifact.toString());
 
-      Artifact a = myEmbedder.createArtifact(id.groupId,
-                                             id.artifactId,
-                                             id.version,
+      Artifact a = myEmbedder.createArtifact(eachArtifact.getGroupId(),
+                                             eachArtifact.getArtifactId(),
+                                             eachArtifact.getVersion(),
                                              MavenConstants.JAR_TYPE,
                                              classifier);
-      myEmbedder.resolve(a, new ArrayList<ArtifactRepository>(entry.getValue()));
-
+      myEmbedder.resolve(a, new ArrayList<ArtifactRepository>(eachEntry.getValue()));
       if (a.isResolved()) downloadedFiles.add(a.getFile());
     }
   }
 
-  private void downloadPlugins(List<MavenProjectModel> projects) throws CanceledException {
+  private void downloadPlugins() throws CanceledException {
     myProgress.setText(ProjectBundle.message("maven.downloading.artifact", "plugins"));
 
     int pluginsCount = 0;
-    for (MavenProjectModel each : projects) {
+    for (MavenProjectModel each : myMavenProjects) {
       pluginsCount += each.getPlugins().size();
     }
 
     int step = 0;
-    for (MavenProjectModel eachProject : projects) {
+    for (MavenProjectModel eachProject : myMavenProjects) {
       for (Plugin eachPlugin : eachProject.getPlugins()) {
         myProgress.checkCanceled();
         myProgress.setFraction(((double)step++) / pluginsCount);
         myProgress.setText2(eachPlugin.getKey());
+
         myEmbedder.resolvePlugin(eachPlugin, eachProject.getMavenProject());
+        myProjectsTree.fireUpdated(eachProject);
       }
     }
   }

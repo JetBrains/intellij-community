@@ -6,11 +6,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
-public class MavenWithDataTestFixture {
+public class MavenCustomRepositoryTestFixture {
   private File myTempDir;
   private File myWorkingData;
 
-  public MavenWithDataTestFixture(File tempDir) {
+  public MavenCustomRepositoryTestFixture(File tempDir) {
     myTempDir = tempDir;
   }
 

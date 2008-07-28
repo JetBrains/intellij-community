@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class NexusIndexerTest extends MavenTestCase {
-  private MavenWithDataTestFixture myDataTestFixture;
+  private MavenCustomRepositoryTestFixture myRepositoryFixture;
   private MavenEmbedder embedder;
   private NexusIndexer indexer;
   private IndexUpdater updater;
@@ -34,8 +34,8 @@ public class NexusIndexerTest extends MavenTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
-    myDataTestFixture.setUp();
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(new File(myTempDirFixture.getTempDirPath()));
+    myRepositoryFixture.setUp();
 
     embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
 
@@ -60,19 +60,19 @@ public class NexusIndexerTest extends MavenTestCase {
   }
 
   public void testSeraching() throws Exception {
-    addContext("local1", new File(myDataTestFixture.getTestDataPath("local1_index")), null, null);
+    addContext("local1", new File(myRepositoryFixture.getTestDataPath("local1_index")), null, null);
     assertSearchWorks();
   }
 
   public void testUpdatingLocal() throws Exception {
-    IndexingContext c = addContext("local1", indexDir, new File(myDataTestFixture.getTestDataPath("local1")), null);
+    IndexingContext c = addContext("local1", indexDir, new File(myRepositoryFixture.getTestDataPath("local1")), null);
     indexer.scan(c, new NullScanningListener());
 
     assertSearchWorks();
   }
 
   public void testDownloading() throws Exception {
-    IndexingContext c = addContext("remote", indexDir, null, "file:///" + myDataTestFixture.getTestDataPath("remote"));
+    IndexingContext c = addContext("remote", indexDir, null, "file:///" + myRepositoryFixture.getTestDataPath("remote"));
     updater.fetchAndUpdateIndex(c, new NullTransferListener());
 
     assertSearchWorks();

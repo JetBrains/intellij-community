@@ -428,9 +428,6 @@ public class MavenEventsHandler extends DummyProjectComponent implements Persist
       requestKeymapUpdate();
     }
 
-    public void beforeProjectUpdate(MavenProjectModel n) {
-    }
-
     public void projectUpdated(MavenProjectModel file) {
       requestKeymapUpdate();
     }

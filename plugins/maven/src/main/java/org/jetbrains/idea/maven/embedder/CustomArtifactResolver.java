@@ -18,15 +18,12 @@ import java.util.List;
 
 public class CustomArtifactResolver extends DefaultArtifactResolver implements Contextualizable {
   public static final String MAVEN_PROJECT_MODEL_MANAGER = "MAVEN_PROJECT_MODEL_MANAGER";
-  public static final String IS_ONLINE = "IS_ONLINE";
 
   private MavenProjectsTree myModelManager;
-  private boolean isOnline;
   private CustomWagonManager myWagonManagerCache;
 
   public void contextualize(Context context) throws ContextException {
     myModelManager = (MavenProjectsTree)context.get(MAVEN_PROJECT_MODEL_MANAGER);
-    isOnline = (Boolean)context.get(IS_ONLINE);
   }
 
   @Override
@@ -34,7 +31,7 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
       throws ArtifactResolutionException, ArtifactNotFoundException {
     if (resolveAsModule(artifact)) return;
 
-    boolean shouldOpen = !isOnline && isResolvingParent(artifact);
+    boolean shouldOpen = isResolvingParent(artifact);
     if (shouldOpen) open();
     try {
       super.resolve(artifact, remoteRepositories, localRepository);
@@ -49,7 +46,7 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
       throws ArtifactResolutionException, ArtifactNotFoundException {
     if (resolveAsModule(artifact)) return;
 
-    boolean shouldOpen = !isOnline && isResolvingParent(artifact);
+    boolean shouldOpen = isResolvingParent(artifact);
     if (shouldOpen) open();
     try {
       super.resolveAlways(artifact, remoteRepositories, localRepository);

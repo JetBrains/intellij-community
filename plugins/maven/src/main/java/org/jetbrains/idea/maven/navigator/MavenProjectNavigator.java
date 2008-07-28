@@ -209,9 +209,6 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         });
       }
 
-      public void beforeProjectUpdate(MavenProjectModel n) {
-      }
-
       public void projectUpdated(final MavenProjectModel n) {
         if (!isActivated) return;
 

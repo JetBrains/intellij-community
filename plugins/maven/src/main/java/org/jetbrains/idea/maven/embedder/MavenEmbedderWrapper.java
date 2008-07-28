@@ -64,7 +64,6 @@ public class MavenEmbedderWrapper {
   public Set<MavenId> retrieveAndResetUnresolvedArtifactIds() {
     try {
       WagonManager wagon = (WagonManager)myEmbedder.getPlexusContainer().lookup(WagonManager.ROLE);
-      if (!(wagon instanceof CustomWagonManager)) return Collections.emptySet();
 
       CustomWagonManager customWagon = (CustomWagonManager)wagon;
       Set<MavenId> result = customWagon.getUnresolvedIds();

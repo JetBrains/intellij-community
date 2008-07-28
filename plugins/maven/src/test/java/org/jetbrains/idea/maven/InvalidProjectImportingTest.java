@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven;
 
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
-import org.jetbrains.idea.maven.indices.MavenWithDataTestFixture;
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryTestFixture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -376,7 +376,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getModules(root).get(2), true);
   }
 
-  public void testUnresolvedExtensions() throws Exception {
+  public void testUnresolvedExtensionsAfterImport() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -393,6 +393,72 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProjectModel root = getRootProjects().get(0);
     assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1:runtime'.");
+  }
+
+  public void testUnresolvedExtensionsAfterResolve() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <extensions>" +
+                  "   <extension>" +
+                  "     <groupId>xxx</groupId>" +
+                  "     <artifactId>yyy</artifactId>" +
+                  "     <version>1</version>" +
+                  "    </extension>" +
+                  "  </extensions>" +
+                  "</build>");
+
+    resolveProject();
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1:runtime'.");
+  }
+
+  public void testDoesNotReportExtensionsThatWereNotTriedToBeResolved() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  // for some reasons this plugins is not rtied to be resolved by embedder.
+                  // we shouldn't report it as unresolved.
+                  "<build>" +
+                  "  <extensions>" +
+                  "   <extension>" +
+                  "      <groupId>org.apache.maven.wagon</groupId>" +
+                  "      <artifactId>wagon-ssh-external</artifactId>" +
+                  "      <version>1.0-alpha-6</version>" +
+                  "    </extension>" +
+                  "  </extensions>" +
+                  "</build>");
+
+    assertProblems(getRootProjects().get(0), true);
+
+    resolveProject();
+    assertProblems(getRootProjects().get(0), true);
+  }
+
+  public void testDoesNotReportExtensionsThatDoNotHaveJarFiles() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  // for some reasons this plugins is not rtied to be resolved by embedder.
+                  // we shouldn't report it as unresolved.
+                  "<build>" +
+                  "  <extensions>" +
+                  "   <extension>" +
+                  "      <groupId>org.apache.maven.wagon</groupId>" +
+                  "      <artifactId>wagon</artifactId>" +
+                  "      <version>1.0-alpha-6</version>" +
+                  "    </extension>" +
+                  "  </extensions>" +
+                  "</build>");
+
+    assertProblems(getRootProjects().get(0), true);
+
+    resolveProject();
+    assertProblems(getRootProjects().get(0), true);
   }
 
   public void testUnresolvedBuildExtensionsInModules() throws Exception {
@@ -473,7 +539,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotReportResolvedPlugins() throws Exception {
-    MavenWithDataTestFixture fixture = new MavenWithDataTestFixture(myDir);
+    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir);
     fixture.setUp();
 
     setRepositoryPath(fixture.getTestDataPath("plugins"));

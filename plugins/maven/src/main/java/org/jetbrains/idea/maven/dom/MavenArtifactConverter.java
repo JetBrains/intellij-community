@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.dom.model.Plugin;
 import org.jetbrains.idea.maven.indices.MavenIndexException;
-import org.jetbrains.idea.maven.indices.MavenPluginInfoReader;
+import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -50,7 +50,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
 
       Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
       if (StringUtil.isEmpty(id.groupId) && plugin != null) {
-        for (String each : MavenPluginInfoReader.DEFAULT_GROUPS) {
+        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
           id.groupId = each;
           if (isValid(p, manager, id, context)) return s;
         }
@@ -83,7 +83,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
       Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
       if (StringUtil.isEmpty(id.groupId) && plugin != null) {
         Set<String> result = new HashSet<String>();
-        for (String each : MavenPluginInfoReader.DEFAULT_GROUPS) {
+        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
           id.groupId = each;
           result.addAll(getVariants(p, manager, id, context));
         }
@@ -148,7 +148,7 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
   private File resolveArtifactFile(ConvertContext context, MavenProjectsManager manager, MavenId id) {
     Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
     if (plugin != null) {
-      return MavenPluginInfoReader.getPluginFile(manager.getLocalRepository(), id.groupId, id.artifactId, id.version, "pom");
+      return MavenArtifactUtil.getArtifactFile(manager.getLocalRepository(), id.groupId, id.artifactId, id.version, "pom");
     }
 
     return new File(manager.getLocalRepository(), assembleArtifactFile(context, id));

@@ -23,10 +23,10 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testEnsuringLocalRepositoryIndex() throws Exception {
-    String dir1 = myIndicesFixture.getDataTestFixture().getTestDataPath("dir/foo");
-    String dir2 = myIndicesFixture.getDataTestFixture().getTestDataPath("dir\\foo");
-    String dir3 = myIndicesFixture.getDataTestFixture().getTestDataPath("dir\\foo\\");
-    String dir4 = myIndicesFixture.getDataTestFixture().getTestDataPath("dir/bar");
+    String dir1 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir/foo");
+    String dir2 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir\\foo");
+    String dir3 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir\\foo\\");
+    String dir4 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir/bar");
 
     List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1, Collections.<String>emptySet());
     assertEquals(1, indices1.size());
@@ -40,7 +40,7 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testEnsuringRemoteRepositoryIndex() throws Exception {
-    String local = myIndicesFixture.getDataTestFixture().getTestDataPath("dir");
+    String local = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir");
     String remote1 = "http://foo/bar";
     String remote2 = "  http://foo\\bar\\\\  ";
     String remote3 = "http://foo\\bar\\baz";

@@ -162,13 +162,13 @@ public class MavenEmbedderFactory {
   }
 
   public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
-                                                           MavenProjectsTree modelManager) {
-    return createEmbedder(settings, new MyCustomizer(modelManager, false));
+                                                           MavenProjectsTree projectsTree) {
+    return createEmbedder(settings, new MyCustomizer(projectsTree, false));
   }
 
   public static MavenEmbedderWrapper createEmbedderForResolve(MavenCoreSettings settings,
-                                                              MavenProjectsTree modelManager) {
-    return createEmbedder(settings, new MyCustomizer(modelManager, true));
+                                                              MavenProjectsTree projectsTree) {
+    return createEmbedder(settings, new MyCustomizer(projectsTree, true));
   }
 
   public static MavenEmbedderWrapper createEmbedderForExecute(MavenCoreSettings settings) {
@@ -258,11 +258,11 @@ public class MavenEmbedderFactory {
   }
 
   public static class MyCustomizer implements ContainerCustomizer {
-    private MavenProjectsTree myModelManager;
+    private MavenProjectsTree myProjectsTree;
     private boolean isOnline;
 
-    public MyCustomizer(MavenProjectsTree projectMapping, boolean online) {
-      myModelManager = projectMapping;
+    public MyCustomizer(MavenProjectsTree projectsTree, boolean online) {
+      myProjectsTree = projectsTree;
       isOnline = online;
     }
 
@@ -272,18 +272,16 @@ public class MavenEmbedderFactory {
       d = c.getComponentDescriptor(ArtifactFactory.ROLE);
       d.setImplementation(CustomArtifactFactory.class.getName());
 
-      if (myModelManager != null) {
-        c.getContext().put(CustomArtifactResolver.MAVEN_PROJECT_MODEL_MANAGER, myModelManager);
-        c.getContext().put(CustomArtifactResolver.IS_ONLINE, isOnline);
+      if (myProjectsTree != null) {
+        c.getContext().put(CustomArtifactResolver.MAVEN_PROJECT_MODEL_MANAGER, myProjectsTree);
 
         d = c.getComponentDescriptor(ArtifactResolver.ROLE);
         d.setImplementation(CustomArtifactResolver.class.getName());
       }
 
-      if (isOnline) return;
-
       d = c.getComponentDescriptor(WagonManager.ROLE);
       d.setImplementation(CustomWagonManager.class.getName());
+      c.getContext().put(CustomWagonManager.IS_ONLINE, isOnline);
 
       d = c.getComponentDescriptor(ExtensionManager.class.getName());
       d.setImplementation(CustomExtensionManager.class.getName());

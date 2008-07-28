@@ -13,8 +13,8 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.indices.MavenPluginInfo;
-import org.jetbrains.idea.maven.indices.MavenPluginInfoReader;
+import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
+import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
@@ -124,7 +124,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static void collectGoals(final File repository, final MavenId mavenId, final Collection<String> list) {
-    final MavenPluginInfo plugin = MavenPluginInfoReader.loadPluginInfo(repository, mavenId);
+    final MavenPluginInfo plugin = MavenArtifactUtil.readPluginInfo(repository, mavenId);
     if (plugin == null) return;
 
     for (MavenPluginInfo.Mojo m : plugin.getMojos()) {

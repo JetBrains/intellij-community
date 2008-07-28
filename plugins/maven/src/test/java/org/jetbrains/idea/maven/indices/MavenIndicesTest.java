@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 
 public class MavenIndicesTest extends MavenImportingTestCase {
-  private MavenWithDataTestFixture myDataTestFixture;
+  private MavenCustomRepositoryTestFixture myRepositoryFixture;
   private MavenIndices myIndices;
   private MavenEmbedder myEmbedder;
   private File myIndicesDir;
@@ -19,8 +19,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myDataTestFixture = new MavenWithDataTestFixture(myDir);
-    myDataTestFixture.setUp();
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir);
+    myRepositoryFixture.setUp();
 
     initIndices();
   }
@@ -47,15 +47,15 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testCreatingAndUpdatingLocal() throws Exception {
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.update(i, new EmptyProgressIndicator());
 
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
   }
 
   public void testCreatingSeveral() throws Exception {
-    MavenIndex i1 = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    MavenIndex i2 = myIndices.add(myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
+    MavenIndex i1 = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i2 = myIndices.add(myRepositoryFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
     myIndices.update(i1, new EmptyProgressIndicator());
     myIndices.update(i2, new EmptyProgressIndicator());
 
@@ -64,25 +64,25 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testAddingWithoutUpdate() throws Exception {
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     assertTrue(i.getGroupIds().isEmpty());
   }
 
   public void testUpdatingLocalClearsPreviousIndex() throws Exception {
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
 
     myIndices.update(i, new EmptyProgressIndicator());
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
 
-    myDataTestFixture.delete("local1");
-    myDataTestFixture.copy("local2", "local1");
+    myRepositoryFixture.delete("local1");
+    myRepositoryFixture.copy("local2", "local1");
 
     myIndices.update(i, new EmptyProgressIndicator());
     assertUnorderedElementsAreEqual(i.getGroupIds(), "jmock");
   }
 
   public void testAddingRemote() throws Exception {
-    MavenIndex i = myIndices.add("file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+    MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndices.update(i, new EmptyProgressIndicator());
 
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
@@ -95,7 +95,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
       return;
     }
 
-    MavenIndex i = myIndices.add("file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+    MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndices.update(i, new EmptyProgressIndicator());
 
     //shouldn't throw 'The existing index is for repository [remote] and not for repository [xxx]'
@@ -103,29 +103,29 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testRemoving() throws Exception {
-    MavenIndex i = myIndices.add("file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+    MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndices.update(i, new EmptyProgressIndicator());
     myIndices.remove(i);
     assertFalse(i.getDir().exists());
   }
 
   public void testClearIndexAfterRemoving() throws Exception {
-    MavenIndex i = myIndices.add("file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+    MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndices.update(i, new EmptyProgressIndicator());
 
     myIndices.remove(i);
-    i = myIndices.add("file:///" + myDataTestFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+    i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     assertTrue(i.getGroupIds().isEmpty());
   }
 
   public void testAddingInAbsenseOfParentDirectories() throws Exception {
     String subDir = "subDir1/subDir2/index";
     initIndices(subDir);
-    myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
   }
 
   public void testClearingIndexDirOnLoadError() throws Exception {
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
     shutdownIndices();
 
     FileWriter w = new FileWriter(new File(i.getDir(), MavenIndex.INDEX_INFO_FILE));
@@ -139,8 +139,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testDoNotClearAlreadyLoadedIndexesOnLoadError() throws Exception {
-    myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    MavenIndex i2 = myIndices.add(myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
+    myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i2 = myIndices.add(myRepositoryFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
     shutdownIndices();
 
     FileWriter w = new FileWriter(new File(i2.getDir(), MavenIndex.INDEX_INFO_FILE));
@@ -154,8 +154,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testLoadingIndexIfCachesAreBroken() throws Exception {
-    MavenIndex i1 = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    MavenIndex i2 = myIndices.add(myDataTestFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
+    MavenIndex i1 = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i2 = myIndices.add(myRepositoryFixture.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
     myIndices.update(i1, new EmptyProgressIndicator());
     myIndices.update(i2, new EmptyProgressIndicator());
 
@@ -183,13 +183,13 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testAddingIndexWithExistingDirectoryDoesNotThrowException() throws Exception {
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.update(i, new EmptyProgressIndicator());
 
     shutdownIndices();
 
     initIndices();
-    i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.update(i, new EmptyProgressIndicator());
   }
 
@@ -207,8 +207,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testGettingArtifactInfos() throws Exception {
-    myDataTestFixture.copy("local2", "local1");
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myRepositoryFixture.copy("local2", "local1");
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.update(i, new EmptyProgressIndicator());
 
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit", "jmock");
@@ -223,12 +223,12 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testGettingArtifactInfosFromNotUpdatedRepositories() throws Exception {
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     assertUnorderedElementsAreEqual(i.getGroupIds()); // shouldn't throw
   }
 
   public void testGettingArtifactInfosAfterReload() throws Exception {
-    myIndices.update(myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL),
+    myIndices.update(myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL),
                      new EmptyProgressIndicator());
 
     shutdownIndices();
@@ -238,8 +238,8 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testHasArtifactInfo() throws Exception {
-    myDataTestFixture.copy("local2", "local1");
-    MavenIndex i = myIndices.add(myDataTestFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myRepositoryFixture.copy("local2", "local1");
+    MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.update(i, new EmptyProgressIndicator());
 
     assertTrue(i.hasGroupId("junit"));

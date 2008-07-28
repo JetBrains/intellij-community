@@ -1,25 +1,27 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
+import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.core.util.MavenId;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MavenPluginInfoReaderTest extends MavenTestCase {
-  private MavenWithDataTestFixture myDataFixture;
+  private MavenCustomRepositoryTestFixture myRepositoryFixture;
   private MavenPluginInfo p;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myDataFixture = new MavenWithDataTestFixture(myDir);
-    myDataFixture.setUp();
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir);
+    myRepositoryFixture.setUp();
 
-    setRepositoryPath(myDataFixture.getTestDataPath("plugins"));
+    setRepositoryPath(myRepositoryFixture.getTestDataPath("plugins"));
 
     MavenId id = new MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2");
-    p = MavenPluginInfoReader.loadPluginInfo(getRepositoryFile(), id);
+    p = MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id);
   }
 
   public void testLoadingPluginInfo() throws Exception {
