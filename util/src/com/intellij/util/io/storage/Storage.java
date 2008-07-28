@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -38,12 +39,26 @@ public class Storage implements Disposable, Forceable {
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
   private final PagePool myPool;
+  @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
+  @NonNls public static final String DATA_EXTENSION = ".storageData";
 
   public static boolean deleteFiles(String storageFilePath) {
-    final File recordsFile = new File(storageFilePath + ".rindex");
-    final File dataFile = new File(storageFilePath + ".data");
+    final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
+    final File dataFile = new File(storageFilePath + DATA_EXTENSION);
 
     return FileUtil.delete(recordsFile) && FileUtil.delete(dataFile);
+  }
+
+  public static void convertFromOldExtensions(String storageFilePath) {
+    try {
+      FileUtil.rename(new File(storageFilePath + ".rindex"), new File(storageFilePath + INDEX_EXTENSION));
+      FileUtil.rename(new File(storageFilePath + ".data"), new File(storageFilePath + DATA_EXTENSION));
+      
+      LOG.info("Succesfully converted storage files to new extensions for path: " + storageFilePath);
+    }
+    catch (IOException e) {
+      // Ignore. May well be we don't have old files at all.
+    }
   }
 
   @NotNull
@@ -53,8 +68,10 @@ public class Storage implements Disposable, Forceable {
 
   @NotNull
   public static Storage create(String storageFilePath, PagePool pool) throws IOException {
-    final File recordsFile = new File(storageFilePath + ".rindex");
-    final File dataFile = new File(storageFilePath + ".data");
+    convertFromOldExtensions(storageFilePath);
+
+    final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
+    final File dataFile = new File(storageFilePath + DATA_EXTENSION);
 
     if (recordsFile.exists() != dataFile.exists()) {
       deleteFiles(storageFilePath);
@@ -105,11 +122,11 @@ public class Storage implements Disposable, Forceable {
       long start = System.currentTimeMillis();
 
       try {
-        File newDataFile = new File(path + ".data.temp");
+        File newDataFile = new File(path + ".storageData.backup");
         FileUtil.delete(newDataFile);
         newDataFile.createNewFile();
 
-        File oldDataFile = new File(path + ".data");
+        File oldDataFile = new File(path + DATA_EXTENSION);
         DataTable newDataTable = new DataTable(newDataFile, myPool);
 
         final int count = myRecordsTable.getRecordsCount();

@@ -2,6 +2,7 @@ package com.intellij.historyPerfTests;
 
 import com.intellij.history.core.storage.ContentStorage;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.util.io.storage.Storage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -87,8 +88,8 @@ public class ContentStorageTest extends PerformanceTestCase {
   public void testSizeAfterManyModifications() throws Exception {
     modifyStorageManyTimes();
     s.close();
-    long indexLength = new File(file.getPath() + ".rindex").length();
-    long dataLength = new File(file.getPath() + ".data").length();
+    long indexLength = new File(file.getPath() + Storage.INDEX_EXTENSION).length();
+    long dataLength = new File(file.getPath() + Storage.DATA_EXTENSION).length();
     assertEquals(19, (int)(indexLength + dataLength) / (1024 * 1024));
   }
 
