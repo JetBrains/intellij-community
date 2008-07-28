@@ -46,7 +46,9 @@ public class CompilerPaths {
   public static File getGeneratedDataDirectory(Project project, Compiler compiler) {
     //noinspection HardCodedStringLiteral
     File dir = new File(getGeneratedDataDirectory(project), compiler.getDescription().replaceAll("\\s+", "_"));
-    dir.mkdirs();
+    if (!project.isDefault()) {
+      dir.mkdirs();
+    }
     return dir;
   }
 
@@ -57,7 +59,9 @@ public class CompilerPaths {
   public static File getGeneratedDataDirectory(Project project) {
     //noinspection HardCodedStringLiteral
     File dir = new File(getCompilerSystemDirectory(project), ".generated");
-    dir.mkdirs();
+    if (!project.isDefault()) {
+      dir.mkdirs();
+    }
     return dir;
   }
 
@@ -68,7 +72,9 @@ public class CompilerPaths {
   public static File getCacheStoreDirectory(final Project project) {
     //noinspection HardCodedStringLiteral
     final File cacheStoreDirectory = new File(getCompilerSystemDirectory(project), ".caches");
-    cacheStoreDirectory.mkdirs();
+    if (!project.isDefault()) {
+      cacheStoreDirectory.mkdirs();
+    }
     return cacheStoreDirectory;
   }
 
@@ -79,7 +85,9 @@ public class CompilerPaths {
   public static File getCompilerSystemDirectory(Project project) {
     //noinspection HardCodedStringLiteral
     final File compilerProjectSystemDir = new File(getCompilerSystemDirectory(), project.getName() + "." + project.getLocationHash());
-    compilerProjectSystemDir.mkdirs();
+    if (!project.isDefault()) {
+      compilerProjectSystemDir.mkdirs();
+    }
     return compilerProjectSystemDir;
   }
 

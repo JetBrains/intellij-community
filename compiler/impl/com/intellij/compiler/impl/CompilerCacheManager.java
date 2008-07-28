@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,8 +28,6 @@ public class CompilerCacheManager implements ProjectComponent {
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
   private final List<Disposable> myCacheDisposables = new ArrayList<Disposable>();
   private final File myCachesRoot;
-  private PersistentStringEnumerator mySymbolTable;
-  @NonNls private static final String SYMTABLE_BASE_FILE_NAME = "symtable";
 
   public CompilerCacheManager(Project project) {
     myCachesRoot = CompilerPaths.getCacheStoreDirectory(project);
@@ -128,7 +125,6 @@ public class CompilerCacheManager implements ProjectComponent {
         LOG.info(e);
       }
     }
-    mySymbolTable = null;
     myCacheDisposables.clear();
     myCompilerToCacheMap.clear();
   }
@@ -144,23 +140,5 @@ public class CompilerCacheManager implements ProjectComponent {
         }
       }
     }
-  }
-  
-  private PersistentStringEnumerator getSymTable() throws IOException {
-    if (mySymbolTable == null) {
-      final File symtableFile = new File(myCachesRoot, SYMTABLE_BASE_FILE_NAME);
-      final PersistentStringEnumerator symTable = new PersistentStringEnumerator(symtableFile);
-      myCacheDisposables.add(new Disposable() {
-        public void dispose() {
-          try {
-            symTable.close();
-          }
-          catch (IOException ignored) {
-          }
-        }
-      });
-      mySymbolTable = symTable;
-    }
-    return mySymbolTable;
   }
 }
