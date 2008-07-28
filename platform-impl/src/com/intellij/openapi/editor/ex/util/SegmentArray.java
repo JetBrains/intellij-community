@@ -6,6 +6,7 @@ import java.lang.reflect.Array;
 
 public class SegmentArray {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
+
   protected SegmentArray() {
     myStarts = new int[INITIAL_SIZE];
     myEnds = new int[INITIAL_SIZE];
@@ -19,8 +20,8 @@ public class SegmentArray {
       LOG.error("Invalid endOffset:" + endOffset);
     }
 
-    if(i >= mySegmentCount) {
-      mySegmentCount = i+1;
+    if (i >= mySegmentCount) {
+      mySegmentCount = i + 1;
     }
     myStarts = reallocateArray(myStarts, i);
     myStarts[i] = startOffset;
@@ -35,14 +36,13 @@ public class SegmentArray {
   }
 
   protected static int[] reallocateArray(int[] array, int index) {
-    if(index < array.length)
-      return array;
+    if (index < array.length) return array;
 
     int newArraySize = array.length;
-    if(newArraySize == 0) {
+    if (newArraySize == 0) {
       newArraySize = 16;
     }
-    while(newArraySize <= index) {
+    while (newArraySize <= index) {
       newArraySize = (newArraySize * 120) / 100;
     }
     int[] newArray = new int[newArraySize];
@@ -52,14 +52,13 @@ public class SegmentArray {
 
   @SuppressWarnings({"unchecked"})
   protected static <T> T[] reallocateArray(T[] array, int index) {
-    if(index < array.length)
-      return array;
+    if (index < array.length) return array;
 
     int newArraySize = array.length;
-    if(newArraySize == 0) {
+    if (newArraySize == 0) {
       newArraySize = 16;
     }
-    while(newArraySize <= index) {
+    while (newArraySize <= index) {
       newArraySize = (newArraySize * 120) / 100;
     }
 
@@ -70,14 +69,13 @@ public class SegmentArray {
   }
 
   protected static short[] reallocateArray(short[] array, int index) {
-    if(index < array.length)
-      return array;
+    if (index < array.length) return array;
 
     int newArraySize = array.length;
-    if(newArraySize == 0) {
+    if (newArraySize == 0) {
       newArraySize = 16;
     }
-    while(newArraySize <= index) {
+    while (newArraySize <= index) {
       newArraySize = (newArraySize * 120) / 100;
     }
     short[] newArray = new short[newArraySize];
@@ -86,19 +84,22 @@ public class SegmentArray {
   }
 
   public final int findSegmentIndex(int offset) {
-    if(mySegmentCount <= 0) {
+    if (mySegmentCount <= 0) {
       if (offset == 0) return 0;
       throw new IllegalStateException("no segments avaliable");
     }
 
-    if(offset > myEnds[mySegmentCount -1] || offset < 0){
-      throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + myEnds[mySegmentCount - 1] + "]");
+    final int lastValidOffset = getLastValidOffset();
+
+    if (offset > lastValidOffset || offset < 0) {
+      throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + lastValidOffset + "]");
     }
 
-    if (offset == myEnds[mySegmentCount - 1]) return mySegmentCount - 1;
+    final int lastValidIndex = mySegmentCount - 1;
+    if (offset == lastValidOffset) return lastValidIndex;
 
     int start = 0;
-    int end = mySegmentCount - 1;
+    int end = lastValidIndex;
 
     while (start < end) {
       int i = (start + end) / 2;
@@ -118,15 +119,19 @@ public class SegmentArray {
     return start;
   }
 
+  public int getLastValidOffset() {
+    return mySegmentCount == 0 ? 0 : myEnds[mySegmentCount - 1];
+  }
+
   public final void changeSegmentLength(int startIndex, int change) {
-    if(startIndex >= 0 && startIndex < mySegmentCount) {
+    if (startIndex >= 0 && startIndex < mySegmentCount) {
       myEnds[startIndex] += change;
     }
-    shiftSegments(startIndex+1, change);
+    shiftSegments(startIndex + 1, change);
   }
 
   public final void shiftSegments(int startIndex, int shift) {
-    for(int i=startIndex; i<mySegmentCount; i++) {
+    for (int i = startIndex; i < mySegmentCount; i++) {
       myStarts[i] += shift;
       myEnds[i] += shift;
       if (myStarts[i] < 0 || myEnds[i] < 0) {
@@ -146,30 +151,30 @@ public class SegmentArray {
   }
 
   protected int[] remove(int[] array, int startIndex, int endIndex) {
-    if(endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
+    if (endIndex < mySegmentCount) {
+      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
 
   protected <T> T[] remove(T[] array, int startIndex, int endIndex) {
-    if(endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
+    if (endIndex < mySegmentCount) {
+      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
 
 
   protected short[] remove(short[] array, int startIndex, int endIndex) {
-    if(endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
+    if (endIndex < mySegmentCount) {
+      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
 
   protected long[] remove(long[] array, int startIndex, int endIndex) {
-    if(endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
+    if (endIndex < mySegmentCount) {
+      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
@@ -182,8 +187,8 @@ public class SegmentArray {
 
   protected int[] insert(int[] array, int[] insertArray, int startIndex, int insertLength) {
     int[] newArray = reallocateArray(array, mySegmentCount + insertLength);
-    if(startIndex < mySegmentCount) {
-      System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
+    if (startIndex < mySegmentCount) {
+      System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
     }
     System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
     return newArray;
@@ -191,8 +196,8 @@ public class SegmentArray {
 
   protected <T> T[] insert(T[] array, T[] insertArray, int startIndex, int insertLength) {
     T[] newArray = reallocateArray(array, mySegmentCount + insertLength);
-    if(startIndex < mySegmentCount) {
-      System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
+    if (startIndex < mySegmentCount) {
+      System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
     }
     System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
     return newArray;
@@ -200,22 +205,22 @@ public class SegmentArray {
 
   protected short[] insert(short[] array, short[] insertArray, int startIndex, int insertLength) {
     short[] newArray = reallocateArray(array, mySegmentCount + insertLength);
-    if(startIndex < mySegmentCount) {
-      System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
+    if (startIndex < mySegmentCount) {
+      System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
     }
     System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
     return newArray;
   }
 
   public int getSegmentStart(int index) {
-    if(index < 0 || index >= mySegmentCount) {
+    if (index < 0 || index >= mySegmentCount) {
       throw new IndexOutOfBoundsException("Wrong line: " + index);
     }
     return myStarts[index];
   }
 
   public int getSegmentEnd(int index) {
-    if(index < 0 || index >= mySegmentCount) {
+    if (index < 0 || index >= mySegmentCount) {
       throw new IndexOutOfBoundsException("Wrong line: " + index);
     }
     return myEnds[index];

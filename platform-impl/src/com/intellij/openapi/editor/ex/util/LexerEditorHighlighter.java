@@ -81,7 +81,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       // bulk mode was reset
       doSetText(document.getCharsSequence());
     }
-    return new HighlighterIteratorImpl(startOffset);
+
+    final int latestValidOffset = mySegments.getLastValidOffset();
+    return new HighlighterIteratorImpl(startOffset <= latestValidOffset ? startOffset : latestValidOffset);
   }
 
   private int packData(IElementType tokenType, int state) {
