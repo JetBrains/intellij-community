@@ -8,19 +8,24 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * plugin.dtd:reference interface.
  */
 public interface Reference extends DomElement {
 
-	/**
-	 * Returns the value of the id child.
-	 * Attribute id
-	 * @return the value of the id child.
-	 */
-	@NotNull
-	@Required
-	GenericAttributeValue<String> getRef();
+  /**
+   * Returns the value of the id child.
+   * Attribute id
+   *
+   * @return the value of the id child.
+   */
+  @NotNull
+  @Required
+  GenericAttributeValue<String> getRef();
 
+  @NotNull
+  Collection<AddToGroup> getAddToGroups();
 
 }

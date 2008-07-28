@@ -10,12 +10,17 @@ import java.util.List;
 
 public interface Actions extends DomElement {
 
-	@NotNull
-	List<Action> getActions();
-	Action addAction();
+  @NotNull
+  List<Action> getActions();
+
+  Action addAction();
 
 
-	@NotNull
-	List<Group> getGroups();
-	Group addGroup();
+  @NotNull
+  List<Group> getGroups();
+
+  Group addGroup();
+
+  @NotNull
+  List<Reference> getReferences();
 }
