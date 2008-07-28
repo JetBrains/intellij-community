@@ -137,15 +137,14 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
       }
       if (!toContinue) return false;
 
-      final CustomPropertyScopeProvider[] providers = Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME);
-      for (CustomPropertyScopeProvider provider : providers) {
-        searchScope.intersectWith(provider.getScope(psiManager.getProject()));
+      for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
+        final SearchScope scope = searchScope.intersectWith(provider.getScope(psiManager.getProject()));
+        toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
+                                                                          scope,
+                                                                          propertyName,
+                                                                          UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+        if (!toContinue) return false;
       }
-      toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
-                                                                        searchScope,
-                                                                        propertyName,
-                                                                        UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-      if (!toContinue) return false;
     }
 
     return true;
