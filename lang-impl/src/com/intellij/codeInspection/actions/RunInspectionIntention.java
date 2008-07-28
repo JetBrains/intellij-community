@@ -11,13 +11,12 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +50,12 @@ public class RunInspectionIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    final InspectionProfileEntry inspectionTool =
+        InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).getInspectionTool(myShortName);
+    if (inspectionTool instanceof LocalInspectionToolWrapper &&
+        ((LocalInspectionToolWrapper)inspectionTool).getTool() instanceof UnfairLocalInspectionTool) {
+      return false;
+    }
     return true;
   }
 
