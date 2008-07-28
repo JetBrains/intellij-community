@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -67,13 +68,19 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
     final LocalChangeList dropList = (LocalChangeList)getUserObject();
     dragOwner.moveChangesTo(dropList, dragBean.getChanges());
-    final List<VirtualFile> unversionedFiles = dragBean.getUnversionedFiles();
-    if (unversionedFiles != null) {
-      dragOwner.addUnversionedFiles(dropList, unversionedFiles);
+
+    final List<VirtualFile> toUpdate = new ArrayList<VirtualFile>();
+
+    addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
+    addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
+    if (! toUpdate.isEmpty()) {
+      dragOwner.addUnversionedFiles(dropList, toUpdate);
     }
-    final List<VirtualFile> ignoredFiles = dragBean.getIgnoredFiles();
+  }
+
+  private static void addIfNotNull(final List<VirtualFile> unversionedFiles1, final List<VirtualFile> ignoredFiles) {
     if (ignoredFiles != null) {
-      dragOwner.addUnversionedFiles(dropList, ignoredFiles);
+      unversionedFiles1.addAll(ignoredFiles);
     }
   }
 

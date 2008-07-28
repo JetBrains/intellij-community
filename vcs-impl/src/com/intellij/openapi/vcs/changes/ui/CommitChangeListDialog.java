@@ -673,11 +673,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public void refresh() {
-    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
-    myBrowser.rebuildList();
-    for (RefreshableOnComponent component : myAdditionalComponents) {
-      component.refresh();
-    }
+    ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
+      public void run() {
+        myBrowser.rebuildList();
+        for (RefreshableOnComponent component : myAdditionalComponents) {
+          component.refresh();
+        }
+      }
+    }, false, true, "commit dialog");   // title not shown for silently
   }
 
   public void saveState() {

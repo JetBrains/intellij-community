@@ -59,26 +59,29 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     if (project == null) return;
 
-    FilePath[] roots = filterDescindingFiles(getRoots(context), project);
+    final FilePath[] roots = filterDescindingFiles(getRoots(context), project);
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().saveAll();
     }
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if (changeListManager.ensureUpToDate(true)) {
-      LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
+    changeListManager.invokeAfterUpdate(new Runnable() {
+      public void run() {
 
-      Change[] changes = context.getSelectedChanges();
-      if (changes != null && changes.length > 0) {
-        Collection<Change> changeCollection = new ArrayList<Change>();
-        Collections.addAll(changeCollection, changes);
-        CommitChangeListDialog.commitChanges(project, changeCollection, initialSelection, getExecutor(project), null);
+        final LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
+
+        Change[] changes = context.getSelectedChanges();
+        if (changes != null && changes.length > 0) {
+          Collection<Change> changeCollection = new ArrayList<Change>();
+          Collections.addAll(changeCollection, changes);
+          CommitChangeListDialog.commitChanges(project, changeCollection, initialSelection, getExecutor(project), null);
+        }
+        else {
+          CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
+        }
       }
-      else {
-        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
-      }
-    }
+    }, false, true, "common checkin");  // title is not displayed if silently
   }
 
   @Nullable

@@ -28,12 +28,15 @@ public class RollbackDialogAction extends AnAction {
     FileDocumentManager.getInstance().saveAllDocuments();
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    ChangesBrowser browser = e.getData(ChangesBrowser.DATA_KEY);
+    final ChangesBrowser browser = e.getData(ChangesBrowser.DATA_KEY);
     RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes), true);
-    ChangeListManager.getInstance(project).ensureUpToDate(false);
-    if (browser != null) {
-      browser.rebuildList();
-    }
+    ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
+      public void run() {
+        if (browser != null) {
+          browser.rebuildList();
+        }
+      }
+    }, false, false, VcsBundle.message("changes.action.rollback.text"));
   }
 
   public void update(AnActionEvent e) {

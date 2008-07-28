@@ -197,7 +197,7 @@ public class ApplyPatchAction extends AnAction {
 
           changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
         }
-      });
+      }, false, false, VcsBundle.message("change.lists.manager.move.changes.to.list"));
     }
   }
 
@@ -213,10 +213,9 @@ public class ApplyPatchAction extends AnAction {
               changes.add(change);
             }
           }
-
           changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
         }
-      });
+      }, false, false, VcsBundle.message("change.lists.manager.move.changes.to.list"));
     }
   }
 

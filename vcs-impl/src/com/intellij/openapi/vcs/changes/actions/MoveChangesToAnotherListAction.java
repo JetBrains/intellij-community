@@ -121,7 +121,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
     LocalChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {
       listManager.moveChangesTo(resultList, changes);
-      if (unversionedFiles != null) {
+      if ((unversionedFiles != null) && (! unversionedFiles.isEmpty())) {
         listManager.addUnversionedFiles(resultList, unversionedFiles);
       }
       return true;

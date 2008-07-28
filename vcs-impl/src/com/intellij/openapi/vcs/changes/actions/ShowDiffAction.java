@@ -2,7 +2,10 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -28,8 +31,10 @@ import java.util.*;
  * @author max
  */
 public class ShowDiffAction extends AnAction {
+  private static String ourText = ActionsBundle.actionText("ChangesView.Diff");
+
   public ShowDiffAction() {
-    super(ActionsBundle.actionText("ChangesView.Diff"),
+    super(ourText,
           ActionsBundle.actionDescription("ChangesView.Diff"),
           IconLoader.getIcon("/actions/diff.png"));
   }
@@ -45,49 +50,95 @@ public class ShowDiffAction extends AnAction {
     return !ChangesUtil.getFilePath(changes [0]).isDirectory();
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);
+  public void actionPerformed(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     if (project == null || changes == null) return;
 
-    changes = ((ChangeListManagerEx) ChangeListManager.getInstance(project)).checkLoadFakeRevisions(changes);
-    if (changes == null || changes.length == 0) {
-      // VCS synchronization was cancelled
-      return;
-    }
+    final boolean needsConvertion = checkIfThereAreFakeRevisions(project, changes);
 
-    int index = 0;
-    if (changes.length == 1) {
-      final Change selectedChange = changes[0];
-      if (checkNotifyBinaryDiff(selectedChange)) {
-        return;
-      }
-      ChangeList changeList = ((ChangeListManagerEx) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
-      if (changeList != null) {
-        if (changesInList == null) {
-          changesInList = new ArrayList<Change>(changeList.getChanges());
-          Collections.sort(changesInList, new Comparator<Change>() {
-            public int compare(final Change o1, final Change o2) {
-              return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
-            }
-          });
+    // this trick is essential since we are under some conditions to refresh changes;
+    // but we can only rely on callback after refresh
+    final Runnable performer = new Runnable() {
+      public void run() {
+        Change[] convertedChanges;
+        if (needsConvertion) {
+          convertedChanges = loadFakeRevisions(project, changes);
+        } else {
+          convertedChanges = changes;
         }
-        changes = changesInList.toArray(new Change[changesInList.size()]);
-        for(int i=0; i<changes.length; i++) {
-          if (changes [i] == selectedChange) { 
-            index = i;
-            break;
+
+        if (convertedChanges == null || convertedChanges.length == 0) {
+          return;
+        }
+
+        List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);
+
+        int index = 0;
+        if (convertedChanges.length == 1) {
+          final Change selectedChange = convertedChanges[0];
+          if (checkNotifyBinaryDiff(selectedChange)) {
+            return;
+          }
+          ChangeList changeList = ((ChangeListManagerImpl) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
+          if (changeList != null) {
+            if (changesInList == null) {
+              changesInList = new ArrayList<Change>(changeList.getChanges());
+              Collections.sort(changesInList, new Comparator<Change>() {
+                public int compare(final Change o1, final Change o2) {
+                  return ChangesUtil.getFilePath(o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath(o2).getName());
+                }
+              });
+            }
+            convertedChanges = changesInList.toArray(new Change[changesInList.size()]);
+            for(int i=0; i<convertedChanges.length; i++) {
+              if (convertedChanges [i] == selectedChange) {
+                index = i;
+                break;
+              }
+            }
           }
         }
-      }
-    }
 
-    showDiffForChange(changes, index, project);
+        showDiffForChange(convertedChanges, index, project);
+      }
+    };
+
+    if (needsConvertion) {
+      ChangeListManager.getInstance(project).invokeAfterUpdate(performer, true, false, ourText);
+    }  else {
+      performer.run();
+    }
   }
 
   public static void showDiffForChange(final Change[] changes, final int index, final Project project) {
     showDiffForChange(changes, index, project, DiffExtendUIFactory.NONE, true);
+  }
+
+  private boolean checkIfThereAreFakeRevisions(final Project project, final Change[] changes) {
+    boolean needsConvertion = false;
+    for(Change change: changes) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision instanceof ChangeListManagerImpl.FakeRevision) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(beforeRevision.getFile());
+        needsConvertion = true;
+      }
+      if (afterRevision instanceof ChangeListManagerImpl.FakeRevision) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(afterRevision.getFile());
+        needsConvertion = true;
+      }
+    }
+    return needsConvertion;
+  }
+
+  @Nullable
+  private static Change[] loadFakeRevisions(final Project project, final Change[] changes) {
+    List<Change> matchingChanges = new ArrayList<Change>();
+    for(Change change: changes) {
+      matchingChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
+    }
+    return matchingChanges.toArray(new Change[matchingChanges.size()]);
   }
 
   public interface DiffExtendUIFactory {

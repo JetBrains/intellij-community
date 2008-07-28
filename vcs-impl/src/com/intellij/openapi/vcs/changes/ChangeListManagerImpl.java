@@ -4,10 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -35,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -168,7 +166,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       cancelUpdates();
       if (! myWaitingUpdateCompletionQueue.isEmpty()) {
         for (Runnable runnable : myWaitingUpdateCompletionQueue) {
-          invokeWaiter(runnable);
+          runnable.run();
         }
         myWaitingUpdateCompletionQueue.clear();
       }
@@ -200,16 +198,85 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    *
    * runnable is invoked on AWT thread
    */
-  public void invokeAfterUpdate(final Runnable afterUpdate) {
+  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title) {
     if (!myInitialized) return;
 
-    synchronized (myPendingUpdatesLock) {
-      scheduleUpdate(10, true, new Runnable() {
+    final Runnable runnable;
+    if (silently) {
+      runnable = new Runnable() {
         public void run() {
-          afterUpdate.run();
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              afterUpdate.run();
+              ChangesViewManager.getInstance(myProject).refreshView();
+            }
+          });
+        }
+      };
+    } else {
+      final FictiveBackgroundable fictiveBackgroundable = new FictiveBackgroundable(myProject, afterUpdate, cancellable, title);
+      ProgressManager.getInstance().run(fictiveBackgroundable);
+      runnable = new Runnable() {
+        public void run() {
+          fictiveBackgroundable.done();
+        }
+      };
+    }
+
+    synchronized (myPendingUpdatesLock) {
+      scheduleUpdate(10, true, runnable);
+    }
+  }
+
+  private static class FictiveBackgroundable extends Task.Backgroundable {
+    private final Runnable myRunnable;
+    private boolean myDone;
+    private final Object myLock = new Object();
+
+    private FictiveBackgroundable(@Nullable final Project project, @NotNull final Runnable runnable, final boolean cancellable, final String title) {
+      super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable, new PerformInBackgroundOption() {
+        public boolean shouldStartInBackground() {
+          return true;
+        }
+        public void processSentToBackground() {
+        }
+
+        public void processRestoredToForeground() {
+        }
+      });
+      myRunnable = runnable;
+      myDone = false;
+    }
+
+    public void run(final ProgressIndicator indicator) {
+      synchronized (myLock) {
+        while ((! myDone) && (! ProgressManager.getInstance().getProgressIndicator().isCanceled())) {
+          try {
+            myLock.wait();
+          }
+          catch (InterruptedException e) {
+            // ok
+          }
+        }
+      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          synchronized (myLock) {
+            if (! myDone) {
+              return;
+            }
+          }
+          myRunnable.run();
           ChangesViewManager.getInstance(myProject).refreshView();
         }
       });
+    }
+
+    public void done() {
+      synchronized (myLock) {
+        myDone = true;
+        myLock.notifyAll();
+      }
     }
   }
 
@@ -248,39 +315,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         break;
       }
     }
-  }
-
-  @Nullable
-  public Change[] checkLoadFakeRevisions(final Change[] changes) {
-    for(Change change: changes) {
-      if (change.getBeforeRevision() instanceof FakeRevision ||
-          change.getAfterRevision() instanceof FakeRevision) {
-        return loadFakeRevisions(changes);
-      }
-    }
-    return changes;
-  }
-
-  @Nullable
-  private Change[] loadFakeRevisions(final Change[] changes) {
-    for(Change change: changes) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (beforeRevision instanceof FakeRevision) {
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(beforeRevision.getFile());
-      }
-      if (afterRevision instanceof FakeRevision) {
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(afterRevision.getFile());
-      }
-    }
-    if (!ensureUpToDate(true)) {
-      return null;
-    }
-    List<Change> matchingChanges = new ArrayList<Change>();
-    for(Change change: changes) {
-      matchingChanges.addAll(getChangesIn(ChangesUtil.getFilePath(change)));
-    }
-    return matchingChanges.toArray(new Change[matchingChanges.size()]);
   }
 
   private static class DisposedException extends RuntimeException {}
@@ -591,7 +625,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         
         // this indicates that at least one update action had completed since the request for it
         for (Runnable updateWaiter : updateWaiters) {
-          invokeWaiter(updateWaiter);
+          updateWaiter.run();
         }
 
         myPendingUpdatesLock.notifyAll();
@@ -950,6 +984,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final Collection<Change> changesInList = map.get(fromList);
       myListeners.getMulticaster().changesMoved(changesInList, fromList, list);
     }
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        ChangesViewManager.getInstance(myProject).refreshView();
+      }
+    });
   }
 
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {
@@ -981,24 +1020,29 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     if (!list.isDefault()) {
       // find the changes for the added files and move them to the necessary changelist
-      ensureUpToDate(false);
-      List<Change> changesToMove = new ArrayList<Change>();
-      for(Change change: getDefaultChangeList().getChanges()) {
-        final ContentRevision afterRevision = change.getAfterRevision();
-        if (afterRevision != null) {
-          VirtualFile vFile = afterRevision.getFile().getVirtualFile();
-          if (files.contains(vFile)) {
-            changesToMove.add(change);
+      invokeAfterUpdate(new Runnable() {
+        public void run() {
+          List<Change> changesToMove = new ArrayList<Change>();
+          for(Change change: getDefaultChangeList().getChanges()) {
+            final ContentRevision afterRevision = change.getAfterRevision();
+            if (afterRevision != null) {
+              VirtualFile vFile = afterRevision.getFile().getVirtualFile();
+              if (files.contains(vFile)) {
+                changesToMove.add(change);
+              }
+            }
           }
+
+          if (changesToMove.size() > 0) {
+            moveChangesTo(list, changesToMove.toArray(new Change[changesToMove.size()]));
+          }
+
+          ChangesViewManager.getInstance(myProject).scheduleRefresh();
         }
-      }
-
-      if (changesToMove.size() > 0) {
-        moveChangesTo(list, changesToMove.toArray(new Change[changesToMove.size()]));
-      }
+      }, false, false, VcsBundle.message("change.lists.manager.add.unversioned"));
+    } else {
+      ChangesViewManager.getInstance(myProject).scheduleRefresh();
     }
-
-    ChangesViewManager.getInstance(myProject).scheduleRefresh();
   }
 
   public Project getProject() {
