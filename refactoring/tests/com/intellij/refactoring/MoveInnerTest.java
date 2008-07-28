@@ -50,6 +50,10 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("package1.OuterClass.InnerClass", "InnerClass", false, null, false, false, "package2"));
   }
 
+  public void testImportStaticOfEnum() throws Exception { // IDEADEV-28619
+    doTest(createAction("p.A.E", "E", false, null, false, false, null));
+  }
+
   private PerformAction createAction(@NonNls final String innerClassName,
                                      @NonNls final String newClassName,
                                      final boolean passOuterClass,
