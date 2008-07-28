@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormattingModel {
@@ -28,7 +29,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
   private Project myProject;
 
   public PsiBasedFormatterModelWithShiftIndentInside(final PsiFile file,
-                                                     final Block rootBlock,
+                                                     @NotNull final Block rootBlock,
                                                      final FormattingDocumentModelImpl documentModel) {
     super(file, rootBlock, documentModel);
     myProject = file.getProject();

@@ -18,11 +18,11 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   private final ASTNode myASTNode;
   private final FormattingDocumentModelImpl myDocumentModel;
-  private final Block myRootBlock;
+  @NotNull private final Block myRootBlock;
   protected boolean myCanModifyAllWhiteSpaces = false;
   
   public PsiBasedFormattingModel(final PsiFile file,
-                                 final Block rootBlock,
+                                 @NotNull final Block rootBlock,
                                  final FormattingDocumentModelImpl documentModel) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myDocumentModel = documentModel;

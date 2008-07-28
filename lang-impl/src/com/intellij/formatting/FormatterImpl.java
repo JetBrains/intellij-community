@@ -474,7 +474,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   public FormattingModel createFormattingModelForPsiFile(final PsiFile file,
-                                                         final Block rootBlock,
+                                                         @NotNull final Block rootBlock,
                                                          final CodeStyleSettings settings) {
     return new PsiBasedFormattingModel(file, rootBlock, FormattingDocumentModelImpl.createOn(file));
   }

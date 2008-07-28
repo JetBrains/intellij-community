@@ -18,6 +18,7 @@ package com.intellij.formatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows plugins to create an instance of the standard {@link FormattingModel} implementation.
@@ -43,8 +44,8 @@ public class FormattingModelProvider {
    */
 
   public static FormattingModel createFormattingModelForPsiFile(PsiFile file,
-                                                                    Block rootBlock,
-                                                                    CodeStyleSettings settings){
+                                                                @NotNull Block rootBlock,
+                                                                CodeStyleSettings settings){
     return myFactory.createFormattingModelForPsiFile(file, rootBlock, settings);
   }
 
