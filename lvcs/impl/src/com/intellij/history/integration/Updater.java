@@ -33,16 +33,12 @@ public class Updater implements CacheUpdater {
     for (VirtualFile r : roots) {
       if (parentIsNotUnderContentRoot(r)) result.add(r);
     }
-    removeDupplicates(result);
+    ContainerUtil.removeDuplicates(result);
     sortRoots(result);
-    return result.toArray(new VirtualFile[0]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
-  private void removeDupplicates(List<VirtualFile> roots) {
-    ContainerUtil.removeDuplicates(roots);
-  }
-
-  private void sortRoots(List<VirtualFile> roots) {
+  private static void sortRoots(List<VirtualFile> roots) {
     Collections.sort(roots, new Comparator<VirtualFile>() {
       public int compare(VirtualFile a, VirtualFile b) {
         boolean ancestor = VfsUtil.isAncestor(a, b, false);
@@ -118,7 +114,7 @@ public class Updater implements CacheUpdater {
       if (e == null) {
         createRecursively(f);
       }
-      else if (notTheSameKind(e, f)) {
+      else if (!sameKind(e, f)) {
         myVcs.delete(e.getPath());
         createRecursively(f);
       }
@@ -144,8 +140,8 @@ public class Updater implements CacheUpdater {
     deleteObsoleteFiles(entry, dir);
   }
 
-  private boolean notTheSameKind(Entry e, VirtualFile f) {
-    return e.isDirectory() != f.isDirectory();
+  private static boolean sameKind(Entry e, VirtualFile f) {
+    return e.isDirectory() == f.isDirectory();
   }
 
   private void deleteObsoleteFiles(Entry entry, VirtualFile dir) {
@@ -212,14 +208,14 @@ public class Updater implements CacheUpdater {
     return false;
   }
 
-  private void log(StringBuilder b, String title, VirtualFile[] roots) {
+  private static void log(StringBuilder b, String title, VirtualFile[] roots) {
     b.append(title + "\n");
     for (VirtualFile r : roots) {
       b.append("-'" + r + "'\n");
     }
   }
 
-  private void log(StringBuilder b, String title, List<Entry> roots) {
+  private static void log(StringBuilder b, String title, List<Entry> roots) {
     b.append(title + "\n");
     for (Entry r : roots) {
       b.append("-'" + r + "'\n");
