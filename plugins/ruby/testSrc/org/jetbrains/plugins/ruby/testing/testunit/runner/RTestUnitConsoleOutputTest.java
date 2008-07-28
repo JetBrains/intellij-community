@@ -3,10 +3,11 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.MockPrinter;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 
 /**
  * @author Roman Chernyatchik
@@ -33,10 +34,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
   @Override
   protected void tearDown() throws Exception {
     myEventsProcessor.onFinishTesting();
-    myConsole.dispose();
-
-    myConsole = null;
-    myEventsProcessor = null;
+    Disposer.dispose(myConsole);
 
     super.tearDown();
   }

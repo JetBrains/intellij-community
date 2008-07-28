@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestTreeView;
@@ -33,11 +34,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   @Override
   protected void tearDown() throws Exception {
     myEventsProcessor.onFinishTesting();
-    myConsole.dispose();
-
-    myTreeModel = null;
-    myConsole = null;
-    myEventsProcessor = null;
+    Disposer.dispose(myConsole);
 
     super.tearDown();
   }
