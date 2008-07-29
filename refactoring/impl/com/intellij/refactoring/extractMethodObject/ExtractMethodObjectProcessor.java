@@ -22,6 +22,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.usageView.UsageInfo;
@@ -45,6 +46,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private MyExtractMethodProcessor myExtractProcessor;
   private boolean myCreateInnerClass;
   private String myInnerClassName;
+
+  private PsiMethod myInnerMethod;
+  private boolean myMadeStatic = false;
 
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
     super(project);
@@ -231,7 +235,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiCodeBlock methodBody = getMethod().getBody();
     LOG.assertTrue(methodBody != null);
     replacedMethodBody.replace(methodBody);
-    innerClass.add(newMethod);
+    myInnerMethod = (PsiMethod)innerClass.add(newMethod);
   }
 
   private void createInnerClassConstructor(final PsiClass innerClass, final PsiParameter[] parameters) throws IncorrectOperationException {
@@ -297,6 +301,21 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return null;
   }
 
+  protected void changeInstanceAccess(final Project project)
+      throws IncorrectOperationException {
+    if (myMadeStatic) {
+      PsiReference[] refs =
+          ReferencesSearch.search(myInnerMethod, GlobalSearchScope.projectScope(project), false).toArray(PsiReference.EMPTY_ARRAY);
+      for (PsiReference ref : refs) {
+        final PsiElement element = ref.getElement();
+        final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+        if (callExpression != null) {
+          replaceMethodCallExpression(inferTypeArguments(callExpression), callExpression);
+        }
+      }
+    }
+  }
+
   public PsiMethod getMethod() {
     return myExtractProcessor.getExtractedMethod();
   }
@@ -347,7 +366,16 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     @Override
     public PsiElement processMatch(final Match match) throws IncorrectOperationException {
+      final boolean makeStatic = myInnerMethod != null &&
+                                 RefactoringUtil.isInStaticContext(match.getMatchStart(), getExtractedMethod().getContainingClass());
       final PsiElement element = super.processMatch(match);
+      if (makeStatic) {
+        myMadeStatic = true;
+        final PsiModifierList modifierList = myInnerMethod.getContainingClass().getModifierList();
+        LOG.assertTrue(modifierList != null);
+        modifierList.setModifierProperty(PsiModifier.STATIC, true);
+        myInnerMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      }
       PsiMethodCallExpression methodCallExpression = null;
       if (element instanceof PsiMethodCallExpression) {
         methodCallExpression = (PsiMethodCallExpression)element;

@@ -75,6 +75,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
           processor.run();
           if (processor.isCreateInnerClass()) {
             DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
+            processor.changeInstanceAccess(project);
           }
           final PsiElement method = processor.getMethod();
           LOG.assertTrue(method != null);
