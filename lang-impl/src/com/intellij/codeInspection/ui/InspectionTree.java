@@ -242,16 +242,16 @@ public class InspectionTree extends Tree {
       append(node.toString(),
              patchAttr(node, appearsBold(node) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : getMainForegroundAttributes(node)));
 
-      if (!node.isValid()) {
-        append(" " + InspectionsBundle.message("inspection.invalid.node.text"), patchAttr(node, SimpleTextAttributes.ERROR_ATTRIBUTES));
-      }
-
       int problemCount = node.getProblemCount();
       if (!leaf) {
         append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }
 
-      setIcon(node.getIcon(expanded));     
+      if (!node.isValid()) {
+        append(" " + InspectionsBundle.message("inspection.invalid.node.text"), patchAttr(node, SimpleTextAttributes.ERROR_ATTRIBUTES));
+      } else {
+        setIcon(node.getIcon(expanded));
+      }
     }
 
     public static SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
