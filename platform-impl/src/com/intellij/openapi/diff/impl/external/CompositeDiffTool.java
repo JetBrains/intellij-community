@@ -22,7 +22,7 @@ class CompositeDiffTool implements DiffTool {
     checkDiffData(data);
     DiffTool tool = chooseTool(data);
     if (tool != null) tool.show(data);
-    else LOG.error("Can't show");
+    else LOG.error("No diff tool found which is able to handle request " + data);
   }
 
   public boolean canShow(DiffRequest data) {

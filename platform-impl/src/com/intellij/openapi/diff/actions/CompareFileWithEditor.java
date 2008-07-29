@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class CompareFileWithEditor extends BaseDiffAction {
   @Nullable
@@ -93,6 +94,12 @@ public class CompareFileWithEditor extends BaseDiffAction {
                                   getVirtualFileContentTitle(getDocumentFile(myDocument)));
       }
 
+    }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "FileEditorContents:" + myFile.getPath();
     }
   }
 }
