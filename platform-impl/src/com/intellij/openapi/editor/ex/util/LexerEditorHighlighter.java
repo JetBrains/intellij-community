@@ -115,7 +115,14 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     CharSequence text = document.getCharsSequence();
     int oldStartOffset = e.getOffset();
 
-    final int oldStartIndex = Math.max(0, mySegments.findSegmentIndex(oldStartOffset) - 2);
+    final int segmentIndex;
+    try {
+      segmentIndex = mySegments.findSegmentIndex(oldStartOffset) - 2;
+    }
+    catch (IndexOutOfBoundsException ex) {
+      throw new IndexOutOfBoundsException(ex.getMessage() + " Lexer: " + myLexer);
+    }
+    final int oldStartIndex = Math.max(0, segmentIndex);
     int startIndex = oldStartIndex;
 
     int data;
