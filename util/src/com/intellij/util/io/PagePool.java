@@ -170,28 +170,39 @@ public class PagePool {
   }
 
   public void flushPages(final RandomAccessDataFile owner) {
+    flushPages(owner, Integer.MAX_VALUE);
+  }
+
+  /**
+   *
+   * @param owner
+   * @param maxPagesToFlush
+   * @return true if all the dirty pages where flushed.
+   */
+  public boolean flushPages(final RandomAccessDataFile owner, final int maxPagesToFlush) {
     boolean hasFlushes;
     synchronized (lock) {
       hasFlushes = scanQueue(owner, myProtectedQueue);
       hasFlushes |= scanQueue(owner, myProbationalQueue);
     }
 
-    if (hasFlushes) {
-      flushFinalizationQueue(Integer.MAX_VALUE);
-    }
+    return !hasFlushes || flushFinalizationQueue(maxPagesToFlush);
   }
 
-  private void flushFinalizationQueue(final int maxPagesToFlush) {
+  private boolean flushFinalizationQueue(final int maxPagesToFlush) {
     int count = 0;
 
     while (count < maxPagesToFlush) {
       FinalizationRequest request = retreiveFinalizationRequest();
       if (request == null) {
-        break;
+        return true;
       }
+
       processFinalizationRequest(request);
       count++;
     }
+
+    return false;
   }
 
   private boolean scanQueue(final RandomAccessDataFile owner, final Map<?, Page> queue) {

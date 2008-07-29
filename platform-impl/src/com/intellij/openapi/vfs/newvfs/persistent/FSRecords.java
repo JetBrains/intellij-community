@@ -200,7 +200,7 @@ public class FSRecords implements Disposable, Forceable {
         int lastModCount = 0;
         public void run() {
           if (lastModCount == ourLocalModificationCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
-            force();
+            flushSome();
           }
           lastModCount = ourLocalModificationCount;
         }
@@ -218,6 +218,23 @@ public class FSRecords implements Disposable, Forceable {
         myNames.force();
         myAttributes.force();
         myRecords.force();
+      }
+    }
+
+    public static void flushSome() {
+      synchronized (lock) {
+        myNames.force();
+        boolean attrsClean = myAttributes.flushSome();
+
+        if (attrsClean) {
+          try {
+            markClean();
+          }
+          catch (IOException e) {
+            // Ignore
+          }
+          myRecords.force();
+        }
       }
     }
 

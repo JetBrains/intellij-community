@@ -42,6 +42,8 @@ public class Storage implements Disposable, Forceable {
   @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
   @NonNls public static final String DATA_EXTENSION = ".storageData";
 
+  private static final int MAX_PAGES_TO_FLUSH_AT_A_TIME = 50;
+
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
     final File dataFile = new File(storageFilePath + DATA_EXTENSION);
@@ -182,6 +184,15 @@ public class Storage implements Disposable, Forceable {
     synchronized (lock) {
       myDataTable.force();
       myRecordsTable.force();
+    }
+  }
+
+  public boolean flushSome() {
+    synchronized (lock) {
+      boolean okRecords = myRecordsTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
+      boolean okData = myDataTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
+
+      return okRecords && okData;
     }
   }
 

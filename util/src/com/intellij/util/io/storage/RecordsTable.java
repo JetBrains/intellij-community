@@ -167,6 +167,15 @@ class RecordsTable implements Disposable, Forceable {
     myStorage.force();
   }
 
+  public boolean flushSome(int maxPages) {
+    myStorage.flushSomePages(maxPages);
+    if (!myStorage.isDirty()) {
+      force();
+      return true;
+    }
+    return false;
+  }
+
   public boolean isDirty() {
     return myIsDirty;
   }

@@ -152,6 +152,12 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
+  public void flushSomePages(int maxPagesToFlush) {
+    if (isDirty()) {
+      myIsDirty = !myPool.flushPages(this, maxPagesToFlush);
+    }
+  }
+
   public boolean isDirty() {
     return myIsDirty;
   }
