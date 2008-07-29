@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.io.FileUtil;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -118,6 +119,20 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   //  assertTrue(i.getGroupIds().isEmpty());
   //}
 
+  public void testDoNotAddSameIndexTwice() throws Exception {
+    MavenIndex local = myIndices.add(myRepositoryFixture.getTestDataPath("foo"), MavenIndex.Kind.LOCAL);
+
+    assertSame(local, myIndices.add(myRepositoryFixture.getTestDataPath("FOO"), MavenIndex.Kind.LOCAL));
+    assertSame(local, myIndices.add(myRepositoryFixture.getTestDataPath("foo") + "/\\", MavenIndex.Kind.LOCAL));
+    assertSame(local, myIndices.add("  " + myRepositoryFixture.getTestDataPath("foo") + "  ", MavenIndex.Kind.LOCAL));
+
+    MavenIndex remote = myIndices.add("http://foo.bar", MavenIndex.Kind.REMOTE);
+
+    assertSame(remote, myIndices.add("HTTP://FOO.BAR", MavenIndex.Kind.REMOTE));
+    assertSame(remote, myIndices.add("http://foo.bar/\\", MavenIndex.Kind.REMOTE));
+    assertSame(remote, myIndices.add("  http://foo.bar  ", MavenIndex.Kind.REMOTE));
+  }
+
   public void testAddingInAbsenseOfParentDirectories() throws Exception {
     String subDir = "subDir1/subDir2/index";
     initIndices(subDir);
@@ -182,6 +197,20 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(myIndices.getIndices().get(1).getGroupIds(), "jmock");
   }
 
+  public void testDoNotLoadSameIndexTwice() throws Exception {
+    MavenIndex index = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    File dir = index.getDir();
+    shutdownIndices();
+
+    File copy = new File(dir.getParentFile(), "INDEX_COPY");
+    FileUtil.copyDir(dir, copy);
+    
+    initIndices();
+
+    assertEquals(1, myIndices.getIndices().size());
+    assertFalse(copy.exists());
+  }
+
   public void testAddingIndexWithExistingDirectoryDoesNotThrowException() throws Exception {
     MavenIndex i = myIndices.add(myRepositoryFixture.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.update(i, new EmptyProgressIndicator());
@@ -202,7 +231,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
 
     shutdownIndices();
     initIndices();
-    
+
     assertEquals(message, myIndices.getIndices().get(0).getFailureMessage());
   }
 

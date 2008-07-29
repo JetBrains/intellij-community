@@ -12,7 +12,6 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -78,9 +77,8 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
   private void updateIndicesList() {
     try {
       MavenIndicesManager m = MavenIndicesManager.getInstance();
-      File repo = MavenProjectsManager.getInstance(myProject).getLocalRepository();
       myProjectIndices.set(m.ensureIndicesExist(myProject,
-                                                repo.getPath(),
+                                                MavenProjectsManager.getInstance(myProject).getLocalRepository(),
                                                 collectRemoteRepositories()));
     }
     catch (MavenIndexException e) {

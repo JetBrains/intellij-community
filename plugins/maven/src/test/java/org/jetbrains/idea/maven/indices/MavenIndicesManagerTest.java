@@ -5,6 +5,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
+import java.io.File;
 
 public class MavenIndicesManagerTest extends MavenImportingTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
@@ -23,10 +24,10 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testEnsuringLocalRepositoryIndex() throws Exception {
-    String dir1 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir/foo");
-    String dir2 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir\\foo");
-    String dir3 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir\\foo\\");
-    String dir4 = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir/bar");
+    File dir1 = myIndicesFixture.getRepositoryFixture().getTestData("dir/foo");
+    File dir2 = myIndicesFixture.getRepositoryFixture().getTestData("dir\\foo");
+    File dir3 = myIndicesFixture.getRepositoryFixture().getTestData("dir\\foo\\");
+    File dir4 = myIndicesFixture.getRepositoryFixture().getTestData("dir/bar");
 
     List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1, Collections.<String>emptySet());
     assertEquals(1, indices1.size());
@@ -40,7 +41,7 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testEnsuringRemoteRepositoryIndex() throws Exception {
-    String local = myIndicesFixture.getRepositoryFixture().getTestDataPath("dir");
+    File local = myIndicesFixture.getRepositoryFixture().getTestData("dir");
     String remote1 = "http://foo/bar";
     String remote2 = "  http://foo\\bar\\\\  ";
     String remote3 = "http://foo\\bar\\baz";

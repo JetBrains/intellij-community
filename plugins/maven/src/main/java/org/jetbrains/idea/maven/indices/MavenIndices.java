@@ -50,7 +50,13 @@ public class MavenIndices {
     if (indices == null) return;
     for (File each : indices) {
       try {
-        myIndices.add(new MavenIndex(each));
+        MavenIndex index = new MavenIndex(each);
+        if (findExisting(index.getRepositoryPathOrUrl(), index.getKind()) != null) {
+          index.close();
+          FileUtil.delete(each);
+          continue;
+        }
+        myIndices.add(index);
       }
       catch (Exception e) {
         FileUtil.delete(each);
@@ -80,10 +86,28 @@ public class MavenIndices {
   }
 
   public synchronized MavenIndex add(String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
+    MavenIndex index = findExisting(repositoryPathOrUrl, kind);
+    if (index != null) return index;
+
     File dir = getAvailableIndexDir();
-    MavenIndex index = new MavenIndex(dir, repositoryPathOrUrl, kind);
+    index = new MavenIndex(dir, repositoryPathOrUrl, kind);
     myIndices.add(index);
     return index;
+  }
+
+  private MavenIndex findExisting(String repositoryPathOrUrl, MavenIndex.Kind kind) {
+    File file = kind == MavenIndex.Kind.LOCAL ? new File(repositoryPathOrUrl.trim()) : null;
+    for (MavenIndex each : myIndices) {
+      switch (kind) {
+        case LOCAL:
+          if (each.isForLocal(file)) return each;
+          break;
+        case REMOTE:
+          if (each.isForRemote(repositoryPathOrUrl)) return each;
+          break;
+      }
+    }
+    return null;
   }
 
   private File getAvailableIndexDir() {

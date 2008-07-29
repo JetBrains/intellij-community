@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -104,53 +103,24 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   public synchronized List<MavenIndex> ensureIndicesExist(Project project,
-                                                          String localRepository,
+                                                          File localRepository,
                                                           Collection<String> remoteRepositories) throws MavenIndexException {
-    List<MavenIndex> result = new ArrayList<MavenIndex>();
-    List<MavenIndex> indices = getIndices();
+    // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
+    LinkedHashSet<MavenIndex> result = new LinkedHashSet<MavenIndex>();
 
-    File localRepositoryFile = new File(localRepository);
-    for (MavenIndex each : indices) {
-      if (each.getKind() == MavenIndex.Kind.LOCAL) {
-        if (each.getRepositoryFile().equals(localRepositoryFile)) {
-          result.add(each);
-          break;
-        }
-      }
-    }
-    if (result.isEmpty()) {
-      MavenIndex localIndex = getIndicesObject().add(localRepository, MavenIndex.Kind.LOCAL);
-      result.add(localIndex);
-    }
-    if (result.get(0).getUpdateTimestamp() == -1) {
-      scheduleUpdate(project, Collections.singletonList(result.get(0)));
+    MavenIndices indicesObjectCache = getIndicesObject();
+
+    MavenIndex localIndex = indicesObjectCache.add(localRepository.getPath(), MavenIndex.Kind.LOCAL);
+    result.add(localIndex);
+    if (localIndex.getUpdateTimestamp() == -1) {
+      scheduleUpdate(project, Collections.singletonList(localIndex));
     }
 
-    Set<String> toCreate = new HashSet<String>();
-    for (String each : remoteRepositories) {
-      toCreate.add(normalizeRemoteIndexUrl(each));
+    for (String eachRepo : remoteRepositories) {
+      result.add(indicesObjectCache.add(eachRepo, MavenIndex.Kind.REMOTE));
     }
 
-    for (MavenIndex each : indices) {
-      if (toCreate.remove(normalizeRemoteIndexUrl(each.getRepositoryPathOrUrl()))) {
-        result.add(each);
-      }
-    }
-
-    for (String each : toCreate) {
-      result.add(getIndicesObject().add(each, MavenIndex.Kind.REMOTE));
-    }
-
-    return result;
-  }
-
-  private String normalizeRemoteIndexUrl(String url) {
-    url = url.trim();
-    url = FileUtil.toSystemIndependentName(url);
-    while (url.endsWith("/")) {
-      url = url.substring(0, url.length() - 1);
-    }
-    return url;
+    return new ArrayList<MavenIndex>(result);
   }
 
   public void addArtifact(File repository, MavenId artifact) {

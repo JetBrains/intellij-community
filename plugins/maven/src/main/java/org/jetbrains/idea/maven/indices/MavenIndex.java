@@ -62,7 +62,7 @@ public class MavenIndex {
 
   public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind) throws MavenIndexException {
     myDir = dir;
-    myRepositoryPathOrUrl = repositoryPathOrUrl;
+    myRepositoryPathOrUrl = normalizePathOrUrl(repositoryPathOrUrl);
     myKind = kind;
 
     open();
@@ -87,7 +87,7 @@ public class MavenIndex {
     }
 
     myKind = Kind.valueOf(props.getProperty(KIND_KEY));
-    myRepositoryPathOrUrl = props.getProperty(PATH_OR_URL_KEY);
+    myRepositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
 
     try {
       String timestamp = props.getProperty(TIMESTAMP_KEY);
@@ -100,6 +100,15 @@ public class MavenIndex {
     myFailureMessage = props.getProperty(FAILURE_MESSAGE_KEY);
 
     open();
+  }
+
+  private String normalizePathOrUrl(String pathOrUrl) {
+    pathOrUrl = pathOrUrl.trim();
+    pathOrUrl = FileUtil.toSystemIndependentName(pathOrUrl);
+    while (pathOrUrl.endsWith("/")) {
+      pathOrUrl = pathOrUrl.substring(0, pathOrUrl.length() - 1);
+    }
+    return pathOrUrl;
   }
 
   private void open() throws MavenIndexException {
@@ -187,6 +196,14 @@ public class MavenIndex {
 
   public Kind getKind() {
     return myKind;
+  }
+
+  public boolean isForLocal(File repository) {
+    return myKind == Kind.LOCAL && getRepositoryFile().equals(repository);
+  }
+
+  public boolean isForRemote(String url) {
+    return myKind == Kind.REMOTE && getRepositoryUrl().equalsIgnoreCase(normalizePathOrUrl(url));
   }
 
   public synchronized long getUpdateTimestamp() {

@@ -25,8 +25,12 @@ public class MavenCustomRepositoryTestFixture {
   }
 
   public String getTestDataPath(String relativePath) {
-    String path = new File(myWorkingData, relativePath).getPath();
+    String path = getTestData(relativePath).getPath();
     return FileUtil.toSystemIndependentName(path);
+  }
+
+  public File getTestData(String relativePath) {
+    return new File(myWorkingData, relativePath);
   }
 
   public void delete(String relativePath) {
