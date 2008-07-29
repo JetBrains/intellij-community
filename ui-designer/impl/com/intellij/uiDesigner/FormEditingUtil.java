@@ -659,6 +659,10 @@ public final class FormEditingUtil {
     if (components.size() > 0) {
       RadComponent component = components.get(0);
       ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTreeBuilder();
+      if (builder == null) {
+        // race condition when handling event?
+        return;
+      }
       builder.beginUpdateSelection();
       try {
         clearSelection((RadContainer) getRoot(component));
