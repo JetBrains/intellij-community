@@ -794,11 +794,11 @@
     </test>
     <!-- caused "Probably a bug: eating token without its type checking" errors in Diana -->
     <test verify="false">
-      <pattern><![CDATA[a<error>)</error>b]]></pattern>
+      <pattern><![CDATA[a<error>)</error><error descr="Pattern expected">b</error>]]></pattern>
       <expected>OK</expected>
     </test>
     <test verify="false">
-      <pattern><![CDATA[\s*@return(?:s)?\s*(?:(?:\{|:)?\s*(?<error>(</error>[^\s\}]+)\s*\}?\s*)?(.*)]]></pattern>
+      <pattern><![CDATA[\s*@return(?:s)?\s*(?:(?:\{|:)?\s*(?<error>(</error><error>[</error><error>^</error><error>\</error>s<error>\</error>}<error>]</error><error>+</error><error>)</error><error>\</error>s<error>*</error><error>\</error>}<error>?</error><error>\</error>s<error>*</error><error>)</error><error>?</error><error>(</error><error>.</error><error>*</error><error>)</error>]]></pattern>
       <expected>OK</expected>
     </test>
   </regressions>

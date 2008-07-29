@@ -176,6 +176,7 @@ public class MainParseTest extends BaseParseTestcase {
                 if (test.expectedResult == Result.ERR) {
                     System.out.println("  OK");
                 } else {
+                    e.printStackTrace();
                     System.out.println("  FAILED. Expression = " + FileUtil.loadTextAndClose(new FileReader(new File(getTestDataPath(), name))));
                     if (myOut.size() > 0) {
                         String line;
