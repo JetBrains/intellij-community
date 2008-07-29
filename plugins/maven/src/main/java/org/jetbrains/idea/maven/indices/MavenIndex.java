@@ -423,13 +423,7 @@ public class MavenIndex {
       myData.flush();
     }
     catch (IOException e) {
-      String message = "with fix 2" +
-                       "\nrepository: " + myRepositoryPathOrUrl +
-                       "\ndataDir: " + myDataDirName +
-                       "\nlastUpdate: " + myUpdateTimestamp +
-                       "\nfailureMessage: " + myFailureMessage;
-
-      throw new MavenIndexException(message, e);
+      throw new MavenIndexException(e);
     }
   }
 
