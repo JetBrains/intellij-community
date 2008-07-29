@@ -166,7 +166,8 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
       if (!conflictsDialog.isOK()) return;
     }
 
-    if (myCbMakeVarargs != null && myCbMakeVarargs.isSelected()) {
+    final JCheckBox makeVarargsCb = myCreateInnerClassRb.isSelected() ? myCbMakeVarargs : myCbMakeVarargsAnonymous;
+    if (makeVarargsCb != null && makeVarargsCb.isSelected()) {
       final ParameterTablePanel.VariableData data = myVariableData[myVariableData.length - 1];
       if (data.type instanceof PsiArrayType) {
         data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
