@@ -128,6 +128,7 @@ public class QuickFixAction extends AnAction {
             public void run() {
               final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
               for (CommonProblemDescriptor descriptor : descriptors) {
+                if (descriptor == null) continue;
                 final QuickFix[] fixes = descriptor.getFixes();
                 if (fixes != null) {
                   for (QuickFix fix : fixes) {
