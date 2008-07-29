@@ -1,5 +1,6 @@
 package com.intellij.psi.search;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -72,7 +73,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
     public boolean acceptInput(final VirtualFile file) {
-      return true;
+      return !ProjectUtil.isProjectOrWorkspaceFile(file);
     }
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.cache.impl.todo;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -92,8 +93,11 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
       if (!(file.getFileSystem() instanceof LocalFileSystem)) {
         return false; // do not index TODOs in library sources
       }
-      
+
       final FileType fileType = myFtManager.getFileTypeByFile(file);
+      if (ProjectUtil.isProjectOrWorkspaceFile(file, fileType)) {
+        return false;
+      }
       
       if (fileType instanceof LanguageFileType) {
         final Language lang = ((LanguageFileType)fileType).getLanguage();

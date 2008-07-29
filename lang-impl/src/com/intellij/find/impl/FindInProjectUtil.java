@@ -1,6 +1,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -208,6 +209,8 @@ public class FindInProjectUtil {
 
         long fileLength = getFileLength(virtualFile);
         if (fileLength == -1) continue; // Binary or invalid
+
+        if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) continue;
 
         if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
           if (skipAllLarge) continue;

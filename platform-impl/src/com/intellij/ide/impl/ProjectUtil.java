@@ -4,6 +4,8 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -20,10 +22,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -34,6 +38,7 @@ import java.io.IOException;
  */
 public class ProjectUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.ProjectUtil");
+  @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
 
   private ProjectUtil() {
   }
@@ -81,7 +86,8 @@ public class ProjectUtil {
 
     if (virtualFile == null) return null;
 
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) || virtualFile.isDirectory() && virtualFile.findChild(".idea") != null) {
+    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) || virtualFile.isDirectory() && virtualFile.findChild(
+        DIRECTORY_BASED_PROJECT_DIR) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
     else {
@@ -98,7 +104,7 @@ public class ProjectUtil {
 
     File iprFile = new File(path);
 
-    File ideaDir = new File(iprFile.getParentFile(), ".idea");
+    File ideaDir = new File(iprFile.getParentFile(), DIRECTORY_BASED_PROJECT_DIR);
     File iwsFile = new File(iprFile.getParentFile(), getProjectName(iprFile) + ".iws");
 
     ideaDir.mkdirs();
@@ -244,5 +250,19 @@ public class ProjectUtil {
 
   public static String getInitialModuleRootPath(String projectFilePath) {
     return new File(projectFilePath).getParentFile().getAbsolutePath();
+  }
+
+
+  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
+    return isProjectOrWorkspaceFile(file, file.getFileType());
+  }
+
+  public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
+                                                 final FileType fileType) {
+    final VirtualFile parent = file.getParent();
+    return fileType instanceof WorkspaceFileType ||
+           fileType instanceof ProjectFileType ||
+           fileType instanceof ModuleFileType ||
+           (parent != null && parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR));
   }
 }

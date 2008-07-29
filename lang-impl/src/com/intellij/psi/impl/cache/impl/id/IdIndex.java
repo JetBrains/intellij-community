@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.cache.impl.id;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -27,7 +28,8 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     private final FileTypeManager myFtManager = FileTypeManager.getInstance();
     public boolean acceptInput(final VirtualFile file) {
-      return isIndexable(myFtManager.getFileTypeByFile(file));
+      final FileType fileType = myFtManager.getFileTypeByFile(file);
+      return isIndexable(fileType) && !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
     }
   };
 
