@@ -9,7 +9,7 @@ public class MavenLog {
     //if (ApplicationManager.getApplication().isUnitTestMode()) {
     //  LOG.warn(message);
     //} else {
-      LOG.info(message);
+    LOG.info(message);
     //}
   }
 
@@ -17,7 +17,7 @@ public class MavenLog {
     //if (ApplicationManager.getApplication().isUnitTestMode()) {
     //  LOG.warn(throwable);
     //} else {
-      LOG.info(throwable);
+    LOG.info(throwable);
     //}
   }
 
@@ -26,6 +26,10 @@ public class MavenLog {
   }
 
   public static void error(Throwable throwable) {
-    LOG.error(throwable);
+    error("", throwable);
+  }
+
+  public static void error(String message, Throwable throwable) {
+    LOG.error(message, throwable);
   }
 }

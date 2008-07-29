@@ -9,8 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.*;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
-import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.settings.Proxy;
 import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenLog;
@@ -104,31 +102,6 @@ public class MavenIndex {
     open();
   }
 
-  private synchronized void save() {
-    myDir.mkdirs();
-
-    Properties props = new Properties();
-
-    props.setProperty(KIND_KEY, myKind.toString());
-    props.setProperty(PATH_OR_URL_KEY, myRepositoryPathOrUrl);
-    if (myUpdateTimestamp != null) props.setProperty(TIMESTAMP_KEY, String.valueOf(myUpdateTimestamp));
-    props.setProperty(DATA_DIR_NAME_KEY, myDataDirName);
-    if (myFailureMessage != null) props.setProperty(FAILURE_MESSAGE_KEY, myFailureMessage);
-
-    try {
-      FileOutputStream s = new FileOutputStream(new File(myDir, INDEX_INFO_FILE));
-      try {
-        props.store(s, null);
-      }
-      finally {
-        s.close();
-      }
-    }
-    catch (IOException e) {
-      MavenLog.info(e);
-    }
-  }
-
   private void open() throws MavenIndexException {
     try {
       doOpen();
@@ -156,10 +129,47 @@ public class MavenIndex {
         close();
       }
       catch (Exception ignore) {
+        MavenLog.warn(e);
       }
       FileUtil.delete(getCurrentDataDir());
+      // just in case we couldn't correctly close or delete the current data.
+      myDataDirName = null;
       myUpdateTimestamp = null;
       throw e;
+    }
+  }
+
+  public synchronized void close() throws MavenIndexException {
+    try {
+      if (myData != null) myData.close();
+    }
+    catch (IOException e) {
+      throw new MavenIndexException(e);
+    }
+  }
+
+  private synchronized void save() {
+    myDir.mkdirs();
+
+    Properties props = new Properties();
+
+    props.setProperty(KIND_KEY, myKind.toString());
+    props.setProperty(PATH_OR_URL_KEY, myRepositoryPathOrUrl);
+    if (myUpdateTimestamp != null) props.setProperty(TIMESTAMP_KEY, String.valueOf(myUpdateTimestamp));
+    props.setProperty(DATA_DIR_NAME_KEY, myDataDirName);
+    if (myFailureMessage != null) props.setProperty(FAILURE_MESSAGE_KEY, myFailureMessage);
+
+    try {
+      FileOutputStream s = new FileOutputStream(new File(myDir, INDEX_INFO_FILE));
+      try {
+        props.store(s, null);
+      }
+      finally {
+        s.close();
+      }
+    }
+    catch (IOException e) {
+      MavenLog.info(e);
     }
   }
 
@@ -187,27 +197,9 @@ public class MavenIndex {
     return myFailureMessage;
   }
 
-  public synchronized void close() throws MavenIndexException {
-    try {
-      if (myData != null) myData.close();
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
-  }
-
-  public synchronized void delete() throws MavenIndexException {
-    try {
-      close();
-    }
-    finally {
-      FileUtil.delete(myDir);
-    }
-  }
-
-  public void update(MavenEmbedder embedder,
-                     NexusIndexer indexer,
+  public void update(NexusIndexer indexer,
                      IndexUpdater updater,
+                     ProxyInfo proxyInfo,
                      ProgressIndicator progress) throws ProcessCanceledException {
     try {
       if (myKind == Kind.LOCAL) {
@@ -215,7 +207,7 @@ public class MavenIndex {
       }
       IndexingContext context = createContext(indexer);
       try {
-        updateContext(context, embedder, indexer, updater, progress);
+        updateContext(context, indexer, updater, proxyInfo, progress);
         updateData(context, progress);
       }
       finally {
@@ -252,16 +244,16 @@ public class MavenIndex {
   }
 
   private void updateContext(IndexingContext context,
-                             MavenEmbedder embedder,
                              NexusIndexer indexer,
                              IndexUpdater updater,
+                             ProxyInfo proxyInfo,
                              ProgressIndicator progress) throws IOException, UnsupportedExistingLuceneIndexException {
     switch (myKind) {
       case LOCAL:
         updateLocalContext(context, indexer, progress);
         break;
       case REMOTE:
-        updateRemoteContext(context, embedder, updater);
+        updateRemoteContext(context, updater, proxyInfo);
         break;
     }
   }
@@ -274,23 +266,13 @@ public class MavenIndex {
       indexer.scan(context, new MyScanningListener(), false);
     }
     finally {
-      progress.setIndeterminate(true);
+      progress.setIndeterminate(false);
     }
   }
 
   private void updateRemoteContext(IndexingContext context,
-                                   MavenEmbedder embedder,
-                                   IndexUpdater updater) throws IOException, UnsupportedExistingLuceneIndexException {
-    Proxy proxy = embedder.getSettings().getActiveProxy();
-    ProxyInfo proxyInfo = null;
-    if (proxy != null) {
-      proxyInfo = new ProxyInfo();
-      proxyInfo.setHost(proxy.getHost());
-      proxyInfo.setPort(proxy.getPort());
-      proxyInfo.setNonProxyHosts(proxy.getNonProxyHosts());
-      proxyInfo.setUserName(proxy.getUsername());
-      proxyInfo.setPassword(proxy.getPassword());
-    }
+                                   IndexUpdater updater,
+                                   ProxyInfo proxyInfo) throws IOException, UnsupportedExistingLuceneIndexException {
     updater.fetchAndUpdateIndex(context, new TransferListenerAdapter(), proxyInfo);
   }
 
@@ -441,11 +423,11 @@ public class MavenIndex {
       myData.flush();
     }
     catch (IOException e) {
-      String message = myRepositoryPathOrUrl +
-          "\nopen: " + myData.isOpen +
-          "\ndataDir: " + myDataDirName +
-          "\nlastUpdate: " + myUpdateTimestamp +
-          "\nfailureMessage: " + myFailureMessage;
+      String message = "with fix 2" +
+                       "\nrepository: " + myRepositoryPathOrUrl +
+                       "\ndataDir: " + myDataDirName +
+                       "\nlastUpdate: " + myUpdateTimestamp +
+                       "\nfailureMessage: " + myFailureMessage;
 
       throw new MavenIndexException(message, e);
     }
@@ -509,7 +491,8 @@ public class MavenIndex {
                     groupId + ":" + artifactId + ":" + version);
   }
 
-  private boolean hasValue(final PersistentStringEnumerator set, Map<String, Boolean> cache, final String value) throws MavenIndexException {
+  private boolean hasValue(final PersistentStringEnumerator set, Map<String, Boolean> cache, final String value)
+      throws MavenIndexException {
     Boolean cached = cache.get(value);
     if (cached != null) return cached;
 
@@ -550,15 +533,19 @@ public class MavenIndex {
     final Map<String, Boolean> hasArtifactCache = new HashMap<String, Boolean>();
     final Map<String, Boolean> hasVersionCache = new HashMap<String, Boolean>();
 
-    volatile boolean isOpen = true;
-
     public IndexData(File dir) throws IOException {
-      groups = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
-      groupsWithArtifacts = new PersistentStringEnumerator(new File(dir, ARTIFACT_IDS_FILE));
-      groupsWithArtifactsWithVersions = new PersistentStringEnumerator(new File(dir, VERSIONS_FILE));
+      try {
+        groups = new PersistentStringEnumerator(new File(dir, GROUP_IDS_FILE));
+        groupsWithArtifacts = new PersistentStringEnumerator(new File(dir, ARTIFACT_IDS_FILE));
+        groupsWithArtifactsWithVersions = new PersistentStringEnumerator(new File(dir, VERSIONS_FILE));
 
-      groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
-      groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
+        groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
+        groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
+      }
+      catch (IOException e) {
+        close();
+        throw e;
+      }
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(File f) throws IOException {
@@ -566,8 +553,6 @@ public class MavenIndex {
     }
 
     public void close() throws IOException {
-      isOpen = false;
-
       safeClose(groups);
       safeClose(groupsWithArtifacts);
       safeClose(groupsWithArtifactsWithVersions);

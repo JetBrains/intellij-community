@@ -9,9 +9,10 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenIndicesStressTest extends MavenTestCase {
-  public void test() throws Exception {
+  public void test1() throws Exception {
     MavenCustomRepositoryTestFixture fixture;
 
     fixture = new MavenCustomRepositoryTestFixture(myDir);
@@ -39,7 +40,9 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
         catch (ProcessCanceledException e) {
           throw new RuntimeException(e);
         }
-        isFinished.set(true);
+        finally {
+          isFinished.set(true);
+        }
       }
     });
 
@@ -49,7 +52,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
           int i = 0;
           while (!isFinished.get()) {
             System.out.println("Adding artifact #" + i);
-            index.addArtifact(new MavenId("group" + i, "artifact" + 1, "" + 1));
+            index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
             i++;
           }
         }
@@ -70,7 +73,71 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
 
     t1.join(100);
     t2.join(100);
-    
+
     indices.close();
+  }
+
+  public void test2() throws Exception {
+    MavenCustomRepositoryTestFixture fixture;
+
+    fixture = new MavenCustomRepositoryTestFixture(myDir);
+    fixture.setUp();
+    fixture.copy("plugins", "local1");
+    fixture.copy("local2", "local1");
+    setRepositoryPath(fixture.getTestDataPath("local1"));
+
+    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
+    File indicesDir = new File(myDir, "indices");
+
+    MavenIndices indices = new MavenIndices(embedder, indicesDir);
+    MavenIndex index = indices.add(getRepositoryPath(), MavenIndex.Kind.LOCAL);
+
+    index.addArtifact(new MavenId("group1", "artifact1", "1"));
+    indices.close();
+
+    MavenIndices indices1 = new MavenIndices(embedder, indicesDir);
+    MavenIndices indices2 = new MavenIndices(embedder, indicesDir);
+
+    AtomicInteger finishedCount = new AtomicInteger(0);
+
+    Thread t1 = createThread(indices1.getIndices().get(0), finishedCount);
+    Thread t2 = createThread(indices2.getIndices().get(0), finishedCount);
+
+    t1.start();
+    t2.start();
+
+    do {
+      t1.join(100);
+      t2.join(100);
+    }
+    while (finishedCount.get() < 2);
+
+    t1.join(100);
+    t2.join(100);
+
+    indices.close();
+
+    indices1.close();
+    indices2.close();
+  }
+
+  private Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {
+    Thread t2 = new Thread(new Runnable() {
+      public void run() {
+        try {
+          for (int i = 0; i < 1000; i++) {
+            System.out.println("Adding artifact #" + i);
+            index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+          }
+        }
+        catch (MavenIndexException e) {
+          throw new RuntimeException(e);
+        }
+        finally {
+          finishedCount.incrementAndGet();
+        }
+      }
+    });
+    return t2;
   }
 }

@@ -257,7 +257,7 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected boolean ignore() {
-    System.out.println("ignored");
+    System.out.println("Ignored: " + getClass().getSimpleName() + "." + getName());
     return true;
   }
 }

@@ -2,9 +2,9 @@ package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
+import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
-import static java.util.Arrays.asList;
 
 public class MavenIndicesManagerTest extends MavenImportingTestCase {
   private MavenIndicesTestFixture myIndicesFixture;

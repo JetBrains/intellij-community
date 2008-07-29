@@ -102,21 +102,21 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     myIndices.update(i, new EmptyProgressIndicator());
   }
 
-  public void testRemoving() throws Exception {
-    MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-    myIndices.update(i, new EmptyProgressIndicator());
-    myIndices.remove(i);
-    assertFalse(i.getDir().exists());
-  }
+  //public void testRemoving() throws Exception {
+  //  MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+  //  myIndices.update(i, new EmptyProgressIndicator());
+  //  myIndices.remove(i);
+  //  assertFalse(i.getDir().exists());
+  //}
 
-  public void testClearIndexAfterRemoving() throws Exception {
-    MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-    myIndices.update(i, new EmptyProgressIndicator());
-
-    myIndices.remove(i);
-    i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-    assertTrue(i.getGroupIds().isEmpty());
-  }
+  //public void testClearIndexAfterRemoving() throws Exception {
+  //  MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+  //  myIndices.update(i, new EmptyProgressIndicator());
+  //
+  //  myIndices.remove(i);
+  //  i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
+  //  assertTrue(i.getGroupIds().isEmpty());
+  //}
 
   public void testAddingInAbsenseOfParentDirectories() throws Exception {
     String subDir = "subDir1/subDir2/index";

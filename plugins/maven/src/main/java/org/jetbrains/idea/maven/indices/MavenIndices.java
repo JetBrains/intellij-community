@@ -4,6 +4,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.settings.Proxy;
+import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.idea.maven.core.MavenLog;
@@ -103,17 +105,21 @@ public class MavenIndices {
     }
   }
 
-  public synchronized void remove(MavenIndex i) {
-    myIndices.remove(i);
-    try {
-      i.delete();
-    }
-    catch (MavenIndexException e) {
-      MavenLog.warn(e);
-    }
+  public void update(MavenIndex i, ProgressIndicator progress) throws ProcessCanceledException {
+    i.update(myIndexer, myUpdater, getProxyInfo(), progress);
   }
 
-  public void update(MavenIndex i, ProgressIndicator progress) throws ProcessCanceledException {
-    i.update(myEmbedder, myIndexer, myUpdater, progress);
+  private ProxyInfo getProxyInfo() {
+    Proxy proxy = myEmbedder.getSettings().getActiveProxy();
+    ProxyInfo result = null;
+    if (proxy != null) {
+      result = new ProxyInfo();
+      result.setHost(proxy.getHost());
+      result.setPort(proxy.getPort());
+      result.setNonProxyHosts(proxy.getNonProxyHosts());
+      result.setUserName(proxy.getUsername());
+      result.setPassword(proxy.getPassword());
+    }
+    return result;
   }
 }

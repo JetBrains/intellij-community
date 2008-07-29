@@ -160,11 +160,24 @@ public class MavenIndicesManager implements ApplicationComponent {
           each.addArtifact(artifact);
         }
         catch (MavenIndexException e) {
-          MavenLog.error(e);
+          MavenLog.error(logIndexError(each), e);
         }
         return;
       }
     }
+  }
+
+  private String logIndexError(MavenIndex each) {
+    String message = "Failed with fix #1 for index " + each.getDir();
+    String separator = "\n-------------------------------------------------";
+    for (MavenIndex eachExistingIndex : getIndices()) {
+      message += separator +
+                 "\ndir: " + eachExistingIndex.getDir() +
+                 "\ndataDir: " + eachExistingIndex.getCurrentDataDir() +
+                 "\nrepository: " + eachExistingIndex.getRepositoryPathOrUrl();
+    }
+    message += separator;
+    return message;
   }
 
   public void scheduleUpdate(final Project p, List<MavenIndex> indices) {
