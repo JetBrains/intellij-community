@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
+import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -24,6 +25,12 @@ import java.util.List;
 public class SmartEnterAction extends EditorAction {
   public SmartEnterAction() {
     super(new Handler());
+  }
+
+  @Override
+  protected Editor getEditor(final DataContext dataContext) {
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    return BaseCodeInsightAction.getInjectedEditor(editor.getProject(), editor);
   }
 
   private static class Handler extends EditorWriteActionHandler {

@@ -28,12 +28,20 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
   protected Editor getEditor(final DataContext dataContext, final Project project) {
     Editor editor = getBaseEditor(dataContext, project);
     if (!myLookForInjectedEditor) return editor;
+    return getInjectedEditor(project, editor);
+  }
+
+  public static Editor getInjectedEditor(final Project project, final Editor editor) {
+    return getInjectedEditor(project, editor, true);
+  }
+
+  public static Editor getInjectedEditor(final Project project, final Editor editor, boolean commit) {
     Editor injectedEditor = editor;
     if (editor != null) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       PsiFile psiFile = documentManager.getCachedPsiFile(editor.getDocument());
       if (psiFile != null) {
-        documentManager.commitAllDocuments();
+        if (commit) documentManager.commitAllDocuments();
         injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
       }
     }

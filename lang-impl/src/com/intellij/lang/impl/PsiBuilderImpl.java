@@ -616,7 +616,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public void error(String messageText) {
-    if (myProduction.get(myProduction.size() - 1) instanceof ErrorItem) return;
+    final ProductionMarker lastMarker = myProduction.get(myProduction.size() - 1);
+    if (lastMarker instanceof ErrorItem && lastMarker.myLexemIndex == myCurrentLexem) {
+      return;
+    }
     myProduction.add(new ErrorItem(this, messageText, myCurrentLexem));
   }
 
