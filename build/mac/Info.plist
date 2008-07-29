@@ -69,7 +69,7 @@
         <string>true</string>
       </dict>
       <key>VMOptions</key>
-      <string>-Xms16m -Xmx192m -XX:MaxPermSize=120m -Xbootclasspath/p:../lib/boot.jar -ea</string>
+      <string>-Xms16m -Xmx192m -XX:MaxPermSize=120m -Xbootclasspath/a:../lib/boot.jar -ea</string>
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
    </dict>
