@@ -67,6 +67,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       final int offset = editor.getCaretModel().getOffset();
       final PsiElement element = file.findElementAt(offset);
+      if (element == null) return;
       final Task.Backgroundable task = new Task.Backgroundable(project, ActionsBundle.message("action.ShowIntentionActions.text"), true) {
         public void run(@NotNull final ProgressIndicator indicator) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
