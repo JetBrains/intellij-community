@@ -267,7 +267,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void showRevertErrors(List<String> errors) {
-    myGateway.showError(message("message.can.not.revert.because", formatErrors(errors)));
+    myGateway.showError(message("message.cannot.revert.because", formatErrors(errors)));
   }
 
   private String formatErrors(List<String> errors) {
@@ -286,6 +286,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   private void createPatch() {
     try {
+      if (!myModel.canPerformCreatePatch()) {
+        myGateway.showError(message("message.cannot.create.patch.because.of.unavailable.content"));
+        return;
+      }
+
       CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel();
       p.setFileName(getDefaultPatchFile());
       if (!showAsDialog(p)) return;

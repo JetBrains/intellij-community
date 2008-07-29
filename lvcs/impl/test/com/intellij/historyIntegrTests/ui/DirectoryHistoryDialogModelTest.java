@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.Change;
 
 import java.util.List;
 
-// todo should be integration test case because ...vcs.Change creation requires idea environment 
 public class DirectoryHistoryDialogModelTest extends IntegrationTestCase {
   private LocalVcs vcs = new InMemoryLocalVcs();
   private DirectoryHistoryDialogModel m;

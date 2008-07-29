@@ -249,7 +249,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCannotCreatePatchIfThereIsUnavailableContent() throws IOException {
+  public void testCannotPerformCreatePatchIfThereIsUnavailableContent() throws IOException {
     vcs.changeFileContent("f", bigContentFactory(), -1);
     vcs.changeFileContent("f", cf(""), -1);
     vcs.changeFileContent("f", bigContentFactory(), -1);
@@ -257,16 +257,16 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     initModelFor("f");
 
     m.selectRevisions(1, 3);
-    assertTrue(m.isCreatePatchEnabled());
+    assertTrue(m.canPerformCreatePatch());
 
     m.selectRevisions(0, 3);
-    assertFalse(m.isCreatePatchEnabled());
+    assertFalse(m.canPerformCreatePatch());
 
     m.selectRevisions(1, 2);
-    assertFalse(m.isCreatePatchEnabled());
+    assertFalse(m.canPerformCreatePatch());
 
     m.selectRevisions(0, 2);
-    assertFalse(m.isCreatePatchEnabled());
+    assertFalse(m.canPerformCreatePatch());
   }
 
   private void initModelFor(String name) {
