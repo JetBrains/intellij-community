@@ -76,6 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -894,23 +895,32 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final GrTypeDefinitionBody body = getBody();
+
+    if (body == null) throw new IncorrectOperationException("Class must have body");;
+
     final PsiElement lBrace = body.getLBrace();
+    final PsiElement rBrace = body.getRBrace();
 
     if (lBrace == null) throw new IncorrectOperationException("L brace unfound");
+    if (rBrace == null) throw new IncorrectOperationException("R brace unfound");
     PsiElement anchor = null;
 
     if (psiElement instanceof GrMethod && ((GrMethod) psiElement).isConstructor()) {
 
       final GrMembersDeclaration[] memberDeclarations = body.getMemberDeclarations();
 
-      for (GrMembersDeclaration memberDeclaration : memberDeclarations) {
-        if (memberDeclaration instanceof GrMethodDefinitionImpl) {
-          anchor = memberDeclaration.getPrevSibling();
-          break;
+      if (memberDeclarations.length == 0){
+          anchor = rBrace.getPrevSibling();
+      } else {
+           for (GrMembersDeclaration memberDeclaration : memberDeclarations) {
+            if (memberDeclaration instanceof GrMethodDefinitionImpl) {
+              anchor = memberDeclaration.getPrevSibling();
+              break;
 
-        } else if (memberDeclaration instanceof GrVariableDeclaration) {
-          anchor = memberDeclaration.getNextSibling();
-        }
+            } else if (memberDeclaration instanceof GrVariableDeclaration) {
+              anchor = memberDeclaration.getNextSibling();
+            }
+          }
       }
     } else {
       anchor = lBrace.getNextSibling();
