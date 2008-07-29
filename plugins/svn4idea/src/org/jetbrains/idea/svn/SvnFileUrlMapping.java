@@ -37,16 +37,23 @@ public interface SvnFileUrlMapping {
   boolean rootsDiffer();
 
   class RootUrlInfo {
+    private final SVNURL myRepositoryUrlUrl;
     private final String myRepositoryUrl;
     private final SVNURL myAbsoluteUrlAsUrl;
 
-    public RootUrlInfo(final String repositoryUrl, final SVNURL absoluteUrlAsUrl) {
-      myRepositoryUrl = repositoryUrl.endsWith("/") ? repositoryUrl.substring(0, repositoryUrl.length() - 1) : repositoryUrl;
+    public RootUrlInfo(final SVNURL repositoryUrl, final SVNURL absoluteUrlAsUrl) {
+      myRepositoryUrlUrl = repositoryUrl;
+      final String asString = repositoryUrl.toString();
+      myRepositoryUrl = asString.endsWith("/") ? asString.substring(0, asString.length() - 1) : asString;
       myAbsoluteUrlAsUrl = absoluteUrlAsUrl;
     }
 
     public String getRepositoryUrl() {
       return myRepositoryUrl;
+    }
+
+    public SVNURL getRepositoryUrlUrl() {
+      return myRepositoryUrlUrl;
     }
 
     public String getAbsoluteUrl() {

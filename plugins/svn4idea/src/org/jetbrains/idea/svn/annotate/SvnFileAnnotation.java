@@ -37,6 +37,7 @@ public class SvnFileAnnotation implements FileAnnotation {
   private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
 
   private final SvnVcs myVcs;
+  private final VirtualFile myFile;
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
   private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<Long, SvnFileRevision>();
 
@@ -101,8 +102,9 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
 
-  public SvnFileAnnotation(final SvnVcs vcs) {
+  public SvnFileAnnotation(final SvnVcs vcs, final VirtualFile file) {
     myVcs = vcs;
+    myFile = file;
     myVcs.getSvnEntriesFileListener().addListener(myListener);
   }
 
@@ -163,7 +165,7 @@ public class SvnFileAnnotation implements FileAnnotation {
         final LineInfo info = myLineInfos.get(lineNum);
         SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
         if (svnRevision != null) {
-          ShowAllSubmittedFilesAction.showSubmittedFiles(myVcs.getProject(), svnRevision);        
+          ShowAllSubmittedFilesAction.showSubmittedFiles(myVcs.getProject(), svnRevision, myFile);        
         }
       }
     }

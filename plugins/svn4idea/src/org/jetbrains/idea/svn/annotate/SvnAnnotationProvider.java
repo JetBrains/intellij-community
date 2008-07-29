@@ -55,7 +55,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
       public void run() {
         final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         try {
-          final SvnFileAnnotation result = new SvnFileAnnotation(myVcs);
+          final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file);
 
           final File ioFile = new File(file.getPath()).getAbsoluteFile();
           SVNWCClient wcClient = myVcs.createWCClient();

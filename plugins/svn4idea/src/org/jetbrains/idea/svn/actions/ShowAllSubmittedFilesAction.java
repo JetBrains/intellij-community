@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -27,19 +28,30 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
 
 public class ShowAllSubmittedFilesAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction");
+
   public ShowAllSubmittedFilesAction() {
     super(SvnBundle.message("action.name.show.all.paths.affected"), null, IconLoader.findIcon("/icons/allRevisions.png"));
   }
@@ -51,22 +63,24 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    e.getPresentation().setEnabled(e.getData(VcsDataKeys.VCS_FILE_REVISION) != null);
+    final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+    e.getPresentation().setEnabled((e.getData(VcsDataKeys.VCS_FILE_REVISION) != null) && (revisionVirtualFile != null));
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
     final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-    if (revision != null) {
+    final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+    if ((revision != null) && (revisionVirtualFile != null)) {
       final SvnFileRevision svnRevision = ((SvnFileRevision)revision);
 
-      showSubmittedFiles(project, svnRevision);
+      showSubmittedFiles(project, svnRevision, revisionVirtualFile);
     }
   }
 
-  public static void showSubmittedFiles(final Project project, final SvnFileRevision svnRevision) {
-    final SvnChangeList changeList = loadRevisions(project, svnRevision);
+  public static void showSubmittedFiles(final Project project, final SvnFileRevision svnRevision, final VirtualFile file) {
+    final SvnChangeList changeList = loadRevisions(project, svnRevision, file);
 
     if (changeList != null) {
       long revNumber = ((SvnRevisionNumber)svnRevision.getRevisionNumber()).getRevision().getNumber();
@@ -79,7 +93,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
   }
 
   @Nullable
-  private static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision) {
+  private static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, final VirtualFile file) {
     final Ref<SvnChangeList> result = new Ref<SvnChangeList>();
     final SvnRevisionNumber number = ((SvnRevisionNumber)svnRevision.getRevisionNumber());
 
@@ -90,14 +104,34 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       final Exception[] ex = new Exception[1];
       final String url = svnRevision.getURL();
       final SVNLogEntry[] logEntry = new SVNLogEntry[1];
-      final SVNRepository repos = vcs.createRepository(url);
       final SvnRepositoryLocation location = new SvnRepositoryLocation(url);
+
+      final SVNLogClient client = vcs.createLogClient();
+      final SVNURL repositoryUrl;
+      if (file.isInLocalFileSystem()) {
+        final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
+        final SvnFileUrlMapping.RootUrlInfo wcRoot = urlMapping.getWcRootForFilePath(new File(file.getPath())).getSecond();
+        if (wcRoot == null) {
+          return null;
+        }
+        repositoryUrl = wcRoot.getRepositoryUrlUrl();
+      } else {
+        final SVNInfo svnInfo = vcs.createWCClient().doInfo(SVNURL.parseURIEncoded(url), SVNRevision.HEAD, SVNRevision.HEAD);
+        repositoryUrl = svnInfo.getRepositoryRootURL();
+        if (repositoryUrl == null) {
+          Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.version", number, "Cannot get repository url"),
+                                   SvnBundle.message("message.title.error.fetching.affected.paths"));
+          return null;
+        }
+      }
+
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
+
             ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.loading.log"));
-            repos.log(new String[]{"/"}, targetRevision.getNumber(), targetRevision.getNumber(), true, true, 0, new ISVNLogEntryHandler() {
-              public void handleLogEntry(SVNLogEntry currentLogEntry) {
+            client.doLog(repositoryUrl, null, targetRevision, targetRevision, targetRevision, false, true, 0, new ISVNLogEntryHandler() {
+              public void handleLogEntry(final SVNLogEntry currentLogEntry) throws SVNException {
                 logEntry[0] = currentLogEntry;
               }
             });
@@ -106,8 +140,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
             }
 
             ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
-            result.set(new SvnChangeList(vcs, location, logEntry [0], repos.getRepositoryRoot(true).toString()));
-            repos.closeSession();
+            result.set(new SvnChangeList(vcs, location, logEntry [0], repositoryUrl.toString()));
           }
           catch (Exception e) {
             ex[0] = e;
@@ -117,6 +150,10 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       if (ex[0] != null) throw ex[0];
     }
     catch (Exception e1) {
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      e1.printStackTrace(new PrintStream(baos));
+      LOG.info("For url: " + svnRevision.getURL() + "Exception: " + new String(baos.toByteArray()));
+
       Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.version", number, e1.getLocalizedMessage()),
                                SvnBundle.message("message.title.error.fetching.affected.paths"));
       return null;
