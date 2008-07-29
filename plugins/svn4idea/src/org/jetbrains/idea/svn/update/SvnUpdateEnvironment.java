@@ -79,6 +79,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
 
       final SVNUpdateClient updateClient = myVcs.createUpdateClient();
+      updateClient.setEventHandler(myHandler);
       updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);
       if (rootInfo != null) {
         final SVNURL url = rootInfo.getUrl();
