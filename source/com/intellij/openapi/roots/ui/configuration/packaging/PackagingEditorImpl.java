@@ -174,11 +174,13 @@ public class PackagingEditorImpl implements PackagingEditor {
     List<ContainerElement> elements = new ArrayList<ContainerElement>();
     for (PackagingTreeNode treeNode : treeNodes) {
       ContainerElement containerElement = treeNode.getContainerElement();
+      if (containerElement == null) continue;
+      
       PackagingArtifact owner = treeNode.getOwner();
       if (owner != null && owner.getContainerElement() != null) {
         owners.add(owner);
       }
-      else if (containerElement != null) {
+      else {
         elements.add(containerElement);
       }
     }
@@ -203,6 +205,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     boolean ok = PackagingElementPropertiesComponent.showDialog(element, myMainPanel, myPolicy);
     if (ok) {
       rebuildTree();
+      selectElement(element);
     }
   }
 
@@ -221,6 +224,14 @@ public class PackagingEditorImpl implements PackagingEditor {
   }
 
   public void selectElement(@NotNull final ContainerElement toSelect) {
+    PackagingTreeNode node = findNodeByElement(toSelect);
+    if (node != null) {
+      TreeUtil.selectNode(myTree, node);
+    }
+  }
+
+  @Nullable
+  private PackagingTreeNode findNodeByElement(final ContainerElement toSelect) {
     final Ref<PackagingTreeNode> ref = Ref.create(null);
     TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
       public boolean accept(final Object node) {
@@ -235,10 +246,7 @@ public class PackagingEditorImpl implements PackagingEditor {
         return true;
       }
     });
-    PackagingTreeNode node = ref.get();
-    if (node != null) {
-      TreeUtil.selectNode(myTree, node);
-    }
+    return ref.get();
   }
 
   public Tree getTree() {

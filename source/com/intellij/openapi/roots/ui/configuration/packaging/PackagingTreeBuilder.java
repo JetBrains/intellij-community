@@ -103,7 +103,13 @@ public abstract class PackagingTreeBuilder {
       String jarName = path.substring(i+1);
       PackagingTreeNode parent = root;
       if (i != -1) {
-        parent = PackagingTreeNodeFactory.getOrCreateDirectoryNode(path.substring(0, i), root, owner);
+        String parentPath = path.substring(0, i);
+        if (method == PackagingMethod.JAR_AND_COPY_FILE) {
+          parent = PackagingTreeNodeFactory.getOrCreateDirectoryNode(parentPath, root, owner);
+        }
+        else {
+          parent = PackagingTreeNodeFactory.getOrCreateDirectoryNode(parentPath, root.getParent(), owner);
+        }
       }
       return PackagingTreeNodeFactory.createPackedModuleOutputNode(moduleLink, jarName, parent, owner);
     }

@@ -95,15 +95,6 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode implement
   }
 
   protected boolean belongsToIncludedArtifact() {
-    if (myOwner == null) return false;
-
-    PackagingTreeNode parent = getParent();
-    while (parent != null) {
-      if (parent instanceof PackagingArtifactNode && myOwner.equals(((PackagingArtifactNode)parent).getArtifact())) {
-        return false;
-      }
-      parent = parent.getParent();
-    }
-    return true;
+    return myOwner != null;
   }
 }
