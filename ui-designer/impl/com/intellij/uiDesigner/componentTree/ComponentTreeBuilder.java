@@ -3,26 +3,25 @@ package com.intellij.uiDesigner.componentTree;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.HierarchyChangeListener;
 import com.intellij.uiDesigner.SelectionWatcher;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -90,7 +89,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
    * This method synchronizes selection in the tree with the selected
    * RadComponent in the component hierarchy
    */
-  private void syncSelection(){
+  private void syncSelection() {
     // Found selected components
     final RadContainer rootContainer=myEditor.getRootContainer();
     final ArrayList<RadComponent> selection = new ArrayList<RadComponent>();
@@ -111,28 +110,13 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
       selection.add(rootContainer);
     }
 
-    // Set selection in the tree
-    getTree().clearSelection();
-    TreePath firstSelectedPath = null;
-    for(int i = selection.size() - 1; i >= 0; i--){
-      final ComponentPtr ptr=new ComponentPtr(myEditor, selection.get(i));
-      buildNodeForElement(ptr);
-      final DefaultMutableTreeNode nodeForElement=getNodeForElement(ptr);
-      if (nodeForElement == null) {
-        //TODO[anton,vova] investigate!!!
-        return;
-      }
-
-//      LOG.assertTrue(nodeForElement!=null);
-      // Add selected path and scroll it to visible area
-      final TreePath selectedPath=new TreePath(nodeForElement.getPath());
-      getTree().addSelectionPath(selectedPath);
-      if(firstSelectedPath == null){
-        firstSelectedPath = selectedPath;
-      }
+    final ComponentPtr[] componentPtrs = new ComponentPtr[selection.size()];
+    for (int i = 0; i < selection.size(); i++) {
+      componentPtrs [i] = new ComponentPtr(myEditor, selection.get(i));
     }
-    LOG.assertTrue(firstSelectedPath != null);
-    getTree().scrollPathToVisible(firstSelectedPath);
+
+    // Set selection in the tree
+    select(componentPtrs, null);
 
     // Notify the ComponentTree that selected component changed
     myEditor.fireSelectedComponentChanged();
@@ -234,47 +218,31 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
   /**
    * Synchronizes GuiEditor with the tree
    */
-  private final class MyTreeSelectionListener implements TreeSelectionListener{
-    public void valueChanged(final TreeSelectionEvent e){
-      if(myInsideChange>0){
-        return;
-      }
-      final TreePath[] paths = getTree().getSelectionPaths();
-      if(paths==null){
+  private final class MyTreeSelectionListener implements TreeSelectionListener {
+    public void valueChanged(final TreeSelectionEvent e) {
+      if (myInsideChange>0) {
         return;
       }
 
+      final Set<ComponentPtr> selectedElements = getSelectedElements(ComponentPtr.class);
       myInsideChange++;
       try{
         FormEditingUtil.clearSelection(myEditor.getRootContainer());
         boolean hasComponentInTab = false;
-        for(int i = paths.length - 1; i >= 0; i--){
-          final DefaultMutableTreeNode lastComponent=(DefaultMutableTreeNode)paths[i].getLastPathComponent();
-          LOG.assertTrue(lastComponent!=null);
-
-          ComponentPtrDescriptor descriptor=null;
-          if (lastComponent.getUserObject() instanceof ComponentPtrDescriptor) {
-            descriptor = (ComponentPtrDescriptor) lastComponent.getUserObject();
-          }
-          if(descriptor!=null){
-            final ComponentPtr ptr=(ComponentPtr)descriptor.getElement();
-            if(ptr != null && ptr.isValid()){
-              final RadComponent component=ptr.getComponent();
-              LOG.assertTrue(component!=null);
-              if (!hasComponentInTab) {
-                hasComponentInTab = FormEditingUtil.selectComponent(myEditor, component);
-              }
-              else {
-                component.setSelected(true);
-              }
-              if (i == 0) {
-                myEditor.scrollComponentInView(component);
-              }
+        int count = 0;
+        for(ComponentPtr ptr: selectedElements) {
+          if(ptr.isValid()) {
+            final RadComponent component=ptr.getComponent();
+            LOG.assertTrue(component!=null);
+            if (!hasComponentInTab) {
+              hasComponentInTab = FormEditingUtil.selectComponent(myEditor, component);
             }
-          }
-          else {
-            // need to repaint button group bracket
-            myEditor.repaintLayeredPane();
+            else {
+              component.setSelected(true);
+            }
+            if (++count == selectedElements.size()) {
+              myEditor.scrollComponentInView(component);
+            }
           }
         }
 

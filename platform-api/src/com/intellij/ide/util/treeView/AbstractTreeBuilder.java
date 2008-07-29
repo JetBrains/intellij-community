@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Time;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import javax.swing.tree.TreePath;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Set;
 
 public abstract class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
@@ -289,4 +291,20 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return (DefaultTreeModel)getTree().getModel();
   }
 
+  @NotNull
+  public final Set<Object> getSelectedElements() {
+    return getUi().getSelectedElements();
+  }
+
+  @NotNull
+  public final <T> Set<T> getSelectedElements(Class<T> elementClass) {
+    Set<T> result = new HashSet<T>();
+    for (Object o : getSelectedElements()) {
+      if (elementClass.isInstance(o)) {
+        //noinspection unchecked
+        result.add((T) o);
+      }
+    }
+    return result;
+  }
 }

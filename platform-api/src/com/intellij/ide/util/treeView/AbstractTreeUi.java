@@ -1146,7 +1146,8 @@ class AbstractTreeUi {
     }
   }
 
-  private Set<Object> getSelectedElements() {
+  @NotNull
+  final Set<Object> getSelectedElements() {
     final TreePath[] paths = myTree.getSelectionPaths();
 
     Set<Object> result = new HashSet<Object>();
