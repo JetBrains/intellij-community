@@ -649,7 +649,7 @@ public class FileBasedIndex implements ApplicationComponent {
       return myTransactionMap.get(document);
     }
 
-    return findUncomittedPsi(document);
+    return findLatestKnownPsiForUncomittedDocument(document);
   }
 
   @NotNull
@@ -1082,15 +1082,20 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @Nullable
-  private static PsiFile findUncomittedPsi(Document doc) {
+  private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc) {
+    PsiFile target = null;
+    long modStamp = doc.getModificationStamp();
+
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
-      if (pdm.isUncommited(doc)) {
-        return pdm.getPsiFile(doc);
+      final PsiFile file = pdm.getCachedPsiFile(doc);
+      if (file != null && file.getModificationStamp() > modStamp) {
+        target = file;
+        modStamp = file.getModificationStamp();
       }
     }
 
-    return null;
+    return target;
   }
   
   private static class IndexableFilesFilter implements InputFilter {
