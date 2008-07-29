@@ -116,6 +116,19 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile("/targetCompletion-out.xml");
   }
 
+  public void testTargetCompletion2() throws Exception {
+    final String filePath = "targetCompletion2.xml";
+
+    configureByFile(filePath);
+    AntSupport.markFileAsAntFile(myVFile, myFile.getViewProvider(), true);
+
+    performNormalCompletion();
+    if (getItems() != null) {
+      select();
+    }
+    checkResultByFile("/targetCompletion2-out.xml");
+  }
+
   public void testEntityCompletion() throws Exception {
     configureByFile("EntityCompletion.xml");
     performNormalCompletion();
@@ -178,7 +191,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
       protected void handleEmptyLookup(CompletionContext context, LookupData lookupData) {
       }
     };
-    handler.invoke(getProject(), getEditor(), getFile());
+    handler.invoke(getProject(), getEditor(), AntSupport.getAntFile(myFile));
   }
 
   private void select(char completionChar, LookupItem item) {

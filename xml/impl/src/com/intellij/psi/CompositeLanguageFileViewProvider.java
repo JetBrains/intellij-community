@@ -48,6 +48,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   public SingleRootFileViewProvider createCopy(final LightVirtualFile copy) {
     final CompositeLanguageFileViewProvider viewProvider = cloneInner(copy);
     final PsiFileImpl psiFile = (PsiFileImpl)viewProvider.getPsi(getBaseLanguage());
+    assert psiFile != null;
+    psiFile.setOriginalFile(getPsi(getBaseLanguage()));
 
     // copying main tree
     final FileElement treeClone = (FileElement)psiFile.calcTreeElement().clone(); // base language tree clone
