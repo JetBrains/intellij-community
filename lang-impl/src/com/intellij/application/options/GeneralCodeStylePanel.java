@@ -7,10 +7,12 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +22,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -69,22 +70,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myRightMargin = settings.RIGHT_MARGIN;
 
-    myRightMarginField.getDocument().addDocumentListener(new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        int valueFromControl = getRightMarginImpl();
-        if (valueFromControl > 0) {
-          myRightMargin = valueFromControl;
-        }
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        int valueFromControl = getRightMarginImpl();
-        if (valueFromControl > 0) {
-          myRightMargin = valueFromControl;
-        }
-      }
-
-      public void changedUpdate(DocumentEvent e) {
+    myRightMarginField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
         int valueFromControl = getRightMarginImpl();
         if (valueFromControl > 0) {
           myRightMargin = valueFromControl;
@@ -99,16 +86,19 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private void update() {
     boolean enabled = !myCbUseSameIndents.isSelected();
-    if (!enabled && myIndentOptionsTabs.getSelectedIndex() != myIndentOptionsTabs.getTabCount()-1) {
-      myIndentOptionsTabs.setSelectedIndex(myIndentOptionsTabs.getTabCount()-1);
+    if (!enabled && myIndentOptionsTabs.getSelectedIndex() != 0) {
+      myIndentOptionsTabs.setSelectedIndex(0);
     }
 
     int index = 0;
-    for(IndentOptionsEditor options:myAdditionalIndentOptions.values()) {
-      options.setEnabled(enabled);
-      myIndentOptionsTabs.setEnabledAt(index, enabled);
+    for(IndentOptionsEditor options: myAdditionalIndentOptions.values()) {
+      final boolean tabEnabled = enabled || index == 0;
+      options.setEnabled(tabEnabled);
+      myIndentOptionsTabs.setEnabledAt(index, tabEnabled);
       index++;
     }
+    myOtherIndentOptions.setEnabled(enabled);
+    myIndentOptionsTabs.setEnabledAt(myIndentOptionsTabs.getTabCount()-1, enabled);
   }
 
   private JPanel createTabOptionsPanel() {
@@ -119,8 +109,16 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myIndentOptionsTabs = new TabbedPaneWrapper(JTabbedPane.RIGHT);
 
-    for(Map.Entry<FileType, IndentOptionsEditor> entry:myAdditionalIndentOptions.entrySet()) {
-      myIndentOptionsTabs.addTab(entry.getKey().getName(), entry.getValue().createPanel());
+    for(Map.Entry<FileType, IndentOptionsEditor> entry: myAdditionalIndentOptions.entrySet()) {
+      FileType ft = entry.getKey();
+      String tabName;
+      if (ft instanceof LanguageFileType) {
+        tabName = ((LanguageFileType) ft).getLanguage().getDisplayName();
+      }
+      else {
+        tabName = ft.getName();
+      }
+      myIndentOptionsTabs.addTab(tabName, entry.getValue().createPanel());
     }
 
     myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.other"), myOtherIndentOptions.createPanel());
@@ -172,10 +170,16 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
     settings.USE_SAME_INDENTS = myCbUseSameIndents.isSelected();
-    myOtherIndentOptions.apply(settings, settings.OTHER_INDENT_OPTIONS);
+    if (settings.USE_SAME_INDENTS) {
+      IndentOptionsEditor theEditor = findEditorForSameIndents();
+      theEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
+    }
+    else {
+      myOtherIndentOptions.apply(settings, settings.OTHER_INDENT_OPTIONS);
 
-    for(FileType fileType: myAdditionalIndentOptions.keySet()) {
-      myAdditionalIndentOptions.get(fileType).apply(settings, settings.getAdditionalIndentOptions(fileType));
+      for(FileType fileType: myAdditionalIndentOptions.keySet()) {
+        myAdditionalIndentOptions.get(fileType).apply(settings, settings.getAdditionalIndentOptions(fileType));
+      }
     }
 
     int rightMarginImpl = getRightMarginImpl();
@@ -183,6 +187,17 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       settings.RIGHT_MARGIN = rightMarginImpl;
     }
 
+  }
+
+  private IndentOptionsEditor findEditorForSameIndents() {
+    IndentOptionsEditor theEditor;
+    if (myAdditionalIndentOptions.isEmpty()) {
+      theEditor = myOtherIndentOptions;
+    }
+    else {
+      theEditor = myAdditionalIndentOptions.values().iterator().next();
+    }
+    return theEditor;
   }
 
   private int getRightMarginImpl() {
@@ -217,13 +232,22 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (myCbUseSameIndents.isSelected() != settings.USE_SAME_INDENTS) {
       return true;
     }
-    if (myOtherIndentOptions.isModified(settings, settings.OTHER_INDENT_OPTIONS)) {
-      return true;
-    }
-
-    for(FileType fileType: myAdditionalIndentOptions.keySet()) {
-      if (myAdditionalIndentOptions.get(fileType).isModified(settings, settings.getAdditionalIndentOptions(fileType))) {
+    if (settings.USE_SAME_INDENTS) {
+      final IndentOptionsEditor editor = findEditorForSameIndents();
+      // since the values from the editor will be saved into all options,
+      if (editor.isModified(settings, settings.OTHER_INDENT_OPTIONS)) {
         return true;
+      }
+    }
+    else {
+      if (myOtherIndentOptions.isModified(settings, settings.OTHER_INDENT_OPTIONS)) {
+        return true;
+      }
+
+      for(FileType fileType: myAdditionalIndentOptions.keySet()) {
+        if (myAdditionalIndentOptions.get(fileType).isModified(settings, settings.getAdditionalIndentOptions(fileType))) {
+          return true;
+        }
       }
     }
 
