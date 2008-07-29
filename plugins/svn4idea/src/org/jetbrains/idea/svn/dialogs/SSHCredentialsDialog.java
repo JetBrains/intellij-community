@@ -18,12 +18,14 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.help.HelpManager;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -32,9 +34,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.svn.SvnBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,7 +48,6 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
   private String myRealm;
   private JTextField myUserNameText;
-  private JTextField myPortText;
   private JCheckBox myAllowSaveCheckBox;
   private JPasswordField myPasswordText;
   private JPasswordField myPassphraseText;
@@ -72,12 +70,13 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     setResizable(true);
   }
 
-  public void setup(String realm, String userName, boolean allowSave) {
+  public void setup(String realm, String userName, boolean allowSave, final int port) {
     myRealm = realm;
     myUserName = userName;
     myAllowSave = allowSave;
     getHelpAction().setEnabled(true);
     init();
+    myPortField.setText("" + port);
   }
 
   protected void doHelpAction() {

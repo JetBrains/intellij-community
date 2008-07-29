@@ -43,7 +43,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   }
 
   public SVNAuthentication requestClientAuthentication(final String kind,
-                                                       SVNURL url,
+                                                       final SVNURL url,
                                                        final String realm,
                                                        SVNErrorMessage errorMessage,
                                                        final SVNAuthentication previousAuth,
@@ -96,7 +96,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
       command = new Runnable() {
         public void run() {
           SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject);
-          dialog.setup(realm, userName, authMayBeStored);
+          dialog.setup(realm, userName, authMayBeStored, url.getPort());
           if (previousAuth == null) {
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
