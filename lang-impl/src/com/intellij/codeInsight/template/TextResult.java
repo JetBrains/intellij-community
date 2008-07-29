@@ -1,16 +1,18 @@
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
 public class TextResult implements Result{
   private final String myText;
 
-  public TextResult(String text) {
+  public TextResult(@NotNull String text) {
     myText = text;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }
