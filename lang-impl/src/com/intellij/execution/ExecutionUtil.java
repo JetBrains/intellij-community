@@ -14,23 +14,18 @@ import javax.swing.*;
 public class ExecutionUtil {
 
   private static final Icon INVALID_CONFIGURATION = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png");
-  private static final Icon WITH_COVERAGE_CONFIGURATION = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png");
 
   private ExecutionUtil() {
   }
 
   public static Icon getConfigurationIcon(final Project project, final RunConfiguration configuration, final boolean invalid) {
     final RunManager runManager = RunManager.getInstance(project);
-    final Icon icon = configuration.getFactory().getIcon();
+    final Icon icon = configuration.getFactory().getIcon(configuration);
     final Icon configurationIcon = runManager.isTemporary(configuration) ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
       return LayeredIcon.create(configurationIcon, INVALID_CONFIGURATION);
     }
 
-    // TODO:
-    /*else if (configuration instanceof CoverageEnabledConfiguration && ((CoverageEnabledConfiguration)configuration).isCoverageEnabled()) {
-      return LayeredIcon.create(configurationIcon, WITH_COVERAGE_CONFIGURATION);
-    } */
     return configurationIcon;
   }
 

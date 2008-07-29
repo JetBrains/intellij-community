@@ -49,6 +49,10 @@ public abstract class ConfigurationFactory {
     return ADD_ICON;
   }
 
+  public Icon getIcon(@NotNull final RunConfiguration configuration) {
+    return getIcon();
+  }
+
   public Icon getIcon() {
     return myType.getIcon();
   }

@@ -3,6 +3,7 @@ package com.intellij.execution.application;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/application.png");
 
+
   /**reflection*/
   public ApplicationConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
@@ -29,6 +32,14 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
       }
 
+      @Override
+      public Icon getIcon(@NotNull final RunConfiguration configuration) {
+        if (configuration instanceof ApplicationConfiguration && ((ApplicationConfiguration) configuration).isCoverageEnabled()) {
+          return LayeredIcon.create(getIcon(), CoverageEnabledConfiguration.WITH_COVERAGE_CONFIGURATION);
+        } else {
+          return getIcon();
+        }
+      }
     };
   }
 
