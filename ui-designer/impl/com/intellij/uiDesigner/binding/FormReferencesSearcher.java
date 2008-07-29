@@ -81,7 +81,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return className == null || processReferencesInUIFormsInner(className, aClass, processor, scope, manager, filterScope);
   }
 
-  private static String getQualifiedName(final PsiClass aClass) {
+  public static String getQualifiedName(final PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         return aClass.getQualifiedName();

@@ -108,13 +108,13 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   }
 
   public static List<PsiFile> findFormsBoundToClass(PsiClass psiClass) {
-    String qName = psiClass.getQualifiedName();
+    String qName = FormReferencesSearcher.getQualifiedName(psiClass);
     if (qName == null) return Collections.emptyList();
     return findFormsBoundToClass(psiClass.getProject(), psiClass.getQualifiedName());
   }
 
   public static List<PsiFile> findFormsBoundToClass(PsiClass psiClass, GlobalSearchScope scope) {
-    String qName = psiClass.getQualifiedName();
+    String qName = FormReferencesSearcher.getQualifiedName(psiClass);
     if (qName == null) return Collections.emptyList();
     return findFormsBoundToClass(psiClass.getProject(), psiClass.getQualifiedName(), scope);
   }
