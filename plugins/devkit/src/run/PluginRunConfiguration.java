@@ -111,7 +111,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         fillParameterList(params.getProgramParametersList(), PROGRAM_PARAMETERS);
 
         @NonNls String libPath = ideaJdk.getHomePath() + File.separator + "lib";
-        vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
+        vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
 
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
         vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
