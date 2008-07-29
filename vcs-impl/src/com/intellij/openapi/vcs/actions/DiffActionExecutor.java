@@ -55,6 +55,7 @@ public abstract class DiffActionExecutor {
         }
       }, VcsBundle.message("show.diff.progress.title"), true, myProject);
       if (!ex.isNull()) {
+        //noinspection ThrowableResultOfMethodCallIgnored
         AbstractVcsHelper.getInstance(myProject).showError(ex.get(), VcsBundle.message("message.title.diff"));
         return null;
       }
@@ -80,6 +81,9 @@ public abstract class DiffActionExecutor {
         return;
       }
       final DiffContent remote = createRemote(revisionNumber);
+      if (remote == null) {
+        return;
+      }
 
       final SimpleDiffRequest request = new SimpleDiffRequest(myProject, mySelectedFile.getPresentableUrl());
       final DocumentContent content2 = new DocumentContent(myProject, FileDocumentManager.getInstance().getDocument(mySelectedFile));

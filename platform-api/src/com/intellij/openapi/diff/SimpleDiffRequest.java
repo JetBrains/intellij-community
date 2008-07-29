@@ -18,6 +18,7 @@ package com.intellij.openapi.diff;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -62,7 +63,7 @@ public class SimpleDiffRequest extends DiffRequest {
     myHints.remove(hint);
   }
 
-  public void setContents(DiffContent content1, DiffContent content2) {
+  public void setContents(@NotNull DiffContent content1, @NotNull DiffContent content2) {
     myContents[0] = content1;
     myContents[1] = content2;
   }
