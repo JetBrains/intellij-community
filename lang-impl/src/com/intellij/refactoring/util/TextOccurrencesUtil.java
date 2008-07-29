@@ -2,6 +2,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
@@ -48,7 +49,8 @@ public class TextOccurrencesUtil {
     TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
-        if (definition.getStringLiteralElements().contains(element.getNode().getElementType())) {
+        final ASTNode node = element.getNode();
+        if (node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
           synchronized (results) {
             results.add(element);
           }
