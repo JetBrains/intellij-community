@@ -45,7 +45,7 @@ public class FlipOperandsFix extends AbstractFix {
     }
 
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
-        return myExpression != null && myExpression.getType() == XPathType.BOOLEAN && myExpression.getROperand() != null;
+        return myExpression != null && myExpression.isValid() && myExpression.getType() == XPathType.BOOLEAN && myExpression.getROperand() != null;
     }
 
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

@@ -44,10 +44,13 @@ public class ConvertToEntityFix extends AbstractFix {
     }
 
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
+        if (!myToken.isValid()) {
+            return false;
+        }
         final PsiFile psiFile = myToken.getContainingFile();
         assert psiFile != null;
         final PsiElement context = psiFile.getContext();
-        return myToken.isValid() && context != null && context.isValid();
+        return context != null && context.isValid();
     }
 
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

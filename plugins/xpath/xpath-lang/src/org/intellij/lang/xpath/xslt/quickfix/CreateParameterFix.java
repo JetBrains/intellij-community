@@ -45,6 +45,6 @@ public class CreateParameterFix extends AddParamBase {
     }
 
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
-        return XsltCodeInsightUtil.getTemplateTag(myReference, true) != null;
+        return myReference.isValid() && XsltCodeInsightUtil.getTemplateTag(myReference, true) != null;
     }
 }
