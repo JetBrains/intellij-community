@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -299,8 +300,11 @@ public class LaterInvocator {
             lastInfo.runnable.run();
             lastInfo.callback.setDone();
           }
+          catch (ProcessCanceledException ex) {
+            // ignore            
+          }
           catch (Throwable t) {
-            if (t instanceof StackOverflowError){
+            if (t instanceof StackOverflowError) {
               t.printStackTrace();
             }
             LOG.error(t);
