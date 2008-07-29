@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -65,6 +66,7 @@ public class LineStatusTracker {
   public LineStatusTracker(Document document, Document upToDateDocument, Project project) {
     myDocument = document;
     myUpToDateDocument = upToDateDocument;
+    myUpToDateDocument.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
   }
 
@@ -72,15 +74,11 @@ public class LineStatusTracker {
     if (myIsReleased) return;
     LOG.assertTrue(!myIsInitialized);
     try {
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));
-            }
-          });
+          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));
         }
-      }, null, null);
+      });
 
       myUpToDateDocument.setReadOnly(true);
       reinstallRanges();

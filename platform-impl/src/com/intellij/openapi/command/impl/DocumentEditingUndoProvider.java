@@ -59,7 +59,7 @@ class DocumentEditingUndoProvider {
       if (isCopy(document)) return;
 
       if (allEditorsAreViewersFor(document)) return;
-      if (myProject != null && !isToRecordActions(document)) return;
+      if (!isToRecordActions(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
       if (externalChanges()) {
