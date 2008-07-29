@@ -11,12 +11,14 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.LayeredIcon;
 import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +40,15 @@ public class TestNGConfigurationType implements LocatableConfigurationType
                 LOGGER.info("Create TestNG Template Configuration");
                 return new TestNGConfiguration("", project, this);
             }
+
+          @Override
+          public Icon getIcon(@NotNull final RunConfiguration configuration) {
+            if (configuration instanceof TestNGConfiguration && ((TestNGConfiguration) configuration).isCoverageEnabled()) {
+              return LayeredIcon.create(getIcon(), CoverageEnabledConfiguration.WITH_COVERAGE_CONFIGURATION);
+            } else {
+              return getIcon();
+            }
+          }
         };
     }
 

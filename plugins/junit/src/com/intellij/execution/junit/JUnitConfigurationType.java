@@ -22,12 +22,14 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +46,14 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
         return new JUnitConfiguration("", project, this);
       }
 
+      @Override
+      public Icon getIcon(@NotNull final RunConfiguration configuration) {
+        if (configuration instanceof JUnitConfiguration && ((JUnitConfiguration) configuration).isCoverageEnabled()) {
+          return LayeredIcon.create(getIcon(), CoverageEnabledConfiguration.WITH_COVERAGE_CONFIGURATION);
+        } else {
+          return getIcon();
+        }
+      }
     };
   }
 
