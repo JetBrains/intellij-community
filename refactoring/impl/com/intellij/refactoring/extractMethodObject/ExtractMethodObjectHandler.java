@@ -7,13 +7,15 @@ package com.intellij.refactoring.extractMethodObject;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -67,26 +69,14 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) return;
 
     if (extractProcessor.showDialog()) {
-      final SmartPsiElementPointer [] extractedMethod = new SmartPsiElementPointer[1];
       new WriteCommandAction(project, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME) {
         protected void run(final Result result) throws Throwable {
           extractProcessor.doRefactoring();
           processor.run();
-          extractedMethod[0] = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(processor.getMethod());
-        }
-      }.execute();
-
-      if (processor.isCreateInnerClass()) {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable(){
-          public void run() {
+          if (processor.isCreateInnerClass()) {
             DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
           }
-        }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
-      }
-
-      new WriteCommandAction(project, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME) {
-        protected void run(final Result result) throws Throwable {
-          final PsiElement method = extractedMethod[0].getElement();
+          final PsiElement method = processor.getMethod();
           LOG.assertTrue(method != null);
           method.delete();
         }
