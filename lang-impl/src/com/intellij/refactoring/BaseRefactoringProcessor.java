@@ -143,8 +143,10 @@ public abstract class BaseRefactoringProcessor {
       return;
     }
 
+    assert !refUsages.isNull();
     if (!preprocessUsages(refUsages)) return;
     final UsageInfo[] usages = refUsages.get();
+    assert usages != null;
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
 
     boolean isPreview = isPreviewUsages(usages);
@@ -197,9 +199,10 @@ public abstract class BaseRefactoringProcessor {
     showUsageView(viewDescriptor, factory, usages);
   }
 
-  private boolean ensureElementsWritable(final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
+  private boolean ensureElementsWritable(@NotNull final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
     Set<PsiElement> elements = new THashSet<PsiElement>();
     for (UsageInfo usage : usages) {
+      assert usage != null: "Found null element in usages array";
       PsiElement element = usage.getElement();
       if (element != null) elements.add(element);
     }

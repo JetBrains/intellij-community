@@ -23,6 +23,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
 
+import org.jetbrains.annotations.NonNls;
+
 public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   public static interface Callback {
     void run(MoveFilesOrDirectoriesDialog dialog);
@@ -83,7 +85,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     return panel;
   }
 
-  public void setData(PsiElement[] psiElements, PsiDirectory initialTargetDirectory, String helpID) {
+  public void setData(PsiElement[] psiElements, PsiDirectory initialTargetDirectory, @NonNls String helpID) {
     if (psiElements.length == 1) {
       String text;
       if (psiElements[0] instanceof PsiFile) {
