@@ -319,11 +319,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return getRepositoryBrowser().getSelectedURL();
   }
 
-  @NotNull
-  private RepositoryTreeNode getNotNullSelectedNode() {
-    final RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-    assert node != null;
-    return node;
+  @Nullable
+  private RepositoryTreeNode getSelectedNode() {
+    return getRepositoryBrowser().getSelectedNode();
   }
 
   protected class HistoryAction extends AnAction {
@@ -335,7 +333,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final RepositoryTreeNode node = getNotNullSelectedNode();
+      final RepositoryTreeNode node = getSelectedNode();
+      if (node == null) {
+        return;
+      }
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
       AbstractVcsHelper.getInstance(myProject).showFileHistory(
@@ -354,7 +355,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      getNotNullSelectedNode().reload(true);
+      final RepositoryTreeNode selectedNode = getSelectedNode();
+      if (selectedNode != null) {
+        selectedNode.reload(true);
+      }
     }
   }
 
@@ -406,7 +410,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      RepositoryTreeNode node = getNotNullSelectedNode();
+      RepositoryTreeNode node = getSelectedNode();
+      if (node == null) {
+        return;
+      }
       SVNURL url = node.getURL();
       if (url != null) {
         int rc = Messages.showYesNoDialog(myProject, SvnBundle.message("repository.browser.discard.location.prompt", url.toString()),
@@ -435,7 +442,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       // show dialog for comment and folder name, then create folder
       // then refresh selected node.
-      final RepositoryTreeNode node = getNotNullSelectedNode();
+      final RepositoryTreeNode node = getSelectedNode();
+      if (node == null) {
+        return;
+      }
       MkdirOptionsDialog dialog = new MkdirOptionsDialog(myProject, node.getURL());
       dialog.show();
       VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
@@ -470,11 +480,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       // then refresh selected node.
       SVNURL root;
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      if (node == null) {
+        return;
+      }
       while (node.getSVNDirEntry() != null) {
         node = (RepositoryTreeNode) node.getParent();
       }
       root = node.getURL();
-      SVNURL sourceURL = getNotNullSelectedNode().getURL();
+      final RepositoryTreeNode selectedNode = getSelectedNode();
+      if (selectedNode == null) {
+        return;
+      }
+      SVNURL sourceURL = selectedNode.getURL();
       DiffOptionsDialog dialog = new DiffOptionsDialog(myProject, root, sourceURL);
       dialog.show();
       if (dialog.isOK()) {
@@ -542,7 +559,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final RepositoryTreeNode node = getNotNullSelectedNode();
+      final RepositoryTreeNode node = getSelectedNode();
+      if (node == null) {
+        return;
+      }
       RepositoryTreeNode rootNode = node;
       while (! rootNode.isRepositoryRoot()) {
         rootNode = (RepositoryTreeNode) rootNode.getParent();
@@ -738,7 +758,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
     }
     public void actionPerformed(AnActionEvent e) {
-      SVNURL url = getNotNullSelectedNode().getURL();
+      final RepositoryTreeNode selectedNode = getSelectedNode();
+      if (selectedNode == null) {
+        return;
+      }
+      SVNURL url = selectedNode.getURL();
       final File dir = selectFile("Destination directory", "Select export destination directory");
       if (dir == null) {
         return;
@@ -778,7 +802,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      RepositoryTreeNode node = getNotNullSelectedNode();
+      RepositoryTreeNode node = getSelectedNode();
+      if (node == null) {
+        return;
+      }
       SVNURL url = node.getURL();
       AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), 
                                                                   new SvnRepositoryLocation(url.toString()),
@@ -924,7 +951,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   protected void doCheckout(@Nullable final CheckoutProvider.Listener listener) {
-    SVNURL url = getNotNullSelectedNode().getURL();
+    final RepositoryTreeNode selectedNode = getSelectedNode();
+    if (selectedNode == null) {
+      return;
+    }
+    SVNURL url = selectedNode.getURL();
     File dir = selectFile("Destination directory", "Select checkout destination directory");
     if (dir == null) {
       return;
@@ -956,7 +987,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return false;
     }
 
-    SVNURL url = getNotNullSelectedNode().getURL();
+    final RepositoryTreeNode selectedNode = getSelectedNode();
+    if (selectedNode == null) {
+      return false;
+    }
+    SVNURL url = selectedNode.getURL();
     ImportOptionsDialog dialog = new ImportOptionsDialog(myProject, url, dir);
     dialog.show();
     VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
@@ -966,7 +1001,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       boolean ignored = dialog.isIncludeIgnored();
       String message = dialog.getCommitMessage();
       SvnCheckoutProvider.doImport(myProject, src, url, recursive, ignored, message);
-      getNotNullSelectedNode().reload(false);
+      selectedNode.reload(false);
     }
     return dialog.isOK();
   }
