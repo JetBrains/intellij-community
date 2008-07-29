@@ -343,6 +343,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
               for (CheckinHandler handler : myHandlers) {
                 handler.checkinSuccessful();
               }
+
+              clearDefaulListComment();
               close(OK_EXIT_CODE);
             }
             else {
@@ -364,6 +366,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     else {
       session.executionCanceled();
+    }
+  }
+
+  private void clearDefaulListComment() {
+    final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
+    if (isDefaultList(list)) {
+      list.setComment("");
     }
   }
 
@@ -391,10 +400,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void saveCommentIntoChangeList() {
     if (myLastSelectedChangeList != null) {
       final String actualCommentText = myCommitMessageArea.getComment();
-      if (! Comparing.equal(myLastSelectedChangeList.getComment(), actualCommentText)) {
+      if ((! Comparing.equal(myLastSelectedChangeList.getComment(), actualCommentText)) &&
+          (! Comparing.equal(actualCommentText, VcsConfiguration.getInstance(myProject).LAST_COMMIT_MESSAGE))) {
         myLastSelectedChangeList.setComment(actualCommentText);
       }
     }
+  }
+
+  private boolean isDefaultList(final LocalChangeList list) {
+    return VcsBundle.message("changes.default.changlist.name").equals(list.getName());
   }
 
   private void updateComment() {
@@ -409,7 +423,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     String listComment = list.getComment();
     if (StringUtil.isEmptyOrSpaces(listComment)) {
       final String listTitle = list.getName();
-      if (!VcsBundle.message("changes.default.changlist.name").equals(listTitle)) {
+      if (! isDefaultList(list)) {
         listComment = listTitle;
       }
       else {
@@ -503,6 +517,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         }
       }, null);
 
+      clearDefaulListComment();
     }
     catch (InputException ex) {
       ex.show();
@@ -514,6 +529,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return false;
     }
 
+    saveCommentIntoChangeList();
     VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
     try {
       saveState();
@@ -528,7 +544,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public void doCancelAction() {
     saveCommentIntoChangeList();
-    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
+    //VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
     super.doCancelAction();
   }
 
