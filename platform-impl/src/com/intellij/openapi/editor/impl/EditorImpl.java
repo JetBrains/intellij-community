@@ -65,6 +65,8 @@ import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.text.AttributedCharacterIterator;
@@ -189,6 +191,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private MouseEvent myInitialMouseEvent;
   private boolean myIgnoreMouseEventsConsequitiveToInitial;
+
+  private String myReleasedAt = null;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -376,6 +380,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void release() {
+    if (isReleased) {
+      LOG.error("Double release. First released at: " + myReleasedAt);
+    }
+
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    final PrintWriter printWriter = new PrintWriter(buffer);
+    new Throwable().printStackTrace(printWriter);
+    myReleasedAt = buffer.toString();
+
     isReleased = true;
     myDocument.removeDocumentListener(myHighlighter);
     myDocument.removeDocumentListener(myEditorDocumentAdapter);
