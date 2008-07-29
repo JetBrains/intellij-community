@@ -320,6 +320,8 @@
 
   <extensionPoint name="testFinder"
                   interface="com.intellij.testIntegration.TestFinder"/>
+  <extensionPoint name="testCreator"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="lang.smartEnterProcessor"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>

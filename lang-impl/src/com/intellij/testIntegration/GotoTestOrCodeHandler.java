@@ -7,8 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.testIntegration.createTest.CreateTestAction;
-import com.intellij.util.IncorrectOperationException;
 
 import java.util.Collection;
 
@@ -43,15 +41,8 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
   @Override
   protected void handleNoVariansCase(Project project, Editor editor, PsiFile file) {
-    try {
-      CreateTestAction action = new CreateTestAction();
-      if (action.isAvailable(project, editor, file)) {
-        action.invoke(project, editor, file);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
+    TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
+    if (creator != null) creator.createTest(project, editor, file);
   }
 
   protected String getChooserInFileTitleKey(PsiElement sourceElement) {
