@@ -1,16 +1,18 @@
-package com.intellij.refactoring;
+package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.rename.RenameProcessor;
+import junit.framework.Assert;
 
 /**
  * @author ven
  */
-public class UIDesignerRelatedTest extends MultiFileTestCase {
+public class RenameUIRelatedTest extends MultiFileTestCase {
   protected String getTestRoot() {
     return "/refactoring/renameUIRelated/";
   }
@@ -24,9 +26,9 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("UIClass", ProjectScope.getAllScope(myProject));
-        assertNotNull(aClass);
+        Assert.assertNotNull(aClass);
         final PsiField field = aClass.findFieldByName("UIField", false);
-        assertNotNull(field);
+        Assert.assertNotNull(field);
 
         new RenameProcessor(myProject, field, "OtherName", true, true).run();
       }
@@ -37,7 +39,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("gov");
-        assertNotNull(aPackage);
+        Assert.assertNotNull(aPackage);
 
 
         new RenameProcessor(myProject, aPackage, "org", true, true).run();
@@ -49,9 +51,9 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("PropEnum", ProjectScope.getAllScope(myProject));
-        assertNotNull(aClass);
+        Assert.assertNotNull(aClass);
         PsiField enumConstant = aClass.findFieldByName("valueB", false);
-        assertNotNull(enumConstant);
+        Assert.assertNotNull(enumConstant);
 
         new RenameProcessor(myProject, enumConstant, "newValueB", true, true).run();
       }
@@ -62,7 +64,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiFile file = myPsiManager.findFile(rootDir.findChild("F1.properties"));
-        assertNotNull(file);
+        Assert.assertNotNull(file);
 
 
         new RenameProcessor(myProject, file, "F2.properties", true, true).run();
@@ -74,7 +76,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         PsiFile file = myPsiManager.findFile(rootDir.findChild("p1").findChild("Form1.form"));
-        assertNotNull(file);
+        Assert.assertNotNull(file);
 
 
         new RenameProcessor(myProject, file, "Form2.form", true, true).run();

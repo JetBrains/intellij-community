@@ -107,7 +107,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     manager.startBatchFilesProcessingMode();
 
     try {
-      PsiFile[] files = manager.getCacheManager().getFilesWithWord(name, UsageSearchContext.IN_FOREIGN_LANGUAGES, scope, true);
+      List<PsiFile> files = FormClassIndex.findFormsBoundToClass(manager.getProject(), name, scope);
 
       for (PsiFile file : files) {
         ProgressManager.getInstance().checkCanceled();
@@ -131,14 +131,11 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     PsiManagerImpl manager = (PsiManagerImpl)field.getManager();
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return true;
-    String qClassName = getQualifiedName(containingClass);
-    if (qClassName == null) return true;
-
     String fieldName = field.getName();
     manager.startBatchFilesProcessingMode();
 
     try {
-      PsiFile[] files = manager.getCacheManager().getFilesWithWord(qClassName, UsageSearchContext.IN_FOREIGN_LANGUAGES, scope, true);
+      final List<PsiFile> files = FormClassIndex.findFormsBoundToClass(containingClass, scope);
 
       for (PsiFile file : files) {
         ProgressManager.getInstance().checkCanceled();
