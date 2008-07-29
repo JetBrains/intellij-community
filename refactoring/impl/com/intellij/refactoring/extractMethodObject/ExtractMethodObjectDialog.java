@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -211,6 +212,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
 
   protected JComponent createCenterPanel() {
+    mySignatureArea.setEditable(false);
     myCreateInnerClassRb.setSelected(true);
     enable(true);
     final ActionListener enableDisableListener = new ActionListener() {
@@ -225,6 +227,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     final ActionListener updateSugnatureListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         updateSignature();
+        IdeFocusManager.getInstance(myProject).requestFocus(myCreateInnerClassRb.isSelected() ? myInnerClassName :  myMethodName, false);
       }
     };
 
