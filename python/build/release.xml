@@ -139,7 +139,7 @@
           fork="true"
           args="traverseUI ${classes.dir}/search/searchableOptions.xml">
       <jvmarg line="-ea -Didea.home.path=${idea.home} -Didea.system.path=${idea.system.path} -Didea.config.path=${idea.config.path} -Didea.platform.prefix=Python -Didea.load.plugins=Pythonid -Didea.no.jre.check=true"  />
-      <jvmarg value="-Xbootclasspath/p:${idea.dir}/jdk15/lib/boot.jar"/>
+      <jvmarg value="-Xbootclasspath/a:${idea.dir}/jdk15/lib/boot.jar"/>
 
        <classpath>
          <path refid="classpath.lib"/>
