@@ -87,8 +87,9 @@ public class TemplateState implements Disposable {
       public void commandStarted(CommandEvent event) {
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
-          myDocumentChangesTerminateTemplate = offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
-                                   offset > mySegments.getSegmentEnd(myCurrentSegmentNumber);
+          myDocumentChangesTerminateTemplate = myCurrentSegmentNumber >= 0 &&
+              (offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
+                                   offset > mySegments.getSegmentEnd(myCurrentSegmentNumber));
         }
         started = true;
       }
