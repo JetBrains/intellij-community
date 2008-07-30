@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.compiler.options;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,13 +30,16 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ExcludedEntriesConfiguration implements JDOMExternalizable {
-  private static final @NonNls String FILE = "file";
-  private static final @NonNls String DIRECTORY = "directory";
-  private static final @NonNls String URL = "url";
-  private static final @NonNls String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
-  private List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+public class ExcludedEntriesConfiguration implements JDOMExternalizable, Disposable {
+  @NonNls private static final String FILE = "file";
+  @NonNls private static final String DIRECTORY = "directory";
+  @NonNls private static final String URL = "url";
+  @NonNls private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
+  private final List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private ExcludeEntryDescription[] myCachedDescriptions = null;
+
+  public ExcludedEntriesConfiguration() {
+  }
 
   public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
     if (myCachedDescriptions == null) {
@@ -59,12 +64,12 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
       String url = element.getAttributeValue(URL);
       if (url == null) continue;
       if (FILE.equals(element.getName())) {
-        ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, false, true);
+        ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, false, true, this);
         addExcludeEntryDescription(excludeEntryDescription);
       }
       if (DIRECTORY.equals(element.getName())) {
         boolean includeSubdirectories = Boolean.parseBoolean(element.getAttributeValue(INCLUDE_SUBDIRECTORIES));
-        ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, includeSubdirectories, false);
+        ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, includeSubdirectories, false,this);
         addExcludeEntryDescription(excludeEntryDescription);
       }
     }
@@ -112,5 +117,11 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
       }
     }
     return false;
+  }
+
+  public void dispose() {
+    for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
+      Disposer.dispose(description);
+    }
   }
 }

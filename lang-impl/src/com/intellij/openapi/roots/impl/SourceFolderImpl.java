@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -21,18 +22,18 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
   static final String DEFAULT_PACKAGE_PREFIX = "";
   @NonNls private static final String PACKAGE_PREFIX_ATTR = "packagePrefix";
 
-  SourceFolderImpl(VirtualFile file, boolean isTestSource, ContentEntryImpl contentEntry) {
+  SourceFolderImpl(@NotNull VirtualFile file, boolean isTestSource, @NotNull ContentEntryImpl contentEntry) {
     this(file, isTestSource, DEFAULT_PACKAGE_PREFIX, contentEntry);
   }
 
-  SourceFolderImpl(VirtualFile file, boolean isTestSource, String packagePrefix, ContentEntryImpl contentEntry) {
+  SourceFolderImpl(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix, @NotNull ContentEntryImpl contentEntry) {
     super(file, contentEntry);
     myIsTestSource = isTestSource;
     myPackagePrefix = packagePrefix;
   }
 
-  public SourceFolderImpl(String url, boolean isTestSource, ContentEntryImpl e) {
-    super(url, e);
+  public SourceFolderImpl(@NotNull String url, boolean isTestSource, @NotNull ContentEntryImpl contentEntry) {
+    super(url, contentEntry);
     myIsTestSource = isTestSource;
     myPackagePrefix = DEFAULT_PACKAGE_PREFIX;
   }
@@ -79,10 +80,18 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
   }
 
   public ContentFolder cloneFolder(ContentEntry contentEntry) {
-    return new SourceFolderImpl(this, (ContentEntryImpl)contentEntry);
+    ContentEntryImpl clone = (ContentEntryImpl)((ClonableContentEntry)contentEntry).cloneEntry(((RootModelComponentBase)contentEntry).getRootModel());
+    return new SourceFolderImpl(this, clone);
   }
 
-  public boolean isSynthetic() {
-    return false;
+  public int compareTo(ContentFolderBaseImpl folder) {
+    if (!(folder instanceof SourceFolderImpl)) return -1;
+
+    int i = super.compareTo(folder);
+    if (i!= 0) return i;
+
+    i = myPackagePrefix.compareTo(((SourceFolderImpl)folder).myPackagePrefix);
+    if (i!= 0) return i;
+    return Boolean.valueOf(myIsTestSource).compareTo(((SourceFolderImpl)folder).myIsTestSource);
   }
 }

@@ -67,11 +67,12 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     if (that.myLibrary == null) {
       myLibraryName = that.myLibraryName;
       myLibraryLevel = that.myLibraryLevel;
-    } else {
+    }
+    else {
       myLibrary = that.myLibrary;
     }
     myExported = that.myExported;
-    init (getRootProvider());
+    init(getRootProvider());
     addListeners();
   }
 
@@ -88,7 +89,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   private void searchForLibrary(@NotNull String level, @NotNull String name) {
     if (myLibrary != null) return;
-    final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, myRootModel.getModule().getProject());
+    final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, getRootModel().getModule().getProject());
     final Library library = libraryTable != null ? libraryTable.getLibraryByName(name) : null;
     if (library == null) {
       myLibraryName = name;
@@ -112,7 +113,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   @Nullable
   public Library getLibrary() {
-    Library library = myRootModel.getConfigurationAccessor().getLibrary(myLibrary, myLibraryName, myLibraryLevel);
+    Library library = getRootModel().getConfigurationAccessor().getLibrary(myLibrary, myLibraryName, myLibraryLevel);
     if (library != null) { //library was not deleted
       return library;
     }
@@ -152,7 +153,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
-    return new LibraryOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(myRootModel.getModule().getProject()), VirtualFilePointerManager.getInstance());
+    ProjectRootManagerImpl rootManager = ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject());
+    return new LibraryOrderEntryImpl(this, rootModel, rootManager, VirtualFilePointerManager.getInstance());
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
@@ -186,7 +188,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   private void addListeners () {
     final String libraryLevel = getLibraryLevel();
-    final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryLevel, myRootModel.getModule().getProject());
+    final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryLevel, getRootModel().getModule().getProject());
     if (libraryTable != null) {
       myProjectRootManagerImpl.addListenerForTable(myLibraryListener, libraryTable);
     }
@@ -197,10 +199,10 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     return false;
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     final LibraryTable libraryTable =
-      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(getLibraryLevel(), myRootModel.getModule().getProject());
+      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(getLibraryLevel(), getRootModel().getModule().getProject());
     if (libraryTable != null) {
       myProjectRootManagerImpl.removeListenerForTable(myLibraryListener, libraryTable);
     }

@@ -45,6 +45,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.util.PatchedWeakReference;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -53,7 +54,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -152,16 +152,17 @@ import java.util.HashSet;
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = myProjectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
 
     setUpModule();
 
     setUpJdk();
 
-    openProject();
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+
+    runStartupActivities();
   }
 
-  protected void openProject() {
+  protected void runStartupActivities() {
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
   }
 
@@ -222,10 +223,11 @@ import java.util.HashSet;
     if (virtualFilePointerManager != null) {
       virtualFilePointerManager.cleanupForNextTest();
     }
+    PatchedWeakReference.clearAll();
     resetAllFields();
   }
 
-  private static void doPostponedFormatting(final Project project) {
+  public static void doPostponedFormatting(final Project project) {
     try {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         public void run() {
@@ -317,22 +319,11 @@ import java.util.HashSet;
   }
 
   private void resetClassFields(final Class<?> aClass) {
-    if (aClass == null) return;
-
-    final Field[] fields = aClass.getDeclaredFields();
-    for (Field field : fields) {
-      final int modifiers = field.getModifiers();
-      if ((modifiers & Modifier.FINAL) == 0
-          &&  (modifiers & Modifier.STATIC) == 0
-          && !field.getType().isPrimitive()) {
-        field.setAccessible(true);
-        try {
-          field.set(this, null);
-        }
-        catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-      }
+    try {
+      clearDeclaredFields(this, aClass);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
     }
 
     if (aClass == IdeaTestCase.class) return;

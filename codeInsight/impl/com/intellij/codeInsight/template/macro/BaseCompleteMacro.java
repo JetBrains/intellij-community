@@ -67,7 +67,7 @@ public abstract class BaseCompleteMacro implements Macro {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (!project.isOpen()) return;
+        if (project.isDisposed()) return;
 
         CommandProcessor.getInstance().executeCommand(
             project, new Runnable() {
@@ -118,15 +118,13 @@ public abstract class BaseCompleteMacro implements Macro {
     public void itemSelected(LookupEvent event) {
       LookupItem item = event.getItem();
       if (item == null) return;
-      final Project project = myContext.getProject();
-
 
       if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    invokeCompletion(myContext);
-                  }
-                });
+          public void run() {
+            invokeCompletion(myContext);
+          }
+        });
         return;
       }
 

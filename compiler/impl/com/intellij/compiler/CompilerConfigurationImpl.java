@@ -24,10 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
 import org.apache.oro.text.regex.*;
@@ -62,7 +59,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
-
 
   public int DEPLOY_AFTER_MAKE = Options.SHOW_DIALOG;
 
@@ -153,6 +149,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void disposeComponent() {
+    Disposer.dispose(myExcludedEntriesConfiguration);
   }
 
   public void initComponent() { }

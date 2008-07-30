@@ -124,4 +124,17 @@ public class LibraryUtil {
     }
     return roots.toArray(new VirtualFile[roots.size()]);
   }
+
+  public static Library findLibrary(Module module, final String name) {
+    return ModuleRootManager.getInstance(module).processOrder(new RootPolicy<Library>(){
+      @Override
+      public Library visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Library value) {
+        if (value != null) return value;
+        if (name.equals(libraryOrderEntry.getLibraryName())) {
+          return libraryOrderEntry.getLibrary();
+        }
+        return null;
+      }
+    }, null);
+  }
 }

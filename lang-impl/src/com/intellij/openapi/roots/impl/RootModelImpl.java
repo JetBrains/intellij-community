@@ -1,12 +1,12 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.watcher.OrderEntryProperties;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
@@ -14,8 +14,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.*;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -31,29 +35,24 @@ import java.util.*;
 public class RootModelImpl implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
-  private TreeSet<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
+  private final TreeSet<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
 
-  private List<OrderEntry> myOrderEntries = new Order();
+  private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
   private OrderEntry[] myCachedOrderEntries;
 
   private final ModuleLibraryTable myModuleLibraryTable;
   final ModuleRootManagerImpl myModuleRootManager;
   private boolean myWritable;
-  private VirtualFilePointerListener myVirtualFilePointerListener;
-  private VirtualFilePointerManager myFilePointerManager;
+  final VirtualFilePointerListener myVirtualFilePointerListener;
+  private final VirtualFilePointerManager myFilePointerManager;
   VirtualFilePointer myExplodedDirectoryPointer;
-
 
   private String myExplodedDirectory;
 
-  ArrayList<RootModelComponentBase> myComponents = new ArrayList<RootModelComponentBase>();
-  private List<VirtualFilePointer> myPointersToDispose = new ArrayList<VirtualFilePointer>();
-
+  final List<RootModelComponentBase> myComponents = new ArrayList<RootModelComponentBase>();
 
   private boolean myExcludeExploded;
-
-
 
   @NonNls private static final String EXPLODED_TAG = "exploded";
   @NonNls private static final String ATTRIBUTE_URL = "url";
@@ -62,54 +61,38 @@ public class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
 
   private boolean myDisposed = false;
-  private final OrderEntryProperties myOrderEntryProperties;
 
   private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
 
   private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
 
-  private RootConfigurationAccessor myConfigurationAccessor = new RootConfigurationAccessor();
+  private final RootConfigurationAccessor myConfigurationAccessor;
 
-  private VirtualFilePointerFactory myVirtualFilePointerFactory = new VirtualFilePointerFactory() {
-    public VirtualFilePointer create(VirtualFile file) {
-      final VirtualFilePointer pointer = myFilePointerManager.create(file, myVirtualFilePointerListener);
-      annotatePointer(pointer);
-      return pointer;
-    }
-
-    public VirtualFilePointer create(String url) {
-      final VirtualFilePointer pointer = myFilePointerManager.create(url, myVirtualFilePointerListener);
-      annotatePointer(pointer);
-      return pointer;
-    }
-
-    public VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer) {
-      final VirtualFilePointer pointer = myFilePointerManager.duplicate(virtualFilePointer, myVirtualFilePointerListener);
-      annotatePointer(pointer);
-      return pointer;
+  @NonNls private static final String ROOT_ELEMENT = "root";
+  private final ProjectRootManagerImpl myProjectRootManager;
+  // have to register all child disposables using this fake object since all clients call just ModifiableModel.dispose()
+  private final Disposable myDisposable = new Disposable() {
+    public void dispose() {
     }
   };
-  @NonNls private static final String PROPERTIES_CHILD_NAME = "orderEntryProperties";
-  @NonNls private static final String ROOT_ELEMENT = "root";
-  private ProjectRootManagerImpl myProjectRootManager;
 
-  RootModelImpl(ModuleRootManagerImpl moduleRootManager,
-                ProjectRootManagerImpl projectRootManager,
-                VirtualFilePointerManager filePointerManager,
-                final VirtualFilePointerListener listener) {
+  RootModelImpl(ModuleRootManagerImpl moduleRootManager, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
     myModuleRootManager = moduleRootManager;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
 
     myWritable = false;
-    myVirtualFilePointerListener = listener;
+
+    myVirtualFilePointerListener = projectRootManager.getVirtualFilePointerListener();
     addSourceOrderEntries();
-    myOrderEntryProperties = new OrderEntryProperties();
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
 
     for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
-      myExtensions.add(extension.getModifiableModel(false));
+      ModuleExtension model = extension.getModifiableModel(false);
+      Disposer.register(myDisposable, model);
+      myExtensions.add(model);
     }
+    myConfigurationAccessor = new RootConfigurationAccessor();
   }
 
   private void addSourceOrderEntries() {
@@ -150,36 +133,33 @@ public class RootModelImpl implements ModifiableRootModel {
       myOrderEntries.add(new ModuleSourceOrderEntryImpl(this));
     }
 
-
     myExcludeExploded = element.getChild(EXCLUDE_EXPLODED_TAG) != null;
-
 
     myExplodedDirectoryPointer = getOutputPathValue(element, EXPLODED_TAG, true);
     myExplodedDirectory = getOutputPathValue(element, EXCLUDE_EXPLODED_TAG);
 
-    myWritable = false;
-    myOrderEntryProperties = new OrderEntryProperties();
-    final Element propertiesChild = element.getChild(PROPERTIES_CHILD_NAME);
-    if (propertiesChild != null) {
-      myOrderEntryProperties.readExternal(propertiesChild);
-    }
+    myWritable = true;
 
     for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
       String paths = orderRootType.getModulePathsName();
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
         if (pathsElement != null) {
-          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myDisposable);
           myOrderRootPointerContainers.put(orderRootType, container);
           container.readExternal(pathsElement, ROOT_ELEMENT);
         }
       }
     }
 
-    for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
-      extension.readExternal(element);
-      myExtensions.add(extension.getModifiableModel(false));
+    RootModelImpl originalRootModel = moduleRootManager.getRootModel();
+    for (ModuleExtension extension : originalRootModel.myExtensions) {
+      ModuleExtension model = extension.getModifiableModel(false);
+      model.readExternal(element);
+      Disposer.register(myDisposable, model);
+      myExtensions.add(model);
     }
+    myConfigurationAccessor = new RootConfigurationAccessor();
   }
 
   public boolean isWritable() {
@@ -190,6 +170,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return myConfigurationAccessor;
   }
 
+  //creates modifiable model
   RootModelImpl(RootModelImpl rootModel,
                 ModuleRootManagerImpl moduleRootManager,
                 final boolean writable,
@@ -208,12 +189,7 @@ public class RootModelImpl implements ModifiableRootModel {
     LOG.assertTrue(!writable || virtualFilePointerListener == null);
     myVirtualFilePointerListener = virtualFilePointerListener;
 
-    if (rootModel.myExplodedDirectoryPointer != null) {
-      myExplodedDirectoryPointer = pointerFactory().duplicate(rootModel.myExplodedDirectoryPointer);
-    }
-    myExplodedDirectory = rootModel.myExplodedDirectory;
-
-    myExcludeExploded = rootModel.myExcludeExploded;
+    setExplodedFrom(rootModel, virtualFilePointerListener, filePointerManager);
 
     final TreeSet<ContentEntry> thatContent = rootModel.myContent;
     for (ContentEntry contentEntry : thatContent) {
@@ -222,26 +198,41 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    final List<OrderEntry> order = rootModel.myOrderEntries;
-    for (OrderEntry orderEntry : order) {
-      if (orderEntry instanceof ClonableOrderEntry) {
-        myOrderEntries.add(((ClonableOrderEntry)orderEntry).cloneEntry(this, myProjectRootManager, myFilePointerManager));
-      }
+    setOrderEntriesFrom(rootModel);
+    copyContainersFrom(rootModel);
+
+    for (ModuleExtension extension : rootModel.myExtensions) {
+      ModuleExtension model = extension.getModifiableModel(writable);
+      Disposer.register(myDisposable, model);
+      myExtensions.add(model);
     }
-    myOrderEntryProperties = rootModel.myOrderEntryProperties.copy(this);
+  }
+
+  private void setExplodedFrom(RootModelImpl rootModel, VirtualFilePointerListener virtualFilePointerListener, VirtualFilePointerManager filePointerManager) {
+    if (rootModel.myExplodedDirectoryPointer != null) {
+      myExplodedDirectoryPointer = filePointerManager.duplicate(rootModel.myExplodedDirectoryPointer, getModule(), virtualFilePointerListener);
+    }
+    myExplodedDirectory = rootModel.myExplodedDirectory;
+
+    myExcludeExploded = rootModel.myExcludeExploded;
+  }
+
+  private void copyContainersFrom(RootModelImpl rootModel) {
+    myOrderRootPointerContainers.clear();
     for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
       final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
       if (otherContainer != null) {
-        VirtualFilePointerContainer container = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
-        container.addAll(otherContainer);
-        myOrderRootPointerContainers.put(orderRootType, container);
+        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(getModule()));
       }
     }
+  }
 
-   
-
-    for (ModuleExtension extension : rootModel.myExtensions) {
-      myExtensions.add(writable ? extension.getModifiableModel(writable) : extension);
+  private void setOrderEntriesFrom(RootModelImpl rootModel) {
+    myOrderEntries.clear();
+    for (OrderEntry orderEntry : rootModel.myOrderEntries) {
+      if (orderEntry instanceof ClonableOrderEntry) {
+        myOrderEntries.add(((ClonableOrderEntry)orderEntry).cloneEntry(this, myProjectRootManager, myFilePointerManager));
+      }
     }
   }
 
@@ -285,17 +276,19 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public String[] getContentRootUrls() {
-    final ArrayList<String> result = new ArrayList<String>();
+    if (myContent.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
+    final ArrayList<String> result = new ArrayList<String>(myContent.size());
 
     for (ContentEntry contentEntry : myContent) {
       result.add(contentEntry.getUrl());
     }
+
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   @NotNull
   public String[] getExcludeRootUrls() {
-    final ArrayList<String> result = new ArrayList<String>();
+    final List<String> result = new SmartList<String>();
     for (ContentEntry contentEntry : myContent) {
       final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
       for (ExcludeFolder excludeFolder : excludeFolders) {
@@ -307,7 +300,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public VirtualFile[] getExcludeRoots() {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new SmartList<VirtualFile>();
     for (ContentEntry contentEntry : myContent) {
       final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
       for (ExcludeFolder excludeFolder : excludeFolders) {
@@ -320,10 +313,9 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
-
   @NotNull
   public String[] getSourceRootUrls() {
-    final ArrayList<String> result = new ArrayList<String>();
+    List<String> result = new SmartList<String>();
     for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
@@ -333,22 +325,9 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
-  private String[] getSourceRootUrls(boolean testFlagValue) {
-    final ArrayList<String> result = new ArrayList<String>();
-    for (ContentEntry contentEntry : myContent) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (SourceFolder sourceFolder : sourceFolders) {
-        if (sourceFolder.isTestSource() == testFlagValue) {
-          result.add(sourceFolder.getUrl());
-        }
-      }
-    }
-    return ContainerUtil.toArray(result, new String[result.size()]);
-  }
-
   @NotNull
   public VirtualFile[] getSourceRoots() {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new SmartList<VirtualFile>();
     for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
@@ -382,9 +361,6 @@ public class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     LOG.assertTrue(myContent.contains(entry));
     myContent.remove(entry);
-    if (myComponents.contains(entry)) {
-      ((RootModelComponentBase)entry).dispose();
-    }
   }
 
   public void addOrderEntry(OrderEntry entry) {
@@ -451,13 +427,25 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   private void assertValidRearrangement(OrderEntry[] newEntries) {
-    LOG.assertTrue(newEntries.length == myOrderEntries.size(), "Invalid rearranged order");
+    String error = checkValidRearrangement(newEntries);
+    LOG.assertTrue(error == null, error);
+  }
+  private String checkValidRearrangement(OrderEntry[] newEntries) {
+    if (newEntries.length != myOrderEntries.size()) {
+      return "Size mismatch: old size=" + myOrderEntries.size() + "; new size=" + newEntries.length;
+    }
     Set<OrderEntry> set = new HashSet<OrderEntry>();
     for (OrderEntry newEntry : newEntries) {
-      LOG.assertTrue(myOrderEntries.contains(newEntry), "Invalid rearranged order");
-      LOG.assertTrue(!set.contains(newEntry), "Invalid rearranged order");
+      if (!myOrderEntries.contains(newEntry)) {
+        return "Trying to add nonexisting order entry " + newEntry;
+      }
+
+      if (set.contains(newEntry)) {
+        return "Trying to add duplicate order entry " + newEntry;
+      }
       set.add(newEntry);
     }
+    return null;
   }
 
   public void clear() {
@@ -469,11 +457,41 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public void commit() {
-    for (ModuleExtension extension : myExtensions) {
-      extension.commit();
-    }
     myModuleRootManager.commitModel(this);
     myWritable = false;
+  }
+
+  public void docommit() {
+    assert isWritable();
+
+    if (!vptrEqual(myExplodedDirectoryPointer, getSourceModel().myExplodedDirectoryPointer)) {
+      getSourceModel().setExplodedDirectory(getExplodedDirectoryUrl());
+    }
+
+    getSourceModel().myExcludeExploded = myExcludeExploded;
+
+    if (areOrderEntriesChanged()) {
+      getSourceModel().setOrderEntriesFrom(this);
+    }
+
+    if (areContentEntriesChanged()) {
+      getSourceModel().myContent.clear();
+      for (ContentEntry contentEntry : myContent) {
+        getSourceModel().myContent.add(((ClonableContentEntry)contentEntry).cloneEntry(getSourceModel()));
+      }
+    }
+
+    if (!myOrderRootPointerContainers.equals(getSourceModel().myOrderRootPointerContainers)) {
+      getSourceModel().copyContainersFrom(this);
+    }
+
+    getSourceModel().setExplodedFrom(this, myVirtualFilePointerListener, myFilePointerManager);
+
+    for (ModuleExtension extension : myExtensions) {
+      if (extension.isChanged()) {
+        extension.commit();
+      }
+    }
   }
 
   @NotNull
@@ -504,19 +522,19 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   private ContentEntry addContentEntry(ContentEntry e) {
+    if (myContent.contains(e)) {
+      for (ContentEntry contentEntry : getContentEntries()) {
+        if (ContentComparator.INSTANCE.compare(contentEntry, e) == 0) return contentEntry;
+      }
+    }
     myContent.add(e);
     return e;
   }
-
-
 
   public void writeExternal(Element element) throws WriteExternalException {
     for (ModuleExtension extension : myExtensions) {
       extension.writeExternal(element);
     }
-
-
-
 
     if (myExplodedDirectory != null) {
       final Element pathElement = new Element(EXPLODED_TAG);
@@ -527,8 +545,6 @@ public class RootModelImpl implements ModifiableRootModel {
     if (myExcludeExploded) {
       element.addContent(new Element(EXCLUDE_EXPLODED_TAG));
     }
-
-
 
     for (ContentEntry contentEntry : myContent) {
       if (contentEntry instanceof ContentEntryImpl) {
@@ -543,10 +559,6 @@ public class RootModelImpl implements ModifiableRootModel {
         ((WritableOrderEntry)orderEntry).writeExternal(element);
       }
     }
-
-    final Element propertiesChild = new Element(PROPERTIES_CHILD_NAME);
-    myOrderEntryProperties.writeExternal(propertiesChild, this);
-    element.addContent(propertiesChild);
 
     for(OrderRootType orderRootType: myOrderRootPointerContainers.keySet()) {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
@@ -643,6 +655,24 @@ public class RootModelImpl implements ModifiableRootModel {
     return false;
   }
 
+  public void projectOpened() {
+    for (ContentEntry contentEntry : myContent) {
+      ((RootModelComponentBase)contentEntry).projectOpened();
+    }
+    for (OrderEntry orderEntry : myOrderEntries) {
+      ((RootModelComponentBase)orderEntry).projectOpened();
+    }
+  }
+
+  public void projectClosed() {
+    for (ContentEntry contentEntry : myContent) {
+      ((RootModelComponentBase)contentEntry).projectClosed();
+    }
+    for (OrderEntry orderEntry : myOrderEntries) {
+      ((RootModelComponentBase)orderEntry).projectClosed();
+    }
+  }
+
   private static class ContentComparator implements Comparator<ContentEntry> {
     public static final ContentComparator INSTANCE = new ContentComparator();
 
@@ -651,38 +681,17 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-
   public VirtualFile getExplodedDirectory() {
-    if (myExplodedDirectoryPointer == null) {
-      return null;
-    }
-    else {
-      return myExplodedDirectoryPointer.getFile();
-    }
+    return myExplodedDirectoryPointer == null ? null : myExplodedDirectoryPointer.getFile();
   }
 
-
-
   public void setExplodedDirectory(VirtualFile file) {
-    assertWritable();
-    if (file != null) {
-      myExplodedDirectoryPointer = pointerFactory().create(file);
-      myExplodedDirectory = file.getUrl();
-    }
-    else {
-      myExplodedDirectoryPointer = null;
-    }
+    setExplodedDirectory(file == null ? null : file.getUrl());
   }
 
   public void setExplodedDirectory(String url) {
-    assertWritable();
-    if (url != null) {
-      myExplodedDirectoryPointer = pointerFactory().create(url);
-      myExplodedDirectory = url;
-    }
-    else {
-      myExplodedDirectoryPointer = null;
-    }
+    myExplodedDirectory = url;
+    myExplodedDirectoryPointer = url == null ? null : myFilePointerManager.create(url, myDisposable, myVirtualFilePointerListener);
   }
 
   @NotNull
@@ -691,12 +700,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public String getExplodedDirectoryUrl() {
-    if (myExplodedDirectoryPointer == null) {
-      return null;
-    }
-    else {
-      return myExplodedDirectoryPointer.getUrl();
-    }
+    return myExplodedDirectoryPointer == null ? null : myExplodedDirectoryPointer.getUrl();
   }
 
   private static boolean vptrEqual(VirtualFilePointer p1, VirtualFilePointer p2) {
@@ -708,7 +712,6 @@ public class RootModelImpl implements ModifiableRootModel {
 
   public boolean isChanged() {
     if (!myWritable) return false;
-//    if (myJdkChanged) return true;
 
     if (!vptrEqual(myExplodedDirectoryPointer, getSourceModel().myExplodedDirectoryPointer)) {
       return true;
@@ -718,8 +721,26 @@ public class RootModelImpl implements ModifiableRootModel {
       if (moduleExtension.isChanged()) return true;
     }
 
-    if (myExcludeExploded != getSourceModel().myExcludeExploded) return true;
+    return myExcludeExploded != getSourceModel().myExcludeExploded ||
+           areOrderEntriesChanged() ||
+           areContentEntriesChanged() ||
+           !myOrderRootPointerContainers.equals(getSourceModel().myOrderRootPointerContainers);
+  }
 
+  private boolean areContentEntriesChanged() {
+    return ArrayUtil.lexicographicCompare(getContentEntries(), getSourceModel().getContentEntries()) != 0;
+    //final ContentEntry[] contentEntries = getContentEntries();
+    //final ContentEntry[] thatContentEntries = getSourceModel().getContentEntries();
+    //if (contentEntries.length != thatContentEntries.length) return true;
+    //for (int i = 0; i < contentEntries.length; i++) {
+    //  ContentEntry entry = contentEntries[i];
+    //  ContentEntry sourceEntry = thatContentEntries[i];
+    //  if (!((ContentEntryImpl)entry).areRootsEqual((ContentEntryImpl)sourceEntry)) return true;
+    //}
+    //return false;
+  }
+
+  private boolean areOrderEntriesChanged() {
     OrderEntry[] orderEntries = getOrderEntries();
     OrderEntry[] sourceOrderEntries = getSourceModel().getOrderEntries();
     if (orderEntries.length != sourceOrderEntries.length) return true;
@@ -730,42 +751,7 @@ public class RootModelImpl implements ModifiableRootModel {
         return true;
       }
     }
-
-    final String[] contentRootUrls = getContentRootUrls();
-    final String[] thatContentRootUrls = getSourceModel().getContentRootUrls();
-    if (!Arrays.equals(contentRootUrls, thatContentRootUrls)) return true;
-
-    final String[] excludeRootUrls = getExcludeRootUrls();
-    final String[] thatExcludeRootUrls = getSourceModel().getExcludeRootUrls();
-    if (!Arrays.equals(excludeRootUrls, thatExcludeRootUrls)) return true;
-
-    final String[] sourceRootForMainUrls = getSourceRootUrls(false);
-    final String[] thatSourceRootForMainUrls = getSourceModel().getSourceRootUrls(false);
-    if (!Arrays.equals(sourceRootForMainUrls, thatSourceRootForMainUrls)) return true;
-
-    final String[] sourceRootForTestUrls = getSourceRootUrls(true);
-    final String[] thatSourceRootForTestUrls = getSourceModel().getSourceRootUrls(true);
-    if (!Arrays.equals(sourceRootForTestUrls, thatSourceRootForTestUrls)) return true;
-
-    final ContentEntry[] contentEntries = getContentEntries();
-    final ContentEntry[] thatContentEntries = getSourceModel().getContentEntries();
-    if (contentEntries.length != thatContentEntries.length) return true;
-    for (int i = 0; i < contentEntries.length; i++) {
-      final ContentEntry contentEntry = contentEntries[i];
-      final ContentEntry thatContentEntry = thatContentEntries[i];
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      final SourceFolder[] thatSourceFolders = thatContentEntry.getSourceFolders();
-      if (sourceFolders.length != thatSourceFolders.length) return true;
-      for (int j = 0; j < sourceFolders.length; j++) {
-        final SourceFolder sourceFolder = sourceFolders[j];
-        final SourceFolder thatSourceFolder = thatSourceFolders[j];
-        if (!sourceFolder.getUrl().equals(thatSourceFolder.getUrl())
-            || !sourceFolder.getPackagePrefix().equals(thatSourceFolder.getPackagePrefix())) {
-          return true;
-        }
-      }
-    }
-    return !myOrderRootPointerContainers.equals(getSourceModel().myOrderRootPointerContainers);
+    return false;
   }
 
   void addExportedUrs(OrderRootType type, List<String> result, Set<Module> processed) {
@@ -845,36 +831,19 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public void dispose() {
-    assertWritable();
-    for (ModuleExtension extension : myExtensions) {
-      Disposer.dispose(extension);
-    }
-    disposeModel();
-    myWritable = false;
+    assert !myDisposed;
+    Disposer.dispose(myDisposable);
     myExtensions.clear();
-  }
-
-  void disposeModel() {
-    final RootModelComponentBase[] rootModelComponentBases = myComponents.toArray(
-      new RootModelComponentBase[myComponents.size()]);
-    for (RootModelComponentBase rootModelComponentBase : rootModelComponentBases) {
-      rootModelComponentBase.dispose();
-    }
-
-    for (VirtualFilePointer pointer : myPointersToDispose) {
-      myFilePointerManager.kill(pointer, myVirtualFilePointerListener);
-    }
-    myPointersToDispose.clear();
-    myVirtualFilePointerListener = null;
+    myWritable = false;
     myDisposed = true;
   }
 
-  public boolean isExcludeExplodedDirectory() { return myExcludeExploded; }
+  public boolean isExcludeExplodedDirectory() {
+    return myExcludeExploded;
+  }
 
-  public void setExcludeExplodedDirectory(boolean excludeExplodedDir) { myExcludeExploded = excludeExplodedDir; }
-
-  private void annotatePointer(VirtualFilePointer pointer) {
-    myPointersToDispose.add(pointer);
+  public void setExcludeExplodedDirectory(boolean excludeExplodedDir) {
+    myExcludeExploded = excludeExplodedDir;
   }
 
   private class Order extends ArrayList<OrderEntry> {
@@ -906,9 +875,6 @@ public class RootModelImpl implements ModifiableRootModel {
     public OrderEntry remove(int i) {
       OrderEntry entry = super.remove(i);
       setIndicies(i);
-      if (myComponents.contains(entry)) {
-        ((RootModelComponentBase)entry).dispose();
-      }
       clearCachedEntries();
       return entry;
     }
@@ -1010,15 +976,10 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new Module[result.size()]);
   }
 
-  VirtualFilePointerFactory pointerFactory() {
-    return myVirtualFilePointerFactory;
-  }
-
   private RootModelImpl getSourceModel() {
     assertWritable();
     return myModuleRootManager.getRootModel();
   }
-
 
   private static class CollectDependentModules extends RootPolicy<List<String>> {
     public List<String> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, List<String> arrayList) {
@@ -1027,13 +988,11 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-
-
   public void setRootUrls(final OrderRootType orderRootType, final String[] urls) {
     assertWritable();
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
-      container = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+      container = myFilePointerManager.createContainer(myDisposable);
       myOrderRootPointerContainers.put(orderRootType, container);
     }
     container.clear();
@@ -1043,12 +1002,12 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Nullable
-  protected VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
+  private VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
     final Element outputPathChild = element.getChild(tag);
     VirtualFilePointer vptr = null;
     if (outputPathChild != null && createPointer) {
       String outputPath = outputPathChild.getAttributeValue(ATTRIBUTE_URL);
-      vptr = pointerFactory().create(outputPath);
+      vptr = myFilePointerManager.create(outputPath, myDisposable, myVirtualFilePointerListener);
     }
     return vptr;
   }
@@ -1067,6 +1026,10 @@ public class RootModelImpl implements ModifiableRootModel {
       if (klass.isAssignableFrom(extension.getClass())) return (T)extension;
     }
     return null;
+  }
+
+  void registerOnDispose(Disposable disposable) {
+    Disposer.register(myDisposable, disposable);
   }
 }
 

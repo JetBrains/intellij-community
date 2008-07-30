@@ -21,13 +21,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class PatchedWeakReference<T> extends WeakReference<T>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatchedWeakReference");
 
-  private static ArrayList<PatchedWeakReference<?>> ourRefsList = new ArrayList<PatchedWeakReference<?>>();
-  private static ReferenceQueue ourQueue = new ReferenceQueue();
+  private static List<PatchedWeakReference<?>> ourRefsList = new ArrayList<PatchedWeakReference<?>>();
+  private static final ReferenceQueue ourQueue = new ReferenceQueue();
 
   static {
     JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
@@ -39,7 +40,10 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
 
   public PatchedWeakReference(T referent) {
     super(referent, ourQueue);
-    synchronized(ourRefsList){
+    if(ourRefsList.size() % 100 == 0) {
+      int i = 0;
+    }
+    synchronized(ourQueue) {
       ourRefsList.add(this);
     }
   }
@@ -60,8 +64,8 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
     }
     if (!haveClearedRefs) return;
 
-    synchronized(ourRefsList){
-      ArrayList<PatchedWeakReference<?>> newList = new ArrayList<PatchedWeakReference<?>>();
+    synchronized(ourQueue) {
+      ArrayList<PatchedWeakReference<?>> newList = new ArrayList<PatchedWeakReference<?>>(ourRefsList.size()/2+1);
       for(int i = 0; i < ourRefsList.size(); i++){
         PatchedWeakReference<?> ref = ourRefsList.get(i);
         if (ref.get() != null){
@@ -69,13 +73,20 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
         }
       }
 
-
-
       if (LOG.isDebugEnabled()){
         LOG.info("old size:" + ourRefsList.size());
         LOG.info("new size:" + newList.size());
       }
+      //System.out.println("old size:" + ourRefsList.size());
+      //System.out.println("new size:" + newList.size());
       ourRefsList = newList;
+    }
+  }
+
+  public static void clearAll() {
+    synchronized (ourQueue) {
+      while (ourQueue.poll() != null);
+      ourRefsList = new ArrayList<PatchedWeakReference<?>>();
     }
   }
 }

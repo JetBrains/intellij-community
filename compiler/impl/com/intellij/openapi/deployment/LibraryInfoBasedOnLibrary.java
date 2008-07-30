@@ -7,6 +7,7 @@ package com.intellij.openapi.deployment;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jdom.Element;
@@ -21,6 +22,7 @@ class LibraryInfoBasedOnLibrary implements LibraryInfo {
   private final Library myLibrary;
 
   public LibraryInfoBasedOnLibrary(@NotNull Library library) {
+    assert !((LibraryEx)library).isDisposed();
     myLibrary = library;
   }
 

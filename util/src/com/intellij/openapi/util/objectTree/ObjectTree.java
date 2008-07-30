@@ -16,20 +16,19 @@
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.THashMap;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.Equality;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
 
-  private Set<T> myRootObjects = new THashSet<T>();
-  private Map<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>();
+  private Set<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
+  private Map<T, ObjectNode<T>> myObject2NodeMap = new IdentityHashMap<T, ObjectNode<T>>();
 
   private List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
   private List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
@@ -52,13 +51,13 @@ public final class ObjectTree<T> {
     final ObjectNode<T> parentNode = getNodeFor(parent);
     final ObjectNode<T> childNode = getNodeFor(child);
 
-    if (childNode != null && childNode.getParent() != parentNode && childNode.getParent() != null) {
-      childNode.getParent().removeChild(childNode);
+    ObjectNode<T> childParent = childNode.getParent();
+    if (childParent != parentNode && childParent != null) {
+      childParent.removeChild(childNode);
       parentNode.addChild(childNode);
     }
     else if (myRootObjects.contains(child)) {
-      final ObjectNode<T> parentless = getNodeFor(child);
-      parentNode.addChild(parentless);
+      parentNode.addChild(childNode);
       myRootObjects.remove(child);
     }
     else {
@@ -108,18 +107,23 @@ public final class ObjectTree<T> {
     }
   }
 
-  private void executeUnregistered(final T object, final ObjectTreeAction<T> action) {
-    if (myExecutedUnregisteredNodes.contains(object)) return;
+  static <T> void executeActionWithRecursiveGuard(T object, final ObjectTreeAction<T> action, List<T> recursiveGuard) {
+    if (ArrayUtil.indexOf(recursiveGuard, object, Equality.IDENTITY) != -1) return;
 
-    myExecutedUnregisteredNodes.add(object);
+    recursiveGuard.add(object);
     try {
       action.execute(object);
-    } finally {
-      myExecutedUnregisteredNodes.remove(object);
+    }
+    finally {
+      recursiveGuard.remove(object);
     }
   }
 
-  public final void executeChildAndReplace(T toExecute, T toReplace, boolean disposeTree, ObjectTreeAction action) {
+  private void executeUnregistered(final T object, final ObjectTreeAction<T> action) {
+    executeActionWithRecursiveGuard(object, action, myExecutedUnregisteredNodes);
+  }
+
+  public final void executeChildAndReplace(T toExecute, T toReplace, boolean disposeTree, ObjectTreeAction<T> action) {
     final ObjectNode<T> toExecuteNode = getObject2NodeMap().get(toExecute);
     assert toExecuteNode != null : "Object " + toExecute + " wasn't registered or already disposed";
 

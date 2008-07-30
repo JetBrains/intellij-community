@@ -4,7 +4,6 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -20,6 +19,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,42 +40,58 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   private boolean myInheritedCompilerOutput = true;
   private boolean myExcludeOutput = true;
-  private Module myModule;
+  private final Module myModule;
 
   private CompilerModuleExtensionImpl mySource;
   private boolean myWritable;
-  private static final Logger LOG = Logger.getInstance("#" + CompilerModuleExtensionImpl.class.getName());
-  private ArrayList<VirtualFilePointer> myVirtualFilePointers = new ArrayList<VirtualFilePointer>();
+  private boolean myDisposed;
 
-  public CompilerModuleExtensionImpl(final Module module) {
+  public CompilerModuleExtensionImpl(@NotNull final Module module) {
     myModule = module;
   }
 
   public CompilerModuleExtensionImpl(final CompilerModuleExtensionImpl source, final boolean writable) {
+    this(source.myModule);
     myWritable = writable;
     myCompilerOutput = source.myCompilerOutput;
-    myCompilerOutputPointer = source.myCompilerOutputPointer;
+    myCompilerOutputPointer = duplicatePointer(source.myCompilerOutputPointer);
     myCompilerOutputForTests = source.myCompilerOutputForTests;
-    myCompilerOutputPathForTestsPointer = source.myCompilerOutputPathForTestsPointer;
+    myCompilerOutputPathForTestsPointer = duplicatePointer(source.myCompilerOutputPathForTestsPointer);
     myInheritedCompilerOutput = source.myInheritedCompilerOutput;
     myExcludeOutput = source.myExcludeOutput;
-    myModule = source.myModule;
     mySource = source;
   }
 
+  private VirtualFilePointer duplicatePointer(VirtualFilePointer pointer) {
+    if (pointer == null) return null;
+    final VirtualFilePointerListener listener =
+        ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).getVirtualFilePointerListener();
+    final VirtualFilePointerManager filePointerManager = VirtualFilePointerManager.getInstance();
+    return filePointerManager.duplicate(pointer, this, listener);
+  }
+
+
   public void readExternal(final Element element) throws InvalidDataException {
+    assert !myDisposed;
     final String value = element.getAttributeValue(INHERIT_COMPILER_OUTPUT);
     myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
     myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
 
+    assert myCompilerOutputPointer == null;
     myCompilerOutputPointer = getOutputPathValue(element, OUTPUT_TAG, !myInheritedCompilerOutput);
+
+    assert myCompilerOutput == null;
     myCompilerOutput = getOutputPathValue(element, OUTPUT_TAG);
 
+    assert myCompilerOutputPathForTestsPointer == null;
     myCompilerOutputPathForTestsPointer = getOutputPathValue(element, TEST_OUTPUT_TAG, !myInheritedCompilerOutput);
+
+    assert myCompilerOutputForTests == null;
     myCompilerOutputForTests = getOutputPathValue(element, TEST_OUTPUT_TAG);
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
+    assert !myDisposed;
     if (myCompilerOutput != null) {
       final Element pathElement = new Element(OUTPUT_TAG);
       pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutput);
@@ -119,12 +135,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       if (projectOutputPath == null) return null;
       return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getModule().getName());
     }
-    if (myCompilerOutputPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPointer.getFile();
-    }
+    return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getFile();
   }
 
   @Nullable
@@ -134,12 +145,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       if (projectOutputPath == null) return null;
       return projectOutputPath.findFileByRelativePath(TEST + "/" + getModule().getName());
     }
-    if (myCompilerOutputPathForTestsPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPathForTestsPointer.getFile();
-    }
+    return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getFile();
   }
 
   @Nullable
@@ -149,12 +155,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       if (projectOutputPath == null) return null;
       return projectOutputPath + "/" + PRODUCTION + "/" + getModule().getName();
     }
-    if (myCompilerOutputPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPointer.getUrl();
-    }
+    return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getUrl();
   }
 
   @Nullable
@@ -164,72 +165,33 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       if (projectOutputPath == null) return null;
       return projectOutputPath + "/" + TEST + "/" + getModule().getName();
     }
-    if (myCompilerOutputPathForTestsPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPathForTestsPointer.getUrl();
-    }
+    return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getUrl();
   }
 
   public void setCompilerOutputPath(final VirtualFile file) {
-    assertWritable();
-    if (file != null) {
-      myCompilerOutputPointer = createPointer(file);
-      myCompilerOutput = file.getUrl();
-    }
-    else {
-      myCompilerOutputPointer = null;
-    }
-  }
-
-  private VirtualFilePointer createPointer(final VirtualFile file) {
-    final VirtualFilePointerListener listener =
-      ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).getVirtualFilePointerListener();
-    final VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(file, listener);
-    myVirtualFilePointers.add(pointer);
-    return pointer;
+    setCompilerOutputPath(file == null ? null : file.getUrl());
   }
 
   private VirtualFilePointer createPointer(final String url) {
     final VirtualFilePointerListener listener =
       ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).getVirtualFilePointerListener();
-    final VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(url, listener);
-    myVirtualFilePointers.add(pointer);
-    return pointer;
+    return VirtualFilePointerManager.getInstance().create(url, this, listener);
   }
 
   public void setCompilerOutputPath(final String url) {
     assertWritable();
-    if (url != null) {
-      myCompilerOutputPointer = createPointer(url);
-      myCompilerOutput = url;
-    }
-    else {
-      myCompilerOutputPointer = null;
-    }
+    myCompilerOutput = url;
+    myCompilerOutputPointer = url == null ? null : createPointer(url);
   }
 
   public void setCompilerOutputPathForTests(final VirtualFile file) {
-    assertWritable();
-    if (file != null) {
-      myCompilerOutputPathForTestsPointer = createPointer(file);
-      myCompilerOutputForTests = file.getUrl();
-    }
-    else {
-      myCompilerOutputPathForTestsPointer = null;
-    }
+    setCompilerOutputPathForTests(file == null ? null : file.getUrl());
   }
 
   public void setCompilerOutputPathForTests(final String url) {
     assertWritable();
-    if (url != null) {
-      myCompilerOutputPathForTestsPointer = createPointer(url);
-      myCompilerOutputForTests = url;
-    }
-    else {
-      myCompilerOutputPathForTestsPointer = null;
-    }
+    myCompilerOutputForTests = url;
+    myCompilerOutputPathForTestsPointer = url == null ? null : createPointer(url);
   }
 
   public Module getModule() {
@@ -246,7 +208,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   private void assertWritable() {
-    LOG.assertTrue(myWritable, "Writable model can be retrieved from writable ModifiableRootModel");
+    assert myWritable: "Writable model can be retrieved from writable ModifiableRootModel";
   }
 
   public boolean isCompilerOutputPathInherited() {
@@ -271,18 +233,21 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   public CompilerModuleExtension getModifiableModel(final boolean writable) {
+    assert !myDisposed;
     return new CompilerModuleExtensionImpl(this, writable);
   }
 
   public void commit() {
     if (mySource != null) {
       mySource.myCompilerOutput = myCompilerOutput;
-      mySource.myCompilerOutputPointer = myCompilerOutputPointer;
+      boolean old = mySource.myWritable;
+      mySource.myWritable = true;
+      mySource.setCompilerOutputPath(myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getUrl());
       mySource.myCompilerOutputForTests = myCompilerOutputForTests;
-      mySource.myCompilerOutputPathForTestsPointer = myCompilerOutputPathForTestsPointer;
+      mySource.setCompilerOutputPathForTests(myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getUrl());
       mySource.myInheritedCompilerOutput = myInheritedCompilerOutput;
       mySource.myExcludeOutput = myExcludeOutput;
-      mySource.myModule = myModule;
+      mySource.myWritable = old;
     }
   }
 
@@ -309,19 +274,10 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   public void dispose() {
-    if (myModule != null) {
-      mySource = null;
-      myCompilerOutput = null;
-      myCompilerOutputForTests = null;
-      final VirtualFilePointerListener listener =
-        ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).getVirtualFilePointerListener();
-      final VirtualFilePointerManager filePointerManager = VirtualFilePointerManager.getInstance();
-      for (VirtualFilePointer pointer : myVirtualFilePointers) {
-        filePointerManager.kill(pointer, listener);
-      }
-      myVirtualFilePointers.clear();
-      myModule = null;
-    }
+    myDisposed = true;
+    mySource = null;
+    myCompilerOutput = null;
+    myCompilerOutputForTests = null;
   }
 
   @Nullable

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -17,20 +18,20 @@ public class ExcludeFolderImpl extends ContentFolderBaseImpl implements Clonable
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleExcludeFolderImpl");
   @NonNls static final String ELEMENT_NAME = "excludeFolder";
 
-  ExcludeFolderImpl(VirtualFile file, ContentEntryImpl contentEntry) {
+  ExcludeFolderImpl(@NotNull VirtualFile file, @NotNull ContentEntryImpl contentEntry) {
     super(file, contentEntry);
   }
 
-  ExcludeFolderImpl(String url, ContentEntryImpl contentEntry) {
+  ExcludeFolderImpl(@NotNull String url, @NotNull ContentEntryImpl contentEntry) {
     super(url, contentEntry);
   }
 
-  ExcludeFolderImpl(Element element, ContentEntryImpl contentEntry) throws InvalidDataException {
+  ExcludeFolderImpl(@NotNull Element element, @NotNull ContentEntryImpl contentEntry) throws InvalidDataException {
     super(element, contentEntry);
     LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));
   }
 
-  public ExcludeFolderImpl(ExcludeFolderImpl that, ContentEntryImpl contentEntry) {
+  public ExcludeFolderImpl(@NotNull ExcludeFolderImpl that, @NotNull ContentEntryImpl contentEntry) {
     super(that, contentEntry);
   }
 
@@ -40,5 +41,11 @@ public class ExcludeFolderImpl extends ContentFolderBaseImpl implements Clonable
 
   public ContentFolder cloneFolder(ContentEntry contentEntry) {
     return new ExcludeFolderImpl(this, (ContentEntryImpl)contentEntry);
+  }
+
+  @Override
+  public int compareTo(ContentFolderBaseImpl folder) {
+    if (!(folder instanceof ExcludeFolderImpl)) return -1;
+    return super.compareTo(folder);
   }
 }

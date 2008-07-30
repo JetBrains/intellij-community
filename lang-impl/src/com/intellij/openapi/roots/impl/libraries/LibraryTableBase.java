@@ -23,14 +23,18 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   private LibraryModel myModel = new LibraryModel();
   private boolean myFirstLoad = true;
 
-
-  public LibraryTable.ModifiableModel getModifiableModel() {
+  public ModifiableModel getModifiableModel() {
     return new LibraryModel(myModel);
   }
 
   public Element getState() {
     final Element element = new Element("state");
-    myModel.writeExternal(element);
+    try {
+      myModel.writeExternal(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
     return element;
   }
 
@@ -117,14 +121,14 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   public Library createLibrary(String name) {
-    final LibraryTable.ModifiableModel modifiableModel = getModifiableModel();
+    final ModifiableModel modifiableModel = getModifiableModel();
     final Library library = modifiableModel.createLibrary(name);
     modifiableModel.commit();
     return library;
   }
 
   public void removeLibrary(@NotNull Library library) {
-    final LibraryTable.ModifiableModel modifiableModel = getModifiableModel();
+    final ModifiableModel modifiableModel = getModifiableModel();
     modifiableModel.removeLibrary(library);
     modifiableModel.commit();
   }
@@ -141,7 +145,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
     myModel = model;
     for (Library library : removedLibraries) {
-      library.dispose();
+      Disposer.dispose(library);
       fireAfterLibraryRemoved(library);
     }
     for (Library library : addedLibraries) {
@@ -162,7 +166,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModel.writeExternal(element);
   }
 
-  public class LibraryModel implements LibraryTable.ModifiableModel, JDOMExternalizable {
+  public class LibraryModel implements ModifiableModel, JDOMExternalizable {
     private final ArrayList<Library> myLibraries = new ArrayList<Library>();
     private boolean myWritable;
 
@@ -193,7 +197,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       @NonNls final String libraryPrefix = "library.";
       final String libPath = System.getProperty(libraryPrefix + name);
       if (libPath != null) {
-        final LibraryImpl library = new LibraryImpl(name, LibraryTableBase.this);
+        final LibraryImpl library = new LibraryImpl(name, LibraryTableBase.this, null);
         library.addRoot(libPath, OrderRootType.CLASSES);
         return library;
       }
@@ -212,7 +216,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     public Library createLibrary(String name) {
       assertWritable();
-      final LibraryImpl library = new LibraryImpl(name, LibraryTableBase.this);
+      final LibraryImpl library = new LibraryImpl(name, LibraryTableBase.this, null);
       myLibraries.add(library);
       return library;
     }
@@ -238,8 +242,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       final List libraryElements = element.getChildren(LibraryImpl.ELEMENT);
       for (Object libraryElement1 : libraryElements) {
         Element libraryElement = (Element)libraryElement1;
-        final LibraryImpl library = new LibraryImpl(LibraryTableBase.this);
-        library.readExternal(libraryElement);
+        final LibraryImpl library = new LibraryImpl(LibraryTableBase.this, libraryElement, null);
         if (library.getName() != null) {
           Library oldLibrary = libraries.get(library.getName());
           if (oldLibrary != null) {
@@ -251,7 +254,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
     }
 
-    public void writeExternal(Element element) {
+    public void writeExternal(Element element) throws WriteExternalException {
       for (Library library : myLibraries) {
         if (library.getName() != null) {
           library.writeExternal(element);

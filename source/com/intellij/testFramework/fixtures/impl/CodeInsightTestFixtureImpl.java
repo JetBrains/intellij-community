@@ -29,6 +29,8 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -356,7 +358,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       protected void run() throws Throwable {
         configureByFilesInner(fileBefore);
         LookupItem[] lookupItems = completeBasic();
-        UsefulTestCase.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", lookupItems);
+        Assert.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", lookupItems);
         result.addAll(ContainerUtil.map(lookupItems, new Function<LookupItem, String>() {
           public String fun(final LookupItem lookupItem) {
             return lookupItem.getLookupString();
@@ -772,9 +774,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     myFile = myPsiManager.findFile(copy);
     setContext(myFile, myFileContext);
-    int offset = -1;
     myEditor = createEditor(copy);
     assert myEditor != null;
+    int offset = -1;
     if (loader.caretMarker != null) {
       offset = loader.caretMarker.getStartOffset();
       myEditor.getCaretModel().moveToOffset(offset);
@@ -782,6 +784,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (loader.selStartMarker != null && loader.selEndMarker != null) {
       myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
     }
+
+    Module module = getModule();
+    if (module != null) {
+      for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+        module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+      }
+    }
+
     return offset;
   }
 

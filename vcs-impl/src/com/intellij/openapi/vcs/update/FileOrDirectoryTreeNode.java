@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -21,7 +22,7 @@ import java.util.Map;
  * author: lesya
  */
 public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implements VirtualFilePointerListener, Disposable {
-  private final static Map<FileStatus, SimpleTextAttributes> myFileStatusToAttributeMap = new com.intellij.util.containers.HashMap<FileStatus, SimpleTextAttributes>();
+  private static final Map<FileStatus, SimpleTextAttributes> myFileStatusToAttributeMap = new HashMap<FileStatus, SimpleTextAttributes>();
   private final SimpleTextAttributes myInvalidAttributes;
   private final Project myProject;
   protected final File myFile;
@@ -32,7 +33,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     String preparedPath = path.replace(File.separatorChar, '/');
     String url = VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(),
                                                  preparedPath);
-    setUserObject(VirtualFilePointerManager.getInstance().create(url, this));
+    setUserObject(VirtualFilePointerManager.getInstance().create(url, this, this));
     myFile = new File(getFilePath());
     myInvalidAttributes = invalidAttributes;
     myProject = project;
@@ -53,7 +54,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   public void validityChanged(VirtualFilePointer[] pointers) {
     if (!getFilePointer().isValid()) {
       AbstractTreeNode parent = (AbstractTreeNode) getParent();
-      if ((parent != null) && parent.getSupportsDeletion()) {
+      if (parent != null && parent.getSupportsDeletion()) {
         getTreeModel().removeNodeFromParent(this);
       }
       else {
@@ -77,7 +78,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   }
 
   public VirtualFilePointer getFilePointer() {
-    return ((VirtualFilePointer)getUserObject());
+    return (VirtualFilePointer)getUserObject();
   }
 
   public SimpleTextAttributes getAttributes() {
@@ -101,12 +102,10 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   }
 
   public boolean getSupportsDeletion() {
-    AbstractTreeNode parent = ((AbstractTreeNode)getParent());
-    if (parent == null) return false;
-    return parent.getSupportsDeletion();
+    AbstractTreeNode parent = (AbstractTreeNode)getParent();
+    return parent != null && parent.getSupportsDeletion();
   }
 
   public void dispose() {
-    VirtualFilePointerManager.getInstance().kill((VirtualFilePointer) getUserObject(), this);
   }
 }

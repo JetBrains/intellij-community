@@ -87,7 +87,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       VirtualFile file = getSelectedFile();
 
       if (file != null && file.isValid()) {
-        ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true);
+        ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true, myProject);
         ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(myProject)).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
         FileStatusManager.getInstance(myProject).fileStatusesChanged();
       }

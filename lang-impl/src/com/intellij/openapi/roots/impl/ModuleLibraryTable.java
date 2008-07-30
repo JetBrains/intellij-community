@@ -25,11 +25,11 @@ import java.util.Iterator;
  *  @author dsl
  */
 public class ModuleLibraryTable implements LibraryTable, LibraryTable.ModifiableModel {
-  private RootModelImpl myRootModel;
   private static final ModuleLibraryOrderEntryCondition MODULE_LIBRARY_ORDER_ENTRY_FILTER = new ModuleLibraryOrderEntryCondition();
   private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
-  private ProjectRootManagerImpl myProjectRootManager;
-  private VirtualFilePointerManager myFilePointerManager;
+  private final RootModelImpl myRootModel;
+  private final ProjectRootManagerImpl myProjectRootManager;
+  private final VirtualFilePointerManager myFilePointerManager;
   public static final LibraryTablePresentation MODULE_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("module.library.display.name", plural ? 2 : 1);
@@ -79,7 +79,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
         if (libraryOrderEntry.isModuleLevel()) {
           if (library.equals(libraryOrderEntry.getLibrary())) {
             myRootModel.removeOrderEntry(orderEntry);
-            library.dispose();
+            //library.dispose();
             return;
           }
         }
@@ -152,7 +152,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     return myRootModel.isChanged();
   }
 
-  public LibraryTable.ModifiableModel getModifiableModel() {
+  public ModifiableModel getModifiableModel() {
     return this;
   }
 }

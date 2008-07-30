@@ -87,45 +87,45 @@ public final class ObjectNode<T> {
     }
   }
   
-  public boolean execute(boolean disposeTree, ObjectTreeAction<T> action) {
-    if (myTree.getNodesInExecution().contains(this)) {
-      return false;
-    }
+  public boolean execute(final boolean disposeTree, final ObjectTreeAction<T> action) {
+    ObjectTree.executeActionWithRecursiveGuard(this, new ObjectTreeAction<ObjectNode<T>>() {
+      public void execute(ObjectNode<T> each) {
+        action.beforeTreeExecution(myObject);
 
-    myTree.getNodesInExecution().add(this);
-
-    action.beforeTreeExecution(myObject);
-
-    if (myChildren != null) {
+        if (myChildren != null) {
 //todo: [kirillk] optimize
-      final ObjectNode<T>[] children = myChildren.toArray(new ObjectNode[myChildren.size()]);
-      for (int i = children.length - 1; i >= 0; i--) {
-        children[i].execute(disposeTree, action);
+          final ObjectNode<T>[] children = myChildren.toArray(new ObjectNode[myChildren.size()]);
+          for (int i = children.length - 1; i >= 0; i--) {
+            children[i].execute(disposeTree, action);
+          }
+        }
+
+        if (disposeTree) {
+          myChildren = null;
+        }
+
+        try {
+          action.execute(myObject);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+
+        if (disposeTree) {
+          myTree.getObject2NodeMap().remove(myObject);
+          if (myParent != null) {
+            myParent.removeChild(ObjectNode.this);
+          }
+          else {
+            myTree.getRootObjects().remove(myObject);
+          }
+        }
       }
-    }
 
-    if (disposeTree) {
-      myChildren = null;
-    }
+      public void beforeTreeExecution(ObjectNode<T> parent) {
 
-    try {
-      action.execute(myObject);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
-
-    if (disposeTree) {
-      myTree.getObject2NodeMap().remove(myObject);
-      if (myParent != null) {
-        myParent.removeChild(this);
       }
-      else {
-        myTree.getRootObjects().remove(myObject);
-      }
-    }
-
-    myTree.getNodesInExecution().remove(this);
+    }, myTree.getNodesInExecution());
 
     return true;
   }

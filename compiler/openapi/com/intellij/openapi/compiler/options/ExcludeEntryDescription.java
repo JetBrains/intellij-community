@@ -20,30 +20,28 @@
  */
 package com.intellij.openapi.compiler.options;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 
-public class ExcludeEntryDescription {
-  private boolean myIsFile = true;
+public class ExcludeEntryDescription implements Disposable {
+  private final boolean myIsFile;
   private boolean myIncludeSubdirectories;
-  private VirtualFilePointer myFilePointer;
+  private final VirtualFilePointer myFilePointer;
 
-  public ExcludeEntryDescription(VirtualFile virtualFile, boolean includeSubdirectories, boolean isFile) {
-    myFilePointer = VirtualFilePointerManager.getInstance().create(virtualFile, null);
+  public ExcludeEntryDescription(String url, boolean includeSubdirectories, boolean isFile, Disposable parent) {
+    myFilePointer = VirtualFilePointerManager.getInstance().create(url, parent, null);
     myIncludeSubdirectories = includeSubdirectories;
     myIsFile = isFile;
   }
-
-  public ExcludeEntryDescription(String url, boolean includeSubdirectories, boolean isFile) {
-    myFilePointer = VirtualFilePointerManager.getInstance().create(url, null);
-    myIncludeSubdirectories = includeSubdirectories;
-    myIsFile = isFile;
+  public ExcludeEntryDescription(VirtualFile virtualFile, boolean includeSubdirectories, boolean isFile, Disposable parent) {
+    this(virtualFile.getUrl(), includeSubdirectories, isFile, parent);
   }
 
-  public ExcludeEntryDescription copy() {
-    return new ExcludeEntryDescription(getUrl(), myIncludeSubdirectories, myIsFile);
+  public ExcludeEntryDescription copy(Disposable parent) {
+    return new ExcludeEntryDescription(getUrl(), myIncludeSubdirectories, myIsFile,parent);
   }
 
   public boolean isFile() {
@@ -85,13 +83,13 @@ public class ExcludeEntryDescription {
     if(entryDescription.myIncludeSubdirectories != myIncludeSubdirectories) {
       return false;
     }
-    if(!Comparing.equal(entryDescription.getUrl(), getUrl())) {
-      return false;
-    }
-    return true;
+    return Comparing.equal(entryDescription.getUrl(), getUrl());
   }
 
   public int hashCode() {
     return getUrl().hashCode();
+  }
+
+  public void dispose() {
   }
 }

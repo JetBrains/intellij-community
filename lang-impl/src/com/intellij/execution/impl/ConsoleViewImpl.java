@@ -269,7 +269,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     if (myEditor != null){
       myFlushAlarm.cancelAllRequests();
       mySpareTimeAlarm.cancelAllRequests();
-      EditorFactory.getInstance().releaseEditor(myEditor);
+      if (!myEditor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
       synchronized (LOCK) {
         myDeferredOutput = new StringBuffer();
       }

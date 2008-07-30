@@ -50,10 +50,7 @@ public class ConfigFileImpl implements ConfigFile {
 
   private void setUrl(String url) {
     final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
-    if (myFilePointer != null) {
-      pointerManager.kill(myFilePointer, myListener);
-    }
-    myFilePointer = pointerManager.create(url, myListener);
+    myFilePointer = pointerManager.create(url, this, myListener);
     onChange();
   }
 
@@ -96,7 +93,6 @@ public class ConfigFileImpl implements ConfigFile {
   }
 
   public void dispose() {
-    VirtualFilePointerManager.getInstance().kill(myFilePointer, myListener);
   }
 
   @NotNull

@@ -168,9 +168,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         for (Runnable runnable : myWaitingUpdateCompletionQueue) {
           runnable.run();
         }
-        myWaitingUpdateCompletionQueue.clear();
+        waitForUpdateDone(null);
       }
-      waitForUpdateDone(null);
     }
   }
 

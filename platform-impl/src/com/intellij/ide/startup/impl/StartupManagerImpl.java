@@ -67,9 +67,11 @@ public class StartupManagerImpl extends StartupManagerEx {
           HeavyProcessLatch.INSTANCE.processStarted();
           try {
             runActivities(myPreStartupActivities);
-            myFileSystemSynchronizer.setCancelable(true);
-            myFileSystemSynchronizer.execute();
-            myFileSystemSynchronizer = null;
+            if (myFileSystemSynchronizer != null || !ApplicationManager.getApplication().isUnitTestMode()) {
+              myFileSystemSynchronizer.setCancelable(true);
+              myFileSystemSynchronizer.execute();
+              myFileSystemSynchronizer = null;
+            }
             myStartupActivityRunning = true;
             runActivities(myActivities);
 

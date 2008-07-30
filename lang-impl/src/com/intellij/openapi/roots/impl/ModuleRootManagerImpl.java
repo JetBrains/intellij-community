@@ -19,7 +19,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -59,11 +58,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final ModuleFileIndexImpl myFileIndex;
   private boolean myIsDisposed = false;
   private boolean isModuleAdded = false;
-  private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedFiles;
-  private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles;
+  private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
+  private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<RootModelImpl, Throwable>();
-
-
 
   public ModuleRootManagerImpl(Module module,
                                DirectoryIndex directoryIndex,
@@ -74,13 +71,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myFilePointerManager = filePointerManager;
 
     myFileIndex = new ModuleFileIndexImpl(myModule, directoryIndex);
-    myCachedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
-    myCachedExportedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
 
-    final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
-      myModule.getProject())).getVirtualFilePointerListener();
-
-    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager, listener);
+    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
   }
 
   @NotNull
@@ -101,7 +93,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   public void initComponent() { }
 
   public void disposeComponent() {
-    myRootModel.disposeModel();
+    myRootModel.dispose();
     myIsDisposed = true;
 
     if (Disposer.isDebugMode()) {
@@ -137,8 +129,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final RootModelImpl model = new RootModelImpl(myRootModel, this, true, accessor, null, myFilePointerManager, myProjectRootManager) {
       @Override
-      void disposeModel() {
-        super.disposeModel();
+      public void dispose() {
+        super.dispose();
         if (Disposer.isDebugMode()) {
           myModelCreations.remove(this);
         }
@@ -208,7 +200,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         final VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
         for (String url : urls) {
           if (url != null) {
-            cachedFiles.add(virtualFilePointerManager.create(url, null));
+            cachedFiles.add(virtualFilePointerManager.create(url, getModule(), null));
           }
         }
       }
@@ -261,32 +253,35 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   private void commitModelWithoutEvents(RootModelImpl rootModel) {
-    setModel(rootModel);
+    doCommit(rootModel);
   }
 
-  private void setModel(RootModelImpl rootModel) {
-    if (myRootModel != rootModel) {
-      myRootModel.disposeModel();
-    }
-    if (!isModuleAdded) {
-      myRootModel = rootModel;
-    }
-    else {
-      final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
-        myModule.getProject())).getVirtualFilePointerListener();
-      myRootModel = new RootModelImpl(rootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
-      rootModel.disposeModel();
-    }
+  private void doCommit(RootModelImpl rootModel) {
+    rootModel.docommit();
+    rootModel.dispose();
+
+    //if (myRootModel != rootModel) {
+    //  myRootModel.disposeModel();
+    //}
+    //if (isModuleAdded) {
+    //  final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
+    //    myModule.getProject())).getVirtualFilePointerListener();
+    //  myRootModel = new RootModelImpl(rootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
+    //  rootModel.disposeModel();
+    //}
+    //else {
+    //  myRootModel = rootModel;
+    //}
   }
 
 
-  static void multiCommit(ModifiableRootModel[] _rootModels,
+  static void multiCommit(ModifiableRootModel[] rootModels,
                           ModifiableModuleModel moduleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    final List<RootModelImpl> modelsToCommit = getSortedChangedModels(_rootModels, moduleModel);
+    final List<RootModelImpl> modelsToCommit = getSortedChangedModels(rootModels, moduleModel);
 
-    final List<ModifiableRootModel> modelsToDispose = new ArrayList<ModifiableRootModel>(Arrays.asList(_rootModels));
+    final List<ModifiableRootModel> modelsToDispose = new ArrayList<ModifiableRootModel>(Arrays.asList(rootModels));
     modelsToDispose.removeAll(modelsToCommit);
 
     Runnable runnable = new Runnable() {
@@ -418,7 +413,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
       for (String url : result) {
         if (url != null) {
-          files.add(pointerManager.create(url, null));
+          files.add(pointerManager.create(url, getModule(), null));
         }
       }
       myCachedExportedFiles.put(rootType, files);
@@ -464,27 +459,20 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void projectOpened() {
-    final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
-    for (RootModelComponentBase rootModelComponentBase : components) {
-      rootModelComponentBase.projectOpened();
-    }
+    myRootModel.projectOpened();
   }
 
   public void projectClosed() {
-    final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
-    for (RootModelComponentBase rootModelComponentBase : components) {
-      rootModelComponentBase.projectClosed();
-    }
+    myRootModel.projectClosed();
   }
 
   public void moduleAdded() {
-    RootModelImpl oldModel = myRootModel;
-    final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
-      myModule.getProject())).getVirtualFilePointerListener();
-    myRootModel = new RootModelImpl(myRootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
-    oldModel.disposeModel();
-    final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
-    for (RootModelComponentBase rootModelComponentBase : components) {
+    //RootModelImpl oldModel = myRootModel;
+    //final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
+    //  myModule.getProject())).getVirtualFilePointerListener();
+    //myRootModel = new RootModelImpl(myRootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
+    //oldModel.disposeModel();
+    for (RootModelComponentBase rootModelComponentBase : myRootModel.myComponents) {
       rootModelComponentBase.moduleAdded();
     }
     isModuleAdded = true;
@@ -550,19 +538,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
 
   public void dropCaches() {
-    VirtualFilePointerManager manager = VirtualFilePointerManager.getInstance();
-    killPointers(manager, myCachedFiles);
-    killPointers(manager, myCachedExportedFiles);
     myCachedFiles.clear();
     myCachedExportedFiles.clear();
-  }
-
-  private static void killPointers(final VirtualFilePointerManager manager, Map<OrderRootType, Set<VirtualFilePointer>> cach) {
-    for (Set<VirtualFilePointer> pointers : cach.values()) {
-      for (VirtualFilePointer pointer : pointers) {
-        manager.kill(pointer, null);
-      }
-    }
   }
 
   public ModuleRootManagerState getState() {
@@ -577,9 +554,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
       if (throwEvent) {
         fireBeforeRootsChange();
-        setModel(newModel);
-        final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
-        for (RootModelComponentBase rootModelComponentBase : components) {
+        doCommit(newModel);
+        for (RootModelComponentBase rootModelComponentBase : myRootModel.myComponents) {
           rootModelComponentBase.moduleAdded();
         }
         fireRootsChanged();

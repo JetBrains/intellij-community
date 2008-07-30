@@ -63,22 +63,30 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   
   private final ProjectManager myProjectManager;
   private final Set<File> myIgnoredRoots = new HashSet<File>();
+  private final MyProjectManagerListener myProjectManagerListener = new MyProjectManagerListener();
+  private final MyVfsListener myVfsListener = new MyVfsListener();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager) {
     myProjectManager = projectManager;
 
-    projectManager.addProjectManagerListener(new MyProjectManagerListener());
-    vfsManager.addVirtualFileListener(new MyVfsListener());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      registerListeners(vfsManager, projectManager);
+    }
   }
-  
+
+  public void registerListeners(VirtualFileManager vfsManager, ProjectManager projectManager) {
+    projectManager.addProjectManagerListener(myProjectManagerListener);
+    vfsManager.addVirtualFileListener(myVfsListener);
+  }
+
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
   }
-  
+
   public void addIgnoredRoots(Collection<File> roots) {
     myIgnoredRoots.addAll(roots);
   }
-  
+
   public void removeIgnoredRoots(Collection<File> roots) {
     myIgnoredRoots.removeAll(roots);
   }
@@ -102,7 +110,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     return false;
   }
-  
+
   @Nullable
   public static VirtualFile getSourceFileByOutput(VirtualFile outputFile) {
     final OutputFileInfo outputFileInfo = loadOutputInfo(outputFile);
@@ -114,7 +122,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     return null;
   }
-  
+
   public void collectFiles(CompileContext context, final TranslatingCompiler compiler, Iterator<VirtualFile> scopeSrcIterator, boolean forceCompile,
                            final boolean isRebuild,
                            Collection<VirtualFile> toCompile,
@@ -122,10 +130,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final Project project = context.getProject();
     final int projectId = getProjectId(project);
     final CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
-    final boolean _forceCompile = forceCompile || isRebuild; 
+    final boolean _forceCompile = forceCompile || isRebuild;
     synchronized (mySourcesToRecompile) {
       final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(projectId);
-      if (_forceCompile || (pathsToRecompile != null && pathsToRecompile.size() > 0)) {
+      if (_forceCompile || pathsToRecompile != null && !pathsToRecompile.isEmpty()) {
         while (scopeSrcIterator.hasNext()) {
           final VirtualFile file = scopeSrcIterator.next();
           if (configuration.isExcludedFromCompilation(file) || !compiler.isCompilableFile(file, context)) {
@@ -221,7 +229,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  
+
   @NotNull
   public String getComponentName() {
     return "TranslatingCompilerFilesMonitor";
@@ -285,7 +293,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       LOG.error(e);
     }
   }
-  
+
+  public void removeListeners() {
+    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
+    myProjectManager.removeProjectManagerListener(myProjectManagerListener);
+  }
+
   @Nullable
   private static SourceFileInfo loadSourceInfo(final VirtualFile file) {
     final DataInputStream is = ourSourceFileAttribute.readAttribute(file);
@@ -353,7 +366,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       LOG.info(ignored);
     }
   }
-  
+
   private static int getProjectId(Project project) {
     try {
       return FSRecords.getNames().enumerate(project.getLocationHash());
@@ -363,7 +376,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     return -1;
   }
-  
+
   private static class OutputFileInfo {
     private final int mySourcePath;
     @Nullable
@@ -409,7 +422,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   private static class SourceFileInfo {
     private TIntLongHashMap myTimestamps; // ProjectId -> last compiled stamp
-    private TIntObjectHashMap myProjectToOutputPathMap; // ProjectId -> either a single output path or a set of output paths 
+    private TIntObjectHashMap myProjectToOutputPathMap; // ProjectId -> either a single output path or a set of output paths
 
     private SourceFileInfo() {
     }
@@ -490,7 +503,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
       return result;
     }
-    
+
     private void addOutputPath(final int projectId, String outputPath) {
       try {
         addOutputPath(projectId, FSRecords.getNames().enumerate(outputPath));
@@ -569,7 +582,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       }
     }
-    
+
     boolean isAssociated(int projectId, String outputPath) {
       if (myProjectToOutputPathMap != null) {
         try {
@@ -590,11 +603,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  
+
   private static interface FileProcessor {
     void execute(VirtualFile file);
   }
-  
+
   private static void processRecursively(VirtualFile file, final FileProcessor processor) {
     if (file.getFileSystem() instanceof LocalFileSystem) {
       if (file.isDirectory()) {
@@ -627,7 +640,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     for (VirtualFile srcRoot : roots) {
       if (indicator != null) {
         indicator.setText2(srcRoot.getPresentableUrl());
-        indicator.setFraction((++processed) / (double)totalRootCount);
+        indicator.setFraction(++processed / (double)totalRootCount);
       }
       fileIndex.iterateContentUnderDirectory(srcRoot, new ContentIterator() {
         public boolean processFile(final VirtualFile file) {
@@ -647,7 +660,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
-    
+
     final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
 
     public void projectOpened(final Project project) {
@@ -676,7 +689,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         public void run() {
           new Task.Modal(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
             public void run(@NotNull final ProgressIndicator indicator) {
-      
+
               final IntermediateOutputCompiler[] compilers =
                   CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
 
@@ -698,9 +711,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               }
 
               final List<VirtualFile> projectRoots = Arrays.asList(ProjectRootManager.getInstance(project).getContentSourceRoots());
-              final int totalRootsCount = projectRoots.size() + intermediateRoots.size(); 
+              final int totalRootsCount = projectRoots.size() + intermediateRoots.size();
               scanSourceContent(project, projectRoots, totalRootsCount);
-              
+
               if (intermediateRoots.size() > 0) {
                 final int projectId = getProjectId(project);
                 final FileProcessor processor = new FileProcessor() {
@@ -716,7 +729,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 int processed = projectRoots.size();
                 for (VirtualFile root : intermediateRoots) {
                   indicator.setText2(root.getPresentableUrl());
-                  indicator.setFraction((++processed) / (double)totalRootsCount);
+                  indicator.setFraction(++processed / (double)totalRootsCount);
                   processRecursively(root, processor);
                 }
               }
@@ -725,7 +738,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
     }
-    
+
     public void projectClosed(final Project project) {
       myConnections.remove(project).disconnect();
       synchronized (mySourcesToRecompile) {
@@ -733,7 +746,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
   }
-  
+
   private class MyVfsListener extends VirtualFileAdapter {
     public void propertyChanged(final VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
@@ -744,7 +757,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     public void contentsChanged(final VirtualFileEvent event) {
       markDirtyIfSource(event.getFile());
     }
-    
+
     public void fileCreated(final VirtualFileEvent event) {
       processNewFile(event.getFile());
     }
@@ -752,7 +765,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     public void fileCopied(final VirtualFileCopyEvent event) {
       processNewFile(event.getFile());
     }
-     
+
     public void beforeFileDeletion(final VirtualFileEvent event) {
       final VirtualFile eventFile = event.getFile();
       final boolean suppressAttributesChecking = eventFile.isDirectory() && isIgnored(eventFile);
@@ -822,7 +835,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
     }
-    
+
     private void processNewFile(VirtualFile file) {
       for (final Project project : myProjectManager.getOpenProjects()) {
         final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
@@ -835,7 +848,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 addSourceForRecompilation(projectId, file, null);
               }
             }
-                  
+
             boolean isCompilable(VirtualFile file) {
               for (TranslatingCompiler translator : translators) {
                 if (translator.isCompilableFile(file, DummyCompileContext.getInstance())) {
@@ -859,8 +872,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
   }
-  
-  
+
+
   private static boolean belongsToIntermediateSources(VirtualFile file, Project project) {
     final IntermediateOutputCompiler[] srcGenerators = CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
     if (srcGenerators.length == 0) {
@@ -870,7 +883,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     if (modules.length == 0) {
       return false;
     }
-    
+
     final String filePath = file.getPath();
     for (IntermediateOutputCompiler generator : srcGenerators) {
       for (Module module : modules) {
@@ -891,14 +904,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       }
     }
-    
+
     return false;
   }
-  
+
   private void addSourceForRecompilation(final int projectId, final VirtualFile srcFile, final @Nullable SourceFileInfo preloadedInfo) {
     final SourceFileInfo srcInfo = preloadedInfo != null? preloadedInfo : loadSourceInfo(srcFile);
-    
-    final boolean alreadyMarked; 
+
+    final boolean alreadyMarked;
     synchronized (mySourcesToRecompile) {
       TIntHashSet set = mySourcesToRecompile.get(projectId);
       if (set == null) {
@@ -913,14 +926,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       srcInfo.processOutputPaths(projectId, new ScheduleOutputsForDeletionProc(srcFile.getUrl()));
       saveSourceInfo(srcFile, srcInfo);
     }
-  }                             
-  
+  }
+
   private void removeSourceForRecompilation(final int projectId, final int srcId) {
     synchronized (mySourcesToRecompile) {
       TIntHashSet set = mySourcesToRecompile.get(projectId);
       if (set != null) {
         set.remove(srcId);
-        if (set.size() == 0) {
+        if (set.isEmpty()) {
           mySourcesToRecompile.remove(projectId);
         }
       }

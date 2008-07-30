@@ -103,7 +103,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
     return "< " + getJdkName() + " >";
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     myProjectRootManagerImpl.removeJdkTableListener(myJdkTableListener);
     myProjectRootManager.removeProjectJdkListener(myListener);

@@ -256,17 +256,22 @@ public abstract class UsefulTestCase extends TestCase {
   public static void clearFields(final Object test) throws IllegalAccessException {
     Class aClass = test.getClass();
     while (aClass != null) {
-      for (final Field field : aClass.getDeclaredFields()) {
-        @NonNls final String name = field.getDeclaringClass().getName();
-        if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
-          final int modifiers = field.getModifiers();
-          if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
-            field.setAccessible(true);
-            field.set(test, null);
-          }
+      clearDeclaredFields(test, aClass);
+      aClass = aClass.getSuperclass();
+    }
+  }
+
+  public static void clearDeclaredFields(Object test, Class aClass) throws IllegalAccessException {
+    if (aClass == null) return;
+    for (final Field field : aClass.getDeclaredFields()) {
+      @NonNls final String name = field.getDeclaringClass().getName();
+      if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
+        final int modifiers = field.getModifiers();
+        if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
+          field.setAccessible(true);
+          field.set(test, null);
         }
       }
-      aClass = aClass.getSuperclass();
     }
   }
 }

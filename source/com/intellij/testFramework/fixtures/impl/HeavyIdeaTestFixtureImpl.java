@@ -10,7 +10,6 @@ import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
@@ -25,8 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import org.jetbrains.annotations.NonNls;
@@ -95,7 +93,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
     ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    doPostponedFormatting(myProject);
+    IdeaTestCase.doPostponedFormatting(myProject);
 
     Disposer.dispose(myProject);
 
@@ -122,25 +120,8 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
   }
 
   public Module getModule() {
-    return ModuleManager.getInstance(getProject()).getModules()[0];
-  }
-
-  private static void doPostponedFormatting(final Project project) {
-    try {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-            }
-          });
-        }
-      });
-    }
-    catch (Throwable e) {
-      // Way to go...
-    }
+    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    return modules.length == 0 ? null : modules[0];
   }
 
   private class MyDataProvider implements DataProvider {

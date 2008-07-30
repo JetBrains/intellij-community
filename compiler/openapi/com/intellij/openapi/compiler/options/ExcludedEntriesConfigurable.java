@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.RightAlignedLabelUI;
@@ -45,7 +46,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private Project myProject;
   private ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private FileChooserDescriptor myDescriptor;
-  private ExcludedEntriesConfiguration myConfiguration;
+  private final ExcludedEntriesConfiguration myConfiguration;
 
   public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
     myDescriptor = descriptor;
@@ -55,10 +56,17 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
 
   public void reset() {
     ExcludeEntryDescription[] descriptions = myConfiguration.getExcludeEntryDescriptions();
-    myExcludeEntryDescriptions.clear();
+    disposeMyDescriptions();
     for (ExcludeEntryDescription description : descriptions) {
-      myExcludeEntryDescriptions.add(description.copy());
+      myExcludeEntryDescriptions.add(description.copy(myProject));
     }
+  }
+
+  private void disposeMyDescriptions() {
+    for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
+      Disposer.dispose(description);
+    }
+    myExcludeEntryDescriptions.clear();
   }
 
   public void apply() {
@@ -139,15 +147,15 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       int savedSelected = selected;
       VirtualFile[] chosen = FileChooser.chooseFiles(myProject, descriptor);
       for (final VirtualFile chosenFile : chosen) {
-        ExcludeEntryDescription description;
         if (isFileExcluded(chosenFile)) {
           continue;
         }
+        ExcludeEntryDescription description;
         if (chosenFile.isDirectory()) {
-          description = new ExcludeEntryDescription(chosenFile, true, false);
+          description = new ExcludeEntryDescription(chosenFile, true, false, myProject);
         }
         else {
-          description = new ExcludeEntryDescription(chosenFile, false, true);
+          description = new ExcludeEntryDescription(chosenFile, false, true, myProject);
         }
         myExcludeEntryDescriptions.add(selected, description);
         selected++;
@@ -189,6 +197,8 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       int removedCount = 0;
       for (int indexToRemove : selected) {
         final int row = indexToRemove - removedCount;
+        ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
+        Disposer.dispose(description);
         myExcludeEntryDescriptions.remove(row);
         model.fireTableRowsDeleted(row, row);
         removedCount += 1;
@@ -286,7 +296,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     private JPanel myPanel = new JPanel();
 
     public BooleanRenderer() {
-      setHorizontalAlignment(JLabel.CENTER);
+      setHorizontalAlignment(CENTER);
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value,

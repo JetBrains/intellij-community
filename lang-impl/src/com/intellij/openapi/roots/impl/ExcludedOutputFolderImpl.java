@@ -1,42 +1,17 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ExcludedOutputFolder;
 import com.intellij.openapi.roots.ContentFolder;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ExcludedOutputFolder;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 
 /**
  *  @author dsl
  */
-public class ExcludedOutputFolderImpl implements ExcludedOutputFolder, ClonableContentFolder {
-  private final ContentEntryImpl myContentEntry;
-  private final VirtualFilePointer myOutputPath;
-
+public class ExcludedOutputFolderImpl extends ContentFolderBaseImpl implements ExcludedOutputFolder, ClonableContentFolder {
   ExcludedOutputFolderImpl(ContentEntryImpl contentEntry, VirtualFilePointer outputPath) {
-    myContentEntry = contentEntry;
-    myOutputPath = outputPath;
-  }
-
-  public VirtualFile getFile() {
-    final VirtualFile file = myOutputPath.getFile();
-    if (file == null || file.isDirectory()) {
-      return file;
-    }
-    else {
-      return null;
-    }
-  }
-
-  @NotNull
-  public ContentEntry getContentEntry() {
-    return myContentEntry;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return myOutputPath.getUrl();
+    super(outputPath, contentEntry);
   }
 
   public boolean isSynthetic() {
@@ -44,6 +19,13 @@ public class ExcludedOutputFolderImpl implements ExcludedOutputFolder, ClonableC
   }
 
   public ContentFolder cloneFolder(final ContentEntry contentEntry) {
-    return new ExcludedOutputFolderImpl((ContentEntryImpl)contentEntry, myOutputPath);
+    return new ExcludedOutputFolderImpl((ContentEntryImpl)contentEntry, VirtualFilePointerManager.getInstance().create(getUrl(), getRootModel().getModule(),
+                                                                                                                       ((ContentEntryImpl)contentEntry).getRootModel().myVirtualFilePointerListener));
+  }
+
+  @Override
+  public int compareTo(ContentFolderBaseImpl folder) {
+    if (!(folder instanceof ExcludedOutputFolderImpl)) return -1;
+    return super.compareTo(folder);
   }
 }

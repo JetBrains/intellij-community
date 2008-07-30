@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -16,42 +17,38 @@ import org.jetbrains.annotations.NonNls;
  * Library entry for moduler ("in-place") libraries
  *  @author dsl
  */
-class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
-                                                                    LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
+class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private final Library myLibrary;
   @NonNls static final String ENTRY_TYPE = "module-library";
   private boolean myExported;
   @NonNls private static final String EXPORTED_ATTR = "exported";
 
-  private ModuleLibraryOrderEntryImpl (Library library,
-                                       RootModelImpl rootModel,
-                                       boolean isExported,
-                                       ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
-    super(rootModel, projectRootManager, filePointerManager);
-    myLibrary = library;
-    ((LibraryEx) myLibrary).setRootModel(myRootModel);
-    init(myLibrary.getRootProvider());
+  //cloning
+  private ModuleLibraryOrderEntryImpl(Library library, RootModelImpl rootModel, boolean isExported) {
+    super(rootModel, ProjectRootManagerImpl.getInstanceImpl(rootModel.getProject()), VirtualFilePointerManager.getInstance());
+    myLibrary = ((LibraryEx)library).cloneLibrary(getRootModel());
+    init();
     myExported = isExported;
   }
 
-  ModuleLibraryOrderEntryImpl (RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
-    this ((String) null, rootModel, projectRootManager, filePointerManager);
+  ModuleLibraryOrderEntryImpl(RootModelImpl rootModel,
+                              ProjectRootManagerImpl projectRootManager,
+                              VirtualFilePointerManager filePointerManager) {
+    this((String)null, rootModel, projectRootManager, filePointerManager);
   }
 
-  ModuleLibraryOrderEntryImpl (String name,
-                               RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  ModuleLibraryOrderEntryImpl(String name,
+                              RootModelImpl rootModel,
+                              ProjectRootManagerImpl projectRootManager,
+                              VirtualFilePointerManager filePointerManager) {
     super(rootModel, projectRootManager, filePointerManager);
-    if (name != null) {
-      myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name);
-    } else {
-      myLibrary = LibraryTableImplUtil.createModuleLevelLibrary();
-    }
-    ((LibraryEx)myLibrary).setRootModel(myRootModel);
+    myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name, getRootModel());
+    init();
+  }
+
+  private void init() {
+    Disposer.register(this, myLibrary);
     init(myLibrary.getRootProvider());
   }
 
@@ -62,9 +59,8 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     super(rootModel, projectRootManager, filePointerManager);
     LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
-    myLibrary = LibraryTableImplUtil.loadLibrary(element, null);
-    ((LibraryEx)myLibrary).setRootModel(myRootModel);
-    init(myLibrary.getRootProvider());
+    myLibrary = LibraryTableImplUtil.loadLibrary(element, getRootModel());
+    init();
   }
 
   public Library getLibrary() {
@@ -125,7 +121,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
-    return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported, ProjectRootManagerImpl.getInstanceImpl(myRootModel.getModule().getProject()), VirtualFilePointerManager.getInstance());
+    return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
@@ -144,5 +140,10 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
 
   public void setExported(boolean value) {
     myExported = value;
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
   }
 }

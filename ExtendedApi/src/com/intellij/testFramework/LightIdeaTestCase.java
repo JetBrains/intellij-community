@@ -8,15 +8,12 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +27,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -57,21 +55,19 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +94,6 @@ import java.util.Map;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
-  protected Disposable myTestRootDisposable;
 
   private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
   private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
@@ -157,22 +152,11 @@ import java.util.Map;
   }
 
   private void resetClassFields(final Class<?> aClass) {
-    if (aClass == null) return;
-
-    final Field[] fields = aClass.getDeclaredFields();
-    for (Field field : fields) {
-      final int modifiers = field.getModifiers();
-      if ((modifiers & Modifier.FINAL) == 0
-          &&  (modifiers & Modifier.STATIC) == 0
-          && !field.getType().isPrimitive()) {
-        field.setAccessible(true);
-        try {
-          field.set(this, null);
-        }
-        catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-      }
+    try {
+      UsefulTestCase.clearDeclaredFields(this, aClass);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
     }
 
     if (aClass == LightIdeaTestCase.class) return;
@@ -190,7 +174,7 @@ import java.util.Map;
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       public void run() {
         if (ourProject != null) {
-          ProjectUtil.closeProject(ourProject);
+          closeAndDeleteProject();
         }
         else {
           cleanPersistedVFSContent();
@@ -289,10 +273,6 @@ import java.util.Map;
 
   protected void setUp() throws Exception {
     super.setUp();
-    myTestRootDisposable = new Disposable() {
-      public void dispose() {
-      }
-    };
     initApplication(this);
     doSetup(getProjectJDK(), configureLocalInspectionTools(), myAvailableTools, myAvailableLocalTools);
   }
@@ -373,32 +353,12 @@ import java.util.Map;
   }
 
   protected void tearDown() throws Exception {
-    Disposer.dispose(myTestRootDisposable);
-    myTestRootDisposable = null;
     doTearDown();
     super.tearDown();
   }
 
-  private static void doPostponedFormatting(final Project project) {
-    try {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-            }
-          });
-        }
-      });
-    }
-    catch (Throwable e) {
-      // Way to go...
-    }
-  }
-
   public static void doTearDown() throws Exception {
-    doPostponedFormatting(ourProject);
+    IdeaTestCase.doPostponedFormatting(ourProject);
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
@@ -567,7 +527,7 @@ import java.util.Map;
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected Document getDocument(final PsiFile file) {
+  protected static Document getDocument(final PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
@@ -579,11 +539,7 @@ import java.util.Map;
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
-              if (ourProject != null) {
-                final File projectFile = VfsUtil.virtualToIoFile(ourProject.getProjectFile());
-                ProjectUtil.closeProject(ourProject);
-                FileUtil.delete(projectFile);
-              }
+              closeAndDeleteProject();
             }
           });
         }
@@ -595,5 +551,13 @@ import java.util.Map;
         }
       }
     }));
+  }
+
+  private static synchronized void closeAndDeleteProject() {
+    if (ourProject != null) {
+      final File projectFile = VfsUtil.virtualToIoFile(((ProjectEx)ourProject).getStateStore().getProjectFile());
+      if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
+      FileUtil.delete(projectFile);
+    }
   }
 }

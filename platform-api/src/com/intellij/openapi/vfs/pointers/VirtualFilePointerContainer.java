@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vfs.pointers;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -60,4 +62,6 @@ public interface VirtualFilePointerContainer {
   void moveUp(String url);
 
   void moveDown(String url);
+
+  VirtualFilePointerContainer clone(@NotNull Disposable parent);
 }

@@ -18,17 +18,12 @@ import java.util.List;
 /**
  *  @author dsl
  */
-public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSourceOrderEntry,
-                                                                                  WritableOrderEntry,
-                                                                                  ClonableOrderEntry {
-  private final RootModelImpl myRootModel;
-
+public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSourceOrderEntry, WritableOrderEntry, ClonableOrderEntry {
   @NonNls static final String ENTRY_TYPE = "sourceFolder";
   @NonNls private static final String ATTRIBUTE_FOR_TESTS = "forTests";
 
   ModuleSourceOrderEntryImpl(RootModelImpl rootModel) {
     super(rootModel);
-    myRootModel = rootModel;
   }
 
   ModuleSourceOrderEntryImpl(Element element, RootModelImpl rootModel) throws InvalidDataException {
@@ -36,7 +31,6 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
       throw new InvalidDataException();
     }
-    myRootModel = rootModel;
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
@@ -51,7 +45,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   }
 
   public Module getOwnerModule() {
-    return myRootModel.getModule();
+    return getRootModel().getModule();
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
@@ -74,16 +68,16 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
-      return myRootModel.getSourceRoots();
+      return getRootModel().getSourceRoots();
     }
-    return myRootModel.getRootPaths(type);
+    return getRootModel().getRootPaths(type);
   }
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
     final ArrayList<String> result = new ArrayList<String>();
     if (OrderRootType.SOURCES.equals(type)) {
-      final ContentEntry[] content = myRootModel.getContentEntries();
+      final ContentEntry[] content = getRootModel().getContentEntries();
       for (ContentEntry contentEntry : content) {
         final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
         for (SourceFolder sourceFolder : sourceFolders) {
@@ -93,7 +87,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
       }
       return result.toArray(new String[result.size()]);
     }
-    return myRootModel.getRootUrls(type);
+    return getRootModel().getRootUrls(type);
   }
 
   public OrderEntry cloneEntry(RootModelImpl rootModel,

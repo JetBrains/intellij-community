@@ -81,12 +81,12 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   private void addListeners() {
     myListenersAdded = true;
-    myConnection = myRootModel.getModule().getProject().getMessageBus().connect();
+    myConnection = getRootModel().getProject().getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
   }
 
   public Module getOwnerModule() {
-    return myRootModel.getModule();
+    return getRootModel().getModule();
   }
 
   @NotNull
@@ -144,7 +144,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @Nullable
   public Module getModule() {
-    return myRootModel.getConfigurationAccessor().getModule(myModule, myModuleName);
+    return getRootModel().getConfigurationAccessor().getModule(myModule, myModuleName);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
@@ -171,7 +171,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return new ModuleOrderEntryImpl(this, rootModel);
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     if (myListenersAdded) {
       myConnection.disconnect();
@@ -205,7 +205,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   }
 
   public void setExported(boolean value) {
-    myRootModel.assertWritable();
+    getRootModel().assertWritable();
     myExported = value;
   }
 
@@ -245,7 +245,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   protected void moduleAdded() {
     super.moduleAdded();
     if (myModule == null) {
-      final Module module = ModuleManager.getInstance(myRootModel.getModule().getProject()).findModuleByName(myModuleName);
+      final Module module = ModuleManager.getInstance(getRootModel().getModule().getProject()).findModuleByName(myModuleName);
       if (module != null) {
         setModule(module);
       }

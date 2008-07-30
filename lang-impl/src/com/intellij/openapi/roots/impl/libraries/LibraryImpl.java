@@ -8,10 +8,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -26,6 +28,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -45,50 +48,54 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   @NonNls private static final String RECURSIVE_ATTR = "recursive";
   private String myName;
   private final LibraryTable myLibraryTable;
-  private Map<OrderRootType, VirtualFilePointerContainer> myRoots;
-  private Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
-  private List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
-  private LibraryImpl mySource;
+  private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
+  private final Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
+  private final List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
+  private final LibraryImpl mySource;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
-  private ModifiableRootModel myRootModel;
+  private final ModifiableRootModel myRootModel;
   private MessageBusConnection myBusConnection = null;
+  private boolean myDisposed;
 
-  LibraryImpl(String name, LibraryTable table) {
+  LibraryImpl(LibraryTable table, Element element, ModifiableRootModel rootModel) throws InvalidDataException {
+    myLibraryTable = table;
+    myRootModel = rootModel;
+    mySource = null;
+    readName(element);
+    readJarDirectories(element);
+    //init roots depends on my hashcode, hashcode depends on jardirectories and name
+    myRoots = initRoots();
+    readRoots(element);
+    updateWatchedRoots();
+  }
+
+  LibraryImpl(String name, LibraryTable table, ModifiableRootModel rootModel) {
     myName = name;
     myLibraryTable = table;
+    myRootModel = rootModel;
     myRoots = initRoots();
     mySource = null;
   }
 
-  LibraryImpl(final LibraryTable table) {
-    myLibraryTable = table;
+  private LibraryImpl(LibraryImpl from, LibraryImpl newSource, ModifiableRootModel rootModel) {
+    assert !from.isDisposed();
+    myRootModel = rootModel;
+    myName = from.myName;
     myRoots = initRoots();
-    mySource = null; 
-  }
-
-
-  LibraryImpl() {
-    myLibraryTable = null;
-    myRoots = initRoots();
-    mySource = null;
-  }
-
-  private LibraryImpl(LibraryImpl that) {
-    myName = that.myName;
-    myRoots = initRoots();
-    mySource = that;
-    myLibraryTable = that.myLibraryTable;
+    mySource = newSource;
+    myLibraryTable = from.myLibraryTable;
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       final VirtualFilePointerContainer thisContainer = myRoots.get(rootType);
-      final VirtualFilePointerContainer thatContainer = that.myRoots.get(rootType);
+      final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);
       thisContainer.addAll(thatContainer);
     }
-    myJarDirectories.putAll(that.myJarDirectories);
+    myJarDirectories.putAll(from.myJarDirectories);
   }
 
   public void dispose() {
-    if (myWatchRequests.size() > 0) {
+    assert !isDisposed();
+    if (!myWatchRequests.isEmpty()) {
       LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
       myWatchRequests.clear();
     }
@@ -96,6 +103,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       myBusConnection.disconnect();
       myBusConnection = null;
     }
+    disposeMyPointers();
+    myDisposed = true;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   public String getName() {
@@ -103,11 +116,13 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public String[] getUrls(OrderRootType rootType) {
+    assert !isDisposed();
     final VirtualFilePointerContainer result = myRoots.get(rootType);
     return result.getUrls();
   }
 
   public VirtualFile[] getFiles(OrderRootType rootType) {
+    assert !isDisposed();
     final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
     for (VirtualFile file : myRoots.get(rootType).getFiles()) {
       if (file.isDirectory()) {
@@ -153,25 +168,17 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public ModifiableModel getModifiableModel() {
-    return new LibraryImpl(this);
+    assert !isDisposed();
+    LibraryImpl model = new LibraryImpl(this, this, myRootModel);
+    Disposer.register(this, model);
+    return model;
   }
 
-  public Library cloneLibrary() {
+  public Library cloneLibrary(RootModelImpl rootModel) {
     LOG.assertTrue(myLibraryTable == null);
-    final LibraryImpl that = new LibraryImpl(this);
-    that.mySource = null;
-    that.updateWatchedRoots();
-    return that;
-  }
-
-  public void setRootModel(ModifiableRootModel rootModel) {
-    LOG.assertTrue(myLibraryTable == null);
-    myRootModel = rootModel;
-  }
-
-  @Nullable("will return non-null value only for module level libraries")
-  public Module getModule() {
-    return myRootModel != null ? myRootModel.getModule() : null;
+    final LibraryImpl clone = new LibraryImpl(this, null, rootModel);
+    clone.updateWatchedRoots();
+    return clone;
   }
 
   public boolean allPathsValid(OrderRootType type) {
@@ -188,12 +195,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return myRootProvider;
   }
 
-  private static HashMap<OrderRootType, VirtualFilePointerContainer> initRoots() {
-    final HashMap<OrderRootType, VirtualFilePointerContainer> result =
-      new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
+  private Map<OrderRootType, VirtualFilePointerContainer> initRoots() {
+    Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
 
     for(OrderRootType rootType: OrderRootType.getAllTypes()) {
-      result.put(rootType, VirtualFilePointerManager.getInstance().createContainer());
+      result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(this));
     }
     result.put(OrderRootType.COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
     result.put(OrderRootType.CLASSES_AND_OUTPUT, result.get(OrderRootType.CLASSES));
@@ -202,15 +208,29 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
+    readName(element);
+    readRoots(element);
+    readJarDirectories(element);
+    updateWatchedRoots();
+  }
+
+  private void readName(Element element) {
     myName = element.getAttributeValue(LIBRARY_NAME_ATTR);
+  }
+
+  private void readRoots(Element element) throws InvalidDataException {
+    int i = 0;
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      VirtualFilePointerContainer roots = myRoots.get(rootType);
       final Element rootChild = element.getChild(rootType.name());
       if (rootChild == null) {
         continue;
       }
+      VirtualFilePointerContainer roots = myRoots.get(rootType);
       roots.readExternal(rootChild, ROOT_PATH_ELEMENT);
     }
+  }
+
+  private void readJarDirectories(Element element) {
     myJarDirectories.clear();
     final List jarDirs = element.getChildren(JAR_DIRECTORY_ELEMENT);
     for (Object item : jarDirs) {
@@ -221,7 +241,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         myJarDirectories.put(url, Boolean.valueOf(Boolean.parseBoolean(recursive)));
       }
     }
-    updateWatchedRoots();
   }
 
 
@@ -258,6 +277,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   public void addRoot(String url, OrderRootType rootType) {
     LOG.assertTrue(isWritable());
+    assert !isDisposed();
 
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(url);
@@ -265,12 +285,14 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   public void addRoot(VirtualFile file, OrderRootType rootType) {
     LOG.assertTrue(isWritable());
+    assert !isDisposed();
 
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(file);
   }
 
   public void addJarDirectory(final String url, final boolean recursive) {
+    assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(OrderRootType.CLASSES);
     container.add(url);
@@ -278,6 +300,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public void addJarDirectory(final VirtualFile file, final boolean recursive) {
+    assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(OrderRootType.CLASSES);
     container.add(file);
@@ -295,6 +318,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public boolean removeRoot(String url, OrderRootType rootType) {
+    assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     final VirtualFilePointer byUrl = container.findByUrl(url);
@@ -302,17 +326,19 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       container.remove(byUrl);
       myJarDirectories.remove(url);
       return true;
-    } 
+    }
     return false;
   }
 
   public void moveRootUp(String url, OrderRootType rootType) {
+    assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.moveUp(url);
   }
 
   public void moveRootDown(String url, OrderRootType rootType) {
+    assert !isDisposed();
     LOG.assertTrue(isWritable());
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.moveDown(url);
@@ -351,35 +377,53 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public void commit() {
-    LOG.assertTrue(mySource != null);
+    assert !isDisposed();
     mySource.commit(this);
-    mySource = null;
+    Disposer.dispose(this);
   }
 
-  private void commit(LibraryImpl model) {
+  private void commit(LibraryImpl fromModel) {
     if (myLibraryTable != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-    } 
+    }
     else if (myRootModel != null) {
       LOG.assertTrue(myRootModel.isWritable());
     }
-    if (!Comparing.equal(model.myName, myName)) {
-      myName = model.myName;
+    if (!Comparing.equal(fromModel.myName, myName)) {
+      myName = fromModel.myName;
       if (myLibraryTable instanceof LibraryTableBase) {
         ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
       }
     }
-    if (areRootsChanged(model)) {
-      myRoots = model.myRoots;
-      myJarDirectories = model.myJarDirectories;
+    if (areRootsChanged(fromModel)) {
+      disposeMyPointers();
+      copyRootsFrom(fromModel);
+      myJarDirectories.clear();
+      myJarDirectories.putAll(fromModel.myJarDirectories);
       updateWatchedRoots();
       myRootProvider.fireRootSetChanged();
     }
   }
 
+  private void copyRootsFrom(LibraryImpl fromModel) {
+    myRoots.clear();
+    for (Map.Entry<OrderRootType, VirtualFilePointerContainer> entry : fromModel.myRoots.entrySet()) {
+      OrderRootType rootType = entry.getKey();
+      VirtualFilePointerContainer container = entry.getValue();
+      VirtualFilePointerContainer clone = container.clone(this);
+      myRoots.put(rootType, clone);
+    }
+  }
+
+  private void disposeMyPointers() {
+    for (VirtualFilePointerContainer container : new THashSet<VirtualFilePointerContainer>(myRoots.values())) {
+      container.killAll();
+    }
+  }
+
   private void updateWatchedRoots() {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (myWatchRequests.size() > 0) {
+    if (!myWatchRequests.isEmpty()) {
       fs.removeWatchedRoots(myWatchRequests);
       myWatchRequests.clear();
     }
@@ -391,7 +435,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         myWatchRequests.add(request);
       }
     }
-    if (myJarDirectories.size() > 0) {
+    if (!myJarDirectories.isEmpty()) {
       if (myBusConnection == null) {
         myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
         myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -458,7 +502,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   private class MyRootProviderImpl extends RootProviderBaseImpl {
-    
+
     public String[] getUrls(OrderRootType rootType) {
       Set<String> originalUrls = new HashSet<String>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
       for (VirtualFile file : getFiles(rootType)) { // Add those expanded with jar directories.
@@ -486,7 +530,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
     final LibraryImpl library = (LibraryImpl)o;
 
-    if (myJarDirectories != null ? !myJarDirectories.equals(library.myJarDirectories) : library.myJarDirectories != null) return false;
+    if (!myJarDirectories.equals(library.myJarDirectories)) return false;
     if (myName != null ? !myName.equals(library.myName) : library.myName != null) return false;
     if (myRoots != null ? !myRoots.equals(library.myRoots) : library.myRoots != null) return false;
 
@@ -494,10 +538,19 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public int hashCode() {
-    int result;
-    result = (myName != null ? myName.hashCode() : 0);
+    int result = myName != null ? myName.hashCode() : 0;
     result = 31 * result + (myRoots != null ? myRoots.hashCode() : 0);
     result = 31 * result + (myJarDirectories != null ? myJarDirectories.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "Library: name:"+myName+"; jars:"+myJarDirectories.keySet()+"; roots:"+myRoots.values();
+  }
+
+  @Nullable("will return non-null value only for module level libraries")
+  public Module getModule() {
+    return myRootModel == null ? null : myRootModel.getModule();
   }
 }

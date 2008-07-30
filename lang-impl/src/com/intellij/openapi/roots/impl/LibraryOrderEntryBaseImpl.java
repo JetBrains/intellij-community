@@ -11,7 +11,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -28,7 +27,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     super(rootModel);
     myRootContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
     for (OrderRootType type : OrderRootType.getAllTypes()) {
-      myRootContainers.put(type, filePointerManager.createContainer(myRootModel.pointerFactory()));
+      myRootContainers.put(type, filePointerManager.createContainer(this));
     }
     myProjectRootManagerImpl = instanceImpl;
   }
@@ -78,7 +77,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
-    LOG.assertTrue(!myRootModel.getModule().isDisposed());
+    LOG.assertTrue(!getRootModel().getModule().isDisposed());
     if (type == OrderRootType.COMPILATION_CLASSES || type == OrderRootType.CLASSES_AND_OUTPUT) {
       return myRootContainers.get(OrderRootType.CLASSES).getUrls();
     }
@@ -94,19 +93,19 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   }
 
   public final Module getOwnerModule() {
-    return myRootModel.getModule();
+    return getRootModel().getModule();
   }
 
   protected void updateFromRootProviderAndSubscribe(RootProvider wrapper) {
-    myRootModel.fireBeforeExternalChange();
+    getRootModel().fireBeforeExternalChange();
     updatePathsFromProviderAndSubscribe(wrapper);
-    myRootModel.fireAfterExternalChange();
+    getRootModel().fireAfterExternalChange();
   }
 
   private void updateFromRootProvider(RootProvider wrapper) {
-    myRootModel.fireBeforeExternalChange();
+    getRootModel().fireBeforeExternalChange();
     updatePathsFromProvider(wrapper);
-    myRootModel.fireAfterExternalChange();
+    getRootModel().fireAfterExternalChange();
   }
 
   private void resubscribe(RootProvider wrapper) {
@@ -141,12 +140,11 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   }
 
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
-    final Collection<VirtualFilePointerContainer> virtualFilePointerContainers = myRootContainers.values();
-    for (VirtualFilePointerContainer virtualFilePointerContainer : virtualFilePointerContainers) {
-      virtualFilePointerContainer.killAll();
-    }
+    //for (VirtualFilePointerContainer virtualFilePointerContainer : new THashSet<VirtualFilePointerContainer>(myRootContainers.values())) {
+    //  virtualFilePointerContainer.killAll();
+    //}
     unsubscribe();
   }
 

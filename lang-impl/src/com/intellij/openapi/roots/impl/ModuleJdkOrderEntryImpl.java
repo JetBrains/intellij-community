@@ -110,7 +110,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public Sdk getJdk() {
-    return myRootModel.getConfigurationAccessor().getSdk(myJdk, myJdkName);
+    return getRootModel().getConfigurationAccessor().getSdk(myJdk, myJdkName);
   }
 
   public String getJdkName() {
@@ -187,11 +187,11 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
-    return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(myRootModel.getModule().getProject()),
+    return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject()),
                                        VirtualFilePointerManager.getInstance());
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     myProjectRootManagerImpl.removeJdkTableListener(this);
   }
