@@ -45,6 +45,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected void tearDown() throws Exception {
+    myJavaFacade = null;
     myPsiManager = null;
     myFile = null;
     myTestDataBefore = null;
