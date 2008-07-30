@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jdom.Element;
@@ -102,7 +103,11 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   @NotNull
   public InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
     final PsiFile psiFile = psiElement.getContainingFile();
-    LOG.assertTrue(psiFile != null);
+
+    if (psiFile == null) {
+      LOG.assertTrue(psiElement instanceof PsiDirectory, "Element of type: " + psiElement.getClass().getName());
+      return (InspectionProfile)getProjectProfileImpl();
+    }
 
     final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(myProject);
 
