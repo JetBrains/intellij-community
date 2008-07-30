@@ -72,6 +72,28 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable
   private final AbstractVcs myVcs;
   private final boolean myIsAlien;
+  private boolean myDisposed = false;
+
+  private static class MyUpdateButtonsRunnable implements Runnable {
+    private CommitChangeListDialog myDialog;
+
+    private MyUpdateButtonsRunnable(final CommitChangeListDialog dialog) {
+      myDialog = dialog;
+    }
+
+    public void cancel() {
+      myDialog = null;
+    }
+
+    public void run() {
+      if (myDialog != null) {
+        myDialog.updateButtons();
+        myDialog.updateLegend();
+      }
+    }
+  }
+
+  private MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
 
   private static void commit(Project project, final List<Change> changes, final LocalChangeList initialSelection,
                              final List<CommitExecutor> executors, boolean showVcsCommit, final String comment) {
@@ -440,8 +462,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public void dispose() {
     myBrowser.dispose();
     Disposer.dispose(myCommitMessageArea);
+    Disposer.dispose(myOKButtonUpdateAlarm);
+    myUpdateButtonsRunnable.cancel();
     super.dispose();
-    myOKButtonUpdateAlarm.cancelAllRequests();
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));
   }
 
@@ -712,6 +735,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateButtons() {
+    if (myDisposed) return;
     setOKActionEnabled(hasDiffs());
     if (myExecutorActions != null) {
       for (Action executorAction : myExecutorActions) {
@@ -719,12 +743,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
     myOKButtonUpdateAlarm.cancelAllRequests();
-    myOKButtonUpdateAlarm.addRequest(new Runnable() {
-      public void run() {
-        updateButtons();
-        updateLegend();
-      }
-    }, 300, ModalityState.stateForComponent(myBrowser));
+    myOKButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(myBrowser));
   }
 
   private void updateLegend() {

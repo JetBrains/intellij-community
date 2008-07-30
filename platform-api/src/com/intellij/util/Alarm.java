@@ -152,6 +152,7 @@ public class Alarm implements Disposable {
         if (!myDisposed) {
           final Runnable task = myTask;
           if (task == null) return;
+          myTask = null;
           if (myModalityState != null) {
             synchronized (LOCK) {
               myRequests.remove(this);
