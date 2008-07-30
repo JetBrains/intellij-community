@@ -15,15 +15,15 @@ import org.jetbrains.idea.maven.events.*;
 public class BeforeRunAction extends ToggleAction {
   public boolean isSelected(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenTask task = MavenEventsHandler.getMavenTask(e.getDataContext());
-    return project != null && task != null && MavenEventsHandler.getInstance(project).hasAssginments(task);
+    final MavenTask task = MavenEventsManager.getMavenTask(e.getDataContext());
+    return project != null && task != null && MavenEventsManager.getInstance(project).hasAssginments(task);
   }
 
   public void setSelected(AnActionEvent e, boolean ignoredState) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenTask task = MavenEventsHandler.getMavenTask(e.getDataContext());
+    final MavenTask task = MavenEventsManager.getMavenTask(e.getDataContext());
     if (project != null && task != null) {
-      final MavenEventsHandler eventsHandler = MavenEventsHandler.getInstance(project);
+      final MavenEventsManager eventsHandler = MavenEventsManager.getInstance(project);
 
       final DialogWrapper dialog = new ExecuteOnRunDialog(project, EventsBundle.message("maven.event.execute.before.run.debug")) {
         protected boolean isAssigned(ConfigurationType type, RunConfiguration configuration) {

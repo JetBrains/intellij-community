@@ -67,7 +67,7 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsHandler</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsManager</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.runner.MavenRunner</implementation-class>
@@ -209,7 +209,7 @@
       <separator/>
       <action id="Maven.AssignShortcut"
               class="org.jetbrains.idea.maven.events.actions.AssignShortcutAction" text="Assign shortcut..."
-              description="Assign shortcut to this goal">
+              description="Assign shortcut">
       </action>
     </group>
 

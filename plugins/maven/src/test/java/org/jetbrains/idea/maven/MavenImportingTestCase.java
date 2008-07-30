@@ -15,7 +15,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.events.MavenEventsHandler;
+import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.*;
@@ -57,7 +57,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenTreeStructure.RootNode createMavenTree() {
     MavenTreeStructure s = new MavenTreeStructure(myProject,
                                               myMavenProjectsManager,
-                                              myProject.getComponent(MavenEventsHandler.class)) {
+                                              myProject.getComponent(MavenEventsManager.class)) {
       {
         for (MavenProjectModel each : myMavenProjectsManager.getProjects()) {
           this.myRoot.addUnder(new MavenTreeStructure.PomNode(each));

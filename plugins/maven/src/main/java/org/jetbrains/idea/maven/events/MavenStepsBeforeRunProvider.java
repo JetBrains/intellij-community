@@ -24,11 +24,11 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public String getStepName() {
-    return MavenEventsHandler.RUN_MAVEN_STEP;
+    return MavenEventsManager.RUN_MAVEN_STEP;
   }
 
   public String getStepDescription(final RunConfiguration runConfiguration) {
-    return MavenEventsHandler.getInstance(myProject).getRunStepDescription(runConfiguration);
+    return MavenEventsManager.getInstance(myProject).getRunStepDescription(runConfiguration);
   }
 
   public boolean hasTask(RunConfiguration configuration) {
@@ -69,10 +69,10 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public String configureStep(final RunConfiguration runConfiguration) {
-    return MavenEventsHandler.getInstance(myProject).configureRunStep(runConfiguration);
+    return MavenEventsManager.getInstance(myProject).configureRunStep(runConfiguration);
   }
 
-  private MavenEventsHandler getEventsHandler() {
-    return myProject.getComponent(MavenEventsHandler.class);
+  private MavenEventsManager getEventsHandler() {
+    return myProject.getComponent(MavenEventsManager.class);
   }
 }

@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.events.MavenEventsHandler;
+import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
@@ -53,7 +53,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
   protected final Project myProject;
   protected final MavenProjectsManager myProjectsManager;
-  protected final MavenEventsHandler myEventsHandler;
+  protected final MavenEventsManager myEventsHandler;
 
   protected final RootNode myRoot = new RootNode();
 
@@ -62,7 +62,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
   public MavenTreeStructure(Project project,
                             MavenProjectsManager projectsManager,
-                            MavenEventsHandler eventsHandler) {
+                            MavenEventsManager eventsHandler) {
     myProject = project;
     myProjectsManager = projectsManager;
     myEventsHandler = eventsHandler;

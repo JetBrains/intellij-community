@@ -21,13 +21,16 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.project.MavenConstants;
@@ -43,9 +46,9 @@ import java.util.*;
  * @author Vladislav.Kaznacheev
  */
 @State(name = "MavenEventsHandler", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenEventsHandler extends DummyProjectComponent implements PersistentStateComponent<MavenEventsState> {
-  public static MavenEventsHandler getInstance(Project project) {
-    return project.getComponent(MavenEventsHandler.class);
+public class MavenEventsManager extends DummyProjectComponent implements PersistentStateComponent<MavenEventsState> {
+  public static MavenEventsManager getInstance(Project project) {
+    return project.getComponent(MavenEventsManager.class);
   }
 
   @NonNls private static final String ACTION_ID_PREFIX = "Maven_";
@@ -67,12 +70,51 @@ public class MavenEventsHandler extends DummyProjectComponent implements Persist
   private Collection<Listener> myListeners = new HashSet<Listener>();
   private TaskSelector myTaskSelector;
 
-  public MavenEventsHandler(final Project project, final MavenProjectsManager projectsManager, final MavenRunner runner) {
+  private final Alarm myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+
+  public MavenEventsManager(Project project, MavenProjectsManager projectsManager, MavenRunner runner) {
     myProject = project;
     myProjectsManager = projectsManager;
     myRunner = runner;
+  }
 
-    //myProjectsManager.addListener(new MyProjectStateListener(project));
+  @Override
+  public void initComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+      public void run() {
+        doInit();
+      }
+    });
+  }
+
+  @TestOnly
+  public void doInit() {
+    myProjectsManager.addListener(new MyProjectStateListener());
+    myKeymapListener = new MyKeymapListener();
+
+    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+    compilerManager.addBeforeTask(new CompileTask() {
+      public boolean execute(CompileContext context) {
+        return MavenEventsManager.this.execute(getState().beforeCompile, context.getProgressIndicator());
+      }
+    });
+    compilerManager.addAfterTask(new CompileTask() {
+      public boolean execute(CompileContext context) {
+        return MavenEventsManager.this.execute(getState().afterCompile, context.getProgressIndicator());
+      }
+    });
+  }
+
+  @Override
+  public void disposeComponent() {
+    Disposer.dispose(myKeymapUpdaterAlarm);
+
+    if (myKeymapListener != null) {
+      myKeymapListener.stopListen();
+      myKeymapListener = null;
+    }
   }
 
   public void addListener(Listener listener) {
@@ -146,16 +188,19 @@ public class MavenEventsHandler extends DummyProjectComponent implements Persist
   }
 
   public String getActionId(@Nullable String pomPath, @Nullable String goal) {
-    final StringBuilder stringBuilder = new StringBuilder(ACTION_ID_PREFIX);
-    stringBuilder.append(myProject.getLocationHash());
+    StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
+    result.append(myProject.getLocationHash());
+
     if (pomPath != null) {
-      final String portablePath = FileUtil.toSystemIndependentName(pomPath);
-      stringBuilder.append(new File(portablePath).getParentFile().getName()).append(Integer.toHexString(portablePath.hashCode()));
-      if (goal != null) {
-        stringBuilder.append(goal);
-      }
+      String portablePath = FileUtil.toSystemIndependentName(pomPath);
+
+      result.append(new File(portablePath).getParentFile().getName());
+      result.append(Integer.toHexString(portablePath.hashCode()));
+
+      if (goal != null) result.append(goal);
     }
-    return stringBuilder.toString();
+
+    return result.toString();
   }
 
   public String getActionDescription(@NotNull String pomPath, @NotNull final String goal) {
@@ -236,38 +281,6 @@ public class MavenEventsHandler extends DummyProjectComponent implements Persist
     clearAssignment(runConfiguration.getType(), runConfiguration);
     updateShortcuts(null);
     return null;
-  }
-
-  public void projectClosed() {
-    if (myKeymapListener != null) {
-      myKeymapListener.stopListen();
-      myKeymapListener = null;
-    }
-  }
-
-  @Override
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        subscribe();
-      }
-    });
-  }
-
-  private void subscribe() {
-    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    compilerManager.addBeforeTask(new CompileTask() {
-      public boolean execute(CompileContext context) {
-        return MavenEventsHandler.this.execute(getState().beforeCompile, context.getProgressIndicator());
-      }
-    });
-    compilerManager.addAfterTask(new CompileTask() {
-      public boolean execute(CompileContext context) {
-        return MavenEventsHandler.this.execute(getState().afterCompile, context.getProgressIndicator());
-      }
-    });
-
-    myKeymapListener = new MyKeymapListener();
   }
 
   public String configureRunStep(final RunConfiguration runConfiguration) {
@@ -407,51 +420,48 @@ public class MavenEventsHandler extends DummyProjectComponent implements Persist
   }
 
   private class MyProjectStateListener implements MavenProjectsManager.Listener {
-
-    boolean updateScheduled;
-    private final Project myProject;
-
-    public MyProjectStateListener(final Project project) {
-      myProject = project;
-      updateScheduled = false;
-    }
+    private volatile boolean isUpdateScheduled = false;
 
     public void activate() {
-      requestKeymapUpdate();
+      scheduleKeymapUpdate();
     }
 
-    public void projectAdded(MavenProjectModel file) {
-      requestKeymapUpdate();
+    public void projectAdded(MavenProjectModel project) {
+      scheduleKeymapUpdate();
     }
 
-    public void projectRemoved(MavenProjectModel file) {
-      requestKeymapUpdate();
+    public void projectUpdated(MavenProjectModel project) {
+      scheduleKeymapUpdate();
     }
 
-    public void projectUpdated(MavenProjectModel file) {
-      requestKeymapUpdate();
+    public void projectRemoved(MavenProjectModel project) {
+      scheduleKeymapUpdate();
     }
 
-    public void setIgnored(VirtualFile file, boolean on) {
-      requestKeymapUpdate();
+    public void setIgnored(MavenProjectModel project, boolean on) {
+      if (on) {
+        projectRemoved(project);
+      } else {
+        projectAdded(project);
+      }
     }
 
     public void profilesChanged(List<String> profiles) {
-      requestKeymapUpdate();
     }
 
-    private void requestKeymapUpdate() {
-      if (!updateScheduled) {
-        updateScheduled = true;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-            if (myProject.isOpen()) {
-              MavenKeymapExtension.createActions(myProject);
-            }
-            updateScheduled = false;
-          }
-        });
+    private void scheduleKeymapUpdate() {
+      Runnable updateTask = new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          MavenKeymapExtension.createActions(myProject);
+        }
+      };
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        updateTask.run();
+      }
+      else {
+        myKeymapUpdaterAlarm.addRequest(updateTask, 10);
       }
     }
   }

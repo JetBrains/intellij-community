@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenLog;
@@ -57,7 +56,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
       public void profilesChanged(List<String> profiles) {
       }
 
-      public void setIgnored(VirtualFile file, boolean on) {
+      public void setIgnored(MavenProjectModel project, boolean on) {
       }
 
       public void projectAdded(MavenProjectModel n) {

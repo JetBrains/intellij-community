@@ -1,12 +1,13 @@
 package org.jetbrains.idea.maven.core.util;
 
-import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jdom.Element;
-import org.jetbrains.idea.maven.core.util.JDOMReader;
 
-import java.io.InputStream;
 import java.io.IOException;
-import java.util.*;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MavenPluginInfo {
   private String myGroupId;
@@ -67,7 +68,6 @@ public class MavenPluginInfo {
 
   public class Mojo {
     private String myGoal;
-    private List<ParameterInfo> myParameterInfos;
 
     private Mojo(String goal) {
       myGoal = goal;

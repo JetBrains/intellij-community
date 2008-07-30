@@ -5,40 +5,38 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.events.MavenTask;
+import org.jetbrains.idea.maven.core.MavenDataKeys;
+import org.jetbrains.idea.maven.events.MavenEventsManager;
+import org.jetbrains.idea.maven.project.MavenConstants;
 
-/**
- * @author Vladislav.Kaznacheev
- */
+import java.util.List;
+
 public class AssignShortcutAction extends AnAction {
-
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if(project!=null){
-      final String actionId = getGoalActionId(e, project);
-      if(actionId != null){
-        new EditKeymapsDialog(project, actionId).show();
-      }
-    }
-  }
-
   public void update(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final String actionId = getGoalActionId(e, project);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    String actionId = getGoalActionId(e, project);
     e.getPresentation().setEnabled(project != null && actionId != null);
   }
 
+  public void actionPerformed(AnActionEvent e) {
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+
+    String actionId = getGoalActionId(e, project);
+    if (actionId != null) {
+      new EditKeymapsDialog(project, actionId).show();
+    }
+  }
+
   @Nullable
-  private static String getGoalActionId(final AnActionEvent e, final Project project) {
-    final MavenTask task = MavenEventsHandler.getMavenTask(e.getDataContext());
-    if(task!=null){
-      return project.getComponent(MavenEventsHandler.class).getActionId(task.pomPath, task.goal);
-    }
-    else {
-      return null;
-    }
+  private static String getGoalActionId(AnActionEvent e, Project project) {
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    if (file == null || !MavenConstants.POM_XML.equals(file.getName())) return null;
+
+    List<String> goals = MavenDataKeys.MAVEN_GOALS_KEY.getData(e.getDataContext());
+    String goal = (goals == null || goals.size() != 1) ? null : goals.get(0);
+    return MavenEventsManager.getInstance(project).getActionId(file.getPath(), goal);
   }
 }
 

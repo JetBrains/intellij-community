@@ -65,7 +65,7 @@ public class MavenArtifactDownloader {
   }
 
   private void scheduleFilesRefresh(final List<File> downloadedFiles) {
-    Runnable r = new Runnable() {
+    Runnable refreshTask = new Runnable() {
       public void run() {
         LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
       }
@@ -73,10 +73,10 @@ public class MavenArtifactDownloader {
 
     if (ApplicationManager.getApplication().isUnitTestMode()
         || ApplicationManager.getApplication().isDispatchThread()) {
-      r.run();
+      refreshTask.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(r);
+      ApplicationManager.getApplication().invokeLater(refreshTask);
     }
   }
 

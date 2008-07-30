@@ -11,10 +11,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
 import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
+import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
@@ -28,59 +28,66 @@ import java.util.*;
  * @author Vladislav.Kaznacheev
  */
 public class MavenKeymapExtension implements KeymapExtension {
-
-  private static final Icon iconOpen = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon iconClosed = IconLoader.getIcon("/images/phasesClosed.png");
+  private static final Icon OPEN_ICON = IconLoader.getIcon("/images/phasesOpen.png");
+  private static final Icon CLOSED_ICON = IconLoader.getIcon("/images/phasesClosed.png");
 
   public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
-    final Map<String, KeymapGroup> pomPathToActionId = new HashMap<String, KeymapGroup>();
-    final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(EventsBundle.message("maven.event.action.group.name"),
-                                                                            iconClosed, iconOpen);
+    KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(
+        EventsBundle.message("maven.event.action.group.name"), CLOSED_ICON, OPEN_ICON);
 
-    if (project != null) {
-      final ActionManager actionManager = ActionManager.getInstance();
-      String[] ids = actionManager.getActionIds(getProjectPrefix(project));
-      Arrays.sort(ids);
+    if (project == null) return result;
 
-      for (final String id : ids) {
-        if (condition != null && !condition.value(actionManager.getActionOrStub(id))) continue;
-        final AnAction anAction = actionManager.getAction(id);
-        if (anAction instanceof MavenGoalAction) {
-          final String pomPath = ((MavenGoalAction)anAction).myPomPath;
-          KeymapGroup subGroup = pomPathToActionId.get(pomPath);
-          if (subGroup == null) {
-            String name = getMavenProjectName(MavenProjectsManager.getInstance(project),
-                                              LocalFileSystem.getInstance().findFileByPath(pomPath));
-            subGroup = KeymapGroupFactory.getInstance().createGroup(name);
-            pomPathToActionId.put(pomPath, subGroup);
-            result.addGroup(subGroup);
-          }
-          subGroup.addActionId(id);
-        }
+    ActionManager actionManager = ActionManager.getInstance();
+    String[] ids = actionManager.getActionIds(getProjectPrefix(project));
+    Arrays.sort(ids);
+
+    Map<String, KeymapGroup> pomPathToActionId = new HashMap<String, KeymapGroup>();
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+
+    for (String eachId : ids) {
+      AnAction eachAction = actionManager.getAction(eachId);
+
+      if (!(eachAction instanceof MavenGoalAction)) continue;
+      if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
+
+      String pomPath = ((MavenGoalAction)eachAction).myPomPath;
+      KeymapGroup subGroup = pomPathToActionId.get(pomPath);
+
+      if (subGroup == null) {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(pomPath);
+        if (file == null) continue;
+
+        String name = getMavenProjectName(projectsManager, file);
+        subGroup = KeymapGroupFactory.getInstance().createGroup(name);
+        pomPathToActionId.put(pomPath, subGroup);
+        result.addGroup(subGroup);
       }
+
+      subGroup.addActionId(eachId);
     }
 
     return result;
   }
 
-  private static String getProjectPrefix(@NotNull Project project) {
-    return project.getComponent(MavenEventsHandler.class).getActionId(null, null);
+  public static String getProjectPrefix(Project project) {
+    return MavenEventsManager.getInstance(project).getActionId(null, null);
   }
 
   public static void createActions(@NotNull Project project) {
-    final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    final MavenEventsHandler eventsHandler = project.getComponent(MavenEventsHandler.class);
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    MavenEventsManager eventsHandler = MavenEventsManager.getInstance(project);
 
-    final List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
+    List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
 
-    for (MavenProjectModel each : projectsManager.getProjects()) {
-      if (!projectsManager.isIgnored(each)) {
-        final String mavenProjectName = each.getMavenProject().getName();
-        final String pomPath = each.getPath();
-        final String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
-        for (String goal : getGoals(each, projectsManager.getLocalRepository())) {
-          actionList.add(new MavenGoalAction(mavenProjectName, actionIdPrefix, pomPath, goal));
-        }
+    for (MavenProjectModel eachProject : projectsManager.getProjects()) {
+      if (projectsManager.isIgnored(eachProject)) continue;
+
+      String projectName = eachProject.getMavenProject().getName();
+      String pomPath = eachProject.getPath();
+      String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
+
+      for (String eachGoal : collectGoals(eachProject, projectsManager.getLocalRepository())) {
+        actionList.add(new MavenGoalAction(projectName, actionIdPrefix, pomPath, eachGoal));
       }
     }
 
@@ -92,7 +99,8 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static void refreshActions(Collection<MavenGoalAction> actionList, String actionIdPrefix) {
-    final ActionManager actionManager = ActionManager.getInstance();
+    ActionManager actionManager = ActionManager.getInstance();
+
     synchronized (actionManager) {
       for (String oldId : actionManager.getActionIds(actionIdPrefix)) {
         actionManager.unregisterAction(oldId);
@@ -112,19 +120,19 @@ public class MavenKeymapExtension implements KeymapExtension {
     return EventsBundle.message("maven.event.unknown.project");
   }
 
-  private static Collection<String> getGoals(MavenProjectModel node, File repository) {
+  private static Collection<String> collectGoals(MavenProjectModel project, File repository) {
     Collection<String> result = new HashSet<String>();
     result.addAll(MavenEmbedderFactory.getStandardGoalsList());
 
-    for (MavenId plugin : node.getPluginIds()) {
+    for (MavenId plugin : project.getPluginIds()) {
       collectGoals(repository, plugin, result);
     }
 
     return result;
   }
 
-  private static void collectGoals(final File repository, final MavenId mavenId, final Collection<String> list) {
-    final MavenPluginInfo plugin = MavenArtifactUtil.readPluginInfo(repository, mavenId);
+  private static void collectGoals(File repository, MavenId mavenId, Collection<String> list) {
+    MavenPluginInfo plugin = MavenArtifactUtil.readPluginInfo(repository, mavenId);
     if (plugin == null) return;
 
     for (MavenPluginInfo.Mojo m : plugin.getMojos()) {
@@ -132,7 +140,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
   }
 
-  static class MavenGoalAction extends AnAction {
+  private static class MavenGoalAction extends AnAction {
     private final String myPomPath;
     private final String myGoal;
     private final String myId;
@@ -142,23 +150,21 @@ public class MavenKeymapExtension implements KeymapExtension {
       myGoal = goal;
       myId = actionIdPrefix + goal;
 
-      Presentation templatePresentation = getTemplatePresentation();
-      templatePresentation.setText(goal, false);
-      templatePresentation.setDescription(EventsBundle.message("maven.event.action.description", goal, mavenProjectName));
+      Presentation template = getTemplatePresentation();
+      template.setText(goal, false);
+      template.setDescription(EventsBundle.message("maven.event.action.description", goal, mavenProjectName));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final Project project = e.getData(PlatformDataKeys.PROJECT);
-      if (project != null) {
-        final MavenRunner runner = project.getComponent(MavenRunner.class);
-        if (!runner.isRunning()) {
-          final MavenRunnerParameters runnerParameters =
-            new MavenTask(myPomPath, myGoal).createBuildParameters(MavenProjectsManager.getInstance(project));
-          if (runnerParameters != null) {
-            runner.run(runnerParameters);
-          }
-        }
-      }
+      Project project = e.getData(PlatformDataKeys.PROJECT);
+      if (project == null) return;
+
+      MavenRunner runner = project.getComponent(MavenRunner.class);
+      if (runner.isRunning()) return;
+
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+      MavenRunnerParameters params = new MavenTask(myPomPath, myGoal).createBuildParameters(projectsManager);
+      if (params != null) runner.run(params);
     }
 
     public String toString() {
