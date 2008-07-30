@@ -40,7 +40,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
 
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (psiClass == null ||
         psiClass.isAnnotationType() ||
         psiClass.isInterface() ||
@@ -72,7 +72,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
 
     final Module srcModule = ModuleUtil.findModuleForPsiElement(file);
-    final PsiClass srcClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    final PsiClass srcClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+
+    if (srcClass == null) return;
+
     PsiDirectory srcDir = file.getContainingDirectory();
     PsiPackage srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir);
 

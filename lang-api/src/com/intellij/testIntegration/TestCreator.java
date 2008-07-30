@@ -1,7 +1,7 @@
 package com.intellij.testIntegration;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public interface TestCreator {

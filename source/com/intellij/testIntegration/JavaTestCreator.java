@@ -9,10 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 public class JavaTestCreator implements TestCreator {
   public void createTest(Project project, Editor editor, PsiFile file) {
     try {
-      CreateTestAction action = new CreateTestAction();
-      if (action.isAvailable(project, editor, file)) {
-        action.invoke(project, editor, file);
-      }
+      new CreateTestAction().invoke(project, editor, file.getContainingFile());
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
