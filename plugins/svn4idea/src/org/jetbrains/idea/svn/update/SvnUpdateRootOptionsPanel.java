@@ -49,6 +49,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private JCheckBox myUpdateToSpecificUrl;
   private TextFieldWithBrowseButton myBranchField;
   private JLabel myBranchLabel;
+  private JLabel myUrlLabel;
   private String mySourceUrl;
   private SVNURL myBranchUrl;
 
@@ -70,14 +71,15 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         chooseBranch();
       }
     });
-    myBranchLabel.setLabelFor(myBranchField.getButton());
+    myBranchLabel.setLabelFor(myBranchField);
+    myUrlLabel.setLabelFor(myURLText);
 
     myUpdateToSpecificUrl.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myUpdateToSpecificUrl.isSelected()) {
           myURLText.setEnabled(true);
           myBranchField.setEnabled((myBranchUrl != null) && (mySourceUrl != null));
-          chooseBranch();
+          //chooseBranch();
         } else {
           myURLText.setEnabled(false);
           myBranchField.setEnabled(false);
