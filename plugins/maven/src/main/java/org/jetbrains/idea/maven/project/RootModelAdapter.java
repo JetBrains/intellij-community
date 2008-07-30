@@ -213,6 +213,16 @@ public class RootModelAdapter {
     return libraries;
   }
 
+  void updateModuleLibrary(String libraryName, String urlSources, String urlJavadoc) {
+    final Library library = getLibraryModel().getLibraryByName(libraryName);
+    if (library != null) {
+      final Library.ModifiableModel libraryModel = library.getModifiableModel();
+      setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
+      setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
+      libraryModel.commit();
+    }
+  }
+
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     try {
       myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(languageLevel);

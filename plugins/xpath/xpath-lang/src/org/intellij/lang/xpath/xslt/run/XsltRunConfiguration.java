@@ -81,11 +81,11 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     private List<Pair<String, String>> myParameters = new ArrayList<Pair<String, String>>();
-    private @Nullable VirtualFilePointer myXsltFile = null;
-    private @Nullable VirtualFilePointer myXmlInputFile = null;
-    private @NotNull OutputType myOutputType = OutputType.CONSOLE;
-    private @NotNull JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
-    private @Nullable FileType myFileType = StdFileTypes.XML;
+    @Nullable private VirtualFilePointer myXsltFile = null;
+    @Nullable private VirtualFilePointer myXmlInputFile = null;
+    @NotNull private OutputType myOutputType = OutputType.CONSOLE;
+    @NotNull private JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
+    @Nullable private FileType myFileType = StdFileTypes.XML;
 
     public String myOutputFile; // intentionally untracked. should it be?
     public boolean myOpenOutputFile;
@@ -185,8 +185,8 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     public final RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
         configuration.myParameters = new ArrayList<Pair<String, String>>(myParameters);
-        if (myXsltFile != null) configuration.myXsltFile = FILE_POINTER_MANAGER.duplicate(myXsltFile, null);
-        if (myXmlInputFile != null) configuration.myXmlInputFile = FILE_POINTER_MANAGER.duplicate(myXmlInputFile, null);
+        if (myXsltFile != null) configuration.myXsltFile = FILE_POINTER_MANAGER.duplicate(myXsltFile, getProject(), null);
+        if (myXmlInputFile != null) configuration.myXmlInputFile = FILE_POINTER_MANAGER.duplicate(myXmlInputFile, getProject(), null);
         return configuration;
     }
 
@@ -224,6 +224,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     // return modules to compile before run. Null or empty list to make project
+    @NotNull
     public Module[] getModules() {
         return getModule() != null ? new Module[]{ getModule() } : Module.EMPTY_ARRAY;
     }
@@ -237,14 +238,14 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (e != null) {
             final String url = e.getAttributeValue("url");
             if (url != null) {
-                myXsltFile = FILE_POINTER_MANAGER.create(url, null);
+                myXsltFile = FILE_POINTER_MANAGER.create(url, getProject(), null);
             }
         }
         e = element.getChild("XmlFile");
         if (e != null) {
             final String url = e.getAttributeValue("url");
             if (url != null) {
-                myXmlInputFile = FILE_POINTER_MANAGER.create(url, null);
+                myXmlInputFile = FILE_POINTER_MANAGER.create(url, getProject(), null);
             }
         }
 
@@ -272,7 +273,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     @Nullable
-    private FileType getFileType(String value) {
+    private static FileType getFileType(String value) {
         final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
         for (FileType fileType : fileTypes) {
             if (fileType.getName().equals(value)) {
@@ -344,21 +345,15 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     public void setXsltFile(@NotNull String xsltFile) {
-        if (myXsltFile != null) {
-            FILE_POINTER_MANAGER.kill(myXsltFile, null);
-        }
         if (isEmpty(xsltFile)) {
             myXsltFile = null;
         } else {
-            myXsltFile = FILE_POINTER_MANAGER.create(VfsUtil.pathToUrl(xsltFile).replace(File.separatorChar, '/'), null);
+            myXsltFile = FILE_POINTER_MANAGER.create(VfsUtil.pathToUrl(xsltFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
     private void setXsltFile(VirtualFile virtualFile) {
-        if (myXsltFile != null) {
-            FILE_POINTER_MANAGER.kill(myXsltFile, null);
-        }
-        myXsltFile = FILE_POINTER_MANAGER.create(virtualFile, null);
+        myXsltFile = FILE_POINTER_MANAGER.create(virtualFile, getProject(), null);
     }
 
     @Nullable
@@ -401,19 +396,15 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     }
 
     public void setXmlInputFile(@NotNull String xmlInputFile) {
-        if (myXmlInputFile != null) {
-            FILE_POINTER_MANAGER.kill(myXmlInputFile, null);
-        }
         if (isEmpty(xmlInputFile)) {
             myXmlInputFile = null;
         } else {
-            myXmlInputFile = FILE_POINTER_MANAGER.create(VfsUtil.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), null);
+            myXmlInputFile = FILE_POINTER_MANAGER.create(VfsUtil.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
     public void setXmlInputFile(VirtualFile xmlInputFile) {
-        FILE_POINTER_MANAGER.kill(myXmlInputFile, null);
-        myXmlInputFile = FILE_POINTER_MANAGER.create(xmlInputFile, null);
+      myXmlInputFile = FILE_POINTER_MANAGER.create(xmlInputFile, getProject(), null);
     }
 
     public void setModule(Module module) {

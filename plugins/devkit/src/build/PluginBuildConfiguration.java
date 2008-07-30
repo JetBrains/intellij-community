@@ -47,8 +47,8 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 import java.io.File;
 
 public class PluginBuildConfiguration extends BuildConfiguration implements ModuleComponent, JDOMExternalizable {
-  private Module myModule;
-  private ConfigFileContainer myPluginXmlContainer;
+  private final Module myModule;
+  private final ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myPluginXmlPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
@@ -89,10 +89,6 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
 
   public boolean isExplodedEnabled() {
     return true;
-  }
-
-  public boolean isBuildOnFrameDeactivation() {
-    return false;
   }
 
   public boolean isBuildExternalDependencies() {
@@ -202,7 +198,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
     new WriteAction() {
       protected void run(final Result result) throws Throwable {
         createDescriptor(url);
-        myPluginXmlPointer = VirtualFilePointerManager.getInstance().create(url, null);
+        myPluginXmlPointer = VirtualFilePointerManager.getInstance().create(url, myModule, null);
       }
     }.execute();
   }
@@ -217,13 +213,13 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
         Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), null);
+            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
           }
         });
       } else {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, null);
+            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
           }
         });
       }

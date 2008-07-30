@@ -39,215 +39,214 @@ import org.jdom.Element;
 import java.util.*;
 
 class FileAssociationsManagerImpl extends FileAssociationsManager implements ProjectComponent, JDOMExternalizable, ModificationTracker {
-    private final Project myProject;
-    private final VirtualFilePointerManager myFilePointerManager;
-    private final Map<VirtualFilePointer, VirtualFilePointerContainer> myAssociations;
-    private long myModCount;
+  private final Project myProject;
+  private final VirtualFilePointerManager myFilePointerManager;
+  private final Map<VirtualFilePointer, VirtualFilePointerContainer> myAssociations;
+  private long myModCount;
 
-    public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
-        myProject = project;
-        myFilePointerManager = filePointerManager;
-        myAssociations = new HashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+  public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
+    myProject = project;
+    myFilePointerManager = filePointerManager;
+    myAssociations = new HashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public void readExternal(Element element) throws InvalidDataException {
+    final List<Element> children = element.getChildren("file");
+    for (Element child : children) {
+      final String url = child.getAttributeValue("url");
+      if (url != null) {
+        final VirtualFilePointer pointer = myFilePointerManager.create(url, myProject, null);
+        final VirtualFilePointerContainer container = myFilePointerManager.createContainer(myProject);
+        container.readExternal(child, "association");
+        myAssociations.put(pointer, container);
+      }
     }
+  }
 
-    @SuppressWarnings({ "unchecked" })
-    public void readExternal(Element element) throws InvalidDataException {
-        final List<Element> children = element.getChildren("file");
-        for (Element child : children) {
-            final String url = child.getAttributeValue("url");
-            if (url != null) {
-                final VirtualFilePointer pointer = myFilePointerManager.create(url, null);
-                final VirtualFilePointerContainer container = myFilePointerManager.createContainer();
-                container.readExternal(child, "association");
-                myAssociations.put(pointer, container);
-            }
-        }
+  public void writeExternal(Element element) throws WriteExternalException {
+    for (VirtualFilePointer pointer : myAssociations.keySet()) {
+      final Element e = new Element("file");
+      e.setAttribute("url", pointer.getUrl());
+      final VirtualFilePointerContainer container = myAssociations.get(pointer);
+      container.writeExternal(e, "association");
+      element.addContent(e);
     }
+  }
 
-    public void writeExternal(Element element) throws WriteExternalException {
-        for (VirtualFilePointer pointer : myAssociations.keySet()) {
-            final Element e = new Element("file");
-            e.setAttribute("url", pointer.getUrl());
-            final VirtualFilePointerContainer container = myAssociations.get(pointer);
-            container.writeExternal(e, "association");
-            element.addContent(e);
-        }
+  public TransactionalManager getTempManager() {
+    return new TempManager(this, myProject, myFilePointerManager);
+  }
+
+  public void projectOpened() {
+  }
+
+  public void projectClosed() {
+  }
+
+  @NotNull
+  @NonNls
+  public String getComponentName() {
+    return "XSLT-Support.FileAssociationsManager";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+    clear();
+  }
+
+  private void clear() {
+    final Set<VirtualFilePointer> virtualFilePointers = myAssociations.keySet();
+    for (VirtualFilePointer pointer : virtualFilePointers) {
+      myAssociations.get(pointer).killAll();
     }
+    myAssociations.clear();
+  }
 
-    public TransactionalManager getTempManager() {
-        return new TempManager(this, myProject, myFilePointerManager);
+  void copyFrom(FileAssociationsManagerImpl source) {
+    clear();
+    myAssociations.putAll(copy(source));
+    touch();
+  }
+
+  private void touch() {
+    myModCount++;
+    final ProjectView view = ProjectView.getInstance(myProject);
+    view.refresh();
+  }
+
+  private static HashMap<VirtualFilePointer, VirtualFilePointerContainer> copy(FileAssociationsManagerImpl other) {
+    final HashMap<VirtualFilePointer, VirtualFilePointerContainer> hashMap = new HashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+
+    final Set<VirtualFilePointer> virtualFilePointers = other.myAssociations.keySet();
+    for (VirtualFilePointer pointer : virtualFilePointers) {
+      final VirtualFilePointerContainer container = other.myFilePointerManager.createContainer(other.myProject);
+      container.addAll(other.myAssociations.get(pointer));
+      hashMap.put(other.myFilePointerManager.duplicate(pointer, other.myProject, null), container);
     }
+    return hashMap;
+  }
 
-    public void projectOpened() {
-    }
+  public void removeAssociations(PsiFile file) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
 
-    public void projectClosed() {
-    }
-
-    @NotNull
-    @NonNls
-    public String getComponentName() {
-        return "XSLT-Support.FileAssociationsManager";
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-        clear();
-    }
-
-    protected void clear() {
-        final Set<VirtualFilePointer> virtualFilePointers = myAssociations.keySet();
-        for (VirtualFilePointer pointer : virtualFilePointers) {
-            myFilePointerManager.kill(pointer, null);
-            myAssociations.get(pointer).killAll();
-        }
-        myAssociations.clear();
-    }
-
-    void copyFrom(FileAssociationsManagerImpl source) {
-        clear();
-        myAssociations.putAll(copy(source));
+    for (VirtualFilePointer pointer : myAssociations.keySet()) {
+      if (pointer.getUrl().equals(virtualFile.getUrl())) {
+        myAssociations.remove(pointer);
         touch();
+        return;
+      }
     }
+  }
 
-    private void touch() {
-        myModCount++;
-        final ProjectView view = ProjectView.getInstance(myProject);
-        view.refresh();
-    }
+  public void removeAssociation(PsiFile file, PsiFile assoc) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
+    if (assoc.getVirtualFile() == null) return;
 
-    private static HashMap<VirtualFilePointer, VirtualFilePointerContainer> copy(FileAssociationsManagerImpl other) {
-        final HashMap<VirtualFilePointer, VirtualFilePointerContainer> hashMap =
-                new HashMap<VirtualFilePointer, VirtualFilePointerContainer>();
-
-        final Set<VirtualFilePointer> virtualFilePointers = other.myAssociations.keySet();
-        for (VirtualFilePointer pointer : virtualFilePointers) {
-            final VirtualFilePointerContainer container = other.myFilePointerManager.createContainer();
-            container.addAll(other.myAssociations.get(pointer));
-            hashMap.put(other.myFilePointerManager.duplicate(pointer, null), container);
-        }
-        return hashMap;
-    }
-
-    public void removeAssociations(PsiFile file) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return;
-
-        for (VirtualFilePointer pointer : myAssociations.keySet()) {
-            if (pointer.getUrl().equals(virtualFile.getUrl())) {
-                myAssociations.remove(pointer);
-                touch();
-                return;
+    for (VirtualFilePointer pointer : myAssociations.keySet()) {
+      if (pointer.getUrl().equals(virtualFile.getUrl())) {
+        VirtualFilePointerContainer container = myAssociations.get(pointer);
+        if (container != null) {
+          //noinspection ConstantConditions
+          final VirtualFilePointer p = container.findByUrl(assoc.getVirtualFile().getUrl());
+          if (p != null) {
+            container.remove(p);
+            if (container.size() == 0) {
+              myAssociations.remove(pointer);
             }
+            touch();
+          }
         }
+        return;
+      }
     }
+  }
 
-    public void removeAssociation(PsiFile file, PsiFile assoc) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return;
-        if (assoc.getVirtualFile() == null) return;
+  public void addAssociation(PsiFile file, PsiFile assoc) {
+    final VirtualFile virtualFile = assoc.getVirtualFile();
+    if (virtualFile == null) return;
+    addAssociation(file, virtualFile);
+  }
 
-        for (VirtualFilePointer pointer : myAssociations.keySet()) {
-            if (pointer.getUrl().equals(virtualFile.getUrl())) {
-                VirtualFilePointerContainer container = myAssociations.get(pointer);
-                if (container != null) {
-                    //noinspection ConstantConditions
-                    final VirtualFilePointer p = container.findByUrl(assoc.getVirtualFile().getUrl());
-                    if (p != null) {
-                        container.remove(p);
-                        if (container.size() == 0) {
-                            myAssociations.remove(pointer);
-                        }
-                        touch();
-                    }
-                }
-                return;
+  public void addAssociation(PsiFile file, VirtualFile assoc) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
+
+    for (VirtualFilePointer pointer : myAssociations.keySet()) {
+      if (pointer.getUrl().equals(virtualFile.getUrl())) {
+        VirtualFilePointerContainer container = myAssociations.get(pointer);
+        if (container == null) {
+          container = myFilePointerManager.createContainer(myProject);
+          myAssociations.put(pointer, container);
+        }
+        if (container.findByUrl(assoc.getUrl()) == null) {
+          container.add(assoc);
+          touch();
+        }
+        return;
+      }
+    }
+    final VirtualFilePointerContainer container = myFilePointerManager.createContainer(myProject);
+    container.add(assoc);
+    myAssociations.put(myFilePointerManager.create(virtualFile, myProject, null), container);
+    touch();
+  }
+
+  public Map<VirtualFile, VirtualFile[]> getAssociations() {
+    final HashMap<VirtualFile, VirtualFile[]> map = new HashMap<VirtualFile, VirtualFile[]>();
+    final Set<VirtualFilePointer> set = myAssociations.keySet();
+    for (VirtualFilePointer pointer : set) {
+      if (pointer.isValid()) {
+        final VirtualFile file = pointer.getFile();
+        map.put(file, myAssociations.get(pointer).getFiles());
+      }
+    }
+    return map;
+  }
+
+  public PsiFile[] getAssociationsFor(PsiFile file) {
+    return getAssociationsFor(file, FileType.EMPTY_ARRAY);
+  }
+
+  public PsiFile[] getAssociationsFor(PsiFile file, FileType... fileTypes) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return PsiFile.EMPTY_ARRAY;
+
+    for (VirtualFilePointer pointer : myAssociations.keySet()) {
+      if (pointer.isValid() && pointer.getUrl().equals(virtualFile.getUrl())) {
+        final VirtualFilePointerContainer container = myAssociations.get(pointer);
+        if (container != null) {
+          final VirtualFile[] files = container.getFiles();
+          final Set<PsiFile> list = new HashSet<PsiFile>();
+          final PsiManager psiManager = PsiManager.getInstance(myProject);
+          for (VirtualFile assoc : files) {
+            final PsiFile psiFile = psiManager.findFile(assoc);
+            if (psiFile != null && (fileTypes.length == 0 || matchesFileType(psiFile, fileTypes))) {
+              list.add(psiFile);
             }
+          }
+          return list.toArray(new PsiFile[list.size()]);
         }
-    }
-
-    public void addAssociation(PsiFile file, PsiFile assoc) {
-        final VirtualFile virtualFile = assoc.getVirtualFile();
-        if (virtualFile == null) return;
-        addAssociation(file, virtualFile);
-    }
-
-    public void addAssociation(PsiFile file, VirtualFile assoc) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return;
-
-        for (VirtualFilePointer pointer : myAssociations.keySet()) {
-            if (pointer.getUrl().equals(virtualFile.getUrl())) {
-                VirtualFilePointerContainer container = myAssociations.get(pointer);
-                if (container == null) {
-                    container = myFilePointerManager.createContainer();
-                    myAssociations.put(pointer, container);
-                }
-                if (container.findByUrl(assoc.getUrl()) == null) {
-                    container.add(assoc);
-                    touch();
-                }
-                return;
-            }
+        else {
+          return PsiFile.EMPTY_ARRAY;
         }
-        final VirtualFilePointerContainer container = myFilePointerManager.createContainer();
-        container.add(assoc);
-        myAssociations.put(myFilePointerManager.create(virtualFile, null), container);
-        touch();
+      }
     }
+    return PsiFile.EMPTY_ARRAY;
+  }
 
-    public Map<VirtualFile, VirtualFile[]> getAssociations() {
-        final HashMap<VirtualFile, VirtualFile[]> map = new HashMap<VirtualFile, VirtualFile[]>();
-        final Set<VirtualFilePointer> set = myAssociations.keySet();
-        for (VirtualFilePointer pointer : set) {
-            if (pointer.isValid()) {
-                final VirtualFile file = pointer.getFile();
-                map.put(file, myAssociations.get(pointer).getFiles());
-            }
-        }
-        return map;
+  private static boolean matchesFileType(PsiFile psiFile, FileType... fileTypes) {
+    for (FileType fileType : fileTypes) {
+      if (psiFile.getFileType().equals(fileType)) return true;
     }
+    return false;
+  }
 
-    public PsiFile[] getAssociationsFor(PsiFile file) {
-        return getAssociationsFor(file, FileType.EMPTY_ARRAY);
-    }
-
-    public PsiFile[] getAssociationsFor(PsiFile file, FileType... fileTypes) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return PsiFile.EMPTY_ARRAY;
-
-        for (VirtualFilePointer pointer : myAssociations.keySet()) {
-            if (pointer.isValid() && pointer.getUrl().equals(virtualFile.getUrl())) {
-                final VirtualFilePointerContainer container = myAssociations.get(pointer);
-                if (container != null) {
-                    final VirtualFile[] files = container.getFiles();
-                    final Set<PsiFile> list = new HashSet<PsiFile>();
-                    final PsiManager psiManager = PsiManager.getInstance(myProject);
-                    for (VirtualFile assoc : files) {
-                        final PsiFile psiFile = psiManager.findFile(assoc);
-                        if (psiFile != null && (fileTypes.length == 0 || matchesFileType(psiFile, fileTypes))) {
-                            list.add(psiFile);
-                        }
-                    }
-                    return list.toArray(new PsiFile[list.size()]);
-                } else {
-                    return PsiFile.EMPTY_ARRAY;
-                }
-            }
-        }
-        return PsiFile.EMPTY_ARRAY;
-    }
-
-    private boolean matchesFileType(PsiFile psiFile, FileType... fileTypes) {
-        for (FileType fileType : fileTypes) {
-            if (psiFile.getFileType().equals(fileType)) return true;
-        }
-        return false;
-    }
-
-    public long getModificationCount() {
-        return myModCount;
-    }
+  public long getModificationCount() {
+    return myModCount;
+  }
 }

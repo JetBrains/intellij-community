@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
@@ -21,7 +20,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    ProjectManager.getInstance().closeProject(myProject);
+    //ProjectManager.getInstance().closeProject(myProject);
     super.tearDown();
   }
 

@@ -40,7 +40,7 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
     }
 
     public void projectClosed(){
-        if(telemetryEnabled){
+        if(telemetryEnabled && toolWindow != null){
             toolWindow.unregister(project);
         }
     }
