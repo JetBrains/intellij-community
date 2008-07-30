@@ -1,9 +1,9 @@
 package com.intellij.execution.testframework.ui;
 
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.Disposable;
 
 public class TestsOutputConsolePrinter implements Printer, Disposable {
@@ -76,9 +76,8 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     myCurrentPrintable.setPrintLinstener(this);
     if (test.isRoot()) {
       myOutputStorage.printOn(this);
-    } else {
-      myCurrentPrintable.printOn(this);
     }
+    myCurrentPrintable.printOn(this);
     scrollToBeginning();
   }
 
