@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -10,6 +11,8 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -19,6 +22,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -39,6 +44,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 
 public class OverrideImplementUtil {
@@ -405,7 +412,7 @@ public class OverrideImplementUtil {
   private static void chooseAndOverrideOrImplementMethods(final Project project,
                                                           final Editor editor,
                                                           final PsiClass aClass,
-                                                          boolean toImplement){
+                                                          final boolean toImplement){
     LOG.assertTrue(aClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -422,6 +429,8 @@ public class OverrideImplementUtil {
     chooser.setTitle(toImplement
                      ? CodeInsightBundle.message("methods.to.implement.chooser.title")
                      : CodeInsightBundle.message("methods.to.override.chooser.title"));
+    registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
+
     chooser.setCopyJavadocVisible(true);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
@@ -433,6 +442,39 @@ public class OverrideImplementUtil {
         overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
     });
+  }
+
+  private static void registerHandlerForComplementaryAction(final Project project, final Editor editor, final PsiClass aClass,
+                                                            final boolean toImplement,
+                                                            final MemberChooser<PsiMethodMember> chooser) {
+    final JComponent preferredFocusedComponent = chooser.getPreferredFocusedComponent();
+    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+
+    final @NonNls String s = toImplement ? "OverrideMethods" : "ImplementMethods";
+    final Shortcut[] shortcuts = keymap.getShortcuts(s);
+
+    if (shortcuts.length > 0 && shortcuts[0] instanceof KeyboardShortcut) {
+      preferredFocusedComponent.getInputMap().put(
+        ((KeyboardShortcut)shortcuts[0]).getFirstKeyStroke(), s
+      );
+
+      preferredFocusedComponent.getActionMap().put(
+          s,
+          new AbstractAction() {
+            public void actionPerformed(final ActionEvent e) {
+              chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
+
+              // invoke later in order to close previous modal dialog
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  final CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
+                  handler.invoke(project, editor, aClass.getContainingFile());
+                }
+              });
+            }
+          }
+      );
+    }
   }
 
   public static void overrideOrImplementMethodsInRightPlace(Editor editor,
