@@ -412,7 +412,9 @@ public class FileUtil {
     catch (FileNotFoundException e) {
       File parentFile = toFile.getParentFile();
       if (parentFile == null) {
-        throw new IOException("parent file is null for " + toFile.getPath(), e);
+        final IOException ioException = new IOException("parent file is null for " + toFile.getPath());
+        ioException.initCause(e);
+        throw ioException;
       }
       parentFile.mkdirs();
       toFile.createNewFile();
