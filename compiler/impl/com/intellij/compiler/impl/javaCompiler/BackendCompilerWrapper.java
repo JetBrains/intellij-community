@@ -697,7 +697,6 @@ public class BackendCompilerWrapper {
   }
 
   private void updateOutputItemsList(final String outputDir, VirtualFile javaFile, Set<VirtualFile> compiledWithErrors, VirtualFile sourceRoot, final String packagePrefix) throws CacheCorruptedException {
-
     final Cache newCache = myCompileContext.getDependencyCache().getNewClassesCache();
     final Set<CompiledClass> paths = myFileNameToSourceMap.get(javaFile.getName());
     if (paths != null && !paths.isEmpty()) {
@@ -723,6 +722,7 @@ public class BackendCompilerWrapper {
             }
           }
           else {
+            myCompileContext.addMessage(CompilerMessageCategory.ERROR, "Failed to copy from temporary location to output directory: " + outputPath + " (see idea.log for details)", null, -1, -1);
             if (LOG.isDebugEnabled()) {
               LOG.debug("Failed to move to real location: " + outputPath + "; from " + outputDir);
             }
