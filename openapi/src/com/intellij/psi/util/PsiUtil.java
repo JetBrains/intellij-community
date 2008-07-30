@@ -887,7 +887,7 @@ public final class PsiUtil extends PsiUtilBase {
     if (!psiClass.isEquivalentTo(baseClass) && !psiClass.isInheritor(baseClass, true)) return null;
 
     final PsiTypeParameter[] parameters = baseClass.getTypeParameters();
-    if (parameters.length <= typeParamIndex) return null;
+    if (parameters.length <= typeParamIndex) return PsiType.getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope());
 
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, classResolveResult.getSubstitutor());
     final PsiType type = substitutor.substitute(parameters[typeParamIndex]);
