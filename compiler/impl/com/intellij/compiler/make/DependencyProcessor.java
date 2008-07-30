@@ -249,7 +249,7 @@ public class DependencyProcessor {
           continue;
         }
         MethodInfo[] usedMethods = backDependency.getUsedMethods();
-        if (isDependentOnEquivalentMethods(usedMethods, myRemovedMembers)) {
+        if (isDependentOnEquivalentMethods(usedMethods, extractMethods(myRemovedMembers, true))) {
           if (myDependencyCache.markTargetClassInfo(backDependency)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(backDependency.getClassQualifiedName()) +
@@ -258,7 +258,7 @@ public class DependencyProcessor {
           }
           continue;
         }
-        if (isDependentOnEquivalentMethods(usedMethods, myAddedMembers)) {
+        if (isDependentOnEquivalentMethods(usedMethods, extractMethods(myAddedMembers, true))) {
           if (myDependencyCache.markTargetClassInfo(backDependency)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(backDependency.getClassQualifiedName()) +
@@ -269,11 +269,12 @@ public class DependencyProcessor {
       }
     }
 
-    final Set<MemberInfo> methodsToCheck = new HashSet<MemberInfo>();
+    final Set<MethodInfo> methodsToCheck = new HashSet<MethodInfo>();
     extractMethods(myRemovedMembers, methodsToCheck, false);
-    extractMethods(myAddedMembers, methodsToCheck, false);
+    
+    processInheritanceDependencies(methodsToCheck);
 
-    processInheritanceDependencies(!methodsToCheck.isEmpty());
+    extractMethods(myAddedMembers, methodsToCheck, false);
 
     if (!MakeUtil.isAnonymous(myDependencyCache.resolve(myQName))) {
       // these checks make no sence for anonymous classes
@@ -382,16 +383,22 @@ public class DependencyProcessor {
     }
   }
 
-  private static void extractMethods(Collection<MemberInfo> fromCollection, Collection<MemberInfo> toCollection, boolean includeConstructors) {
-    for (final Object aFromCollection : fromCollection) {
-      MemberInfo memberInfo = (MemberInfo)aFromCollection;
+  private static Set<MethodInfo> extractMethods(Collection<MemberInfo> fromCollection, boolean includeConstructors) {
+    final Set<MethodInfo> methods = new HashSet<MethodInfo>();
+    extractMethods(fromCollection, methods, includeConstructors);
+    return methods;
+  }
+  
+  private static void extractMethods(Collection<MemberInfo> fromCollection, Collection<MethodInfo> toCollection, boolean includeConstructors) {
+    for (final MemberInfo memberInfo : fromCollection) {
       if (memberInfo instanceof MethodInfo) {
+        final MethodInfo methodInfo = (MethodInfo)memberInfo;
         if (includeConstructors) {
-          toCollection.add(memberInfo);
+          toCollection.add(methodInfo);
         }
         else {
-          if (!((MethodInfo)memberInfo).isConstructor()) {
-            toCollection.add(memberInfo);
+          if (!methodInfo.isConstructor()) {
+            toCollection.add(methodInfo);
           }
         }
       }
@@ -446,7 +453,7 @@ public class DependencyProcessor {
     return false;
   }
 
-  private boolean isDependentOnEquivalentMethods(MethodInfo[] checkedMembers, Set<MemberInfo> members) throws CacheCorruptedException {
+  private boolean isDependentOnEquivalentMethods(MethodInfo[] checkedMembers, Set<MethodInfo> members) throws CacheCorruptedException {
     // check if 'members' contains method with the same name and the same numbers of parameters, but with different types
     if (members.isEmpty()) return false; // optimization
     for (MethodInfo checkedMethod : checkedMembers) {
@@ -457,7 +464,7 @@ public class DependencyProcessor {
     return false;
   }
 
-  private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set<MemberInfo> methodsToCheck, int methodsClassName) throws CacheCorruptedException {
+  private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set<MethodInfo> methodsToCheck, int methodsClassName) throws CacheCorruptedException {
     Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName);
     for (Dependency dependency : backDependencies) {
       if (myDependencyCache.isTargetClassInfoMarked(dependency)) continue;
@@ -494,8 +501,8 @@ public class DependencyProcessor {
       }
     }
   }
-
-  private void processInheritanceDependencies(final boolean hasRemovedMethods) throws CacheCorruptedException {
+  
+  private void processInheritanceDependencies(final Set<MethodInfo> removedMethods) throws CacheCorruptedException {
     final Cache oldCache = myDependencyCache.getCache();
     final Cache newCache = myDependencyCache.getNewClassesCache();
 
@@ -503,6 +510,19 @@ public class DependencyProcessor {
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
 
     final Set<MemberInfo> removedConcreteMethods = fetchNonAbstractMethods(myRemovedMembers);
+    final Set<MethodInfo> removedOverridableMethods;
+    if (!removedMethods.isEmpty()) {
+      removedOverridableMethods = new HashSet<MethodInfo>(removedMethods);
+      for (Iterator<MethodInfo> it = removedOverridableMethods.iterator(); it.hasNext();) {
+        final MethodInfo method = it.next();
+        if (method.isFinal() || method.isStatic() || method.isPrivate() || method.isConstructor()) {
+          it.remove();
+        }
+      }
+    }
+    else {
+      removedOverridableMethods = Collections.emptySet();
+    }
     myDependencyCache.getCacheNavigator().walkSubClasses(myQName, new ClassInfoProcessor() {
       public boolean process(final int subclassQName) throws CacheCorruptedException {
         if (myDependencyCache.isClassInfoMarked(subclassQName)) {
@@ -514,7 +534,7 @@ public class DependencyProcessor {
           return true;
         }
 
-        if (hasRemovedMethods && myIsRemoteInterface && !CacheUtils.isInterface(oldCache, subclassQName)) {
+        if (!removedMethods.isEmpty() && myIsRemoteInterface && !CacheUtils.isInterface(oldCache, subclassQName)) {
           if (myDependencyCache.markClass(subclassQName)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) +
@@ -682,15 +702,24 @@ public class DependencyProcessor {
           }
         }
         
-        if (hasRemovedMethods) {
-          if (myDependencyCache.hasOverrideAnnotatedMethods(subclassQName, myProject)) {
-            if (myDependencyCache.markClass(subclassQName)) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Mark dependent subclass " + myDependencyCache.resolve(subclassQName) + "; reason: the class has methods annotated with @Override and some methods were changed or removed in a base class" +
-                          myDependencyCache.resolve(myQName));
+        if (!removedOverridableMethods.isEmpty() && !myDependencyCache.isClassInfoMarked(subclassQName) && myDependencyCache.getNewClassesCache().getClassId(subclassQName) == Cache.UNKNOWN /*not compiled in this session*/) {
+          final Cache cache = myDependencyCache.getCache();
+          final int[] subclassMethods = cache.getMethodIds(cache.getClassDeclarationId(subclassQName));
+          for (int subclassMethodId : subclassMethods) {
+            if (!cache.isConstructor(subclassMethodId)) {
+              for (MethodInfo removedMethod : removedOverridableMethods) {
+                if (removedMethod.getName() == cache.getMethodName(subclassMethodId) /*todo: check param signatures here for better accuracy*/) {
+                  // got it
+                  if (myDependencyCache.markClass(subclassQName)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent subclass " + myDependencyCache.resolve(subclassQName) + "; reason: the class has methods annotated with @Override and some methods were changed or removed in a base class" +
+                                myDependencyCache.resolve(myQName));
+                    }
+                  }
+                  return true;
+                }
               }
             }
-            return true;
           }
         }
         // end of subclass processor
@@ -994,18 +1023,16 @@ public class DependencyProcessor {
     }
   }
 
-  private boolean hasEquivalentMethod(Collection<MemberInfo> members, MethodInfo modelMethod) throws CacheCorruptedException {
+  private boolean hasEquivalentMethod(Collection<MethodInfo> members, MethodInfo modelMethod) throws CacheCorruptedException {
     final String[] modelSignature = modelMethod.getParameterDescriptors(myDependencyCache.getSymbolTable());
-    for (final Object member1 : members) {
-      MemberInfo member = (MemberInfo)member1;
-
-      if (!(member instanceof MethodInfo)) continue;
-      final MethodInfo method = (MethodInfo)member;
-
-      if (modelMethod.getName() != method.getName()) continue;
-      String[] methodSignature = method.getParameterDescriptors(myDependencyCache.getSymbolTable());
-
-      if (modelSignature.length != methodSignature.length) continue;
+    for (final MethodInfo method : members) {
+      if (modelMethod.getName() != method.getName()) {
+        continue;
+      }
+      final String[] methodSignature = method.getParameterDescriptors(myDependencyCache.getSymbolTable());
+      if (modelSignature.length != methodSignature.length) {
+        continue;
+      }
 
       for (int i = 0; i < methodSignature.length; i++) {
         if (!methodSignature[i].equals(modelSignature[i])) {

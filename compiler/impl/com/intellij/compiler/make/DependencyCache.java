@@ -14,15 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
@@ -658,74 +650,6 @@ public class DependencyCache {
 
   public boolean wasRemote(int qName) {
     return myPreviouslyRemoteClasses.contains(qName);
-  }
-
-  private TIntHashSet myClassesWithOverrideAnnotatedMethods;
-  private TIntHashSet myClassesForAnonymousWithOverrideAnnotatedMethods;
-  
-  public boolean hasOverrideAnnotatedMethods(final int qName, final Project project) throws CacheCorruptedException {
-    if (myClassesWithOverrideAnnotatedMethods == null) {
-      final CacheCorruptedException[] ex = new CacheCorruptedException[] {null};
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          myClassesWithOverrideAnnotatedMethods = new TIntHashSet();
-          myClassesForAnonymousWithOverrideAnnotatedMethods = new TIntHashSet();
-          final PsiClass overrideClass =
-            JavaPsiFacade.getInstance(project).findClass(Override.class.getName(), GlobalSearchScope.allScope(project));
-          if (overrideClass != null) {
-            final Query<PsiMember> query = AnnotatedMembersSearch.search(overrideClass);
-            query.forEach(new Processor<PsiMember>() {
-              public boolean process(final PsiMember psiMember) {
-                try {
-                  final PsiClass aClass = psiMember.getContainingClass();
-                  if (aClass == null) {
-                    return true;
-                  }
-                  final PsiClass topLevelClass = PsiUtil.getTopLevelClass(aClass);
-                  
-                  LOG.assertTrue(topLevelClass != null);
-                  
-                  final String qualifiedName = topLevelClass.getQualifiedName();
-                  if (qualifiedName != null) {
-                    if (aClass.equals(topLevelClass)) {
-                      myClassesWithOverrideAnnotatedMethods.add(mySymbolTable.getId(qualifiedName));
-                    }
-                    else {
-                      // containing class is either anonymous or local or inner
-                      myClassesForAnonymousWithOverrideAnnotatedMethods.add(mySymbolTable.getId(qualifiedName));
-                    }
-                  }
-                  return true;
-                }
-                catch (CacheCorruptedException e) {
-                  ex[0] = e;
-                  return false;
-                }
-              }
-            });
-          }
-        }
-      });
-      if (ex[0] != null) {
-        throw ex[0];
-      }
-    }
-    
-    if (myClassesWithOverrideAnnotatedMethods.contains(qName)) {
-      return true;
-    }
-    // in case the class anonymous or nested
-    String qualifiedName = resolve(qName);
-    int dollarIndex = qualifiedName.lastIndexOf('$');
-    while (dollarIndex > 0) {
-      qualifiedName = qualifiedName.substring(0, dollarIndex);
-      final int qNameId = mySymbolTable.getId(qualifiedName);
-      if (myClassesForAnonymousWithOverrideAnnotatedMethods.contains(qNameId)) {
-        return true;
-      }
-      dollarIndex = qualifiedName.lastIndexOf('$');
-    }
-    return false;
   }
 
   private class DeclaringClassFinder implements ClassInfoProcessor {
