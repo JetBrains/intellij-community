@@ -70,7 +70,7 @@ public class EditorUtil {
     boolean useOptimization = true;
     boolean hasNonTabs = false;
     boolean hasTabs = false;
-    final int maxScanIndex = Math.min(start + columnNumber, end);
+    final int maxScanIndex = Math.min(start + columnNumber + 1, end);
 
     for (int i = start; i < maxScanIndex; i++) {
       if (text.charAt(i) == '\t') {
@@ -120,12 +120,15 @@ public class EditorUtil {
         int prevX = x;
         x = editorImpl.nextTabStop(x);
         column += (x - prevX) / spaceSize;
-      } else {
+      }
+      else {
         x += editorImpl.charWidth(c, fontType);
         column++;
       }
     }
-
+    if (column == columnNumber && offset < end && text.charAt(offset) == '\t' && (editorImpl.nextTabStop(x) - x) / spaceSize == 0) {
+      offset++;
+    }
     if (column > columnNumber) offset--;
 
     return offset;

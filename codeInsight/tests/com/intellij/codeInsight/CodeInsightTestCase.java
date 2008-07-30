@@ -145,9 +145,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     File toDirIO = createTempDirectory();
     VirtualFile toDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(toDirIO.getCanonicalPath().replace(File.separatorChar, '/'));
 
-    final LinkedHashMap<VirtualFile, EditorInfo> editorInfos;
     // auxiliary files should be copied first
     vFiles = ArrayUtil.reverseArray(vFiles);
+    final LinkedHashMap<VirtualFile, EditorInfo> editorInfos;
     if (projectRoot != null) {
       FileUtil.copyDir(projectRoot, toDirIO);
       VirtualFile fromDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot);
@@ -533,7 +533,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void ctrlShiftF7() {
-    new HighlightUsagesHandler().invoke(getProject(), getEditor(), getFile());
+    HighlightUsagesHandler.invoke(getProject(), getEditor(), getFile());
   }
   protected static void ctrlW() {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);

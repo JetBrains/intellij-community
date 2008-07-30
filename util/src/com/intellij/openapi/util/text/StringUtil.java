@@ -268,10 +268,7 @@ public class StringUtil {
   public static int lineColToOffset(@NotNull CharSequence text, int line, int col) {
     int curLine = 0;
     int offset = 0;
-    while (true) {
-      if (line == curLine) {
-        return offset + col;
-      }
+    while (line != curLine) {
       if (offset == text.length()) return -1;
       char c = text.charAt(offset);
       if (c == '\n') {
@@ -285,15 +282,13 @@ public class StringUtil {
       }
       offset++;
     }
+    return offset + col;
   }
 
   public static int offsetToLineNumber(@NotNull CharSequence text, int offset) {
     int curLine = 0;
     int curOffset = 0;
-    while (true) {
-      if (offset <= curOffset) {
-        return curLine;
-      }
+    while (curOffset < offset) {
       if (curOffset == text.length()) return -1;
       char c = text.charAt(curOffset);
       if (c == '\n') {
@@ -307,6 +302,7 @@ public class StringUtil {
       }
       curOffset++;
     }
+    return curLine;
   }
 
   /**
@@ -1255,7 +1251,7 @@ public class StringUtil {
   }
 
   public static String shiftIndentInside(final String initial, final int i, boolean shiftEmptyLines) throws IOException {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder(initial.length());
     LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes()));
     boolean first = true;
     for (byte[] line : reader.readLines()) {

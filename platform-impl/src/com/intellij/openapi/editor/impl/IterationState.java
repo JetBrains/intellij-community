@@ -383,18 +383,16 @@ public final class IterationState {
       Collections.sort(myCurrentHighlighters, LayerComparator.INSTANCE);
     }
 
-    int start = 0;
     for (int i = 0; i < size; i++) {
       RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
       if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
-        //start = i;
         syntax = null;
       }
     }
 
     myCachedAttributesList.clear();
 
-    for (int i = start; i < size; i++) {
+    for (int i = 0; i < size; i++) {
       RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
       if (selection != null && highlighter.getLayer() < HighlighterLayer.SELECTION) {
         myCachedAttributesList.add(selection);
