@@ -611,7 +611,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private void indexUnsavedDocument(final Document document) throws StorageException {
     final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-    if (!vFile.isValid() || !(vFile instanceof VirtualFileWithId)) {
+    if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return;
     }
 

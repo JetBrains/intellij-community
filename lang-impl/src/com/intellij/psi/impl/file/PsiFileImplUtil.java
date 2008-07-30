@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -19,6 +21,12 @@ public class PsiFileImplUtil {
     PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
 
     try{
+      final FileDocumentManager fdm = FileDocumentManager.getInstance();
+      final Document doc = fdm.getCachedDocument(vFile);
+      if (doc != null) {
+        fdm.saveDocument(doc);
+      }
+      
       vFile.rename(manager, newName);
     }
     catch(IOException e){
