@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -32,10 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
@@ -112,6 +111,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             if (parameterList != null) {
                 final PsiTypeElement[] typeParameterElements =
                         parameterList.getTypeParameterElements();
+              if (typeParameterElements.length > 0) {
                 newElementText.append('<');
                 final PsiTypeElement typeParameterElement1 =
                         typeParameterElements[0];
@@ -127,6 +127,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                     }
                 }
                 newElementText.append('>');
+              }
             }
             final PsiElement grandParent = parent.getParent();
             if (!(grandParent instanceof PsiTypeElement)) {
@@ -208,7 +209,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             final PsiClass objectClass = javaLangObject.resolve();
             weaklingList.remove(objectClass);
             if (weaklingList.isEmpty()) {
-                registerError(nameElement, "java.util.collections.Collection");
+                registerError(nameElement, "java.util.Collection");
             } else {
                 final PsiClass weakling = weaklingList.get(0);
                 final String qualifiedName = weakling.getQualifiedName();
