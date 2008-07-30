@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.AssertionFailedError;
@@ -83,6 +84,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     compilerConfiguration.projectOpened();
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
 
+    TranslatingCompilerFilesMonitor.getInstance().registerListeners(VirtualFileManager.getInstance(), ProjectManagerEx.getInstanceEx());
   }
 
   /*
@@ -484,6 +486,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   protected void tearDown() throws Exception {
+    TranslatingCompilerFilesMonitor.getInstance().removeListeners();
     final Exception[] exceptions = new Exception[]{null};
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
