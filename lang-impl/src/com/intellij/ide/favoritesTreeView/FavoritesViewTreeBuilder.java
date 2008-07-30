@@ -106,6 +106,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
 
   public void updateFromRoot() {
+    ((FavoritesTreeStructure)getTreeStructure()).rootsChanged();
     if (isDisposed()) return;
     getUpdater().cancelAllRequests();
     super.updateFromRoot();
@@ -142,7 +143,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   @Nullable
   DefaultMutableTreeNode findSmartFirstLevelNodeByElement(final Object element) {
-    final Collection<AbstractTreeNode> favorites = ((FavoritesTreeStructure)getTreeStructure()).getFavoritesRoots();
+    final Collection<AbstractTreeNode> favorites = ((AbstractTreeNode)((FavoritesTreeStructure)getTreeStructure()).getRootElement()).getChildren();
     for (AbstractTreeNode favorite : favorites) {
       Object currentValue = favorite.getValue();
       if (currentValue instanceof SmartPsiElementPointer){

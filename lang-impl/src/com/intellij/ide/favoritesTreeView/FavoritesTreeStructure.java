@@ -33,25 +33,13 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
   protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
-    return new AbstractTreeNode<String>(myProject, "") {
-      @NotNull
-      public Collection<AbstractTreeNode> getChildren() {
-        return getFavoritesRoots();
-      }
-
-      public void update(final PresentationData presentation) {
-      }
-    };
+    return new FavoritesRootNode();
   }
 
-  public void addToFavorites(AbstractTreeNode treeNode) {
-    //Object elementToAdd = treeNode.getValue() instanceof SmartPsiElementPointer ? ((SmartPsiElementPointer)treeNode.getValue()).getElement() : treeNode.getValue();
-    //for (AbstractTreeNode node : myFavoritesRoots) {
-    //  Object element = node.getValue() instanceof SmartPsiElementPointer ? ((SmartPsiElementPointer)node.getValue()).getElement() : node.getValue();
-    //  if (Comparing.equal(element, elementToAdd)) return;
-    //}
-    //myFavoritesRoots.add(treeNode);
+  public void rootsChanged() {
+    ((FavoritesRootNode)getRootElement()).rootsChanged();
   }
+
 
   //for tests only
   @NotNull public Collection<AbstractTreeNode> getFavoritesRoots() {
@@ -154,5 +142,28 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
       }
     }
     return result;
+  }
+
+  private class FavoritesRootNode extends AbstractTreeNode<String> {
+    private Collection<AbstractTreeNode> myFavoritesRoots;
+
+    public FavoritesRootNode() {
+      super(FavoritesTreeStructure.this.myProject, "");
+    }
+
+    @NotNull
+    public Collection<AbstractTreeNode> getChildren() {
+      if (myFavoritesRoots == null) {
+        myFavoritesRoots = getFavoritesRoots();
+      }
+      return myFavoritesRoots;
+    }
+
+    public void rootsChanged() {
+      myFavoritesRoots = null;
+    }
+
+    public void update(final PresentationData presentation) {
+    }
   }
 }
