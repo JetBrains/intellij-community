@@ -32,7 +32,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
       return "NULL";
     }
   };
-  protected final Map<K,V> myMap = createMap();
+  protected Map<K,V> myMap;
 
   protected Map<K, V> createMap() {
     return new THashMap<K, V>();
@@ -40,13 +40,21 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @Nullable
   protected abstract V create(K key);
+
+  private Map<K, V> getMap() {
+    if (myMap == null) {
+      myMap = createMap();
+    }
+    return myMap;
+  }
   
   @Nullable
   public V get(Object key) {
-    V value = myMap.get(getKey(key));
+    final Map<K, V> map = getMap();
+    V value = map.get(getKey(key));
     if (value == null) {
       value = create((K)key);
-      myMap.put((K)getKey(key), value == null ? (V)NULL : value);
+      map.put((K)getKey(key), value == null ? (V)NULL : value);
     }
     return value == NULL ? null : value;
   }
@@ -56,18 +64,20 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public final boolean containsKey(Object key) {
-    return myMap.containsKey(getKey(key));
+    return myMap != null && myMap.containsKey(getKey(key));
   }
 
   public V put(K key, V value) {
-    return myMap.put(getKey(key), value == null ? (V)NULL : value);
+    return getMap().put(getKey(key), value == null ? (V)NULL : value);
   }
 
   public V remove(Object key) {
+    if (myMap == null) return null;
     return myMap.remove(key);
   }
 
   public Set<K> keySet() {
+    if (myMap == null) return Collections.emptySet();
     final Set<K> ts = myMap.keySet();
     if (ts.contains(NULL)) {
       final HashSet<K> hashSet = new HashSet<K>(ts);
@@ -79,6 +89,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public Collection<V> notNullValues() {
+    if (myMap == null) return Collections.emptyList();
     final Collection<V> values = new ArrayList<V>(myMap.values());
     for (Iterator<V> iterator = values.iterator(); iterator.hasNext();) {
       if (iterator.next() == NULL) {
@@ -89,19 +100,22 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public void clear() {
-    myMap.clear();
+    if (myMap != null) {
+      myMap.clear();
+    }
   }
 
   public int size() {
+    if (myMap == null) return 0;
     return myMap.size();
   }
 
   public boolean isEmpty() {
-    return myMap.isEmpty();
+    return myMap == null || myMap.isEmpty();
   }
 
   public boolean containsValue(final Object value) {
-    return myMap.containsValue(value);
+    return myMap != null && myMap.containsValue(value);
   }
 
   public void putAll(final Map<? extends K, ? extends V> m) {
@@ -111,10 +125,12 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public Collection<V> values() {
+    if (myMap == null) return Collections.emptyList();
     return myMap.values();
   }
 
   public Set<Entry<K, V>> entrySet() {
+    if (myMap == null) return Collections.emptySet();
     return myMap.entrySet();
   }
 }
