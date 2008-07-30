@@ -291,11 +291,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     int dotIndex = qName.lastIndexOf('.');
     int dollarIndex = qName.lastIndexOf('$');
     int maxIndex = Math.max(dotIndex, dollarIndex);
-    String wordToSearch = maxIndex >= 0 ? qName.substring(maxIndex + 1) : qName;
+    final String wordToSearch = maxIndex >= 0 ? qName.substring(maxIndex + 1) : qName;
     if (originalElement != null && myManager.isInProject(originalElement) && searchScope.isSearchInLibraries()) {
       searchScope = searchScope.intersectWith(GlobalSearchScope.projectScope(myManager.getProject()));
     }
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, searchScope, true);
+    final GlobalSearchScope theSearchScope = searchScope;
+    PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+      public PsiFile[] compute() {
+        return myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true);
+      }
+    });
 
     final StringSearcher searcher = new StringSearcher(qName);
     searcher.setCaseSensitive(true);
