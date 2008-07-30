@@ -154,14 +154,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     final int[] childrenIds = ourPersistence.listIds(this);
-    VirtualFile[] children = new VirtualFile[childrenIds.length];
-    final Map<String, VirtualFile> map = asMap();
-    for (int i = 0; i < children.length; i++) {
-      final int childId = childrenIds[i];
-      final String name = ourPersistence.getName(childId);
-      VirtualFile child = map != null ? map.get(name) : null;
+    VirtualFile[] children;
+    if (childrenIds.length == 0) {
+      children = EMPTY_ARRAY;
+    }
+    else {
+      children = new VirtualFile[childrenIds.length];
+      final Map<String, VirtualFile> map = asMap();
+      for (int i = 0; i < children.length; i++) {
+        final int childId = childrenIds[i];
+        final String name = ourPersistence.getName(childId);
+        VirtualFile child = map != null ? map.get(name) : null;
 
-      children[i] = child != null && child != NullVirtualFile.INSTANCE ? child : createChild(name, childId);
+        children[i] = child != null && child != NullVirtualFile.INSTANCE ? child : createChild(name, childId);
+      }
     }
 
     if (getId() > 0) {

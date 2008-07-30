@@ -41,6 +41,10 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
 
   public PsiClassType[] getReferencedTypes() {
     if (myTypes != null) return myTypes;
+    if (myNames.length == 0) {
+      myTypes = PsiClassType.EMPTY_ARRAY;
+      return myTypes;
+    }
 
     PsiClassType[] types = new PsiClassType[myNames.length];
 

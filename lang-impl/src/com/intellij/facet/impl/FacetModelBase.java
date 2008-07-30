@@ -25,11 +25,17 @@ public abstract class FacetModelBase implements FacetModel {
   @NotNull
   public Facet[] getSortedFacets() {
     if (mySortedFacets == null) {
-      LinkedHashSet<Facet> facets = new LinkedHashSet<Facet>();
-      for (Facet facet : getAllFacets()) {
-        addUnderlyingFacets(facets, facet);
+      final Facet[] allFacets = getAllFacets();
+      if (allFacets.length == 0) {
+        mySortedFacets = Facet.EMPTY_ARRAY;
       }
-      mySortedFacets = facets.toArray(new Facet[facets.size()]);
+      else {
+        LinkedHashSet<Facet> facets = new LinkedHashSet<Facet>();
+        for (Facet facet : allFacets) {
+          addUnderlyingFacets(facets, facet);
+        }
+        mySortedFacets = facets.toArray(new Facet[facets.size()]);
+      }
     }
     return mySortedFacets;
   }
