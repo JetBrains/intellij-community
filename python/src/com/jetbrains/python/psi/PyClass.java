@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 0:26:47
  * To change this template use File | Settings | File Templates.
  */
-public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner, StubBasedPsiElement<PyClassStub> {
+public interface PyClass extends PsiNamedElement, PyElement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub> {
   @NotNull
   PyStatementList getStatementList();
 

@@ -21,7 +21,9 @@ import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ public class PyResolveUtil {
 
   @NotNull
   public static String getReadableRepr(PsiElement elt) {
+    if (elt == null) return "null!";
     ASTNode node = elt.getNode();
     if (node == null) return "null";
     else {
@@ -54,35 +57,155 @@ public class PyResolveUtil {
   private PyResolveUtil() {
   }
 
+
+  /**
+   * Tries to find nearest parent that conceals nams definded inside it. Such elements are 'class' and 'def':
+   * anything defined within it does not seep to the namespace below them, but is concealed within.
+   * @param elt starting point of search.
+   * @return 'class' or 'def' element, or null if not found.
+   */
   @Nullable
-  public static PsiElement treeWalkUp(PsiScopeProcessor processor, PsiElement elt, PsiElement lastParent, PsiElement place) {
-    if (elt == null) return null;
-
-    PsiElement cur = elt;
-    do {
-      if ((processor instanceof ResolveProcessor) && !(((ResolveProcessor)processor).approve(cur))) {
-        return null;
-      }
-      /* // resolution debug tracker
-      if (cur instanceof PsiFile) System.out.println(processor.toString() + ": " + cur.toString());
-      else System.out.println(processor.toString() + ": " + _fmt_node(cur)); 
-      */
-      if (!cur.processDeclarations(processor, ResolveState.initial(), cur == elt ? lastParent : null, elt)) {
-        if (processor instanceof ResolveProcessor) {
-          return ((ResolveProcessor)processor).getResult();
-        }
-      }
-      if (cur instanceof PsiFile) break;
-      cur = cur.getPrevSibling();
-    }
-    while (cur != null);
-
-    if (elt == place) return null;
-
-    return treeWalkUp(processor, elt.getContext(), elt, place);
+  public static PsiElement getConcealingParent(PsiElement elt) {
+    PsiElement top = PsiTreeUtil.getParentOfType(elt, PyClass.class, PyFunction.class);
+    return top;
   }
 
-  // NOTE: to be moved to more general scope
+  protected static PsiElement getInnermostChildOf(PsiElement elt) {
+    PsiElement feeler = elt;
+    PsiElement seeker;
+    seeker = feeler;
+    // find innermost last child of the subtree we're in
+    while (feeler != null) {
+      seeker = feeler;
+      feeler = feeler.getLastChild();
+    }
+    return seeker;
+  }
+
+  /**
+   * Returns closest previous node of given class, as input file would have it.
+   * @param elt node from which to look for a previous atatement.
+   * @param cls class of the previous node to find.
+   * @return previous statement, or null.
+   */
+  @Nullable
+  public static <T> T getPrevNodeOf(PsiElement elt, Class<T> cls) {
+    PsiElement seeker = elt;
+    while (seeker != null) {
+      PsiElement feeler = seeker.getPrevSibling();
+      if (feeler != null) {
+        seeker = getInnermostChildOf(feeler);
+      }
+      else { // we were the first subnode
+        // find something above the parent node we've not exhausted yet
+        seeker = seeker.getParent();
+        if (seeker instanceof PyFile) return null; // all file nodes have been looked up, in vain
+      }
+      if (cls.isInstance(seeker)) return (T)seeker;
+    }
+    // here elt is null or a PsiFile is not up in the parent chain.
+    return null;
+  }
+
+  /**
+   * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
+   * @param processor a visitor that says when the crawl is done and collects info.
+   * @param elt element from which we start (not checked by processor); if null, the search immediately fails. 
+   * @param fromunder if true, search not above elt, but from an [possibly imaginary] node right below elt; so elt gets analyzed, too.
+   * @return first element that the processor accepted.
+   */
+  @Nullable
+  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt, boolean fromunder) {
+    if (elt == null) return null; // can't find anyway.
+    PsiElement seeker = elt;
+    PsiElement cap = getConcealingParent(elt);
+    do {
+      if (fromunder) {
+        fromunder = false; // only honour fromunder once per call
+        seeker = getPrevNodeOf(getInnermostChildOf(seeker), NameDefiner.class);
+      }
+      else { // main case
+        seeker = getPrevNodeOf(seeker, NameDefiner.class);
+      }
+      // aren't we in the same defining assignment, global, etc?
+      if ((seeker != null) && ((NameDefiner)seeker).mustResolveOutside() && PsiTreeUtil.isAncestor(seeker, elt, true)
+      ) {
+        seeker = getPrevNodeOf(seeker, NameDefiner.class);
+      }
+      // maybe we're under cap
+      while (true) {
+        PsiElement local_cap = getConcealingParent(seeker);
+        if ((local_cap != null) && (local_cap != cap)) { // only look at local cap and above
+          if (local_cap instanceof NameDefiner) seeker = local_cap;
+          else seeker = getPrevNodeOf(local_cap, NameDefiner.class);
+        }
+        if (local_cap == null) break; // seeker is in global context
+        if (local_cap == cap) break; // seeker is in the same context as elt
+        if ((cap != null) && PsiTreeUtil.isAncestor(local_cap, cap, true)) break; // seeker is in a context above elt's
+      }
+      // maybe we're capped by a class
+      PsiElement possible_class_cap = getConcealingParent(seeker);
+      if (possible_class_cap instanceof PyClass) continue; // class implicitly qualifies things, and we're looking for unqualified.
+      // check
+      if (seeker != null) {
+        if (!processor.execute(seeker, ResolveState.initial())) {
+          if (processor instanceof ResolveProcessor) {
+            return ((ResolveProcessor)processor).getResult();
+          }
+          else return seeker; // can't point to exact element, but somewhere here
+        }
+      }
+    } while (seeker != null);
+    return null;
+  }
+
+  /**
+   * Returns treeCrawlUp(processor, elt, false). A convenience method.
+   * @see com.jetbrains.python.psi.PyResolveUtil#treeCrawlUp(PsiScopeProcessor, PsiElement, boolean)
+   */
+  @Nullable
+  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
+    return treeCrawlUp(processor, elt, false);
+  }
+
+
+  public static class DeclRefPair {
+    public final PsiElement decl;
+    public final PsiElement ref;
+    public DeclRefPair(PsiElement decl, PsiElement ref) {
+      this.decl = decl;
+      this.ref = ref;
+    }
+  }
+
+  /**
+   * Resolves a (qualified) reference by collecting all its (left-hand) qualifiers and resolving left to right.
+   * E.g. an attemt to resolve "z" in "x.y.z" resolves x, then y in x, then z in x.y.
+   * @param target the reference to resolve.
+   * @return a list of (declaration, ref) pairs for all qualifeirs of target, with ref == target for the last element.
+   * E.g. for "x.y.z" the result is {(X, x), (Y, y), (Z, z)}, where X, Y and Z are declarations which x, y, and z refer to.
+   * When a declaration for a reference cannot be found, null is given instead.
+   * E.g. {(X, x), (Y, y), (null, z)} means that element z failed to resolve to a declaration. 
+   */
+  @NotNull
+  public static List<DeclRefPair> resolveQualified(PyReferenceExpression target) {
+    List<DeclRefPair> ret = new LinkedList<DeclRefPair>();
+    try {
+      final ASTNode[] nodes = target.getNode().getChildren(PyElementTypes.EXPRESSIONS);
+      if (nodes.length > 0) {
+        PyExpression first = (PyExpression)nodes[nodes.length-1]; // innermost child is leftmost qualifier
+        // find nearest expression that both precedes target and defines the name of first
+        // it may be a target of assignment, a parameter definition or a global definition.
+        // for this, go from target backwards.
+      }
+    }
+    catch (NullPointerException ex) {
+      ret.add(new DeclRefPair(null, target)); // on NPE, return at least a safe "dunno"
+      // TODO: log this
+    }
+    return ret;
+  }
+
   /**
    * Tries to match two [qualified] reference expression paths; target must be a 'sublist' of source to match.
    * E.g., 'a.b.c.d' and 'a.b.c' would match, while 'a.b.c' and 'a.b.c.d' would not. Eqaully, 'a.b.c' and 'a.b.d' would not match.
@@ -109,7 +232,7 @@ public class PyResolveUtil {
 
   /**
    * Unwinds a [multi-level] qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
-   * If any qualifier happens to be not a referencce expression, or expr is null, null is returned.
+   * If any qualifier happens to be not a reference expression, or expr is null, null is returned.
    * @param expr an experssion to unwind.
    * @return path as a list of ref expressions, or null.
    */
@@ -186,6 +309,14 @@ public class PyResolveUtil {
         String referencedName = expr.getReferencedName();
         if (referencedName != null && referencedName.equals(myName)) {
           myResult = element;
+          return false;
+        }
+      }
+      else if (element instanceof NameDefiner) {
+        final NameDefiner definer = (NameDefiner)element;
+        PsiElement by_name = definer.getElementNamed(myName);
+        if (by_name != null) {
+          myResult = by_name;
           return false;
         }
       }
@@ -271,6 +402,7 @@ public class PyResolveUtil {
     }
 
     public boolean execute(PsiElement element, ResolveState substitutor) {
+      // TODO: refactor to look saner; much code duplication
       if (element instanceof PsiNamedElement) {
         final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
         final String name = psiNamedElement.getName();
@@ -283,6 +415,17 @@ public class PyResolveUtil {
         String referencedName = expr.getReferencedName();
         if (referencedName != null && !myVariants.containsKey(referencedName)) {
           myVariants.put(referencedName, LookupElementFactory.getInstance().createLookupElement(element, referencedName));
+        }
+      }
+      else if (element instanceof NameDefiner) {
+        final NameDefiner definer = (NameDefiner)element;
+        for (PyElement expr: definer.iterateNames()) {
+          if (expr != null) { // NOTE: maybe rather have SingleIterables skip nulls outright?
+            String referencedName = expr.getName();
+            if (referencedName != null && !myVariants.containsKey(referencedName)) {
+              myVariants.put(referencedName, LookupElementFactory.getInstance().createLookupElement(element, referencedName));
+            }
+          }
         }
       }
 

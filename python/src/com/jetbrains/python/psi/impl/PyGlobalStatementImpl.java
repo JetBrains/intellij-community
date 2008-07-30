@@ -61,4 +61,17 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
     }
     return true;
   }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    return new ArrayIterable<PyElement>(getGlobals());
+  }
+
+  public PyElement getElementNamed(final String the_name) {
+    return IterHelper.findName(iterateNames(), the_name);
+  }
+
+  public boolean mustResolveOutside() {
+    return true;
+  }
 }

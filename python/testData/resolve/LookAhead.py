@@ -1,5 +1,4 @@
-g<ref>gg("q")
+def f():
+  return f<ref>oo
 
-def f(q): pass
-
-ggg = f
+foo = 1

@@ -118,14 +118,16 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,
-                                     @NotNull PsiElement place) {
+                                     @NotNull PsiElement place)
+  {
+    /*
     if (lastParent != null && lastParent.getParent() == this) {
       final PyParameter[] params = getParameterList().getParameters();
       for (PyParameter param : params) {
         if (!processor.execute(param, substitutor)) return false;
       }
     }
-
+    */
     return processor.execute(this, substitutor);
   }
 
@@ -149,5 +151,18 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
     }
     return super.getElementLocation();
+  }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    return new SingleIterable<PyElement>(this);
+  }
+
+  public PyElement getElementNamed(final String the_name) {
+    return the_name.equals(getName())? this : null;
+  }
+
+  public boolean mustResolveOutside() {
+    return false; 
   }
 }

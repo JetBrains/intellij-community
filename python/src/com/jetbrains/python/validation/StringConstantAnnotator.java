@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
  */
 public class StringConstantAnnotator extends PyAnnotator {
   public static final String MISSING_Q = "Missing closing quote";
-  public static final String PREMATURE_Q = "Premature closing quote";
+  //public static final String PREMATURE_Q = "Premature closing quote";
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     String s = node.getText();
     String msg = "";
@@ -34,11 +34,15 @@ public class StringConstantAnnotator extends PyAnnotator {
         char c = s.charAt(index);
         if (esc) esc = false;
         else {
-          if (c  == first_quote) { // impossible with current lexer, but who knows :)
+          if (c != first_quote) {
+            if (c  == '\\') esc = true;
+          }
+          /*
+          else { // impossible with current lexer, but who knows :)
             msg = PREMATURE_Q + " [" + first_quote  + "]";
             ok = false;
           }
-          else if (c  == '\\') esc = true;
+          */
         }
         index += 1;
       }

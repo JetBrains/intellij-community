@@ -18,10 +18,9 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,5 +45,18 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
 
   public PyParameter[] getParameters() {
     return getStubOrPsiChildren(PyElementTypes.FORMAL_PARAMETER, new PyParameter[0]);
+  }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    return new ArrayIterable<PyElement>(getParameters());
+  }
+
+  public PyElement getElementNamed(final String the_name) {
+    return IterHelper.findName(iterateNames(), the_name);
+  }
+
+  public boolean mustResolveOutside() {
+    return false;  // we don't exactly have children to resolve, but if we did...
   }
 }

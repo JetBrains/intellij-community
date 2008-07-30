@@ -22,10 +22,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyResolveUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,4 +91,43 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
     return true;
   }
 
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    PyElement ret = getAsName();
+    if (ret == null) {
+      List<PyReferenceExpression> unwound_path = PyResolveUtil.unwindRefPath(getImportReference());
+      if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0); 
+    }
+    return new SingleIterable<PyElement>(ret);
+  }
+
+  public PsiElement getElementNamed(final String the_name) {
+    PyElement named_elt = IterHelper.findName(iterateNames(), the_name);
+    if (named_elt != null) {
+      PsiElement from_elt = null;
+      PyReferenceExpression import_ref = getImportReference(); // import what?
+      if (import_ref == null) return null; 
+      String import_ref_name = import_ref.getName();
+      if (import_ref_name == null) return null; // no imported name
+      /*
+      PyFromImportStatement import_from_stmt = PsiTreeUtil.getParentOfType(this, PyFromImportStatement.class);
+      if (import_from_stmt != null) {
+        PyReferenceExpression from_src = import_from_stmt.getImportSource();
+        if (from_src != null) {
+          //return ResolveImportUtil.resolvePythonImport2(from_src, import_ref_name);
+          return ResolveImportUtil.resolveImportReference(import_ref);
+        }
+      }
+      // else return ResolveImportUtil.resolvePythonImport2(import_ref, null);
+      else return ResolveImportUtil.resolveImportReference(import_ref);
+      */
+      return ResolveImportUtil.resolveImportReference(import_ref);
+    }
+    // no element of this name
+    return null;
+  }
+
+  public boolean mustResolveOutside() {
+    return true; // formally
+  }
 }

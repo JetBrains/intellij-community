@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 13:05:17
  * To change this template use File | Settings | File Templates.
  */
-public interface PyAssignmentStatement extends PyStatement {
+public interface PyAssignmentStatement extends PyStatement, NameDefiner {
     PyExpression[] getTargets();
     @Nullable PyExpression getAssignedValue();
 }

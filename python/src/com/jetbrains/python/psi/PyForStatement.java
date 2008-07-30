@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 21:20:52
  * To change this template use File | Settings | File Templates.
  */
-public interface PyForStatement extends PyStatement {
+public interface PyForStatement extends PyStatement, NameDefiner {
     @NotNull PyStatementList getStatementList();
     @Nullable PyStatementList getElseStatementList();
     @Nullable PyExpression getTargetExpression();

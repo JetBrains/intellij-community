@@ -137,6 +137,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyFunction[] getMethods() {
+    // TODO: gather all top-level functions, maybe within control statements
     final PyClassStub classStub = getStub();
     if (classStub != null) {
       return classStub.getChildrenByType(PyElementTypes.FUNCTION_DECLARATION, new PyFunction[0]);
@@ -211,11 +212,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result.toArray(new PyTargetExpression[result.size()]);
   }
 
-  @Override
+  @Override        
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,
-                                     @NotNull PsiElement place) {
+                                     @NotNull PsiElement place)
+  {
+    /* */
     for(PyFunction func: getMethods()) {
       if (func == lastParent) continue;
       if (!processor.execute(func, substitutor)) return false;
@@ -231,6 +234,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (processor instanceof PyResolveUtil.VariantsProcessor) {
       return true;
     }
+    /**/
     return processor.execute(this, substitutor);
   }
 
@@ -245,5 +249,18 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public String toString() {
     return "PyClass: " + getName();
+  }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    return new SingleIterable<PyElement>(this);
+  }
+
+  public PyElement getElementNamed(final String the_name) {
+    return the_name.equals(getName())? this: null;
+  }
+
+  public boolean mustResolveOutside() {
+    return false;
   }
 }

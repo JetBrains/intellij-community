@@ -26,6 +26,6 @@ import com.jetbrains.python.psi.stubs.PyParameterListStub;
  * Time: 23:03:11
  * To change this template use File | Settings | File Templates.
  */
-public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub> {
+public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub>, NameDefiner {
   PyParameter[] getParameters();
 }

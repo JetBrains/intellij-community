@@ -17,13 +17,10 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyExceptBlock;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,23 +30,37 @@ import com.jetbrains.python.psi.PyStatementList;
  * To change this template use File | Settings | File Templates.
  */
 public class PyExceptBlockImpl extends PyElementImpl implements PyExceptBlock {
-    public PyExceptBlockImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyExceptBlockImpl(ASTNode astNode) {
+      super(astNode);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyExceptBlock(this);
-    }
+  @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+      pyVisitor.visitPyExceptBlock(this);
+  }
 
-    public @Nullable PyExpression getExceptClass() {
-        return childToPsi(PyElementTypes.EXPRESSIONS, 0);
-    }
+  public @Nullable PyExpression getExceptClass() {
+      return childToPsi(PyElementTypes.EXPRESSIONS, 0);
+  }
 
-    public @Nullable PyExpression getTarget() {
-        return childToPsi(PyElementTypes.EXPRESSIONS, 1);
-    }
+  public @Nullable PyExpression getTarget() {
+      return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+  }
 
-    public @NotNull PyStatementList getStatementList() {
-        return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
-    }
+  public @NotNull PyStatementList getStatementList() {
+      return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
+  }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    return new SingleIterable<PyElement>(getTarget());
+  }
+
+  public PyElement getElementNamed(final String the_name) {
+    PyElement target = getTarget();
+    return ((target != null) && the_name.equals(target.getName()))? target : null;
+  }
+
+  public boolean mustResolveOutside() {
+    return false; 
+  }
 }

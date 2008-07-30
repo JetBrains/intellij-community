@@ -25,6 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Time: 10:29:19
  * To change this template use File | Settings | File Templates.
  */
-public interface PyGlobalStatement extends PyStatement {
+public interface PyGlobalStatement extends PyStatement, NameDefiner {
     @NotNull PyReferenceExpression[] getGlobals();
 }

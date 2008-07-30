@@ -350,7 +350,9 @@ public class StatementParsing
         from_future = true;
       }
       if (builder.getTokenType() == PyTokenTypes.MULT) {
+        final PsiBuilder.Marker star_import_mark = builder.mark();
         builder.advanceLexer();
+        star_import_mark.done(PyElementTypes.STAR_IMPORT_ELEMENT);
       }
       else if (builder.getTokenType() == PyTokenTypes.LPAR) {
         builder.advanceLexer();

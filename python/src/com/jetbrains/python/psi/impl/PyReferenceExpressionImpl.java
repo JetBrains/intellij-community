@@ -36,7 +36,9 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -95,6 +97,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
+  @Nullable
+  @Override
+  public String getName() {
+    return getReferencedName();
+  }
+
+
   /**
    * Resolves reference to the most obvious point.
    * Imported module names: to module file (or directory for a qualifier). 
@@ -119,6 +128,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           If we ever need to exactly tell a dir from __init__.py, that logic has to change. 
           */ 
         }
+        else return null; // dir without __init__.py does not resolve
       }
       return target;
     }
@@ -132,7 +142,39 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return null;
     }
 
-    return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), this, this, null);
+    // here we have an unqualified expr. it may be defined:
+    // ...in current file
+    //PsiElement ret = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), this, this, null);
+    PsiElement ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), this);
+    if (ret == null) {
+      // ...as a part of current module
+      PyType otype = PyBuiltinCache.getInstance(this.getProject()).getObjectType(); // "object" as a closest kin to "module"
+      ret = otype.resolveMember(getName());
+    }
+    if (ret == null) {
+      // ...as a builtin symbol
+      PyFile bfile = PyBuiltinCache.getInstance(this.getProject()).getBuiltinsFile();
+      ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), bfile, true); 
+    }
+    if (ret == null) {
+      // if we're under a cap, an external object that we want to use might be also defined below us.
+      // look through all contexts, closest first.
+      PsiElement our_cap = PyResolveUtil.getConcealingParent(this);
+      PyResolveUtil.ResolveProcessor proc = new PyResolveUtil.ResolveProcessor(referencedName); // reusable till first hit
+      if (our_cap != null) {
+        PsiElement cap = our_cap;
+        while (true) {
+          cap = PyResolveUtil.getConcealingParent(cap);
+          if (cap == null) cap = this.getContainingFile();
+          ret = PyResolveUtil.treeCrawlUp(proc, cap, true);
+          if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) {
+            break;
+          }
+          if (cap instanceof PsiFile) break; // file level, can't try more
+        }
+      }
+    }
+    return ret;
   }
 
   /**
@@ -213,8 +255,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return new Object[0];
     }
 
+    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class) != null) {
+      // complete to possible modules
+      return ResolveImportUtil.suggestImportVariants(this);
+    }
+
     final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
-    PyResolveUtil.treeWalkUp(processor, this, this, null);
+    PyResolveUtil.treeCrawlUp(processor, this);
     return processor.getResult();
   }
 
@@ -262,6 +309,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   private boolean isBuiltInConstant() {
+    // TODO: generalize
     String name = getReferencedName();
     return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name);
   }

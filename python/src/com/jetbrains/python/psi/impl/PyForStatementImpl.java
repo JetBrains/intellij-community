@@ -84,4 +84,21 @@ public class PyForStatementImpl extends PyElementImpl implements PyForStatement 
     }
     return true;
   }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    PyExpression tgt = getTargetExpression();
+    if (tgt instanceof PyTupleExpression) {
+      return new ArrayIterable<PyElement>(((PyTupleExpression)(tgt)).getElements());
+    }
+    else return new SingleIterable<PyElement>(tgt);
+  }
+
+  public PyElement getElementNamed(final String the_name) {
+    return IterHelper.findName(iterateNames(), the_name);
+  }
+
+  public boolean mustResolveOutside() {
+    return false; 
+  }
 }

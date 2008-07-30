@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 22:22:17
  * To change this template use File | Settings | File Templates.
  */
-public interface PyImportElement extends PyElement {
+public interface PyImportElement extends PyElement, NameDefiner {
 
   @Nullable
   PyReferenceExpression getImportReference();

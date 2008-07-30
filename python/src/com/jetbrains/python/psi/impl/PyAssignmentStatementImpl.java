@@ -18,14 +18,17 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -96,5 +99,36 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       }
     }
     return true;
+  }
+
+  protected static List<PyElement> _unfoldParenExprs(PyElement[] targets, List<PyElement> receiver) {
+    // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
+    for (PyElement exp : targets) {
+      if (exp instanceof PyParenthesizedExpression) {
+        final PyParenthesizedExpression parex = (PyParenthesizedExpression)exp;
+        PyExpression cont = parex.getContainedExpression();
+        if (cont instanceof PyTupleExpression) {
+          final PyTupleExpression tupex = (PyTupleExpression)cont;
+          _unfoldParenExprs(tupex.getElements(), receiver);
+        }
+        else receiver.add(exp);
+      }
+      else receiver.add(exp);
+    }
+    return receiver;
+  }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    PyExpression[] targets = getTargets();
+    return _unfoldParenExprs(targets, new ArrayList<PyElement>(targets.length));
+  }
+
+  public PyElement getElementNamed(final String the_name) {
+    return IterHelper.findName(iterateNames(), the_name);
+  }
+
+  public boolean mustResolveOutside() {
+    return true; // a = a+1 resolves 'a' outside itself.
   }
 }
