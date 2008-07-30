@@ -51,20 +51,26 @@ public class ColorPreviewComponent extends JComponent {
   @Nullable
   public static JComponent getPreviewComponent(@NotNull final PsiElement element) {
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+
     if (psiNewExpression != null) {
       final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(psiNewExpression, PsiJavaCodeReferenceElement.class);
+
       if (referenceElement != null) {
         final PsiReference reference = referenceElement.getReference();
+
         if (reference != null) {
           final PsiElement psiElement = reference.resolve();
+
           if (psiElement instanceof PsiClass && "java.awt.Color".equals(((PsiClass)psiElement).getQualifiedName())) {
             final PsiExpressionList argumentList = psiNewExpression.getArgumentList();
+
             if (argumentList != null) {
               final PsiExpression[] expressions = argumentList.getExpressions();
               int[] values = new int[expressions.length];
               float[] values2 = new float[expressions.length];
               int i = 0;
               int j = 0;
+              
               for (final PsiExpression each : expressions) {
                 if (each instanceof PsiLiteralExpression) {
                   final Object o = ((PsiLiteralExpression)each).getValue();
@@ -121,8 +127,10 @@ public class ColorPreviewComponent extends JComponent {
     if (PlatformPatterns.psiElement(PsiIdentifier.class).withParent(PlatformPatterns.psiElement(PsiReferenceExpression.class))
       .accepts(element)) {
       final PsiReference reference = element.getParent().getReference();
+
       if (reference != null) {
         final PsiElement psiElement = reference.resolve();
+
         if (psiElement instanceof PsiField) {
           if ("java.awt.Color".equals(((PsiField)psiElement).getContainingClass().getQualifiedName())) {
             final String colorName = ((PsiField)psiElement).getName().toLowerCase().replace("_", "");
@@ -136,15 +144,18 @@ public class ColorPreviewComponent extends JComponent {
 
     if (element.getParent() instanceof XmlAttributeValue) {
       final PsiElement parentParent = element.getParent().getParent();
+
       if (parentParent instanceof XmlAttribute) {
-        XmlAttribute attribute = (XmlAttribute)parentParent;
-        String attrName = attribute.getName();
+        final XmlAttribute attribute = (XmlAttribute)parentParent;
+        final String attrName = attribute.getName().toLowerCase();
+
         if ("alink".equals(attrName) ||
-            "link".equals(attrName) | "text".equals(attrName) ||
+            "link".equals(attrName) ||
+            "text".equals(attrName) ||
             "vlink".equals(attrName) ||
-            "bgcolor".equals(attrName) ||
-            "color".equals(attrName)) {
-          String s = element.getText();
+            attrName.indexOf("color") >= 0) {
+          String s = element.getText();  // TODO: support [#FFF, #FFF]
+
           if (s.length() > 0) {
             final String hexColor = (s.charAt(0) == '#') ? s : ColorSampleLookupValue.getHexCodeForColorName(s.toLowerCase());
             if (hexColor != null) {
