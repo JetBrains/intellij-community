@@ -48,7 +48,10 @@ public class Storage implements Disposable, Forceable {
     final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
     final File dataFile = new File(storageFilePath + DATA_EXTENSION);
 
-    return FileUtil.delete(recordsFile) && FileUtil.delete(dataFile);
+    // ensure both files deleted
+    final boolean deletedRecordsFile = FileUtil.delete(recordsFile);
+    final boolean deletedDataFile = FileUtil.delete(dataFile);
+    return deletedRecordsFile && deletedDataFile;
   }
 
   public static void convertFromOldExtensions(String storageFilePath) {
