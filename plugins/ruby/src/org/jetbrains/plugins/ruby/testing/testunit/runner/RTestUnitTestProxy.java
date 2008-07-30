@@ -64,6 +64,7 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
       myChildren = new ArrayList<RTestUnitTestProxy>();
     }
     myChildren.add(child);
+    //TODO reset children cache
     child.setParent(this);
 
     if (myPrinter != Printer.DEAF) {
@@ -144,12 +145,24 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     myParent = parent;
   }
 
-  public List<? extends RTestUnitTestProxy> getChildren(final Filter filter) {
-    if (filter == Filter.NO_FILTER) {
-      return getChildren();
+  public List<? extends RTestUnitTestProxy> getChildren(@Nullable final Filter filter) {
+    final List<? extends RTestUnitTestProxy> allChildren = getChildren();
+
+    if (filter == Filter.NO_FILTER || filter == null) {
+      return allChildren;
     }
-    //TODO[romeo] add filter
-    return Collections.<RTestUnitTestProxy>emptyList();
+
+    final List<RTestUnitTestProxy> selectedChildren = new ArrayList<RTestUnitTestProxy>();
+    for (RTestUnitTestProxy child : allChildren) {
+      if (filter.shouldAccept(child)) {
+        selectedChildren.add(child);
+      }
+    }
+
+    if ((selectedChildren.isEmpty())) {
+      return Collections.<RTestUnitTestProxy>emptyList();
+    }
+    return selectedChildren;
   }
 
   public boolean wasLaunched() {

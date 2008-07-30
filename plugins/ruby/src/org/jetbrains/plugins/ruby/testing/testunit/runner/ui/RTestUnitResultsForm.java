@@ -4,11 +4,13 @@ import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
-import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
@@ -21,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeBuilder;
@@ -28,9 +31,8 @@ import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeStructure
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.tree.TreePath;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -49,12 +51,11 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private ColorProgressBar myProgressLine;
   private JLabel myStatusLabel;
   private JTabbedPane myTabbedPane;
-  private JPanel toolbarPanel; //TODO[romeo] add toolbar
+  private JPanel toolbarPanel;
   private RTestUnitTestTreeView tree;
 
-  private final TestsProgressAnimator myAnimator; 
-  private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
-  //private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+  private final TestsProgressAnimator myAnimator;
+  private final RTestUnitToolbarPanel myToolbar;
 
   /**
    * Fake parent suite for all tests and suites
@@ -77,44 +78,31 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private final RTestsRunConfiguration myRunConfiguration;
 
   public RTestUnitResultsForm(final RTestsRunConfiguration runConfiguration,
-                              final TestConsoleProperties consoleProperties) {
+                              final TestConsoleProperties consoleProperties,
+                              final RunnerSettings runnerSettings,
+                              final ConfigurationPerRunnerSettings configurationSettings) {
     myConsoleProperties = consoleProperties;
     myRunConfiguration = runConfiguration;
 
     final Project project = runConfiguration.getProject();
     myProject = project;
+
     myLogFilesManager = new LogFilesManager(project, this);
 
+    //Create tests common suite root
     //noinspection HardCodedStringLiteral
     myTestsRootNode = new RTestUnitTestProxy("[root]", true);
 
+    // Setup tests tree
+    tree.setLargeModel(true);
     tree.attachToModel(this);
     final RTestUnitTreeStructure structure = new RTestUnitTreeStructure(project, myTestsRootNode);
     myTreeBuilder = new RTestUnitTreeBuilder(tree, structure);
     myAnimator = new MyAnimator(myTreeBuilder);
 
-    splitterProportions.externalizeFromDimensionService(RTEST_UNIT_SPLITTER_PROPERTY);
-        final Container container = splitPane.getParent();
-        GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
-        final Splitter splitter = (Splitter)container.getComponent(0);
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            splitterProportions.restoreSplitterProportions(container);
-            splitter.addPropertyChangeListener(new PropertyChangeListener() {
-              public void propertyChange(final PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
-                  splitterProportions.saveSplitterProportions(container);
-                  splitterProportions.externalizeToDimensionService(RTEST_UNIT_SPLITTER_PROPERTY);
-                }
-              }
-            });
-          }
-        });
-        Disposer.register(this, new Disposable() {
-          public void dispose() {
-            splitter.dispose();
-          }
-        });
+    myToolbar = initToolbarPanel(consoleProperties, runnerSettings, configurationSettings);
+
+    makeSplitterSettingsExternalizable(splitPane);
   }
 
   public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {
@@ -216,22 +204,24 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
    * Returns root node, fake parent suite for all tests and suites
    * @return
    */
-  public void startTesting() {
+  public void onStartTesting() {
     // Status line
     myProgressLine.setColor(ColorProgressBar.GREEN);
 
     // Tests tree
-    tree.getSelectionModel().setSelectionPath(new TreePath(myTreeBuilder.getNodeForElement(myTestsRootNode)));
+    selectWithoutNotify(myTestsRootNode);
   }
 
-  public void finishTesting() {
+  public void onFinishTesting() {
     myAnimator.stopMovie();
 
-    //TODO[romeo] selection
+
+    //TODO implement
     //if (RTestUnitConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
     //    selectTest(myTestsRootNode.getFirstDefect());
     //} else {
-        tree.getSelectionModel().setSelectionPath(new TreePath(myTreeBuilder.getNodeForElement(myTestsRootNode)));
+        selectWithoutNotify(myTestsRootNode);
+        //tree.getSelectionModel().setSelectionPath(new TreePath(myTreeBuilder.getNodeForElement(myTestsRootNode)));
     //}
     tree.repaint();
 
@@ -247,12 +237,15 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
    * @param testsTotal Total tests
    * @param testsCurrentCount Current count
    */
-  public void addTestNode(final RTestUnitTestProxy testProxy,
+  public void onTestStarted(final RTestUnitTestProxy testProxy,
                           final int testsTotal, final int testsCurrentCount) {
     // update progress if total is set
     myProgressLine.setFraction(testsTotal != 0 ? (double)testsCurrentCount / testsTotal : 0);
 
     _addTestOrSuite(testProxy);
+
+    //TODO if Console.properites.TRACK_RUNNING_TEST.consoleProperties
+    // select(test)
   }
 
   /**
@@ -262,7 +255,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
    *
    * @param newSuite Tests suite
    */
-  public void addSuiteNode(final RTestUnitTestProxy newSuite) {
+  public void onSuiteStarted(final RTestUnitTestProxy newSuite) {
     _addTestOrSuite(newSuite);
   }
 
@@ -289,15 +282,11 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   }
 
   public void setFilter(final Filter filter) {
-    //TODO[romeo] implement
-    //getTreeStructure().setFilter(filter);
-    //myTreeBuilder.updateFromRoot();
+    // is usded by Test Runner actions, e.g. hide passed, etc
+    final RTestUnitTreeStructure treeStructure = myTreeBuilder.getRTestUnitTreeStructure();
+    treeStructure.setFilter(filter);
+    myTreeBuilder.updateFromRoot();
   }
-  //
-  //public TestTreeStructure getTreeStructure() {
-  //    return (TestTreeStructure) myTreeBuilder.getTreeStructure();
-  //}
-
 
   public void addListener(final ModelListener l) {
     myListeners.add(l);
@@ -320,8 +309,18 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     return myTestsRootNode;
   }
 
-  public void selectAndNotify(final AbstractTestProxy testProxy) {
-    //TODO[romeo] implement
+  public void selectAndNotify(@Nullable final AbstractTestProxy testProxy) {
+    //is used by Test Runner actions - go to next failed, passed, first failed, etc
+
+    selectWithoutNotify(testProxy);
+  }
+
+  private void selectWithoutNotify(final AbstractTestProxy testProxy) {
+    if (testProxy == null) {
+      return;
+    }
+
+    myTreeBuilder.select(testProxy, null);
   }
 
   public void dispose() {
@@ -329,6 +328,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
       listener.onDispose();
     }
     myAnimator.dispose();
+    myToolbar.dispose();
     Disposer.dispose(myTreeBuilder);
     myLogFilesManager.unregisterFileMatcher();
   }
@@ -336,13 +336,13 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
   private void _addTestOrSuite(@NotNull final RTestUnitTestProxy newTestOrSuite) {
 
-    RTestUnitTestProxy parentSuite = newTestOrSuite.getParent();
-    if (parentSuite == null) {
-      parentSuite = myTestsRootNode;
-    }
-    
+    final RTestUnitTestProxy parentSuite = newTestOrSuite.getParent();
+    assert parentSuite != null;
+
+
+
     // Tree
-    myTreeBuilder.addItem(parentSuite, newTestOrSuite);
+    myTreeBuilder.updateTestsSubtree(parentSuite);
     myTreeBuilder.repaintWithParents(newTestOrSuite);
 
     IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
@@ -352,6 +352,44 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     }, ModalityState.NON_MODAL);
   }
 
+  private RTestUnitToolbarPanel initToolbarPanel(final TestConsoleProperties consoleProperties,
+                                                 final RunnerSettings runnerSettings,
+                                                 final ConfigurationPerRunnerSettings configurationSettings) {
+    toolbarPanel.setLayout(new BorderLayout());
+    final RTestUnitToolbarPanel toolbar =
+        new RTestUnitToolbarPanel(consoleProperties, runnerSettings, configurationSettings, this);
+    toolbarPanel.add(toolbar);
+
+    return toolbar;
+  }
+
+  private void makeSplitterSettingsExternalizable(final JSplitPane splitPane) {
+    final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
+    //PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+
+    splitterProportions.externalizeFromDimensionService(RTEST_UNIT_SPLITTER_PROPERTY);
+    final Container container = splitPane.getParent();
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
+    final Splitter splitter = (Splitter)container.getComponent(0);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        splitterProportions.restoreSplitterProportions(container);
+        splitter.addPropertyChangeListener(new PropertyChangeListener() {
+          public void propertyChange(final PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
+              splitterProportions.saveSplitterProportions(container);
+              splitterProportions.externalizeToDimensionService(RTEST_UNIT_SPLITTER_PROPERTY);
+            }
+          }
+        });
+      }
+    });
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        splitter.dispose();
+      }
+    });
+  }
 
   private static class MyAnimator extends TestsProgressAnimator {
     public MyAnimator(final AbstractTestTreeBuilder builder) {

@@ -6,7 +6,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.MockPrinter;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 
 /**
@@ -22,7 +21,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     super.setUp();
 
     final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
-    final TestResultsViewer resultsViewer = new RTestUnitResultsForm(consoleProperties.getConfiguration(), consoleProperties);
+    final TestResultsViewer resultsViewer = createResultsViewer(consoleProperties);
 
     myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
     myEventsProcessor = new RTestUnitEventsProcessor(resultsViewer);

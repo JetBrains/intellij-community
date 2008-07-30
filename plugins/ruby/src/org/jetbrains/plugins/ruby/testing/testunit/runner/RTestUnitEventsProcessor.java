@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public class RTestUnitEventsProcessor {
 
   public void onStartTesting() {
     // prepare view
-    myResultsViewer.startTesting();
+    myResultsViewer.onStartTesting();
 
     myStartTime = System.currentTimeMillis();
 
@@ -54,7 +55,7 @@ public class RTestUnitEventsProcessor {
     testsRootNode.setFinished();
 
     // update view
-    myResultsViewer.finishTesting();
+    myResultsViewer.onFinishTesting();
 
     mySuitesStack.popSuite(testsRootNode.getName());
     LOG.assertTrue(mySuitesStack.getStackSize() == 0);
@@ -70,10 +71,11 @@ public class RTestUnitEventsProcessor {
       return;
     }
 
+    final RTestUnitTestProxy parentSuite = getCurrentTestSuite();
+
     // creates test
     final RTestUnitTestProxy testProxy = new RTestUnitTestProxy(testName, false);
-    final RTestUnitTestProxy parentSuite = mySuitesStack.getCurrentSuite();
-    testProxy.setParent(parentSuite);
+    parentSuite.addChild(testProxy);
     // adds to running tests map
     myRunningTestsFullNameToProxy.put(fullName, testProxy);
 
@@ -87,16 +89,24 @@ public class RTestUnitEventsProcessor {
     //Progress started
     testProxy.setStarted();
     // update tree
-    myResultsViewer.addTestNode(testProxy, myTestsTotal, myTestsCurrentCount);
+    myResultsViewer.onTestStarted(testProxy, myTestsTotal, myTestsCurrentCount);
     // update progress bar
     updateProgress();
   }
 
-  public void onTestSuiteStart(final String suiteName) {
-    final RTestUnitTestProxy newSuite = new RTestUnitTestProxy(suiteName, true);
-
+  @NotNull
+  private RTestUnitTestProxy getCurrentTestSuite() {
     final RTestUnitTestProxy parentSuite = mySuitesStack.getCurrentSuite();
-    newSuite.setParent(parentSuite);
+    assert parentSuite != null;
+
+    return parentSuite;
+  }
+
+  public void onTestSuiteStart(final String suiteName) {
+    final RTestUnitTestProxy parentSuite = getCurrentTestSuite();
+    //new suite
+    final RTestUnitTestProxy newSuite = new RTestUnitTestProxy(suiteName, true);
+    parentSuite.addChild(newSuite);
 
     mySuitesStack.pushSuite(newSuite);
 
@@ -104,7 +114,7 @@ public class RTestUnitEventsProcessor {
     newSuite.setStarted();
 
     //update tree
-    myResultsViewer.addSuiteNode(newSuite);
+    myResultsViewer.onSuiteStarted(newSuite);
   }
 
   public void onTestFinish(final String testName) {
@@ -159,8 +169,7 @@ public class RTestUnitEventsProcessor {
   }
 
   protected String getFullTestName(final String testName) {
-    //TODO[romeo]
-    return testName;
+    return getCurrentTestSuite().getName() + testName;
   }
 
   protected Map<String, RTestUnitTestProxy> getRunningTestsFullNameToProxy() {

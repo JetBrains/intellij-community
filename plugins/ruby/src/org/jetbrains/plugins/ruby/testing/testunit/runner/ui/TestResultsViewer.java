@@ -45,7 +45,7 @@ public interface TestResultsViewer extends Disposable {
   /**
    * On start testing, before tests and suits launching
    */
-  void startTesting();
+  void onStartTesting();
 
   /**
    * Fake Root for toplevel test suits/tests
@@ -56,7 +56,7 @@ public interface TestResultsViewer extends Disposable {
   /**
    * After test framework finish testing
    */
-  void finishTesting();
+  void onFinishTesting();
 
   /**
    * Add test to viewer
@@ -64,14 +64,14 @@ public interface TestResultsViewer extends Disposable {
    * @param testsTotal Total amount of tests
    * @param testsCurrentCount Current test number
    */
-  void addTestNode(final RTestUnitTestProxy testProxy,
+  void onTestStarted(final RTestUnitTestProxy testProxy,
                    final int testsTotal, final int testsCurrentCount);
 
   /**
    * Adds suite to viewer
    * @param suite Suite
    */
-  void addSuiteNode(final RTestUnitTestProxy suite);
+  void onSuiteStarted(final RTestUnitTestProxy suite);
 
   /**
    * Update testing status

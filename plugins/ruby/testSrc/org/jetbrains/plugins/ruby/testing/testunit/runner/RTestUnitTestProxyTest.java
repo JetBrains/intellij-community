@@ -270,7 +270,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     mySuite.addChild(mySimpleTest);
 
     assertEquals(1, mySuite.getChildren(Filter.NO_FILTER).size());
-    assertEmpty(mySuite.getChildren(null));
+    assertEquals(1, mySuite.getChildren(null).size());
   }
 
   public void testGetAllTests() {
