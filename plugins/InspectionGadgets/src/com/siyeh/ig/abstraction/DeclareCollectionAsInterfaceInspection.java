@@ -17,8 +17,10 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -113,19 +116,11 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                         parameterList.getTypeParameterElements();
               if (typeParameterElements.length > 0) {
                 newElementText.append('<');
-                final PsiTypeElement typeParameterElement1 =
-                        typeParameterElements[0];
-                if (typeParameterElement1 != null) {
-                    newElementText.append(typeParameterElement1.getText());
-                }
-                for (int i = 1; i < typeParameterElements.length; i++) {
-                    newElementText.append(',');
-                    final PsiTypeElement typeParameterElement =
-                            typeParameterElements[i];
-                    if (typeParameterElement != null) {
-                        newElementText.append(typeParameterElement.getText());
-                    }
-                }
+                newElementText.append(StringUtil.join(Arrays.asList(typeParameterElements), new Function<PsiTypeElement, String>() {
+                  public String fun(final PsiTypeElement psiTypeElement) {
+                    return psiTypeElement.getText();
+                  }
+                }, ","));
                 newElementText.append('>');
               }
             }
