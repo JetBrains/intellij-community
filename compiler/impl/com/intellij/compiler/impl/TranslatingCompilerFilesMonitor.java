@@ -826,7 +826,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     private void markDirtyIfSource(final VirtualFile file) {
       processRecursively(file, new FileProcessor() {
         public void execute(final VirtualFile file) {
-          final SourceFileInfo srcInfo = loadSourceInfo(file);
+          final SourceFileInfo srcInfo = file.isValid()? loadSourceInfo(file) : null;
           if (srcInfo != null) {
             for (int projectId : srcInfo.getProjectIds().toArray()) {
               addSourceForRecompilation(projectId, file, srcInfo);
