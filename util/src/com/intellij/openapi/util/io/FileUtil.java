@@ -405,7 +405,6 @@ public class FileUtil {
   }
 
   public static void copy(File fromFile, File toFile) throws IOException {
-    FileInputStream fis = new FileInputStream(fromFile);
     FileOutputStream fos;
     try {
       fos = new FileOutputStream(toFile);
@@ -413,7 +412,7 @@ public class FileUtil {
     catch (FileNotFoundException e) {
       File parentFile = toFile.getParentFile();
       if (parentFile == null) {
-        return; // TODO: diagnostics here
+        throw new IOException("parent file is null for " + toFile.getPath(), e);
       }
       parentFile.mkdirs();
       toFile.createNewFile();
@@ -421,6 +420,7 @@ public class FileUtil {
     }
 
     if (Patches.FILE_CHANNEL_TRANSFER_BROKEN) {
+      FileInputStream fis = new FileInputStream(fromFile);
       try {
         copy(fis, fos);
       }
@@ -430,9 +430,8 @@ public class FileUtil {
       }
     }
     else {
-      FileChannel fromChannel = fis.getChannel();
+      FileChannel fromChannel = new FileInputStream(fromFile).getChannel();
       FileChannel toChannel = fos.getChannel();
-
       try {
         fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
       }
