@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -88,6 +89,10 @@ public abstract class RunConfigurationBase implements RunConfiguration {
 
   public final int hashCode() {
     return super.hashCode();
+  }
+
+  public void checkRunnerSettings(@NotNull ProgramRunner runner, @Nullable RunnerSettings runnerSettings,
+                                  @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
   }
 
   public final boolean equals(final Object obj) {

@@ -1,7 +1,7 @@
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
@@ -18,9 +18,10 @@ public class ExecutionUtil {
   private ExecutionUtil() {
   }
 
-  public static Icon getConfigurationIcon(final Project project, final RunConfiguration configuration, final boolean invalid) {
+  public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {
     final RunManager runManager = RunManager.getInstance(project);
-    final Icon icon = configuration.getFactory().getIcon(configuration);
+    RunConfiguration configuration = settings.getConfiguration();
+    final Icon icon = settings.getFactory().getIcon(configuration);
     final Icon configurationIcon = runManager.isTemporary(configuration) ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
       return LayeredIcon.create(configurationIcon, INVALID_CONFIGURATION);
@@ -29,13 +30,13 @@ public class ExecutionUtil {
     return configurationIcon;
   }
 
-  public static Icon getConfigurationIcon(final Project project, final RunConfiguration configuration) {
+  public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings) {
     try {
-      configuration.checkConfiguration();
-      return getConfigurationIcon(project, configuration, false);
+      settings.checkSettings();
+      return getConfigurationIcon(project, settings, false);
     }
     catch (RuntimeConfigurationException ex) {
-      return getConfigurationIcon(project, configuration, true);
+      return getConfigurationIcon(project, settings, true);
     }
   }
 

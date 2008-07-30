@@ -198,6 +198,19 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
   }
 
+  public void checkSettings() throws RuntimeConfigurationException {
+    myConfiguration.checkConfiguration();
+    if (myConfiguration instanceof RunConfigurationBase) {
+      final RunConfigurationBase runConfigurationBase = (RunConfigurationBase)myConfiguration;
+      Set<ProgramRunner> runners = new HashSet<ProgramRunner>();
+      runners.addAll(myRunnerSettings.keySet());
+      runners.addAll(myConfigurationPerRunnerSettings.keySet());
+      for (ProgramRunner runner : runners) {
+        runConfigurationBase.checkRunnerSettings(runner, myRunnerSettings.get(runner), myConfigurationPerRunnerSettings.get(runner));
+      }
+    }
+  }
+
   private static Comparator<Element> createRunnerComparator() {
     return new Comparator<Element>() {
       public int compare(final Element o1, final Element o2) {

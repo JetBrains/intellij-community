@@ -103,14 +103,15 @@ class RunConfigurable extends BaseConfigurable {
             RunConfiguration configuration = null;
             String name = null;
             if (userObject instanceof SingleConfigurationConfigurable) {
-              final SingleConfigurationConfigurable settings = (SingleConfigurationConfigurable)userObject;
+              final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
+              setIcon(ExecutionUtil.getConfigurationIcon(getProject(), settings.getSettings(), !settings.isValid()));
               configuration = settings.getConfiguration();
-              setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration, !settings.isValid()));
               name = settings.getNameText();
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-              configuration = ((RunnerAndConfigurationSettingsImpl)userObject).getConfiguration();
-              setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration));
+              RunnerAndConfigurationSettingsImpl settings = (RunnerAndConfigurationSettingsImpl)userObject;
+              setIcon(ExecutionUtil.getConfigurationIcon(getProject(), settings));
+              configuration = settings.getConfiguration();
               name = configuration.getName();
             }
             if (configuration != null) {
@@ -570,7 +571,7 @@ class RunConfigurable extends BaseConfigurable {
 
   private static boolean canRunConfiguration(SingleConfigurationConfigurable<RunConfiguration> configuration) {
     try {
-      return configuration != null && RunManagerImpl.canRunConfiguration(configuration.getSnapshot().getConfiguration());
+      return configuration != null && RunManagerImpl.canRunConfiguration(configuration.getSnapshot());
     }
     catch (ConfigurationException e) {
       return false;

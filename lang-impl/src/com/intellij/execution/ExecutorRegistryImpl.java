@@ -145,7 +145,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       final RunnerAndConfigurationSettingsImpl selectedConfiguration = getConfiguration(project);
-      if (selectedConfiguration != null && RunManagerImpl.canRunConfiguration(selectedConfiguration.getConfiguration())) {
+      if (selectedConfiguration != null && RunManagerImpl.canRunConfiguration(selectedConfiguration)) {
         final ProgramRunner runner =
           RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
         enabled = runner != null;

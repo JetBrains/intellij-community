@@ -1,8 +1,6 @@
 package com.intellij.execution.impl;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerRegistry;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -96,9 +94,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       try {
         RunnerAndConfigurationSettings snapshot = getSnapshot();
         snapshot.setName(getNameText());
-        snapshot.getConfiguration().checkConfiguration();
+        snapshot.checkSettings();
         for (ProgramRunner runner : RunnerRegistry.getInstance().getRegisteredRunners()) {
-          checkConfiguration(runner, snapshot);
+          for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+            if (runner.canRun(executor.getId(), snapshot.getConfiguration())) {
+              checkConfiguration(runner, snapshot);
+              break;
+            }
+          }
         }
       }
       catch (RuntimeConfigurationException exception) {

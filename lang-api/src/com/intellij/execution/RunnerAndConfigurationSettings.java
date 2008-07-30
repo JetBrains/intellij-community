@@ -41,4 +41,6 @@ public interface RunnerAndConfigurationSettings {
 
   @Nullable
   ConfigurationType getType();
+
+  void checkSettings() throws RuntimeConfigurationException;
 }

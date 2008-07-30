@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,15 +55,16 @@ public class RunConfigurationAction extends ComboBoxAction {
     else {
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
       RunnerAndConfigurationSettings selected = runManager.getSelectedConfiguration();
-      updateButton(selected == null? null : selected.getConfiguration(), project, presentation);
+      updateButton(selected, project, presentation);
       presentation.setEnabled(true);
     }
   }
 
-  private static void updateButton(final RunConfiguration configuration, final Project project, final Presentation presentation) {
-    if (project != null && configuration != null) {
-      presentation.setText(configuration.getName(), false);
-      setConfigurationIcon(presentation, configuration, project);
+  private static void updateButton(final @Nullable RunnerAndConfigurationSettings settings, final @Nullable Project project,
+                                   final @NotNull Presentation presentation) {
+    if (project != null && settings != null) {
+      presentation.setText(settings.getName(), false);
+      setConfigurationIcon(presentation, settings, project);
     }
     else {
       presentation.setText(" ");
@@ -70,8 +72,8 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
   }
 
-  private static void setConfigurationIcon(final Presentation presentation, final RunConfiguration configuration, final Project project) {
-    presentation.setIcon(ExecutionUtil.getConfigurationIcon(project, configuration));
+  private static void setConfigurationIcon(final Presentation presentation, final RunnerAndConfigurationSettings settings, final Project project) {
+    presentation.setIcon(ExecutionUtil.getConfigurationIcon(project, settings));
   }
 
   public JComponent createCustomComponent(final Presentation presentation) {
@@ -180,12 +182,12 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
 
     private void updateIcon(final Presentation presentation) {
-      setConfigurationIcon(presentation, myConfiguration.getConfiguration(), myProject);
+      setConfigurationIcon(presentation, myConfiguration, myProject);
     }
 
     public void actionPerformed(final AnActionEvent e){
       RunManagerEx.getInstanceEx(myProject).setActiveConfiguration(myConfiguration);
-      updateButton(myConfiguration.getConfiguration(), myProject, e.getPresentation());
+      updateButton(myConfiguration, myProject, e.getPresentation());
     }
 
     public void update(final AnActionEvent e) {
