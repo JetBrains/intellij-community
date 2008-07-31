@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestTreeView;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -14,7 +14,7 @@ import javax.swing.tree.TreeModel;
  */
 public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   private RTestUnitConsoleView myConsole;
-  private RTestUnitEventsProcessor myEventsProcessor;
+  private GeneralToRTestUnitEventsConvertor myEventsProcessor;
   private TreeModel myTreeModel;
 
   @Override
@@ -22,11 +22,12 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     super.setUp();
 
     final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
-    final TestResultsViewer resultsViewer = createResultsViewer(consoleProperties);
+    final RTestUnitResultsForm resultsViewer = (RTestUnitResultsForm)createResultsViewer(consoleProperties);
 
     myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
-    myEventsProcessor = new RTestUnitEventsProcessor(resultsViewer);
-    myTreeModel = ((RTestUnitResultsForm)resultsViewer).getTreeView().getModel();
+    myEventsProcessor = new GeneralToRTestUnitEventsConvertor(resultsViewer.getTestsRootNode());
+    myEventsProcessor.addEventsListener(resultsViewer);
+    myTreeModel = resultsViewer.getTreeView().getModel();
 
     myEventsProcessor.onStartTesting();
   }
@@ -40,10 +41,6 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   }
 
   public void testOnStartTesting() {
-    assertTrue(myEventsProcessor.getStartTime() > 0);
-    assertEquals(0, myEventsProcessor.getTestsCurrentCount());
-    assertEquals(0, myEventsProcessor.getTestsTotal());
-
     final Object rootTreeNode = myTreeModel.getRoot();
     assertEquals(0, myTreeModel.getChildCount(rootTreeNode));
 
@@ -61,21 +58,10 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     assertEquals("[root]", rootTreeNode.toString());
   }
 
-  public void testOnTestsCount() {
-    myEventsProcessor.onTestsCount(200);
-
-    assertEquals(0, myEventsProcessor.getTestsCurrentCount());
-    assertEquals(200, myEventsProcessor.getTestsTotal());
-  }
-
   public void testOnTestStart() {
     myEventsProcessor.onTestStart("some_test");
-
-    assertEquals(1, myEventsProcessor.getTestsCurrentCount());
-
     final String fullName = myEventsProcessor.getFullTestName("some_test");
-    final RTestUnitTestProxy proxy =
-        myEventsProcessor.getRunningTestsFullNameToProxy().get(fullName);
+    final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
 
     assertNotNull(proxy);
     assertTrue(proxy.isInProgress());
@@ -88,10 +74,8 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
 
 
     myEventsProcessor.onTestStart("some_test2");
-    assertEquals(2, myEventsProcessor.getTestsCurrentCount());
     final String fullName2 = myEventsProcessor.getFullTestName("some_test2");
-    final RTestUnitTestProxy proxy2 =
-        myEventsProcessor.getRunningTestsFullNameToProxy().get(fullName2);
+    final RTestUnitTestProxy proxy2 = myEventsProcessor.getProxyByFullTestName(fullName2);
     assertSameElements(rootProxy.getChildren(), proxy, proxy2);
   }
 
@@ -99,30 +83,15 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     myEventsProcessor.onTestStart("some_test");
     myEventsProcessor.onTestStart("some_test");
 
-    assertEquals(1, myEventsProcessor.getTestsCurrentCount());
-  }
-
-  public void testOnTestStart_ChangeTotal() {
-    myEventsProcessor.onTestsCount(2);
-    myEventsProcessor.onTestStart("some_test");
-    assertEquals(2, myEventsProcessor.getTestsTotal());
-    myEventsProcessor.onTestStart("some_test1");
-    assertEquals(2, myEventsProcessor.getTestsTotal());
-    myEventsProcessor.onTestStart("some_test2");
-    assertEquals(3, myEventsProcessor.getTestsTotal());
-    myEventsProcessor.onTestStart("some_test3");
-    assertEquals(4, myEventsProcessor.getTestsTotal());
+    assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
   }
 
   public void testOnTestFailure() {
     myEventsProcessor.onTestStart("some_test");
     myEventsProcessor.onTestFailure("some_test", "", "");
 
-    assertEquals(1, myEventsProcessor.getTestsCurrentCount());
-
     final String fullName = myEventsProcessor.getFullTestName("some_test");
-    final RTestUnitTestProxy proxy =
-        myEventsProcessor.getRunningTestsFullNameToProxy().get(fullName);
+    final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
 
     assertTrue(proxy.isDefect());
     assertFalse(proxy.isInProgress());
@@ -133,8 +102,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     myEventsProcessor.onTestFailure("some_test", "", "");
     myEventsProcessor.onTestFailure("some_test", "", "");
 
-    assertEquals(1, myEventsProcessor.getTestsCurrentCount());
-    assertEquals(1, myEventsProcessor.getRunningTestsFullNameToProxy().size());
+    assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(1, myEventsProcessor.getFailedTestsSet().size());
 
   }
@@ -142,11 +110,10 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   public void testOnTestFinish() {
     myEventsProcessor.onTestStart("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
-    final RTestUnitTestProxy proxy = myEventsProcessor.getRunningTestsFullNameToProxy().get(fullName);
+    final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
     myEventsProcessor.onTestFinish("some_test");
 
-    assertEquals(1, myEventsProcessor.getTestsCurrentCount());
-    assertEquals(0, myEventsProcessor.getRunningTestsFullNameToProxy().size());
+    assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(0, myEventsProcessor.getFailedTestsSet().size());
 
 
@@ -186,18 +153,11 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     assertTrue(rootProxy.isDefect());
   }
 
-  public void testOnFinishTesting_EndTime() {
-    myEventsProcessor.onFinishTesting();
-    assertTrue(myEventsProcessor.getEndTime() > 0);
-  }
-
   public void testOnFinishTesting_WithDefect() {
     myEventsProcessor.onTestStart("test");
     myEventsProcessor.onTestFailure("test", "", "");
     myEventsProcessor.onTestFinish("test");
     myEventsProcessor.onFinishTesting();
-
-    assertTrue(myEventsProcessor.getEndTime() > 0);
 
     //Tree
     final Object rootTreeNode = myTreeModel.getRoot();
@@ -212,15 +172,19 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   public void testOnFinishTesting_twice() {
     myEventsProcessor.onFinishTesting();
 
-    final long time = myEventsProcessor.getEndTime();
+    final Marker finishedMarker = new Marker();
+    myEventsProcessor.addEventsListener(new RTestUnitEventsAdapter(){
+      @Override
+      public void onTestingFinished() {
+        finishedMarker.set();
+      }
+    });
     myEventsProcessor.onFinishTesting();
-    assertEquals(time, myEventsProcessor.getEndTime());
+    assertFalse(finishedMarker.isSet());
   }
 
   public void testOnSuiteStart() {
-    assertEquals(0, myEventsProcessor.getTestsCurrentCount());
     myEventsProcessor.onTestSuiteStart("suite1");
-    assertEquals(0, myEventsProcessor.getTestsCurrentCount());
 
     //lets check that new tests have right parent
     myEventsProcessor.onTestStart("test1");

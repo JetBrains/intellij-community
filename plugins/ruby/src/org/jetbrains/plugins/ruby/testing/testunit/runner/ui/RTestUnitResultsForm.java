@@ -25,9 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeBuilder;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeStructure;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.*;
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
@@ -43,7 +41,8 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConsoleManager, TestResultsViewer {
+public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConsoleManager, TestResultsViewer,
+                                             RTestUnitEventsListener {
   @NonNls private static final String RTEST_UNIT_SPLITTER_PROPERTY = "RubyTestUnit.Splitter.Proportion";
 
   private JPanel myContentPane;
@@ -76,6 +75,13 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
   // Run configuration for Test::Unit
   private final RTestsRunConfiguration myRunConfiguration;
+
+  private int myTestsCurrentCount;
+  private int myTestsTotal;
+  private int myTestsFailuresCount;
+  private long myStartTime;
+  private long myEndTime;
+
 
   public RTestUnitResultsForm(final RTestsRunConfiguration runConfiguration,
                               final TestConsoleProperties consoleProperties,
@@ -204,15 +210,22 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
    * Returns root node, fake parent suite for all tests and suites
    * @return
    */
-  public void onStartTesting() {
+  public void onTestingStarted() {
     // Status line
     myProgressLine.setColor(ColorProgressBar.GREEN);
 
     // Tests tree
     selectWithoutNotify(myTestsRootNode);
+
+    myStartTime = System.currentTimeMillis();
+    updateStatusLabel();
   }
 
-  public void onFinishTesting() {
+  public void onTestingFinished() {
+    myEndTime = System.currentTimeMillis();
+    updateStatusLabel();
+
+
     myAnimator.stopMovie();
 
 
@@ -228,24 +241,38 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     LvcsHelper.addLabel(this);
   }
 
+  public void onTestsCount(final int count) {
+    myTestsTotal = count;
+  }
+
   /**
    * Adds test to tree and updates status line.
    * Test proxy should be initialized, proxy parent must be some suite (already added to tree)
-   * If parent is null, then test will be added to tests root.
    *
    * @param testProxy Proxy
-   * @param testsTotal Total tests
-   * @param testsCurrentCount Current count
    */
-  public void onTestStarted(final RTestUnitTestProxy testProxy,
-                          final int testsTotal, final int testsCurrentCount) {
+  public void onTestStarted(@NotNull final RTestUnitTestProxy testProxy) {
+    // Counters
+    myTestsCurrentCount++;
+    // fix total count if it is corrupted
+    if (myTestsCurrentCount > myTestsTotal) {
+      myTestsTotal = myTestsCurrentCount;
+    }
+
     // update progress if total is set
-    myProgressLine.setFraction(testsTotal != 0 ? (double)testsCurrentCount / testsTotal : 0);
+    myProgressLine.setFraction(myTestsTotal != 0 ? (double)myTestsCurrentCount / myTestsTotal : 0);
 
     _addTestOrSuite(testProxy);
 
+
+    updateStatusLabel();
     //TODO if Console.properites.TRACK_RUNNING_TEST.consoleProperties
     // select(test)
+  }
+
+  public void onTestFailed(@NotNull final RTestUnitTestProxy test) {
+    myTestsFailuresCount++;
+    updateStatusLabel();
   }
 
   /**
@@ -255,26 +282,20 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
    *
    * @param newSuite Tests suite
    */
-  public void onSuiteStarted(final RTestUnitTestProxy newSuite) {
+  public void onSuiteStarted(@NotNull final RTestUnitTestProxy newSuite) {
     _addTestOrSuite(newSuite);
+  }
+
+  public void onTestFinished(@NotNull final RTestUnitTestProxy test) {
+    //Do nothing
+  }
+
+  public void onSuiteFinished(@NotNull final RTestUnitTestProxy suite) {
+    //Do nothing
   }
 
   public RTestUnitTestProxy getTestsRootNode() {
     return myTestsRootNode;
-  }
-
-  public void updateStatusLabel(final long startTime, final long endTime,
-                                  final int testsTotal, final int testsCount,
-                                  final Set<AbstractTestProxy> failedTestsSet) {
-
-    final int failuresCount = failedTestsSet.size();
-
-    if (failuresCount > 0) {
-      myProgressLine.setColor(ColorProgressBar.RED);
-    }
-    myStatusLabel.setText(TestsPresentationUtil.getProgressStatus_Text(startTime, endTime,
-                                                                       testsTotal, testsCount,
-                                                                       failuresCount));
   }
 
   public TestConsoleProperties getProperties() {
@@ -315,14 +336,6 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     selectWithoutNotify(testProxy);
   }
 
-  private void selectWithoutNotify(final AbstractTestProxy testProxy) {
-    if (testProxy == null) {
-      return;
-    }
-
-    myTreeBuilder.select(testProxy, null);
-  }
-
   public void dispose() {
     for (ModelListener listener : myListeners) {
       listener.onDispose();
@@ -333,6 +346,29 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myLogFilesManager.unregisterFileMatcher();
   }
 
+  private void selectWithoutNotify(final AbstractTestProxy testProxy) {
+    if (testProxy == null) {
+      return;
+    }
+
+    myTreeBuilder.select(testProxy, null);
+  }
+
+  protected int getTestsCurrentCount() {
+    return myTestsCurrentCount;
+  }
+
+  protected int getTestsTotal() {
+    return myTestsTotal;
+  }
+
+  protected long getStartTime() {
+    return myStartTime;
+  }
+
+  protected long getEndTime() {
+    return myEndTime;
+  }
 
   private void _addTestOrSuite(@NotNull final RTestUnitTestProxy newTestOrSuite) {
 
@@ -390,6 +426,16 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
       }
     });
   }
+
+  private void updateStatusLabel() {
+    if (myTestsFailuresCount > 0) {
+      myProgressLine.setColor(ColorProgressBar.RED);
+    }
+    myStatusLabel.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
+                                                                       myTestsTotal, myTestsCurrentCount,
+                                                                       myTestsFailuresCount));
+  }
+
 
   private static class MyAnimator extends TestsProgressAnimator {
     public MyAnimator(final AbstractTestTreeBuilder builder) {

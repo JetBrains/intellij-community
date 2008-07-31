@@ -80,4 +80,8 @@ public class TestSuiteStack {
     }
     return builder.toString();
   }
+
+  public void clear() {
+    myStack.clear();
+  }
 }

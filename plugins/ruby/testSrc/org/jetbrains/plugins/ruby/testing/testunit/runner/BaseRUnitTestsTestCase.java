@@ -28,16 +28,40 @@ public abstract class BaseRUnitTestsTestCase extends LightIdeaTestCase {
     return createTestProxy("test");
   }
 
+  protected RTestUnitTestProxy createTestProxy(final RTestUnitTestProxy parentSuite) {
+    return createTestProxy("test", parentSuite);
+  }
+
   protected RTestUnitTestProxy createTestProxy(final String name) {
-    return new RTestUnitTestProxy(name, false);
+    return createTestProxy(name, null);
+  }
+
+  protected RTestUnitTestProxy createTestProxy(final String name, final RTestUnitTestProxy parentSuite) {
+    final RTestUnitTestProxy proxy = new RTestUnitTestProxy(name, false);
+    if (parentSuite != null) {
+      parentSuite.addChild(proxy);
+    }
+    return proxy;
   }
 
   protected RTestUnitTestProxy createSuiteProxy(final String name) {
-    return new RTestUnitTestProxy(name, true);
+    return createSuiteProxy(name, null);
+  }
+
+  protected RTestUnitTestProxy createSuiteProxy(final String name, final RTestUnitTestProxy parentSuite) {
+    final RTestUnitTestProxy suite = new RTestUnitTestProxy(name, true);
+    if (parentSuite != null) {
+      parentSuite.addChild(suite);
+    }
+    return suite;
   }
 
   protected RTestUnitTestProxy createSuiteProxy() {
     return createSuiteProxy("suite");
+  }
+
+  protected RTestUnitTestProxy createSuiteProxy(final RTestUnitTestProxy parentSuite) {
+    return createSuiteProxy("suite", parentSuite);
   }
 
   protected RTestsRunConfiguration createRTestsRunConfiguration() {
@@ -57,11 +81,9 @@ public abstract class BaseRUnitTestsTestCase extends LightIdeaTestCase {
 
   protected TestResultsViewer createResultsViewer(final RTestUnitConsoleProperties consoleProperties) {
     final ExecutionEnvironment environment = new ExecutionEnvironment();
-    final TestResultsViewer resultsViewer =
-        new RTestUnitResultsForm(consoleProperties.getConfiguration(),
-                                 consoleProperties,
-                                 environment.getRunnerSettings(),
-                                 environment.getConfigurationSettings());
-    return resultsViewer;
+    return new RTestUnitResultsForm(consoleProperties.getConfiguration(),
+                                    consoleProperties,
+                                    environment.getRunnerSettings(),
+                                    environment.getConfigurationSettings());
   }
 }

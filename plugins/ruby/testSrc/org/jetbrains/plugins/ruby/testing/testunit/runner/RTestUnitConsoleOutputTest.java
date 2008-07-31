@@ -13,7 +13,7 @@ import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
  */
 public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
   private RTestUnitConsoleView myConsole;
-  private RTestUnitEventsProcessor myEventsProcessor;
+  private GeneralToRTestUnitEventsConvertor myEventsProcessor;
   private MockPrinter myMockResetablePrinter;
 
   @Override
@@ -24,7 +24,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     final TestResultsViewer resultsViewer = createResultsViewer(consoleProperties);
 
     myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
-    myEventsProcessor = new RTestUnitEventsProcessor(resultsViewer);
+    myEventsProcessor = new GeneralToRTestUnitEventsConvertor(resultsViewer.getTestsRootNode());
 
     myEventsProcessor.onStartTesting();
     myMockResetablePrinter = new MockPrinter(true);

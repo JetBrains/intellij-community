@@ -81,4 +81,13 @@ public class TestSuiteStackTest extends BaseRUnitTestsTestCase {
 
     assertEquals("[1]->[2]->[3]", myTestSuiteStack.getSuitePathPresentation());    
   }
+
+  public void testClear() {
+    myTestSuiteStack.pushSuite(createSuiteProxy("1"));
+    myTestSuiteStack.pushSuite(createSuiteProxy("2"));
+    myTestSuiteStack.pushSuite(createSuiteProxy("3"));
+    myTestSuiteStack.clear();
+
+    assertEquals(0, myTestSuiteStack.getStackSize());
+  }
 }

@@ -3,62 +3,52 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author: Roman Chernyatchik
  */
-public class RTestUnitEventsProcessor {
-  private static final Logger LOG = Logger.getInstance(RTestUnitEventsProcessor.class.getName());
+public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProcessor {
+  private static final Logger LOG = Logger.getInstance(GeneralToRTestUnitEventsConvertor.class.getName());
 
-  private final TestResultsViewer myResultsViewer;
   private final Map<String, RTestUnitTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, RTestUnitTestProxy>();
-
-  private int myTestsCurrentCount;
-  private int myTestsTotal;
-  private long myStartTime;
-  private long myEndTime;
 
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
   private final TestSuiteStack mySuitesStack = new TestSuiteStack();
+  private final List<RTestUnitEventsListener> myEventsListeners = new ArrayList<RTestUnitEventsListener>();
+  private RTestUnitTestProxy myTestsRootNode;
+  private boolean myIsTestingFinished;
 
-  public RTestUnitEventsProcessor(final TestResultsViewer resultsViewer) {
-    myResultsViewer = resultsViewer;
+  public GeneralToRTestUnitEventsConvertor(@NotNull final RTestUnitTestProxy testsRootNode) {
+    myTestsRootNode = testsRootNode;
+  }
+
+  public void addEventsListener(final RTestUnitEventsListener listener) {
+    myEventsListeners.add(listener);
   }
 
   public void onStartTesting() {
-    // prepare view
-    myResultsViewer.onStartTesting();
+    mySuitesStack.pushSuite(myTestsRootNode);
+    myTestsRootNode.setStarted();
 
-    myStartTime = System.currentTimeMillis();
-
-    final RTestUnitTestProxy testsRootNode = myResultsViewer.getTestsRootNode();
-    mySuitesStack.pushSuite(testsRootNode);
-    testsRootNode.setStarted();
-    updateProgress();
+    //fire
+    fireOnTestingStarted();
   }
 
   public void onFinishTesting() {
-    if (myEndTime > 0) {
+    if (myIsTestingFinished) {
       // has been already invoked!
       return;
     }
-    myEndTime = System.currentTimeMillis();
-    updateProgress();
+    myIsTestingFinished = true;
 
-    final RTestUnitTestProxy testsRootNode = myResultsViewer.getTestsRootNode();
-    testsRootNode.setFinished();
-
-    // update view
-    myResultsViewer.onFinishTesting();
-
-    mySuitesStack.popSuite(testsRootNode.getName());
+    myTestsRootNode.setFinished();
+    mySuitesStack.popSuite(myTestsRootNode.getName());
     LOG.assertTrue(mySuitesStack.getStackSize() == 0);
+
+    //fire events
+    fireOnTestingFinished();
   }
 
   public void onTestStart(final String testName) {
@@ -79,19 +69,11 @@ public class RTestUnitEventsProcessor {
     // adds to running tests map
     myRunningTestsFullNameToProxy.put(fullName, testProxy);
 
-    // Prerequisites
-    myTestsCurrentCount++;
-    // fix total count if it is corrupted
-    if (myTestsCurrentCount > myTestsTotal) {
-      myTestsTotal = myTestsCurrentCount;
-    }
-
     //Progress started
     testProxy.setStarted();
-    // update tree
-    myResultsViewer.onTestStarted(testProxy, myTestsTotal, myTestsCurrentCount);
-    // update progress bar
-    updateProgress();
+
+    //fire events
+    fireOnTestStarted(testProxy);
   }
 
   @NotNull
@@ -113,8 +95,8 @@ public class RTestUnitEventsProcessor {
     //Progress started
     newSuite.setStarted();
 
-    //update tree
-    myResultsViewer.onSuiteStarted(newSuite);
+    //fire event
+    fireOnSuiteStarted(newSuite);
   }
 
   public void onTestFinish(final String testName) {
@@ -123,11 +105,17 @@ public class RTestUnitEventsProcessor {
 
     testProxy.setFinished();
     myRunningTestsFullNameToProxy.remove(fullTestName);
+
+    //fire events
+    fireOnTestFinished(testProxy);
   }
 
   public void onTestSuiteFinish(final String suiteName) {
     final RTestUnitTestProxy mySuite = mySuitesStack.popSuite(suiteName);
     mySuite.setFinished();
+
+    //fire events
+    fireOnSuiteFinished(mySuite);
   }
 
   public void onTestFailure(final String testName,
@@ -147,9 +135,9 @@ public class RTestUnitEventsProcessor {
 
 
     myFailedTestsSet.add(testProxy);
-   
-    // update progress bar
-    updateProgress();
+
+    // fire event
+    fireOnTestFailed(testProxy);
   }
 
   public void onTestOutput(final String testName,
@@ -165,35 +153,19 @@ public class RTestUnitEventsProcessor {
   }
 
   public void onTestsCount(final int count) {
-    myTestsTotal = count;
+    fireOnTestsCount(count);
   }
 
   protected String getFullTestName(final String testName) {
     return getCurrentTestSuite().getName() + testName;
   }
 
-  protected Map<String, RTestUnitTestProxy> getRunningTestsFullNameToProxy() {
-    return myRunningTestsFullNameToProxy;
-  }
-
-  protected int getTestsCurrentCount() {
-    return myTestsCurrentCount;
-  }
-
-  protected int getTestsTotal() {
-    return myTestsTotal;
-  }
-
-  protected long getStartTime() {
-    return myStartTime;
-  }
-
-  protected long getEndTime() {
-    return myEndTime;
+  protected int getRunningTestsQuantity() {
+    return myRunningTestsFullNameToProxy.size();
   }
 
   protected Set<AbstractTestProxy> getFailedTestsSet() {
-    return myFailedTestsSet;
+    return Collections.unmodifiableSet(myFailedTestsSet);
   }
 
   protected RTestUnitTestProxy getProxyByFullTestName(final String fullTestName) {
@@ -202,8 +174,62 @@ public class RTestUnitEventsProcessor {
     return testProxy;
   }
 
-  private void updateProgress() {
-    myResultsViewer.updateStatusLabel(myStartTime, myEndTime, myTestsTotal,
-                                      myTestsCurrentCount, myFailedTestsSet);
-  }  
+  private void fireOnTestingStarted() {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onTestingStarted();
+    }
+  }
+
+  private void fireOnTestingFinished() {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onTestingFinished();
+    }
+  }
+
+  private void fireOnTestsCount(final int count) {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onTestsCount(count);
+    }
+  }
+
+
+  private void fireOnTestStarted(final RTestUnitTestProxy test) {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onTestStarted(test);
+    }
+  }
+
+  private void fireOnTestFinished(final RTestUnitTestProxy test) {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onTestFinished(test);
+    }
+  }
+
+  private void fireOnTestFailed(final RTestUnitTestProxy test) {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onTestFailed(test);
+    }
+  }
+
+  private void fireOnSuiteStarted(final RTestUnitTestProxy suite) {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onSuiteStarted(suite);
+    }
+  }
+
+  private void fireOnSuiteFinished(final RTestUnitTestProxy suite) {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onSuiteFinished(suite);
+    }
+  }
+
+  /*
+   * Remove listeners,  etc
+   */
+  public void cleanupOnProcessTerminated() {
+    myEventsListeners.clear();
+    myRunningTestsFullNameToProxy.clear();
+    mySuitesStack.clear();        
+  }
+
 }
