@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -61,15 +60,6 @@ abstract class ModuleOutputBaseNode extends PackagingTreeNode {
       return ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName());
     }
     return null;
-  }
-
-  @Override
-  public void renderTooltip(final ColoredTreeCellRenderer renderer) {
-    if (belongsToIncludedArtifact()) {
-      PackagingArtifact owner = getOwner();
-      LOG.assertTrue(owner != null);
-      renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
-    }
   }
 
   public Object getSourceObject() {

@@ -24,6 +24,14 @@ public abstract class PackagingTreeBuilder {
   public abstract PackagingArtifact createRootArtifact();
 
   @NotNull
+  public PackagingTreeParameters getDefaultParameters() {
+    return new PackagingTreeParameters(false, false);
+  }
+
+  public void updateParameters(final @NotNull PackagingTreeParameters treeParameters) {
+  }
+
+  @NotNull
   public List<? extends PackagingTreeNode> createNodes(@NotNull PackagingArtifactNode artifactRoot, @NotNull ContainerElement element,
                                                        final PackagingArtifact owner, final PackagingTreeParameters parameters) {
     if (element instanceof LibraryLink) {

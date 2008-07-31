@@ -44,9 +44,6 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode implement
     return null;
   }
 
-  public void renderTooltip(ColoredTreeCellRenderer renderer) {
-  }
-
   public int compareTo(final PackagingTreeNode node) {
     return getOutputFileName().compareToIgnoreCase(node.getOutputFileName());
   }

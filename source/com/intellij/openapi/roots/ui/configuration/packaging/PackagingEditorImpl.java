@@ -73,7 +73,7 @@ public class PackagingEditorImpl implements PackagingEditor {
   private JCheckBox myShowLibraryFilesCheckBox;
   private PackagingArtifact myRootArtifact;
   private Project myProject;
-  private int myRowUnderMouse = -1;
+  private PackagingTreeParameters myTreeParameters;
 
   public PackagingEditorImpl(final PackagingConfiguration originalConfiguration,
                              final PackagingConfiguration modifiedConfiguration,
@@ -86,6 +86,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     myPolicy = policy;
     myBuilder = builder;
     myProject = myPolicy.getModule().getProject();
+    setTreeParameters(myBuilder.getDefaultParameters());
 
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -144,6 +145,8 @@ public class PackagingEditorImpl implements PackagingEditor {
     });
     ActionListener actionListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        myTreeParameters = new PackagingTreeParameters(myShowIncludedCheckBox.isSelected(), myShowLibraryFilesCheckBox.isSelected());
+        myBuilder.updateParameters(myTreeParameters);
         rebuildTree();
       }
     };
@@ -298,6 +301,7 @@ public class PackagingEditorImpl implements PackagingEditor {
   public void setTreeParameters(PackagingTreeParameters parameters) {
     myShowIncludedCheckBox.setSelected(parameters.isShowIncludedContent());
     myShowLibraryFilesCheckBox.setSelected(parameters.isShowLibraryFiles());
+    myTreeParameters = parameters;
   }
 
   public void rebuildTree() {
@@ -305,9 +309,8 @@ public class PackagingEditorImpl implements PackagingEditor {
     myRoot.removeAllChildren();
     myRootArtifact = myBuilder.createRootArtifact();
     PackagingArtifactNode root = PackagingTreeNodeFactory.createArtifactNode(myRootArtifact, myRoot, null);
-    PackagingTreeParameters parameters = new PackagingTreeParameters(myShowIncludedCheckBox.isSelected(), myShowLibraryFilesCheckBox.isSelected());
     for (ContainerElement element : getPackagedElements()) {
-      myBuilder.createNodes(root, element, null, parameters);
+      myBuilder.createNodes(root, element, null, myTreeParameters);
     }
     myTreeModel.nodeStructureChanged(myRoot);
     TreeUtil.sort(myTreeModel, new Comparator<PackagingTreeNode>() {
@@ -478,35 +481,9 @@ public class PackagingEditorImpl implements PackagingEditor {
         }
       }
     }
-
-    /*
-    @Override
-    public void mouseEntered(final MouseEvent e) {
-      handleMouseEvent(e);
-    }
-
-    @Override
-    public void mouseExited(final MouseEvent e) {
-      handleMouseEvent(e);
-    }
-
-    @Override
-    public void mouseDragged(final MouseEvent e) {
-      handleMouseEvent(e);
-    }
-
-    @Override
-    public void mouseMoved(final MouseEvent e) {
-      handleMouseEvent(e);
-    }
-    */
   }
 
-  private void handleMouseEvent(final MouseEvent e) {
-    myRowUnderMouse = myTree.getRowForLocation(e.getX(), e.getY());
-  }
-
-  private class PackagingTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static class PackagingTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(final JTree tree,
                                       final Object value,
                                       final boolean selected,
@@ -516,11 +493,6 @@ public class PackagingEditorImpl implements PackagingEditor {
                                       final boolean hasFocus) {
       PackagingTreeNode node = (PackagingTreeNode)value;
       node.render(this);
-      /*
-      if (myRowUnderMouse == row) {
-        node.renderTooltip(this);
-      }
-      */
     }
   }
 

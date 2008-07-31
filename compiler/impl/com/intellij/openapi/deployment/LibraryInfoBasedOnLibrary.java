@@ -20,10 +20,12 @@ import java.util.Arrays;
 */
 class LibraryInfoBasedOnLibrary implements LibraryInfo {
   private final Library myLibrary;
+  private LibraryInfoImpl myInfoToRestore;
 
   public LibraryInfoBasedOnLibrary(@NotNull Library library) {
     assert !((LibraryEx)library).isDisposed();
     myLibrary = library;
+    myInfoToRestore = new LibraryInfoImpl(library);
   }
 
   public String getName() {
@@ -50,4 +52,7 @@ class LibraryInfoBasedOnLibrary implements LibraryInfo {
   public void readExternal(Element element) throws InvalidDataException {
   }
 
+  public LibraryInfoImpl getInfoToRestore() {
+    return myInfoToRestore;
+  }
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,15 +42,6 @@ abstract class LibraryNodeBase extends PackagingTreeNode {
       return ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName());
     }
     return null;
-  }
-
-  @Override
-  public void renderTooltip(final ColoredTreeCellRenderer renderer) {
-    if (belongsToIncludedArtifact()) {
-      PackagingArtifact owner = getOwner();
-      LOG.assertTrue(owner != null);
-      renderer.append(" " + ProjectBundle.message("node.text.packaging.included.from.0", owner.getDisplayName()), getCommentAttributes());
-    }
   }
 
   public void navigate(final ModuleStructureConfigurable configurable) {
