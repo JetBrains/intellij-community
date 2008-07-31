@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -58,7 +59,7 @@ public class CtrlMouseHandler implements ProjectComponent {
   private int myStoredModifiers = 0;
   private TooltipProvider myTooltipProvider = null;
 
-  enum BrowseMode { None, Declaration, TypeDeclaration, Implementation }
+  private enum BrowseMode { None, Declaration, TypeDeclaration, Implementation }
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
@@ -233,9 +234,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
 
     public Info(@NotNull PsiElement elementAtPointer ) {
-      myElementAtPointer = elementAtPointer;
-      myStartOffset = elementAtPointer.getTextOffset();
-      myEndOffset = myStartOffset + elementAtPointer.getTextLength();
+      this(elementAtPointer, elementAtPointer.getTextOffset(), elementAtPointer.getTextOffset() + elementAtPointer.getTextLength());
     }
 
     boolean isSimilarTo(final Info that) {
@@ -247,21 +246,20 @@ public class CtrlMouseHandler implements ProjectComponent {
     @Nullable
     public abstract String getInfo();
 
-    public abstract boolean isValid();
+    public abstract boolean isValid(Document document);
   }
 
   private static class InfoSingle extends Info {
     @NotNull private final PsiElement myTargetElement;
 
     public InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
-      super ( elementAtPointer );
+      super(elementAtPointer);
       myTargetElement = targetElement;
     }
 
     public InfoSingle(final PsiReference ref, @NotNull final PsiElement targetElement) {
-      super ( ref.getElement(),
-              ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
-              ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getEndOffset());
+      super(ref.getElement(), ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
+            ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getEndOffset());
       myTargetElement = targetElement;
     }
 
@@ -270,25 +268,27 @@ public class CtrlMouseHandler implements ProjectComponent {
       return generateInfo(myTargetElement);
     }
 
-    public boolean isValid() {
-      return  myTargetElement.isValid() && myTargetElement != myElementAtPointer && myTargetElement != myElementAtPointer.getParent()
-        /* && targetNavigateable(myTargetElement)*/;
+    public boolean isValid(Document document) {
+      return myTargetElement.isValid() &&
+             myTargetElement != myElementAtPointer &&
+             myTargetElement != myElementAtPointer.getParent() &&
+             new TextRange(0, document.getTextLength()).contains(new TextRange(myStartOffset, myEndOffset))
+          /* && targetNavigateable(myTargetElement)*/;
     }
-
   }
 
   private static class InfoMultiple extends Info {
 
     public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
-      super ( elementAtPointer );
+      super(elementAtPointer);
     }
 
     public String getInfo() {
       return CodeInsightBundle.message("multiple.implementations.tooltip");
     }
 
-    public boolean isValid() {
-      return true;
+    public boolean isValid(Document document) {
+      return new TextRange(0, document.getTextLength()).contains(new TextRange(myStartOffset, myEndOffset));
     }
   }
 
@@ -427,8 +427,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         }
       }
 
-      if (info.isValid()) {
-
+      if (info.isValid(myEditor.getDocument())) {
         installLinkHighlighter(info);
 
         internalComponent.addKeyListener(myEditorKeyListener);
