@@ -1240,9 +1240,19 @@ class AbstractTreeUi {
         }
       }
 
-      if (firstVisible == null || kidsToExpand.size() == 0) {
+      if (firstVisible == null) {
         onDone.run();
-      } else {
+      } else if (kidsToExpand.size() == 0) {
+        final DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)firstVisible.getParent();
+        if (parentNode != null) {
+          final TreePath parentPath = new TreePath(parentNode.getPath());
+          if (!myTree.isExpanded(parentPath)) {
+            expand(parentPath);
+          }
+        }
+        onDone.run();
+      }
+      else {
         processExpand(firstVisible, kidsToExpand, kidsToExpand.size() - 1, onDone);
       }
     }
