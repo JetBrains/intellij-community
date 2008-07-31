@@ -1,11 +1,10 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin version="2">
   <name>Subversion Integration</name>
   <id>Subversion</id>
   <version>1.0</version>
+  <category>VCS Integration</category>
 
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <idea-version min="5.0" max="5.0"/>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
 
   <project-components>
