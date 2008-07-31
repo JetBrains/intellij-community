@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
@@ -256,20 +257,8 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    List<String> urls = getUrls();
-
-    String outputPath = getURI();
-    if (outputPath != null && !outputPath.endsWith(JAR_SUFFIX) && LibraryLink.MODULE_LEVEL.equals(getLevel()) && urls.size() == 1
-      && (getPackagingMethod().equals(PackagingMethod.COPY_FILES) || getPackagingMethod().equals(PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST))) {
-      String jarName = getJarFileName(urls.get(0));
-      if (jarName != null) {
-        //for compatibility with builds before 7119
-        setURI(DeploymentUtil.appendToPath(outputPath, jarName));
-      }
-    }
     super.writeExternal(element);
-    setURI(outputPath);
-
+    List<String> urls = getUrls();
     String name = getName();
     if (name == null) {
       for (final String url : urls) {
@@ -306,10 +295,11 @@ public class LibraryLinkImpl extends LibraryLink {
 
   public void adjustLibrary() {
     if (myLibraryInfo instanceof LibraryInfoBasedOnLibrary) {
-      Library library = ((LibraryInfoBasedOnLibrary)myLibraryInfo).getLibrary();
+      LibraryInfoBasedOnLibrary libraryInfo = (LibraryInfoBasedOnLibrary)myLibraryInfo;
+      Library library = libraryInfo.getLibrary();
       LibraryTable table = library.getTable();
-      if (table != null && !isInTable(library, table)) {
-        LibraryInfoImpl info = new LibraryInfoImpl(library);
+      if (table != null && !isInTable(library, table) || ((LibraryEx)library).isDisposed()) {
+        LibraryInfoImpl info = libraryInfo.getInfoToRestore();
         Library newLibrary = info.findLibrary(myProject, getParentModule(), null);
         myLibraryInfo = newLibrary != null ? new LibraryInfoBasedOnLibrary(newLibrary) : info;
       }
