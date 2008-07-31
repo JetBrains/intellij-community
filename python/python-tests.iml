@@ -13,7 +13,6 @@
     <orderEntry type="library" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="idea-tests" />
-    <orderEntryProperties />
   </component>
 </module>
 

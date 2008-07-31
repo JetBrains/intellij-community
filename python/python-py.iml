@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="python" />
-    <orderEntryProperties />
   </component>
 </module>
 
