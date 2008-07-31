@@ -58,4 +58,8 @@ public class RootFileElement extends FileElement {
     }
     return rootChildren.toArray(new Object[rootChildren.size()]);
   }
+
+  public Object getParentFor(final VirtualFile parent) {
+    return null;
+  }
 }

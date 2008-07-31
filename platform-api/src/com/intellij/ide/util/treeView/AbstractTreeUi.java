@@ -420,7 +420,9 @@ class AbstractTreeUi {
       myTreeModel.nodeChanged(getRootNode());
     }
 
-    processDeferredActions();
+    if (!myLoadingParents.contains(getTreeStructure().getRootElement())) {
+      processDeferredActions();
+    }
   }
 
   private void processDeferredActions() {
@@ -527,10 +529,13 @@ class AbstractTreeUi {
 
   private void expand(final TreePath path) {
     if (path == null) return;
+    final Object last = path.getLastPathComponent();
     boolean isLeaf = myTree.getModel().isLeaf(path.getLastPathComponent());
+    final boolean isRoot = last == myTree.getModel().getRoot();
     final TreePath parent = path.getParentPath();
-    if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent))) {
-      final Object last = path.getLastPathComponent();
+    if (false) {
+      processNodeActionsIfReady((DefaultMutableTreeNode)last);
+    } else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent))) {
       if (last instanceof DefaultMutableTreeNode) {
         processNodeActionsIfReady((DefaultMutableTreeNode)last);
       }
@@ -1298,7 +1303,12 @@ class AbstractTreeUi {
   }
 
   public final boolean isNodeBeingBuilt(Object node) {
-    return isParentLoading(node) || isLoadingChildrenFor(node);
+    return isParentLoading(node) || isLoadingChildrenFor(node) || isLoadingParent(node);
+  }
+
+  private boolean isLoadingParent(Object node) {
+    if (!(node instanceof DefaultMutableTreeNode)) return false;
+    return myLoadingParents.contains(getElementFor((DefaultMutableTreeNode)node));
   }
 
   public void setTreeStructure(final AbstractTreeStructure treeStructure) {

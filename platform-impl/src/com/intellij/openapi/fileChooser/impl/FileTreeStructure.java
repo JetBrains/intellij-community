@@ -119,7 +119,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
         parent = LocalFileSystem.getInstance().findFileByPath(localPath);
       }
       if (parent == null) {
-        return null;
+        return myRootElement;
       }
       return new FileElement(parent, parent.getName());
     }
