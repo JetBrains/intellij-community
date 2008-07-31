@@ -44,4 +44,6 @@ interface SpacingFactory {
                                                  final boolean keepLineBreaks,
                                                  final int keepBlankLines);
 
+  Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks,
+                     final int keepBlankLines, final int prefLineFeeds);
 }

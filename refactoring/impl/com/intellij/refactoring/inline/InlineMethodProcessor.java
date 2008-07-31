@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -1021,6 +1022,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiClassInitializer classInitializer = myFactory.createClassInitializer();
           final PsiClass containingClass = field.getContainingClass();
           classInitializer = (PsiClassInitializer)containingClass.addAfter(classInitializer, field);
+          containingClass.addAfter(CodeEditUtil.createLineFeed(field.getManager()), field);          
           final PsiCodeBlock body = classInitializer.getBody();
           PsiExpressionStatement statement = (PsiExpressionStatement)myFactory.createStatementFromText(field.getName() + " = 0;", body);
           statement = (PsiExpressionStatement)body.add(statement);

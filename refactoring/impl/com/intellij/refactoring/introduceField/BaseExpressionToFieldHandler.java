@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
@@ -202,9 +203,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           }
           PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
-          if ((anchorMember instanceof PsiField || anchorMember instanceof PsiClassInitializer) &&
+          if ((anchorMember instanceof PsiField) &&
               anchorMember.hasModifierProperty(PsiModifier.STATIC) == field.hasModifierProperty(PsiModifier.STATIC)) {
             field = (PsiField)destClass.addBefore(field, anchorMember);
+          }
+          else if (anchorMember instanceof PsiClassInitializer) {
+            field = (PsiField)destClass.addBefore(field, anchorMember);
+            destClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), anchorMember);
           }
           else {
             field = (PsiField)destClass.add(field);

@@ -366,4 +366,8 @@ public class CodeEditUtil {
   public static boolean isMarkedToReformatBefore(final TreeElement element) {
     return element.getCopyableUserData(REFORMAT_KEY) != null;
   }
+
+  public static PsiElement createLineFeed(final PsiManager manager) {
+    return Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n", 0, 1, null, manager).getPsi();
+  }
 }

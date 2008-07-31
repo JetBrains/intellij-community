@@ -3,6 +3,8 @@ package com.intellij.formatting;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
+import java.util.ArrayList;
+
 class LeafBlockWrapper extends AbstractBlockWrapper {
   //TODO remove text!!!
   private static int CONTAIN_LINE_FEEDS = 4;
@@ -14,6 +16,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private LeafBlockWrapper myNextBlock;
   private SpacingImpl mySpaceProperty;
   private IndentInside myLastLineIndent;
+  //private CharSequence myText;
 
   public LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
@@ -40,6 +43,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
       myLastLineIndent = null;
     }
 
+    //myText = model.getText(getTextRange());
 
     myFlags = flagsValue;
   }
@@ -64,6 +68,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myNextBlock = nextBlock;
   }
 
+  protected boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child) {
+    return false;
+  }
+
   public void dispose() {
     super.dispose();
     myPreviousBlock = null;
@@ -75,20 +83,20 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   public SpacingImpl getSpaceProperty() {
     return mySpaceProperty;
   }
-  
+
   public IndentData calculateOffset(final CodeStyleSettings.IndentOptions options) {
-    
+
     if (myIndentFromParent != null) {
       final AbstractBlockWrapper firstIndentedParent = findFirstIndentedParent();
       final IndentData indentData = new IndentData(myIndentFromParent.getIndentSpaces(), myIndentFromParent.getSpaces());
-      if (firstIndentedParent == null) {        
+      if (firstIndentedParent == null) {
         return indentData;
       } else {
         final WhiteSpace whiteSpace = firstIndentedParent.getWhiteSpace();
         return new IndentData(whiteSpace.getIndentOffset(), whiteSpace.getSpaces()).add(indentData);
       }
     }
-    
+
     if (myParent == null) return new IndentData(0);
     if (getIndent().isAbsolute()) {
       setCanUseFirstChildIndentAsBlockIndent(false);
@@ -98,8 +106,13 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
         current = current.myParent;
       }
     }
-    
-    return myParent.getChildOffset(this, options, this.getStartOffset());
+
+    ArrayList<IndentData> ignored = new ArrayList<IndentData>();
+    IndentData result = myParent.getChildOffset(this, options, this.getStartOffset());
+    if (!ignored.isEmpty()) {
+      result = result.add(ignored.get(ignored.size() - 1));
+    }
+    return result;
   }
 
   public void setSpaceProperty(final SpacingImpl currentSpaceProperty) {
@@ -135,4 +148,9 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new TextRange(myStart, myEnd);
   }
 
+  /*
+  @Override
+  public String toString() {
+    return myText.toString();
+  } */
 }

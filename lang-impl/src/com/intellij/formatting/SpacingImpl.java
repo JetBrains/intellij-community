@@ -7,6 +7,7 @@ class SpacingImpl extends Spacing {
   private int myKeepBlankLines;
   private int myMaxSpaces;
   private int myMinLineFeeds;
+  private int myPrefLineFeeds = 0;
   protected int myFlags;
 
   private static int READ_ONLY_MASK = 1;
@@ -21,22 +22,20 @@ class SpacingImpl extends Spacing {
                      final boolean safe,
                      final boolean shouldKeepLineBreaks,
                      final int keepBlankLines,
-                     final boolean keepFirstColumn) {
-    init(minSpaces, maxSpaces, minLineFeeds, isReadOnly, safe, shouldKeepLineBreaks, keepBlankLines, keepFirstColumn);
+                     final boolean keepFirstColumn,
+                     final int prefLineFeeds) {
+    init(minSpaces, maxSpaces, minLineFeeds, isReadOnly, safe, shouldKeepLineBreaks, keepBlankLines, keepFirstColumn, prefLineFeeds);
   }
 
-  void init(final int minSpaces,
-                    final int maxSpaces,
-                    final int minLineFeeds,
-                    final boolean isReadOnly,
-                    final boolean safe,
-                    final boolean shouldKeepLineBreaks,
-                    final int keepBlankLines,
-                    final boolean keepFirstColumn) {
+  void init(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean isReadOnly, final boolean safe, final boolean shouldKeepLineBreaks,
+            final int keepBlankLines,
+            final boolean keepFirstColumn,
+            final int prefLineFeeds) {
     myMinSpaces = minSpaces;
 
     myMaxSpaces = Math.max(minSpaces, maxSpaces);
     myMinLineFeeds = minLineFeeds;
+    myPrefLineFeeds = prefLineFeeds;
     if (minLineFeeds > 1 && (minLineFeeds - 1) > keepBlankLines) {
       myKeepBlankLines = minLineFeeds - 1;
     } else {
@@ -92,16 +91,21 @@ class SpacingImpl extends Spacing {
            myMinSpaces == spacing.myMinSpaces &&
            myMaxSpaces == spacing.myMaxSpaces &&
            myMinLineFeeds == spacing.myMinLineFeeds &&
+           myPrefLineFeeds == spacing.myPrefLineFeeds &&
            myKeepBlankLines == spacing.myKeepBlankLines;
   }
 
   public int hashCode() {
-    return myMinSpaces + myMaxSpaces * 29 + myMinLineFeeds * 11 + myFlags + myKeepBlankLines;
+    return myMinSpaces + myMaxSpaces * 29 + myMinLineFeeds * 11 + myFlags + myKeepBlankLines + myPrefLineFeeds;
   }
 
   @NonNls
   @Override
   public String toString() {
     return "<Spacing: minSpaces=" + myMinSpaces + " maxSpaces=" + myMaxSpaces + " minLineFeeds=" + myMinLineFeeds + ">";
+  }
+
+  public int getPrefLineFeeds() {
+    return myPrefLineFeeds >= myMinLineFeeds ? myPrefLineFeeds : myMinLineFeeds;
   }
 }

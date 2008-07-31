@@ -184,18 +184,34 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
                                          mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       } else {
-        myResult = Spacing.createSpacing(0, 0, 1,
-                                         mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        if (myRole2 == ChildRole.CLASS_INITIALIZER && isTheOnlyClassMember(myChild2)) {
+          myResult = Spacing.createSpacing(0, 0, 0,
+                                           mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        }
+        else {
+          myResult = Spacing.createSpacing(0, 0, 1,
+                                           mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        }
       }
     }
     else processClassBody();
+  }
+
+  private boolean isTheOnlyClassMember(final ASTNode node) {
+    ASTNode next = node.getTreeNext();
+    if (next == null || !(next.getElementType() == JavaTokenType.LBRACE)) return false;
+
+    ASTNode prev = node.getTreePrev();
+    if (prev == null || !(prev.getElementType() == JavaTokenType.LBRACE)) return false;
+    
+    return true;
   }
 
   private void processClassBody() {
     if (myChild1 instanceof JspJavaComment || myChild2 instanceof JspJavaComment) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
-    else if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == JavaElementType.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
+    else if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == JavaElementType.METHOD) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
@@ -205,10 +221,37 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
           .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
     }
-    else if (myRole1 == ChildRole.METHOD || myChild1.getElementType() == JavaElementType.METHOD || myRole1 == ChildRole.CLASS_INITIALIZER) {
+    else if (myRole2 == ChildRole.CLASS_INITIALIZER) {
+      if (myRole1 == ChildRole.LBRACE) {
+        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+      else if (myRole1 == ChildRole.FIELD) {
+        int lines = Math.max(getLinesAroundField(), getLinesAroundMethod()) + 1;
+        myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, 0, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE,
+                                         lines);
+      }
+      else {
+        final int blankLines = getLinesAroundMethod() + 1;
+        myResult = Spacing
+          .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+
+    }
+    else if (myRole1 == ChildRole.METHOD || myChild1.getElementType() == JavaElementType.METHOD) {
       if (myRole2 == ChildRole.RBRACE) {
         myResult = Spacing
           .createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      }
+      else {
+        final int blankLines = getLinesAroundMethod() + 1;
+        myResult = Spacing
+          .createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+    }
+    else if (myRole1 == ChildRole.CLASS_INITIALIZER) {
+      if (myRole2 == ChildRole.RBRACE) {
+        myResult = Spacing
+          .createSpacing(0, Integer.MAX_VALUE, isInsideAnonimusClass() ? 0 : 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
@@ -305,6 +348,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing
         .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
     }
+
+
+  }
+
+  private boolean isInsideAnonimusClass() {
+    return myParent instanceof PsiAnonymousClass;
   }
 
   private int getLinesAroundMethod() {

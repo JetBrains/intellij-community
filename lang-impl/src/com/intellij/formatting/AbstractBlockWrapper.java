@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * Time: 9:40:01 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AbstractBlockWrapper {
+public abstract class AbstractBlockWrapper {
   protected WhiteSpace myWhiteSpace;
   protected CompositeBlockWrapper myParent;
   protected int myStart;
@@ -124,11 +124,22 @@ public class AbstractBlockWrapper {
 
   }
 
-  public IndentData getChildOffset(AbstractBlockWrapper child,
-                                   CodeStyleSettings.IndentOptions options,
-                                   final int tokenBlockStartOffset) {
+  public IndentData getChildOffset(AbstractBlockWrapper child, CodeStyleSettings.IndentOptions options, final int tokenBlockStartOffset) {
     final boolean childOnNewLine = child.getWhiteSpace().containsLineFeeds();
-    IndentData childIndent = childOnNewLine /*|| getWhiteSpace().containsLineFeeds()*/ ? getIndent(options, child, tokenBlockStartOffset) : new IndentData(0);
+    final IndentData childIndent;
+
+    if (childOnNewLine) {
+      childIndent = getIndent(options, child, tokenBlockStartOffset);
+    }
+    else {
+      IndentImpl.Type type = child.getIndent().getType();
+      if (!getWhiteSpace().containsLineFeeds() && (type == IndentImpl.Type.NORMAL || type == IndentImpl.Type.CONTINUATION || type == IndentImpl.Type.CONTINUATION_WITHOUT_FIRST) && indentAlreadyUsedBefore(child)) {
+        childIndent = getIndent(options, child, tokenBlockStartOffset);
+      }
+      else {
+        childIndent = new IndentData(0);
+      }
+    }
 
     if (childOnNewLine && child.getIndent().isAbsolute()) {
       myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
@@ -174,6 +185,8 @@ public class AbstractBlockWrapper {
     }
   }
 
+  protected abstract boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child);
+
   protected final void setCanUseFirstChildIndentAsBlockIndent(final boolean newValue) {
     if (newValue) myFlags |= CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
     else myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
@@ -197,7 +210,13 @@ public class AbstractBlockWrapper {
       return indent.add(getWhiteSpace());
     }
     else {
-      return indent.add(myParent.getChildOffset(this, indentOption, -1));
+      ArrayList<IndentData> ignored = new ArrayList<IndentData>();
+      IndentData offsetFromParent = myParent.getChildOffset(this, indentOption, -1);
+      IndentData result = indent.add(offsetFromParent);
+      if (!ignored.isEmpty()) {
+        result = result.add(ignored.get(ignored.size() - 1));
+      }
+      return result;
     }
 
   }

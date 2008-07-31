@@ -12,7 +12,7 @@ public class DependantSpacingImpl extends SpacingImpl {
                               TextRange dependance,
                               final boolean keepLineBreaks,
                               final int keepBlankLines) {
-    super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines, false);
+    super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines, false, 0);
     myDependance = dependance;
   }
 

@@ -34,7 +34,7 @@ public class FormatterImpl extends FormatterEx
   private final IndentImpl myContinutationWithoutFirstIndent = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
   private final IndentImpl myAbsoluteLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, true);
   private final IndentImpl myNormalIndent = new IndentImpl(IndentImpl.Type.NORMAL, false);
-  private final SpacingImpl myReadOnlySpacing = new SpacingImpl(0, 0, 0, true, false, true, 0, false);
+  private final SpacingImpl myReadOnlySpacing = new SpacingImpl(0, 0, 0, true, false, true, 0, false, 0);
 
   public FormatterImpl() {
     Indent.setFactory(this);
@@ -92,7 +92,7 @@ public class FormatterImpl extends FormatterEx
                                int minLineFeeds,
                                final boolean keepLineBreaks,
                                final int keepBlankLines) {
-    return getSpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines,false);
+    return getSpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines,false, 0);
   }
 
   public Spacing getReadOnlySpacing() {
@@ -410,7 +410,7 @@ public class FormatterImpl extends FormatterEx
                   current.setSpaceProperty(
                     getSpacingImpl(
                       spaceProperty.getMinSpaces(), spaceProperty.getMaxSpaces(), spaceProperty.getMinLineFeeds(), spaceProperty.isReadOnly(),
-                      spaceProperty.isSafe(), newKeepLineBreaksFlag, newKeepLineBreaks, false
+                      spaceProperty.isSafe(), newKeepLineBreaksFlag, newKeepLineBreaks, false, spaceProperty.getPrefLineFeeds()
                     )
                   );
                 }
@@ -488,29 +488,34 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
-    return getSpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines, false);
+    return getSpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines, false, 0);
   }
 
   public Spacing createKeepingFirstColumnSpacing(final int minSpace,
                                                  final int maxSpace,
                                                  final boolean keepLineBreaks,
                                                  final int keepBlankLines) {
-    return getSpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines, true);
+    return getSpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines, true, 0);
+  }
+
+  public Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks, final int keepBlankLines,
+                               final int prefLineFeeds) {
+    return getSpacingImpl(minSpaces, maxSpaces, -1, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
   }
 
   private final Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();
-  private final SpacingImpl ourSharedSpacing = new SpacingImpl(-1,-1,-1,false,false,false,-1,false);
+  private final SpacingImpl ourSharedSpacing = new SpacingImpl(-1,-1,-1,false,false,false,-1,false,0);
 
   private SpacingImpl getSpacingImpl(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean readOnly, final boolean safe,
                                      final boolean keepLineBreaksFlag,
                                      final int keepLineBreaks,
-                                     final boolean keepFirstColumn) {
+                                     final boolean keepFirstColumn, int prefLineFeeds) {
     synchronized(this) {
-      ourSharedSpacing.init(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn);
+      ourSharedSpacing.init(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn, prefLineFeeds);
       SpacingImpl spacing = ourSharedProperties.get(ourSharedSpacing);
 
       if (spacing == null) {
-        spacing = new SpacingImpl(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn);
+        spacing = new SpacingImpl(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn, prefLineFeeds);
         ourSharedProperties.put(spacing, spacing);
       }
       return spacing;

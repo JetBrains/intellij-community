@@ -234,7 +234,12 @@ class WhiteSpace {
               setLineFeeds(0);
               mySpaces = 0;
             }
+
+            if (getLineFeeds() > 0 && getLineFeeds() < spaceProperty.getPrefLineFeeds()) {
+              setLineFeeds(spaceProperty.getPrefLineFeeds());
+            }
           }
+
         } else if (isFirst()) {
           setLineFeeds(0);
           mySpaces = 0;

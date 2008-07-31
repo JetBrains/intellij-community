@@ -6,6 +6,7 @@ import java.util.List;
 
 public class CompositeBlockWrapper extends AbstractBlockWrapper{
   private List<AbstractBlockWrapper> myChildren;
+  //private static final CodeStyleSettings.IndentOptions DEF_OPTIONS = new CodeStyleSettings.IndentOptions();
 
   public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpace, final CompositeBlockWrapper parent, TextRange textRange) {
     super(block, whiteSpace, parent, textRange);
@@ -27,6 +28,14 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     }
   }
 
+  protected boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child) {
+    for (AbstractBlockWrapper childBefore : myChildren) {
+      if (childBefore == child) return false;
+      if (childBefore.getWhiteSpace().containsLineFeeds()) return true;      
+    }
+    return false;
+  }
+
   public void dispose() {
     super.dispose();
     myChildren = null;
@@ -42,4 +51,13 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     return candidate;
   }
 
+  /*
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    for (AbstractBlockWrapper child : myChildren) {
+      result.append(child.getWhiteSpace().generateWhiteSpace(DEF_OPTIONS)).append(child.toString());
+    }
+    return result.toString();
+  } */
 }

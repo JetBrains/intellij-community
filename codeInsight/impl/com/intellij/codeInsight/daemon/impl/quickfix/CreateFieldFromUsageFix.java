@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -65,8 +66,13 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
         field.setName(fieldName);
       }
       if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
-          && (enclosingContext instanceof PsiClassInitializer || enclosingContext instanceof PsiField)) {
+          && (enclosingContext instanceof PsiField)) {
         field = (PsiField)targetClass.addBefore(field, enclosingContext);
+      }
+      else if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
+          && (enclosingContext instanceof PsiClassInitializer)) {
+        field = (PsiField)targetClass.addBefore(field, enclosingContext);
+        targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
       }
       else {
         field = (PsiField)targetClass.add(field);

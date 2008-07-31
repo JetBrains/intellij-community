@@ -59,6 +59,31 @@ public abstract class Spacing {
   }
 
   /**
+   * Creates a regular spacing setting instance.
+   *
+   * @param minSpaces      The minimum number of spaces that should be present between the blocks
+   *                       to which the spacing setting instance is related. Spaces are inserted
+   *                       if there are less than this amount of spaces in the document.
+   * @param maxSpaces      The maximum number of spaces that should be present between the blocks
+   *                       to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
+   *                       if the number of spaces is not limited. Spaces are deleted if there are
+   *                       more than this amount of spaces in the document.
+   * @param minLineFeeds   The minimum number of line breaks that should be present between the blocks
+   *                       to which the spacing setting instance is related.
+   * @param keepLineBreaks Whether the existing line breaks between the blocks should be preserved.
+   * @param keepBlankLines Whether the existing blank lines between the blocks should be preserved.
+   * @return the spacing setting instance.
+   */
+  public static Spacing createSpacing(int minSpaces,
+                                      int maxSpaces,
+                                      int minLineFeeds,
+                                      boolean keepLineBreaks,
+                                      int keepBlankLines,
+                                      int prefLineFeeds) {
+    return myFactory.createSpacing(minSpaces, maxSpaces, minLineFeeds, keepLineBreaks, keepBlankLines, prefLineFeeds);
+  }
+
+  /**
    * Returns a spacing setting instance indicating that no line breaks or spaces can be
    * inserted or removed by the formatter between the specified two blocks.
    * @return the spacing setting instance.

@@ -9,6 +9,7 @@ import com.intellij.patterns.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -106,8 +107,9 @@ class InlineToAnonymousConstructorProcessor {
 
     int fieldCount = myClass.getFields().length;
     int processedFields = 0;
+    PsiJavaToken token = anonymousClass.getRBrace();
     if (initializerBlock.getBody().getStatements().length > 0 && fieldCount == 0) {
-      anonymousClass.addBefore(initializerBlock, anonymousClass.getRBrace());
+      insertInitializerBefore(initializerBlock, anonymousClass, token);
     }
 
     for(PsiElement child: classCopy.getChildren()) {
@@ -116,25 +118,32 @@ class InlineToAnonymousConstructorProcessor {
         if (!myFieldInitializers.isEmpty() || !myLocalsForParameters.isEmpty() || classResolveSubstitutor != PsiSubstitutor.EMPTY || outerClassLocal != null) {
           replaceReferences((PsiMember) child, substitutedParameters, outerClassLocal);
         }
-        child = anonymousClass.addBefore(child, anonymousClass.getRBrace());
+        child = anonymousClass.addBefore(child, token);
       }
       else if (child instanceof PsiField) {
         PsiField field = (PsiField) child;
         replaceReferences(field, substitutedParameters, outerClassLocal);
         PsiExpression initializer = myFieldInitializers.get(field.getName());
-        field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
+        field = (PsiField) anonymousClass.addBefore(field, token);
         if (initializer != null) {
           field.setInitializer(initializer);
         }
         processedFields++;
         if (processedFields == fieldCount && initializerBlock.getBody().getStatements().length > 0) {
-          anonymousClass.addBefore(initializerBlock, anonymousClass.getRBrace());
+          insertInitializerBefore(initializerBlock, anonymousClass, token);
         }
       }
     }
     ChangeContextUtil.decodeContextInfo(anonymousClass, anonymousClass, null);
     final PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
     JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);
+  }
+
+  private void insertInitializerBefore(final PsiClassInitializer initializerBlock, final PsiClass anonymousClass, final PsiJavaToken token)
+      throws IncorrectOperationException {
+    anonymousClass.addBefore(CodeEditUtil.createLineFeed(token.getManager()), token);
+    anonymousClass.addBefore(initializerBlock, token);
+    anonymousClass.addBefore(CodeEditUtil.createLineFeed(token.getManager()), token);
   }
 
   private void checkInlineChainingConstructor() {
