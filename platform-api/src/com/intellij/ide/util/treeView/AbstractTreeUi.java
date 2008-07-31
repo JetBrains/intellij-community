@@ -1240,11 +1240,11 @@ class AbstractTreeUi {
         }
       }
 
-      if (firstVisible == null) {
+      if (firstVisible == null || kidsToExpand.size() == 0) {
         onDone.run();
+      } else {
+        processExpand(firstVisible, kidsToExpand, kidsToExpand.size() - 1, onDone);
       }
-
-      processExpand(firstVisible, kidsToExpand, kidsToExpand.size() - 1, onDone);
     }
     else {
       myDeferredExpansions.add(new Runnable() {
