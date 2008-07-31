@@ -3,8 +3,8 @@
   <id>CVS</id>
   <version>0.1</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <idea-version min="5.0" max="5.0"/>
   <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
+  <category>VCS Integration</category>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
