@@ -362,7 +362,7 @@ public abstract class AbstractLayoutCodeProcessor {
         }
         */
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        final Runnable writeRunnable = new Runnable() {
           public void run() {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               public void run() {
@@ -375,11 +375,21 @@ public abstract class AbstractLayoutCodeProcessor {
               }
             }, myCommandName, null);
           }
-        }, modalityState);
+        };
+
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          writeRunnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(writeRunnable, modalityState);
+        }
       }
     };
 
-    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    }
   }
 
   public void runWithoutProgress() throws IncorrectOperationException {

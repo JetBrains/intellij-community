@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
@@ -20,13 +21,13 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -39,9 +40,9 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
@@ -215,6 +216,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
     }
 
+    if (doTestCustomPass()) {
+      TextEditorHighlightingPass pass = getCustomPass(file, editor);
+      if (pass != null) {
+        pass.collectInformation(new MockProgressIndicator());
+        result.addAll(pass.getHighlights());
+      }
+    }
+
     if (forceExternalValidation()) {
       result.clear();
     }
@@ -227,6 +236,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     return result;
+  }
+
+  protected TextEditorHighlightingPass getCustomPass(final PsiFile file, final Editor editor) {
+    return null;
+  }
+
+  protected boolean doTestCustomPass() {
+    return false;
   }
 
   private void collectLineMarkersForFile(final PsiFile file, final Editor editor, final List<HighlightInfo> result) {

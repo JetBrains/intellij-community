@@ -3,6 +3,7 @@ package com.intellij.codeInsight.actions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,7 @@ public class OptimizeImportsAction extends AnAction {
     DataContext dataContext = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, PlatformDataKeys.EDITOR.getData(dataContext));
 
     final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
 
@@ -76,12 +77,21 @@ public class OptimizeImportsAction extends AnAction {
       }
     }
 
-    final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
-    dialog.show();
-    if (!dialog.isOK()) return;
+    boolean processDirectory;
+    boolean includeSubdirectories;
 
-    if (dialog.isProcessDirectory()){
-      new OptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      includeSubdirectories = processDirectory = false;
+    } else {
+      final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
+      dialog.show();
+      if (!dialog.isOK()) return;
+      processDirectory = dialog.isProcessDirectory();
+      includeSubdirectories = dialog.isIncludeSubdirectories();
+    }
+
+    if (processDirectory){
+      new OptimizeImportsProcessor(project, dir, includeSubdirectories).run();
     }
     else{
       new OptimizeImportsProcessor(project, file).run();
@@ -104,7 +114,7 @@ public class OptimizeImportsAction extends AnAction {
 
     final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, PlatformDataKeys.EDITOR.getData(dataContext), false);
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !isOptimizeImportsAvailable(file)){
