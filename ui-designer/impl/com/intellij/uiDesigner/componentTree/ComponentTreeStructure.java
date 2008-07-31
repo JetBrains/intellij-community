@@ -95,7 +95,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     }
     else if(element instanceof ComponentPtr){ // RadContainer is also RadComponent
       final ComponentPtr ptr=(ComponentPtr)element;
-      LOG.assertTrue(ptr.isValid()); // pointer must be valid
+      if (!ptr.isValid()) return myRootElement;
       final RadComponent component=ptr.getComponent();
       if(component instanceof RadRootContainer){
         return myRootElement;
