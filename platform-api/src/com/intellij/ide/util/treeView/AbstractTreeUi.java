@@ -1286,6 +1286,13 @@ class AbstractTreeUi {
     expand(toExpand);
   }
 
+
+  @Nullable
+  private static Object getElementFor(Object node) {
+    if (!(node instanceof DefaultMutableTreeNode)) return null;
+    return getElementFor((DefaultMutableTreeNode)node);
+  }
+
   @Nullable
   private static Object getElementFor(DefaultMutableTreeNode node) {
     if (node != null) {
@@ -1505,10 +1512,20 @@ class AbstractTreeUi {
 
       getBuilder().expandNodeChildren(node);
 
+      final Object element = getElementFor(node);
+
       for (int i = 0; i < node.getChildCount(); i++) {
         if (isLoadingNode(node.getChildAt(i))) {
           removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
         }
+      }
+
+      if (node.getChildCount() == 0) {
+        addNodeAction(element, new NodeAction() {
+          public void onReady(final DefaultMutableTreeNode node) {
+            expand(element, null);
+          }
+        });
       }
 
       int n = alarm.cancelAllRequests();
