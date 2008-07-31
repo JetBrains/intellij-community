@@ -34,9 +34,9 @@ package com.intellij.cvsSupport2;
 import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.actions.update.UpdateSettingsOnCvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsUpdatePolicy;
@@ -49,6 +49,7 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -57,7 +58,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class CvsUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
@@ -72,8 +76,60 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     CvsUpdatePolicy.fillGroups(updatedFiles);
   }
 
+  private static class CvsSequentialUpdateContext implements SequentialUpdatesContext {
+    private final UpdateSettingsOnCvsConfiguration myConfiguration;
+    private final String myUpdateTagName;
+    private final static String error = "merge.wasnt.started.only.update.was.performed";
+
+    private CvsSequentialUpdateContext(final UpdateSettingsOnCvsConfiguration configuration, final String tagName) {
+      myUpdateTagName = tagName;
+      myConfiguration = configuration;
+    }
+
+    @NotNull
+    public String getMessageWhenInterruptedBeforeStart() {
+      String mergeString = "-j " + myConfiguration.getBranch1ToMergeWith();
+      if (myConfiguration.getBranch2ToMergeWith() != null) {
+        mergeString += " -j " + myConfiguration.getBranch2ToMergeWith();
+      }
+      return "Merge (" + mergeString + ") wasn't started, only update (-r " + myUpdateTagName + ") was performed";
+    }
+
+    public UpdateSettingsOnCvsConfiguration getConfiguration() {
+      return myConfiguration;
+    }
+  }
+
+  private UpdateSettingsOnCvsConfiguration createSettingsAndUpdateContext(final CvsConfiguration cvsConfiguration,
+                                                                          @NotNull final Ref<SequentialUpdatesContext> contextRef) {
+    if (contextRef.get() != null) {
+      final CvsSequentialUpdateContext cvsContext = (CvsSequentialUpdateContext) contextRef.get();
+      contextRef.set(null);
+      return cvsContext.getConfiguration();
+    }
+    
+    if ((! cvsConfiguration.CLEAN_COPY) && cvsConfiguration.UPDATE_DATE_OR_REVISION_SETTINGS.overridesDefault() &&
+        (cvsConfiguration.MERGING_MODE != CvsConfiguration.DO_NOT_MERGE)) {
+      // split into 2 updates
+      final UpdateSettingsOnCvsConfiguration secondUpdate = new UpdateSettingsOnCvsConfiguration(
+          cvsConfiguration.PRUNE_EMPTY_DIRECTORIES, cvsConfiguration.MERGING_MODE, cvsConfiguration.MERGE_WITH_BRANCH1_NAME,
+          cvsConfiguration.MERGE_WITH_BRANCH2_NAME, cvsConfiguration.CREATE_NEW_DIRECTORIES, cvsConfiguration.UPDATE_KEYWORD_SUBSTITUTION,
+          new DateOrRevisionSettings(), cvsConfiguration.MAKE_NEW_FILES_READONLY, cvsConfiguration.CLEAN_COPY, cvsConfiguration.RESET_STICKY);
+      contextRef.set(new CvsSequentialUpdateContext(secondUpdate, cvsConfiguration.UPDATE_DATE_OR_REVISION_SETTINGS.asString()));
+
+      return new UpdateSettingsOnCvsConfiguration(
+          cvsConfiguration.PRUNE_EMPTY_DIRECTORIES, CvsConfiguration.DO_NOT_MERGE, null, null, cvsConfiguration.CREATE_NEW_DIRECTORIES,
+          cvsConfiguration.UPDATE_KEYWORD_SUBSTITUTION, cvsConfiguration.UPDATE_DATE_OR_REVISION_SETTINGS,
+          cvsConfiguration.MAKE_NEW_FILES_READONLY, cvsConfiguration.CLEAN_COPY, cvsConfiguration.RESET_STICKY);
+    } else {
+      // usual way
+      return new UpdateSettingsOnCvsConfiguration(cvsConfiguration, cvsConfiguration.CLEAN_COPY, cvsConfiguration.RESET_STICKY);
+    }
+  }
+
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) {
+  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator,
+                                         @NotNull final Ref<SequentialUpdatesContext> contextRef) {
     CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(myProject);
     if (!myLastUpdateWasConfigured) {
       cvsConfiguration.CLEAN_COPY = false;
@@ -82,48 +138,14 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     myLastUpdateWasConfigured = false;
 
     try {
-      final UpdateSettingsOnCvsConfiguration updateSettings = new UpdateSettingsOnCvsConfiguration(cvsConfiguration,
-                                                                                                   cvsConfiguration.CLEAN_COPY,
-                                                                                                   cvsConfiguration.RESET_STICKY);
-      final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
-                                                                          updateSettings, myProject, updatedFiles);
+      final UpdateSettingsOnCvsConfiguration updateSettings = createSettingsAndUpdateContext(cvsConfiguration, contextRef);
+      final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots, updateSettings, myProject, updatedFiles);
       handler.addCvsListener(new UpdatedFilesProcessor(myProject, updatedFiles));
       CvsOperationExecutor cvsOperationExecutor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
       cvsOperationExecutor.setShowErrors(false);
-      cvsOperationExecutor.performActionSync(handler, new CvsOperationExecutorCallback() {
-        public void executionFinished(boolean successfully) {
-
-        }
-
-        public void executionFinishedSuccessfully() {
-
-        }
-
-        public void executeInProgressAfterAction(ModalityContext modaityContext) {
-
-        }
-      });
+      cvsOperationExecutor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
       final CvsResult result = cvsOperationExecutor.getResult();
-      return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
-        public void onRefreshFilesCompleted() {
-          final FileGroup mergedWithConflictsGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
-          final FileGroup binaryMergedGroup = updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
-          if (!mergedWithConflictsGroup.isEmpty() || !binaryMergedGroup.isEmpty()) {
-            Collection<String> paths = new ArrayList<String>();
-            paths.addAll(mergedWithConflictsGroup.getFiles());
-            paths.addAll(binaryMergedGroup.getFiles());
-
-            final List<VirtualFile> list = invokeManualMerging(paths, myProject);
-            FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
-            for(VirtualFile mergedFile: list) {
-              String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
-              mergedWithConflictsGroup.remove(path);
-              binaryMergedGroup.remove(path);
-              mergedGroup.add(path);
-            }
-          }
-        }
-      };
+      return createUpdateSessionAdapter(updatedFiles, result);
     }
     finally {
       cvsConfiguration.CLEAN_COPY = false;
@@ -131,18 +153,39 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
   }
 
-  private static List<VirtualFile> invokeManualMerging(Collection<String> paths, Project project) {
-    Map<VirtualFile, List<String>> fileToRevisions = new LinkedHashMap<VirtualFile, List<String>>();
-    final List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
-    for (final String path : paths) {
-      VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File(path));
-      if (virtualFile != null) {
-        final List<String> allRevisionsForFile = CvsUtil.getAllRevisionsForFile(virtualFile);
-        if (!allRevisionsForFile.isEmpty()) {
-          fileToRevisions.put(virtualFile, allRevisionsForFile);
-          if (!virtualFile.isWritable()) {
-            readOnlyFiles.add(virtualFile);
+  private UpdateSessionAdapter createUpdateSessionAdapter(final UpdatedFiles updatedFiles, final CvsResult result) {
+    return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
+      public void onRefreshFilesCompleted() {
+        final FileGroup mergedWithConflictsGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
+        final FileGroup binaryMergedGroup = updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
+        if (!mergedWithConflictsGroup.isEmpty() || !binaryMergedGroup.isEmpty()) {
+          Collection<String> paths = new ArrayList<String>();
+          paths.addAll(mergedWithConflictsGroup.getFiles());
+          paths.addAll(binaryMergedGroup.getFiles());
+
+          final List<VirtualFile> list = invokeManualMerging(paths, myProject);
+          FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
+          for(VirtualFile mergedFile: list) {
+            String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
+            mergedWithConflictsGroup.remove(path);
+            binaryMergedGroup.remove(path);
+            mergedGroup.add(path);
           }
+        }
+      }
+    };
+  }
+
+  private static List<VirtualFile> invokeManualMerging(Collection<String> paths, Project project) {
+    final List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+
+    for (final String path : paths) {
+      final VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File(path));
+      if (virtualFile != null) {
+        files.add(virtualFile);
+        if (!virtualFile.isWritable()) {
+          readOnlyFiles.add(virtualFile);
         }
       }
     }
@@ -160,9 +203,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       });
     }
 
-    if (!fileToRevisions.isEmpty()) {
-      final List<VirtualFile> mergedFiles = new ArrayList<VirtualFile>(fileToRevisions.keySet());
-      return AbstractVcsHelper.getInstance(project).showMergeDialog(mergedFiles, new CvsMergeProvider(fileToRevisions, project));
+    if (! files.isEmpty()) {
+      return AbstractVcsHelper.getInstance(project).showMergeDialog(files, new CvsMergeProvider());
     }
     return Collections.emptyList();
   }

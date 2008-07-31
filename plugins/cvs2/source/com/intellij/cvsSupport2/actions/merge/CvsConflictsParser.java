@@ -87,9 +87,9 @@ public class CvsConflictsParser {
     if (myStateStack.isEmpty()) {
       appendLine(line);
     }
-    else if (myStateStack.peek() == State.RIGHT) {
+    else if (myStateStack.peek() == State.LEFT) {
       myStateStack.pop();
-      myStateStack.push(State.LEFT);
+      myStateStack.push(State.RIGHT);
       if (myStateStack.size() > 1) {
         appendToCurrentBuffer(line);
       }
@@ -101,10 +101,10 @@ public class CvsConflictsParser {
 
   private void processRightMarker(final String line) {
     if (myStateStack.isEmpty()) {
-      myStateStack.push(State.RIGHT);
+      myStateStack.push(State.LEFT);
     }
     else {
-      myStateStack.push(State.RIGHT);
+      myStateStack.push(State.LEFT);
       appendToCurrentBuffer(line);
     }
   }

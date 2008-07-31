@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.actions.merge;
 
-import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
@@ -14,11 +13,8 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
 
 
 public class MergeAction extends AnAction {
@@ -53,14 +49,8 @@ public class MergeAction extends AnAction {
       if (operationStatus.hasReadonlyFiles()) {
         return;
       }
-      final Map<VirtualFile, List<String>> fileToRevisions = new HashMap<VirtualFile, List<String>>();
-      for(VirtualFile file: files) {
-        fileToRevisions.put(file, CvsUtil.getAllRevisionsForFile(file));
-      }
       final Project project = context.getProject();
-      AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<VirtualFile>(fileToRevisions.keySet()),
-                                                             new CvsMergeProvider(fileToRevisions, project));
-
+      AbstractVcsHelper.getInstance(project).showMergeDialog(Arrays.asList(files), new CvsMergeProvider());
     }
     catch (Exception e1) {
       LOG.error(e1);

@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,7 @@ public interface UpdateEnvironment {
    * @param contentRoots      the content roots for which update/integrate/status was requested by the user.
    * @param updatedFiles      the holder for the results of the update/integrate/status operation.
    * @param progressIndicator the indicator that can be used to report the progress of the operation.
+   * @param context           in-out parameter: a link between several sequential update operations (that can be triggered by one update action)
    * @return the update session instance, which can be used to get information about errors that have occurred
    *         during the operation and to perform additional post-update processing.
    * @throws ProcessCanceledException if the update operation has been cancelled by the user. Alternatively,
@@ -56,7 +58,7 @@ public interface UpdateEnvironment {
    */
   @NotNull
   UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, UpdatedFiles updatedFiles,
-                                  ProgressIndicator progressIndicator) throws ProcessCanceledException;
+                                  ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context) throws ProcessCanceledException;
 
   /**
    * Allows to show a settings dialog for the operation.

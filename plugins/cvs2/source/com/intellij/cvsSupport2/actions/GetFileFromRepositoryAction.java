@@ -36,6 +36,7 @@ public class GetFileFromRepositoryAction extends ActionOnSelectedElement{
     final FilePath[] filePaths = context.getSelectedFilePaths();
     if (filePaths != null) {
       CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(project);
+      // do not use -j's
       final UpdateSettingsOnCvsConfiguration updateSettings = new UpdateSettingsOnCvsConfiguration(cvsConfiguration,
                                                                                                    cvsConfiguration.CLEAN_COPY,
                                                                                                    cvsConfiguration.RESET_STICKY);

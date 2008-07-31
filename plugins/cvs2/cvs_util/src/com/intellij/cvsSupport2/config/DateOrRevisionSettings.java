@@ -71,6 +71,10 @@ public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevisio
       DATE = value;
   }
 
+  public boolean overridesDefault() {
+    return USE_BRANCH || USE_DATE;
+  }
+
   public DateOrRevisionSettings updateFrom(DateOrRevision dateOrRevision) {
     USE_BRANCH = dateOrRevision.shouldUseBranch();
     USE_DATE = dateOrRevision.shouldUseDate();

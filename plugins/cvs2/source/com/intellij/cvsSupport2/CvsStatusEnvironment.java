@@ -13,10 +13,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vcs.update.UpdateSession;
-import com.intellij.openapi.vcs.update.UpdateSessionAdapter;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,7 +32,8 @@ public class CvsStatusEnvironment implements UpdateEnvironment {
   }
 
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) {
+  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator,
+                                         @NotNull final Ref<SequentialUpdatesContext> context) {
     final UpdateSettings updateSettings = UpdateSettings.DONT_MAKE_ANY_CHANGES;
     final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
                                                                         updateSettings, myProject, updatedFiles);
