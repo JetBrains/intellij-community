@@ -5,9 +5,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.HashSet;
+
+import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author yole
@@ -30,7 +37,28 @@ public class CloseAllUnpinnedEditorsAction extends CloseEditorsActionBase {
   }
 
   @Override
-  protected boolean isValidForProject(final Project project) {
-    return true;
+  protected boolean isActionEnabled(final Project project, final AnActionEvent event) {
+    final ArrayList<Pair<EditorComposite,EditorWindow>> filesToClose = getFilesToClose(event);
+    if (filesToClose.isEmpty()) return false;
+    Set<EditorWindow> checked = new HashSet<EditorWindow>();
+    for (Pair<EditorComposite, EditorWindow> pair : filesToClose) {
+      final EditorWindow window = pair.second;
+      if (!checked.contains(window)) {
+        checked.add(window);
+        if (hasPinned(window)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasPinned(final EditorWindow window) {
+    for (EditorWithProviderComposite e : window.getEditors()) {
+      if (e.isPinned()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

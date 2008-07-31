@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public abstract class CloseEditorsActionBase extends AnAction {
-  private ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
+  protected ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(PlatformDataKeys.PROJECT);
@@ -70,14 +70,18 @@ public abstract class CloseEditorsActionBase extends AnAction {
     final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
     presentation.setText(getPresentationText(inSplitter));
     final Project project = event.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      presentation.setEnabled(false);
-      return;
+    boolean enabled = (project != null && isActionEnabled(project, event));
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setVisible(enabled);
     }
-    presentation.setEnabled(getFilesToClose (event).size () > 0 && isValidForProject(project));
+    else {
+      presentation.setEnabled(enabled);
+    }
   }
 
-  protected abstract boolean isValidForProject(Project project);
+  protected boolean isActionEnabled(final Project project, final AnActionEvent event) {
+    return getFilesToClose(event).size() > 0;
+  }
 
   protected abstract String getPresentationText(boolean inSplitter);
 }
