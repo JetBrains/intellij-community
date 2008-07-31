@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/../out/classes/production/openapi" />
-    <output-test url="file://$MODULE_DIR$/../out/classes/test/openapi" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
@@ -47,7 +45,6 @@
     <orderEntry type="module" module-name="psi-extapi" exported="" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntryProperties />
   </component>
   <component name="copyright">
     <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/../../out/classes/production/ant" />
-    <output-test url="file://$MODULE_DIR$/../../out/classes/test/ant" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
@@ -23,7 +21,6 @@
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>

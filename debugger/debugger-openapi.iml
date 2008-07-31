@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/classes/openapi" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/openapi">
       <sourceFolder url="file://$MODULE_DIR$/openapi" isTestSource="false" />
@@ -12,7 +11,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
-    <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>

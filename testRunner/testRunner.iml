@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="idea_rt" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lvcs-openapi" />
-    <orderEntryProperties />
   </component>
 </module>
 

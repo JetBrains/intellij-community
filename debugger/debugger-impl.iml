@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/classes/impl" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/impl">
       <sourceFolder url="file://$MODULE_DIR$/impl" isTestSource="false" />
@@ -23,7 +22,6 @@
     <orderEntry type="module" module-name="xdebugger-openapi" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="lang-api" />
-    <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>

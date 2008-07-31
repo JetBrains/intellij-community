@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/../out/classes/production/codeInsight-impl" />
-    <output-test url="file://$MODULE_DIR$/../out/classes/test/codeInsight-impl" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/impl">
       <sourceFolder url="file://$MODULE_DIR$/impl" isTestSource="false" />
@@ -28,7 +26,6 @@
     <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>

@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntry type="module" module-name="lvcs-openapi" />
-    <orderEntryProperties />
   </component>
 </module>
 
