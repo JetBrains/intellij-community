@@ -691,8 +691,7 @@ public class InjectedLanguageUtil {
             throw e;
           }
           catch (RuntimeException e) {
-            e.printStackTrace();
-            assert false: "Patch error, file:"+myHostVirtualFile+"; places:"+injectionHosts+"; ranges:"+relevantRangesInHostDocument;
+            throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+relevantRangesInHostDocument, e);
           }
           assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
 
