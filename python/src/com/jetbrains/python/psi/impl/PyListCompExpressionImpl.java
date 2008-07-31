@@ -20,18 +20,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NotNull;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PsiCached;
+import com.jetbrains.python.psi.ComprhForComponent;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.types.PyType;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,7 +33,7 @@ import java.util.List;
  * Time: 23:33:16
  * To change this template use File | Settings | File Templates.
  */
-public class PyListCompExpressionImpl extends PyElementImpl implements PyListCompExpression {
+public class PyListCompExpressionImpl extends PyComprehensionElementImpl implements PyListCompExpression {
   public PyListCompExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -50,68 +43,16 @@ public class PyListCompExpressionImpl extends PyElementImpl implements PyListCom
     pyVisitor.visitPyListCompExpression(this);
   }
 
-  @PsiCached
-  public PyExpression getResultExpression() {
-    ASTNode[] exprs = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-    return exprs.length == 0 ? null : (PyExpression)exprs[0].getPsi();
-  }
-
-  @PsiCached
-  public List<ListCompComponent> getComponents() {
-    ASTNode node = getNode().getFirstChildNode();
-    List<ListCompComponent> list = new ArrayList<ListCompComponent>(5);
-    while (node != null) {
-      IElementType type = node.getElementType();
-      ASTNode next = getNextExpression(node);
-      if (next == null) break;
-      if (type == PyTokenTypes.IF_KEYWORD) {
-        final PyExpression test = (PyExpression)next.getPsi();
-        list.add(new IfComponent() {
-          public PyExpression getTest() {
-            return test;
-          }
-        });
-      }
-      else if (type == PyTokenTypes.FOR_KEYWORD) {
-        ASTNode next2 = getNextExpression(next);
-        if (next2 == null) break;
-        final PyExpression variable = (PyExpression)next.getPsi();
-        final PyExpression iterated = (PyExpression)next2.getPsi();
-        list.add(new ForComponent() {
-          public PyExpression getIteratorVariable() {
-            return variable;
-          }
-
-          public PyExpression getIteratedList() {
-            return iterated;
-          }
-        });
-      }
-      node = node.getTreeNext();
-    }
-    return list;
-  }
-
-  private static ASTNode getNextExpression(ASTNode after) {
-    ASTNode node = after;
-    do {
-      node = node.getTreeNext();
-    }
-    while (node != null && !PyElementTypes.EXPRESSIONS.contains(node.getElementType()));
-    return node;
-  }
-
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    for (ListCompComponent component : getComponents()) {
-      if (component instanceof ForComponent) {
+    for (ComprhForComponent component : getForComponents()) {
+      if (component != null) {
         //TODO: this needs to restrict resolution based on nesting
         // for example, this is not valid (the i in the first for should not resolve):
         //    x  for x in i for i in y
-        ForComponent forComponent = (ForComponent)component;
-        if (!forComponent.getIteratorVariable().processDeclarations(processor, substitutor, null, place)) return false;
+        if (!component.getIteratorVariable().processDeclarations(processor, substitutor, null, place)) return false;
       }
     }
     return true;
@@ -120,4 +61,5 @@ public class PyListCompExpressionImpl extends PyElementImpl implements PyListCom
   public PyType getType() {
     return null;
   }
+
 }

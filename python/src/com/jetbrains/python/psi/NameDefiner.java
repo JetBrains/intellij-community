@@ -50,6 +50,10 @@ public interface NameDefiner extends PsiElement {
     }
   }
 
+  /**
+   * Helper iterator-over-array class.
+   * @param <T> array element type
+   */
   class ArrayIter<T> implements Iterator<T> {
 
     protected int my_index;
@@ -78,6 +82,10 @@ public interface NameDefiner extends PsiElement {
     }
   }
 
+  /**
+   * Iterable that can only have one element.
+   * @param <T> element type
+   */
   class SingleIterable<T> implements Iterable<T> {
 
     T content;

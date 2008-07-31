@@ -17,9 +17,12 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,7 +31,7 @@ import com.jetbrains.python.psi.types.PyType;
  * Time: 10:16:07
  * To change this template use File | Settings | File Templates.
  */
-public class PyGeneratorExpressionImpl extends PyElementImpl implements PyGeneratorExpression {
+public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implements PyGeneratorExpression {
   public PyGeneratorExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -41,4 +44,27 @@ public class PyGeneratorExpressionImpl extends PyElementImpl implements PyGenera
   public PyType getType() {
     return null;
   }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    // extract whatever names are defined in "for" components
+    List<ComprhForComponent> fors = getForComponents();
+    PyElement[] for_targets = new PyElement[fors.size()];
+    int i = 0;
+    for (ComprhForComponent for_comp : fors) {
+      for_targets[i] = for_comp.getIteratorVariable();
+      i += 1;
+    }
+    List<PyElement> name_refs = PyUtil.flattenedParens(for_targets);
+    return name_refs;
+  }
+
+  public PsiElement getElementNamed(final String the_name) {
+    return IterHelper.findName(iterateNames(), the_name);
+  }
+
+  public boolean mustResolveOutside() {
+    return false;
+  }
+
 }

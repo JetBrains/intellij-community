@@ -19,25 +19,13 @@ package com.jetbrains.python.psi;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
+ * List comprehension PSI.
  * User: yole
  * Date: 31.05.2005
- * Time: 23:32:57
- * To change this template use File | Settings | File Templates.
  */
-public interface PyListCompExpression extends PyExpression {
-    PyExpression getResultExpression();
-    List<ListCompComponent> getComponents();
+public interface PyListCompExpression extends PyExpression, NameDefiner {
+  PyExpression getResultExpression();
+  List<ComprhForComponent> getForComponents();
+  List<ComprhIfComponent> getIfComponents();
 
-    interface ListCompComponent {
-    }
-
-    interface IfComponent extends ListCompComponent {
-        PyExpression getTest();
-    }
-
-    interface ForComponent extends ListCompComponent {
-        PyExpression getIteratorVariable();
-        PyExpression getIteratedList();
-    }
 }

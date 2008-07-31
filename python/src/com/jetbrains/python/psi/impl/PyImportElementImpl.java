@@ -29,11 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
+ * The "import foo" or "import foo as bar" parts.
  * User: yole
  * Date: 02.06.2005
- * Time: 22:22:35
- * To change this template use File | Settings | File Templates.
  */
 public class PyImportElementImpl extends PyElementImpl implements PyImportElement {
   public PyImportElementImpl(ASTNode astNode) {
@@ -104,23 +102,11 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
   public PsiElement getElementNamed(final String the_name) {
     PyElement named_elt = IterHelper.findName(iterateNames(), the_name);
     if (named_elt != null) {
-      PsiElement from_elt = null;
-      PyReferenceExpression import_ref = getImportReference(); // import what?
-      if (import_ref == null) return null; 
-      String import_ref_name = import_ref.getName();
-      if (import_ref_name == null) return null; // no imported name
-      /*
-      PyFromImportStatement import_from_stmt = PsiTreeUtil.getParentOfType(this, PyFromImportStatement.class);
-      if (import_from_stmt != null) {
-        PyReferenceExpression from_src = import_from_stmt.getImportSource();
-        if (from_src != null) {
-          //return ResolveImportUtil.resolvePythonImport2(from_src, import_ref_name);
-          return ResolveImportUtil.resolveImportReference(import_ref);
-        }
+      PyReferenceExpression import_ref = getImportReference(); // = most qualified import name: "z" for "import x.y.z"
+      if (getAsName() == null) { // the match was not by target expr of "import ... as foo"
+        if (named_elt instanceof PyReferenceExpression) import_ref  = (PyReferenceExpression)named_elt; // [part of] import ref matched
+        else return null; // I wonder what could have matched there?
       }
-      // else return ResolveImportUtil.resolvePythonImport2(import_ref, null);
-      else return ResolveImportUtil.resolveImportReference(import_ref);
-      */
       return ResolveImportUtil.resolveImportReference(import_ref);
     }
     // no element of this name

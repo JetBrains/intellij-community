@@ -21,11 +21,9 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyParameterList;
 
 /**
- * Created by IntelliJ IDEA.
+ * Checks for anomalies in parameter lists of function declarations.
  * User: yole
  * Date: 12.06.2005
- * Time: 11:05:22
- * To change this template use File | Settings | File Templates.
  */
 public class ParameterListAnnotator extends PyAnnotator {
     @Override public void visitPyParameterList(final PyParameterList node) {

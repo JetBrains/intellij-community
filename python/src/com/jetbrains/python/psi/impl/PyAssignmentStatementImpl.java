@@ -27,9 +27,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -101,27 +98,11 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return true;
   }
 
-  protected static List<PyElement> _unfoldParenExprs(PyElement[] targets, List<PyElement> receiver) {
-    // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
-    for (PyElement exp : targets) {
-      if (exp instanceof PyParenthesizedExpression) {
-        final PyParenthesizedExpression parex = (PyParenthesizedExpression)exp;
-        PyExpression cont = parex.getContainedExpression();
-        if (cont instanceof PyTupleExpression) {
-          final PyTupleExpression tupex = (PyTupleExpression)cont;
-          _unfoldParenExprs(tupex.getElements(), receiver);
-        }
-        else receiver.add(exp);
-      }
-      else receiver.add(exp);
-    }
-    return receiver;
-  }
-
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    PyExpression[] targets = getTargets();
-    return _unfoldParenExprs(targets, new ArrayList<PyElement>(targets.length));
+    PyElement[] targets = getTargets();
+    // return _unfoldParenExprs(targets, new ArrayList<PyElement>(targets.length));
+    return PyUtil.flattenedParens(targets);
   }
 
   public PyElement getElementNamed(final String the_name) {

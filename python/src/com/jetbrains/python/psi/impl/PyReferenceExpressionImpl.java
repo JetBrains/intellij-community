@@ -144,8 +144,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     // here we have an unqualified expr. it may be defined:
     // ...in current file
-    //PsiElement ret = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), this, this, null);
     PsiElement ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), this);
+    if ((ret != null) && (ret instanceof PyClass)) {
+      // is it a case of the bizarre "class Foo(Foo)" construct?
+      PyClass cls = (PyClass)ret;
+      for (PyExpression base_expr : cls.getSuperClassExpressions()){
+        if (base_expr == this) return null; // cannot resolve us, the base class ref, to the class being defined
+      }
+    }
     if (ret == null) {
       // ...as a part of current module
       PyType otype = PyBuiltinCache.getInstance(this.getProject()).getObjectType(); // "object" as a closest kin to "module"

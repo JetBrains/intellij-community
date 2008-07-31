@@ -27,6 +27,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -192,4 +193,45 @@ public class PyUtil {
   private static boolean isWhitespace(ASTNode node) {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
   }
+
+
+  protected static <T extends PyElement> List<T> _unfoldParenExprs(T[] targets, List<T> receiver) {
+    // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
+    for (T exp : targets) {
+      if (exp instanceof PyParenthesizedExpression) {
+        final PyParenthesizedExpression parex = (PyParenthesizedExpression)exp;
+        PyExpression cont = parex.getContainedExpression();
+        if (cont instanceof PyTupleExpression) {
+          final PyTupleExpression tupex = (PyTupleExpression)cont;
+          _unfoldParenExprs((T[])tupex.getElements(), receiver);
+        }
+        else receiver.add(exp);
+      }
+      else receiver.add(exp);
+    }
+    return receiver;
+  }
+
+  // Poor man's catamorhpism :)
+  /**
+   * Flattens the representation of every element in targets, and puts all results together.
+   * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
+   * Typical usage: <code>flattenedParens(some_tuple.getExpressions())</code>.
+   * @param targets target elements.
+   * @return the list of flattened expressions.
+   */
+  @NotNull
+  public static <T extends PyElement> List<T> flattenedParens(T[] targets) {
+    return _unfoldParenExprs(targets, new ArrayList<T>(targets.length));
+  }
+
+  // Poor man's filter
+  // TODO: move to a saner place
+  public static boolean instanceOf(Object obj, Class... possibleClasses) {
+    for (Class cls : possibleClasses) {
+      if (cls.isInstance(obj)) return true;
+    }
+    return false;
+  }
+
 }

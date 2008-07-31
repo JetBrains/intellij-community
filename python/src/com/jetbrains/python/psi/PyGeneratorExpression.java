@@ -16,12 +16,15 @@
 
 package com.jetbrains.python.psi;
 
+import java.util.List;
+
 /**
- * Created by IntelliJ IDEA.
+ * Generator expression PSI.
  * User: yole
  * Date: 05.06.2005
- * Time: 10:15:46
- * To change this template use File | Settings | File Templates.
  */
-public interface PyGeneratorExpression extends PyExpression {
+public interface PyGeneratorExpression extends PyExpression, NameDefiner {
+  PyExpression getResultExpression();
+  List<ComprhForComponent> getForComponents();
+  List<ComprhIfComponent> getIfComponents();
 }

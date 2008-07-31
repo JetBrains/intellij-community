@@ -12,20 +12,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportStatement;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +57,7 @@ public class AddImportAction implements HintAction, QuestionAction {
     final PsiElement element = myReference.getElement();
     if (myReference instanceof PyReferenceExpression) {
       final PyExpression qual = ((PyReferenceExpression)myReference).getQualifier();
-      if ((qual != null) && (qual.getType() instanceof PyModuleType)) return false; // don't propose to import unknown fields, etc  
+      if ((qual != null) /*&& (qual.getType() instanceof PyModuleType)*/) return false; // don't propose to import unknown fields, etc  
     }
     if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class) != null) return false;
     if (PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class) != null) return false;
@@ -83,9 +76,11 @@ public class AddImportAction implements HintAction, QuestionAction {
         final String referenceName = getRefName();
         final PsiFile[] files = getRefFiles(referenceName);
         if (files.length == 1) {
-          final PyImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createImportStatementFromText(myProject, "import " + referenceName);
+          final PyImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createImportStatementFromText(
+              myProject, "import " + referenceName + "\n\n"
+          );
           try {
-            file.addBefore(importNodeToInsert, getFirstNonComment(file));
+            file.addAfter(importNodeToInsert, getInsertPosition(file));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -95,11 +90,20 @@ public class AddImportAction implements HintAction, QuestionAction {
     });
   }
 
-  private static PsiElement getFirstNonComment(final PsiFile file) {
-    final PsiElement firstChild = file.getFirstChild();
-    LOG.assertTrue(firstChild != null);
-    final PsiElement element = PsiTreeUtil.skipSiblingsForward(firstChild, PsiComment.class);
-    return element != null ? element : firstChild;
+  private static PsiElement getInsertPosition(final PsiFile file) {
+    PsiElement feeler = file.getFirstChild();
+    LOG.assertTrue(feeler != null);
+    // skip initial comments and whitespace and try to get just below the last import stmt
+    PsiElement seeker = feeler;
+    do {
+      if (PyUtil.instanceOf(feeler, PyImportStatement.class, PyFromImportStatement.class)) {
+        seeker = feeler;
+        feeler = feeler.getNextSibling();
+      }
+      else if (PyUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) feeler = feeler.getNextSibling();
+      else break; // some other statement, stop
+    } while (feeler != null);
+    return seeker;
   }
 
   public boolean startInWriteAction() {
