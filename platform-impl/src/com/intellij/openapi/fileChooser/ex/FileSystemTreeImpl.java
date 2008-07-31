@@ -53,6 +53,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final FileChooserDescriptor myDescriptor;
 
   private final List<Listener> myListeners = new ArrayList<Listener>();
+  private final MyExpansionListener myExpansionListener = new MyExpansionListener();
 
   public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null);
@@ -68,13 +69,21 @@ public class FileSystemTreeImpl implements FileSystemTree {
     myTree = tree;
     final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree.setModel(treeModel);
-    addTreeExpansionListener();
+
+    myTree.addTreeExpansionListener(myExpansionListener);
+
     myTreeBuilder = createTreeBuilder(myTree, treeModel, myTreeStructure, FileComparator.getInstance(), descriptor, new Runnable() {
       public void run() {
         myTree.expandPath(new TreePath(treeModel.getRoot()));
         if (onInitialized != null) {
           onInitialized.run();
         }
+      }
+    });
+
+    Disposer.register(myTreeBuilder, new Disposable() {
+      public void dispose() {
+        myTree.removeTreeExpansionListener(myExpansionListener);
       }
     });
 
@@ -174,32 +183,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   public void registerMouseListener(final ActionGroup group) {
     PopupHandler.installUnknownPopupHandler(myTree, group, ActionManager.getInstance());
-  }
-
-  private void addTreeExpansionListener() {
-    myTree.addTreeExpansionListener(new TreeExpansionListener() {
-      public void treeExpanded(final TreeExpansionEvent event) {
-        if (myTreeBuilder == null || !myTreeBuilder.isNodeBeingBuilt(event.getPath())) return;
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            TreePath path = event.getPath();
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-            if (node.getUserObject() instanceof FileNodeDescriptor) {
-              FileNodeDescriptor nodeDescriptor = (FileNodeDescriptor)node.getUserObject();
-              FileElement fileDescriptor = nodeDescriptor.getElement();
-              VirtualFile virtualFile = fileDescriptor.getFile();
-              if (virtualFile != null) {
-                virtualFile.refresh(false, false);
-              }
-            }
-          }
-        });
-      }
-
-      public void treeCollapsed(TreeExpansionEvent event) {
-      }
-    });
   }
 
   public boolean areHiddensShown() {
@@ -434,5 +417,29 @@ public class FileSystemTreeImpl implements FileSystemTree {
     }
 
     fireSelection(selection);
+  }
+
+  private class MyExpansionListener implements TreeExpansionListener {
+    public void treeExpanded(final TreeExpansionEvent event) {
+      if (myTreeBuilder == null || !myTreeBuilder.isNodeBeingBuilt(event.getPath())) return;
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          TreePath path = event.getPath();
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+          if (node.getUserObject() instanceof FileNodeDescriptor) {
+            FileNodeDescriptor nodeDescriptor = (FileNodeDescriptor)node.getUserObject();
+            FileElement fileDescriptor = nodeDescriptor.getElement();
+            VirtualFile virtualFile = fileDescriptor.getFile();
+            if (virtualFile != null) {
+              virtualFile.refresh(false, false);
+            }
+          }
+        }
+      });
+    }
+
+    public void treeCollapsed(TreeExpansionEvent event) {
+    }
   }
 }
