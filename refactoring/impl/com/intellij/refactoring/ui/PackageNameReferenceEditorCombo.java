@@ -1,9 +1,10 @@
-package com.intellij.ui;
+package com.intellij.refactoring.ui;
 
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionEvent;

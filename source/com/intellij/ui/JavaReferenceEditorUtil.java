@@ -10,6 +10,9 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class JavaReferenceEditorUtil {
+  private JavaReferenceEditorUtil() {
+  }
+
   public static ReferenceEditorWithBrowseButton createReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
                                                                                       final String text,
                                                                                       final PsiManager manager,
