@@ -321,7 +321,7 @@ public class DefUseUtil {
     }
   }
 
-  protected static abstract class RefsDefs {
+  protected abstract static class RefsDefs {
 
     protected abstract int   nNext(int index);
     protected abstract int getNext(int index, int no);
@@ -341,7 +341,7 @@ public class DefUseUtil {
     protected abstract boolean defs ();
 
     @NotNull
-    public PsiElement[] get (final PsiVariable def, PsiElement refOrDef) {
+    PsiElement[] get (final PsiVariable def, PsiElement refOrDef) {
       if (body == null) {
         return PsiElement.EMPTY_ARRAY;
       }
@@ -379,12 +379,8 @@ public class DefUseUtil {
               }
 
               // hack: ControlFlow doesnn't contains parameters initialization
-              final boolean[] parmsVisited = new boolean [1];
-              if (index == 0 && !parmsVisited [0]) {
-                parmsVisited [0] = true;
-                if (def instanceof PsiParameter) {
-                  res.add(def.getNameIdentifier());
-                }
+              if (index == 0 && def instanceof PsiParameter) {
+                res.add(def.getNameIdentifier());
               }
             }
 

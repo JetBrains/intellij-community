@@ -433,7 +433,7 @@ public class PsiClassImplUtil {
     return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw);
   }
 
-  private static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass,
+  private static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass candidateClass,
                                                PsiSubstitutor candidateSubstitutor,
                                                PsiClass aClass,
                                                PsiSubstitutor substitutor,
