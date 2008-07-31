@@ -697,17 +697,13 @@ public class CompileDriver {
 
       if (snapshot == null || ModuleCompilerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(translator))) {
         // rescan snapshot if previously generated files can influence the input of this compiler
-        final boolean shouldForceRecompilation = snapshot == null && isRebuild && myShouldClearOutputDirectory;
         snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VfsSnapshot>() {
           public VfsSnapshot compute() {
             return new VfsSnapshot(context.getCompileScope().getFiles(null, true));
           }
         });
-        if (shouldForceRecompilation) {
-          TranslatingCompilerFilesMonitor.getInstance().forceRecompilation(myProject, Arrays.asList(snapshot.getFiles()).iterator());
-        }
       }
-
+                
       final CompileContextEx _context;
       if (translator instanceof IntermediateOutputCompiler) {
         // wrap compile context so that output goes into intermediate directories
@@ -948,14 +944,7 @@ public class CompileDriver {
     for (final File file : outputDirectories) {
       file.mkdirs();
     }
-    final TranslatingCompilerFilesMonitor filesMonitor = TranslatingCompilerFilesMonitor.getInstance();
-    try {
-      filesMonitor.addIgnoredRoots(outputDirectories);
-      CompilerUtil.refreshIODirectories(outputDirectories);
-    }
-    finally {
-      filesMonitor.removeIgnoredRoots(outputDirectories);
-    }
+    CompilerUtil.refreshIODirectories(outputDirectories);
   }
 
   private void clearCompilerSystemDirectory(final CompileContext context) {
