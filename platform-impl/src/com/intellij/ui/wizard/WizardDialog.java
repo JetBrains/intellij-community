@@ -16,9 +16,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
-public class WizardDialog extends DialogWrapper implements WizardCallback {
+public class WizardDialog<T extends WizardModel> extends DialogWrapper implements WizardCallback {
 
-  private final WizardModel myModel;
+  protected final T myModel;
 
   private JButton myPrevious = new JButton();
   private JButton myNext = new JButton();
@@ -32,19 +32,25 @@ public class WizardDialog extends DialogWrapper implements WizardCallback {
 
   private JPanel myStepContent;
 
-  public WizardDialog(Project project, boolean canBeParent, WizardModel model) {
+  public WizardDialog(Project project, boolean canBeParent, T model) {
     super(project, canBeParent);
     myModel = model;
     init();
   }
 
-  public WizardDialog(boolean canBeParent, WizardModel model) {
+  public WizardDialog(boolean canBeParent, T model) {
     super(canBeParent);
     myModel = model;
     init();
   }
 
-  public WizardDialog(Component parent, boolean canBeParent, WizardModel model) {
+  public WizardDialog(boolean canBeParent, boolean unknown, T model) {
+    super(canBeParent);
+    myModel = model;
+    init();
+  }
+
+  public WizardDialog(Component parent, boolean canBeParent, T model) {
     super(parent, canBeParent);
     myModel = model;
     init();
