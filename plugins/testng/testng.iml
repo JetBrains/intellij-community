@@ -36,7 +36,6 @@
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="idea_rt" />
     <orderEntry type="module" module-name="coverage" />
-    <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>

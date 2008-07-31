@@ -15,7 +15,6 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntryProperties />
   </component>
 </module>
 

@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>
