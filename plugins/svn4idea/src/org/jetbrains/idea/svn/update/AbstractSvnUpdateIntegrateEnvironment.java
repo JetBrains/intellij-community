@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -61,7 +62,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   @NotNull
   public UpdateSession updateDirectories(@NotNull final FilePath[] contentRoots,
                                          final UpdatedFiles updatedFiles,
-                                         final ProgressIndicator progressIndicator)
+                                         final ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context)
     throws ProcessCanceledException {
 
     final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
