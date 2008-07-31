@@ -5,18 +5,20 @@ import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertyStub;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,11 +27,15 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class PropertyImpl extends PropertiesElementImpl implements Property {
+public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.psi.impl.PropertyImpl");
 
   public PropertyImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public PropertyImpl(final PropertyStub stub, final IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   public String toString() {
@@ -82,6 +88,11 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public String getKey() {
+    final PropertyStub stub = getStub();
+    if (stub != null) {
+      return stub.getKey();
+    }
+
     final ASTNode node = getKeyNode();
     if (node == null) {
       return null;
@@ -112,7 +123,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return unescape(getValue());
   }
 
-  private static String unescape(String s) {
+  public static String unescape(String s) {
     if (s == null) {
       return null;
     }

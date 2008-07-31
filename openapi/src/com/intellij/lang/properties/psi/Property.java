@@ -24,6 +24,7 @@ package com.intellij.lang.properties.psi;
 
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @see com.intellij.lang.properties.psi.PropertiesElementFactory
  */
-public interface Property extends PsiNamedElement {
+public interface Property extends PsiNamedElement, StubBasedPsiElement<PropertyStub> {
   @Nullable String getKey();
   @Nullable String getValue();
 

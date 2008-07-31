@@ -2,26 +2,25 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -176,9 +175,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   public void subtreeChanged() {
     super.subtreeChanged();
-    Map<String, List<Property>> propertiesMap = myPropertiesMap;
-    PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getProject());
-    referenceManager.beforePropertiesFileChange(this, propertiesMap == null ? null : propertiesMap.keySet());
     synchronized (PsiLock.LOCK) {
       myPropertiesMap = null;
       myProperties = null;

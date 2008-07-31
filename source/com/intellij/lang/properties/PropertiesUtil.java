@@ -2,6 +2,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ResourceFileUtil;
@@ -10,11 +11,13 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -28,7 +31,7 @@ public class PropertiesUtil {
 
   @NotNull
   public static List<Property> findPropertiesByKey(Project project, final String key) {
-    return PropertiesReferenceManager.getInstance(project).findPropertiesByKey(key);
+    return new ArrayList<Property>(PropertyKeyIndex.getInstance().get(key, project, GlobalSearchScope.allScope(project)));
   }
 
   public static boolean isPropertyComplete(final Project project, ResourceBundle resourceBundle, String propertyName) {
