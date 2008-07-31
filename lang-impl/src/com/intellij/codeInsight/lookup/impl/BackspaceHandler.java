@@ -24,11 +24,12 @@ class BackspaceHandler extends EditorActionHandler {
     final String prefix = lookup.getAdditionalPrefix();
     if (prefix.length() > 0) {
       lookup.setAdditionalPrefix(prefix.substring(0, prefix.length() - 1));
-
-      Point point = lookup.calculatePosition();
-      Dimension preferredSize = lookup.getComponent().getPreferredSize();
-      lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
-      lookup.getList().repaint();
+      if (lookup.isVisible()) {
+        Point point = lookup.calculatePosition();
+        Dimension preferredSize = lookup.getComponent().getPreferredSize();
+        lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
+        lookup.getList().repaint();
+      }
     }
     else{
       lookup.hide();

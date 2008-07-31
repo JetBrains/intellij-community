@@ -47,10 +47,10 @@ class TypedHandler implements TypedActionHandler {
 
     if (result == CharFilter.Result.ADD_TO_PREFIX){
       lookup.updateList();
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && lookup.isVisible()) {
         Point point = lookup.calculatePosition();
         Dimension preferredSize = lookup.getComponent().getPreferredSize();
-        lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
+        lookup.setBounds(point.x, point.y, preferredSize.width, preferredSize.height);
         lookup.getList().repaint();
       }
     }
