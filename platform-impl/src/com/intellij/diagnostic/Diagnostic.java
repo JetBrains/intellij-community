@@ -25,6 +25,12 @@ public class Diagnostic {
     return true;
   }
 
+  public static boolean isJavaAssertionsEnabled() {
+    boolean result = false;
+    assert result = true;
+    return result;
+  }
+
   public static void methodNotImplemented(String category) {
     methodNotImplemented(category, "");
   }

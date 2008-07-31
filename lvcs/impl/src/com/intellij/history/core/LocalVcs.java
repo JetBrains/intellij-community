@@ -1,5 +1,6 @@
 package com.intellij.history.core;
 
+import com.intellij.diagnostic.Diagnostic;
 import com.intellij.history.Clock;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.core.changes.*;
@@ -11,6 +12,7 @@ import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.history.utils.LocalHistoryLog;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
@@ -121,6 +123,10 @@ public class LocalVcs implements ILocalVcs {
   }
 
   private void doCreateFile(int id, String path, ContentFactory f, long timestamp, boolean isReadOnly) {
+    // todo hook for IDEADEV-21269 (and, probably, for some others).
+    String parent = Paths.getParentOf(path);
+    if (parent != null /*in unit test mode */ && !checkEntryExists(parent)) return;
+
     Content c = createContentFrom(f);
     applyChange(new CreateFileChange(id, path, c, timestamp, isReadOnly));
   }
@@ -134,9 +140,20 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void changeFileContent(String path, ContentFactory f, long timestamp) {
+    // todo hook for IDEADEV-21269 (and, probably, for some others).
+    if (!checkEntryExists(path)) return;
+
     if (contentWasNotChanged(path, f)) return;
     Content c = createContentFrom(f);
     applyChange(new ContentChange(path, c, timestamp));
+  }
+
+  private boolean checkEntryExists(String path) {
+    if (!Diagnostic.isJavaAssertionsEnabled()) return true;
+
+    if (findEntry(path) != null) return true;
+    LocalHistoryLog.LOG.warn("Entry not found: " + path);
+    return false;
   }
 
   protected boolean contentWasNotChanged(String path, ContentFactory f) {

@@ -1,5 +1,6 @@
 package com.intellij.history.integration;
 
+import com.intellij.diagnostic.Diagnostic;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.LocalHistoryLog;
@@ -177,9 +178,7 @@ public class Updater implements CacheUpdater {
   }
 
   private boolean checkDoesNotExist(VirtualFile f) {
-    boolean isReleaseMode = true;
-    assert (isReleaseMode = false) == false;
-    if (isReleaseMode) return true;
+    if (!Diagnostic.isJavaAssertionsEnabled()) return true;
 
     Entry e = myVcs.findEntry(f.getPath());
     if (e == null) return true;
