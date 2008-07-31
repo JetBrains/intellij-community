@@ -329,13 +329,13 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback select(Sdk sdk, final boolean requestFocus) {
+  public ActionCallback select(@NotNull Sdk sdk, final boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myJdkListConfig);
     place.putPath(BaseStructureConfigurable.TREE_NAME, sdk.getName());
     return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback select(LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
+  public ActionCallback select(@NotNull LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
     final Library lib = libraryOrderEntry.getLibrary();
     if (lib != null && lib.getTable() == null) {
       Place place = new Place().putPath(CATEGORY, myModulesConfig);

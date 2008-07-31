@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -175,33 +176,58 @@ public class ClasspathPanel extends JPanel {
     myEntryTable.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2){
-          navigate();
+          navigate(true);
         }
       }
     });
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
+    final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
+      public void actionPerformed(AnActionEvent e) {
+        navigate(false);
+      }
+
+      public void update(AnActionEvent e) {
+        final Presentation presentation = e.getPresentation();
+        presentation.setEnabled(false);
+        if (myEntryTable.getSelectedRowCount() != 1) return;
+        final OrderEntry entry = myModel.getItemAt(myEntryTable.getSelectedRow()).getEntry();
+        if (entry != null && entry.isValid()){
+          if (!(entry instanceof ModuleSourceOrderEntry)){
+            presentation.setEnabled(true);
+          }
+        }
+      }
+    };
+    navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myEntryTable);
+    actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
-  private void navigate() {
+  private void navigate(boolean openLibraryEditor) {
     final int selectedRow = myEntryTable.getSelectedRow();
     final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
-    Object toSelect = null;
-    final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myRootModel.getModule().getProject());
+    final ProjectStructureConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject);
     if (entry instanceof ModuleOrderEntry){
-      toSelect = ((ModuleOrderEntry)entry).getModule();
+      Module module = ((ModuleOrderEntry)entry).getModule();
+      if (module != null) {
+        rootConfigurable.select(module.getName(), null, true);
+      }
     } 
     else if (entry instanceof LibraryOrderEntry){
-      myEditButton.doClick();
-      return;
-    } 
-    else if (entry instanceof JdkOrderEntry){
-      toSelect = ((JdkOrderEntry)entry).getJdk();
+      if (!openLibraryEditor) {
+        rootConfigurable.select((LibraryOrderEntry)entry, true);
+      }
+      else {
+        myEditButton.doClick();
+      }
     }
-    if (toSelect != null) {
-      rootConfigurable.selectNodeInTree(toSelect);
+    else if (entry instanceof JdkOrderEntry) {
+      Sdk jdk = ((JdkOrderEntry)entry).getJdk();
+      if (jdk != null) {
+        rootConfigurable.select(jdk, true);
+      }
     }
   }
 
