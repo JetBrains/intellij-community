@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -102,7 +103,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private void requestFocus(final Component c) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
     if (owner != null && owner == c) {
-      myManager.getFocusManager().requestFocus(new ActionCallback.Runnable() {
+      myManager.getFocusManager().requestFocus(new FocusCommand() {
         public ActionCallback run() {
           myFocusWatcher.setFocusedComponentImpl(c);
           return new ActionCallback.Done();

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.UIBundle;
@@ -463,7 +464,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     assert myContents.contains(toSelect);
 
 
-    getFocusManager().requestFocus(new ActionCallback.Runnable(content) {
+    getFocusManager().requestFocus(new FocusCommand(content) {
       public ActionCallback run() {
         doRequestFocus(toSelect);
         return new ActionCallback.Done();

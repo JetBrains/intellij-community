@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.FocusTrackback;
@@ -24,7 +25,7 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @NotNull
-  public ActionCallback requestFocus(@NotNull final ActionCallback.Runnable command, final boolean forced) {
+  public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     return myToolWindowManager.requestFocus(command, forced);
   }
 

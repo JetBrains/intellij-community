@@ -87,7 +87,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   };
 
   private ActionCallback.Runnable myRequestFocusCmd;
-  private WeakReference<ActionCallback.Runnable> myLastForcedRequest = new WeakReference<ActionCallback.Runnable>(null);
+  private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
 
   /**
    * invoked by reflection
@@ -1375,7 +1375,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ActionCallback requestFocus(final Component c, final boolean forced) {
-    return requestFocus(new ActionCallback.Runnable(c) {
+    return requestFocus(new FocusCommand(c) {
       public ActionCallback run() {
         final ActionCallback result = new ActionCallback();
         if (!c.requestFocusInWindow()) {
@@ -1386,13 +1386,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
         return result;
       }
+
+      @Override
+      public boolean isExpired() {
+        return SwingUtilities.windowForComponent(c) == null;
+      }
+
       public String toString() {
         return "comp request=" + c;
       }
     }, forced);
   }
 
-  public ActionCallback requestFocus(final ActionCallback.Runnable command, final boolean forced) {
+  public ActionCallback requestFocus(final FocusCommand command, final boolean forced) {
     final ActionCallback result = new ActionCallback();
 
     if (!forced) {
@@ -1408,7 +1414,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return result;
   }
 
-  private void _requestFocus(final ActionCallback.Runnable command, final boolean forced, final ActionCallback result) {
+  private void _requestFocus(final FocusCommand command, final boolean forced, final ActionCallback result) {
     if (checkForRejectOrByPass(command, forced, result)) return;
 
     restartIdleAlarm();
@@ -1456,16 +1462,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return false;
   }
 
-  private void setLastEffectiveForcedRequest(ActionCallback.Runnable command) {
-    myLastForcedRequest = new WeakReference<ActionCallback.Runnable>(command);
+  private void setLastEffectiveForcedRequest(FocusCommand command) {
+    myLastForcedRequest = new WeakReference<FocusCommand>(command);
   }
 
-  private ActionCallback.Runnable getLastEffectiveForcedRequest() {
-    return myLastForcedRequest != null ? myLastForcedRequest.get() : null;   
+  @Nullable
+  private FocusCommand getLastEffectiveForcedRequest() {
+    if (myLastForcedRequest == null) return null;
+    final FocusCommand request = myLastForcedRequest.get();
+    return request != null && !request.isExpired() ? request : null;
   }
 
   private boolean isUnforcedRequestAllowed() {
-    return myLastForcedRequest == null || myLastForcedRequest.get() == null;
+    return getLastEffectiveForcedRequest() == null;
   }
 
 }

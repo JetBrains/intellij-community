@@ -41,7 +41,7 @@ public abstract class IdeFocusManager {
    * @return action callback that either notifies when the focus was obtained or focus request was droppped
    */
   @NotNull
-  public abstract ActionCallback requestFocus(@NotNull ActionCallback.Runnable command, boolean forced);
+  public abstract ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced);
 
   /**
    * Finds most suitable component to request focus to. For instance you may pass a JPanel instance,

@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -89,7 +90,7 @@ public class SelectInAction extends AnAction {
         for (final SelectInTarget target : targetsToCheck) {
           if (target.canSelect(context)) {
             if (requestFocus) {
-              IdeFocusManager.getInstance(context.getProject()).requestFocus(new ActionCallback.Runnable() {
+              IdeFocusManager.getInstance(context.getProject()).requestFocus(new FocusCommand() {
                 public ActionCallback run() {
                   target.selectIn(context, requestFocus);
                   return new ActionCallback.Done();

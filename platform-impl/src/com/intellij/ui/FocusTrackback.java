@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,7 +160,7 @@ public class FocusTrackback {
 
     if (project != null && !project.isDisposed()) {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-      focusManager.requestFocus(new ActionCallback.Runnable() {
+      focusManager.requestFocus(new FocusCommand() {
         public ActionCallback run() {
           _restoreFocus();
           return new ActionCallback.Done();
@@ -175,6 +176,8 @@ public class FocusTrackback {
       });
     }
     else {
+      // no ide focus manager, so no way -- do just later
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           _restoreFocus();

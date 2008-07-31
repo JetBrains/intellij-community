@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
@@ -523,7 +524,7 @@ public class JBTabsImpl extends JComponent
   private ActionCallback requestFocus(final JComponent toFocus) {
     if (toFocus == null) return new ActionCallback.Done();
 
-    return myFocusManager.requestFocus(new ActionCallback.Runnable(toFocus) {
+    return myFocusManager.requestFocus(new FocusCommand(toFocus) {
       public ActionCallback run() {
         toFocus.requestFocus();
         return new ActionCallback.Done();
