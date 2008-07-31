@@ -16,6 +16,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.Function;
@@ -122,5 +124,9 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
 
   protected PsiManager getPsiManager() {
     return PsiManager.getInstance(getProject());
+  }
+
+  public PsiElementFactory getElementFactory() {
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
   }
 }

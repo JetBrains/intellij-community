@@ -112,15 +112,15 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
     return null;
   }
 
-  public boolean assertToken(final PrattTokenType type, @NotNull final String errorMessage) {
+  public boolean assertToken(final IElementType type, @NotNull final String errorMessage) {
     return _checkToken(type, errorMessage);
   }
 
-  public boolean checkToken(final PrattTokenType type) {
+  public boolean checkToken(final IElementType type) {
     return _checkToken(type, null);
   }
 
-  private boolean _checkToken(final PrattTokenType type, @Nullable String errorMessage) {
+  private boolean _checkToken(final IElementType type, @Nullable String errorMessage) {
     if (isToken(type)) {
       advance();
       return true;
@@ -176,5 +176,9 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
 
   public int getPriority() {
     return myPriority;
+  }
+
+  public int getCurrentOffset() {
+    return myBuilder.getCurrentOffset();
   }
 }

@@ -32,15 +32,20 @@ public abstract class PrattBuilder {
     return createChildBuilder().withLowestPriority(priority);
   }
 
+  @Nullable
+  public IElementType parseChildren(int priority, @Nullable String expectedMessage) {
+    return createChildBuilder(priority, expectedMessage).parse();
+  }
+
   protected abstract PrattBuilderFacade createChildBuilder();
 
   public boolean assertToken(final PrattTokenType type) {
     return assertToken(type, type.getExpectedText(this));
   }
 
-  public abstract boolean assertToken(PrattTokenType type, @NotNull String errorMessage);
+  public abstract boolean assertToken(IElementType type, @NotNull String errorMessage);
 
-  public abstract boolean checkToken(PrattTokenType type);
+  public abstract boolean checkToken(IElementType type);
 
   public abstract void advance();
 
@@ -73,4 +78,5 @@ public abstract class PrattBuilder {
 
   public abstract int getPriority();
 
+  public abstract int getCurrentOffset();
 }
